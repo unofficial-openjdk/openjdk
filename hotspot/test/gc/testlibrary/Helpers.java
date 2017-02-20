@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,20 +19,21 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 package gc.testlibrary;
 
 import jdk.test.lib.JDKToolLauncher;
-import jdk.test.lib.OutputAnalyzer;
+import jdk.test.lib.process.OutputAnalyzer;
 import sun.hotspot.WhiteBox;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
 
 public class Helpers {
 
@@ -124,20 +125,13 @@ public class Helpers {
      */
     public static String generate(String className, String superClass, String constructor, long fieldCount) {
 
-        StringBuilder builder = new StringBuilder();
-        builder.append(String.format("public class %s%s {\n", className, superClass == null ? ""
-                : " extends " + superClass));
-
-        if (constructor != null) {
-            builder.append(constructor);
-        }
-
-        for (int i = 0; i < fieldCount; ++i) {
-            builder.append(String.format("long f%d;\n", i));
-        }
-
-        builder.append("}\n");
-        return builder.toString();
+        return new StringBuilder()
+                .append(String.format("public class %s%s {\n", className, superClass == null ? ""
+                        : " extends " + superClass))
+                .append(constructor == null ? "" : constructor)
+                .append(fieldsGenerator(fieldCount))
+                .append("}\n")
+                .toString();
     }
 
     /**
@@ -212,50 +206,9 @@ public class Helpers {
                                                   Path workDir, String prefix)
             throws IOException, ClassNotFoundException {
 
-        if (instanceSize % SIZE_OF_LONG != 0L) {
-            throw new Error(String.format("Test bug: only sizes aligned by 8 bytes are supported and %d was specified",
-                    instanceSize));
-        }
+        generateByTemplateAndCompile(className, null, "public class ${ClassName} extends ${BaseClass} {\n${Fields}}\n",
+                "", instanceSize, workDir, prefix);
 
-        long instanceSizeWithoutObjectHeader = instanceSize - WhiteBox.getWhiteBox().getObjectSize(new Object());
-
-        int generatedClassesCount;
-        int fieldsInLastClassCount;
-
-        int sizeOfLastFile = (int) (instanceSizeWithoutObjectHeader
-                % (MAXIMUM_AMOUNT_OF_FIELDS_IN_CLASS * SIZE_OF_LONG));
-
-        if (sizeOfLastFile != 0) {
-            generatedClassesCount = (int) instanceSizeWithoutObjectHeader
-                    / (MAXIMUM_AMOUNT_OF_FIELDS_IN_CLASS * SIZE_OF_LONG) + 1;
-            fieldsInLastClassCount = sizeOfLastFile / SIZE_OF_LONG;
-        } else {
-            generatedClassesCount = (int) instanceSizeWithoutObjectHeader
-                    / (MAXIMUM_AMOUNT_OF_FIELDS_IN_CLASS * SIZE_OF_LONG);
-            fieldsInLastClassCount = MAXIMUM_AMOUNT_OF_FIELDS_IN_CLASS;
-        }
-
-        for (int i = 0; i < generatedClassesCount; i++) {
-            // for the last generated class we use specified class name
-            String clsName = (i == generatedClassesCount - 1) ? className : prefix + i;
-
-            // If we already have a file with the same name we do not create it again
-            if (Files.notExists(Paths.get(clsName + ".java"))) {
-                Helpers.compileClass(clsName, workDir,
-                        Helpers.generate(
-                                clsName,
-                                // for first generated class we don't have 'extends'
-                                (i == 0 ? null : prefix + (i - 1)),
-                                null,
-                                // for the last generated class we use different field count
-                                (i == generatedClassesCount - 1) ? fieldsInLastClassCount
-                                        : MAXIMUM_AMOUNT_OF_FIELDS_IN_CLASS));
-            } else {
-                System.out.println("Class " + clsName +
-                        ".java already exists, skipping class' generation and compilation");
-            }
-
-        }
         return classLoader.loadClass(className);
     }
 
@@ -370,4 +323,16 @@ public class Helpers {
         }
     }
 
+    /**
+     * @return a number formatter instance which prints numbers in a human
+     * readable form, like 9_223_372_036_854_775_807.
+     */
+    public static NumberFormat numberFormatter() {
+        DecimalFormat df = new DecimalFormat();
+        DecimalFormatSymbols dfs = df.getDecimalFormatSymbols();
+        dfs.setGroupingSeparator('_');
+        dfs.setDecimalSeparator('.');
+        df.setDecimalFormatSymbols(dfs);
+        return df;
+    }
 }

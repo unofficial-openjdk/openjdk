@@ -26,6 +26,8 @@
 package com.sun.security.auth;
 
 import java.security.Principal;
+import static sun.security.util.ResourcesMgr.getAuthResourceString;
+
 
 /**
  * This class implements the {@code Principal} interface
@@ -50,17 +52,6 @@ public class SolarisPrincipal implements Principal, java.io.Serializable {
 
     private static final long serialVersionUID = -7840670002439379038L;
 
-    private static final java.util.ResourceBundle rb =
-          java.security.AccessController.doPrivileged
-          (new java.security.PrivilegedAction<java.util.ResourceBundle>() {
-              public java.util.ResourceBundle run() {
-                  return (java.util.ResourceBundle.getBundle
-                                ("sun.security.util.AuthResources",
-                                 sun.security.util.ResourcesMgr.class.getModule()));
-              }
-          });
-
-
     /**
      * @serial
      */
@@ -76,7 +67,7 @@ public class SolarisPrincipal implements Principal, java.io.Serializable {
      */
     public SolarisPrincipal(String name) {
         if (name == null)
-            throw new NullPointerException(rb.getString("provided.null.name"));
+            throw new NullPointerException(getAuthResourceString("provided.null.name"));
 
         this.name = name;
     }
@@ -96,7 +87,7 @@ public class SolarisPrincipal implements Principal, java.io.Serializable {
      * @return a string representation of this {@code SolarisPrincipal}.
      */
     public String toString() {
-        return(rb.getString("SolarisPrincipal.") + name);
+        return(getAuthResourceString("SolarisPrincipal.") + name);
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,9 +39,10 @@ import com.sun.tools.classfile.CharacterRangeTable_attribute;
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.Code_attribute;
 import com.sun.tools.classfile.CompilationID_attribute;
-import com.sun.tools.classfile.ConcealedPackages_attribute;
 import com.sun.tools.classfile.ConstantPool;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Class_info;
+import com.sun.tools.classfile.ConstantPool.CONSTANT_Module_info;
+import com.sun.tools.classfile.ConstantPool.CONSTANT_Package_info;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Double_info;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Fieldref_info;
 import com.sun.tools.classfile.ConstantPool.CONSTANT_Float_info;
@@ -65,8 +66,6 @@ import com.sun.tools.classfile.Descriptor.InvalidDescriptor;
 import com.sun.tools.classfile.EnclosingMethod_attribute;
 import com.sun.tools.classfile.Exceptions_attribute;
 import com.sun.tools.classfile.Field;
-import com.sun.tools.classfile.Hashes_attribute;
-import com.sun.tools.classfile.Hashes_attribute.Entry;
 import com.sun.tools.classfile.InnerClasses_attribute;
 import com.sun.tools.classfile.InnerClasses_attribute.Info;
 import com.sun.tools.classfile.Instruction;
@@ -74,13 +73,18 @@ import com.sun.tools.classfile.Instruction.TypeKind;
 import com.sun.tools.classfile.LineNumberTable_attribute;
 import com.sun.tools.classfile.LocalVariableTable_attribute;
 import com.sun.tools.classfile.LocalVariableTypeTable_attribute;
-import com.sun.tools.classfile.MainClass_attribute;
 import com.sun.tools.classfile.Method;
 import com.sun.tools.classfile.MethodParameters_attribute;
 import com.sun.tools.classfile.Module_attribute;
 import com.sun.tools.classfile.Module_attribute.ExportsEntry;
 import com.sun.tools.classfile.Module_attribute.ProvidesEntry;
 import com.sun.tools.classfile.Module_attribute.RequiresEntry;
+import com.sun.tools.classfile.ModuleHashes_attribute;
+import com.sun.tools.classfile.ModuleHashes_attribute.Entry;
+import com.sun.tools.classfile.ModuleMainClass_attribute;
+import com.sun.tools.classfile.ModuleResolution_attribute;
+import com.sun.tools.classfile.ModuleTarget_attribute;
+import com.sun.tools.classfile.ModulePackages_attribute;
 import com.sun.tools.classfile.Opcode;
 import com.sun.tools.classfile.RuntimeInvisibleAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleParameterAnnotations_attribute;
@@ -102,11 +106,9 @@ import com.sun.tools.classfile.StackMapTable_attribute.same_locals_1_stack_item_
 import com.sun.tools.classfile.StackMapTable_attribute.same_locals_1_stack_item_frame_extended;
 import com.sun.tools.classfile.StackMap_attribute;
 import com.sun.tools.classfile.Synthetic_attribute;
-import com.sun.tools.classfile.TargetPlatform_attribute;
 import com.sun.tools.classfile.TypeAnnotation;
 import com.sun.tools.classfile.TypeAnnotation.Position;
 import static com.sun.tools.classfile.TypeAnnotation.TargetType.THROWS;
-import com.sun.tools.classfile.Version_attribute;
 import java.io.*;
 import java.util.*;
 import java.util.jar.JarEntry;
@@ -670,6 +672,40 @@ class ConstantPoolVisitor implements ConstantPool.Visitor<String, Integer> {
     }
 
     @Override
+    public String visitModule(CONSTANT_Module_info info, Integer p) {
+        String value = slist.get(p);
+        if (value == null) {
+            try {
+                value = visit(cfpool.get(info.name_index), info.name_index);
+                slist.set(p, value);
+                xpool.add(new Element("CONSTANT_Module",
+                        new String[]{"id", p.toString()},
+                        value));
+            } catch (ConstantPoolException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return value;
+    }
+
+    @Override
+    public String visitPackage(CONSTANT_Package_info info, Integer p) {
+        String value = slist.get(p);
+        if (value == null) {
+            try {
+                value = visit(cfpool.get(info.name_index), info.name_index);
+                slist.set(p, value);
+                xpool.add(new Element("CONSTANT_Package",
+                        new String[]{"id", p.toString()},
+                        value));
+            } catch (ConstantPoolException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return value;
+    }
+
+    @Override
     public String visitDouble(CONSTANT_Double_info c, Integer p) {
         String value = slist.get(p);
         if (value == null) {
@@ -1017,7 +1053,7 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
     }
 
     @Override
-    public Element visitConcealedPackages(ConcealedPackages_attribute attr, Element p) {
+    public Element visitModulePackages(ModulePackages_attribute attr, Element p) {
         Element e = new Element(x.getCpString(attr.attribute_name_index));
         for (int i : attr.packages_index) {
             Element ee = new Element("Package");
@@ -1128,7 +1164,7 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
         for (ExportsEntry export : exports) {
             Element exto = new Element("exports");
             exto.setAttr("package", x.getCpString(export.exports_index));
-            for ( int idx : export.exports_to_index) {
+            for (int idx : export.exports_to_index) {
                 exto.setAttr("module", x.getCpString(idx));
             }
             ex.add(exto);
@@ -1140,7 +1176,9 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
         Element ex = new Element("Provides");
         for (ProvidesEntry provide : provides) {
             ex.setAttr("provides", x.getCpString(provide.provides_index));
-            ex.setAttr("with", x.getCpString(provide.with_index));
+            for (int idx : provide.with_index) {
+                ex.setAttr("with", x.getCpString(idx));
+            }
         }
         p.add(ex);
     }
@@ -1461,14 +1499,20 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
     }
 
     @Override
-    public Element visitHashes(Hashes_attribute attr, Element p) {
+    public Element visitModuleHashes(ModuleHashes_attribute attr, Element p) {
         Element e = new Element(x.getCpString(attr.attribute_name_index));
         e.setAttr("Algorithm", x.getCpString(attr.algorithm_index));
         for (Entry entry : attr.hashes_table) {
             Element ee = new Element("Entry");
-            String requires = x.getCpString(entry.requires_index);
-            String hashValue = x.getCpString(entry.hash_index);
-            ee.setAttr(requires, hashValue);
+            String mn = x.getCpString(entry.module_name_index);
+            ee.setAttr("module_name", mn);
+            ee.setAttr("hash_length", "" + entry.hash.length);
+            StringBuilder sb = new StringBuilder();
+            for (byte b: entry.hash) {
+                sb.append(String.format("%02x", b & 0xff));
+            }
+            ee.setAttr("hash", sb.toString());
+            ee.trimToSize();
             e.add(ee);
         }
         e.trimToSize();
@@ -1478,7 +1522,7 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
     }
 
     @Override
-    public Element visitMainClass(MainClass_attribute attr, Element p) {
+    public Element visitModuleMainClass(ModuleMainClass_attribute attr, Element p) {
         Element e = new Element(x.getCpString(attr.attribute_name_index));
         e.add(x.getCpString(attr.main_class_index));
         e.trimToSize();
@@ -1487,20 +1531,20 @@ class AttributeVisitor implements Attribute.Visitor<Element, Element> {
     }
 
     @Override
-    public Element visitTargetPlatform(TargetPlatform_attribute attr, Element p) {
-        Element e = new Element(x.getCpString(attr.attribute_name_index));
-        e.add(x.getCpString(attr.os_name_index));
-        e.add(x.getCpString(attr.os_arch_index));
-        e.add(x.getCpString(attr.os_version_index));
+    public Element visitModuleResolution(ModuleResolution_attribute attr, Element p) {
+        Element e = new Element("ModuleResolution");
+        e.setAttr("flags", Integer.toString(attr.resolution_flags));
         e.trimToSize();
         p.add(e);
         return null;
     }
 
     @Override
-    public Element visitVersion(Version_attribute attr, Element p) {
+    public Element visitModuleTarget(ModuleTarget_attribute attr, Element p) {
         Element e = new Element(x.getCpString(attr.attribute_name_index));
-        e.add(x.getCpString(attr.version_index));
+        e.add(x.getCpString(attr.os_name_index));
+        e.add(x.getCpString(attr.os_arch_index));
+        e.add(x.getCpString(attr.os_version_index));
         e.trimToSize();
         p.add(e);
         return null;
@@ -1813,7 +1857,7 @@ class AnnotationsElementVisitor implements Annotation.element_value.Visitor<Elem
 
     @Override
     public Element visitArray(Array_element_value a, Element p) {
-     Element el = new Element("Array");
+        Element el = new Element("Array");
         for (Annotation.element_value v : a.values) {
            Element child = visit(v, el);
            if (child != null) {

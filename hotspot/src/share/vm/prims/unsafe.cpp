@@ -32,7 +32,7 @@
 #include "prims/jni.h"
 #include "prims/jvm.h"
 #include "prims/unsafe.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/interfaceSupport.hpp"
 #include "runtime/orderAccess.inline.hpp"
@@ -150,12 +150,21 @@ class MemoryAccess : StackObj {
   }
 
   template <typename T>
-  T normalize(T x) {
+  T normalize_for_write(T x) {
     return x;
   }
 
-  jboolean normalize(jboolean x) {
+  jboolean normalize_for_write(jboolean x) {
     return x & 1;
+  }
+
+  template <typename T>
+  T normalize_for_read(T x) {
+    return x;
+  }
+
+  jboolean normalize_for_read(jboolean x) {
+    return x != 0;
   }
 
   /**
@@ -196,7 +205,7 @@ public:
 
     T* p = (T*)addr();
 
-    T x = *p;
+    T x = normalize_for_read(*p);
 
     return x;
   }
@@ -207,7 +216,7 @@ public:
 
     T* p = (T*)addr();
 
-    *p = normalize(x);
+    *p = normalize_for_write(x);
   }
 
 
@@ -223,7 +232,7 @@ public:
 
     T x = OrderAccess::load_acquire((volatile T*)p);
 
-    return x;
+    return normalize_for_read(x);
   }
 
   template <typename T>
@@ -232,7 +241,7 @@ public:
 
     T* p = (T*)addr();
 
-    OrderAccess::release_store_fence((volatile T*)p, normalize(x));
+    OrderAccess::release_store_fence((volatile T*)p, normalize_for_write(x));
   }
 
 
@@ -256,12 +265,37 @@ public:
 
     jlong* p = (jlong*)addr();
 
-    Atomic::store(normalize(x),  p);
+    Atomic::store(normalize_for_write(x),  p);
   }
 #endif
 };
 
 // Get/PutObject must be special-cased, since it works with handles.
+
+// We could be accessing the referent field in a reference
+// object. If G1 is enabled then we need to register non-null
+// referent with the SATB barrier.
+
+#if INCLUDE_ALL_GCS
+static bool is_java_lang_ref_Reference_access(oop o, jlong offset) {
+  if (offset == java_lang_ref_Reference::referent_offset && o != NULL) {
+    Klass* k = o->klass();
+    if (InstanceKlass::cast(k)->reference_type() != REF_NONE) {
+      assert(InstanceKlass::cast(k)->is_subclass_of(SystemDictionary::Reference_klass()), "sanity");
+      return true;
+    }
+  }
+  return false;
+}
+#endif
+
+static void ensure_satb_referent_alive(oop o, jlong offset, oop v) {
+#if INCLUDE_ALL_GCS
+  if (UseG1GC && v != NULL && is_java_lang_ref_Reference_access(o, offset)) {
+    G1SATBCardTableModRefBS::enqueue(v);
+  }
+#endif
+}
 
 // These functions allow a null base pointer with an arbitrary address.
 // But if the base pointer is non-null, the offset should make some sense.
@@ -277,34 +311,9 @@ UNSAFE_ENTRY(jobject, Unsafe_GetObject(JNIEnv *env, jobject unsafe, jobject obj,
     v = *(oop*)index_oop_from_field_offset_long(p, offset);
   }
 
-  jobject ret = JNIHandles::make_local(env, v);
+  ensure_satb_referent_alive(p, offset, v);
 
-#if INCLUDE_ALL_GCS
-  // We could be accessing the referent field in a reference
-  // object. If G1 is enabled then we need to register non-null
-  // referent with the SATB barrier.
-  if (UseG1GC) {
-    bool needs_barrier = false;
-
-    if (ret != NULL) {
-      if (offset == java_lang_ref_Reference::referent_offset && obj != NULL) {
-        oop o = JNIHandles::resolve(obj);
-        Klass* k = o->klass();
-        if (InstanceKlass::cast(k)->reference_type() != REF_NONE) {
-          assert(InstanceKlass::cast(k)->is_subclass_of(SystemDictionary::Reference_klass()), "sanity");
-          needs_barrier = true;
-        }
-      }
-    }
-
-    if (needs_barrier) {
-      oop referent = JNIHandles::resolve(ret);
-      G1SATBCardTableModRefBS::enqueue(referent);
-    }
-  }
-#endif // INCLUDE_ALL_GCS
-
-  return ret;
+  return JNIHandles::make_local(env, v);
 } UNSAFE_END
 
 UNSAFE_ENTRY(void, Unsafe_PutObject(JNIEnv *env, jobject unsafe, jobject obj, jlong offset, jobject x_h)) {
@@ -324,12 +333,18 @@ UNSAFE_ENTRY(jobject, Unsafe_GetObjectVolatile(JNIEnv *env, jobject unsafe, jobj
 
   volatile oop v;
 
+  if (support_IRIW_for_not_multiple_copy_atomic_cpu) {
+    OrderAccess::fence();
+  }
+
   if (UseCompressedOops) {
     volatile narrowOop n = *(volatile narrowOop*) addr;
     (void)const_cast<oop&>(v = oopDesc::decode_heap_oop(n));
   } else {
     (void)const_cast<oop&>(v = *(volatile oop*) addr);
   }
+
+  ensure_satb_referent_alive(p, offset, v);
 
   OrderAccess::acquire();
   return JNIHandles::make_local(env, v);
@@ -779,6 +794,7 @@ UNSAFE_ENTRY(jclass, Unsafe_DefineClass0(JNIEnv *env, jobject unsafe, jstring na
 
 // define a class but do not make it known to the class loader or system dictionary
 // - host_class:  supplies context for linkage, access control, protection domain, and class loader
+//                if host_class is itself anonymous then it is replaced with its host class.
 // - data:  bytes of a class file, a raw memory address (length gives the number of bytes)
 // - cp_patches:  where non-null entries exist, they replace corresponding CP entries in data
 
@@ -787,8 +803,12 @@ UNSAFE_ENTRY(jclass, Unsafe_DefineClass0(JNIEnv *env, jobject unsafe, jstring na
 // link to any member of U.  Just after U is loaded, the only way to use it is reflectively,
 // through java.lang.Class methods like Class.newInstance.
 
+// The package of an anonymous class must either match its host's class's package or be in the
+// unnamed package.  If it is in the unnamed package then it will be put in its host class's
+// package.
+//
+
 // Access checks for linkage sites within U continue to follow the same rules as for named classes.
-// The package of an anonymous class is given by the package qualifier on the name under which it was loaded.
 // An anonymous class also has special privileges to access any member of its host class.
 // This is the main reason why this loading operation is unsafe.  The purpose of this is to
 // allow language implementations to simulate "open classes"; a host class in effect gets
@@ -870,8 +890,10 @@ Unsafe_DefineAnonymousClass_impl(JNIEnv *env,
 
   // Primitive types have NULL Klass* fields in their java.lang.Class instances.
   if (host_klass == NULL) {
-    THROW_0(vmSymbols::java_lang_IllegalArgumentException());
+    THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(), "Host class is null");
   }
+
+  assert(host_klass->is_instance_klass(), "Host class must be an instance class");
 
   const char* host_source = host_klass->external_name();
   Handle      host_loader(THREAD, host_klass->class_loader());
@@ -903,7 +925,7 @@ Unsafe_DefineAnonymousClass_impl(JNIEnv *env,
                                                 host_loader,
                                                 host_domain,
                                                 &st,
-                                                host_klass,
+                                                InstanceKlass::cast(host_klass),
                                                 cp_patches,
                                                 CHECK_NULL);
   if (anonk == NULL) {
@@ -1047,7 +1069,7 @@ UNSAFE_ENTRY(void, Unsafe_Park(JNIEnv *env, jobject unsafe, jboolean isAbsolute,
 
   if (event.should_commit()) {
     oop obj = thread->current_park_blocker();
-    event.set_klass((obj != NULL) ? obj->klass() : NULL);
+    event.set_parkedClass((obj != NULL) ? obj->klass() : NULL);
     event.set_timeout(time);
     event.set_address((obj != NULL) ? (TYPE_ADDRESS) cast_from_oop<uintptr_t>(obj) : 0);
     event.commit();

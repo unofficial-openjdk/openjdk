@@ -79,6 +79,50 @@ public class ThreadLocalRandomTest extends JSR166TestCase {
     }
 
     /**
+     * Repeated calls to next (only accessible via reflection) produce
+     * at least two distinct results, and repeated calls produce all
+     * possible values.
+     */
+    public void testNext() throws ReflectiveOperationException {
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        final java.lang.reflect.Method m;
+        try {
+            m = ThreadLocalRandom.class.getDeclaredMethod(
+                    "next", new Class[] { int.class });
+            m.setAccessible(true);
+        } catch (SecurityException acceptable) {
+            // Security manager may deny access
+            return;
+        } catch (Exception ex) {
+            // jdk9 module system may deny access
+            if (ex.getClass().getSimpleName()
+                .equals("InaccessibleObjectException"))
+                return;
+            throw ex;
+        }
+
+        int i;
+        {
+            int val = new java.util.Random().nextInt(4);
+            for (i = 0; i < NCALLS; i++) {
+                int q = (int) m.invoke(rnd, new Object[] { 2 });
+                if (val == q) break;
+            }
+            assertTrue(i < NCALLS);
+        }
+
+        {
+            int r = (int) m.invoke(rnd, new Object[] { 3 });
+            for (i = 0; i < NCALLS; i++) {
+                int q = (int) m.invoke(rnd, new Object[] { 3 });
+                assertTrue(q < (1<<3));
+                if (r != q) break;
+            }
+            assertTrue(i < NCALLS);
+        }
+    }
+
+    /**
      * Repeated calls to nextInt produce at least two distinct results
      */
     public void testNextInt() {

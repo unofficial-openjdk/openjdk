@@ -24,17 +24,17 @@
 /*
  * @test
  * @bug 8012447
- * @library /testlibrary /test/lib /testlibrary/ctw/src
+ * @library /test/lib /testlibrary/ctw/src
  * @modules java.base/jdk.internal.jimage
  *          java.base/jdk.internal.misc
  *          java.base/jdk.internal.reflect
  *          java.management
- * @build ClassFileInstaller sun.hotspot.tools.ctw.CompileTheWorld sun.hotspot.WhiteBox Foo Bar
- * @run main ClassFileInstaller sun.hotspot.WhiteBox Foo Bar
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main ClassesDirTest prepare
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.hotspot.tools.ctw.logfile=ctw.log sun.hotspot.tools.ctw.CompileTheWorld classes
- * @run main ClassesDirTest check ctw.log
+ * @build sun.hotspot.WhiteBox Foo Bar
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox Foo Bar
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run driver ClassesDirTest prepare
+ * @run driver ClassesDirTest compile classes
+ * @run driver ClassesDirTest check
  * @summary testing of CompileTheWorld :: classes in directory
  * @author igor.ignatyev@oracle.com
  */

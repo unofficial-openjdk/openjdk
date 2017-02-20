@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,22 +19,22 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
+
 /**
  * @test
  * @bug 8062280
  * @summary C2: inlining failure due to access checks being too strict
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary /
+ * @library /test/lib /
  *
  * @run main/othervm compiler.jsr292.MHInlineTest
  */
 
 package compiler.jsr292;
 
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

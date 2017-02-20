@@ -23,6 +23,8 @@
 
 /*
  * @test
- * @bug 8151299
- * @run testng java.httpclient/java.net.http.SelectorTest
+ * @bug 8151299 8164704
+ * @modules jdk.incubator.httpclient
+ * @run testng jdk.incubator.httpclient/jdk.incubator.http.SelectorTest
+ * @run testng jdk.incubator.httpclient/jdk.incubator.http.ResponseHeadersTest
  */

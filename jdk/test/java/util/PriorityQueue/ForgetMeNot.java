@@ -28,7 +28,11 @@
  * @author Martin Buchholz
  */
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.PriorityQueue;
+import java.util.Queue;
 
 public class ForgetMeNot {
     private static void checkQ(PriorityQueue<Integer> q, Integer...elts) {
@@ -57,7 +61,7 @@ public class ForgetMeNot {
     }
 
     private static void realMain(String[] args) throws Throwable {
-        final PriorityQueue<Integer> q = new PriorityQueue<Integer>();
+        final PriorityQueue<Integer> q = new PriorityQueue<>();
         Iterator<Integer> it;
 
         //----------------------------------------------------------------

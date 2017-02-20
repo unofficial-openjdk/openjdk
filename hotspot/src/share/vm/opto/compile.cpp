@@ -574,6 +574,10 @@ uint Compile::scratch_emit_size(const Node* n) {
   buf.consts()->initialize_shared_locs(&locs_buf[lsize * 0], lsize);
   buf.insts()->initialize_shared_locs( &locs_buf[lsize * 1], lsize);
   buf.stubs()->initialize_shared_locs( &locs_buf[lsize * 2], lsize);
+  // Mark as scratch buffer.
+  buf.consts()->set_scratch_emit();
+  buf.insts()->set_scratch_emit();
+  buf.stubs()->set_scratch_emit();
 
   // Do the emission.
 
@@ -967,7 +971,7 @@ Compile::Compile( ciEnv* ci_env,
     _java_calls(0),
     _inner_loops(0),
 #ifndef PRODUCT
-    _trace_opto_output(TraceOptoOutput),
+    _trace_opto_output(directive->TraceOptoOutputOption),
     _in_dump_cnt(0),
     _printer(NULL),
 #endif
@@ -1708,16 +1712,21 @@ Compile::AliasType* Compile::find_alias_type(const TypePtr* adr_type, bool no_cr
   const TypePtr* flat = flatten_alias_type(adr_type);
 
 #ifdef ASSERT
-  assert(flat == flatten_alias_type(flat), "idempotent");
-  assert(flat != TypePtr::BOTTOM,     "cannot alias-analyze an untyped ptr");
-  if (flat->isa_oopptr() && !flat->isa_klassptr()) {
-    const TypeOopPtr* foop = flat->is_oopptr();
-    // Scalarizable allocations have exact klass always.
-    bool exact = !foop->klass_is_exact() || foop->is_known_instance();
-    const TypePtr* xoop = foop->cast_to_exactness(exact)->is_ptr();
-    assert(foop == flatten_alias_type(xoop), "exactness must not affect alias type");
+  {
+    ResourceMark rm;
+    assert(flat == flatten_alias_type(flat), "not idempotent: adr_type = %s; flat = %s => %s",
+           Type::str(adr_type), Type::str(flat), Type::str(flatten_alias_type(flat)));
+    assert(flat != TypePtr::BOTTOM, "cannot alias-analyze an untyped ptr: adr_type = %s",
+           Type::str(adr_type));
+    if (flat->isa_oopptr() && !flat->isa_klassptr()) {
+      const TypeOopPtr* foop = flat->is_oopptr();
+      // Scalarizable allocations have exact klass always.
+      bool exact = !foop->klass_is_exact() || foop->is_known_instance();
+      const TypePtr* xoop = foop->cast_to_exactness(exact)->is_ptr();
+      assert(foop == flatten_alias_type(xoop), "exactness must not affect alias type: foop = %s; xoop = %s",
+             Type::str(foop), Type::str(xoop));
+    }
   }
-  assert(flat == flatten_alias_type(flat), "exact bit doesn't matter");
 #endif
 
   int idx = AliasIdxTop;
@@ -2862,15 +2871,20 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
         addp->Opcode() == Op_ConP &&
         addp == n->in(AddPNode::Base) &&
         n->in(AddPNode::Offset)->is_Con()) {
+      // If the transformation of ConP to ConN+DecodeN is beneficial depends
+      // on the platform and on the compressed oops mode.
       // Use addressing with narrow klass to load with offset on x86.
-      // On sparc loading 32-bits constant and decoding it have less
-      // instructions (4) then load 64-bits constant (7).
+      // Some platforms can use the constant pool to load ConP.
       // Do this transformation here since IGVN will convert ConN back to ConP.
       const Type* t = addp->bottom_type();
-      if (t->isa_oopptr() || t->isa_klassptr()) {
+      bool is_oop   = t->isa_oopptr() != NULL;
+      bool is_klass = t->isa_klassptr() != NULL;
+
+      if ((is_oop   && Matcher::const_oop_prefer_decode()  ) ||
+          (is_klass && Matcher::const_klass_prefer_decode())) {
         Node* nn = NULL;
 
-        int op = t->isa_oopptr() ? Op_ConN : Op_ConNKlass;
+        int op = is_oop ? Op_ConN : Op_ConNKlass;
 
         // Look for existing ConN node of the same exact type.
         Node* r  = root();
@@ -2886,7 +2900,7 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
         if (nn != NULL) {
           // Decode a narrow oop to match address
           // [R12 + narrow_oop_reg<<3 + offset]
-          if (t->isa_oopptr()) {
+          if (is_oop) {
             nn = new DecodeNNode(nn, t);
           } else {
             nn = new DecodeNKlassNode(nn, t);

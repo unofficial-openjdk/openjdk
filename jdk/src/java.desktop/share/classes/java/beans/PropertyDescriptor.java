@@ -183,9 +183,10 @@ public class PropertyDescriptor extends FeatureDescriptor {
             setShortDescription(description.toString());
         }
         Object values = info.get(PropertyInfo.Name.enumerationValues);
-        if (values != null) {
-            setValue(PropertyInfo.Name.enumerationValues.name(), values);
+        if (values == null) {
+            values = new Object[0];
         }
+        setValue(PropertyInfo.Name.enumerationValues.name(), values);
         this.baseName = base;
     }
 
@@ -461,6 +462,7 @@ public class PropertyDescriptor extends FeatureDescriptor {
      *         not been defined or cannot be created
      * @since 1.5
      */
+    @SuppressWarnings("deprecation")
     public PropertyEditor createPropertyEditor(Object bean) {
         Object editor = null;
 

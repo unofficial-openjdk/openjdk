@@ -22,12 +22,10 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
 #include "net_util.h"
-#include "jni.h"
+
+#include "java_net_InetAddress.h"
+#include "java_net_SocketOptions.h"
 
 // Taken from mstcpip.h in Windows SDK 8.0 or newer.
 #define SIO_LOOPBACK_FAST_PATH              _WSAIOW(IOC_VENDOR,16)
@@ -203,24 +201,9 @@ NET_ThrowCurrent(JNIEnv *env, char *msg)
 }
 
 void
-NET_ThrowSocketException(JNIEnv *env, char* msg)
-{
-    static jclass cls = NULL;
-    if (cls == NULL) {
-        cls = (*env)->FindClass(env, "java/net/SocketException");
-        CHECK_NULL(cls);
-        cls = (*env)->NewGlobalRef(env, cls);
-        CHECK_NULL(cls);
-    }
-    (*env)->ThrowNew(env, cls, msg);
-}
-
-void
 NET_ThrowByNameWithLastError(JNIEnv *env, const char *name,
                    const char *defaultDetail) {
-    char errmsg[255];
-    sprintf(errmsg, "errno: %d, error: %s\n", WSAGetLastError(), defaultDetail);
-    JNU_ThrowByNameWithLastError(env, name, errmsg);
+    JNU_ThrowByNameWithMessageAndLastError(env, name, defaultDetail);
 }
 
 jfieldID
@@ -505,10 +488,10 @@ void setExclusiveBind(int fd) {
  * Should be only called by the wrapper method NET_WinBind
  */
 JNIEXPORT int JNICALL
-NET_Bind(int s, struct sockaddr *him, int len)
+NET_Bind(int s, SOCKETADDRESS *sa, int len)
 {
     int rv = 0;
-    rv = bind(s, him, len);
+    rv = bind(s, &sa->sa, len);
 
     if (rv == SOCKET_ERROR) {
         /*
@@ -528,11 +511,11 @@ NET_Bind(int s, struct sockaddr *him, int len)
  * if required, and then calls NET_BIND
  */
 JNIEXPORT int JNICALL
-NET_WinBind(int s, struct sockaddr *him, int len, jboolean exclBind)
+NET_WinBind(int s, SOCKETADDRESS *sa, int len, jboolean exclBind)
 {
     if (exclBind == JNI_TRUE)
         setExclusiveBind(s);
-    return NET_Bind(s, him, len);
+    return NET_Bind(s, sa, len);
 }
 
 JNIEXPORT int JNICALL
@@ -608,7 +591,7 @@ NET_Timeout2(int fd, int fd1, long timeout, int *fdret) {
 
 
 void dumpAddr (char *str, void *addr) {
-    struct SOCKADDR_IN6 *a = (struct SOCKADDR_IN6 *)addr;
+    struct sockaddr_in6 *a = (struct sockaddr_in6 *)addr;
     int family = a->sin6_family;
     printf ("%s\n", str);
     if (family == AF_INET) {
@@ -681,21 +664,21 @@ void dumpAddr (char *str, void *addr) {
  */
 
 JNIEXPORT int JNICALL
-NET_BindV6(struct ipv6bind* b, jboolean exclBind) {
+NET_BindV6(struct ipv6bind *b, jboolean exclBind) {
     int fd=-1, ofd=-1, rv, len;
     /* need to defer close until new sockets created */
     int close_fd=-1, close_ofd=-1;
     SOCKETADDRESS oaddr; /* other address to bind */
-    int family = b->addr->him.sa_family;
+    int family = b->addr->sa.sa_family;
     int ofamily;
     u_short port; /* requested port parameter */
     u_short bound_port;
 
-    if (family == AF_INET && (b->addr->him4.sin_addr.s_addr != INADDR_ANY)) {
+    if (family == AF_INET && (b->addr->sa4.sin_addr.s_addr != INADDR_ANY)) {
         /* bind to v4 only */
         int ret;
-        ret = NET_WinBind ((int)b->ipv4_fd, (struct sockaddr *)b->addr,
-                                sizeof (struct sockaddr_in), exclBind);
+        ret = NET_WinBind((int)b->ipv4_fd, b->addr,
+                          sizeof(SOCKETADDRESS), exclBind);
         if (ret == SOCKET_ERROR) {
             CLOSE_SOCKETS_AND_RETURN;
         }
@@ -703,11 +686,11 @@ NET_BindV6(struct ipv6bind* b, jboolean exclBind) {
         b->ipv6_fd = -1;
         return 0;
     }
-    if (family == AF_INET6 && (!IN6_IS_ADDR_ANY(&b->addr->him6.sin6_addr))) {
+    if (family == AF_INET6 && (!IN6_IS_ADDR_ANY(&b->addr->sa6.sin6_addr))) {
         /* bind to v6 only */
         int ret;
-        ret = NET_WinBind ((int)b->ipv6_fd, (struct sockaddr *)b->addr,
-                                sizeof (struct SOCKADDR_IN6), exclBind);
+        ret = NET_WinBind((int)b->ipv6_fd, b->addr,
+                          sizeof(SOCKETADDRESS), exclBind);
         if (ret == SOCKET_ERROR) {
             CLOSE_SOCKETS_AND_RETURN;
         }
@@ -724,32 +707,32 @@ NET_BindV6(struct ipv6bind* b, jboolean exclBind) {
         fd = (int)b->ipv4_fd;
         ofd = (int)b->ipv6_fd;
         port = (u_short)GET_PORT (b->addr);
-        IN6ADDR_SETANY (&oaddr.him6);
-        oaddr.him6.sin6_port = port;
+        IN6ADDR_SETANY(&oaddr.sa6);
+        oaddr.sa6.sin6_port = port;
     } else {
         ofamily = AF_INET;
         ofd = (int)b->ipv4_fd;
         fd = (int)b->ipv6_fd;
         port = (u_short)GET_PORT (b->addr);
-        oaddr.him4.sin_family = AF_INET;
-        oaddr.him4.sin_port = port;
-        oaddr.him4.sin_addr.s_addr = INADDR_ANY;
+        oaddr.sa4.sin_family = AF_INET;
+        oaddr.sa4.sin_port = port;
+        oaddr.sa4.sin_addr.s_addr = INADDR_ANY;
     }
 
-    rv = NET_WinBind(fd, (struct sockaddr *)b->addr, SOCKETADDRESS_LEN(b->addr), exclBind);
+    rv = NET_WinBind(fd, b->addr, sizeof(SOCKETADDRESS), exclBind);
     if (rv == SOCKET_ERROR) {
         CLOSE_SOCKETS_AND_RETURN;
     }
 
     /* get the port and set it in the other address */
-    len = SOCKETADDRESS_LEN(b->addr);
+    len = sizeof(SOCKETADDRESS);
     if (getsockname(fd, (struct sockaddr *)b->addr, &len) == -1) {
         CLOSE_SOCKETS_AND_RETURN;
     }
     bound_port = GET_PORT (b->addr);
     SET_PORT (&oaddr, bound_port);
-    if ((rv=NET_WinBind (ofd, (struct sockaddr *) &oaddr,
-                         SOCKETADDRESS_LEN (&oaddr), exclBind)) == SOCKET_ERROR) {
+    if ((rv = NET_WinBind(ofd, &oaddr,
+                          sizeof(SOCKETADDRESS), exclBind)) == SOCKET_ERROR) {
         int retries;
         int sotype, arglen=sizeof(sotype);
 
@@ -785,8 +768,7 @@ NET_BindV6(struct ipv6bind* b, jboolean exclBind) {
 
             /* bind random port on first socket */
             SET_PORT (&oaddr, 0);
-            rv = NET_WinBind (ofd, (struct sockaddr *)&oaddr, SOCKETADDRESS_LEN(&oaddr),
-                              exclBind);
+            rv = NET_WinBind(ofd, &oaddr, sizeof(SOCKETADDRESS), exclBind);
             if (rv == SOCKET_ERROR) {
                 CLOSE_SOCKETS_AND_RETURN;
             }
@@ -796,14 +778,13 @@ NET_BindV6(struct ipv6bind* b, jboolean exclBind) {
             close_fd = close_ofd = -1;
 
             /* bind new port on second socket */
-            len = SOCKETADDRESS_LEN(&oaddr);
-            if (getsockname(ofd, (struct sockaddr *)&oaddr, &len) == -1) {
+            len = sizeof(SOCKETADDRESS);
+            if (getsockname(ofd, &oaddr.sa, &len) == -1) {
                 CLOSE_SOCKETS_AND_RETURN;
             }
             bound_port = GET_PORT (&oaddr);
             SET_PORT (b->addr, bound_port);
-            rv = NET_WinBind (fd, (struct sockaddr *)b->addr, SOCKETADDRESS_LEN(b->addr),
-                              exclBind);
+            rv = NET_WinBind(fd, b->addr, sizeof(SOCKETADDRESS), exclBind);
 
             if (rv != SOCKET_ERROR) {
                 if (family == AF_INET) {
@@ -828,7 +809,7 @@ NET_BindV6(struct ipv6bind* b, jboolean exclBind) {
  *      0 if error
  *      > 0 interface index to use
  */
-jint getDefaultIPv6Interface(JNIEnv *env, struct SOCKADDR_IN6 *target_addr)
+jint getDefaultIPv6Interface(JNIEnv *env, struct sockaddr_in6 *target_addr)
 {
     int ret;
     DWORD b;
@@ -839,9 +820,9 @@ jint getDefaultIPv6Interface(JNIEnv *env, struct SOCKADDR_IN6 *target_addr)
     }
 
     ret = WSAIoctl(fd, SIO_ROUTING_INTERFACE_QUERY,
-                    (void *)target_addr, sizeof(struct sockaddr_in6),
-                    (void *)&route, sizeof(struct sockaddr_in6),
-                    &b, 0, 0);
+                   (void *)target_addr, sizeof(struct sockaddr_in6),
+                   (void *)&route, sizeof(struct sockaddr_in6),
+                   &b, 0, 0);
     if (ret == SOCKET_ERROR) {
         // error
         closesocket(fd);
@@ -871,31 +852,33 @@ NET_EnableFastTcpLoopback(int fd) {
     return result == SOCKET_ERROR ? WSAGetLastError() : 0;
 }
 
-/* If address types is IPv6, then IPv6 must be available. Otherwise
- * no address can be generated. In the case of an IPv4 Inetaddress this
- * method will return an IPv4 mapped address where IPv6 is available and
- * v4MappedAddress is TRUE. Otherwise it will return a sockaddr_in
- * structure for an IPv4 InetAddress.
-*/
+/**
+ * See net_util.h for documentation
+ */
 JNIEXPORT int JNICALL
-NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr *him,
-                          int *len, jboolean v4MappedAddress) {
-    jint family, iafam;
-    iafam = getInetAddress_family(env, iaObj);
-    family = (iafam == IPv4)? AF_INET : AF_INET6;
-    if (ipv6_available() && !(family == AF_INET && v4MappedAddress == JNI_FALSE)) {
-        struct SOCKADDR_IN6 *him6 = (struct SOCKADDR_IN6 *)him;
-        jbyte caddr[16];
-        jint address, scopeid = 0;
-        jint cached_scope_id = 0;
+NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port,
+                          SOCKETADDRESS *sa, int *len,
+                          jboolean v4MappedAddress)
+{
+    jint family = getInetAddress_family(env, iaObj);
+    memset((char *)sa, 0, sizeof(SOCKETADDRESS));
 
-        if (family == AF_INET) { /* will convert to IPv4-mapped address */
-            memset((char *) caddr, 0, 16);
+    if (ipv6_available() &&
+        !(family == java_net_InetAddress_IPv4 &&
+          v4MappedAddress == JNI_FALSE))
+    {
+        jbyte caddr[16];
+        jint address;
+        unsigned int scopeid = 0, cached_scope_id = 0;
+
+        if (family == java_net_InetAddress_IPv4) {
+            // convert to IPv4-mapped address
+            memset((char *)caddr, 0, 16);
             address = getInetAddress_addr(env, iaObj);
             if (address == INADDR_ANY) {
                 /* we would always prefer IPv6 wildcard address
-                caddr[10] = 0xff;
-                caddr[11] = 0xff; */
+                 * caddr[10] = 0xff;
+                 * caddr[11] = 0xff; */
             } else {
                 caddr[10] = 0xff;
                 caddr[11] = 0xff;
@@ -907,44 +890,37 @@ NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr 
         } else {
             getInet6Address_ipaddress(env, iaObj, (char *)caddr);
             scopeid = getInet6Address_scopeid(env, iaObj);
-            cached_scope_id = (jint)(*env)->GetIntField(env, iaObj, ia6_cachedscopeidID);
+            cached_scope_id = (unsigned int)(*env)->GetIntField(env, iaObj, ia6_cachedscopeidID);
         }
-
-        memset((char *)him6, 0, sizeof(struct SOCKADDR_IN6));
-        him6->sin6_port = (u_short) htons((u_short)port);
-        memcpy((void *)&(him6->sin6_addr), caddr, sizeof(struct in6_addr) );
-        him6->sin6_family = AF_INET6;
-        if ((family == AF_INET6) && IN6_IS_ADDR_LINKLOCAL( &(him6->sin6_addr) )
-            && (!scopeid && !cached_scope_id)) {
-            cached_scope_id = getDefaultIPv6Interface(env, him6);
+        sa->sa6.sin6_port = (u_short)htons((u_short)port);
+        memcpy((void *)&sa->sa6.sin6_addr, caddr, sizeof(struct in6_addr));
+        sa->sa6.sin6_family = AF_INET6;
+        if ((family == java_net_InetAddress_IPv6) &&
+            IN6_IS_ADDR_LINKLOCAL(&sa->sa6.sin6_addr) &&
+            (!scopeid && !cached_scope_id))
+        {
+            cached_scope_id = getDefaultIPv6Interface(env, &sa->sa6);
             (*env)->SetIntField(env, iaObj, ia6_cachedscopeidID, cached_scope_id);
         }
-        him6->sin6_scope_id = scopeid != 0 ? scopeid : cached_scope_id;
-        *len = sizeof(struct SOCKADDR_IN6) ;
-    } else {
-        struct sockaddr_in *him4 = (struct sockaddr_in*)him;
-        jint address;
-        if (family != AF_INET) {
-          JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", "Protocol family unavailable");
-          return -1;
+        sa->sa6.sin6_scope_id = scopeid == 0 ? cached_scope_id : scopeid;
+        if (len != NULL) {
+            *len = sizeof(struct sockaddr_in6);
         }
-        memset((char *) him4, 0, sizeof(struct sockaddr_in));
+    } else {
+        jint address;
+        if (family != java_net_InetAddress_IPv4) {
+            JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", "Protocol family unavailable");
+            return -1;
+        }
         address = getInetAddress_addr(env, iaObj);
-        him4->sin_port = htons((short) port);
-        him4->sin_addr.s_addr = (u_long) htonl(address);
-        him4->sin_family = AF_INET;
-        *len = sizeof(struct sockaddr_in);
+        sa->sa4.sin_port = htons((short)port);
+        sa->sa4.sin_addr.s_addr = (u_long)htonl(address);
+        sa->sa4.sin_family = AF_INET;
+        if (len != NULL) {
+            *len = sizeof(struct sockaddr_in);
+        }
     }
     return 0;
-}
-
-JNIEXPORT jint JNICALL
-NET_GetPortFromSockaddr(struct sockaddr *him) {
-    if (him->sa_family == AF_INET6) {
-        return ntohs(((struct sockaddr_in6*)him)->sin6_port);
-    } else {
-        return ntohs(((struct sockaddr_in*)him)->sin_port);
-    }
 }
 
 int
@@ -977,16 +953,6 @@ NET_IsEqual(jbyte* caddr1, jbyte* caddr2) {
         }
     }
     return 1;
-}
-
-int getScopeID (struct sockaddr *him) {
-    struct SOCKADDR_IN6 *him6 = (struct SOCKADDR_IN6 *)him;
-    return him6->sin6_scope_id;
-}
-
-int cmpScopeID (unsigned int scope, struct sockaddr *him) {
-    struct SOCKADDR_IN6 *him6 = (struct SOCKADDR_IN6 *)him;
-    return him6->sin6_scope_id == scope;
 }
 
 /**

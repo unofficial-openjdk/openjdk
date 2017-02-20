@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,13 +97,12 @@ public class JavacTaskImpl extends BasicJavacTask {
     /* Internal version of call exposing Main.Result. */
     public Main.Result doCall() {
         try {
-            return handleExceptions(new Callable<Main.Result>() {
-                @Override
-                public Main.Result call() throws Exception {
-                    prepareCompiler(false);
-                    compiler.compile(args.getFileObjects(), args.getClassNames(), processors);
-                    return (compiler.errorCount() > 0) ? Main.Result.ERROR : Main.Result.OK; // FIXME?
-                }
+            return handleExceptions(() -> {
+                prepareCompiler(false);
+                if (compiler.errorCount() > 0)
+                    return Main.Result.ERROR;
+                compiler.compile(args.getFileObjects(), args.getClassNames(), processors);
+                return (compiler.errorCount() > 0) ? Main.Result.ERROR : Main.Result.OK; // FIXME?
             }, Main.Result.SYSERR, Main.Result.ABNORMAL);
         } finally {
             try {
@@ -191,7 +190,7 @@ public class JavacTaskImpl extends BasicJavacTask {
             compiler.genEndPos = true;
             notYetEntered = new HashMap<>();
             if (forParse) {
-                compiler.initProcessAnnotations(processors);
+                compiler.initProcessAnnotations(processors, args.getFileObjects(), args.getClassNames());
                 for (JavaFileObject file: args.getFileObjects())
                     notYetEntered.put(file, null);
                 genList = new ListBuffer<>();
@@ -226,12 +225,7 @@ public class JavacTaskImpl extends BasicJavacTask {
 
     @Override @DefinedBy(Api.COMPILER_TREE)
     public Iterable<? extends CompilationUnitTree> parse() {
-        return handleExceptions(new Callable<Iterable<? extends CompilationUnitTree>>() {
-            @Override
-            public Iterable<? extends CompilationUnitTree> call() {
-                return parseInternal();
-            }
-        }, List.<CompilationUnitTree>nil(), List.<CompilationUnitTree>nil());
+        return handleExceptions(this::parseInternal, List.nil(), List.nil());
     }
 
     private Iterable<? extends CompilationUnitTree> parseInternal() {
@@ -358,12 +352,7 @@ public class JavacTaskImpl extends BasicJavacTask {
 
     @Override @DefinedBy(Api.COMPILER_TREE)
     public Iterable<? extends Element> analyze() {
-        return handleExceptions(new Callable<Iterable<? extends Element>>() {
-            @Override
-            public Iterable<? extends Element> call() {
-                return analyze(null);
-            }
-        }, List.<Element>nil(), List.<Element>nil());
+        return handleExceptions(() -> analyze(null), List.nil(), List.nil());
     }
 
     /**
@@ -425,12 +414,7 @@ public class JavacTaskImpl extends BasicJavacTask {
 
     @Override @DefinedBy(Api.COMPILER_TREE)
     public Iterable<? extends JavaFileObject> generate() {
-        return handleExceptions(new Callable<Iterable<? extends JavaFileObject>>() {
-            @Override
-            public Iterable<? extends JavaFileObject> call() {
-                return generate(null);
-            }
-        }, List.<JavaFileObject>nil(), List.<JavaFileObject>nil());
+        return handleExceptions(() -> generate(null), List.nil(), List.nil());
     }
 
     /**

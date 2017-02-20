@@ -349,6 +349,9 @@ inline void Assembler::stdx( Register d, Register s1, Register s2) { emit_int32(
 inline void Assembler::stdu( Register d, int si16,    Register s1) { emit_int32(STDU_OPCODE | rs(d) | ds(si16)   | rta0mem(s1));}
 inline void Assembler::stdux(Register s, Register a,  Register b)  { emit_int32(STDUX_OPCODE| rs(s) | rta0mem(a) | rb(b));}
 
+inline void Assembler::st_ptr(Register d, int b, Register s1) { std(d, b, s1); }
+DEBUG_ONLY(inline void Assembler::st_ptr(Register d, ByteSize b, Register s1) { std(d, in_bytes(b), s1); })
+
 // PPC 1, section 3.3.13 Move To/From System Register Instructions
 inline void Assembler::mtlr( Register s1)         { emit_int32(MTLR_OPCODE  | rs(s1)); }
 inline void Assembler::mflr( Register d )         { emit_int32(MFLR_OPCODE  | rt(d)); }
@@ -697,6 +700,26 @@ inline void Assembler::fdiv_( FloatRegister d, FloatRegister a, FloatRegister b)
 inline void Assembler::fdivs( FloatRegister d, FloatRegister a, FloatRegister b) { emit_int32( FDIVS_OPCODE | frt(d) | fra(a) | frb(b) | rc(0)); }
 inline void Assembler::fdivs_(FloatRegister d, FloatRegister a, FloatRegister b) { emit_int32( FDIVS_OPCODE | frt(d) | fra(a) | frb(b) | rc(1)); }
 
+// Fused multiply-accumulate instructions.
+// WARNING: Use only when rounding between the 2 parts is not desired.
+// Some floating point tck tests will fail if used incorrectly.
+inline void Assembler::fmadd(   FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FMADD_OPCODE   | frt(d) | fra(a) | frb(b) | frc(c) | rc(0)); }
+inline void Assembler::fmadd_(  FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FMADD_OPCODE   | frt(d) | fra(a) | frb(b) | frc(c) | rc(1)); }
+inline void Assembler::fmadds(  FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FMADDS_OPCODE  | frt(d) | fra(a) | frb(b) | frc(c) | rc(0)); }
+inline void Assembler::fmadds_( FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FMADDS_OPCODE  | frt(d) | fra(a) | frb(b) | frc(c) | rc(1)); }
+inline void Assembler::fmsub(   FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FMSUB_OPCODE   | frt(d) | fra(a) | frb(b) | frc(c) | rc(0)); }
+inline void Assembler::fmsub_(  FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FMSUB_OPCODE   | frt(d) | fra(a) | frb(b) | frc(c) | rc(1)); }
+inline void Assembler::fmsubs(  FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FMSUBS_OPCODE  | frt(d) | fra(a) | frb(b) | frc(c) | rc(0)); }
+inline void Assembler::fmsubs_( FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FMSUBS_OPCODE  | frt(d) | fra(a) | frb(b) | frc(c) | rc(1)); }
+inline void Assembler::fnmadd(  FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FNMADD_OPCODE  | frt(d) | fra(a) | frb(b) | frc(c) | rc(0)); }
+inline void Assembler::fnmadd_( FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FNMADD_OPCODE  | frt(d) | fra(a) | frb(b) | frc(c) | rc(1)); }
+inline void Assembler::fnmadds( FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FNMADDS_OPCODE | frt(d) | fra(a) | frb(b) | frc(c) | rc(0)); }
+inline void Assembler::fnmadds_(FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FNMADDS_OPCODE | frt(d) | fra(a) | frb(b) | frc(c) | rc(1)); }
+inline void Assembler::fnmsub(  FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FNMSUB_OPCODE  | frt(d) | fra(a) | frb(b) | frc(c) | rc(0)); }
+inline void Assembler::fnmsub_( FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FNMSUB_OPCODE  | frt(d) | fra(a) | frb(b) | frc(c) | rc(1)); }
+inline void Assembler::fnmsubs( FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FNMSUBS_OPCODE | frt(d) | fra(a) | frb(b) | frc(c) | rc(0)); }
+inline void Assembler::fnmsubs_(FloatRegister d, FloatRegister a, FloatRegister c, FloatRegister b) { emit_int32( FNMSUBS_OPCODE | frt(d) | fra(a) | frb(b) | frc(c) | rc(1)); }
+
 // PPC 1, section 4.6.6 Floating-Point Rounding and Conversion Instructions
 inline void Assembler::frsp(  FloatRegister d, FloatRegister b) { emit_int32( FRSP_OPCODE   | frt(d) | frb(b) | rc(0)); }
 inline void Assembler::fctid( FloatRegister d, FloatRegister b) { emit_int32( FCTID_OPCODE  | frt(d) | frb(b) | rc(0)); }
@@ -731,8 +754,12 @@ inline void Assembler::lvsl(  VectorRegister d, Register s1, Register s2) { emit
 inline void Assembler::lvsr(  VectorRegister d, Register s1, Register s2) { emit_int32( LVSR_OPCODE   | vrt(d) | ra0mem(s1) | rb(s2)); }
 
 // Vector-Scalar (VSX) instructions.
-inline void Assembler::lxvd2x (VectorSRegister d, Register s1, Register s2) { emit_int32( LXVD2X_OPCODE  | vsrt(d) | ra(s1) | rb(s2)); }
-inline void Assembler::stxvd2x(VectorSRegister d, Register s1, Register s2) { emit_int32( STXVD2X_OPCODE | vsrt(d) | ra(s1) | rb(s2)); }
+inline void Assembler::lxvd2x (VectorSRegister d, Register s1) { emit_int32( LXVD2X_OPCODE  | vsrt(d) | ra(0) | rb(s1)); }
+inline void Assembler::lxvd2x (VectorSRegister d, Register s1, Register s2) { emit_int32( LXVD2X_OPCODE  | vsrt(d) | ra0mem(s1) | rb(s2)); }
+inline void Assembler::stxvd2x(VectorSRegister d, Register s1) { emit_int32( STXVD2X_OPCODE | vsrt(d) | ra(0) | rb(s1)); }
+inline void Assembler::stxvd2x(VectorSRegister d, Register s1, Register s2) { emit_int32( STXVD2X_OPCODE | vsrt(d) | ra0mem(s1) | rb(s2)); }
+inline void Assembler::mtvrd(  VectorRegister  d, Register a)               { emit_int32( MTVSRD_OPCODE  | vrt(d)  | ra(a)  | 1u); } // 1u: d is treated as Vector (VMX/Altivec).
+inline void Assembler::mfvrd(  Register        a, VectorRegister d)         { emit_int32( MFVSRD_OPCODE  | vrt(d)  | ra(a)  | 1u); } // 1u: d is treated as Vector (VMX/Altivec).
 
 inline void Assembler::vpkpx(   VectorRegister d, VectorRegister a, VectorRegister b) { emit_int32( VPKPX_OPCODE   | vrt(d) | vra(a) | vrb(b)); }
 inline void Assembler::vpkshss( VectorRegister d, VectorRegister a, VectorRegister b) { emit_int32( VPKSHSS_OPCODE | vrt(d) | vra(a) | vrb(b)); }

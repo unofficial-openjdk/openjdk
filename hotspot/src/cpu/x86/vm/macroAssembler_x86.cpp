@@ -752,8 +752,7 @@ void MacroAssembler::pushptr(AddressLiteral src) {
   }
 }
 
-void MacroAssembler::reset_last_Java_frame(bool clear_fp,
-                                           bool clear_pc) {
+void MacroAssembler::reset_last_Java_frame(bool clear_fp) {
   // we must set sp to zero to clear frame
   movptr(Address(r15_thread, JavaThread::last_Java_sp_offset()), NULL_WORD);
   // must clear fp, so that compiled frames are not confused; it is
@@ -762,9 +761,8 @@ void MacroAssembler::reset_last_Java_frame(bool clear_fp,
     movptr(Address(r15_thread, JavaThread::last_Java_fp_offset()), NULL_WORD);
   }
 
-  if (clear_pc) {
-    movptr(Address(r15_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
-  }
+  // Always clear the pc because it could have been set by make_walkable()
+  movptr(Address(r15_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
 }
 
 void MacroAssembler::set_last_Java_frame(Register last_java_sp,
@@ -2531,7 +2529,7 @@ void MacroAssembler::call_VM_base(Register oop_result,
   }
   // reset last Java frame
   // Only interpreter should have to clear fp
-  reset_last_Java_frame(java_thread, true, false);
+  reset_last_Java_frame(java_thread, true);
 
    // C++ interp handles this in the interpreter
   check_and_handle_popframe(java_thread);
@@ -3149,6 +3147,24 @@ void MacroAssembler::fremr(Register tmp) {
   fpop();
 }
 
+// dst = c = a * b + c
+void MacroAssembler::fmad(XMMRegister dst, XMMRegister a, XMMRegister b, XMMRegister c) {
+  Assembler::vfmadd231sd(c, a, b);
+  if (dst != c) {
+    movdbl(dst, c);
+  }
+}
+
+// dst = c = a * b + c
+void MacroAssembler::fmaf(XMMRegister dst, XMMRegister a, XMMRegister b, XMMRegister c) {
+  Assembler::vfmadd231ss(c, a, b);
+  if (dst != c) {
+    movflt(dst, c);
+  }
+}
+
+
+
 
 void MacroAssembler::incrementl(AddressLiteral dst) {
   if (reachable(dst)) {
@@ -3483,12 +3499,12 @@ void MacroAssembler::movdqu(XMMRegister dst, XMMRegister src) {
   }
 }
 
-void MacroAssembler::movdqu(XMMRegister dst, AddressLiteral src) {
+void MacroAssembler::movdqu(XMMRegister dst, AddressLiteral src, Register scratchReg) {
   if (reachable(src)) {
     movdqu(dst, as_Address(src));
   } else {
-    lea(rscratch1, src);
-    movdqu(dst, Address(rscratch1, 0));
+    lea(scratchReg, src);
+    movdqu(dst, Address(scratchReg, 0));
   }
 }
 
@@ -3642,8 +3658,7 @@ void MacroAssembler::push_IU_state() {
   pusha();
 }
 
-void MacroAssembler::reset_last_Java_frame(Register java_thread, bool clear_fp, bool clear_pc) {
-  // determine java_thread register
+void MacroAssembler::reset_last_Java_frame(Register java_thread, bool clear_fp) { // determine java_thread register
   if (!java_thread->is_valid()) {
     java_thread = rdi;
     get_thread(java_thread);
@@ -3654,8 +3669,8 @@ void MacroAssembler::reset_last_Java_frame(Register java_thread, bool clear_fp, 
     movptr(Address(java_thread, JavaThread::last_Java_fp_offset()), NULL_WORD);
   }
 
-  if (clear_pc)
-    movptr(Address(java_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
+  // Always clear the pc because it could have been set by make_walkable()
+  movptr(Address(java_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
 
 }
 
@@ -4291,6 +4306,15 @@ void MacroAssembler::vpaddw(XMMRegister dst, XMMRegister nds, Address src, int v
     evmovdqul(xmm0, dst, Assembler::AVX_512bit);
     Assembler::vpaddw(xmm0, xmm0, src, vector_len);
     evmovdqul(xmm0, nds, Assembler::AVX_512bit);
+  }
+}
+
+void MacroAssembler::vpand(XMMRegister dst, XMMRegister nds, AddressLiteral src, int vector_len) {
+  if (reachable(src)) {
+    Assembler::vpand(dst, nds, as_Address(src), vector_len);
+  } else {
+    lea(rscratch1, src);
+    Assembler::vpand(dst, nds, Address(rscratch1, 0), vector_len);
   }
 }
 
@@ -8134,8 +8158,7 @@ void MacroAssembler::has_negatives(Register ary1, Register len,
     jmp(FALSE_LABEL);
 
     clear_vector_masking();   // closing of the stub context for programming mask registers
-  }
-  else {
+  } else {
     movl(result, len); // copy
 
     if (UseAVX == 2 && UseSSE >= 2) {
@@ -8172,8 +8195,7 @@ void MacroAssembler::has_negatives(Register ary1, Register len,
       bind(COMPARE_TAIL); // len is zero
       movl(len, result);
       // Fallthru to tail compare
-    }
-    else if (UseSSE42Intrinsics) {
+    } else if (UseSSE42Intrinsics) {
       // With SSE4.2, use double quad vector compare
       Label COMPARE_WIDE_VECTORS, COMPARE_TAIL;
 
@@ -10757,7 +10779,7 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
 
     set_vector_masking();  // opening of the stub context for programming mask registers
 
-    Label copy_32_loop, copy_loop_tail, copy_just_portion_of_candidates;
+    Label copy_32_loop, copy_loop_tail, restore_k1_return_zero;
 
     // alignement
     Label post_alignement;
@@ -10772,16 +10794,16 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     movl(result, 0x00FF);
     evpbroadcastw(tmp2Reg, result, Assembler::AVX_512bit);
 
-    testl(len, -64);
-    jcc(Assembler::zero, post_alignement);
-
     // Save k1
     kmovql(k3, k1);
 
+    testl(len, -64);
+    jcc(Assembler::zero, post_alignement);
+
     movl(tmp5, dst);
-    andl(tmp5, (64 - 1));
+    andl(tmp5, (32 - 1));
     negl(tmp5);
-    andl(tmp5, (64 - 1));
+    andl(tmp5, (32 - 1));
 
     // bail out when there is nothing to be done
     testl(tmp5, 0xFFFFFFFF);
@@ -10791,13 +10813,12 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     movl(result, 0xFFFFFFFF);
     shlxl(result, result, tmp5);
     notl(result);
-
     kmovdl(k1, result);
 
     evmovdquw(tmp1Reg, k1, Address(src, 0), Assembler::AVX_512bit);
     evpcmpuw(k2, k1, tmp1Reg, tmp2Reg, Assembler::le, Assembler::AVX_512bit);
     ktestd(k2, k1);
-    jcc(Assembler::carryClear, copy_just_portion_of_candidates);
+    jcc(Assembler::carryClear, restore_k1_return_zero);
 
     evpmovwb(Address(dst, 0), k1, tmp1Reg, Assembler::AVX_512bit);
 
@@ -10810,7 +10831,7 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     // end of alignement
 
     movl(tmp5, len);
-    andl(tmp5, (32 - 1));   // tail count (in chars)
+    andl(tmp5, (32 - 1));    // tail count (in chars)
     andl(len, ~(32 - 1));    // vector count (in chars)
     jcc(Assembler::zero, copy_loop_tail);
 
@@ -10822,7 +10843,7 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     evmovdquw(tmp1Reg, Address(src, len, Address::times_2), Assembler::AVX_512bit);
     evpcmpuw(k2, tmp1Reg, tmp2Reg, Assembler::le, Assembler::AVX_512bit);
     kortestdl(k2, k2);
-    jcc(Assembler::carryClear, copy_just_portion_of_candidates);
+    jcc(Assembler::carryClear, restore_k1_return_zero);
 
     // All elements in current processed chunk are valid candidates for
     // compression. Write a truncated byte elements to the memory.
@@ -10833,10 +10854,9 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     bind(copy_loop_tail);
     // bail out when there is nothing to be done
     testl(tmp5, 0xFFFFFFFF);
+    // Restore k1
+    kmovql(k1, k3);
     jcc(Assembler::zero, return_length);
-
-    // Save k1
-    kmovql(k3, k1);
 
     movl(len, tmp5);
 
@@ -10850,30 +10870,16 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     evmovdquw(tmp1Reg, k1, Address(src, 0), Assembler::AVX_512bit);
     evpcmpuw(k2, k1, tmp1Reg, tmp2Reg, Assembler::le, Assembler::AVX_512bit);
     ktestd(k2, k1);
-    jcc(Assembler::carryClear, copy_just_portion_of_candidates);
+    jcc(Assembler::carryClear, restore_k1_return_zero);
 
     evpmovwb(Address(dst, 0), k1, tmp1Reg, Assembler::AVX_512bit);
     // Restore k1
     kmovql(k1, k3);
-
     jmp(return_length);
 
-    bind(copy_just_portion_of_candidates);
-    kmovdl(tmp5, k2);
-    tzcntl(tmp5, tmp5);
-
-    // ~(~0 << tmp5), where tmp5 is a number of elements in an array from the
-    // result to the first element larger than 0xFF
-    movl(result, 0xFFFFFFFF);
-    shlxl(result, result, tmp5);
-    notl(result);
-
-    kmovdl(k1, result);
-
-    evpmovwb(Address(dst, 0), k1, tmp1Reg, Assembler::AVX_512bit);
+    bind(restore_k1_return_zero);
     // Restore k1
     kmovql(k1, k3);
-
     jmp(return_zero);
 
     clear_vector_masking();   // closing of the stub context for programming mask registers
@@ -11070,10 +11076,11 @@ void MacroAssembler::byte_array_inflate(Register src, Register dst, Register len
 
       bind(below_threshold);
       bind(copy_new_tail);
-      if (UseAVX > 2) {
+      if ((UseAVX > 2) &&
+        VM_Version::supports_avx512vlbw() &&
+        VM_Version::supports_bmi2()) {
         movl(tmp2, len);
-      }
-      else {
+      } else {
         movl(len, tmp2);
       }
       andl(tmp2, 0x00000007);

@@ -431,6 +431,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public void mouseReleased(final MouseEvent e) {
             if (didForwardEvent(e)) return;
 
@@ -554,6 +555,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public void mouseDragged(final MouseEvent e) {
 // do not forward drags
 //            if (didForwardEvent(e)) return;
@@ -620,7 +622,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
 
             return didForwardEvent;
         }
-
+        @SuppressWarnings("deprecation")
         boolean didForwardEventInternal(final MouseEvent e) {
             if (fDraggingFrame) return false;
 
@@ -926,11 +928,15 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
             return (w - x) + (h - y) < 12;
         }
 
+        @SuppressWarnings("deprecation")
         void forwardEventToFrame(final MouseEvent e) {
             final Point pt = new Point();
             final Component c = getComponentToForwardTo(e, pt);
             if (c == null) return;
-            c.dispatchEvent(new MouseEvent(c, e.getID(), e.getWhen(), e.getModifiers(), pt.x, pt.y, e.getClickCount(), e.isPopupTrigger(), e.getButton()));
+            c.dispatchEvent(
+                    new MouseEvent(c, e.getID(), e.getWhen(), e.getModifiers(),
+                                   pt.x, pt.y, e.getClickCount(),
+                                   e.isPopupTrigger(), e.getButton()));
         }
 
         Component getComponentToForwardTo(final MouseEvent e, final Point dst) {
@@ -992,6 +998,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         public void mouseMoved(final MouseEvent e) { }
 
         @Override
+        @SuppressWarnings("deprecation")
         public void mouseWheelMoved(final MouseWheelEvent e) {
             final Point pt = new Point();
             final Component c = getComponentToForwardTo(e, pt);

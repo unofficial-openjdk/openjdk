@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Builder;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.MalformedURLException;
@@ -50,15 +51,18 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jdk.internal.loader.Resource;
+import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import sun.net.www.ParseUtil;
 
 
 /**
- * Provides support for patching modules in the boot layer with --patch-module.
+ * Provides support for patching modules, mostly the boot layer.
  */
 
 public final class ModulePatcher {
@@ -66,91 +70,51 @@ public final class ModulePatcher {
     private static final JavaLangModuleAccess JLMA
         = SharedSecrets.getJavaLangModuleAccess();
 
-    // the prefix of the system properties that encode the value of --patch-module
-    private static final String PATCH_PROPERTY_PREFIX = "jdk.module.patch.";
-
     // module name -> sequence of patches (directories or JAR files)
-    private static final Map<String, List<Path>> PATCH_MAP = decodeProperties();
-
-    private ModulePatcher() { }
+    private final Map<String, List<Path>> map;
 
     /**
-     * Decodes the values of --patch-module options, returning a Map of module
-     * name to list of file paths.
-     *
-     * @throws IllegalArgumentException if the the module name is missing or
-     *         --patch-module is used more than once to patch the same module
+     * Initialize the module patcher with the given map. The map key is
+     * the module name, the value is a list of path strings.
      */
-    private static Map<String, List<Path>> decodeProperties() {
-
-        int index = 0;
-        String value = getAndRemoveProperty(PATCH_PROPERTY_PREFIX + index);
-        if (value == null)
-            return Collections.emptyMap();  // --patch-module not specified
-
-        Map<String, List<Path>> map = new HashMap<>();
-        while (value != null) {
-
-            // <module>=<file>(:<file>)*
-
-            int pos = value.indexOf('=');
-            if (pos == -1)
-                throwIAE("Unable to parse: " + value);
-            if (pos == 0)
-                throwIAE("Missing module name: " + value);
-
-            String mn = value.substring(0, pos);
-            List<Path> list = map.get(mn);
-            if (list != null)
-                throwIAE("Module " + mn + " specified more than once");
-            list = new ArrayList<>();
-            map.put(mn, list);
-
-            String paths = value.substring(pos+1);
-            for (String path : paths.split(File.pathSeparator)) {
-                if (!path.isEmpty()) {
-                    list.add(Paths.get(path));
-                }
+    public ModulePatcher(Map<String, List<String>> input) {
+        if (input.isEmpty()) {
+            this.map = Collections.emptyMap();
+        } else {
+            Map<String, List<Path>> map = new HashMap<>();
+            for (Map.Entry<String, List<String>> e : input.entrySet()) {
+                String mn = e.getKey();
+                List<Path> paths = e.getValue().stream()
+                        .map(Paths::get)
+                        .collect(Collectors.toList());
+                map.put(mn, paths);
             }
-
-            index++;
-            value = getAndRemoveProperty(PATCH_PROPERTY_PREFIX + index);
+            this.map = map;
         }
-
-        return map;
-    }
-
-
-    /**
-     * Returns {@code true} is --patch-module is specified to patch modules
-     * in the boot layer.
-     */
-    static boolean isBootLayerPatched() {
-        return !PATCH_MAP.isEmpty();
     }
 
     /**
      * Returns a module reference that interposes on the given module if
      * needed. If there are no patches for the given module then the module
      * reference is simply returned. Otherwise the patches for the module
-     * are scanned (to find any new concealed packages) and a new module
-     * reference is returned.
+     * are scanned (to find any new packages) and a new module reference is
+     * returned.
      *
      * @throws UncheckedIOException if an I/O error is detected
      */
-    public static ModuleReference interposeIfNeeded(ModuleReference mref) {
-
+    public ModuleReference patchIfNeeded(ModuleReference mref) {
+        // if there are no patches for the module then nothing to do
         ModuleDescriptor descriptor = mref.descriptor();
         String mn = descriptor.name();
-
-        // if there are no patches for the module then nothing to do
-        List<Path> paths = PATCH_MAP.get(mn);
+        List<Path> paths = map.get(mn);
         if (paths == null)
             return mref;
 
-
-        // scan the JAR file or directory tree to get the set of packages
+        // Scan the JAR file or directory tree to get the set of packages.
+        // For automatic modules then packages that do not contain class files
+        // must be ignored.
         Set<String> packages = new HashSet<>();
+        boolean isAutomatic = descriptor.isAutomatic();
         try {
             for (Path file : paths) {
                 if (Files.isRegularFile(file)) {
@@ -159,21 +123,23 @@ public final class ModulePatcher {
                     // is not supported by the boot class loader
                     try (JarFile jf = new JarFile(file.toFile())) {
                         jf.stream()
-                          .filter(e -> e.getName().endsWith(".class"))
+                          .filter(e -> !e.isDirectory()
+                                  && (!isAutomatic || e.getName().endsWith(".class")))
                           .map(e -> toPackageName(file, e))
-                          .filter(pn -> pn.length() > 0)
+                          .filter(Checks::isPackageName)
                           .forEach(packages::add);
                     }
 
                 } else if (Files.isDirectory(file)) {
 
-                    // exploded directory
+                    // exploded directory without following sym links
                     Path top = file;
                     Files.find(top, Integer.MAX_VALUE,
-                            ((path, attrs) -> attrs.isRegularFile() &&
-                                    path.toString().endsWith(".class")))
+                               ((path, attrs) -> attrs.isRegularFile()))
+                            .filter(path -> !isAutomatic
+                                    || path.toString().endsWith(".class"))
                             .map(path -> toPackageName(top, path))
-                            .filter(pn -> pn.length() > 0)
+                            .filter(Checks::isPackageName)
                             .forEach(packages::add);
 
                 }
@@ -184,20 +150,66 @@ public final class ModulePatcher {
         }
 
         // if there are new packages then we need a new ModuleDescriptor
-        Set<String> original = descriptor.packages();
-        packages.addAll(original);
-        if (packages.size() > original.size()) {
-            descriptor = JLMA.newModuleDescriptor(descriptor, packages);
+        packages.removeAll(descriptor.packages());
+        if (!packages.isEmpty()) {
+            Builder builder = JLMA.newModuleBuilder(descriptor.name(),
+                                                    /*strict*/ false,
+                                                    descriptor.modifiers());
+            if (!descriptor.isAutomatic()) {
+                descriptor.requires().forEach(builder::requires);
+                descriptor.exports().forEach(builder::exports);
+                descriptor.opens().forEach(builder::opens);
+                descriptor.uses().forEach(builder::uses);
+            }
+            descriptor.provides().forEach(builder::provides);
+
+            descriptor.version().ifPresent(builder::version);
+            descriptor.mainClass().ifPresent(builder::mainClass);
+            descriptor.osName().ifPresent(builder::osName);
+            descriptor.osArch().ifPresent(builder::osArch);
+            descriptor.osVersion().ifPresent(builder::osVersion);
+
+            // original + new packages
+            builder.packages(descriptor.packages());
+            builder.packages(packages);
+
+            descriptor = builder.build();
         }
 
         // return a module reference to the patched module
         URI location = mref.location().orElse(null);
-        return JLMA.newPatchedModule(descriptor,
-                                     location,
-                                     () -> new PatchedModuleReader(paths, mref));
+
+        ModuleHashes recordedHashes = null;
+        ModuleResolution mres = null;
+        if (mref instanceof ModuleReferenceImpl) {
+            ModuleReferenceImpl impl = (ModuleReferenceImpl)mref;
+            recordedHashes = impl.recordedHashes();
+            mres = impl.moduleResolution();
+        }
+
+        return new ModuleReferenceImpl(descriptor,
+                                       location,
+                                       () -> new PatchedModuleReader(paths, mref),
+                                       this,
+                                       recordedHashes,
+                                       null,
+                                       mres);
 
     }
 
+    /**
+     * Returns true is this module patcher has no patches.
+     */
+    public boolean isEmpty() {
+        return map.isEmpty();
+    }
+
+    /*
+     * Returns the names of the patched modules.
+     */
+    Set<String> patchedModules() {
+        return map.keySet();
+    }
 
     /**
      * A ModuleReader that reads resources from a patched module.
@@ -381,6 +393,15 @@ public final class ModulePatcher {
         }
 
         @Override
+        public Stream<String> list() throws IOException {
+            Stream<String> s = delegate().list();
+            for (ResourceFinder finder : finders) {
+                s = Stream.concat(s, finder.list());
+            }
+            return s.distinct();
+        }
+
+        @Override
         public void close() throws IOException {
             closeAll(finders);
             delegate().close();
@@ -393,6 +414,7 @@ public final class ModulePatcher {
      */
     private static interface ResourceFinder extends Closeable {
         Resource find(String name) throws IOException;
+        Stream<String> list() throws IOException;
     }
 
 
@@ -453,6 +475,13 @@ public final class ModulePatcher {
                 }
             };
         }
+
+        @Override
+        public Stream<String> list() throws IOException {
+            return jf.stream()
+                    .filter(e -> !e.isDirectory())
+                    .map(JarEntry::getName);
+        }
     }
 
 
@@ -471,23 +500,14 @@ public final class ModulePatcher {
 
         @Override
         public Resource find(String name) throws IOException {
-            Path file = Paths.get(name.replace('/', File.separatorChar));
-            if (file.getRoot() == null) {
-                file = dir.resolve(file);
-            } else {
-                // drop the root component so that the resource is
-                // located relative to the module directory
-                int n = file.getNameCount();
-                if (n == 0)
-                    return null;
-                file = dir.resolve(file.subpath(0, n));
+            Path path = ResourceHelper.toFilePath(name);
+            if (path != null) {
+                Path file = dir.resolve(path);
+                if (Files.isRegularFile(file)) {
+                    return newResource(name, dir, file);
+                }
             }
-
-            if (Files.isRegularFile(file)) {
-                return newResource(name, dir, file);
-            } else {
-                return null;
-            }
+            return null;
         }
 
         private Resource newResource(String name, Path top, Path file) {
@@ -527,6 +547,15 @@ public final class ModulePatcher {
                 }
             };
         }
+
+        @Override
+        public Stream<String> list() throws IOException {
+            return Files.find(dir, Integer.MAX_VALUE,
+                              (path, attrs) -> attrs.isRegularFile())
+                    .map(f -> dir.relativize(f)
+                                 .toString()
+                                 .replace(File.separatorChar, '/'));
+        }
     }
 
 
@@ -537,17 +566,10 @@ public final class ModulePatcher {
         Path entry = top.relativize(file);
         Path parent = entry.getParent();
         if (parent == null) {
-            return warnUnnamedPackage(top, entry.toString());
+            return warnIfModuleInfo(top, entry.toString());
         } else {
             return parent.toString().replace(File.separatorChar, '.');
         }
-    }
-
-    /**
-     * Gets and remove the named system property
-     */
-    private static String getAndRemoveProperty(String key) {
-        return (String)System.getProperties().remove(key);
     }
 
     /**
@@ -557,19 +579,15 @@ public final class ModulePatcher {
         String name = entry.getName();
         int index = name.lastIndexOf("/");
         if (index == -1) {
-            return warnUnnamedPackage(file, name);
+            return warnIfModuleInfo(file, name);
         } else {
             return name.substring(0, index).replace('/', '.');
         }
     }
 
-    private static String warnUnnamedPackage(Path file, String e) {
-        System.err.println("WARNING: " + e + " not allowed in patch: " + file);
+    private static String warnIfModuleInfo(Path file, String e) {
+        if (e.equals("module-info.class"))
+            System.err.println("WARNING: " + e + " ignored in patch: " + file);
         return "";
     }
-
-    private static void throwIAE(String msg) {
-        throw new IllegalArgumentException(msg);
-    }
-
 }

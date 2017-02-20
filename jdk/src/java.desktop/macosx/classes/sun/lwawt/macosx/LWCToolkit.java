@@ -25,6 +25,7 @@
 
 package sun.lwawt.macosx;
 
+import com.apple.laf.AquaMenuBarUI;
 import java.awt.peer.TaskbarPeer;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -43,6 +44,7 @@ import java.security.*;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.net.MalformedURLException;
+import javax.swing.UIManager;
 
 import sun.awt.*;
 import sun.awt.datatransfer.DataTransferer;
@@ -530,6 +532,7 @@ public final class LWCToolkit extends LWToolkit {
      * @since     1.1
      */
     @Override
+    @SuppressWarnings("deprecation")
     public int getMenuShortcutKeyMask() {
         return Event.META_MASK;
     }
@@ -766,6 +769,7 @@ public final class LWCToolkit extends LWToolkit {
      * stroke.
      */
     @Override
+    @SuppressWarnings("deprecation")
     public int getFocusAcceleratorKeyMask() {
         return InputEvent.CTRL_MASK | InputEvent.ALT_MASK;
     }
@@ -775,6 +779,7 @@ public final class LWCToolkit extends LWToolkit {
      * printable character.
      */
     @Override
+    @SuppressWarnings("deprecation")
     public boolean isPrintableCharacterModifiersMask(int mods) {
         return ((mods & (InputEvent.META_MASK | InputEvent.CTRL_MASK)) == 0);
     }
@@ -934,5 +939,14 @@ public final class LWCToolkit extends LWToolkit {
     @Override
     protected PlatformWindow getPlatformWindowUnderMouse() {
         return CPlatformWindow.nativeGetTopmostPlatformWindowUnderMouse();
+    }
+
+    @Override
+    public void updateScreenMenuBarUI() {
+        if (AquaMenuBarUI.getScreenMenuBarProperty())  {
+            UIManager.put("MenuBarUI", "com.apple.laf.AquaMenuBarUI");
+        } else {
+            UIManager.put("MenuBarUI", null);
+        }
     }
 }

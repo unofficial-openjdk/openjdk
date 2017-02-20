@@ -25,6 +25,8 @@
 
 /**
  * Defines the Java Naming and Directory Interface (JNDI) API.
+ *
+ * @since 9
  */
 module java.naming {
     requires java.security.sasl;
@@ -37,7 +39,6 @@ module java.naming {
     exports com.sun.jndi.toolkit.ctx to
         jdk.naming.dns;
     exports com.sun.jndi.toolkit.url to
-        java.corba,
         jdk.naming.dns,
         jdk.naming.rmi;
     uses javax.naming.ldap.StartTlsResponse;

@@ -30,7 +30,6 @@ import java.io.FilePermission;
 import java.awt.Color;
 import java.awt.Dialog;
 import java.awt.Frame;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
@@ -39,7 +38,6 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
@@ -55,7 +53,6 @@ import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Locale;
 import sun.awt.image.ByteInterleavedRaster;
 
@@ -74,7 +71,6 @@ import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.ResolutionSyntax;
 import javax.print.attribute.Size2DSyntax;
-import javax.print.attribute.standard.Chromaticity;
 import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.Destination;
 import javax.print.attribute.standard.DialogTypeSelection;
@@ -95,11 +91,6 @@ import javax.print.attribute.standard.PrinterIsAcceptingJobs;
 import javax.print.attribute.standard.RequestingUserName;
 import javax.print.attribute.standard.SheetCollate;
 import javax.print.attribute.standard.Sides;
-
-import sun.print.PageableDoc;
-import sun.print.ServiceDialog;
-import sun.print.SunPrinterJobService;
-import sun.print.SunPageSelection;
 
 /**
  * A class which rasterizes a printer job.
@@ -836,9 +827,16 @@ public abstract class RasterPrinterJob extends PrinterJob {
         Rectangle gcBounds = gc.getBounds();
         int x = gcBounds.x+50;
         int y = gcBounds.y+50;
-        ServiceDialog pageDialog = new ServiceDialog(gc, x, y, service,
-                                       DocFlavor.SERVICE_FORMATTED.PAGEABLE,
-                                       attributes, (Frame)null);
+        ServiceDialog pageDialog;
+        if (w instanceof Frame) {
+            pageDialog = new ServiceDialog(gc, x, y, service,
+                                           DocFlavor.SERVICE_FORMATTED.PAGEABLE,
+                                           attributes,(Frame)w);
+        } else {
+            pageDialog = new ServiceDialog(gc, x, y, service,
+                                           DocFlavor.SERVICE_FORMATTED.PAGEABLE,
+                                           attributes, (Dialog)w);
+        }
         Rectangle dlgBounds = pageDialog.getBounds();
 
         // if portion of dialog is not within the gc boundary
@@ -944,6 +942,14 @@ public abstract class RasterPrinterJob extends PrinterJob {
         Window w = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
         if (w != null) {
             grCfg = w.getGraphicsConfiguration();
+             /* Add DialogOwner attribute to set the owner of this print dialog
+              * only if it is not set already
+              * (it might be set in java.awt.PrintJob.printDialog)
+              */
+            if (attributes.get(DialogOwner.class) == null) {
+                attributes.add(w instanceof Frame ? new DialogOwner((Frame)w) :
+                                                    new DialogOwner((Dialog)w));
+            }
         } else {
             grCfg = GraphicsEnvironment.getLocalGraphicsEnvironment().
                         getDefaultScreenDevice().getDefaultConfiguration();
@@ -1001,6 +1007,10 @@ public abstract class RasterPrinterJob extends PrinterJob {
         // temporarily add an attribute pointing back to this job.
         PrinterJobWrapper jobWrapper = new PrinterJobWrapper(this);
         attributes.add(jobWrapper);
+        PageRanges pgRng = (PageRanges)attributes.get(PageRanges.class);
+        if (pgRng == null && mDocument.getNumberOfPages() > 1) {
+            attributes.add(new PageRanges(1, mDocument.getNumberOfPages()));
+        }
         try {
             newService =
             ServiceUI.printDialog(gc, x, y,
@@ -1014,6 +1024,7 @@ public abstract class RasterPrinterJob extends PrinterJob {
                                   attributes);
         }
         attributes.remove(PrinterJobWrapper.class);
+        attributes.remove(DialogOwner.class);
 
         if (newService == null) {
             return false;
@@ -1271,12 +1282,6 @@ public abstract class RasterPrinterJob extends PrinterJob {
         JobSheets jobSheets = (JobSheets)attributes.get(JobSheets.class);
         if (jobSheets != null) {
             noJobSheet = jobSheets == JobSheets.NONE;
-        } else {
-            JobSheets js = (JobSheets)getPrintService().
-                                      getDefaultAttributeValue(JobSheets.class);
-            if (js != null && js.equals(JobSheets.NONE)) {
-                noJobSheet = true;
-            }
         }
 
         JobName jobName = (JobName)attributes.get(JobName.class);
@@ -1474,6 +1479,22 @@ public abstract class RasterPrinterJob extends PrinterJob {
         if ((psvc.getAttribute(PrinterIsAcceptingJobs.class)) ==
                          PrinterIsAcceptingJobs.NOT_ACCEPTING_JOBS) {
             throw new PrinterException("Printer is not accepting job.");
+        }
+
+        /*
+         * Check the default job-sheet value on underlying platform. If IPP
+         * reports job-sheets=none, then honour that and modify noJobSheet since
+         * by default, noJobSheet is false which mean jdk will print banner page.
+         * This is because if "attributes" is null (if user directly calls print()
+         * without specifying any attributes and without showing printdialog) then
+         * setAttribute will return without changing noJobSheet value.
+         * Also, we do this before setAttributes() call so as to allow the user
+         * to override this via explicitly adding JobSheets attributes to
+         * PrintRequestAttributeSet while calling print(attributes)
+         */
+        JobSheets js = (JobSheets)psvc.getDefaultAttributeValue(JobSheets.class);
+        if (js != null && js.equals(JobSheets.NONE)) {
+            noJobSheet = true;
         }
 
         if ((psvc instanceof SunPrinterJobService) &&

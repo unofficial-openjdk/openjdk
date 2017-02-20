@@ -36,7 +36,7 @@ class LogDecorations VALUE_OBJ_CLASS_SPEC {
   char _decorations_buffer[DecorationsBufferSize];
   char* _decoration_offset[LogDecorators::Count];
   LogLevelType _level;
-  LogTagSet _tagset;
+  const LogTagSet& _tagset;
   jlong _millis;
   static jlong _vm_start_time_millis;
   static const char* _host_name;
@@ -52,10 +52,6 @@ class LogDecorations VALUE_OBJ_CLASS_SPEC {
   static void initialize(jlong vm_start_time);
 
   LogDecorations(LogLevelType level, const LogTagSet& tagset, const LogDecorators& decorators);
-
-  LogLevelType level() const {
-    return _level;
-  }
 
   void set_level(LogLevelType level) {
     _level = level;

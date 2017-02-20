@@ -27,7 +27,6 @@
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/codeCache.hpp"
-#include "code/codeCacheExtensions.hpp"
 #include "compiler/compileBroker.hpp"
 #include "compiler/disassembler.hpp"
 #include "gc/shared/collectedHeap.hpp"
@@ -48,7 +47,7 @@
 #include "oops/symbol.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "prims/nativeLookup.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/compilationPolicy.hpp"
 #include "runtime/deoptimization.hpp"
@@ -576,27 +575,39 @@ void InterpreterRuntime::resolve_get_put(JavaThread* thread, Bytecodes::Code byt
   // compute auxiliary field attributes
   TosState state  = as_TosState(info.field_type());
 
-  // Put instructions on final fields are not resolved. This is required so we throw
-  // exceptions at the correct place (when the instruction is actually invoked).
+  // Resolution of put instructions on final fields is delayed. That is required so that
+  // exceptions are thrown at the correct place (when the instruction is actually invoked).
   // If we do not resolve an instruction in the current pass, leaving the put_code
   // set to zero will cause the next put instruction to the same field to reresolve.
+
+  // Resolution of put instructions to final instance fields with invalid updates (i.e.,
+  // to final instance fields with updates originating from a method different than <init>)
+  // is inhibited. A putfield instruction targeting an instance final field must throw
+  // an IllegalAccessError if the instruction is not in an instance
+  // initializer method <init>. If resolution were not inhibited, a putfield
+  // in an initializer method could be resolved in the initializer. Subsequent
+  // putfield instructions to the same field would then use cached information.
+  // As a result, those instructions would not pass through the VM. That is,
+  // checks in resolve_field_access() would not be executed for those instructions
+  // and the required IllegalAccessError would not be thrown.
   //
   // Also, we need to delay resolving getstatic and putstatic instructions until the
   // class is initialized.  This is required so that access to the static
   // field will call the initialization function every time until the class
   // is completely initialized ala. in 2.17.5 in JVM Specification.
   InstanceKlass* klass = InstanceKlass::cast(info.field_holder());
-  bool uninitialized_static = ((bytecode == Bytecodes::_getstatic || bytecode == Bytecodes::_putstatic) &&
-                               !klass->is_initialized());
-
-  Bytecodes::Code put_code = (Bytecodes::Code)0;
-  if (is_put && !info.access_flags().is_final() && !uninitialized_static) {
-    put_code = ((is_static) ? Bytecodes::_putstatic : Bytecodes::_putfield);
-  }
+  bool uninitialized_static = is_static && !klass->is_initialized();
+  bool has_initialized_final_update = info.field_holder()->major_version() >= 53 &&
+                                      info.has_initialized_final_update();
+  assert(!(has_initialized_final_update && !info.access_flags().is_final()), "Fields with initialized final updates must be final");
 
   Bytecodes::Code get_code = (Bytecodes::Code)0;
+  Bytecodes::Code put_code = (Bytecodes::Code)0;
   if (!uninitialized_static) {
     get_code = ((is_static) ? Bytecodes::_getstatic : Bytecodes::_getfield);
+    if ((is_put && !has_initialized_final_update) || !info.access_flags().is_final()) {
+      put_code = ((is_static) ? Bytecodes::_putstatic : Bytecodes::_putfield);
+    }
   }
 
   cp_cache_entry->set_field(
@@ -1187,7 +1198,6 @@ address SignatureHandlerLibrary::set_handler(CodeBuffer* buffer) {
     ICache::invalidate_range(handler, insts_size);
     _handler = handler + insts_size;
   }
-  CodeCacheExtensions::handle_generated_handler(handler, buffer->name(), _handler);
   return handler;
 }
 
@@ -1196,7 +1206,7 @@ void SignatureHandlerLibrary::add(const methodHandle& method) {
     // use slow signature handler if we can't do better
     int handler_index = -1;
     // check if we can use customized (fast) signature handler
-    if (UseFastSignatureHandlers && CodeCacheExtensions::support_fast_signature_handlers() && method->size_of_parameters() <= Fingerprinter::max_size_of_parameters) {
+    if (UseFastSignatureHandlers && method->size_of_parameters() <= Fingerprinter::max_size_of_parameters) {
       // use customized signature handler
       MutexLocker mu(SignatureHandlerLibrary_lock);
       // make sure data structure is initialized
@@ -1213,15 +1223,6 @@ void SignatureHandlerLibrary::add(const methodHandle& method) {
           round_to((intptr_t)_buffer, CodeEntryAlignment) - (address)_buffer;
         CodeBuffer buffer((address)(_buffer + align_offset),
                           SignatureHandlerLibrary::buffer_size - align_offset);
-        if (!CodeCacheExtensions::support_dynamic_code()) {
-          // we need a name for the signature (for lookups or saving)
-          const int SYMBOL_SIZE = 50;
-          char *symbolName = NEW_RESOURCE_ARRAY(char, SYMBOL_SIZE);
-          // support for named signatures
-          jio_snprintf(symbolName, SYMBOL_SIZE,
-                       "native_" UINT64_FORMAT, fingerprint);
-          buffer.set_name(symbolName);
-        }
         InterpreterRuntime::SignatureHandlerGenerator(method, &buffer).generate(fingerprint);
         // copy into code heap
         address handler = set_handler(&buffer);
@@ -1239,7 +1240,6 @@ void SignatureHandlerLibrary::add(const methodHandle& method) {
                           fingerprint,
                           buffer.insts_size());
             if (buffer.insts_size() > 0) {
-              // buffer may be empty for pregenerated handlers
               Disassembler::decode(handler, handler + buffer.insts_size());
             }
 #ifndef PRODUCT

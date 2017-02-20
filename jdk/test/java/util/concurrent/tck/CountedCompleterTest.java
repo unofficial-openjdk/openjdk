@@ -40,6 +40,7 @@ import java.util.concurrent.CountedCompleter;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ForkJoinTask;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -237,7 +238,7 @@ public class CountedCompleterTest extends JSR166TestCase {
         final AtomicInteger onCompletionN = new AtomicInteger(0);
         final AtomicInteger onExceptionalCompletionN = new AtomicInteger(0);
         final AtomicInteger setRawResultN = new AtomicInteger(0);
-        final AtomicReference<Object> rawResult = new AtomicReference<Object>(null);
+        final AtomicReference<Object> rawResult = new AtomicReference<>(null);
         int computeN() { return computeN.get(); }
         int onCompletionN() { return onCompletionN.get(); }
         int onExceptionalCompletionN() { return onExceptionalCompletionN.get(); }

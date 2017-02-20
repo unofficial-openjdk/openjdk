@@ -136,9 +136,9 @@ import java.util.function.Supplier;
  * }}</pre>
  *
  * @author Doug Lea
- * @since 1.8
  * @param <T> The result type returned by this future's {@code join}
  * and {@code get} methods
+ * @since 1.8
  */
 public class CompletableFuture<T> implements Future<T>, CompletionStage<T> {
 
@@ -521,7 +521,7 @@ public class CompletableFuture<T> implements Future<T>, CompletionStage<T> {
                 else
                     break;
             }
-            else if (STACK.weakCompareAndSetVolatile(this, p, (p = p.next)))
+            else if (STACK.weakCompareAndSet(this, p, (p = p.next)))
                 unlinked = true;
             else
                 p = stack;
@@ -532,7 +532,7 @@ public class CompletableFuture<T> implements Future<T>, CompletionStage<T> {
             if (q.isLive()) {
                 p = q;
                 q = s;
-            } else if (NEXT.weakCompareAndSetVolatile(p, q, s))
+            } else if (NEXT.weakCompareAndSet(p, q, s))
                 break;
             else
                 q = p.next;
@@ -2559,6 +2559,13 @@ public class CompletableFuture<T> implements Future<T>, CompletionStage<T> {
      * exceptionally with a CompletionException with this exception as
      * cause.
      *
+     * <p>Unless overridden by a subclass, a new non-minimal
+     * CompletableFuture with all methods available can be obtained from
+     * a minimal CompletionStage via {@link #toCompletableFuture()}.
+     * For example, completion of a minimal stage can be awaited by
+     *
+     * <pre> {@code minimalStage.toCompletableFuture().join(); }</pre>
+     *
      * @return the new CompletionStage
      * @since 9
      */
@@ -2853,6 +2860,16 @@ public class CompletableFuture<T> implements Future<T>, CompletionStage<T> {
         @Override public CompletableFuture<T> completeOnTimeout
             (T value, long timeout, TimeUnit unit) {
             throw new UnsupportedOperationException(); }
+        @Override public CompletableFuture<T> toCompletableFuture() {
+            Object r;
+            if ((r = result) != null)
+                return new CompletableFuture<T>(encodeRelay(r));
+            else {
+                CompletableFuture<T> d = new CompletableFuture<>();
+                unipush(new UniRelay<T,T>(d, this));
+                return d;
+            }
+        }
     }
 
     // VarHandle mechanics

@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "aot/aotLoader.hpp"
 #include "classfile/classFileStream.hpp"
 #include "classfile/metadataOnStackMark.hpp"
 #include "classfile/systemDictionary.hpp"
@@ -130,7 +131,7 @@ bool VM_RedefineClasses::doit_prologue() {
     }
 
     oop mirror = JNIHandles::resolve_non_null(_class_defs[i].klass);
-    // classes for primitives and arrays cannot be redefined
+    // classes for primitives and arrays and vm anonymous classes cannot be redefined
     // check here so following code can assume these classes are InstanceKlass
     if (!is_modifiable_class(mirror)) {
       _res = JVMTI_ERROR_UNMODIFIABLE_CLASS;
@@ -250,9 +251,14 @@ bool VM_RedefineClasses::is_modifiable_class(oop klass_mirror) {
   if (java_lang_Class::is_primitive(klass_mirror)) {
     return false;
   }
-  Klass* the_class_oop = java_lang_Class::as_Klass(klass_mirror);
+  Klass* k = java_lang_Class::as_Klass(klass_mirror);
   // classes for arrays cannot be redefined
-  if (the_class_oop == NULL || !the_class_oop->is_instance_klass()) {
+  if (k == NULL || !k->is_instance_klass()) {
+    return false;
+  }
+
+  // Cannot redefine or retransform an anonymous class.
+  if (InstanceKlass::cast(k)->is_anonymous()) {
     return false;
   }
   return true;
@@ -4006,7 +4012,17 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
     scratch_class->enclosing_method_method_index());
   scratch_class->set_enclosing_method_indices(old_class_idx, old_method_idx);
 
+  // Replace fingerprint data
+  the_class->set_has_passed_fingerprint_check(scratch_class->has_passed_fingerprint_check());
+  the_class->store_fingerprint(scratch_class->get_stored_fingerprint());
+
   the_class->set_has_been_redefined();
+
+  if (!the_class->should_be_initialized()) {
+    // Class was already initialized, so AOT has only seen the original version.
+    // We need to let AOT look at it again.
+    AOTLoader::load_for_klass(the_class, THREAD);
+  }
 
   // keep track of previous versions of this class
   the_class->add_previous_version(scratch_class, emcp_method_count);

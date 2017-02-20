@@ -50,13 +50,6 @@ public interface HotSpotResolvedJavaMethod extends ResolvedJavaMethod {
     boolean isForceInline();
 
     /**
-     * Returns true if this method has a {@code DontInline} annotation.
-     *
-     * @return true if DontInline annotation present, false otherwise
-     */
-    boolean isDontInline();
-
-    /**
      * Returns true if this method has a {@code ReservedStackAccess} annotation.
      *
      * @return true if ReservedStackAccess annotation present, false otherwise
@@ -110,6 +103,15 @@ public interface HotSpotResolvedJavaMethod extends ResolvedJavaMethod {
     int vtableEntryOffset(ResolvedJavaType resolved);
 
     int intrinsicId();
+
+    /**
+     * Determines if this method denotes itself as a candidate for intrinsification. As of JDK 9,
+     * this is denoted by the {@code HotSpotIntrinsicCandidate} annotation. In earlier JDK versions,
+     * this method returns true.
+     *
+     * @see <a href="https://bugs.openjdk.java.net/browse/JDK-8076112">JDK-8076112</a>
+     */
+    boolean isIntrinsicCandidate();
 
     /**
      * Allocates a compile id for this method by asking the VM for one.

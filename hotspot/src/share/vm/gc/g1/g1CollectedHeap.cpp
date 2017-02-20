@@ -74,7 +74,7 @@
 #include "memory/iterator.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/init.hpp"
 #include "runtime/orderAccess.inline.hpp"
 #include "runtime/vmThread.hpp"
@@ -300,6 +300,8 @@ G1CollectedHeap::humongous_obj_allocate_initialize_regions(uint first,
   // thread to calculate the object size incorrectly.
   Copy::fill_to_words(new_obj, oopDesc::header_size(), 0);
 
+  // Next, pad out the unused tail of the last region with filler
+  // objects, for improved usage accounting.
   // How many words we use for filler objects.
   size_t word_fill_size = word_size_sum - word_size;
 
@@ -426,8 +428,7 @@ HeapWord* G1CollectedHeap::humongous_obj_allocate(size_t word_size, AllocationCo
       log_debug(gc, ergo, heap)("Attempt heap expansion (humongous allocation request failed). Allocation request: " SIZE_FORMAT "B",
                                     word_size * HeapWordSize);
 
-
-      _hrm.expand_at(first, obj_regions);
+      _hrm.expand_at(first, obj_regions, workers());
       g1_policy()->record_new_heap_size(num_regions());
 
 #ifdef ASSERT
@@ -739,7 +740,7 @@ bool G1CollectedHeap::alloc_archive_regions(MemRegion* ranges, size_t count) {
 
     // Perform the actual region allocation, exiting if it fails.
     // Then note how much new space we have allocated.
-    if (!_hrm.allocate_containing_regions(curr_range, &commits)) {
+    if (!_hrm.allocate_containing_regions(curr_range, &commits, workers())) {
       return false;
     }
     increase_used(word_size * HeapWordSize);
@@ -1332,6 +1333,7 @@ bool G1CollectedHeap::do_full_collection(bool explicit_gc,
                                                 workers()->active_workers(),
                                                 Threads::number_of_non_daemon_threads());
       workers()->update_active_workers(n_workers);
+      log_info(gc,task)("Using %u workers of %u to rebuild remembered set", n_workers, workers()->total_workers());
 
       ParRebuildRSTask rebuild_rs_task(this);
       workers()->run_task(&rebuild_rs_task);
@@ -1478,7 +1480,7 @@ void G1CollectedHeap::resize_if_necessary_after_full_collection() {
                               "Capacity: " SIZE_FORMAT "B occupancy: " SIZE_FORMAT "B min_desired_capacity: " SIZE_FORMAT "B (" UINTX_FORMAT " %%)",
                               capacity_after_gc, used_after_gc, minimum_desired_capacity, MinHeapFreeRatio);
 
-    expand(expand_bytes);
+    expand(expand_bytes, _workers);
 
     // No expansion, now see if we want to shrink
   } else if (capacity_after_gc > maximum_desired_capacity) {
@@ -1598,7 +1600,7 @@ HeapWord* G1CollectedHeap::expand_and_allocate(size_t word_size, AllocationConte
                             word_size * HeapWordSize);
 
 
-  if (expand(expand_bytes)) {
+  if (expand(expand_bytes, _workers)) {
     _hrm.verify_optional();
     _verifier->verify_region_sets_optional();
     return attempt_allocation_at_safepoint(word_size,
@@ -1608,7 +1610,7 @@ HeapWord* G1CollectedHeap::expand_and_allocate(size_t word_size, AllocationConte
   return NULL;
 }
 
-bool G1CollectedHeap::expand(size_t expand_bytes, double* expand_time_ms) {
+bool G1CollectedHeap::expand(size_t expand_bytes, WorkGang* pretouch_workers, double* expand_time_ms) {
   size_t aligned_expand_bytes = ReservedSpace::page_align_size_up(expand_bytes);
   aligned_expand_bytes = align_size_up(aligned_expand_bytes,
                                        HeapRegion::GrainBytes);
@@ -1625,7 +1627,7 @@ bool G1CollectedHeap::expand(size_t expand_bytes, double* expand_time_ms) {
   uint regions_to_expand = (uint)(aligned_expand_bytes / HeapRegion::GrainBytes);
   assert(regions_to_expand > 0, "Must expand by at least one region");
 
-  uint expanded_by = _hrm.expand_by(regions_to_expand);
+  uint expanded_by = _hrm.expand_by(regions_to_expand, pretouch_workers);
   if (expand_time_ms != NULL) {
     *expand_time_ms = (os::elapsedTime() - expand_heap_start_time_sec) * MILLIUNITS;
   }
@@ -1926,7 +1928,7 @@ jint G1CollectedHeap::initialize() {
   _cmThread = _cm->cmThread();
 
   // Now expand into the initial heap size.
-  if (!expand(init_byte_size)) {
+  if (!expand(init_byte_size, _workers)) {
     vm_shutdown_during_initialization("Failed to allocate initial heap.");
     return JNI_ENOMEM;
   }
@@ -2473,8 +2475,16 @@ size_t G1CollectedHeap::max_capacity() const {
 }
 
 jlong G1CollectedHeap::millis_since_last_gc() {
-  // assert(false, "NYI");
-  return 0;
+  // See the notes in GenCollectedHeap::millis_since_last_gc()
+  // for more information about the implementation.
+  jlong ret_val = (os::javaTimeNanos() / NANOSECS_PER_MILLISEC) -
+    _g1_policy->collection_pause_end_millis();
+  if (ret_val < 0) {
+    log_warning(gc)("millis_since_last_gc() would return : " JLONG_FORMAT
+      ". returning zero instead.", ret_val);
+    return 0;
+  }
+  return ret_val;
 }
 
 void G1CollectedHeap::prepare_for_verify() {
@@ -3068,6 +3078,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
                                                                   workers()->active_workers(),
                                                                   Threads::number_of_non_daemon_threads());
     workers()->update_active_workers(active_workers);
+    log_info(gc,task)("Using %u workers of %u for evacuation", active_workers, workers()->total_workers());
 
     TraceCollectorStats tcs(g1mm()->incremental_collection_counters());
     TraceMemoryManagerStats tms(false /* fullGC */, gc_cause());
@@ -3163,7 +3174,6 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 
         assert(_verifier->check_cset_fast_test(), "Inconsistency in the InCSetState table.");
 
-        _cm->note_start_of_gc();
         // We call this after finalize_cset() to
         // ensure that the CSet has been finalized.
         _cm->verify_no_cset_oops();
@@ -3239,7 +3249,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
             // No need for an ergo logging here,
             // expansion_amount() does this when it returns a value > 0.
             double expand_ms;
-            if (!expand(expand_bytes, &expand_ms)) {
+            if (!expand(expand_bytes, _workers, &expand_ms)) {
               // We failed to expand the heap. Cannot do anything about it.
             }
             g1_policy()->phase_times()->record_expand_heap_time(expand_ms);
@@ -3249,7 +3259,6 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         // We redo the verification but now wrt to the new CSet which
         // has just got initialized after the previous CSet was freed.
         _cm->verify_no_cset_oops();
-        _cm->note_end_of_gc();
 
         // This timing is only used by the ergonomics to handle our pause target.
         // It is unclear why this should not include the full pause. We will
@@ -4412,6 +4421,19 @@ void G1CollectedHeap::evacuate_collection_set(EvacuationInfo& evacuation_info, G
   NOT_PRODUCT(set_evacuation_failure_alot_for_current_gc();)
 
   assert(dirty_card_queue_set().completed_buffers_num() == 0, "Should be empty");
+
+  G1GCPhaseTimes* phase_times = g1_policy()->phase_times();
+
+  // InitialMark needs claim bits to keep track of the marked-through CLDs.
+  if (collector_state()->during_initial_mark_pause()) {
+    double start_clear_claimed_marks = os::elapsedTime();
+
+    ClassLoaderDataGraph::clear_claimed_marks();
+
+    double recorded_clear_claimed_marks_time_ms = (os::elapsedTime() - start_clear_claimed_marks) * 1000.0;
+    phase_times->record_clear_claimed_marks_time_ms(recorded_clear_claimed_marks_time_ms);
+  }
+
   double start_par_time_sec = os::elapsedTime();
   double end_par_time_sec;
 
@@ -4419,10 +4441,6 @@ void G1CollectedHeap::evacuate_collection_set(EvacuationInfo& evacuation_info, G
     const uint n_workers = workers()->active_workers();
     G1RootProcessor root_processor(this, n_workers);
     G1ParTask g1_par_task(this, per_thread_states, _task_queues, &root_processor, n_workers);
-    // InitialMark needs claim bits to keep track of the marked-through CLDs.
-    if (collector_state()->during_initial_mark_pause()) {
-      ClassLoaderDataGraph::clear_claimed_marks();
-    }
 
     print_termination_stats_hdr();
 
@@ -4435,8 +4453,6 @@ void G1CollectedHeap::evacuate_collection_set(EvacuationInfo& evacuation_info, G
     // taken for the destructor is NOT included in the
     // reported parallel time.
   }
-
-  G1GCPhaseTimes* phase_times = g1_policy()->phase_times();
 
   double par_time_ms = (end_par_time_sec - start_par_time_sec) * 1000.0;
   phase_times->record_par_time(par_time_ms);
@@ -4513,6 +4529,7 @@ void G1CollectedHeap::post_evacuate_collection_set(EvacuationInfo& evacuation_in
 #if defined(COMPILER2) || INCLUDE_JVMCI
   DerivedPointerTable::update_pointers();
 #endif
+  g1_policy()->print_age_table();
 }
 
 void G1CollectedHeap::record_obj_copy_mem_stats() {

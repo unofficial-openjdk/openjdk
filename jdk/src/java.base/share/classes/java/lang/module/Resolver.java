@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,12 @@
 package java.lang.module;
 
 import java.io.PrintStream;
+import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.lang.reflect.Layer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
@@ -43,40 +46,95 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import jdk.internal.module.ModuleHashes;
+import jdk.internal.module.ModuleReferenceImpl;
 
 /**
- * The resolver used by {@link Configuration#resolveRequires} and
- * {@link Configuration#resolveRequiresAndUses}.
+ * The resolver used by {@link Configuration#resolve} and {@link
+ * Configuration#resolveAndBind}.
+ *
+ * @implNote The resolver is used at VM startup and so deliberately avoids
+ * using lambda and stream usages in code paths used during startup.
  */
 
 final class Resolver {
 
     private final ModuleFinder beforeFinder;
-    private final Configuration parent;
+    private final List<Configuration> parents;
     private final ModuleFinder afterFinder;
     private final PrintStream traceOutput;
 
     // maps module name to module reference
     private final Map<String, ModuleReference> nameToReference = new HashMap<>();
 
+    // module constraints on target platform
+    private String osName;
+    private String osArch;
+    private String osVersion;
 
+    String osName() { return osName; }
+    String osArch() { return osArch; }
+    String osVersion() { return osVersion; }
+
+    /**
+     * @throws IllegalArgumentException if there are more than one parent and
+     *         the constraints on the target platform conflict
+     */
     Resolver(ModuleFinder beforeFinder,
-             Configuration parent,
+             List<Configuration> parents,
              ModuleFinder afterFinder,
              PrintStream traceOutput) {
         this.beforeFinder = beforeFinder;
-        this.parent = parent;
+        this.parents = parents;
         this.afterFinder = afterFinder;
         this.traceOutput = traceOutput;
+
+        // record constraints on target platform, checking that they don't conflict
+        for (Configuration parent : parents) {
+            String value = parent.osName();
+            if (value != null) {
+                if (osName == null) {
+                    osName = value;
+                } else {
+                    if (!value.equals(osName)) {
+                        failParentConflict("Operating System", osName, value);
+                    }
+                }
+            }
+            value = parent.osArch();
+            if (value != null) {
+                if (osArch == null) {
+                    osArch = value;
+                } else {
+                    if (!value.equals(osArch)) {
+                        failParentConflict("OS architecture", osArch, value);
+                    }
+                }
+            }
+            value = parent.osVersion();
+            if (value != null) {
+                if (osVersion == null) {
+                    osVersion  = value;
+                } else {
+                    if (!value.equals(osVersion)) {
+                        failParentConflict("OS version", osVersion, value);
+                    }
+                }
+            }
+        }
     }
 
+    private void failParentConflict(String constraint, String s1, String s2) {
+        String msg = "Parents have conflicting constraints on target "
+                     + constraint + ": " + s1 + ", " + s2;
+        throw new IllegalArgumentException(msg);
+    }
 
     /**
      * Resolves the given named modules.
      *
      * @throws ResolutionException
      */
-    Resolver resolveRequires(Collection<String> roots) {
+    Resolver resolve(Collection<String> roots) {
 
         // create the visit stack to get us started
         Deque<ModuleDescriptor> q = new ArrayDeque<>();
@@ -85,13 +143,15 @@ final class Resolver {
             // find root module
             ModuleReference mref = findWithBeforeFinder(root);
             if (mref == null) {
-                if (parent.findModule(root).isPresent()) {
+
+                if (findInParent(root) != null) {
                     // in parent, nothing to do
                     continue;
                 }
+
                 mref = findWithAfterFinder(root);
                 if (mref == null) {
-                    fail("Module %s not found", root);
+                    findFail("Module %s not found", root);
                 }
             }
 
@@ -100,8 +160,7 @@ final class Resolver {
                 mref.location().ifPresent(uri -> trace("  (%s)", uri));
             }
 
-            assert mref.descriptor().name().equals(root);
-            nameToReference.put(root, mref);
+            addFoundModule(mref);
             q.push(mref.descriptor());
         }
 
@@ -125,29 +184,37 @@ final class Resolver {
 
             // process dependences
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
+
+                // only required at compile-time
+                if (requires.modifiers().contains(Modifier.STATIC))
+                    continue;
+
                 String dn = requires.name();
 
                 // find dependence
                 ModuleReference mref = findWithBeforeFinder(dn);
                 if (mref == null) {
-                    if (parent.findModule(dn).isPresent())
+
+                    if (findInParent(dn) != null) {
+                        // dependence is in parent
                         continue;
+                    }
 
                     mref = findWithAfterFinder(dn);
                     if (mref == null) {
-                        fail("Module %s not found, required by %s",
-                                dn, descriptor.name());
+                        findFail("Module %s not found, required by %s",
+                                 dn, descriptor.name());
                     }
                 }
 
                 if (!nameToReference.containsKey(dn)) {
-                    nameToReference.put(dn, mref);
+                    addFoundModule(mref);
                     q.offer(mref.descriptor());
                     resolved.add(mref.descriptor());
 
                     if (isTracing()) {
                         trace("Module %s located, required by %s",
-                                dn, descriptor.name());
+                              dn, descriptor.name());
                         mref.location().ifPresent(uri -> trace("  (%s)", uri));
                     }
                 }
@@ -164,7 +231,7 @@ final class Resolver {
      * Augments the set of resolved modules with modules induced by the
      * service-use relation.
      */
-    Resolver resolveUses() {
+    Resolver bind() {
 
         // Scan the finders for all available service provider modules. As
         // java.base uses services then then module finders will be scanned
@@ -174,7 +241,9 @@ final class Resolver {
             ModuleDescriptor descriptor = mref.descriptor();
             if (!descriptor.provides().isEmpty()) {
 
-                for (String sn : descriptor.provides().keySet()) {
+                for (Provides provides :  descriptor.provides()) {
+                    String sn = provides.service();
+
                     // computeIfAbsent
                     Set<ModuleReference> providers = availableProviders.get(sn);
                     if (providers == null) {
@@ -191,19 +260,23 @@ final class Resolver {
         Deque<ModuleDescriptor> q = new ArrayDeque<>();
 
         // the initial set of modules that may use services
-        Set<ModuleDescriptor> candidateConsumers = new HashSet<>();
-        Configuration p = parent;
-        while (p != null) {
-            candidateConsumers.addAll(p.descriptors());
-            p = p.parent().orElse(null);
+        Set<ModuleDescriptor> initialConsumers;
+        if (Layer.boot() == null) {
+            initialConsumers = new HashSet<>();
+        } else {
+            initialConsumers = parents.stream()
+                    .flatMap(Configuration::configurations)
+                    .distinct()
+                    .flatMap(c -> c.descriptors().stream())
+                    .collect(Collectors.toSet());
         }
         for (ModuleReference mref : nameToReference.values()) {
-            candidateConsumers.add(mref.descriptor());
+            initialConsumers.add(mref.descriptor());
         }
-
 
         // Where there is a consumer of a service then resolve all modules
         // that provide an implementation of that service
+        Set<ModuleDescriptor> candidateConsumers = initialConsumers;
         do {
             for (ModuleDescriptor descriptor : candidateConsumers) {
                 if (!descriptor.uses().isEmpty()) {
@@ -223,7 +296,7 @@ final class Resolver {
                                             mref.location()
                                                 .ifPresent(uri -> trace("  (%s)", uri));
                                         }
-                                        nameToReference.put(pn, mref);
+                                        addFoundModule(mref);
                                         q.push(provider);
                                     }
                                 }
@@ -234,10 +307,84 @@ final class Resolver {
             }
 
             candidateConsumers = resolve(q);
-
         } while (!candidateConsumers.isEmpty());
 
         return this;
+    }
+
+
+    /**
+     * Add the module to the nameToReference map. Also check any constraints on
+     * the target platform with the constraints of other modules.
+     */
+    private void addFoundModule(ModuleReference mref) {
+        ModuleDescriptor descriptor = mref.descriptor();
+        nameToReference.put(descriptor.name(), mref);
+
+        if (descriptor.osName().isPresent()
+                || descriptor.osArch().isPresent()
+                || descriptor.osVersion().isPresent())
+            checkTargetConstraints(descriptor);
+    }
+
+    /**
+     * Check that the module's constraints on the target platform do not
+     * conflict with the constraints of other modules resolved so far or
+     * modules in parent configurations.
+     */
+    private void checkTargetConstraints(ModuleDescriptor descriptor) {
+        String value = descriptor.osName().orElse(null);
+        if (value != null) {
+            if (osName == null) {
+                osName = value;
+            } else {
+                if (!value.equals(osName)) {
+                    failTargetConstraint(descriptor);
+                }
+            }
+        }
+        value = descriptor.osArch().orElse(null);
+        if (value != null) {
+            if (osArch == null) {
+                osArch = value;
+            } else {
+                if (!value.equals(osArch)) {
+                    failTargetConstraint(descriptor);
+                }
+            }
+        }
+        value = descriptor.osVersion().orElse(null);
+        if (value != null) {
+            if (osVersion == null) {
+                osVersion = value;
+            } else {
+                if (!value.equals(osVersion)) {
+                    failTargetConstraint(descriptor);
+                }
+            }
+        }
+    }
+
+    private void failTargetConstraint(ModuleDescriptor md) {
+        String s1 = targetAsString(osName, osArch, osVersion);
+        String s2 = targetAsString(md);
+        findFail("Module %s has constraints on target platform that conflict" +
+                 " with other modules: %s, %s", md.name(), s1, s2);
+    }
+
+    private String targetAsString(ModuleDescriptor descriptor) {
+        String osName = descriptor.osName().orElse(null);
+        String osArch = descriptor.osArch().orElse(null);
+        String osVersion = descriptor.osVersion().orElse(null);
+        return targetAsString(osName, osArch, osVersion);
+    }
+
+    private String targetAsString(String osName, String osArch, String osVersion) {
+        return new StringJoiner("-")
+                .add(Objects.toString(osName, "*"))
+                .add(Objects.toString(osArch, "*"))
+                .add(Objects.toString(osVersion, "*"))
+                .toString();
     }
 
 
@@ -259,7 +406,6 @@ final class Resolver {
 
         if (check) {
             detectCycles();
-            checkPlatformConstraints();
             checkHashes();
         }
 
@@ -297,8 +443,7 @@ final class Resolver {
         if (!visited.contains(descriptor)) {
             boolean added = visitPath.add(descriptor);
             if (!added) {
-                throw new ResolutionException("Cycle detected: " +
-                        cycleAsString(descriptor));
+                resolveFail("Cycle detected: %s", cycleAsString(descriptor));
             }
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
                 String dn = requires.name();
@@ -332,123 +477,59 @@ final class Resolver {
 
 
     /**
-     * If there are platform specific modules then check that the OS name,
-     * architecture and version match.
-     *
-     * @apiNote This method does not currently check if the OS matches
-     *          platform specific modules in parent configurations.
-     */
-    private void checkPlatformConstraints() {
-
-        // first module encountered that is platform specific
-        String savedModuleName = null;
-        String savedOsName = null;
-        String savedOsArch = null;
-        String savedOsVersion = null;
-
-        for (ModuleReference mref : nameToReference.values()) {
-            ModuleDescriptor descriptor = mref.descriptor();
-
-            String osName = descriptor.osName().orElse(null);
-            String osArch = descriptor.osArch().orElse(null);
-            String osVersion = descriptor.osVersion().orElse(null);
-
-            if (osName != null || osArch != null || osVersion != null) {
-
-                if (savedModuleName == null) {
-
-                    savedModuleName = descriptor.name();
-                    savedOsName = osName;
-                    savedOsArch = osArch;
-                    savedOsVersion = osVersion;
-
-                } else {
-
-                    boolean matches = platformMatches(osName, savedOsName)
-                            && platformMatches(osArch, savedOsArch)
-                            && platformMatches(osVersion, savedOsVersion);
-
-                    if (!matches) {
-                        String s1 = platformAsString(savedOsName,
-                                                     savedOsArch,
-                                                     savedOsVersion);
-
-                        String s2 = platformAsString(osName, osArch, osVersion);
-                        fail("Mismatching constraints on target platform: "
-                                + savedModuleName + ": " + s1
-                                + ", " + descriptor.name() + ": " + s2);
-                    }
-
-                }
-
-            }
-        }
-
-    }
-
-    /**
-     * Returns true if the s1 and s2 are equal or one of them is null.
-     */
-    private boolean platformMatches(String s1, String s2) {
-        if (s1 == null || s2 == null)
-            return true;
-        else
-            return Objects.equals(s1, s2);
-    }
-
-    /**
-     * Return a string that encodes the OS name/arch/version.
-     */
-    private String platformAsString(String osName,
-                                    String osArch,
-                                    String osVersion) {
-
-        return new StringJoiner("-")
-                .add(Objects.toString(osName, "*"))
-                .add(Objects.toString(osArch, "*"))
-                .add(Objects.toString(osVersion, "*"))
-                .toString();
-
-    }
-
-    /**
      * Checks the hashes in the module descriptor to ensure that they match
      * any recorded hashes.
      */
     private void checkHashes() {
         for (ModuleReference mref : nameToReference.values()) {
-            ModuleDescriptor descriptor = mref.descriptor();
 
-            // get map of module hashes
-            Optional<ModuleHashes> ohashes = descriptor.hashes();
-            if (!ohashes.isPresent())
+            // get the recorded hashes, if any
+            if (!(mref instanceof ModuleReferenceImpl))
                 continue;
-            ModuleHashes hashes = ohashes.get();
+            ModuleHashes hashes = ((ModuleReferenceImpl)mref).recordedHashes();
+            if (hashes == null)
+                continue;
 
+            ModuleDescriptor descriptor = mref.descriptor();
             String algorithm = hashes.algorithm();
             for (String dn : hashes.names()) {
-                ModuleReference other = nameToReference.get(dn);
-                if (other == null) {
-                    other = parent.findModule(dn)
-                            .map(ResolvedModule::reference)
-                            .orElse(null);
+                ModuleReference mref2 = nameToReference.get(dn);
+                if (mref2 == null) {
+                    ResolvedModule resolvedModule = findInParent(dn);
+                    if (resolvedModule != null)
+                        mref2 = resolvedModule.reference();
+                }
+                if (mref2 == null)
+                    continue;
+
+                if (!(mref2 instanceof ModuleReferenceImpl)) {
+                    findFail("Unable to compute the hash of module %s", dn);
                 }
 
                 // skip checking the hash if the module has been patched
+                ModuleReferenceImpl other = (ModuleReferenceImpl)mref2;
                 if (other != null && !other.isPatched()) {
-                    String recordedHash = hashes.hashFor(dn);
-                    String actualHash = other.computeHash(algorithm);
+                    byte[] recordedHash = hashes.hashFor(dn);
+                    byte[] actualHash = other.computeHash(algorithm);
                     if (actualHash == null)
-                        fail("Unable to compute the hash of module %s", dn);
-                    if (!recordedHash.equals(actualHash)) {
-                        fail("Hash of %s (%s) differs to expected hash (%s)" +
-                             " recorded in %s", dn, actualHash, recordedHash,
-                             descriptor.name());
+                        findFail("Unable to compute the hash of module %s", dn);
+                    if (!Arrays.equals(recordedHash, actualHash)) {
+                        findFail("Hash of %s (%s) differs to expected hash (%s)" +
+                                 " recorded in %s", dn, toHexString(actualHash),
+                                 toHexString(recordedHash), descriptor.name());
                     }
                 }
             }
 
         }
+    }
+
+    private static String toHexString(byte[] ba) {
+        StringBuilder sb = new StringBuilder(ba.length * 2);
+        for (byte b: ba) {
+            sb.append(String.format("%02x", b & 0xff));
+        }
+        return sb.toString();
     }
 
 
@@ -456,47 +537,55 @@ final class Resolver {
      * Computes the readability graph for the modules in the given Configuration.
      *
      * The readability graph is created by propagating "requires" through the
-     * "public requires" edges of the module dependence graph. So if the module
-     * dependence graph has m1 requires m2 && m2 requires public m3 then the
-     * resulting readability graph will contain m1 reads m2, m1 reads m3, and
-     * m2 reads m3.
+     * "requires transitive" edges of the module dependence graph. So if the
+     * module dependence graph has m1 requires m2 && m2 requires transitive m3
+     * then the resulting readability graph will contain m1 reads m2, m1 reads m3,
+     * and m2 reads m3.
      */
     private Map<ResolvedModule, Set<ResolvedModule>> makeGraph(Configuration cf) {
 
+        // initial capacity of maps to avoid resizing
+        int capacity = 1 + (4 * nameToReference.size())/ 3;
+
         // the "reads" graph starts as a module dependence graph and
         // is iteratively updated to be the readability graph
-        Map<ResolvedModule, Set<ResolvedModule>> g1 = new HashMap<>();
+        Map<ResolvedModule, Set<ResolvedModule>> g1 = new HashMap<>(capacity);
 
-        // the "requires public" graph, contains requires public edges only
-        Map<ResolvedModule, Set<ResolvedModule>> g2 = new HashMap<>();
+        // the "requires transitive" graph, contains requires transitive edges only
+        Map<ResolvedModule, Set<ResolvedModule>> g2;
 
-
-        // need "requires public" from the modules in parent configurations as
-        // there may be selected modules that have a dependency on modules in
+        // need "requires transitive" from the modules in parent configurations
+        // as there may be selected modules that have a dependency on modules in
         // the parent configuration.
-
-        Configuration p = parent;
-        while (p != null) {
-            for (ModuleDescriptor descriptor : p.descriptors()) {
-                String name = descriptor.name();
-                ResolvedModule m1 = p.findModule(name)
-                    .orElseThrow(() -> new InternalError(name + " not found"));
-                for (ModuleDescriptor.Requires requires : descriptor.requires()) {
-                    if (requires.modifiers().contains(Modifier.PUBLIC)) {
-                        String dn = requires.name();
-                        ResolvedModule m2 = p.findModule(dn)
-                            .orElseThrow(() -> new InternalError(dn + " not found"));
-                        g2.computeIfAbsent(m1, k -> new HashSet<>()).add(m2);
-                    }
-                }
-            }
-
-            p = p.parent().orElse(null);
+        if (Layer.boot() == null) {
+            g2 = new HashMap<>(capacity);
+        } else {
+            g2 = parents.stream()
+                .flatMap(Configuration::configurations)
+                .distinct()
+                .flatMap(c ->
+                    c.modules().stream().flatMap(m1 ->
+                        m1.descriptor().requires().stream()
+                            .filter(r -> r.modifiers().contains(Modifier.TRANSITIVE))
+                            .flatMap(r -> {
+                                Optional<ResolvedModule> m2 = c.findModule(r.name());
+                                assert m2.isPresent()
+                                        || r.modifiers().contains(Modifier.STATIC);
+                                return m2.stream();
+                            })
+                            .map(m2 -> Map.entry(m1, m2))
+                    )
+                )
+                // stream of m1->m2
+                .collect(Collectors.groupingBy(Map.Entry::getKey,
+                        HashMap::new,
+                        Collectors.mapping(Map.Entry::getValue, Collectors.toSet())
+            ));
         }
 
         // populate g1 and g2 with the dependences from the selected modules
 
-        Map<String, ResolvedModule> nameToResolved = new HashMap<>();
+        Map<String, ResolvedModule> nameToResolved = new HashMap<>(capacity);
 
         for (ModuleReference mref : nameToReference.values()) {
             ModuleDescriptor descriptor = mref.descriptor();
@@ -505,20 +594,21 @@ final class Resolver {
             ResolvedModule m1 = computeIfAbsent(nameToResolved, name, cf, mref);
 
             Set<ResolvedModule> reads = new HashSet<>();
-            Set<ResolvedModule> requiresPublic = new HashSet<>();
+            Set<ResolvedModule> requiresTransitive = new HashSet<>();
 
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
                 String dn = requires.name();
 
-                ResolvedModule m2;
+                ResolvedModule m2 = null;
                 ModuleReference mref2 = nameToReference.get(dn);
                 if (mref2 != null) {
                     // same configuration
                     m2 = computeIfAbsent(nameToResolved, dn, cf, mref2);
                 } else {
                     // parent configuration
-                    m2 = parent.findModule(dn).orElse(null);
+                    m2 = findInParent(dn);
                     if (m2 == null) {
+                        assert requires.modifiers().contains(Modifier.STATIC);
                         continue;
                     }
                 }
@@ -526,9 +616,9 @@ final class Resolver {
                 // m1 requires m2 => m1 reads m2
                 reads.add(m2);
 
-                // m1 requires public m2
-                if (requires.modifiers().contains(Modifier.PUBLIC)) {
-                    requiresPublic.add(m2);
+                // m1 requires transitive m2
+                if (requires.modifiers().contains(Modifier.TRANSITIVE)) {
+                    requiresTransitive.add(m2);
                 }
 
             }
@@ -538,7 +628,7 @@ final class Resolver {
             if (descriptor.isAutomatic()) {
 
                 // reads all selected modules
-                // `requires public` all selected automatic modules
+                // `requires transitive` all selected automatic modules
                 for (ModuleReference mref2 : nameToReference.values()) {
                     ModuleDescriptor descriptor2 = mref2.descriptor();
                     String name2 = descriptor2.name();
@@ -548,40 +638,42 @@ final class Resolver {
                             = computeIfAbsent(nameToResolved, name2, cf, mref2);
                         reads.add(m2);
                         if (descriptor2.isAutomatic())
-                            requiresPublic.add(m2);
+                            requiresTransitive.add(m2);
                     }
                 }
 
                 // reads all modules in parent configurations
-                // `requires public` all automatic modules in parent configurations
-                p = parent;
-                while (p != null) {
-                    for (ResolvedModule m : p.modules()) {
-                        reads.add(m);
-                        if (m.reference().descriptor().isAutomatic())
-                            requiresPublic.add(m);
-                    }
-                    p = p.parent().orElse(null);
+                // `requires transitive` all automatic modules in parent
+                // configurations
+                for (Configuration parent : parents) {
+                    parent.configurations()
+                            .map(Configuration::modules)
+                            .flatMap(Set::stream)
+                            .forEach(m -> {
+                                reads.add(m);
+                                if (m.reference().descriptor().isAutomatic())
+                                    requiresTransitive.add(m);
+                            });
                 }
-
             }
 
             g1.put(m1, reads);
-            g2.put(m1, requiresPublic);
+            g2.put(m1, requiresTransitive);
         }
 
-        // Iteratively update g1 until there are no more requires public to propagate
+        // Iteratively update g1 until there are no more requires transitive
+        // to propagate
         boolean changed;
-        Set<ResolvedModule> toAdd = new HashSet<>();
+        List<ResolvedModule> toAdd = new ArrayList<>();
         do {
             changed = false;
             for (Set<ResolvedModule> m1Reads : g1.values()) {
                 for (ResolvedModule m2 : m1Reads) {
-                    Set<ResolvedModule> m2RequiresPublic = g2.get(m2);
-                    if (m2RequiresPublic != null) {
-                        for (ResolvedModule m3 : m2RequiresPublic) {
+                    Set<ResolvedModule> m2RequiresTransitive = g2.get(m2);
+                    if (m2RequiresTransitive != null) {
+                        for (ResolvedModule m3 : m2RequiresTransitive) {
                             if (!m1Reads.contains(m3)) {
-                                // m1 reads m2, m2 requires public m3
+                                // m1 reads m2, m2 requires transitive m3
                                 // => need to add m1 reads m3
                                 toAdd.add(m3);
                             }
@@ -645,37 +737,38 @@ final class Resolver {
             for (ResolvedModule endpoint : reads) {
                 ModuleDescriptor descriptor2 = endpoint.descriptor();
 
-                for (ModuleDescriptor.Exports export : descriptor2.exports()) {
+                if (descriptor2.isAutomatic()) {
+                    // automatic modules read self and export all packages
+                    if (descriptor2 != descriptor1){
+                        for (String source : descriptor2.packages()) {
+                            ModuleDescriptor supplier
+                                = packageToExporter.putIfAbsent(source, descriptor2);
 
-                    if (export.isQualified()) {
-                        if (!export.targets().contains(descriptor1.name()))
-                            continue;
-                    }
-
-                    // source is exported to descriptor2
-                    String source = export.source();
-                    ModuleDescriptor other
-                        = packageToExporter.put(source, descriptor2);
-
-                    if (other != null && other != descriptor2) {
-                        // package might be local to descriptor1
-                        if (other == descriptor1) {
-                            fail("Module %s contains package %s"
-                                 + ", module %s exports package %s to %s",
-                                    descriptor1.name(),
-                                    source,
-                                    descriptor2.name(),
-                                    source,
-                                    descriptor1.name());
-                        } else {
-                            fail("Modules %s and %s export package %s to module %s",
-                                    descriptor2.name(),
-                                    other.name(),
-                                    source,
-                                    descriptor1.name());
+                            // descriptor2 and 'supplier' export source to descriptor1
+                            if (supplier != null) {
+                                failTwoSuppliers(descriptor1, source, descriptor2, supplier);
+                            }
                         }
 
                     }
+                } else {
+                    for (ModuleDescriptor.Exports export : descriptor2.exports()) {
+                        if (export.isQualified()) {
+                            if (!export.targets().contains(descriptor1.name()))
+                                continue;
+                        }
+
+                        // source is exported by descriptor2
+                        String source = export.source();
+                        ModuleDescriptor supplier
+                            = packageToExporter.putIfAbsent(source, descriptor2);
+
+                        // descriptor2 and 'supplier' export source to descriptor1
+                        if (supplier != null) {
+                            failTwoSuppliers(descriptor1, source, descriptor2, supplier);
+                        }
+                    }
+
                 }
             }
 
@@ -686,28 +779,17 @@ final class Resolver {
                 for (String service : descriptor1.uses()) {
                     String pn = packageName(service);
                     if (!packageToExporter.containsKey(pn)) {
-                        fail("Module %s does not read a module that exports %s",
-                             descriptor1.name(), pn);
+                        resolveFail("Module %s does not read a module that exports %s",
+                                    descriptor1.name(), pn);
                     }
                 }
 
                 // provides S
-                for (Map.Entry<String, ModuleDescriptor.Provides> entry :
-                        descriptor1.provides().entrySet()) {
-                    String service = entry.getKey();
-                    ModuleDescriptor.Provides provides = entry.getValue();
-
-                    String pn = packageName(service);
+                for (ModuleDescriptor.Provides provides : descriptor1.provides()) {
+                    String pn = packageName(provides.service());
                     if (!packageToExporter.containsKey(pn)) {
-                        fail("Module %s does not read a module that exports %s",
-                             descriptor1.name(), pn);
-                    }
-
-                    for (String provider : provides.providers()) {
-                        if (!packages.contains(packageName(provider))) {
-                            fail("Provider %s not in module %s",
-                                 provider, descriptor1.name());
-                        }
+                        resolveFail("Module %s does not read a module that exports %s",
+                                    descriptor1.name(), pn);
                     }
                 }
 
@@ -715,6 +797,54 @@ final class Resolver {
 
         }
 
+    }
+
+    /**
+     * Fail because a module in the configuration exports the same package to
+     * a module that reads both. This includes the case where a module M
+     * containing a package p reads another module that exports p to at least
+     * module M.
+     */
+    private void failTwoSuppliers(ModuleDescriptor descriptor,
+                                  String source,
+                                  ModuleDescriptor supplier1,
+                                  ModuleDescriptor supplier2) {
+
+        if (supplier2 == descriptor) {
+            ModuleDescriptor tmp = supplier1;
+            supplier1 = supplier2;
+            supplier2 = tmp;
+        }
+
+        if (supplier1 == descriptor) {
+            resolveFail("Module %s contains package %s"
+                         + ", module %s exports package %s to %s",
+                    descriptor.name(),
+                    source,
+                    supplier2.name(),
+                    source,
+                    descriptor.name());
+        } else {
+            resolveFail("Modules %s and %s export package %s to module %s",
+                    supplier1.name(),
+                    supplier2.name(),
+                    source,
+                    descriptor.name());
+        }
+
+    }
+
+
+    /**
+     * Find a module of the given name in the parent configurations
+     */
+    private ResolvedModule findInParent(String mn) {
+        for (Configuration parent : parents) {
+            Optional<ResolvedModule> om = parent.findModule(mn);
+            if (om.isPresent())
+                return om.get();
+        }
+        return null;
     }
 
 
@@ -722,24 +852,16 @@ final class Resolver {
      * Invokes the beforeFinder to find method to find the given module.
      */
     private ModuleReference findWithBeforeFinder(String mn) {
-        try {
-            return beforeFinder.find(mn).orElse(null);
-        } catch (FindException e) {
-            // unwrap
-            throw new ResolutionException(e.getMessage(), e.getCause());
-        }
+
+        return beforeFinder.find(mn).orElse(null);
+
     }
 
     /**
      * Invokes the afterFinder to find method to find the given module.
      */
     private ModuleReference findWithAfterFinder(String mn) {
-        try {
-            return afterFinder.find(mn).orElse(null);
-        } catch (FindException e) {
-            // unwrap
-            throw new ResolutionException(e.getMessage(), e.getCause());
-        }
+        return afterFinder.find(mn).orElse(null);
     }
 
     /**
@@ -747,31 +869,27 @@ final class Resolver {
      * and after ModuleFinders.
      */
     private Set<ModuleReference> findAll() {
-        try {
+        Set<ModuleReference> beforeModules = beforeFinder.findAll();
+        Set<ModuleReference> afterModules = afterFinder.findAll();
 
-            Set<ModuleReference> beforeModules = beforeFinder.findAll();
-            Set<ModuleReference> afterModules = afterFinder.findAll();
+        if (afterModules.isEmpty())
+            return beforeModules;
 
-            if (afterModules.isEmpty())
-                return beforeModules;
+        if (beforeModules.isEmpty()
+                && parents.size() == 1
+                && parents.get(0) == Configuration.empty())
+            return afterModules;
 
-            if (beforeModules.isEmpty() && parent == Configuration.empty())
-                return afterModules;
-
-            Set<ModuleReference> result = new HashSet<>(beforeModules);
-            for (ModuleReference mref : afterModules) {
-                String name = mref.descriptor().name();
-                if (!beforeFinder.find(name).isPresent()
-                        && !parent.findModule(name).isPresent())
-                    result.add(mref);
+        Set<ModuleReference> result = new HashSet<>(beforeModules);
+        for (ModuleReference mref : afterModules) {
+            String name = mref.descriptor().name();
+            if (!beforeFinder.find(name).isPresent()
+                    && findInParent(name) == null) {
+                result.add(mref);
             }
-
-            return result;
-
-        } catch (FindException e) {
-            // unwrap
-            throw new ResolutionException(e.getMessage(), e.getCause());
         }
+
+        return result;
     }
 
     /**
@@ -783,9 +901,17 @@ final class Resolver {
     }
 
     /**
+     * Throw FindException with the given format string and arguments
+     */
+    private static void findFail(String fmt, Object ... args) {
+        String msg = String.format(fmt, args);
+        throw new FindException(msg);
+    }
+
+    /**
      * Throw ResolutionException with the given format string and arguments
      */
-    private static void fail(String fmt, Object ... args) {
+    private static void resolveFail(String fmt, Object ... args) {
         String msg = String.format(fmt, args);
         throw new ResolutionException(msg);
     }

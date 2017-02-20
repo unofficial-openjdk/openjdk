@@ -38,7 +38,7 @@
 #include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -86,15 +86,26 @@
 
 #define MAX_PATH (2 * K)
 
-// Minimum stack size for the VM.  It's easier to document a constant value
-// but it's different for x86 and sparc because the page sizes are different.
+// Minimum usable stack sizes required to get to user code. Space for
+// HotSpot guard pages is added later.
+#ifdef _LP64
+// The adlc generated method 'State::MachNodeGenerator(int)' used by the C2 compiler
+// threads requires a large stack with the Solaris Studio C++ compiler version 5.13
+// and product VM builds (debug builds require significantly less stack space).
+size_t os::Posix::_compiler_thread_min_stack_allowed = 325 * K;
+size_t os::Posix::_java_thread_min_stack_allowed = 48 * K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = 224 * K;
+#else
+size_t os::Posix::_compiler_thread_min_stack_allowed = 32 * K;
+size_t os::Posix::_java_thread_min_stack_allowed = 32 * K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = 64 * K;
+#endif // _LP64
+
 #ifdef AMD64
-size_t os::Solaris::min_stack_allowed = 224*K;
 #define REG_SP REG_RSP
 #define REG_PC REG_RIP
 #define REG_FP REG_RBP
 #else
-size_t os::Solaris::min_stack_allowed = 64*K;
 #define REG_SP UESP
 #define REG_PC EIP
 #define REG_FP EBP
@@ -251,7 +262,9 @@ bool os::Solaris::get_frame_at_stack_banging_point(JavaThread* thread, ucontext_
     // method returns the Java sender of the current frame.
     *fr = os::fetch_frame_from_ucontext(thread, uc);
     if (!fr->is_first_java_frame()) {
-      assert(fr->safe_for_sender(thread), "Safety check");
+      // get_frame_at_stack_banging_point() is only called when we
+      // have well defined stacks so java_sender() calls do not need
+      // to assert safe_for_sender() first.
       *fr = fr->java_sender();
     }
   } else {
@@ -269,7 +282,7 @@ bool os::Solaris::get_frame_at_stack_banging_point(JavaThread* thread, ucontext_
       intptr_t* sp = os::Solaris::ucontext_get_sp(uc);
       *fr = frame(sp + 1, fp, (address)*sp);
       if (!fr->is_java_frame()) {
-        assert(fr->safe_for_sender(thread), "Safety check");
+        // See java_sender() comment above.
         *fr = fr->java_sender();
       }
     }

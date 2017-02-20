@@ -38,7 +38,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.tools.DocumentationTool.DocumentationTask;
+import javax.tools.DocumentationTool;
 import javax.tools.JavaFileManager;
+import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
@@ -178,6 +180,16 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
     }
 
     /**
+     * Sets the options.
+     * @param options the options
+     * @return this task object
+     */
+    public JavadocTask options(List<String> options) {
+        this.options = options;
+        return this;
+    }
+
+    /**
      * Sets the files to be documented.
      * @param files the files
      * @return this task object
@@ -303,7 +315,8 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
             if (fileManager == null)
                 fileManager = internalFileManager = jdtool.getStandardFileManager(null, null, null);
             if (outdir != null)
-                setLocationFromPaths(StandardLocation.CLASS_OUTPUT, Collections.singletonList(outdir));
+                setLocationFromPaths(DocumentationTool.Location.DOCUMENTATION_OUTPUT,
+                        Collections.singletonList(outdir));
             if (classpath != null)
                 setLocationFromPaths(StandardLocation.CLASS_PATH, classpath);
             if (sourcepath != null)
@@ -326,7 +339,7 @@ public class JavadocTask extends AbstractTask<JavadocTask> {
         }
     }
 
-    private void setLocationFromPaths(StandardLocation location, List<Path> files) throws IOException {
+    private void setLocationFromPaths(Location location, List<Path> files) throws IOException {
         if (!(fileManager instanceof StandardJavaFileManager))
             throw new IllegalStateException("not a StandardJavaFileManager");
         ((StandardJavaFileManager) fileManager).setLocationFromPaths(location, files);

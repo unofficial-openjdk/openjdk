@@ -72,8 +72,7 @@ public class CoreThreadTimeOut {
     void test(String[] args) throws Throwable {
         final int threadCount = 10;
         final int timeoutMillis = 30;
-        BlockingQueue<Runnable> q
-            = new ArrayBlockingQueue<Runnable>(2*threadCount);
+        BlockingQueue<Runnable> q = new ArrayBlockingQueue<>(2*threadCount);
         ThreadPoolExecutor tpe
             = new ThreadPoolExecutor(threadCount, threadCount,
                                      timeoutMillis, TimeUnit.MILLISECONDS,
@@ -83,15 +82,18 @@ public class CoreThreadTimeOut {
         tpe.allowCoreThreadTimeOut(true);
         check(tpe.allowsCoreThreadTimeOut());
         equal(countExecutorThreads(), 0);
-        long t0 = System.nanoTime();
-        for (int i = 0; i < threadCount; i++)
-            tpe.submit(new Runnable() { public void run() {}});
-        int count = countExecutorThreads();
-        if (millisElapsedSince(t0) < timeoutMillis)
-            equal(count, threadCount);
+        long startTime = System.nanoTime();
+        for (int i = 0; i < threadCount; i++) {
+            tpe.submit(() -> {});
+            int count = countExecutorThreads();
+            if (millisElapsedSince(startTime) < timeoutMillis)
+                equal(count, i + 1);
+        }
         while (countExecutorThreads() > 0 &&
-               millisElapsedSince(t0) < 10 * 1000);
+               millisElapsedSince(startTime) < LONG_DELAY_MS)
+            Thread.yield();
         equal(countExecutorThreads(), 0);
+        check(millisElapsedSince(startTime) >= timeoutMillis);
         tpe.shutdown();
         check(tpe.allowsCoreThreadTimeOut());
         check(tpe.awaitTermination(LONG_DELAY_MS, MILLISECONDS));

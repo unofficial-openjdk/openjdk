@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2008, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,20 +24,32 @@
 /*
  * @test
  * @bug 6480981 8160624
- * @modules java.base/sun.security.tools.keytool
  * @summary keytool should be able to import certificates from remote SSL server
+ * @library /test/lib
  * @run main/othervm PrintSSL
  */
 
-import java.io.IOException;
 import java.net.ServerSocket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.concurrent.CountDownLatch;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
+import jdk.test.lib.SecurityTools;
+import jdk.test.lib.process.OutputAnalyzer;
 
 public class PrintSSL {
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Throwable {
+        Files.deleteIfExists(Paths.get("keystore"));
+
+        // make sure that "-printcert" works with weak algorithms
+        OutputAnalyzer out = SecurityTools.keytool("-genkeypair "
+                + "-keystore keystore -storepass passphrase "
+                + "-keypass passphrase -keyalg rsa -keysize 512 "
+                + "-sigalg MD5withRSA -alias rsa_alias -dname CN=Server");
+        System.out.println(out.getOutput());
+        out.shouldHaveExitValue(0);
 
         int port = new Server().start();
         if(port == -1) {
@@ -47,7 +59,10 @@ public class PrintSSL {
         String cmd = String.format(
                 "-debug %s -printcert -sslserver localhost:%s",
                 ((vmOpt == null) ? "" : vmOpt ), port);
-        sun.security.tools.keytool.Main.main(cmd.split("\\s+"));
+
+        out = SecurityTools.keytool(cmd);
+        System.out.println(out.getOutput());
+        out.shouldHaveExitValue(0);
     }
 
     private static class Server implements Runnable {
@@ -68,9 +83,7 @@ public class PrintSSL {
         public void run() {
 
             System.setProperty("javax.net.ssl.keyStorePassword", "passphrase");
-            System.setProperty("javax.net.ssl.keyStore",
-                    System.getProperty("test.src", "./")
-                    + "/../../../../javax/net/ssl/etc/keystore");
+            System.setProperty("javax.net.ssl.keyStore", "keystore");
             SSLServerSocketFactory sslssf =
                     (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
             try (ServerSocket server = sslssf.createServerSocket(0)) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,6 +58,7 @@ final class WPopupMenuPeer extends WMenuPeer implements PopupMenuPeer {
                 parent = WToolkit.getNativeContainer((Component)parent);
                 parentPeer = (WComponentPeer) WToolkit.targetToPeer(parent);
             }
+            parentPeer.addChildPeer(this);
             createMenu(parentPeer);
             // fix for 5088782: check if menu object is created successfully
             checkMenuCreation();
@@ -69,6 +70,7 @@ final class WPopupMenuPeer extends WMenuPeer implements PopupMenuPeer {
 
     private native void createMenu(WComponentPeer parent);
 
+    @SuppressWarnings("deprecation")
     public void show(Event e) {
         Component origin = (Component)e.target;
         WComponentPeer peer = (WComponentPeer) WToolkit.targetToPeer(origin);
@@ -96,6 +98,7 @@ final class WPopupMenuPeer extends WMenuPeer implements PopupMenuPeer {
      */
     void show(Component origin, Point p) {
         WComponentPeer peer = (WComponentPeer) WToolkit.targetToPeer(origin);
+        @SuppressWarnings("deprecation")
         Event e = new Event(origin, 0, Event.MOUSE_DOWN, p.x, p.y, 0, 0);
         if (peer == null) {
             Component nativeOrigin = WToolkit.getNativeContainer(origin);
@@ -106,5 +109,6 @@ final class WPopupMenuPeer extends WMenuPeer implements PopupMenuPeer {
         _show(e);
     }
 
+    @SuppressWarnings("deprecation")
     private native void _show(Event e);
 }

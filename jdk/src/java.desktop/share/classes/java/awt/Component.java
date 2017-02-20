@@ -53,13 +53,11 @@ import java.beans.Transient;
 import java.awt.im.InputContext;
 import java.awt.im.InputMethodRequests;
 import java.awt.dnd.DropTarget;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.security.AccessControlContext;
 import javax.accessibility.*;
 import java.applet.Applet;
+import javax.swing.JComponent;
 
 import sun.awt.ComponentFactory;
 import sun.security.action.GetPropertyAction;
@@ -81,6 +79,7 @@ import sun.java2d.pipe.hw.ExtendedBufferCapabilities;
 import static sun.java2d.pipe.hw.ExtendedBufferCapabilities.VSyncType.*;
 import sun.awt.RequestFocusController;
 import sun.java2d.SunGraphicsEnvironment;
+import sun.swing.SwingAccessor;
 import sun.util.logging.PlatformLogger;
 
 /**
@@ -844,32 +843,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
                 return new Rectangle(comp.x, comp.y, comp.width, comp.height);
             }
             public void setMixingCutoutShape(Component comp, Shape shape) {
-                Region region = shape == null ?  null :
-                    Region.getInstance(shape, null);
-
-                synchronized (comp.getTreeLock()) {
-                    boolean needShowing = false;
-                    boolean needHiding = false;
-
-                    if (!comp.isNonOpaqueForMixing()) {
-                        needHiding = true;
-                    }
-
-                    comp.mixingCutoutRegion = region;
-
-                    if (!comp.isNonOpaqueForMixing()) {
-                        needShowing = true;
-                    }
-
-                    if (comp.isMixingNeeded()) {
-                        if (needHiding) {
-                            comp.mixOnHiding(comp.isLightweight());
-                        }
-                        if (needShowing) {
-                            comp.mixOnShowing();
-                        }
-                    }
-                }
+                comp.setMixingCutoutShape(shape);
             }
 
             public void setGraphicsConfiguration(Component comp,
@@ -877,8 +851,8 @@ public abstract class Component implements ImageObserver, MenuContainer,
             {
                 comp.setGraphicsConfiguration(gc);
             }
-            public boolean requestFocus(Component comp, FocusEvent.Cause cause) {
-                return comp.requestFocus(cause);
+            public void requestFocus(Component comp, FocusEvent.Cause cause) {
+                comp.requestFocus(cause);
             }
             public boolean canBeFocusOwner(Component comp) {
                 return comp.canBeFocusOwner();
@@ -4042,6 +4016,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
          * {@code true}.
          * @see #createBuffers(int, BufferCapabilities)
          */
+        @SuppressWarnings("deprecation")
         protected FlipBufferStrategy(int numBuffers, BufferCapabilities caps)
             throws AWTException
         {
@@ -5061,6 +5036,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
      *
      * Returns whether or not event was dispatched to an ancestor
      */
+    @SuppressWarnings("deprecation")
     boolean dispatchMouseWheelToAncestor(MouseWheelEvent e) {
         int newX, newY;
         newX = e.getX() + getX(); // Coordinates take into account at least
@@ -7537,8 +7513,51 @@ public abstract class Component implements ImageObserver, MenuContainer,
         requestFocusHelper(false, true);
     }
 
-    boolean requestFocus(FocusEvent.Cause cause) {
-        return requestFocusHelper(false, true, cause);
+
+    /**
+     * Requests by the reason of {@code cause} that this Component get the input
+     * focus, and that this Component's top-level ancestor become the
+     * focused Window. This component must be displayable, focusable, visible
+     * and all of its ancestors (with the exception of the top-level Window)
+     * must be visible for the request to be granted. Every effort will be
+     * made to honor the request; however, in some cases it may be
+     * impossible to do so. Developers must never assume that this
+     * Component is the focus owner until this Component receives a
+     * FOCUS_GAINED event.
+     * <p>
+     * The focus request effect may also depend on the provided
+     * cause value. If this request is succeed the {@code FocusEvent}
+     * generated in the result will receive the cause value specified as the
+     * argument of method. If this request is denied because this Component's
+     * top-level Window cannot become the focused Window, the request will be
+     * remembered and will be granted when the Window is later focused by the
+     * user.
+     * <p>
+     * This method cannot be used to set the focus owner to no Component at
+     * all. Use {@code KeyboardFocusManager.clearGlobalFocusOwner()}
+     * instead.
+     * <p>
+     * Because the focus behavior of this method is platform-dependent,
+     * developers are strongly encouraged to use
+     * {@code requestFocusInWindow(FocusEvent.Cause)} when possible.
+     *
+     * <p>Note: Not all focus transfers result from invoking this method. As
+     * such, a component may receive focus without this or any of the other
+     * {@code requestFocus} methods of {@code Component} being invoked.
+     *
+     * @param  cause the cause why the focus is requested
+     * @see FocusEvent
+     * @see FocusEvent.Cause
+     * @see #requestFocusInWindow(FocusEvent.Cause)
+     * @see java.awt.event.FocusEvent
+     * @see #addFocusListener
+     * @see #isFocusable
+     * @see #isDisplayable
+     * @see KeyboardFocusManager#clearGlobalFocusOwner
+     * @since 9
+     */
+    public void requestFocus(FocusEvent.Cause cause) {
+        requestFocusHelper(false, true, cause);
     }
 
     /**
@@ -7604,9 +7623,77 @@ public abstract class Component implements ImageObserver, MenuContainer,
         return requestFocusHelper(temporary, true);
     }
 
-    boolean requestFocus(boolean temporary, FocusEvent.Cause cause) {
+    /**
+     * Requests by the reason of {@code cause} that this {@code Component} get
+     * the input focus, and that this {@code Component}'s top-level ancestor
+     * become the focused {@code Window}. This component must be
+     * displayable, focusable, visible and all of its ancestors (with
+     * the exception of the top-level Window) must be visible for the
+     * request to be granted. Every effort will be made to honor the
+     * request; however, in some cases it may be impossible to do
+     * so. Developers must never assume that this component is the
+     * focus owner until this component receives a FOCUS_GAINED
+     * event. If this request is denied because this component's
+     * top-level window cannot become the focused window, the request
+     * will be remembered and will be granted when the window is later
+     * focused by the user.
+     * <p>
+     * This method returns a boolean value. If {@code false} is returned,
+     * the request is <b>guaranteed to fail</b>. If {@code true} is
+     * returned, the request will succeed <b>unless</b> it is vetoed, or an
+     * extraordinary event, such as disposal of the component's peer, occurs
+     * before the request can be granted by the native windowing system. Again,
+     * while a return value of {@code true} indicates that the request is
+     * likely to succeed, developers must never assume that this component is
+     * the focus owner until this component receives a FOCUS_GAINED event.
+     * <p>
+     * The focus request effect may also depend on the provided
+     * cause value. If this request is succeed the {FocusEvent}
+     * generated in the result will receive the cause value specified as the
+     * argument of the method.
+     * <p>
+     * This method cannot be used to set the focus owner to no component at
+     * all. Use {@code KeyboardFocusManager.clearGlobalFocusOwner}
+     * instead.
+     * <p>
+     * Because the focus behavior of this method is platform-dependent,
+     * developers are strongly encouraged to use
+     * {@code requestFocusInWindow} when possible.
+     * <p>
+     * Every effort will be made to ensure that {@code FocusEvent}s
+     * generated as a
+     * result of this request will have the specified temporary value. However,
+     * because specifying an arbitrary temporary state may not be implementable
+     * on all native windowing systems, correct behavior for this method can be
+     * guaranteed only for lightweight {@code Component}s.
+     * This method is not intended
+     * for general use, but exists instead as a hook for lightweight component
+     * libraries, such as Swing.
+     * <p>
+     * Note: Not all focus transfers result from invoking this method. As
+     * such, a component may receive focus without this or any of the other
+     * {@code requestFocus} methods of {@code Component} being invoked.
+     *
+     * @param temporary true if the focus change is temporary,
+     *        such as when the window loses the focus; for
+     *        more information on temporary focus changes see the
+     *<a href="../../java/awt/doc-files/FocusSpec.html">Focus Specification</a>
+     *
+     * @param  cause the cause why the focus is requested
+     * @return {@code false} if the focus change request is guaranteed to
+     *         fail; {@code true} if it is likely to succeed
+     * @see FocusEvent
+     * @see FocusEvent.Cause
+     * @see #addFocusListener
+     * @see #isFocusable
+     * @see #isDisplayable
+     * @see KeyboardFocusManager#clearGlobalFocusOwner
+     * @since 9
+     */
+    protected boolean requestFocus(boolean temporary, FocusEvent.Cause cause) {
         return requestFocusHelper(temporary, true, cause);
     }
+
     /**
      * Requests that this Component get the input focus, if this
      * Component's top-level ancestor is already the focused
@@ -7655,7 +7742,59 @@ public abstract class Component implements ImageObserver, MenuContainer,
         return requestFocusHelper(false, false);
     }
 
-    boolean requestFocusInWindow(FocusEvent.Cause cause) {
+    /**
+     * Requests by the reason of {@code cause} that this Component get the input
+     * focus, if this Component's top-level ancestor is already the focused
+     * Window. This component must be displayable, focusable, visible
+     * and all of its ancestors (with the exception of the top-level
+     * Window) must be visible for the request to be granted. Every
+     * effort will be made to honor the request; however, in some
+     * cases it may be impossible to do so. Developers must never
+     * assume that this Component is the focus owner until this
+     * Component receives a FOCUS_GAINED event.
+     * <p>
+     * This method returns a boolean value. If {@code false} is returned,
+     * the request is <b>guaranteed to fail</b>. If {@code true} is
+     * returned, the request will succeed <b>unless</b> it is vetoed, or an
+     * extraordinary event, such as disposal of the Component's peer, occurs
+     * before the request can be granted by the native windowing system. Again,
+     * while a return value of {@code true} indicates that the request is
+     * likely to succeed, developers must never assume that this Component is
+     * the focus owner until this Component receives a FOCUS_GAINED event.
+     * <p>
+     * The focus request effect may also depend on the provided
+     * cause value. If this request is succeed the {@code FocusEvent}
+     * generated in the result will receive the cause value specified as the
+     * argument of the method.
+     * <p>
+     * This method cannot be used to set the focus owner to no Component at
+     * all. Use {@code KeyboardFocusManager.clearGlobalFocusOwner()}
+     * instead.
+     * <p>
+     * The focus behavior of this method can be implemented uniformly across
+     * platforms, and thus developers are strongly encouraged to use this
+     * method over {@code requestFocus(FocusEvent.Cause)} when possible.
+     * Code which relies on {@code requestFocus(FocusEvent.Cause)} may exhibit
+     * different focus behavior on different platforms.
+     *
+     * <p>Note: Not all focus transfers result from invoking this method. As
+     * such, a component may receive focus without this or any of the other
+     * {@code requestFocus} methods of {@code Component} being invoked.
+     *
+     * @param  cause the cause why the focus is requested
+     * @return {@code false} if the focus change request is guaranteed to
+     *         fail; {@code true} if it is likely to succeed
+     * @see #requestFocus(FocusEvent.Cause)
+     * @see FocusEvent
+     * @see FocusEvent.Cause
+     * @see java.awt.event.FocusEvent
+     * @see #addFocusListener
+     * @see #isFocusable
+     * @see #isDisplayable
+     * @see KeyboardFocusManager#clearGlobalFocusOwner
+     * @since 9
+     */
+    public boolean requestFocusInWindow(FocusEvent.Cause cause) {
         return requestFocusHelper(false, false, cause);
     }
 
@@ -7996,6 +8135,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
         return res;
     }
 
+    @SuppressWarnings("deprecation")
     final Component getNextFocusCandidate() {
         Container rootAncestor = getTraversalRoot();
         Component comp = this;
@@ -8695,6 +8835,9 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * the Swing package private method {@code compWriteObjectNotify}.
      */
     private void doSwingSerialization() {
+        if (!(this instanceof JComponent)) {
+            return;
+        }
         @SuppressWarnings("deprecation")
         Package swingPackage = Package.getPackage("javax.swing");
         // For Swing serialization to correctly work Swing needs to
@@ -8707,36 +8850,10 @@ public abstract class Component implements ImageObserver, MenuContainer,
                    klass = klass.getSuperclass()) {
             if (klass.getPackage() == swingPackage &&
                       klass.getClassLoader() == null) {
-                final Class<?> swingClass = klass;
-                // Find the first override of the compWriteObjectNotify method
-                Method[] methods = AccessController.doPrivileged(
-                                                                 new PrivilegedAction<Method[]>() {
-                                                                     public Method[] run() {
-                                                                         return swingClass.getDeclaredMethods();
-                                                                     }
-                                                                 });
-                for (int counter = methods.length - 1; counter >= 0;
-                     counter--) {
-                    final Method method = methods[counter];
-                    if (method.getName().equals("compWriteObjectNotify")){
-                        // We found it, use doPrivileged to make it accessible
-                        // to use.
-                        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                                public Void run() {
-                                    method.setAccessible(true);
-                                    return null;
-                                }
-                            });
-                        // Invoke the method
-                        try {
-                            method.invoke(this, (Object[]) null);
-                        } catch (IllegalAccessException iae) {
-                        } catch (InvocationTargetException ite) {
-                        }
-                        // We're done, bail.
-                        return;
-                    }
-                }
+
+                SwingAccessor.getJComponentAccessor()
+                        .compWriteObjectNotify((JComponent) this);
+                return;
             }
         }
     }
@@ -10260,6 +10377,70 @@ public abstract class Component implements ImageObserver, MenuContainer,
             return false;
         }
         return true;
+    }
+
+    /**
+     * Sets a 'mixing-cutout' shape for this lightweight component.
+     *
+     * This method is used exclusively for the purposes of the
+     * Heavyweight/Lightweight Components Mixing feature and will
+     * have no effect if applied to a heavyweight component.
+     *
+     * By default a lightweight component is treated as an opaque rectangle for
+     * the purposes of the Heavyweight/Lightweight Components Mixing feature.
+     * This method enables developers to set an arbitrary shape to be cut out
+     * from heavyweight components positioned underneath the lightweight
+     * component in the z-order.
+     * <p>
+     * The {@code shape} argument may have the following values:
+     * <ul>
+     * <li>{@code null} - reverts the default cutout shape (the rectangle equal
+     * to the component's {@code getBounds()})
+     * <li><i>empty-shape</i> - does not cut out anything from heavyweight
+     * components. This makes this lightweight component effectively
+     * transparent. Note that descendants of the lightweight component still
+     * affect the shapes of heavyweight components.  An example of an
+     * <i>empty-shape</i> is {@code new Rectangle()}.
+     * <li><i>non-empty-shape</i> - the given shape will be cut out from
+     * heavyweight components.
+     * </ul>
+     * <p>
+     * The most common example when the 'mixing-cutout' shape is needed is a
+     * glass pane component. The {@link JRootPane#setGlassPane()} method
+     * automatically sets the <i>empty-shape</i> as the 'mixing-cutout' shape
+     * for the given glass pane component.  If a developer needs some other
+     * 'mixing-cutout' shape for the glass pane (which is rare), this must be
+     * changed manually after installing the glass pane to the root pane.
+     *
+     * @param shape the new 'mixing-cutout' shape
+     * @since 9
+     */
+    public void setMixingCutoutShape(Shape shape) {
+        Region region = shape == null ? null : Region.getInstance(shape, null);
+
+        synchronized (getTreeLock()) {
+            boolean needShowing = false;
+            boolean needHiding = false;
+
+            if (!isNonOpaqueForMixing()) {
+                needHiding = true;
+            }
+
+            mixingCutoutRegion = region;
+
+            if (!isNonOpaqueForMixing()) {
+                needShowing = true;
+            }
+
+            if (isMixingNeeded()) {
+                if (needHiding) {
+                    mixOnHiding(isLightweight());
+                }
+                if (needShowing) {
+                    mixOnShowing();
+                }
+            }
+        }
     }
 
     // ****************** END OF MIXING CODE ********************************

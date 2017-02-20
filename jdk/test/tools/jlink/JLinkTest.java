@@ -32,13 +32,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.spi.ToolProvider;
 import java.util.stream.Stream;
 
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.internal.PluginRepository;
 import tests.Helper;
 import tests.JImageGenerator;
-import tests.JImageGenerator.InMemoryFile;
 
 /*
  * @test
@@ -48,19 +48,26 @@ import tests.JImageGenerator.InMemoryFile;
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jlink.internal
- *          jdk.jlink/jdk.tools.jmod
+ *          jdk.jlink/jdk.tools.jlink.plugin
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.compiler
  * @build tests.*
  * @run main/othervm -Xmx1g JLinkTest
  */
 public class JLinkTest {
+    static final ToolProvider JLINK_TOOL = ToolProvider.findFirst("jlink")
+        .orElseThrow(() ->
+            new RuntimeException("jlink tool not found")
+        );
+
     // number of built-in plugins from jdk.jlink module
     private static int getNumJlinkPlugins() {
         ModuleDescriptor desc = Plugin.class.getModule().getDescriptor();
-        return desc.provides().
-                    get(Plugin.class.getName()).
-                    providers().size();
+        return desc.provides().stream()
+                .filter(p -> p.service().equals(Plugin.class.getName()))
+                .map(p -> p.providers().size())
+                .findAny()
+                .orElse(0);
     }
 
     private static boolean isOfJLinkModule(Plugin p) {
@@ -105,29 +112,17 @@ public class JLinkTest {
                     .modulePath(helper.defaultModulePath())
                     .output(helper.createNewImageDir(moduleName))
                     .addMods("leaf1")
-                    .option("")
                     .call().assertSuccess();
             JImageGenerator.getJLinkTask()
                     .modulePath(helper.defaultModulePath())
                     .addMods("leaf1")
                     .option("--output")
-                    .option("")
                     .call().assertFailure("Error: no value given for --output");
             JImageGenerator.getJLinkTask()
                     .modulePath("")
                     .output(helper.createNewImageDir(moduleName))
                     .addMods("leaf1")
-                    .option("")
                     .call().assertFailure("Error: no value given for --module-path");
-        }
-
-        {
-            String moduleName = "filter";
-            Path jmod = helper.generateDefaultJModule(moduleName).assertSuccess();
-            String className = "_A.class";
-            JImageGenerator.addFiles(jmod, new InMemoryFile(className, new byte[0]));
-            Path image = helper.generateDefaultImage(moduleName).assertSuccess();
-            helper.checkImage(image, moduleName, new String[] {"/" + moduleName + "/" + className}, null);
         }
 
         {
@@ -137,7 +132,6 @@ public class JLinkTest {
                     .modulePath(helper.defaultModulePath())
                     .output(helper.createNewImageDir(moduleName))
                     .addMods("m")
-                    .option("")
                     .call().assertSuccess();
             moduleName = "mod";
             jmod = helper.generateDefaultJModule(moduleName).assertSuccess();
@@ -145,14 +139,51 @@ public class JLinkTest {
                     .modulePath(helper.defaultModulePath())
                     .output(helper.createNewImageDir(moduleName))
                     .addMods("m")
-                    .option("")
+                    .call().assertSuccess();
+        }
+
+        {
+            String moduleName = "m_8165735"; // JDK-8165735
+            helper.generateDefaultJModule(moduleName+"dependency").assertSuccess();
+            Path jmod = helper.generateDefaultJModule(moduleName, moduleName+"dependency").assertSuccess();
+            JImageGenerator.getJLinkTask()
+                    .modulePath(helper.defaultModulePath())
+                    .repeatedModulePath(".") // second --module-path overrides the first one
+                    .output(helper.createNewImageDir(moduleName))
+                    .addMods(moduleName)
+                    // second --module-path does not have that module
+                    .call().assertFailure("Error: Module m_8165735 not found");
+
+            JImageGenerator.getJLinkTask()
+                    .modulePath(".") // first --module-path overridden later
+                    .repeatedModulePath(helper.defaultModulePath())
+                    .output(helper.createNewImageDir(moduleName))
+                    .addMods(moduleName)
+                    // second --module-path has that module
+                    .call().assertSuccess();
+
+            JImageGenerator.getJLinkTask()
+                    .modulePath(helper.defaultModulePath())
+                    .output(helper.createNewImageDir(moduleName))
+                    .limitMods(moduleName)
+                    .repeatedLimitMods("java.base") // second --limit-modules overrides first
+                    .addMods(moduleName)
+                    .call().assertFailure("Error: Module m_8165735dependency not found, required by m_8165735");
+
+            JImageGenerator.getJLinkTask()
+                    .modulePath(helper.defaultModulePath())
+                    .output(helper.createNewImageDir(moduleName))
+                    .limitMods("java.base")
+                    .repeatedLimitMods(moduleName) // second --limit-modules overrides first
+                    .addMods(moduleName)
                     .call().assertSuccess();
         }
 
         {
             // Help
             StringWriter writer = new StringWriter();
-            jdk.tools.jlink.internal.Main.run(new String[]{"--help"}, new PrintWriter(writer));
+            PrintWriter pw = new PrintWriter(writer);
+            JLINK_TOOL.run(pw, pw, "--help");
             String output = writer.toString();
             if (output.split("\n").length < 10) {
                 System.err.println(output);
@@ -161,20 +192,11 @@ public class JLinkTest {
         }
 
         {
-            // License files
-            String copied = "LICENSE";
-            String[] arr = copied.split(",");
-            String[] copyFiles = new String[2];
-            copyFiles[0] = "--copy-files";
-            copyFiles[1] = copied;
-            Path imageDir = helper.generateDefaultImage(copyFiles, "composite2").assertSuccess();
-            helper.checkImage(imageDir, "composite2", null, null, arr);
-        }
-
-        {
             // List plugins
             StringWriter writer = new StringWriter();
-            jdk.tools.jlink.internal.Main.run(new String[]{"--list-plugins"}, new PrintWriter(writer));
+            PrintWriter pw = new PrintWriter(writer);
+
+            JLINK_TOOL.run(pw, pw, "--list-plugins");
             String output = writer.toString();
             long number = Stream.of(output.split("\\R"))
                     .filter((s) -> s.matches("Plugin Name:.*"))
@@ -247,18 +269,28 @@ public class JLinkTest {
             helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: Invalid compression level invalid");
         }
 
-        // @file
+        // orphan argument - JDK-8166810
         {
-            Path path = Paths.get("embedded.properties");
-            Files.write(path, Collections.singletonList("--strip-debug --add-modules " +
-                    "toto.unknown --compress UNKNOWN\n"));
-            String[] userOptions = {"@", path.toAbsolutePath().toString()};
-            String moduleName = "configembeddednocompresscomposite2";
+            String[] userOptions = {"--compress", "2", "foo" };
+            String moduleName = "orphanarg1";
             helper.generateDefaultJModule(moduleName, "composite2");
-            Path imageDir = helper.generateDefaultImage(userOptions, moduleName).assertSuccess();
-            helper.checkImage(imageDir, moduleName, null, null);
+            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: orphan argument: foo");
         }
 
+        // orphan argument - JDK-8166810
+        {
+            String[] userOptions = {"--output", "foo", "bar" };
+            String moduleName = "orphanarg2";
+            helper.generateDefaultJModule(moduleName, "composite2");
+            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: orphan argument: bar");
+        }
+
+        // basic check for --help - JDK-8173717
+        {
+            JImageGenerator.getJLinkTask()
+                    .option("--help")
+                    .call().assertSuccess();
+        }
     }
 
     private static void testCompress(Helper helper, String moduleName, String... userOptions) throws IOException {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,10 @@
 static jboolean GetJVMPath(const char *jrepath, const char *jvmtype,
                            char *jvmpath, jint jvmpathsize);
 static jboolean GetJREPath(char *path, jint pathsize);
+
+#ifdef USE_REGISTRY_LOOKUP
+jboolean GetPublicJREHome(char *buf, jint bufsize);
+#endif
 
 /* We supports warmup for UI stack that is performed in parallel
  * to VM initialization.
@@ -147,22 +151,6 @@ IsJavaw()
 }
 
 /*
- * Returns the arch path, to get the current arch use the
- * macro GetArch, nbits here is ignored for now.
- */
-const char *
-GetArchPath(int nbits)
-{
-#ifdef _M_AMD64
-    return "amd64";
-#elif defined(_M_IA64)
-    return "ia64";
-#else
-    return "i386";
-#endif
-}
-
-/*
  *
  */
 void
@@ -203,8 +191,8 @@ CreateExecutionEnvironment(int *pargc, char ***pargv,
         exit(2);
     }
 
-    JLI_Snprintf(jvmcfg, so_jvmcfg, "%s%slib%s%s%sjvm.cfg",
-        jrepath, FILESEP, FILESEP, (char*)GetArch(), FILESEP);
+    JLI_Snprintf(jvmcfg, so_jvmcfg, "%s%slib%sjvm.cfg",
+        jrepath, FILESEP, FILESEP);
 
     /* Find the specified JVM type */
     if (ReadKnownVMs(jvmcfg, JNI_FALSE) < 1) {
@@ -346,9 +334,16 @@ GetJREPath(char *path, jint pathsize)
         }
     }
 
+#ifdef USE_REGISTRY_LOOKUP
+    /* Lookup public JRE using Windows registry. */
+    if (GetPublicJREHome(path, pathsize)) {
+        JLI_TraceLauncher("JRE path is %s\n", path);
+        return JNI_TRUE;
+    }
+#endif
+
     JLI_ReportErrorMessage(JRE_ERROR8 JAVA_DLL);
     return JNI_FALSE;
-
 }
 
 /*
@@ -423,11 +418,11 @@ TruncatePath(char *buf)
     *JLI_StrRChr(buf, '\\') = '\0'; /* remove .exe file name */
     if ((cp = JLI_StrRChr(buf, '\\')) == 0) {
         /* This happens if the application is in a drive root, and
-        * there is no bin directory. */
+         * there is no bin directory. */
         buf[0] = '\0';
         return JNI_FALSE;
     }
-    *cp = '\0';  /* remove the bin\ part */
+    *cp = '\0'; /* remove the bin\ part */
     return JNI_TRUE;
 }
 
@@ -449,16 +444,16 @@ GetApplicationHome(char *buf, jint bufsize)
 jboolean
 GetApplicationHomeFromDll(char *buf, jint bufsize)
 {
-    HMODULE hModule;
-    DWORD dwFlags =
-        GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-        GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
+    HMODULE module;
+    DWORD flags = GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                  GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT;
 
-    if (GetModuleHandleEx(dwFlags, (LPCSTR)&GetJREPath, &hModule) == 0) {
-        return JNI_FALSE;
-    };
-    GetModuleFileName(hModule, buf, bufsize);
-    return TruncatePath(buf);
+    if (GetModuleHandleEx(flags, (LPCSTR)&GetJREPath, &module) != 0) {
+        if (GetModuleFileName(module, buf, bufsize) != 0) {
+            return TruncatePath(buf);
+        }
+    }
+    return JNI_FALSE;
 }
 
 /*
@@ -626,11 +621,6 @@ void  JLI_ReportExceptionDescription(JNIEnv * env) {
     } else {
         (*env)->ExceptionDescribe(env);
     }
-}
-
-jboolean
-ServerClassMachine() {
-    return (GetErgoPolicy() == ALWAYS_SERVER_CLASS) ? JNI_TRUE : JNI_FALSE;
 }
 
 /*

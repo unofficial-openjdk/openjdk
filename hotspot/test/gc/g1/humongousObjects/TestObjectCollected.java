@@ -19,7 +19,6 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 package gc.g1.humongousObjects;
@@ -38,13 +37,10 @@ import java.lang.ref.WeakReference;
  * @summary checks that after different type of GCs weak/soft references to humongous object behave correspondingly to
  * actual object behavior
  * @requires vm.gc.G1
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  * @modules java.management
  * @build sun.hotspot.WhiteBox
- *        gc.testlibrary.Helpers
- *        gc.g1.humongousObjects.TestObjectCollected
- *
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *             sun.hotspot.WhiteBox$WhiteBoxPermission
  *

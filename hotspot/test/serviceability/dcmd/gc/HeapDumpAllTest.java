@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,19 +24,11 @@
 /*
  * @test
  * @summary Test of diagnostic command GC.heap_dump -all=true
- * @library /testlibrary
- * @library /test/lib/share/classes
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.compiler
  *          java.management
- *          jdk.jvmstat/sun.jvmstat.monitor
- * @build jdk.test.lib.*
- * @build jdk.test.lib.dcmd.*
- * @build jdk.test.lib.hprof.*
- * @build jdk.test.lib.hprof.model.*
- * @build jdk.test.lib.hprof.parser.*
- * @build jdk.test.lib.hprof.util.*
- * @build HeapDumpTest
+ *          jdk.internal.jvmstat/sun.jvmstat.monitor
  * @run testng HeapDumpAllTest
  */
 public class HeapDumpAllTest extends HeapDumpTest {

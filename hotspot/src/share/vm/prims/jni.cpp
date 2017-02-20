@@ -59,7 +59,7 @@
 #include "prims/jvm_misc.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "prims/jvmtiThreadState.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/compilationPolicy.hpp"
 #include "runtime/fieldDescriptor.hpp"
 #include "runtime/fprofiler.hpp"
@@ -1173,7 +1173,7 @@ static void jni_invoke_nonstatic(JNIEnv *env, JavaValue* result, jobject receive
   args->set_java_argument_object(&java_args);
 
   // handle arguments
-  assert(!method->is_static(), "method should not be static");
+  assert(!method->is_static(), "method %s should not be static", method->name_and_sig_as_C_string());
   args->push_receiver(h_recv); // Push jobject handle
 
   // Fill out JavaCallArguments object
@@ -3475,40 +3475,6 @@ JNI_ENTRY(jobject, jni_GetModule(JNIEnv* env, jclass clazz))
 JNI_END
 
 
-JNI_ENTRY(void, jni_AddModuleReads(JNIEnv* env, jobject m1, jobject m2))
-  JNIWrapper("AddModuleReads");
-  if (m1 == NULL || m2 == NULL) {
-    THROW(vmSymbols::java_lang_NullPointerException());
-  }
-  JavaValue result(T_VOID);
-  Handle m1_h(THREAD, JNIHandles::resolve(m1));
-  if (!java_lang_reflect_Module::is_instance(m1_h())) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad m1 object");
-  }
-  Handle m2_h(THREAD, JNIHandles::resolve(m2));
-  if (!java_lang_reflect_Module::is_instance(m2_h())) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad m2 object");
-  }
-  JavaCalls::call_static(&result,
-                         KlassHandle(THREAD, SystemDictionary::module_Modules_klass()),
-                         vmSymbols::addReads_name(),
-                         vmSymbols::addReads_signature(),
-                         m1_h,
-                         m2_h,
-                         THREAD);
-JNI_END
-
-
-JNI_ENTRY(jboolean, jni_CanReadModule(JNIEnv* env, jobject m1, jobject m2))
-  JNIWrapper("CanReadModule");
-  if (m1 == NULL || m2 == NULL) {
-    THROW_(vmSymbols::java_lang_NullPointerException(), JNI_FALSE);
-  }
-  jboolean res = Modules::can_read_module(m1, m2, CHECK_false);
-  return res;
-JNI_END
-
-
 // Structure containing all jni functions
 struct JNINativeInterface_ jni_NativeInterface = {
     NULL,
@@ -3792,9 +3758,7 @@ struct JNINativeInterface_ jni_NativeInterface = {
 
     // Module features
 
-    jni_GetModule,
-    jni_AddModuleReads,
-    jni_CanReadModule
+    jni_GetModule
 };
 
 

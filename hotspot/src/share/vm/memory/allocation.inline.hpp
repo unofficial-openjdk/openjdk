@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 #ifndef SHARE_VM_MEMORY_ALLOCATION_INLINE_HPP
 #define SHARE_VM_MEMORY_ALLOCATION_INLINE_HPP
 
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/os.hpp"
 #include "services/memTracker.hpp"
 #include "utilities/globalDefinitions.hpp"
@@ -150,6 +150,24 @@ size_t MmapArrayAllocator<E, F>::size_for(size_t length) {
   size_t size = length * sizeof(E);
   int alignment = os::vm_allocation_granularity();
   return align_size_up(size, alignment);
+}
+
+template <class E, MEMFLAGS F>
+E* MmapArrayAllocator<E, F>::allocate_or_null(size_t length) {
+  size_t size = size_for(length);
+  int alignment = os::vm_allocation_granularity();
+
+  char* addr = os::reserve_memory(size, NULL, alignment, F);
+  if (addr == NULL) {
+    return NULL;
+  }
+
+  if (os::commit_memory(addr, size, !ExecMem, "Allocator (commit)")) {
+    return (E*)addr;
+  } else {
+    os::release_memory(addr, size);
+    return NULL;
+  }
 }
 
 template <class E, MEMFLAGS F>

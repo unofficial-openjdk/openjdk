@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,10 +24,10 @@
 /*
  * @test
  * @bug 8136421
- * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @requires vm.jvmci
  *         & (vm.compMode != "Xcomp" | vm.opt.TieredCompilation == null | vm.opt.TieredCompilation == true)
  * @summary no "-Xcomp -XX:-TieredCompilation" combination allowed until JDK-8140018 is resolved
- * @library / /testlibrary /test/lib
+ * @library / /test/lib
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
  * @modules java.base/jdk.internal.org.objectweb.asm
@@ -36,9 +36,7 @@
  *          jdk.vm.ci/jdk.vm.ci.code
  *          jdk.vm.ci/jdk.vm.ci.meta
  *
- * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
- * @build compiler.jvmci.compilerToVM.MaterializeVirtualObjectTest
- * @build sun.hotspot.WhiteBox
+ * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xmixed -Xbootclasspath/a:.
@@ -46,6 +44,8 @@
  *                   -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
  *                   -XX:CompileCommand=exclude,*::check
  *                   -XX:+DoEscapeAnalysis -XX:-UseCounterDecay
+ *                   -XX:CompileCommand=dontinline,compiler/jvmci/compilerToVM/MaterializeVirtualObjectTest,testFrame
+ *                   -XX:CompileCommand=inline,compiler/jvmci/compilerToVM/MaterializeVirtualObjectTest,recurse
  *                   -Xbatch
  *                   -Dcompiler.jvmci.compilerToVM.MaterializeVirtualObjectTest.invalidate=false
  *                   compiler.jvmci.compilerToVM.MaterializeVirtualObjectTest
@@ -121,14 +121,25 @@ public class MaterializeVirtualObjectTest {
         }
         Asserts.assertTrue(WB.isMethodCompiled(METHOD), getName()
                 + "Method unexpectedly not compiled");
+        Asserts.assertTrue(WB.getMethodCompilationLevel(METHOD) == 4, getName()
+                + "Method not compiled at level 4");
         testFrame("someString", COMPILE_THRESHOLD);
     }
 
     private void testFrame(String str, int iteration) {
         Helper helper = new Helper(str);
-        check(iteration);
+        recurse(2, iteration);
         Asserts.assertTrue((helper.string != null) && (this != null)
-                && (helper != null), getName() + " : some locals are null");
+                           && (helper != null), String.format("%s : some locals are null", getName()));
+    }
+    private void recurse(int depth, int iteration) {
+        if (depth == 0) {
+            check(iteration);
+        } else {
+            Integer s = new Integer(depth);
+            recurse(depth - 1, iteration);
+            Asserts.assertEQ(s.intValue(), depth, String.format("different values: %s != %s", s.intValue(), depth));
+        }
     }
 
     private void check(int iteration) {

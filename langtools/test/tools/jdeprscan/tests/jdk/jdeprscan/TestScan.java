@@ -23,6 +23,7 @@
 
 /*
  * @test
+ * @bug 8145464 8164837 8165646
  * @summary Basic test of jdeprscan's scanning phase.
  * @modules jdk.jdeps/com.sun.tools.jdeprscan
  * @library ../../../cases
@@ -74,7 +75,7 @@ public class TestScan {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (PrintStream out = new PrintStream(baos, false, "UTF-8")) {
             boolean r = Main.call(out, System.err,
-                "-cp", deprcases, "--Xload-dir", deprcases, deprusage);
+                "--class-path", deprcases, "--Xload-dir", deprcases, deprusage);
             assertTrue(r);
         }
         byte[] bytes = baos.toByteArray();
@@ -89,6 +90,7 @@ public class TestScan {
                 new InputStreamReader(
                     new ByteArrayInputStream(bytes), StandardCharsets.UTF_8))
                         .lines()
+                        .filter(line -> !line.endsWith(":"))
                         .map(line -> line.split(" +"))
                         .map(array -> array[1])
                         .collect(Collectors.toSet());

@@ -106,16 +106,40 @@ public class AtomicBoolean implements java.io.Serializable {
     /**
      * Possibly atomically sets the value to {@code newValue}
      * if the current value {@code == expectedValue},
-     * with memory effects as specified by {@link VarHandle#weakCompareAndSet}.
+     * with memory effects as specified by {@link VarHandle#weakCompareAndSetPlain}.
+     *
+     * @deprecated This method has plain memory effects but the method
+     * name implies volatile memory effects (see methods such as
+     * {@link #compareAndExchange} and {@link #compareAndSet}).  To avoid
+     * confusion over plain or volatile memory effects it is recommended that
+     * the method {@link #weakCompareAndSetPlain} be used instead.
      *
      * @param expectedValue the expected value
      * @param newValue the new value
      * @return {@code true} if successful
+     * @see #weakCompareAndSetPlain
      */
+    @Deprecated(since="9")
     public boolean weakCompareAndSet(boolean expectedValue, boolean newValue) {
-        return VALUE.weakCompareAndSet(this,
-                                       (expectedValue ? 1 : 0),
-                                       (newValue ? 1 : 0));
+        return VALUE.weakCompareAndSetPlain(this,
+                                            (expectedValue ? 1 : 0),
+                                            (newValue ? 1 : 0));
+    }
+
+    /**
+     * Possibly atomically sets the value to {@code newValue}
+     * if the current value {@code == expectedValue},
+     * with memory effects as specified by {@link VarHandle#weakCompareAndSetPlain}.
+     *
+     * @param expectedValue the expected value
+     * @param newValue the new value
+     * @return {@code true} if successful
+     * @since 9
+     */
+    public boolean weakCompareAndSetPlain(boolean expectedValue, boolean newValue) {
+        return VALUE.weakCompareAndSetPlain(this,
+                                            (expectedValue ? 1 : 0),
+                                            (newValue ? 1 : 0));
     }
 
     /**
@@ -285,7 +309,7 @@ public class AtomicBoolean implements java.io.Serializable {
      * Possibly atomically sets the value to {@code newValue} if the current
      * value {@code == expectedValue},
      * with memory effects as specified by
-     * {@link VarHandle#weakCompareAndSetVolatile}.
+     * {@link VarHandle#weakCompareAndSet}.
      *
      * @param expectedValue the expected value
      * @param newValue the new value
@@ -293,9 +317,9 @@ public class AtomicBoolean implements java.io.Serializable {
      * @since 9
      */
     public final boolean weakCompareAndSetVolatile(boolean expectedValue, boolean newValue) {
-        return VALUE.weakCompareAndSetVolatile(this,
-                                               (expectedValue ? 1 : 0),
-                                               (newValue ? 1 : 0));
+        return VALUE.weakCompareAndSet(this,
+                                       (expectedValue ? 1 : 0),
+                                       (newValue ? 1 : 0));
     }
 
     /**

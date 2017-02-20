@@ -41,6 +41,14 @@ extern "C" {
   typedef jint (JNICALL *vfprintf_hook_t)(FILE *fp, const char *format, va_list args)  ATTRIBUTE_PRINTF(2, 0);
 }
 
+// Obsolete or deprecated -XX flag.
+struct SpecialFlag {
+  const char* name;
+  JDK_Version deprecated_in; // When the deprecation warning started (or "undefined").
+  JDK_Version obsolete_in;   // When the obsolete warning started (or "undefined").
+  JDK_Version expired_in;    // When the option expires (or "undefined").
+};
+
 // PathString is used as:
 //  - the underlying value for a SystemProperty
 //  - the path portion of an --patch-module module/path pair
@@ -447,6 +455,10 @@ class Arguments : AllStatic {
   static intx _Tier3InvokeNotifyFreqLog;
   static intx _Tier4InvocationThreshold;
 
+  // Compilation mode.
+  static bool compilation_mode_selected();
+  static void select_compilation_mode_ergonomically();
+
   // Tiered
   static void set_tiered_flags();
   // CMS/ParNew garbage collectors
@@ -489,9 +501,6 @@ class Arguments : AllStatic {
 
   static int process_patch_mod_option(const char* patch_mod_tail, bool* patch_mod_javabase);
 
-  // Miscellaneous system property setter
-  static bool append_to_addmods_property(const char* module_name);
-
   // Aggressive optimization flags.
   static jint set_aggressive_opts_flags();
 
@@ -521,6 +530,8 @@ class Arguments : AllStatic {
                                            ScopedVMInitArgs* args_out);
 
   static bool handle_deprecated_print_gc_flags();
+
+  static void handle_extra_cms_flags(const char* msg);
 
   static jint parse_vm_init_args(const JavaVMInitArgs *java_tool_options_args,
                                  const JavaVMInitArgs *java_options_args,
@@ -631,6 +642,7 @@ class Arguments : AllStatic {
 #if INCLUDE_JVMCI
   // Check consistency of jvmci vm argument settings.
   static bool check_jvmci_args_consistency();
+  static void set_jvmci_specific_flags();
 #endif
   // Check for consistency in the selection of the garbage collector.
   static bool check_gc_consistency();        // Check user-selected gc

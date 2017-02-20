@@ -72,14 +72,14 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
     NOF_PUBLICITY_LEVELS
   };
 
-  enum { LegalClass, LegalField, LegalMethod, LegalModule }; // used to verify unqualified names
+  enum { LegalClass, LegalField, LegalMethod }; // used to verify unqualified names
 
  private:
   const ClassFileStream* _stream; // Actual input stream
   const Symbol* _requested_name;
   Symbol* _class_name;
   mutable ClassLoaderData* _loader_data;
-  const Klass* _host_klass;
+  const InstanceKlass* _host_klass;
   GrowableArray<Handle>* _cp_patches; // overrides for CP entries
 
   // Metadata created before the instance klass is created.  Must be deallocated
@@ -139,8 +139,8 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   bool _need_verify;
   bool _relax_verify;
 
-  bool _has_default_methods;
-  bool _declares_default_methods;
+  bool _has_nonstatic_concrete_methods;
+  bool _declares_nonstatic_concrete_methods;
   bool _has_final_method;
 
   // precomputed flags
@@ -154,6 +154,9 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   void post_process_parsed_stream(const ClassFileStream* const stream,
                                   ConstantPool* cp,
                                   TRAPS);
+
+  void prepend_host_package_name(const InstanceKlass* host_klass, TRAPS);
+  void fix_anonymous_class_name(TRAPS);
 
   void fill_instance_klass(InstanceKlass* ik, bool cf_changed_in_CFLH, TRAPS);
   void set_klass(InstanceKlass* instance);
@@ -183,7 +186,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   void parse_interfaces(const ClassFileStream* const stream,
                         const int itfs_len,
                         ConstantPool* const cp,
-                        bool* has_default_methods,
+                        bool* has_nonstatic_concrete_methods,
                         TRAPS);
 
   const InstanceKlass* parse_super_class(ConstantPool* const cp,
@@ -221,7 +224,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                      bool is_interface,
                      AccessFlags* const promoted_flags,
                      bool* const has_final_method,
-                     bool* const declares_default_methods,
+                     bool* const declares_nonstatic_concrete_methods,
                      TRAPS);
 
   const u2* parse_exception_table(const ClassFileStream* const stream,
@@ -474,7 +477,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
                   Symbol* name,
                   ClassLoaderData* loader_data,
                   Handle protection_domain,
-                  const Klass* host_klass,
+                  const InstanceKlass* host_klass,
                   GrowableArray<Handle>* cp_patches,
                   Publicity pub_level,
                   TRAPS);
@@ -500,7 +503,7 @@ class ClassFileParser VALUE_OBJ_CLASS_SPEC {
   bool is_anonymous() const { return _host_klass != NULL; }
   bool is_interface() const { return _access_flags.is_interface(); }
 
-  const Klass* host_klass() const { return _host_klass; }
+  const InstanceKlass* host_klass() const { return _host_klass; }
   const GrowableArray<Handle>* cp_patches() const { return _cp_patches; }
   ClassLoaderData* loader_data() const { return _loader_data; }
   const Symbol* class_name() const { return _class_name; }

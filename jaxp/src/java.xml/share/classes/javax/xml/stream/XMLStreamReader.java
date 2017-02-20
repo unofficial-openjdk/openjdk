@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +23,8 @@
  * questions.
  */
 
-/*
- * Copyright (c) 2009 by Oracle Corporation. All Rights Reserved.
- */
-
 package javax.xml.stream;
 
-import java.io.Reader;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
 
@@ -37,19 +33,26 @@ import javax.xml.namespace.QName;
  *  It is designed to be the lowest level and most efficient way to
  *  read XML data.
  *
- * <p> The XMLStreamReader is designed to iterate over XML using
+ * <p>
+ * The XMLStreamReader is designed to iterate over XML using
  * next() and hasNext().  The data can be accessed using methods such as getEventType(),
  * getNamespaceURI(), getLocalName() and getText();
  *
- * <p> The <a href="#next()">next()</a> method causes the reader to read the next parse event.
- * The next() method returns an integer which identifies the type of event just read.
- * <p> The event type can be determined using <a href="#getEventType()">getEventType()</a>.
- * <p> Parsing events are defined as the XML Declaration, a DTD,
+ * <p>
+ * An XMLStreamReader instance is created with an initial event type START_DOCUMENT.
+ * At any moment in time, it has a current event that the methods of the interface
+ * access and may load the next event through the {@link #next() next()} method.
+ * The current event type can be determined by {@link #getEventType getEventType()}, and
+ * the next returned by the {@link #next() next()} method.
+ *
+ * <p>
+ * Parsing events are defined as the XML Declaration, a DTD,
  * start tag, character data, white space, end tag, comment,
  * or processing instruction.  An attribute or namespace event may be encountered
  * at the root level of a document as the result of a query operation.
  *
- * <p>For XML 1.0 compliance an XML processor must pass the
+ * <p>
+ * For XML 1.0 compliance an XML processor must pass the
  * identifiers of declared unparsed entities, notation declarations and their
  * associated identifiers to the application.  This information is
  * provided through the property API on this interface.
@@ -63,7 +66,8 @@ import javax.xml.namespace.QName;
  * These properties can only be accessed during a DTD event and
  * are defined to return null if the information is not available.
  *
- * <p>The following table describes which methods are valid in what state.
+ * <p>
+ * The following table describes which methods are valid in what state.
  * If a method is called in an invalid state the method will throw a
  * java.lang.IllegalStateException.
  *
@@ -502,8 +506,10 @@ public interface XMLStreamReader extends XMLStreamConstants {
   //  public void recycle() throws XMLStreamException;
 
   /**
-   * Returns an integer code that indicates the type
-   * of the event the cursor is pointing to.
+   * Returns an integer code that indicates the type of the event the cursor is
+   * pointing to. The initial event type is {@link #START_DOCUMENT}.
+   *
+   * @return the type of the current event
    */
   public int getEventType();
 
@@ -590,6 +596,8 @@ public interface XMLStreamReader extends XMLStreamConstants {
   /**
    * Returns the offset into the text character array where the first
    * character (of this text event) is stored.
+   *
+   * @return the starting position of the text in the character array
    * @throws java.lang.IllegalStateException if this state is not
    * a valid text state.
    */
@@ -598,6 +606,8 @@ public interface XMLStreamReader extends XMLStreamConstants {
   /**
    * Returns the length of the sequence of characters for this
    * Text event within the text character array.
+   *
+   * @return the length of the text
    * @throws java.lang.IllegalStateException if this state is not
    * a valid text state.
    */
@@ -610,9 +620,11 @@ public interface XMLStreamReader extends XMLStreamConstants {
   public String getEncoding();
 
   /**
-   * Return true if the current event has text, false otherwise
+   * Return a boolean indicating whether the current event has text.
    * The following events have text:
    * CHARACTERS,DTD ,ENTITY_REFERENCE, COMMENT, SPACE
+   *
+   * @return true if the event has text, false otherwise
    */
   public boolean hasText();
 
@@ -623,6 +635,7 @@ public interface XMLStreamReader extends XMLStreamConstants {
    * location and null for the publicId and systemId.
    * The location information is only valid until next() is
    * called.
+   * @return the location of the cursor
    */
   public Location getLocation();
 
@@ -647,8 +660,10 @@ public interface XMLStreamReader extends XMLStreamConstants {
   public String getLocalName();
 
   /**
-   * returns true if the current event has a name (is a START_ELEMENT or END_ELEMENT)
-   * returns false otherwise
+   * returns a boolean indicating whether the current event has a name
+   * (is a START_ELEMENT or END_ELEMENT).
+   *
+   * @return true if the event has a name, false otherwise
    */
   public boolean hasName();
 

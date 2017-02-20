@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -119,7 +119,8 @@ import java.io.Serializable;
  *
  * <ul>
  * <li>They are <em>structurally immutable</em>. Keys and values cannot be added,
- * removed, or updated. Attempts to do so result in {@code UnsupportedOperationException}.
+ * removed, or updated. Calling any mutator method will always cause
+ * {@code UnsupportedOperationException} to be thrown.
  * However, if the contained keys or values are themselves mutable, this may cause the
  * Map to behave inconsistently or its contents to appear to change.
  * <li>They disallow {@code null} keys and values. Attempts to create them with
@@ -1285,7 +1286,7 @@ public interface Map<K, V> {
      * @since 9
      */
     static <K, V> Map<K, V> of() {
-        return new ImmutableCollections.Map0<>();
+        return ImmutableCollections.Map0.instance();
     }
 
     /**
@@ -1601,9 +1602,8 @@ public interface Map<K, V> {
     @SafeVarargs
     @SuppressWarnings("varargs")
     static <K, V> Map<K, V> ofEntries(Entry<? extends K, ? extends V>... entries) {
-        Objects.requireNonNull(entries);
-        if (entries.length == 0) {
-            return new ImmutableCollections.Map0<>();
+        if (entries.length == 0) { // implicit null check of entries
+            return ImmutableCollections.Map0.instance();
         } else if (entries.length == 1) {
             return new ImmutableCollections.Map1<>(entries[0].getKey(),
                                                    entries[0].getValue());

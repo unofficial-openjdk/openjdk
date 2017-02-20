@@ -3766,7 +3766,7 @@ class StubGenerator: public StubCodeGenerator {
     // however can use the register value directly if it is callee saved.
     __ get_thread(java_thread);
 
-    __ reset_last_Java_frame(java_thread, true, false);
+    __ reset_last_Java_frame(java_thread, true);
 
     __ leave(); // required for proper stackwalking of RuntimeStub frame
 
@@ -3857,7 +3857,7 @@ class StubGenerator: public StubCodeGenerator {
       StubRoutines::_crc32c_table_addr = (address)StubRoutines::x86::_crc32c_table;
       StubRoutines::_updateBytesCRC32C = generate_updateBytesCRC32C(supports_clmul);
     }
-    if (VM_Version::supports_sse2() && UseLibmIntrinsic) {
+    if (VM_Version::supports_sse2() && UseLibmIntrinsic && InlineIntrinsics) {
       if (vmIntrinsics::is_intrinsic_available(vmIntrinsics::_dsin) ||
           vmIntrinsics::is_intrinsic_available(vmIntrinsics::_dcos) ||
           vmIntrinsics::is_intrinsic_available(vmIntrinsics::_dtan)) {

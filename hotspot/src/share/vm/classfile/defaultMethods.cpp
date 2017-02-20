@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,12 +77,10 @@ class PseudoScope : public ResourceObj {
 };
 
 static void print_slot(outputStream* str, Symbol* name, Symbol* signature) {
-  ResourceMark rm;
   str->print("%s%s", name->as_C_string(), signature->as_C_string());
 }
 
 static void print_method(outputStream* str, Method* mo, bool with_class=true) {
-  ResourceMark rm;
   if (with_class) {
     str->print("%s.", mo->klass_name()->as_C_string());
   }
@@ -914,7 +912,7 @@ static void create_defaults_and_exceptions(
       BytecodeBuffer buffer;
 
       if (log_is_enabled(Debug, defaultmethods)) {
-        ResourceMark rm;
+        ResourceMark rm(THREAD);
         outputStream* logstream = Log(defaultmethods)::debug_stream();
         logstream->print("for slot: ");
         slot->print_on(logstream);
@@ -929,6 +927,7 @@ static void create_defaults_and_exceptions(
       if (method->has_target()) {
         Method* selected = method->get_selected_target();
         if (selected->method_holder()->is_interface()) {
+          assert(!selected->is_private(), "pushing private interface method as default");
           defaults.push(selected);
         }
       } else if (method->throws_exception()) {

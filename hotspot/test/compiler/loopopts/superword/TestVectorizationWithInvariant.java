@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,6 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /**
@@ -27,14 +26,13 @@
  * @bug 8078497
  * @summary Tests correct alignment of vectors with loop invariant offset.
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary
+ * @library /test/lib
  * @run main compiler.loopopts.superword.TestVectorizationWithInvariant
  */
 
 package compiler.loopopts.superword;
 
 import jdk.internal.misc.Unsafe;
-import jdk.test.lib.Utils;
 
 public class TestVectorizationWithInvariant {
 
@@ -43,7 +41,7 @@ public class TestVectorizationWithInvariant {
     private static final long CHAR_ARRAY_OFFSET;
 
     static {
-        unsafe = Utils.getUnsafe();
+        unsafe = Unsafe.getUnsafe();
         BYTE_ARRAY_OFFSET = unsafe.arrayBaseOffset(byte[].class);
         CHAR_ARRAY_OFFSET = unsafe.arrayBaseOffset(char[].class);
     }

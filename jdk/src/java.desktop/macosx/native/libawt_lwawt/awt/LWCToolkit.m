@@ -43,6 +43,13 @@
 
 #import <JavaRuntimeSupport/JavaRuntimeSupport.h>
 
+// SCROLL PHASE STATE
+#define SCROLL_PHASE_UNSUPPORTED 1
+#define SCROLL_PHASE_BEGAN 2
+#define SCROLL_PHASE_CONTINUED 3
+#define SCROLL_PHASE_CANCELLED 4
+#define SCROLL_PHASE_ENDED 5
+
 int gNumberOfButtons;
 jint* gButtonDownMasks;
 
@@ -72,6 +79,23 @@ static long eventCount;
     eventCount++;
 }
 
++ (jint) scrollStateWithEvent: (NSEvent*) event {
+
+    if ([event type] != NSScrollWheel) {
+        return 0;
+    }
+    
+    NSEventPhase phase = [event phase];
+    NSEventPhase momentumPhase = [event momentumPhase];
+    
+    if (!phase && !momentumPhase) return SCROLL_PHASE_UNSUPPORTED;
+    switch (phase) {
+        case NSEventPhaseBegan: return SCROLL_PHASE_BEGAN;
+        case NSEventPhaseCancelled: return SCROLL_PHASE_CANCELLED;
+        case NSEventPhaseEnded: return SCROLL_PHASE_ENDED;
+        default: return SCROLL_PHASE_CONTINUED;
+    }
+}
 @end
 
 
@@ -117,7 +141,7 @@ static long eventCount;
 }
 
 - (void)dealloc {
-    JNIEnv *env = [ThreadUtilities getJNIEnv];
+    JNIEnv *env = [ThreadUtilities getJNIEnvUncached];
     if (self.runnable) {
         (*env)->DeleteGlobalRef(env, self.runnable);
     }
@@ -125,7 +149,7 @@ static long eventCount;
 }
 
 - (void)perform {
-    JNIEnv* env = [ThreadUtilities getJNIEnv];
+    JNIEnv* env = [ThreadUtilities getJNIEnvUncached];
     static JNF_CLASS_CACHE(sjc_Runnable, "java/lang/Runnable");
     static JNF_MEMBER_CACHE(jm_Runnable_run, sjc_Runnable, "run", "()V");
     JNFCallVoidMethod(env, self.runnable, jm_Runnable_run);

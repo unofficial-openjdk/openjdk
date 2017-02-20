@@ -208,7 +208,7 @@ public abstract class Toolkit {
 
     /**
      * Returns whether dynamic layout of Containers on resize is currently
-     * enabled on the underlying operating system and/or window manager). If the
+     * enabled on the underlying operating system and/or window manager. If the
      * platform supports it, {@code setDynamicLayout(boolean)} may be used to
      * programmatically enable or disable platform dynamic layout. Regardless of
      * whether that toggling is supported, or whether {@code true} or {@code
@@ -468,7 +468,7 @@ public abstract class Toolkit {
     private static void fallbackToLoadClassForAT(String atName) {
         try {
             Class<?> c = Class.forName(atName, false, ClassLoader.getSystemClassLoader());
-            c.newInstance();
+            c.getConstructor().newInstance();
         } catch (ClassNotFoundException e) {
             newAWTError(e, "Assistive Technology not found: " + atName);
         } catch (InstantiationException e) {
@@ -583,15 +583,13 @@ public abstract class Toolkit {
                     }
                     try {
                         if (cls != null) {
-                            toolkit = (Toolkit)cls.newInstance();
+                            toolkit = (Toolkit)cls.getConstructor().newInstance();
                             if (GraphicsEnvironment.isHeadless()) {
                                 toolkit = new HeadlessToolkit(toolkit);
                             }
                         }
-                    } catch (final InstantiationException ignored) {
-                        throw new AWTError("Could not instantiate Toolkit: " + nm);
-                    } catch (final IllegalAccessException ignored) {
-                        throw new AWTError("Could not access Toolkit: " + nm);
+                    } catch (final ReflectiveOperationException ignored) {
+                        throw new AWTError("Could not create Toolkit: " + nm);
                     }
                     return null;
                 }
@@ -1069,6 +1067,7 @@ public abstract class Toolkit {
      * @see       java.awt.MenuShortcut
      * @since     1.1
      */
+    @SuppressWarnings("deprecation")
     public int getMenuShortcutKeyMask() throws HeadlessException {
         GraphicsEnvironment.checkHeadless();
 

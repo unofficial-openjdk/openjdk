@@ -38,20 +38,21 @@ import java.util.Set;
  * @summary Verify that for each group of mutually exclusive predicates defined
  *          in jdk.test.lib.Platform one and only one predicate
  *          evaluates to true.
- * @library /testlibrary
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
  * @run main TestMutuallyExclusivePlatformPredicates
  */
 public class TestMutuallyExclusivePlatformPredicates {
     private static enum MethodGroup {
-        ARCH("isARM", "isPPC", "isSparc", "isX86", "isX64", "isAArch64"),
+        ARCH("isAArch64", "isARM", "isPPC", "isS390x", "isSparc", "isX64", "isX86"),
         BITNESS("is32bit", "is64bit"),
         OS("isAix", "isLinux", "isOSX", "isSolaris", "isWindows"),
-        VM_TYPE("isClient", "isServer", "isGraal", "isMinimal", "isZero"),
+        VM_TYPE("isClient", "isServer", "isGraal", "isMinimal", "isZero", "isEmbedded"),
         MODE("isInt", "isMixed", "isComp"),
-        IGNORED("isDebugBuild", "shouldSAAttach",
-                "canPtraceAttachLinux", "canAttachOSX", "isTieredSupported");
+        IGNORED("isEmulatedClient", "isDebugBuild", "isFastDebugBuild", "isSlowDebugBuild",
+                "shouldSAAttach", "canPtraceAttachLinux", "canAttachOSX",
+                "isTieredSupported");
 
         public final List<String> methodNames;
 

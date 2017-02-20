@@ -25,11 +25,13 @@
 
 /**
  * Defines the JDBC RowSet API.
+ *
+ * @since 9
  */
 module java.sql.rowset {
-    requires public java.logging;
-    requires public java.naming;
-    requires public java.sql;
+    requires transitive java.logging;
+    requires transitive java.naming;
+    requires transitive java.sql;
 
     exports javax.sql.rowset;
     exports javax.sql.rowset.serial;

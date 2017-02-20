@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,8 @@
  *          java.rmi/sun.rmi.server
  *          java.rmi/sun.rmi.transport
  *          java.rmi/sun.rmi.transport.tcp
- * @build TestLibrary RMID
+ *          java.base/sun.nio.ch
+ * @build TestLibrary RMID RMIDSelectorProvider
  *     TestSecurityManager RegisteringActivatable ShutdownGracefully_Stub
  * @run main/othervm/policy=security.policy/timeout=700 ShutdownGracefully
  */
@@ -76,7 +77,7 @@ public class ShutdownGracefully
 
             // start an rmid.
             RMID.removeLog();
-            rmid = RMID.createRMID();
+            rmid = RMID.createRMIDOnEphemeralPort();
 
             // rmid needs to run with a security manager that
             // simulates a log problem; rmid should also snapshot
@@ -166,7 +167,7 @@ public class ShutdownGracefully
             exception = e;
         } finally {
             if (rmid != null)
-                rmid.destroy();
+                rmid.cleanup();
         }
         if (exception != null)
             TestLibrary.bomb("\nexception thrown in test: ", exception);

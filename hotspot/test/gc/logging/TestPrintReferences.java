@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,13 +26,13 @@
  * @bug 8136991
  * @summary Validate the reference processing logging
  * @key gc
- * @library /testlibrary
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
  */
 
-import jdk.test.lib.ProcessTools;
-import jdk.test.lib.OutputAnalyzer;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 public class TestPrintReferences {
   public static void main(String[] args) throws Exception {
@@ -41,7 +41,7 @@ public class TestPrintReferences {
     OutputAnalyzer output = new OutputAnalyzer(pb_enabled.start());
 
     String countRegex = "[0-9]+ refs";
-    String timeRegex = "\\([0-9]+[.,][0-9]+s, [0-9]+[.,][0-9]+s\\) [0-9]+[.,][0-9]+ms";
+    String timeRegex = "[0-9]+[.,][0-9]+ms";
 
     output.shouldMatch(".* GC\\([0-9]+\\) SoftReference " + timeRegex + "\n" +
                        ".* GC\\([0-9]+\\) WeakReference " + timeRegex + "\n" +

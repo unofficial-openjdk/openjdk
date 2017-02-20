@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -348,6 +348,10 @@ AC_DEFUN_ONCE([LIB_SETUP_FREETYPE],
             FREETYPE_BASE_DIR="$SYSROOT/usr/X11"
             LIB_CHECK_POTENTIAL_FREETYPE([$FREETYPE_BASE_DIR/include], [$FREETYPE_BASE_DIR/lib], [well-known location])
           fi
+          if test "x$FOUND_FREETYPE" != xyes; then
+            FREETYPE_BASE_DIR="$SYSROOT/usr/local"
+            LIB_CHECK_POTENTIAL_FREETYPE([$FREETYPE_BASE_DIR/include], [$FREETYPE_BASE_DIR/lib], [well-known location])
+          fi
 
           if test "x$OPENJDK_TARGET_OS" = xmacosx; then
             if test "x$FOUND_FREETYPE" != xyes; then
@@ -355,11 +359,6 @@ AC_DEFUN_ONCE([LIB_SETUP_FREETYPE],
               FREETYPE_BASE_DIR="$SYSROOT/opt/X11"
               LIB_CHECK_POTENTIAL_FREETYPE([$FREETYPE_BASE_DIR/include], [$FREETYPE_BASE_DIR/lib], [well-known location])
             fi
-          fi
-
-          if test "x$FOUND_FREETYPE" != xyes; then
-            FREETYPE_BASE_DIR="$SYSROOT/usr/sfw"
-            LIB_CHECK_POTENTIAL_FREETYPE([$FREETYPE_BASE_DIR/include], [$FREETYPE_BASE_DIR/lib], [well-known location])
           fi
 
           if test "x$FOUND_FREETYPE" != xyes; then

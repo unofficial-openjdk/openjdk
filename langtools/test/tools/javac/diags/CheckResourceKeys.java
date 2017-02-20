@@ -25,8 +25,9 @@
  * @test
  * @bug 6964768 6964461 6964469 6964487 6964460 6964481 6980021
  * @summary need test program to validate javac resource bundles
- * @modules jdk.jdeps/com.sun.tools.classfile
- *          jdk.compiler/com.sun.tools.javac.code
+ * @modules jdk.compiler/com.sun.tools.javac.code
+ *          jdk.compiler/com.sun.tools.javac.resources:open
+ *          jdk.jdeps/com.sun.tools.classfile
  */
 
 import java.io.*;
@@ -257,11 +258,13 @@ public class CheckResourceKeys {
                 // ignore package and class names
                 if (cs.matches("(com|java|javax|jdk|sun)\\.[A-Za-z.]+"))
                     continue;
+                if (cs.matches("(java|javax|sun)\\."))
+                    continue;
                 // ignore debug flag names
                 if (cs.startsWith("debug."))
                     continue;
-                // ignore shouldstop flag names
-                if (cs.startsWith("shouldstop."))
+                // ignore should-stop flag names
+                if (cs.startsWith("should-stop."))
                     continue;
                 // ignore diagsformat flag names
                 if (cs.startsWith("diags."))

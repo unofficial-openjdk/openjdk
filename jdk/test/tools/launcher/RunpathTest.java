@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,7 @@ public class RunpathTest extends TestHelper {
     }
 
     final String findElfReader() {
-        String[] paths = {"/bin", "/sbin", "/usr/bin", "/usr/sbin", "/usr/ccs/bin"};
+        String[] paths = {"/usr/sbin", "/usr/bin"};
         final String cmd = isSolaris ? "elfdump" : "readelf";
         for (String x : paths) {
             File p = new File(x);
@@ -64,7 +64,7 @@ public class RunpathTest extends TestHelper {
     }
 
     void testRpath() {
-        String expectedRpath = ".*RPATH.*\\$ORIGIN/../lib/" + getJreArch() + ".*";
+        String expectedRpath = ".*RPATH.*\\$ORIGIN/../lib.*";
         elfCheck(javaCmd, expectedRpath);
     }
 

@@ -487,8 +487,8 @@ static jvmtiError JNICALL
 </xsl:text>
     <xsl:if test="$trace='Trace'">
       <xsl:text>    if (trace_flags) {
-          log_trace(jvmti)("[-] %s %s",  func_name, 
-                    JvmtiUtil::error_name(JVMTI_ERROR_WRONG_PHASE));
+          log_trace(jvmti)("[-] %s %s(%d)", func_name,
+                    JvmtiUtil::error_name(JVMTI_ERROR_WRONG_PHASE), JvmtiEnv::get_phase());
     }
 </xsl:text>
     </xsl:if>
@@ -1246,7 +1246,7 @@ static jvmtiError JNICALL
   <xsl:param name="name"/>
   <xsl:text> </xsl:text>
   <xsl:value-of select="$name"/>
-  <xsl:text>=0x%zx</xsl:text>
+  <xsl:text>=" SIZE_FORMAT_HEX "</xsl:text>
 </xsl:template>
 
 <xsl:template match="jfloat|jdouble" mode="traceInFormat">

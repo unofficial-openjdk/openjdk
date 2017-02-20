@@ -94,7 +94,7 @@ class Utils {
         }
         File srcDir = new File(getVerifierDir(), "src");
         List<File> javaFileList = findFiles(srcDir, createFilter(JAVA_FILE_EXT));
-        File tmpFile = File.createTempFile("javac", ".tmp");
+        File tmpFile = File.createTempFile("javac", ".tmp", new File("."));
         XCLASSES.mkdirs();
         FileOutputStream fos = null;
         PrintStream ps = null;
@@ -111,6 +111,7 @@ class Utils {
 
         compiler("-d",
                 XCLASSES.getName(),
+                "--add-modules=jdk.jdeps",
                 "--add-exports=jdk.jdeps/com.sun.tools.classfile=ALL-UNNAMED",
                 "@" + tmpFile.getAbsolutePath());
 
@@ -208,6 +209,10 @@ class Utils {
                 Utils.createFilter(".idx")));
         toDelete.addAll(Utils.findFiles(new File("."),
                 Utils.createFilter(".gidx")));
+        toDelete.addAll(Utils.findFiles(new File("."),
+                Utils.createFilter(".tmp")));
+        toDelete.addAll(Utils.findFiles(new File("."),
+                Utils.createFilter(".class")));
         for (File f : toDelete) {
             f.delete();
         }

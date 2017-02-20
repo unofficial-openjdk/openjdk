@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1903,26 +1903,75 @@ public class File
 
         // file name generation
         private static final SecureRandom random = new SecureRandom();
+        private static int shortenSubName(int subNameLength, int excess,
+            int nameMin) {
+            int newLength = Math.max(nameMin, subNameLength - excess);
+            if (newLength < subNameLength) {
+                return newLength;
+            }
+            return subNameLength;
+        }
         static File generateFile(String prefix, String suffix, File dir)
             throws IOException
         {
             long n = random.nextLong();
-            if (n == Long.MIN_VALUE) {
-                n = 0;      // corner case
-            } else {
-                n = Math.abs(n);
-            }
+            String nus = Long.toUnsignedString(n);
 
             // Use only the file name from the supplied prefix
             prefix = (new File(prefix)).getName();
 
-            String name = prefix + Long.toString(n) + suffix;
+            int prefixLength = prefix.length();
+            int nusLength = nus.length();
+            int suffixLength = suffix.length();;
+
+            String name;
+            int nameMax = fs.getNameMax(dir.getPath());
+            int excess = prefixLength + nusLength + suffixLength - nameMax;
+            if (excess <= 0) {
+                name = prefix + nus + suffix;
+            } else {
+                // Name exceeds the maximum path component length: shorten it
+
+                // Attempt to shorten the prefix length to no less then 3
+                prefixLength = shortenSubName(prefixLength, excess, 3);
+                excess = prefixLength + nusLength + suffixLength - nameMax;
+
+                if (excess > 0) {
+                    // Attempt to shorten the suffix length to no less than
+                    // 0 or 4 depending on whether it begins with a dot ('.')
+                    suffixLength = shortenSubName(suffixLength, excess,
+                        suffix.indexOf(".") == 0 ? 4 : 0);
+                    suffixLength = shortenSubName(suffixLength, excess, 3);
+                    excess = prefixLength + nusLength + suffixLength - nameMax;
+                }
+
+                if (excess > 0 && excess <= nusLength - 5) {
+                    // Attempt to shorten the random character string length
+                    // to no less than 5
+                    nusLength = shortenSubName(nusLength, excess, 5);
+                }
+
+                StringBuilder sb =
+                    new StringBuilder(prefixLength + nusLength + suffixLength);
+                sb.append(prefixLength < prefix.length() ?
+                    prefix.substring(0, prefixLength) : prefix);
+                sb.append(nusLength < nus.length() ?
+                    nus.substring(0, nusLength) : nus);
+                sb.append(suffixLength < suffix.length() ?
+                    suffix.substring(0, suffixLength) : suffix);
+                name = sb.toString();
+            }
+
+            // Normalize the path component
+            name = fs.normalize(name);
+
             File f = new File(dir, name);
             if (!name.equals(f.getName()) || f.isInvalid()) {
                 if (System.getSecurityManager() != null)
                     throw new IOException("Unable to create temporary file");
                 else
-                    throw new IOException("Unable to create temporary file, " + f);
+                    throw new IOException("Unable to create temporary file, "
+                        + name);
             }
             return f;
         }

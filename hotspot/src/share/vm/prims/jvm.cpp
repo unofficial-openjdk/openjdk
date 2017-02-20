@@ -54,7 +54,7 @@
 #include "prims/privilegedStack.hpp"
 #include "prims/stackwalk.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/init.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -503,13 +503,24 @@ JVM_ENTRY(void, JVM_FillInStackTrace(JNIEnv *env, jobject receiver))
 JVM_END
 
 
-JVM_ENTRY(void, JVM_GetStackTraceElements(JNIEnv *env, jobject throwable, jobjectArray stackTrace))
-  JVMWrapper("JVM_GetStackTraceElements");
+// java.lang.StackTraceElement //////////////////////////////////////////////
+
+
+JVM_ENTRY(void, JVM_InitStackTraceElementArray(JNIEnv *env, jobjectArray elements, jobject throwable))
+  JVMWrapper("JVM_InitStackTraceElementArray");
   Handle exception(THREAD, JNIHandles::resolve(throwable));
-  objArrayOop st = objArrayOop(JNIHandles::resolve(stackTrace));
+  objArrayOop st = objArrayOop(JNIHandles::resolve(elements));
   objArrayHandle stack_trace(THREAD, st);
   // Fill in the allocated stack trace
   java_lang_Throwable::get_stack_trace_elements(exception, stack_trace, CHECK);
+JVM_END
+
+
+JVM_ENTRY(void, JVM_InitStackTraceElement(JNIEnv* env, jobject element, jobject stackFrameInfo))
+  JVMWrapper("JVM_InitStackTraceElement");
+  Handle stack_frame_info(THREAD, JNIHandles::resolve_non_null(stackFrameInfo));
+  Handle stack_trace_element(THREAD, JNIHandles::resolve_non_null(element));
+  java_lang_StackFrameInfo::to_stack_trace_element(stack_frame_info, stack_trace_element, THREAD);
 JVM_END
 
 
@@ -562,15 +573,8 @@ JVM_ENTRY(jint, JVM_MoreStackWalk(JNIEnv *env, jobject stackStream, jlong mode, 
   }
 
   Handle stackStream_h(THREAD, JNIHandles::resolve_non_null(stackStream));
-  return StackWalk::moreFrames(stackStream_h, mode, anchor, frame_count,
-                               start_index, frames_array_h, THREAD);
-JVM_END
-
-JVM_ENTRY(void, JVM_ToStackTraceElement(JNIEnv *env, jobject frame, jobject stack))
-  JVMWrapper("JVM_ToStackTraceElement");
-  Handle stack_frame_info(THREAD, JNIHandles::resolve_non_null(frame));
-  Handle stack_trace_element(THREAD, JNIHandles::resolve_non_null(stack));
-  java_lang_StackFrameInfo::to_stack_trace_element(stack_frame_info, stack_trace_element, THREAD);
+  return StackWalk::fetchNextBatch(stackStream_h, mode, anchor, frame_count,
+                                   start_index, frames_array_h, THREAD);
 JVM_END
 
 // java.lang.Object ///////////////////////////////////////////////
@@ -1004,10 +1008,10 @@ JVM_END
 
 // Module support //////////////////////////////////////////////////////////////////////////////
 
-JVM_ENTRY(void, JVM_DefineModule(JNIEnv *env, jobject module, jstring version, jstring location,
-                                 jobjectArray packages))
+JVM_ENTRY(void, JVM_DefineModule(JNIEnv *env, jobject module, jboolean is_open, jstring version,
+                                 jstring location, const char* const* packages, jsize num_packages))
   JVMWrapper("JVM_DefineModule");
-  Modules::define_module(module, version, location, packages, CHECK);
+  Modules::define_module(module, version, location, packages, num_packages, CHECK);
 JVM_END
 
 JVM_ENTRY(void, JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module))
@@ -1015,17 +1019,17 @@ JVM_ENTRY(void, JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module))
   Modules::set_bootloader_unnamed_module(module, CHECK);
 JVM_END
 
-JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
+JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, const char* package, jobject to_module))
   JVMWrapper("JVM_AddModuleExports");
   Modules::add_module_exports_qualified(from_module, package, to_module, CHECK);
 JVM_END
 
-JVM_ENTRY(void, JVM_AddModuleExportsToAllUnnamed(JNIEnv *env, jobject from_module, jstring package))
+JVM_ENTRY(void, JVM_AddModuleExportsToAllUnnamed(JNIEnv *env, jobject from_module, const char* package))
   JVMWrapper("JVM_AddModuleExportsToAllUnnamed");
   Modules::add_module_exports_to_all_unnamed(from_module, package, CHECK);
 JVM_END
 
-JVM_ENTRY(void, JVM_AddModuleExportsToAll(JNIEnv *env, jobject from_module, jstring package))
+JVM_ENTRY(void, JVM_AddModuleExportsToAll(JNIEnv *env, jobject from_module, const char* package))
   JVMWrapper("JVM_AddModuleExportsToAll");
   Modules::add_module_exports(from_module, package, NULL, CHECK);
 JVM_END
@@ -1035,24 +1039,9 @@ JVM_ENTRY (void, JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject so
   Modules::add_reads_module(from_module, source_module, CHECK);
 JVM_END
 
-JVM_ENTRY(jboolean, JVM_CanReadModule(JNIEnv *env, jobject asking_module, jobject source_module))
-  JVMWrapper("JVM_CanReadModule");
-  return Modules::can_read_module(asking_module, source_module, THREAD);
-JVM_END
-
-JVM_ENTRY(jboolean, JVM_IsExportedToModule(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
-  JVMWrapper("JVM_IsExportedToModule");
-  return Modules::is_exported_to_module(from_module, package, to_module, THREAD);
-JVM_END
-
-JVM_ENTRY (void, JVM_AddModulePackage(JNIEnv *env, jobject module, jstring package))
+JVM_ENTRY (void, JVM_AddModulePackage(JNIEnv *env, jobject module, const char* package))
   JVMWrapper("JVM_AddModulePackage");
   Modules::add_module_package(module, package, CHECK);
-JVM_END
-
-JVM_ENTRY (jobject, JVM_GetModuleByPackageName(JNIEnv *env, jobject loader, jstring package))
-  JVMWrapper("JVM_GetModuleByPackageName");
-  return Modules::get_module_by_package_name(loader, package, THREAD);
 JVM_END
 
 // Reflection support //////////////////////////////////////////////////////////////////////////////
@@ -2524,7 +2513,6 @@ JVM_ENTRY(const char*, JVM_GetCPMethodNameUTF(JNIEnv *env, jclass cls, jint cp_i
   switch (cp->tag_at(cp_index).value()) {
     case JVM_CONSTANT_InterfaceMethodref:
     case JVM_CONSTANT_Methodref:
-    case JVM_CONSTANT_NameAndType:  // for invokedynamic
       return cp->uncached_name_ref_at(cp_index)->as_utf8();
     default:
       fatal("JVM_GetCPMethodNameUTF: illegal constant");
@@ -2542,7 +2530,6 @@ JVM_ENTRY(const char*, JVM_GetCPMethodSignatureUTF(JNIEnv *env, jclass cls, jint
   switch (cp->tag_at(cp_index).value()) {
     case JVM_CONSTANT_InterfaceMethodref:
     case JVM_CONSTANT_Methodref:
-    case JVM_CONSTANT_NameAndType:  // for invokedynamic
       return cp->uncached_signature_ref_at(cp_index)->as_utf8();
     default:
       fatal("JVM_GetCPMethodSignatureUTF: illegal constant");
@@ -3349,6 +3336,35 @@ JVM_ENTRY(jobjectArray, JVM_GetSystemPackages(JNIEnv *env))
   JvmtiVMObjectAllocEventCollector oam;
   objArrayOop result = ClassLoader::get_system_packages(CHECK_NULL);
   return (jobjectArray) JNIHandles::make_local(result);
+JVM_END
+
+
+// java.lang.ref.Reference ///////////////////////////////////////////////////////////////
+
+
+JVM_ENTRY(jobject, JVM_GetAndClearReferencePendingList(JNIEnv* env))
+  JVMWrapper("JVM_GetAndClearReferencePendingList");
+
+  MonitorLockerEx ml(Heap_lock);
+  oop ref = Universe::reference_pending_list();
+  if (ref != NULL) {
+    Universe::set_reference_pending_list(NULL);
+  }
+  return JNIHandles::make_local(env, ref);
+JVM_END
+
+JVM_ENTRY(jboolean, JVM_HasReferencePendingList(JNIEnv* env))
+  JVMWrapper("JVM_HasReferencePendingList");
+  MonitorLockerEx ml(Heap_lock);
+  return Universe::has_reference_pending_list();
+JVM_END
+
+JVM_ENTRY(void, JVM_WaitForReferencePendingList(JNIEnv* env))
+  JVMWrapper("JVM_WaitForReferencePendingList");
+  MonitorLockerEx ml(Heap_lock);
+  while (!Universe::has_reference_pending_list()) {
+    ml.wait();
+  }
 JVM_END
 
 

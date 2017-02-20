@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,14 +39,12 @@ import java.util.Set;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.ModuleElement.ExportsDirective;
 import javax.lang.model.element.ModuleElement.RequiresDirective;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.SimpleElementVisitor9;
 import javax.tools.JavaFileManager;
@@ -54,15 +52,12 @@ import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 
-import com.sun.tools.javac.code.Flags;
 import com.sun.tools.javac.code.Kinds.Kind;
 import com.sun.tools.javac.code.Symbol;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
 import com.sun.tools.javac.code.Symbol.CompletionFailure;
-import com.sun.tools.javac.code.Symbol.MethodSymbol;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
 import com.sun.tools.javac.code.Symbol.PackageSymbol;
-import com.sun.tools.javac.code.Symbol.VarSymbol;
 import com.sun.tools.javac.code.Symtab;
 import com.sun.tools.javac.comp.Modules;
 import com.sun.tools.javac.tree.JCTree.JCClassDecl;
@@ -75,7 +70,10 @@ import jdk.javadoc.doclet.DocletEnvironment;
 import jdk.javadoc.doclet.DocletEnvironment.ModuleMode;
 
 import static com.sun.tools.javac.code.Scope.LookupKind.NON_RECURSIVE;
+import static javax.tools.JavaFileObject.Kind.*;
+import static jdk.javadoc.internal.tool.Main.Result.*;
 import static jdk.javadoc.internal.tool.JavadocTool.isValidClassName;
+
 
 /**
  * This class manages elements specified on the command line, and
@@ -136,7 +134,7 @@ import static jdk.javadoc.internal.tool.JavadocTool.isValidClassName;
  * Rules for processing:
  *
  * 1. A specified element, meaning an element given on the
- *    command-line, and exposed via getSpecifiedElements()
+ *    command-line, and exposed via specified elements collections.
  * 2. Expand-contents, an internal pseudo term, meaning
  *    it is part of the recursive expansion of specified
  *    elements, meaning, the modules are expanded first, then
@@ -158,6 +156,7 @@ public class ElementsTable {
     private final Location location;
     private final Modules modules;
     private final Map<ToolOption, Object> opts;
+    private final Messager messager;
 
     private final Map<String, Entry> entries = new LinkedHashMap<>();
 
@@ -201,6 +200,8 @@ public class ElementsTable {
         this.fm = toolEnv.fileManager;
         this.modules = Modules.instance(context);
         this.opts = opts;
+        this.messager = Messager.instance0(context);
+
         this.location = modules.multiModuleMode
                 ? StandardLocation.MODULE_SOURCE_PATH
                 : toolEnv.fileManager.hasLocation(StandardLocation.SOURCE_PATH)
@@ -226,8 +227,28 @@ public class ElementsTable {
         }
     }
 
+    private Set<Element> specifiedElements = null;
     /**
-     * Returns the selected/included module elements.
+     * Returns a set of elements specified on the
+     * command line, including any inner classes.
+     *
+     * @return the set of elements specified on the command line
+     */
+    public Set<? extends Element> getSpecifiedElements() {
+        if (specifiedElements == null) {
+            Set<Element> result = new LinkedHashSet<>();
+            result.addAll(specifiedModuleElements);
+            result.addAll(specifiedPackageElements);
+            result.addAll(specifiedTypeElements);
+            specifiedElements = Collections.unmodifiableSet(result);
+        }
+        return specifiedElements;
+    }
+
+    private Set<Element> includedElements = null;
+    /**
+     * Returns a set of elements included elements. The inclusion is as
+     * follows:
      * A module is fully included,
      *   - is specified on the command line --module
      *   - is derived from the module graph, that is, by expanding the
@@ -235,14 +256,7 @@ public class ElementsTable {
      *
      * A module is included if an enclosed package or type is
      * specified on the command line.
-     * @return the included module elements
-     */
-    public Set<ModuleElement> getIncludedModuleElements() {
-        return includedModuleElements;
-    }
-
-    /**
-     * Returns the selected/included package elements.
+     *
      * A package is fully included,
      *  - is specified on the command line
      *  - is derived from expanding -subpackages
@@ -251,66 +265,32 @@ public class ElementsTable {
      * A package is included, if an enclosed package or a type is specified on
      * the command line.
      *
-     * @return the included package elements
-     */
-    public Set<PackageElement> getIncludedPackageElements() {
-        return includedPackageElements;
-    }
-
-    /**
-     * Returns the selected/included type elements (including those
-     * within specified or included packages) to be documented.
+     * Included type elements (including those within specified or included packages)
+     * to be documented.
+     *
      * A type is fully included if
      *  - is specified on the command line with -sourcepath
      *  - is visible with --show-types filter
      * A nested type is fully included if
      *  - is visible with --show-types filter
      *  - is enclosed in a fully included type
-     *
-     * @return the included type elements
-     * to be documented
+     * @return the set of elements specified on the command line
      */
-    public Set<TypeElement> getIncludedTypeElements() {
-        return includedTypeElements;
-    }
-
-    /**
-     * Returns a set of module elements specified on the
-     * command line.
-     * @return the set of module elements specified on the
-     * command line
-     */
-    public Set<ModuleElement> getSpecifiedModuleElements() {
-        return specifiedModuleElements;
-    }
-
-    /**
-     * Returns a set of package elements specified on the
-     * command line. These may also contain children packages
-     * if specified with -subpackage.
-     *
-     * @return the set of package elements specified on the
-     * command line
-     */
-    public Set<PackageElement> getSpecifiedPackageElements() {
-        return specifiedPackageElements;
-    }
-
-    /**
-     * Returns a set of type elements specified on the
-     * command line, including any inner classes.
-     *
-     * @return the set of type elements specified on the command line
-     */
-    public Set<TypeElement> getSpecifiedTypeElements() {
-        return specifiedTypeElements;
+    public Set<? extends Element> getIncludedElements() {
+        if (includedElements == null) {
+            Set<Element> result = new LinkedHashSet<>();
+            result.addAll(includedModuleElements);
+            result.addAll(includedPackageElements);
+            result.addAll(includedTypeElements);
+            includedElements = Collections.unmodifiableSet(result);
+        }
+        return includedElements;
     }
 
     private IncludedVisitor includedVisitor = null;
 
     /**
-     * Returns true if the given element is included or selected for
-     * consideration.
+     * Returns true if the given element is included for consideration.
      * This method accumulates elements in the cache as enclosed elements of
      * fully included elements are tested.
      * A member (constructor, method, field) is included if
@@ -339,9 +319,9 @@ public class ElementsTable {
      * This is a terminal operation, thus no further modifications
      * are allowed to the specified data sets.
      *
-     * @throws IOException if an error occurs
+     * @throws ToolException if an error occurs
      */
-    void analyze() throws IOException {
+    void analyze() throws ToolException {
         // compute the specified element, by expanding module dependencies
         computeSpecifiedModules();
 
@@ -354,7 +334,6 @@ public class ElementsTable {
         // compute the packages belonging to all the specified modules
         Set<PackageElement> expandedModulePackages = computeModulePackages();
         initializeIncludedSets(expandedModulePackages);
-
     }
 
     ElementsTable classTrees(com.sun.tools.javac.util.List<JCCompilationUnit> classTrees) {
@@ -363,16 +342,17 @@ public class ElementsTable {
     }
 
     @SuppressWarnings("unchecked")
-    ElementsTable scanSpecifiedItems() throws IOException {
+    ElementsTable scanSpecifiedItems() throws ToolException {
 
         // scan modules specified on the command line
         List<String> moduleNames = (List<String>) opts.computeIfAbsent(ToolOption.MODULE,
                 s -> Collections.EMPTY_LIST);
         List<String> mlist = new ArrayList<>();
         for (String m : moduleNames) {
-            Location moduleLoc = fm.getModuleLocation(location, m);
+            Location moduleLoc = getModuleLocation(location, m);
             if (moduleLoc == null) {
-                toolEnv.error("main.module_not_found", m);
+                String text = messager.getText("main.module_not_found", m);
+                throw new ToolException(CMDERR, text);
             } else {
                 mlist.add(m);
                 ModuleSymbol msym = syms.enterModule(names.fromString(m));
@@ -390,7 +370,7 @@ public class ElementsTable {
         // scan for modules with qualified subpackages
         ((List<String>)opts.computeIfAbsent(ToolOption.SUBPACKAGES, v -> Collections.EMPTY_LIST))
             .stream()
-            .map((packageName) -> new ModulePackage(packageName))
+            .map(ModulePackage::new)
             .forEachOrdered((mpkg) -> {
                 subPackages.add(mpkg);
                 if (mpkg.hasModule()) {
@@ -437,7 +417,7 @@ public class ElementsTable {
      */
     ElementsTable packages(Collection<String> packageNames) {
         packageNames.stream()
-            .map((packageName) -> new ModulePackage(packageName))
+            .map(ModulePackage::new)
             .forEachOrdered((mpkg) -> cmdLinePackages.add(mpkg));
         return this;
     }
@@ -457,10 +437,10 @@ public class ElementsTable {
     }
 
     @SuppressWarnings("unchecked")
-    private void computeSubpackages() throws IOException {
+    private void computeSubpackages() throws ToolException {
         ((List<String>) opts.computeIfAbsent(ToolOption.EXCLUDE, v -> Collections.EMPTY_LIST))
                 .stream()
-                .map((packageName) -> new ModulePackage(packageName))
+                .map(ModulePackage::new)
                 .forEachOrdered((mpkg) -> excludePackages.add(mpkg));
 
         excludePackages.forEach((p) -> {
@@ -469,7 +449,14 @@ public class ElementsTable {
 
         for (ModulePackage modpkg : subPackages) {
             Location packageLocn = getLocation(modpkg);
-            for (JavaFileObject fo : fm.list(packageLocn, modpkg.packageName, sourceKinds, true)) {
+            Iterable<JavaFileObject> list = null;
+            try {
+                list = fm.list(packageLocn, modpkg.packageName, sourceKinds, true);
+            } catch (IOException ioe) {
+                String text = messager.getText("main.file.manager.list", modpkg.packageName);
+                throw new ToolException(SYSERR, text, ioe);
+            }
+            for (JavaFileObject fo : list) {
                 String binaryName = fm.inferBinaryName(packageLocn, fo);
                 String pn = getPackageName(binaryName);
                 String simpleName = getSimpleName(binaryName);
@@ -505,10 +492,10 @@ public class ElementsTable {
     private Set<ModuleElement> getModuleRequires(ModuleElement mdle, boolean isPublic) {
         Set<ModuleElement> result = new HashSet<>();
         for (RequiresDirective rd : ElementFilter.requiresIn(mdle.getDirectives())) {
-            if (isPublic && rd.isPublic()) {
+            if (isPublic && rd.isTransitive()) {
                 result.add(rd.getDependency());
             }
-            if (!isPublic && !rd.isPublic()) {
+            if (!isPublic && !rd.isTransitive()) {
                 result.add(rd.getDependency());
             }
         }
@@ -528,7 +515,7 @@ public class ElementsTable {
         ListBuffer<ModuleElement> queue = new ListBuffer<>();
 
         // expand each specified module
-        for (ModuleElement mdle : getSpecifiedModuleElements()) {
+        for (ModuleElement mdle : specifiedModuleElements) {
             result.add(mdle); // a specified module is included
             queue.append(mdle);
             Set<ModuleElement> publicRequires = getModuleRequires(mdle, true);
@@ -554,34 +541,50 @@ public class ElementsTable {
         specifiedModuleElements = Collections.unmodifiableSet(result);
     }
 
-    private Set<PackageElement> getAllModulePackages(ModuleElement mdle) throws IOException {
+    private Set<PackageElement> getAllModulePackages(ModuleElement mdle) throws ToolException {
         Set<PackageElement> result = new HashSet<>();
-        ModuleSymbol msym = (ModuleSymbol)mdle;
-        Location msymloc = fm.getModuleLocation(location, msym.name.toString());
-        for (JavaFileObject fo : fm.list(msymloc, "", sourceKinds, true)) {
-            if (fo.getName().endsWith("module-info.java"))
-                continue;
-            String binaryName = fm.inferBinaryName(msymloc, fo);
-            String pn = getPackageName(binaryName);
-            PackageSymbol psym = syms.enterPackage(msym, names.fromString(pn));
-            result.add((PackageElement)psym);
+        ModuleSymbol msym = (ModuleSymbol) mdle;
+        Location msymloc = getModuleLocation(location, msym.name.toString());
+        try {
+            for (JavaFileObject fo : fm.list(msymloc, "", sourceKinds, true)) {
+                if (fo.getName().endsWith("module-info.java"))
+                    continue;
+                String binaryName = fm.inferBinaryName(msymloc, fo);
+                String pn = getPackageName(binaryName);
+                PackageSymbol psym = syms.enterPackage(msym, names.fromString(pn));
+                result.add((PackageElement) psym);
+            }
+
+        } catch (IOException ioe) {
+            String text = messager.getText("main.file.manager.list", msymloc.getName());
+            throw new ToolException(SYSERR, text, ioe);
         }
         return result;
     }
 
-    private Set<PackageElement> computeModulePackages() throws IOException {
-        final AccessKind accessValue = accessFilter.getAccessValue(ElementKind.PACKAGE);
+    private Set<PackageElement> computeModulePackages() throws ToolException {
+        AccessKind accessValue = accessFilter.getAccessValue(ElementKind.PACKAGE);
         final boolean documentAllModulePackages = (accessValue == AccessKind.PACKAGE ||
                 accessValue == AccessKind.PRIVATE);
 
+        accessValue = accessFilter.getAccessValue(ElementKind.MODULE);
+        final boolean moduleDetailedMode = (accessValue == AccessKind.PACKAGE ||
+                accessValue == AccessKind.PRIVATE);
         Set<PackageElement> expandedModulePackages = new LinkedHashSet<>();
 
         for (ModuleElement mdle : specifiedModuleElements) {
-            // add all exported packages belonging to a specified module
-            if (specifiedModuleElements.contains(mdle)) {
+            if (documentAllModulePackages) { // include all packages
+                List<PackageElement> packages = ElementFilter.packagesIn(mdle.getEnclosedElements());
+                expandedModulePackages.addAll(packages);
+                expandedModulePackages.addAll(getAllModulePackages(mdle));
+            } else { // selectively include required packages
                 List<ExportsDirective> exports = ElementFilter.exportsIn(mdle.getDirectives());
                 for (ExportsDirective export : exports) {
-                    expandedModulePackages.add(export.getPackage());
+                    // add if fully exported or add qualified exports only if desired
+                    if (export.getTargetModules() == null
+                            || documentAllModulePackages || moduleDetailedMode) {
+                        expandedModulePackages.add(export.getPackage());
+                    }
                 }
             }
 
@@ -595,27 +598,6 @@ public class ElementsTable {
                         expandedModulePackages.add(pkg);
                     }
                 }
-            }
-
-            if (!documentAllModulePackages) {
-                List<ExportsDirective> exports = ElementFilter.exportsIn(mdle.getDirectives());
-                // check exported packages
-                for (ExportsDirective export : exports) {
-                    List<? extends ModuleElement> targetModules = export.getTargetModules();
-                    if (targetModules == null) { // no qualified exports, add 'em all
-                        expandedModulePackages.add(export.getPackage());
-                    } else { // qualified export, add only if target module is being considered
-                        for (ModuleElement target : targetModules) {
-                            if (specifiedModuleElements.contains(target)) {
-                                expandedModulePackages.add(export.getPackage());
-                            }
-                        }
-                    }
-                }
-            } else { // add all exported and module private packages
-                List<PackageElement> packages = ElementFilter.packagesIn(mdle.getEnclosedElements());
-                expandedModulePackages.addAll(packages);
-                expandedModulePackages.addAll(getAllModulePackages(mdle));
             }
         }
         return expandedModulePackages;
@@ -635,7 +617,8 @@ public class ElementsTable {
         // add all specified packages
         specifiedPackageElements.forEach(pkg -> {
             ModuleElement mdle = toolEnv.elements.getModuleOf(pkg);
-            imodules.add(mdle);
+            if (mdle != null)
+                imodules.add(mdle);
             ipackages.add(pkg);
         });
 
@@ -648,11 +631,10 @@ public class ElementsTable {
         // add all types and its nested types
         specifiedTypeElements.forEach((klass) -> {
             ModuleElement mdle = toolEnv.elements.getModuleOf(klass);
-            if (!mdle.isUnnamed())
+            if (mdle != null && !mdle.isUnnamed())
                 imodules.add(mdle);
             PackageElement pkg = toolEnv.elements.getPackageOf(klass);
-            if (!pkg.isUnnamed())
-                ipackages.add(pkg);
+            ipackages.add(pkg);
             addAllClasses(iclasses, klass, true);
         });
 
@@ -662,10 +644,10 @@ public class ElementsTable {
         includedTypeElements = Collections.unmodifiableSet(iclasses);
     }
 
-    /**
+    /*
      * Computes the included packages and freezes the specified packages list.
      */
-    private void computeSpecifiedPackages() throws IOException {
+    private void computeSpecifiedPackages() throws ToolException {
 
         computeSubpackages();
 
@@ -683,7 +665,7 @@ public class ElementsTable {
             if (pkg != null) {
                 packlist.add(pkg);
             } else {
-                toolEnv.warning("main.package_not_found", modpkg.toString());
+                messager.printWarningUsingKey("main.package_not_found", modpkg.toString());
             }
         });
         specifiedPackageElements = Collections.unmodifiableSet(packlist);
@@ -693,32 +675,36 @@ public class ElementsTable {
      * Adds all classes as well as inner classes, to the specified
      * list.
      */
-    private void computeSpecifiedTypes() {
+    private void computeSpecifiedTypes() throws ToolException {
         Set<TypeElement> classes = new LinkedHashSet<>();
-        classDecList.stream().filter((def) -> (shouldDocument(def.sym))).forEach((def) -> {
+          classDecList.forEach((def) -> {
             TypeElement te = (TypeElement) def.sym;
             if (te != null) {
                 addAllClasses(classes, te, true);
             }
         });
-        classArgList.forEach((className) -> {
+        for (String className : classArgList) {
             TypeElement te = toolEnv.loadClass(className);
             if (te == null) {
-                toolEnv.error("javadoc.class_not_found", className);
+                String text = messager.getText("javadoc.class_not_found", className);
+                throw new ToolException(CMDERR, text);
             } else {
                 addAllClasses(classes, te, true);
             }
-        });
+        }
         specifiedTypeElements = Collections.unmodifiableSet(classes);
     }
 
     private void addFilesForParser(Collection<JavaFileObject> result,
-            Collection<ModulePackage> collection, boolean recurse) throws IOException {
+            Collection<ModulePackage> collection,
+            boolean recurse) throws ToolException {
         for (ModulePackage modpkg : collection) {
             toolEnv.notice("main.Loading_source_files_for_package", modpkg.toString());
             List<JavaFileObject> files = getFiles(modpkg, recurse);
             if (files.isEmpty()) {
-                    toolEnv.error("main.no_source_files_for_package", modpkg.toString());
+                String text = messager.getText("main.no_source_files_for_package",
+                        modpkg.toString());
+                throw new ToolException(CMDERR, text);
             } else {
                 result.addAll(files);
             }
@@ -732,7 +718,7 @@ public class ElementsTable {
      * @return a list of java file objects
      * @throws IOException if an error occurs
      */
-    List<JavaFileObject> getFilesToParse() throws IOException {
+    List<JavaFileObject> getFilesToParse() throws ToolException {
         List<JavaFileObject> result = new ArrayList<>();
         addFilesForParser(result, cmdLinePackages, false);
         addFilesForParser(result, subPackages, true);
@@ -744,9 +730,10 @@ public class ElementsTable {
      *
      * @param packageName the specified package
      * @return the set of file objects for the specified package
-     * @throws IOException if an error occurs while accessing the files
+     * @throws ToolException if an error occurs while accessing the files
      */
-    private List<JavaFileObject> getFiles(ModulePackage modpkg, boolean recurse) throws IOException {
+    private List<JavaFileObject> getFiles(ModulePackage modpkg,
+            boolean recurse) throws ToolException {
         Entry e = getEntry(modpkg);
         // The files may have been found as a side effect of searching for subpackages
         if (e.files != null) {
@@ -759,12 +746,18 @@ public class ElementsTable {
             return Collections.emptyList();
         }
         String pname = modpkg.packageName;
-        for (JavaFileObject fo : fm.list(packageLocn, pname, sourceKinds, recurse)) {
-            String binaryName = fm.inferBinaryName(packageLocn, fo);
-            String simpleName = getSimpleName(binaryName);
-            if (isValidClassName(simpleName)) {
-                lb.append(fo);
+
+        try {
+            for (JavaFileObject fo : fm.list(packageLocn, pname, sourceKinds, recurse)) {
+                String binaryName = fm.inferBinaryName(packageLocn, fo);
+                String simpleName = getSimpleName(binaryName);
+                if (isValidClassName(simpleName)) {
+                    lb.append(fo);
+                }
             }
+        } catch (IOException ioe) {
+            String text = messager.getText("main.file.manager.list", pname);
+            throw new ToolException(SYSERR, text, ioe);
         }
 
         return lb.toList();
@@ -781,20 +774,30 @@ public class ElementsTable {
             return null;
     }
 
-    private Location getLocation(ModulePackage modpkg) throws IOException {
+    private Location getLocation(ModulePackage modpkg) throws ToolException {
         if (location != StandardLocation.MODULE_SOURCE_PATH) {
             return location;
         }
 
         if (modpkg.hasModule()) {
-            return fm.getModuleLocation(location, modpkg.moduleName);
+            return getModuleLocation(location, modpkg.moduleName);
         }
         // TODO: handle invalid results better.
         ModuleSymbol msym = findModuleOfPackageName(modpkg.packageName);
         if (msym == null) {
             return null;
         }
-        return fm.getModuleLocation(location, msym.name.toString());
+        return getModuleLocation(location, msym.name.toString());
+    }
+
+    private Location getModuleLocation(Location location, String msymName)
+            throws ToolException {
+        try {
+            return fm.getLocationForModule(location, msymName);
+        } catch (IOException ioe) {
+            String text = messager.getText("main.doclet_could_not_get_location", msymName);
+            throw new ToolException(ERROR, text, ioe);
+        }
     }
 
     private Entry getEntry(String name) {
@@ -827,21 +830,21 @@ public class ElementsTable {
         try {
             // eliminate needless checking, do this first.
             if (list.contains(klass)) return;
-            if (toolEnv.isSynthetic(klass)) return;
             // ignore classes with invalid Java class names
             if (!JavadocTool.isValidClassName(klass.name.toString())) return;
-            if (filtered && !shouldDocument(klass)) return;
+            if (filtered && !isTypeElementSelected(klass)) return;
             list.add(klass);
             for (Symbol sym : klass.members().getSymbols(NON_RECURSIVE)) {
                 if (sym != null && sym.kind == Kind.TYP) {
                     ClassSymbol s = (ClassSymbol)sym;
-                    if (!toolEnv.isSynthetic(s)) {
-                        addAllClasses(list, s, filtered);
-                    }
+                    addAllClasses(list, s, filtered);
                 }
             }
         } catch (CompletionFailure e) {
-            // quietly ignore completion failures
+            if (e.getMessage() != null)
+                messager.printWarning(e.getMessage());
+            else
+                messager.printWarningUsingKey("main.unexpected.exception", e);
         }
     }
 
@@ -853,92 +856,65 @@ public class ElementsTable {
         boolean filtered = true;
         PackageSymbol sym = (PackageSymbol)pkg;
         for (Symbol isym : sym.members().getSymbols(NON_RECURSIVE)) {
-            if (isym != null) {
-                ClassSymbol s = (ClassSymbol)isym;
-                if (!toolEnv.isSynthetic(sym)) {
-                    addAllClasses(list, s, filtered);
-                }
-            }
+            addAllClasses(list, (TypeElement)isym, filtered);
         }
     }
 
-    SimpleElementVisitor9<Boolean, Void> shouldDocumentVisitor = null;
-    /**
-     * Returns whether an element ought to be documented.
-     * @param e the element in question
-     * @return true if the element should be documented
-     */
-    public boolean shouldDocument(Element e) {
-        if (shouldDocumentVisitor == null) {
-            shouldDocumentVisitor = new SimpleElementVisitor9<Boolean, Void>() {
+    private boolean isTypeElementSelected(TypeElement te) {
+        return (xclasses || toolEnv.getFileKind(te) == SOURCE) && isSelected(te);
+    }
 
+    SimpleElementVisitor9<Boolean, Void> visibleElementVisitor = null;
+    /**
+     * Returns true if the element is selected, by applying
+     * the access filter checks. Special treatment is applied to
+     * types, for a top level type the access filter applies completely,
+     * however if is a nested type then it is allowed either  if
+     * the enclosing is a static or the enclosing is also selected.
+     *
+     * @param e the element to be checked
+     * @return true if the element is visible
+     */
+    public boolean isSelected(Element e) {
+        if (toolEnv.isSynthetic((Symbol) e)) {
+            return false;
+        }
+        if (visibleElementVisitor == null) {
+            visibleElementVisitor = new SimpleElementVisitor9<Boolean, Void>() {
                 @Override
                 public Boolean visitType(TypeElement e, Void p) {
-                    return shouldDocument((ClassSymbol) e);
+                    if (!accessFilter.checkModifier(e)) {
+                        return false; // it is not allowed
+                    }
+                    Element encl = e.getEnclosingElement();
+
+                    // check if nested
+                    if (encl.getKind() == ElementKind.PACKAGE)
+                        return true; // top-level class, allow it
+
+                    // is enclosed static
+                    if (encl.getModifiers().contains(Modifier.STATIC))
+                        return true; // allowed
+
+                    // check the enclosing
+                    return visit(encl);
                 }
 
                 @Override
-                public Boolean visitVariable(VariableElement e, Void p) {
-                    return shouldDocument((VarSymbol) e);
-                }
-
-                @Override
-                public Boolean visitExecutable(ExecutableElement e, Void p) {
-                    return shouldDocument((MethodSymbol) e);
-                }
-
-                @Override
-                public Boolean visitPackage(PackageElement e, Void p) {
+                protected Boolean defaultAction(Element e, Void p) {
                     return accessFilter.checkModifier(e);
+                }
+
+                @Override
+                public Boolean visitUnknown(Element e, Void p) {
+                    throw new AssertionError("unkown element: " + p);
                 }
             };
         }
-        return shouldDocumentVisitor.visit(e);
-    }
-
-    /** Check whether this member should be documented. */
-    private boolean shouldDocument(VarSymbol sym) {
-        if (toolEnv.isSynthetic(sym)) {
-            return false;
-        }
-        return accessFilter.checkModifier(sym);
-    }
-
-    /** Check whether this member should be documented. */
-    private boolean shouldDocument(MethodSymbol sym) {
-        if (toolEnv.isSynthetic(sym)) {
-            return false;
-        }
-        return accessFilter.checkModifier(sym);
-    }
-
-    /** Check whether this class should be documented. */
-    private boolean shouldDocument(ClassSymbol sym) {
-        return
-            !toolEnv.isSynthetic(sym) && // no synthetics
-            (xclasses || toolEnv.hasPath(sym)) &&
-            isVisible(sym);
-    }
-
-    /**
-     * Returns the visibility of a type element.
-     * If the type element is a nested type, then check if the
-     * enclosing is static or the enclosed is visible.
-     *
-     * @param te the type element to be checked
-     * @return true if the element is visible
-     */
-    public boolean isVisible(TypeElement te) {
-        ClassSymbol sym = (ClassSymbol)te;
-        if (!accessFilter.checkModifier(sym)) {
-            return false;
-        }
-        ClassSymbol encl = sym.owner.enclClass();
-        return (encl == null || (sym.flags_field & Flags.STATIC) != 0 || isVisible(encl));
+        return visibleElementVisitor.visit(e);
     }
 
     private class IncludedVisitor extends SimpleElementVisitor9<Boolean, Void> {
-
         final private Set<Element> includedCache;
 
         public IncludedVisitor() {
@@ -962,7 +938,7 @@ public class ElementsTable {
             if (includedTypeElements.contains(e)) {
                 return true;
             }
-            if (shouldDocument(e)) {
+            if (isTypeElementSelected(e)) {
                 // Class is nameable from top-level and
                 // the class and all enclosing classes
                 // pass the modifier filter.
@@ -990,7 +966,7 @@ public class ElementsTable {
         public Boolean defaultAction(Element e, Void p) {
             if (includedCache.contains(e))
                 return true;
-            if (visit(e.getEnclosingElement()) && shouldDocument(e)) {
+            if (visit(e.getEnclosingElement()) && isSelected(e)) {
                 switch(e.getKind()) {
                     case ANNOTATION_TYPE: case CLASS: case ENUM: case INTERFACE:
                     case MODULE: case OTHER: case PACKAGE:

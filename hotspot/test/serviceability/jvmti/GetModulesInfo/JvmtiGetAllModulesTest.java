@@ -24,7 +24,7 @@
 /**
  * @test
  * @summary Verifies the JVMTI GetAllModules API
- * @library /testlibrary
+ * @library /test/lib
  * @run main/othervm -agentlib:JvmtiGetAllModulesTest JvmtiGetAllModulesTest
  *
  */
@@ -49,6 +49,17 @@ import jdk.test.lib.Asserts;
 
 public class JvmtiGetAllModulesTest {
 
+    static class MyModuleReference extends ModuleReference {
+        public MyModuleReference(ModuleDescriptor descriptor, URI uri) {
+            super(descriptor, uri);
+        }
+
+        // Trivial implementation to make the class non-abstract
+        public ModuleReader open() {
+            return null;
+        }
+    }
+
     private static native Module[] getModulesNative();
 
     private static Set<Module> getModulesJVMTI() {
@@ -71,13 +82,11 @@ public class JvmtiGetAllModulesTest {
         Asserts.assertEquals(Layer.boot().modules(), getModulesJVMTI());
 
         // Load a new named module
-        ModuleDescriptor descriptor
-                = new ModuleDescriptor.Builder(MY_MODULE_NAME)
-                .build();
+        ModuleDescriptor descriptor = ModuleDescriptor.newModule(MY_MODULE_NAME).build();
         ModuleFinder finder = finderOf(descriptor);
         ClassLoader loader = new ClassLoader() {};
         Configuration parent = Layer.boot().configuration();
-        Configuration cf = parent.resolveRequires(finder, ModuleFinder.of(), Set.of(MY_MODULE_NAME));
+        Configuration cf = parent.resolve(finder, ModuleFinder.of(), Set.of(MY_MODULE_NAME));
         Layer my = Layer.boot().defineModules(cf, m -> loader);
 
         // Verify that the loaded module is indeed reported by JVMTI
@@ -104,11 +113,7 @@ public class JvmtiGetAllModulesTest {
 
             URI uri = URI.create("module:/" + name);
 
-            Supplier<ModuleReader> supplier = () -> {
-                throw new UnsupportedOperationException();
-            };
-
-            ModuleReference mref = new ModuleReference(descriptor, uri, supplier);
+            ModuleReference mref = new MyModuleReference(descriptor, uri);
 
             namesToReference.put(name, mref);
         }

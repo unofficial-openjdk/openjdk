@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,8 +46,6 @@ import java.io.IOException;
 import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnmappableCharacterException;
-import java.security.AccessController;
-import java.util.Locale;
 import sun.security.action.GetPropertyAction;
 import sun.util.PropertyResourceBundleCharset;
 import sun.util.ResourceBundleEnumeration;
@@ -65,7 +63,7 @@ import sun.util.ResourceBundleEnumeration;
  * files containing the resource data.  <code>ResourceBundle.getBundle</code>
  * will automatically look for the appropriate properties file and create a
  * <code>PropertyResourceBundle</code> that refers to it. See
- * {@link ResourceBundle#getBundle(java.lang.String, java.util.Locale, java.lang.ClassLoader) ResourceBundle.getBundle}
+ * {@link ResourceBundle#getBundle(String, Locale, ClassLoader) ResourceBundle.getBundle}
  * for a complete description of the search and instantiation strategy.
  *
  * <p>
@@ -107,19 +105,14 @@ import sun.util.ResourceBundleEnumeration;
  * </pre>
  * </blockquote>
  *
- * <p>
- * The implementation of a {@code PropertyResourceBundle} subclass must be
- * thread-safe if it's simultaneously used by multiple threads. The default
- * implementations of the non-abstract methods in this class are thread-safe.
- *
- * <p>
- * <strong>Note:</strong> PropertyResourceBundle can be constructed either
- * from an InputStream or a Reader, which represents a property file.
- * Constructing a PropertyResourceBundle instance from an InputStream requires
- * that the input stream be encoded in UTF-8. By default, if a
+ * @apiNote
+ * {@code PropertyResourceBundle} can be constructed either
+ * from an {@code InputStream} or a {@code Reader}, which represents a property file.
+ * Constructing a {@code PropertyResourceBundle} instance from an {@code InputStream}
+ * requires that the input stream be encoded in {@code UTF-8}. By default, if a
  * {@link java.nio.charset.MalformedInputException} or an
  * {@link java.nio.charset.UnmappableCharacterException} occurs on reading the
- * input stream, then the PropertyResourceBundle instance resets to the state
+ * input stream, then the {@code PropertyResourceBundle} instance resets to the state
  * before the exception, re-reads the input stream in {@code ISO-8859-1}, and
  * continues reading. If the system property
  * {@code java.util.PropertyResourceBundle.encoding} is set to either
@@ -128,8 +121,15 @@ import sun.util.ResourceBundleEnumeration;
  * If "ISO-8859-1" is specified, characters that cannot be represented in
  * ISO-8859-1 encoding must be represented by Unicode Escapes as defined in section
  * 3.3 of <cite>The Java&trade; Language Specification</cite>
- * whereas the other constructor which takes a Reader does not have that limitation.
+ * whereas the other constructor which takes a {@code Reader} does not have that limitation.
  * Other encoding values are ignored for this system property.
+ * The system property is read and evaluated when initializing this class.
+ * Changing or removing the property has no effect after the initialization.
+ *
+ * @implSpec
+ * The implementation of a {@code PropertyResourceBundle} subclass must be
+ * thread-safe if it's simultaneously used by multiple threads. The default
+ * implementations of the non-abstract methods in this class are thread-safe.
  *
  * @see ResourceBundle
  * @see ListResourceBundle
@@ -146,16 +146,18 @@ public class PropertyResourceBundle extends ResourceBundle {
 
     /**
      * Creates a property resource bundle from an {@link java.io.InputStream
-    * InputStream}. This constructor reads the property file in UTF-8 by default.
-    * If a {@link java.nio.charset.MalformedInputException} or an
-    * {@link java.nio.charset.UnmappableCharacterException} occurs on reading the
-    * input stream, then the PropertyResourceBundle instance resets to the state
-    * before the exception, re-reads the input stream in {@code ISO-8859-1} and
-    * continues reading. If the system property
-    * {@code java.util.PropertyResourceBundle.encoding} is set to either
-    * "ISO-8859-1" or "UTF-8", the input stream is solely read in that encoding,
-    * and throws the exception if it encounters an invalid sequence. Other
-    * encoding values are ignored for this system property.
+     * InputStream}. This constructor reads the property file in UTF-8 by default.
+     * If a {@link java.nio.charset.MalformedInputException} or an
+     * {@link java.nio.charset.UnmappableCharacterException} occurs on reading the
+     * input stream, then the PropertyResourceBundle instance resets to the state
+     * before the exception, re-reads the input stream in {@code ISO-8859-1} and
+     * continues reading. If the system property
+     * {@code java.util.PropertyResourceBundle.encoding} is set to either
+     * "ISO-8859-1" or "UTF-8", the input stream is solely read in that encoding,
+     * and throws the exception if it encounters an invalid sequence. Other
+     * encoding values are ignored for this system property.
+     * The system property is read and evaluated when initializing this class.
+     * Changing or removing the property has no effect after the initialization.
      *
      * @param stream an InputStream that represents a property file
      *        to read from.
@@ -236,5 +238,5 @@ public class PropertyResourceBundle extends ResourceBundle {
 
     // ==================privates====================
 
-    private Map<String,Object> lookup;
+    private final Map<String,Object> lookup;
 }

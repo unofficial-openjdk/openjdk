@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import compiler.compilercontrol.share.method.MethodGenerator;
 import compiler.compilercontrol.share.pool.PoolHelper;
 import compiler.compilercontrol.share.scenario.State;
 import jdk.test.lib.Asserts;
-import jdk.test.lib.OutputAnalyzer;
+import jdk.test.lib.process.OutputAnalyzer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -74,7 +74,7 @@ public class LogProcessor implements Consumer<OutputAnalyzer> {
         if (loggedMethods.isEmpty()) {
             return;
         }
-        matchTasks(getScanner());
+        matchTasks();
     }
 
     /*
@@ -95,19 +95,21 @@ public class LogProcessor implements Consumer<OutputAnalyzer> {
      * Parses for &lt;task method='java.lang.String indexOf (I)I' &gt;
      * and finds if there is a compilation log for this task
      */
-    private void matchTasks(Scanner scanner) {
-        String task = scanner.findWithinHorizon(TASK_ELEMENT, 0);
-        while (task != null) {
-            String element = scanner.findWithinHorizon(ANY_ELEMENT, 0);
-            if (Pattern.matches(TASK_DONE_ELEMENT, element)
-                    || Pattern.matches(TASK_END_ELEMENT, element)) {
-                /* If there is nothing between <task> and </task>
-                   except <task done /> then compilation log is empty.
-                   Check the method in this task should not be logged */
-                Asserts.assertFalse(matchMethod(task), "Compilation log "
-                        + "expected. Met: " + element);
-            }
-            task = scanner.findWithinHorizon(TASK_ELEMENT, 0);
+    private void matchTasks() {
+        try (Scanner scanner = getScanner()) {
+          String task = scanner.findWithinHorizon(TASK_ELEMENT, 0);
+          while (task != null) {
+              String element = scanner.findWithinHorizon(ANY_ELEMENT, 0);
+              if (Pattern.matches(TASK_DONE_ELEMENT, element)
+                      || Pattern.matches(TASK_END_ELEMENT, element)) {
+                  /* If there is nothing between <task> and </task>
+                     except <task done /> then compilation log is empty.
+                     Check the method in this task should not be logged */
+                  Asserts.assertFalse(matchMethod(task), "Compilation log "
+                          + "expected. Met: " + element);
+              }
+              task = scanner.findWithinHorizon(TASK_ELEMENT, 0);
+          }
         }
     }
 

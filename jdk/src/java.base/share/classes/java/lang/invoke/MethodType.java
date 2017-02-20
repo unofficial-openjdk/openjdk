@@ -809,6 +809,28 @@ class MethodType implements java.io.Serializable {
         return sj.toString();
     }
 
+    /** True if my parameter list is effectively identical to the given full list,
+     *  after skipping the given number of my own initial parameters.
+     *  In other words, after disregarding {@code skipPos} parameters,
+     *  my remaining parameter list is no longer than the {@code fullList}, and
+     *  is equal to the same-length initial sublist of {@code fullList}.
+     */
+    /*non-public*/
+    boolean effectivelyIdenticalParameters(int skipPos, List<Class<?>> fullList) {
+        int myLen = ptypes.length, fullLen = fullList.size();
+        if (skipPos > myLen || myLen - skipPos > fullLen)
+            return false;
+        List<Class<?>> myList = Arrays.asList(ptypes);
+        if (skipPos != 0) {
+            myList = myList.subList(skipPos, myLen);
+            myLen -= skipPos;
+        }
+        if (fullLen == myLen)
+            return myList.equals(fullList);
+        else
+            return myList.equals(fullList.subList(0, myLen));
+    }
+
     /** True if the old return type can always be viewed (w/o casting) under new return type,
      *  and the new parameters can be viewed (w/o casting) under the old parameter types.
      */
@@ -1106,7 +1128,7 @@ class MethodType implements java.io.Serializable {
     public String toMethodDescriptorString() {
         String desc = methodDescriptor;
         if (desc == null) {
-            desc = BytecodeDescriptor.unparse(this);
+            desc = BytecodeDescriptor.unparseMethod(this.rtype, this.ptypes);
             methodDescriptor = desc;
         }
         return desc;
@@ -1234,7 +1256,7 @@ s.writeObject(this.parameterArray());
         private final ReferenceQueue<T> stale;
 
         public ConcurrentWeakInternSet() {
-            this.map = new ConcurrentHashMap<>();
+            this.map = new ConcurrentHashMap<>(512);
             this.stale = new ReferenceQueue<>();
         }
 

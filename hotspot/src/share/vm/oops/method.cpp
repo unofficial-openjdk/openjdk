@@ -30,7 +30,6 @@
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "gc/shared/gcLocker.hpp"
 #include "gc/shared/generation.hpp"
-#include "gc/shared/referencePendingListLocker.hpp"
 #include "interpreter/bytecodeStream.hpp"
 #include "interpreter/bytecodeTracer.hpp"
 #include "interpreter/bytecodes.hpp"
@@ -54,6 +53,7 @@
 #include "runtime/compilationPolicy.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
+#include "runtime/init.hpp"
 #include "runtime/orderAccess.inline.hpp"
 #include "runtime/relocator.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -85,7 +85,6 @@ Method::Method(ConstMethod* xconst, AccessFlags access_flags) {
   set_constMethod(xconst);
   set_access_flags(access_flags);
   set_intrinsic_id(vmIntrinsics::_none);
-  set_jfr_towrite(false);
   set_force_inline(false);
   set_hidden(false);
   set_dont_inline(false);
@@ -97,7 +96,7 @@ Method::Method(ConstMethod* xconst, AccessFlags access_flags) {
   // Fix and bury in Method*
   set_interpreter_entry(NULL); // sets i2i entry and from_int
   set_adapter_entry(NULL);
-  clear_code(); // from_c/from_i get set to c2i/i2i
+  clear_code(false /* don't need a lock */); // from_c/from_i get set to c2i/i2i
 
   if (access_flags.is_native()) {
     clear_native_function();
@@ -277,7 +276,8 @@ int Method::validate_bci_from_bcp(address bcp) const {
 }
 
 address Method::bcp_from(int bci) const {
-  assert((is_native() && bci == 0) || (!is_native() && 0 <= bci && bci < code_size()), "illegal bci: %d", bci);
+  assert((is_native() && bci == 0) || (!is_native() && 0 <= bci && bci < code_size()),
+         "illegal bci: %d for %s method", bci, is_native() ? "native" : "non-native");
   address bcp = code_base() + bci;
   assert(is_native() && bcp == code_base() || contains(bcp), "bcp doesn't belong to this method");
   return bcp;
@@ -396,12 +396,6 @@ void Method::build_interpreter_method_data(const methodHandle& method, TRAPS) {
   // allocating profiling data. Callers clear pending exception so don't
   // add one here.
   if (ClassLoaderDataGraph::has_metaspace_oom()) {
-    return;
-  }
-
-  // Do not profile method if current thread holds the pending list lock,
-  // which avoids deadlock for acquiring the MethodData_lock.
-  if (ReferencePendingListLocker::is_locked_by_self()) {
     return;
   }
 
@@ -564,7 +558,7 @@ bool Method::compute_has_loops_flag() {
 bool Method::is_final_method(AccessFlags class_access_flags) const {
   // or "does_not_require_vtable_entry"
   // default method or overpass can occur, is not final (reuses vtable entry)
-  // private methods get vtable entries for backward class compatibility.
+  // private methods in classes get vtable entries for backward class compatibility.
   if (is_overpass() || is_default_method())  return false;
   return is_final() || class_access_flags.is_final();
 }
@@ -576,7 +570,7 @@ bool Method::is_final_method() const {
 bool Method::is_default_method() const {
   if (method_holder() != NULL &&
       method_holder()->is_interface() &&
-      !is_abstract()) {
+      !is_abstract() && !is_private()) {
     return true;
   } else {
     return false;
@@ -589,7 +583,9 @@ bool Method::can_be_statically_bound(AccessFlags class_access_flags) const {
   ResourceMark rm;
   bool is_nonv = (vtable_index() == nonvirtual_vtable_index);
   if (class_access_flags.is_interface()) {
-    assert(is_nonv == is_static(), "is_nonv=%s", name_and_sig_as_C_string());
+      assert(is_nonv == is_static() || is_nonv == is_private(),
+             "nonvirtual unexpected for non-static, non-private: %s",
+             name_and_sig_as_C_string());
   }
 #endif
   assert(valid_vtable_index() || valid_itable_index(), "method must be linked before we ask this question");
@@ -910,8 +906,8 @@ void Method::set_not_osr_compilable(int comp_level, bool report, const char* rea
 }
 
 // Revert to using the interpreter and clear out the nmethod
-void Method::clear_code() {
-
+void Method::clear_code(bool acquire_lock /* = true */) {
+  MutexLockerEx pl(acquire_lock ? Patching_lock : NULL, Mutex::_no_safepoint_check_flag);
   // this may be NULL if c2i adapters have not been made yet
   // Only should happen at allocate time.
   if (adapter() == NULL) {
@@ -956,34 +952,103 @@ void Method::unlink_method() {
 }
 #endif
 
+/****************************************************************************
+// The following illustrates how the entries work for CDS shared Methods:
+//
+// Our goal is to delay writing into a shared Method until it's compiled.
+// Hence, we want to determine the initial values for _i2i_entry,
+// _from_interpreted_entry and _from_compiled_entry during CDS dump time.
+//
+// In this example, both Methods A and B have the _i2i_entry of "zero_locals".
+// They also have similar signatures so that they will share the same
+// AdapterHandlerEntry.
+//
+// _adapter_trampoline points to a fixed location in the RW section of
+// the CDS archive. This location initially contains a NULL pointer. When the
+// first of method A or B is linked, an AdapterHandlerEntry is allocated
+// dynamically, and its c2i/i2c entries are generated.
+//
+// _i2i_entry and _from_interpreted_entry initially points to the same
+// (fixed) location in the CODE section of the CDS archive. This contains
+// an unconditional branch to the actual entry for "zero_locals", which is
+// generated at run time and may be on an arbitrary address. Thus, the
+// unconditional branch is also generated at run time to jump to the correct
+// address.
+//
+// Similarly, _from_compiled_entry points to a fixed address in the CODE
+// section. This address has enough space for an unconditional branch
+// instruction, and is initially zero-filled. After the AdapterHandlerEntry is
+// initialized, and the address for the actual c2i_entry is known, we emit a
+// branch instruction here to branch to the actual c2i_entry.
+//
+// The effect of the extra branch on the i2i and c2i entries is negligible.
+//
+// The reason for putting _adapter_trampoline in RO is many shared Methods
+// share the same AdapterHandlerEntry, so we can save space in the RW section
+// by having the extra indirection.
+
+
+[Method A: RW]
+  _constMethod ----> [ConstMethod: RO]
+                       _adapter_trampoline -----------+
+                                                      |
+  _i2i_entry              (same value as method B)    |
+  _from_interpreted_entry (same value as method B)    |
+  _from_compiled_entry    (same value as method B)    |
+                                                      |
+                                                      |
+[Method B: RW]                               +--------+
+  _constMethod ----> [ConstMethod: RO]       |
+                       _adapter_trampoline --+--->(AdapterHandlerEntry* ptr: RW)-+
+                                                                                 |
+                                                 +-------------------------------+
+                                                 |
+                                                 +----> [AdapterHandlerEntry] (allocated at run time)
+                                                              _fingerprint
+                                                              _c2i_entry ---------------------------------+->[c2i entry..]
+ _i2i_entry  -------------+                                   _i2c_entry ---------------+-> [i2c entry..] |
+ _from_interpreted_entry  |                                   _c2i_unverified_entry     |                 |
+         |                |                                                             |                 |
+         |                |  (_cds_entry_table: CODE)                                   |                 |
+         |                +->[0]: jmp _entry_table[0] --> (i2i_entry_for "zero_locals") |                 |
+         |                |                               (allocated at run time)       |                 |
+         |                |  ...                           [asm code ...]               |                 |
+         +-[not compiled]-+  [n]: jmp _entry_table[n]                                   |                 |
+         |                                                                              |                 |
+         |                                                                              |                 |
+         +-[compiled]-------------------------------------------------------------------+                 |
+                                                                                                          |
+ _from_compiled_entry------------>  (_c2i_entry_trampoline: CODE)                                         |
+                                    [jmp c2i_entry] ------------------------------------------------------+
+
+***/
+
 // Called when the method_holder is getting linked. Setup entrypoints so the method
 // is ready to be called from interpreter, compiler, and vtables.
 void Method::link_method(const methodHandle& h_method, TRAPS) {
   // If the code cache is full, we may reenter this function for the
   // leftover methods that weren't linked.
   if (is_shared()) {
-    if (adapter() != NULL) return;
-  } else {
-    if (_i2i_entry != NULL) return;
-
-    assert(adapter() == NULL, "init'd to NULL" );
+    address entry = Interpreter::entry_for_cds_method(h_method);
+    assert(entry != NULL && entry == _i2i_entry,
+           "should be correctly set during dump time");
+    if (adapter() != NULL) {
+      return;
+    }
+    assert(entry == _from_interpreted_entry,
+           "should be correctly set during dump time");
+  } else if (_i2i_entry != NULL) {
+    return;
   }
   assert( _code == NULL, "nothing compiled yet" );
 
   // Setup interpreter entrypoint
   assert(this == h_method(), "wrong h_method()" );
-  address entry;
 
-  if (this->is_shared()) {
-    entry = Interpreter::entry_for_cds_method(h_method);
-  } else {
-    entry = Interpreter::entry_for_method(h_method);
-  }
-  assert(entry != NULL, "interpreter entry must be non-null");
-  if (is_shared()) {
-    assert(entry == _i2i_entry && entry == _from_interpreted_entry,
-           "should be correctly set during dump time");
-  } else {
+  if (!is_shared()) {
+    assert(adapter() == NULL, "init'd to NULL");
+    address entry = Interpreter::entry_for_method(h_method);
+    assert(entry != NULL, "interpreter entry must be non-null");
     // Sets both _i2i_entry and _from_interpreted_entry
     set_interpreter_entry(entry);
   }
@@ -1015,12 +1080,19 @@ address Method::make_adapters(methodHandle mh, TRAPS) {
   // so making them eagerly shouldn't be too expensive.
   AdapterHandlerEntry* adapter = AdapterHandlerLibrary::get_adapter(mh);
   if (adapter == NULL ) {
-    THROW_MSG_NULL(vmSymbols::java_lang_VirtualMachineError(), "Out of space in CodeCache for adapters");
+    if (!is_init_completed()) {
+      // Don't throw exceptions during VM initialization because java.lang.* classes
+      // might not have been initialized, causing problems when constructing the
+      // Java exception object.
+      vm_exit_during_initialization("Out of space in CodeCache for adapters");
+    } else {
+      THROW_MSG_NULL(vmSymbols::java_lang_VirtualMachineError(), "Out of space in CodeCache for adapters");
+    }
   }
 
   if (mh->is_shared()) {
     assert(mh->adapter() == adapter, "must be");
-    assert(mh->_from_compiled_entry != NULL, "must be"); // FIXME, the instructions also not NULL
+    assert(mh->_from_compiled_entry != NULL, "must be");
   } else {
     mh->set_adapter_entry(adapter);
     mh->_from_compiled_entry = adapter->get_c2i_entry();
@@ -1030,9 +1102,9 @@ address Method::make_adapters(methodHandle mh, TRAPS) {
 
 void Method::restore_unshareable_info(TRAPS) {
   // Since restore_unshareable_info can be called more than once for a method, don't
-  // redo any work.   If this field is restored, there is nothing to do.
-  if (_from_compiled_entry == NULL) {
-    // restore method's vtable by calling a virtual function
+  // redo any work.
+  if (adapter() == NULL) {
+    // Restore Method's C++ vtable by calling a virtual function
     restore_vtable();
 
     methodHandle mh(THREAD, this);
@@ -1073,6 +1145,7 @@ bool Method::check_code() const {
 
 // Install compiled code.  Instantly it can execute.
 void Method::set_code(methodHandle mh, CompiledMethod *code) {
+  MutexLockerEx pl(Patching_lock, Mutex::_no_safepoint_check_flag);
   assert( code, "use clear_code to remove code" );
   assert( mh->check_code(), "" );
 
@@ -1375,7 +1448,7 @@ methodHandle Method::clone_with_new_data(methodHandle m, u_char* new_code, int n
   }
 
   // copy annotations over to new method
-  newcm->copy_annotations_from(cm);
+  newcm->copy_annotations_from(loader_data, cm, CHECK_NULL);
   return newm;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,11 @@
  * @test
  * @summary Module system initialization exception results if a module is specificed twice to --patch-module.
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary
+ * @library /test/lib
  */
 
-import jdk.test.lib.*;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 public class PatchModuleDupModule {
 
@@ -37,8 +38,8 @@ public class PatchModuleDupModule {
 
   public static void main(String args[]) throws Exception {
     ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
-      "--patch-module=module1=module1_dir",
-      "--patch-module=module1=module1_dir",
+      "--patch-module=module_one=module_one_dir",
+      "--patch-module=module_one=module_one_dir",
       "-version");
     OutputAnalyzer output = new OutputAnalyzer(pb.start());
     output.shouldContain("java.lang.ExceptionInInitializerError");

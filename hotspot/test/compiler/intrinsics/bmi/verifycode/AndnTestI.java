@@ -24,12 +24,12 @@
 /*
  * @test
  * @bug 8031321
- * @requires vm.flavor == "server"
- * @library /testlibrary /test/lib /
+ * @requires vm.flavor == "server" & !vm.emulatedClient
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
  *
- * @build compiler.intrinsics.bmi.verifycode.AndnTestI
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/bootclasspath/othervm -Xbatch -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI

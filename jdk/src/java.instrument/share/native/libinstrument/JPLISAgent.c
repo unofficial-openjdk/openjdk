@@ -272,6 +272,7 @@ initializeJPLISAgent(   JPLISAgent *    agent,
     agent->mNativeMethodPrefixAdded                  = JNI_FALSE;
     agent->mAgentClassName                           = NULL;
     agent->mOptionsString                            = NULL;
+    agent->mJarfile                                  = NULL;
 
     /* make sure we can recover either handle in either direction.
      * the agent has a ref to the jvmti; make it mutual
@@ -789,9 +790,10 @@ getModuleObject(jvmtiEnv*               jvmti,
     pkg_name_buf[len] = '\0';
 
     err = (*jvmti)->GetNamedModule(jvmti, loaderObject, pkg_name_buf, &moduleObject);
+    free((void*)pkg_name_buf);
+    check_phase_ret_blob(err, NULL);
     jplis_assert_msg(err == JVMTI_ERROR_NONE, "error in the JVMTI GetNamedModule");
 
-    free((void*)pkg_name_buf);
     return moduleObject;
 }
 

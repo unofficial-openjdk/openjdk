@@ -36,7 +36,6 @@ import java.nio.file.*;
 
 import toolbox.JavacTask;
 import toolbox.Task;
-import toolbox.ToolBox;
 
 public class ResolveTest extends ModuleTestBase {
     public static void main(String... args) throws Exception {
@@ -83,11 +82,11 @@ public class ResolveTest extends ModuleTestBase {
     @Test
     public void testUnexportedTypeUnreadableModule(Path base) throws Exception {
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src.resolve("m1"),
-                "module m1 { }",
+        tb.writeJavaFiles(src.resolve("m1x"),
+                "module m1x { }",
                 "package p1; public class C1 { }");
-        tb.writeJavaFiles(src.resolve("m2"),
-                "module m2 { }",
+        tb.writeJavaFiles(src.resolve("m2x"),
+                "module m2x { }",
                 "package p2; public class C2 { p1.C1 c; }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);
@@ -100,18 +99,18 @@ public class ResolveTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("C2.java:1:33: compiler.err.not.def.access.package.cant.access: p1.C1, p1"))
+        if (!log.contains("C2.java:1:31: compiler.err.package.not.visible: p1, (compiler.misc.not.def.access.does.not.read: m2x, p1, m1x)"))
             throw new Exception("expected output not found");
     }
 
     @Test
     public void testUnexportedTypeReadableModule(Path base) throws Exception {
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src.resolve("m1"),
-                "module m1 { }",
+        tb.writeJavaFiles(src.resolve("m1x"),
+                "module m1x { }",
                 "package p1; public class C1 { }");
-        tb.writeJavaFiles(src.resolve("m2"),
-                "module m2 { requires m1; }",
+        tb.writeJavaFiles(src.resolve("m2x"),
+                "module m2x { requires m1x; }",
                 "package p2; public class C2 { p1.C1 c; }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);
@@ -124,21 +123,21 @@ public class ResolveTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("C2.java:1:33: compiler.err.not.def.access.package.cant.access: p1.C1, p1"))
+        if (!log.contains("C2.java:1:31: compiler.err.package.not.visible: p1, (compiler.misc.not.def.access.not.exported: p1, m1x)"))
             throw new Exception("expected output not found");
     }
 
     @Test
     public void testQualifiedExportedTypeReadableModule(Path base) throws Exception {
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src.resolve("m1"),
-                "module m1 { exports p1 to m3; }",
+        tb.writeJavaFiles(src.resolve("m1x"),
+                "module m1x { exports p1 to m3x; }",
                 "package p1; public class C1 { }");
-        tb.writeJavaFiles(src.resolve("m2"),
-                "module m2 { requires m1; }",
+        tb.writeJavaFiles(src.resolve("m2x"),
+                "module m2x { requires m1x; }",
                 "package p2; public class C2 { p1.C1 c; }");
-        tb.writeJavaFiles(src.resolve("m3"),
-                "module m3 { requires m1; }");
+        tb.writeJavaFiles(src.resolve("m3x"),
+                "module m3x { requires m1x; }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);
 
@@ -150,18 +149,18 @@ public class ResolveTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("C2.java:1:33: compiler.err.not.def.access.package.cant.access: p1.C1, p1"))
+        if (!log.contains("C2.java:1:31: compiler.err.package.not.visible: p1, (compiler.misc.not.def.access.not.exported.to.module: p1, m1x, m2x)"))
             throw new Exception("expected output not found");
     }
 
     @Test
     public void testExportedTypeUnreadableModule(Path base) throws Exception {
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src.resolve("m1"),
-                "module m1 { exports p1; }",
+        tb.writeJavaFiles(src.resolve("m1x"),
+                "module m1x { exports p1; }",
                 "package p1; public class C1 { }");
-        tb.writeJavaFiles(src.resolve("m2"),
-                "module m2 { }",
+        tb.writeJavaFiles(src.resolve("m2x"),
+                "module m2x { }",
                 "package p2; public class C2 { p1.C1 c; }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);
@@ -174,18 +173,18 @@ public class ResolveTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("C2.java:1:33: compiler.err.not.def.access.package.cant.access: p1.C1, p1"))
+        if (!log.contains("C2.java:1:31: compiler.err.package.not.visible: p1, (compiler.misc.not.def.access.does.not.read: m2x, p1, m1x)"))
             throw new Exception("expected output not found");
     }
 
     @Test
     public void testExportedTypeReadableModule(Path base) throws Exception {
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src.resolve("m1"),
-                "module m1 { exports p1; }",
+        tb.writeJavaFiles(src.resolve("m1x"),
+                "module m1x { exports p1; }",
                 "package p1; public class C1 { }");
-        tb.writeJavaFiles(src.resolve("m2"),
-                "module m2 { requires m1; }",
+        tb.writeJavaFiles(src.resolve("m2x"),
+                "module m2x { requires m1x; }",
                 "package p2; public class C2 { p1.C1 c; }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);
@@ -201,11 +200,11 @@ public class ResolveTest extends ModuleTestBase {
     @Test
     public void testExportedTypeReadableModule2(Path base) throws Exception {
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src.resolve("m1"),
-                "module m1 { exports p1 to m2; }",
+        tb.writeJavaFiles(src.resolve("m1x"),
+                "module m1x { exports p1 to m2x; }",
                 "package p1; public class C1 { }");
-        tb.writeJavaFiles(src.resolve("m2"),
-                "module m2 { requires m1; }",
+        tb.writeJavaFiles(src.resolve("m2x"),
+                "module m2x { requires m1x; }",
                 "package p2; public class C2 { p1.C1 c; }");
         Path modules = base.resolve("modules");
         Files.createDirectories(modules);

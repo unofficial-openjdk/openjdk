@@ -2754,9 +2754,11 @@ class StubGenerator: public StubCodeGenerator {
     const Register keylen      = rscratch1;
 
     address start = __ pc();
+
       __ enter();
 
-      __ mov(rscratch2, len_reg);
+      __ movw(rscratch2, len_reg);
+
       __ ldrw(keylen, Address(key, arrayOopDesc::length_offset_in_bytes() - arrayOopDesc::base_offset_in_bytes(T_INT)));
 
       __ ld1(v0, __ T16B, rvec);
@@ -2814,8 +2816,9 @@ class StubGenerator: public StubCodeGenerator {
       __ eor(v0, __ T16B, v0, v31);
 
       __ st1(v0, __ T16B, __ post(to, 16));
-      __ sub(len_reg, len_reg, 16);
-      __ cbnz(len_reg, L_aes_loop);
+
+      __ subw(len_reg, len_reg, 16);
+      __ cbnzw(len_reg, L_aes_loop);
 
       __ st1(v0, __ T16B, rvec);
 
@@ -2855,9 +2858,11 @@ class StubGenerator: public StubCodeGenerator {
     const Register keylen      = rscratch1;
 
     address start = __ pc();
+
       __ enter();
 
-      __ mov(rscratch2, len_reg);
+      __ movw(rscratch2, len_reg);
+
       __ ldrw(keylen, Address(key, arrayOopDesc::length_offset_in_bytes() - arrayOopDesc::base_offset_in_bytes(T_INT)));
 
       __ ld1(v2, __ T16B, rvec);
@@ -2920,8 +2925,8 @@ class StubGenerator: public StubCodeGenerator {
       __ st1(v0, __ T16B, __ post(to, 16));
       __ orr(v2, __ T16B, v1, v1);
 
-      __ sub(len_reg, len_reg, 16);
-      __ cbnz(len_reg, L_aes_loop);
+      __ subw(len_reg, len_reg, 16);
+      __ cbnzw(len_reg, L_aes_loop);
 
       __ st1(v2, __ T16B, rvec);
 
@@ -3801,7 +3806,7 @@ class StubGenerator: public StubCodeGenerator {
 
     oop_maps->add_gc_map(the_pc - start, map);
 
-    __ reset_last_Java_frame(true, true);
+    __ reset_last_Java_frame(true);
     __ maybe_isb();
 
     __ leave();
@@ -4671,8 +4676,11 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::_throw_StackOverflowError_entry =
       generate_throw_exception("StackOverflowError throw_exception",
                                CAST_FROM_FN_PTR(address,
-                                                SharedRuntime::
-                                                throw_StackOverflowError));
+                                                SharedRuntime::throw_StackOverflowError));
+    StubRoutines::_throw_delayed_StackOverflowError_entry =
+      generate_throw_exception("delayed StackOverflowError throw_exception",
+                               CAST_FROM_FN_PTR(address,
+                                                SharedRuntime::throw_delayed_StackOverflowError));
     if (UseCRC32Intrinsics) {
       // set table address before stub generation which use it
       StubRoutines::_crc_table_adr = (address)StubRoutines::aarch64::_crc_table;

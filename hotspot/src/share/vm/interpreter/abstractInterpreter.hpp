@@ -76,6 +76,8 @@ class AbstractInterpreter: AllStatic {
     java_lang_math_log10,                                       // implementation of java.lang.Math.log10 (x)
     java_lang_math_pow,                                         // implementation of java.lang.Math.pow   (x,y)
     java_lang_math_exp,                                         // implementation of java.lang.Math.exp   (x)
+    java_lang_math_fmaF,                                        // implementation of java.lang.Math.fma   (x, y, z)
+    java_lang_math_fmaD,                                        // implementation of java.lang.Math.fma   (x, y, z)
     java_lang_ref_reference_get,                                // implementation of java.lang.ref.Reference.get()
     java_util_zip_CRC32_update,                                 // implementation of java.util.zip.CRC32.update()
     java_util_zip_CRC32_updateBytes,                            // implementation of java.util.zip.CRC32.updateBytes()
@@ -219,7 +221,7 @@ class AbstractInterpreter: AllStatic {
   }
 
   static int expr_offset_in_bytes(int i) {
-#if !defined(ZERO) && (defined(PPC) || defined(SPARC))
+#if !defined(ZERO) && (defined(PPC) || defined(S390) || defined(SPARC))
     return stackElementSize * i + wordSize;  // both point to one word past TOS
 #else
     return stackElementSize * i;
@@ -297,10 +299,6 @@ class AbstractInterpreter: AllStatic {
   }
 
   static void initialize_method_handle_entries();
-
-  // PPC-only: Support abs and sqrt like in compiler.
-  // For others we can use a normal (native) entry.
-  static bool math_entry_available(MethodKind kind);
 };
 
 //------------------------------------------------------------------------------------------------------------------------

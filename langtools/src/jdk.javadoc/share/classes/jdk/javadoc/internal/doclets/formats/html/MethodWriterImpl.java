@@ -172,7 +172,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
     @Override
     public void addComments(TypeMirror holderType, ExecutableElement method, Content methodDocTree) {
         TypeElement holder = utils.asTypeElement(holderType);
-        if (!utils.getBody(method).isEmpty()) {
+        if (!utils.getFullBody(method).isEmpty()) {
             if (holder.equals(typeElement) ||
                     !(utils.isPublic(holder) ||
                     utils.isLinkable(holder))) {
@@ -261,9 +261,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
     @Override
     public List<String> getSummaryTableHeader(Element member) {
         List<String> header = Arrays.asList(writer.getModifierTypeHeader(),
-                resources.getText("doclet.0_and_1",
-                        resources.getText("doclet.Method"),
-                        resources.getText("doclet.Description")));
+                resources.getText("doclet.Method"), resources.getText("doclet.Description"));
         return header;
     }
 
@@ -366,10 +364,10 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
      */
     protected static void addImplementsInfo(HtmlDocletWriter writer,
             ExecutableElement method, Content dl) {
-        if (writer.configuration.nocomment) {
+        Utils utils = writer.utils;
+        if (utils.isStatic(method) || writer.configuration.nocomment) {
             return;
         }
-        Utils utils = writer.utils;
         Contents contents = writer.contents;
         ImplementedMethods implementedMethodsFinder =
                 new ImplementedMethods(method, writer.configuration);

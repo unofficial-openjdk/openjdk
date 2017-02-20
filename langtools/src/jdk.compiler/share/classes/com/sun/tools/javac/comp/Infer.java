@@ -120,7 +120,7 @@ public class Infer {
         dependenciesFolder = options.get("debug.dumpInferenceGraphsTo");
         pendingGraphs = List.nil();
 
-        emptyContext = new InferenceContext(this, List.<Type>nil());
+        emptyContext = new InferenceContext(this, List.nil());
     }
 
     /** A value for prototypes that admit any type, including polymorphic ones. */
@@ -319,7 +319,8 @@ public class Infer {
                  *  need to use it several times: with several targets.
                  */
                 saved_undet = inferenceContext.save();
-                if (allowGraphInference && !warn.hasNonSilentLint(Lint.LintCategory.UNCHECKED)) {
+                boolean unchecked = warn.hasNonSilentLint(Lint.LintCategory.UNCHECKED);
+                if (allowGraphInference && !unchecked) {
                     boolean shouldPropagate = shouldPropagate(getReturnType(), resultInfo, inferenceContext);
 
                     InferenceContext minContext = shouldPropagate ?
@@ -338,7 +339,10 @@ public class Infer {
                     }
                 }
                 inferenceContext.solve(noWarnings);
-                return inferenceContext.asInstType(this).getReturnType();
+                Type ret = inferenceContext.asInstType(this).getReturnType();
+                //inline logic from Attr.checkMethod - if unchecked conversion was required, erase
+                //return type _after_ resolution
+                return unchecked ? types.erasure(ret) : ret;
             } catch (InferenceException ex) {
                 resultInfo.checkContext.report(null, ex.getDiagnostic());
                 Assert.error(); //cannot get here (the above should throw)
@@ -404,15 +408,11 @@ public class Infer {
         } else if (to.hasTag(NONE)) {
             to = from.isPrimitive() ? from : syms.objectType;
         } else if (qtype.hasTag(UNDETVAR)) {
-            if (resultInfo.pt.isReference()) {
-                if (needsEagerInstantiation((UndetVar)qtype, to, inferenceContext)) {
-                    to = generateReferenceToTargetConstraint(tree, (UndetVar)qtype, to, resultInfo, inferenceContext);
-                }
-            } else {
-                if (to.isPrimitive()) {
-                    to = generateReturnConstraintsPrimitive(tree, (UndetVar)qtype, to,
-                        resultInfo, inferenceContext);
-                }
+            if (needsEagerInstantiation((UndetVar)qtype, to, inferenceContext) &&
+                    (allowGraphInference || !to.isPrimitive())) {
+                to = generateReferenceToTargetConstraint(tree, (UndetVar)qtype, to, resultInfo, inferenceContext);
+            } else if (to.isPrimitive()) {
+                to = types.boxedClass(to).type;
             }
         } else if (rsInfoInfContext.free(resultInfo.pt)) {
             //propagation - cache captured vars
@@ -432,26 +432,21 @@ public class Infer {
         return from;
     }
 
-    private Type generateReturnConstraintsPrimitive(JCTree tree, UndetVar from,
-            Type to, Attr.ResultInfo resultInfo, InferenceContext inferenceContext) {
-        if (!allowGraphInference) {
-            //if legacy, just return boxed type
-            return types.boxedClass(to).type;
-        }
-        //if graph inference we need to skip conflicting boxed bounds...
-        for (Type t : from.getBounds(InferenceBound.EQ, InferenceBound.UPPER,
-                InferenceBound.LOWER)) {
-            Type boundAsPrimitive = types.unboxedType(t);
-            if (boundAsPrimitive == null || boundAsPrimitive.hasTag(NONE)) {
-                continue;
-            }
-            return generateReferenceToTargetConstraint(tree, from, to,
-                    resultInfo, inferenceContext);
-        }
-        return types.boxedClass(to).type;
-    }
-
     private boolean needsEagerInstantiation(UndetVar from, Type to, InferenceContext inferenceContext) {
+        if (to.isPrimitive()) {
+            /* T is a primitive type, and one of the primitive wrapper classes is an instantiation,
+             * upper bound, or lower bound for alpha in B2.
+             */
+            for (Type t : from.getBounds(InferenceBound.values())) {
+                Type boundAsPrimitive = types.unboxedType(t);
+                if (boundAsPrimitive == null || boundAsPrimitive.hasTag(NONE)) {
+                    continue;
+                }
+                return true;
+            }
+            return false;
+        }
+
         Type captureOfTo = types.capture(to);
         /* T is a reference type, but is not a wildcard-parameterized type, and either
          */
@@ -636,12 +631,11 @@ public class Infer {
     TypeMapping<Void> fromTypeVarFun = new TypeMapping<Void>() {
         @Override
         public Type visitTypeVar(TypeVar tv, Void aVoid) {
-            return new UndetVar(tv, incorporationEngine(), types);
-        }
-
-        @Override
-        public Type visitCapturedType(CapturedType t, Void aVoid) {
-            return new CapturedUndetVar(t, incorporationEngine(), types);
+            UndetVar uv = new UndetVar(tv, incorporationEngine(), types);
+            if ((tv.tsym.flags() & Flags.THROWS) != 0) {
+                uv.setThrow();
+            }
+            return uv;
         }
     };
 
@@ -1472,7 +1466,7 @@ public class Infer {
         THROWS(InferenceBound.UPPER) {
             @Override
             public boolean accepts(UndetVar t, InferenceContext inferenceContext) {
-                if ((t.qtype.tsym.flags() & Flags.THROWS) == 0) {
+                if (!t.isThrows()) {
                     //not a throws undet var
                     return false;
                 }

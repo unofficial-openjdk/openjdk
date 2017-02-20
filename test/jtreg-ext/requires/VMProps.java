@@ -25,6 +25,7 @@ package requires;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,6 +33,8 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import sun.hotspot.cpuinfo.CPUInfo;
 import sun.hotspot.gc.GC;
 import sun.hotspot.WhiteBox;
 
@@ -59,9 +62,13 @@ public class VMProps implements Callable<Map<String, String>> {
         map.put("vm.bits", vmBits());
         map.put("vm.flightRecorder", vmFlightRecorder());
         map.put("vm.simpleArch", vmArch());
+        map.put("vm.debug", vmDebug());
+        map.put("vm.jvmci", vmJvmci());
+        map.put("vm.emulatedClient", vmEmulatedClient());
+        map.put("vm.cpu.features", cpuFeatures());
         vmGC(map); // vm.gc.X = true/false
 
-        dump(map);
+        VMProps.dump(map);
         return map;
     }
 
@@ -148,6 +155,39 @@ public class VMProps implements Callable<Map<String, String>> {
     }
 
     /**
+     * @return debug level value extracted from the "jdk.debug" property.
+     */
+    protected String vmDebug() {
+        return "" + System.getProperty("jdk.debug").contains("debug");
+    }
+
+    /**
+     * @return true if VM supports JVMCI and false otherwise
+     */
+    protected String vmJvmci() {
+        // builds with jvmci have this flag
+        return "" + (WB.getBooleanVMFlag("EnableJVMCI") != null);
+    }
+
+    /**
+     * @return true if VM runs in emulated-client mode and false otherwise.
+     */
+    protected String vmEmulatedClient() {
+        String vmInfo = System.getProperty("java.vm.info");
+        if (vmInfo == null) {
+            return "false";
+        }
+        return "" + vmInfo.contains(" emulated-client");
+    }
+
+    /**
+     * @return supported CPU features
+     */
+    protected String cpuFeatures() {
+        return CPUInfo.getFeatures().toString();
+    }
+
+    /**
      * For all existing GC sets vm.gc.X property.
      * Example vm.gc.G1=true means:
      *    VM supports G1
@@ -172,7 +212,7 @@ public class VMProps implements Callable<Map<String, String>> {
      *
      * @param map
      */
-    protected void dump(Map<String, String> map) {
+    protected static void dump(Map<String, String> map) {
         String dumpFileName = System.getProperty("vmprops.dump");
         if (dumpFileName == null) {
             return;
@@ -180,7 +220,7 @@ public class VMProps implements Callable<Map<String, String>> {
         List<String> lines = new ArrayList<>();
         map.forEach((k, v) -> lines.add(k + ":" + v));
         try {
-            Files.write(Paths.get(dumpFileName), lines);
+            Files.write(Paths.get(dumpFileName), lines, StandardOpenOption.APPEND);
         } catch (IOException e) {
             throw new RuntimeException("Failed to dump properties into '"
                     + dumpFileName + "'", e);

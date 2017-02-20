@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,16 +27,18 @@ package java.lang.reflect;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
-import java.lang.module.ModuleDescriptor.Provides;
+import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Version;
 import java.lang.module.ResolvedModule;
 import java.net.URI;
 import java.net.URL;
-import java.util.Collections;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -49,9 +51,17 @@ import java.util.stream.Stream;
 
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.ResourceHelper;
+import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ServicesCatalog;
+import jdk.internal.org.objectweb.asm.AnnotationVisitor;
+import jdk.internal.org.objectweb.asm.Attribute;
+import jdk.internal.org.objectweb.asm.ClassReader;
+import jdk.internal.org.objectweb.asm.ClassVisitor;
+import jdk.internal.org.objectweb.asm.ClassWriter;
+import jdk.internal.org.objectweb.asm.Opcodes;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import sun.security.util.SecurityConstants;
@@ -63,16 +73,15 @@ import sun.security.util.SecurityConstants;
  * Java Virtual Machine when a graph of modules is defined to the Java virtual
  * machine to create a module {@link Layer Layer}. </p>
  *
- * <p> An unnamed module does not have a name. There is an unnamed module
- * per {@link ClassLoader ClassLoader} that is obtained by invoking the class
- * loader's {@link ClassLoader#getUnnamedModule() getUnnamedModule} method. The
- * {@link Class#getModule() getModule} method of all types defined by a class
- * loader that are not in a named module return the class loader's unnamed
+ * <p> An unnamed module does not have a name. There is an unnamed module for
+ * each {@link ClassLoader ClassLoader}, obtained by invoking its {@link
+ * ClassLoader#getUnnamedModule() getUnnamedModule} method. All types that are
+ * not in a named module are members of their defining class loader's unnamed
  * module. </p>
  *
  * <p> The package names that are parameters or returned by methods defined in
  * this class are the fully-qualified names of the packages as defined in
- * section 6.5.3 of <cite>The Java&trade; Language Specification </cite>, for
+ * section 6.5.3 of <cite>The Java&trade; Language Specification</cite>, for
  * example, {@code "java.lang"}. </p>
  *
  * <p> Unless otherwise specified, passing a {@code null} argument to a method
@@ -80,10 +89,11 @@ import sun.security.util.SecurityConstants;
  * be thrown. </p>
  *
  * @since 9
+ * @spec JPMS
  * @see java.lang.Class#getModule
  */
 
-public final class Module {
+public final class Module implements AnnotatedElement {
 
     // the layer that contains this module, can be null
     private final Layer layer;
@@ -113,18 +123,12 @@ public final class Module {
 
         // define module to VM
 
-        Set<String> packages = descriptor.packages();
-        int n = packages.size();
-        String[] array = new String[n];
-        int i = 0;
-        for (String pn : packages) {
-            array[i++] = pn.replace('.', '/');
-        }
+        boolean isOpen = descriptor.isOpen();
         Version version = descriptor.version().orElse(null);
         String vs = Objects.toString(version, null);
         String loc = Objects.toString(uri, null);
-
-        defineModule0(this, vs, loc, array);
+        String[] packages = descriptor.packages().toArray(new String[0]);
+        defineModule0(this, isOpen, vs, loc, packages);
     }
 
 
@@ -240,24 +244,24 @@ public final class Module {
 
     // --
 
-    // the special Module to mean reads or exported to "all unnamed modules"
+    // special Module to mean "all unnamed modules"
     private static final Module ALL_UNNAMED_MODULE = new Module(null);
 
-    // special Module to mean exported to "everyone"
+    // special Module to mean "everyone"
     private static final Module EVERYONE_MODULE = new Module(null);
 
-    // exported to all modules
-    private static final Set<Module> EVERYONE = Collections.singleton(EVERYONE_MODULE);
+    // set contains EVERYONE_MODULE, used when a package is opened or
+    // exported unconditionally
+    private static final Set<Module> EVERYONE_SET = Set.of(EVERYONE_MODULE);
 
 
     // -- readability --
 
-    // the modules that this module permanently reads
-    // (will be final when the modules are defined in reverse topology order)
+    // the modules that this module reads
     private volatile Set<Module> reads;
 
     // additional module (2nd key) that some module (1st key) reflectively reads
-    private static final WeakPairMap<Module, Module, Boolean> transientReads
+    private static final WeakPairMap<Module, Module, Boolean> reflectivelyReads
         = new WeakPairMap<>();
 
 
@@ -293,13 +297,13 @@ public final class Module {
         }
 
         // check if this module reads the other module reflectively
-        if (transientReads.containsKeyPair(this, other))
+        if (reflectivelyReads.containsKeyPair(this, other))
             return true;
 
         // if other is an unnamed module then check if this module reads
         // all unnamed modules
         if (!other.isNamed()
-            && transientReads.containsKeyPair(this, ALL_UNNAMED_MODULE))
+            && reflectivelyReads.containsKeyPair(this, ALL_UNNAMED_MODULE))
             return true;
 
         return false;
@@ -309,17 +313,22 @@ public final class Module {
      * If the caller's module is this module then update this module to read
      * the given module.
      *
-     * This method is a no-op if {@code other} is this module (all modules can
-     * read themselves) or this module is an unnamed module (as unnamed modules
-     * read all modules).
+     * This method is a no-op if {@code other} is this module (all modules read
+     * themselves), this module is an unnamed module (as unnamed modules read
+     * all modules), or this module already reads {@code other}.
+     *
+     * @implNote <em>Read edges</em> added by this method are <em>weak</em> and
+     * do not prevent {@code other} from being GC'ed when this module is
+     * strongly reachable.
      *
      * @param  other
      *         The other module
      *
      * @return this module
      *
-     * @throws IllegalStateException
-     *         If this is a named module and the caller is not this module
+     * @throws IllegalCallerException
+     *         If this is a named module and the caller's module is not this
+     *         module
      *
      * @see #canRead
      */
@@ -329,7 +338,7 @@ public final class Module {
         if (this.isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
-                throw new IllegalStateException(caller + " != " + this);
+                throw new IllegalCallerException(caller + " != " + this);
             }
             implAddReads(other, true);
         }
@@ -381,30 +390,39 @@ public final class Module {
         }
 
         // add reflective read
-        transientReads.putIfAbsent(this, other, Boolean.TRUE);
+        reflectivelyReads.putIfAbsent(this, other, Boolean.TRUE);
     }
 
 
-    // -- exports --
+    // -- exported and open packages --
 
-    // the packages that are permanently exported
-    // (will be final when the modules are defined in reverse topology order)
-    private volatile Map<String, Set<Module>> exports;
+    // the packages are open to other modules, can be null
+    // if the value contains EVERYONE_MODULE then the package is open to all
+    private volatile Map<String, Set<Module>> openPackages;
 
-    // additional exports added at run-time
-    // this module (1st key), other module (2nd key), exported packages (value)
+    // the packages that are exported, can be null
+    // if the value contains EVERYONE_MODULE then the package is exported to all
+    private volatile Map<String, Set<Module>> exportedPackages;
+
+    // additional exports or opens added at run-time
+    // this module (1st key), other module (2nd key)
+    // (package name, open?) (value)
     private static final WeakPairMap<Module, Module, Map<String, Boolean>>
-        transientExports = new WeakPairMap<>();
+        reflectivelyExports = new WeakPairMap<>();
 
 
     /**
      * Returns {@code true} if this module exports the given package to at
      * least the given module.
      *
-     * <p> This method always return {@code true} when invoked on an unnamed
+     * <p> This method returns {@code true} if invoked to test if a package in
+     * this module is exported to itself. It always returns {@code true} when
+     * invoked on an unnamed module. A package that is {@link #isOpen open} to
+     * the given module is considered exported to that module at run-time and
+     * so this method returns {@code true} if the package is open to the given
      * module. </p>
      *
-     * <p> This method does not check if the given module reads this module </p>
+     * <p> This method does not check if the given module reads this module. </p>
      *
      * @param  pn
      *         The package name
@@ -413,93 +431,196 @@ public final class Module {
      *
      * @return {@code true} if this module exports the package to at least the
      *         given module
+     *
+     * @see ModuleDescriptor#exports()
+     * @see #addExports(String,Module)
      */
     public boolean isExported(String pn, Module other) {
         Objects.requireNonNull(pn);
         Objects.requireNonNull(other);
-        return implIsExported(pn, other);
+        return implIsExportedOrOpen(pn, other, /*open*/false);
+    }
+
+    /**
+     * Returns {@code true} if this module has <em>opened</em> a package to at
+     * least the given module.
+     *
+     * <p> This method returns {@code true} if invoked to test if a package in
+     * this module is open to itself. It returns {@code true} when invoked on an
+     * {@link ModuleDescriptor#isOpen open} module with a package in the module.
+     * It always returns {@code true} when invoked on an unnamed module. </p>
+     *
+     * <p> This method does not check if the given module reads this module. </p>
+     *
+     * @param  pn
+     *         The package name
+     * @param  other
+     *         The other module
+     *
+     * @return {@code true} if this module has <em>opened</em> the package
+     *         to at least the given module
+     *
+     * @see ModuleDescriptor#opens()
+     * @see #addOpens(String,Module)
+     * @see AccessibleObject#setAccessible(boolean)
+     * @see java.lang.invoke.MethodHandles#privateLookupIn
+     */
+    public boolean isOpen(String pn, Module other) {
+        Objects.requireNonNull(pn);
+        Objects.requireNonNull(other);
+        return implIsExportedOrOpen(pn, other, /*open*/true);
     }
 
     /**
      * Returns {@code true} if this module exports the given package
      * unconditionally.
      *
-     * <p> This method always return {@code true} when invoked on an unnamed
-     * module. </p>
+     * <p> This method always returns {@code true} when invoked on an unnamed
+     * module. A package that is {@link #isOpen(String) opened} unconditionally
+     * is considered exported unconditionally at run-time and so this method
+     * returns {@code true} if the package is opened unconditionally. </p>
      *
-     * <p> This method does not check if the given module reads this module </p>
+     * <p> This method does not check if the given module reads this module. </p>
      *
      * @param  pn
      *         The package name
      *
      * @return {@code true} if this module exports the package unconditionally
+     *
+     * @see ModuleDescriptor#exports()
      */
     public boolean isExported(String pn) {
         Objects.requireNonNull(pn);
-        return implIsExported(pn, EVERYONE_MODULE);
+        return implIsExportedOrOpen(pn, EVERYONE_MODULE, /*open*/false);
     }
 
     /**
-     * Returns {@code true} if this module exports the given package to the
-     * given module. If the other module is {@code EVERYONE_MODULE} then
-     * this method tests if the package is exported unconditionally.
+     * Returns {@code true} if this module has <em>opened</em> a package
+     * unconditionally.
+     *
+     * <p> This method always returns {@code true} when invoked on an unnamed
+     * module. Additionally, it always returns {@code true} when invoked on an
+     * {@link ModuleDescriptor#isOpen open} module with a package in the
+     * module. </p>
+     *
+     * <p> This method does not check if the given module reads this module. </p>
+     *
+     * @param  pn
+     *         The package name
+     *
+     * @return {@code true} if this module has <em>opened</em> the package
+     *         unconditionally
+     *
+     * @see ModuleDescriptor#opens()
      */
-    private boolean implIsExported(String pn, Module other) {
+    public boolean isOpen(String pn) {
+        Objects.requireNonNull(pn);
+        return implIsExportedOrOpen(pn, EVERYONE_MODULE, /*open*/true);
+    }
 
-        // all packages are exported by unnamed modules
+
+    /**
+     * Returns {@code true} if this module exports or opens the given package
+     * to the given module. If the other module is {@code EVERYONE_MODULE} then
+     * this method tests if the package is exported or opened unconditionally.
+     */
+    private boolean implIsExportedOrOpen(String pn, Module other, boolean open) {
+        // all packages in unnamed modules are open
         if (!isNamed())
             return true;
 
-        // exported via module declaration/descriptor
-        if (isExportedPermanently(pn, other))
+        // all packages are exported/open to self
+        if (other == this && containsPackage(pn))
             return true;
 
-        // exported via addExports
-        if (isExportedReflectively(pn, other))
+        // all packages in open and automatic modules are open
+        if (descriptor.isOpen() || descriptor.isAutomatic())
+            return containsPackage(pn);
+
+        // exported/opened via module declaration/descriptor
+        if (isStaticallyExportedOrOpen(pn, other, open))
             return true;
 
-        // not exported or not exported to other
+        // exported via addExports/addOpens
+        if (isReflectivelyExportedOrOpen(pn, other, open))
+            return true;
+
+        // not exported or open to other
         return false;
     }
 
     /**
-     * Returns {@code true} if this module permanently exports the given
-     * package to the given module.
+     * Returns {@code true} if this module exports or opens a package to
+     * the given module via its module declaration.
      */
-    private boolean isExportedPermanently(String pn, Module other) {
-        Map<String, Set<Module>> exports = this.exports;
-        if (exports != null) {
-            Set<Module> targets = exports.get(pn);
-
-            if ((targets != null)
-                && (targets.contains(other) || targets.contains(EVERYONE_MODULE)))
-                return true;
+    boolean isStaticallyExportedOrOpen(String pn, Module other, boolean open) {
+        // package is open to everyone or <other>
+        Map<String, Set<Module>> openPackages = this.openPackages;
+        if (openPackages != null) {
+            Set<Module> targets = openPackages.get(pn);
+            if (targets != null) {
+                if (targets.contains(EVERYONE_MODULE))
+                    return true;
+                if (other != EVERYONE_MODULE && targets.contains(other))
+                    return true;
+            }
         }
+
+        if (!open) {
+            // package is exported to everyone or <other>
+            Map<String, Set<Module>> exportedPackages = this.exportedPackages;
+            if (exportedPackages != null) {
+                Set<Module> targets = exportedPackages.get(pn);
+                if (targets != null) {
+                    if (targets.contains(EVERYONE_MODULE))
+                        return true;
+                    if (other != EVERYONE_MODULE && targets.contains(other))
+                        return true;
+                }
+            }
+        }
+
         return false;
     }
 
+
     /**
-     * Returns {@code true} if this module reflectively exports the given
+     * Returns {@code true} if this module reflectively exports or opens given
      * package package to the given module.
      */
-    private boolean isExportedReflectively(String pn, Module other) {
-        // exported to all modules
-        Map<String, ?> exports = transientExports.get(this, EVERYONE_MODULE);
-        if (exports != null && exports.containsKey(pn))
-            return true;
+    private boolean isReflectivelyExportedOrOpen(String pn, Module other, boolean open) {
+        // exported or open to all modules
+        Map<String, Boolean> exports = reflectivelyExports.get(this, EVERYONE_MODULE);
+        if (exports != null) {
+            Boolean b = exports.get(pn);
+            if (b != null) {
+                boolean isOpen = b.booleanValue();
+                if (!open || isOpen) return true;
+            }
+        }
 
         if (other != EVERYONE_MODULE) {
 
-            // exported to other
-            exports = transientExports.get(this, other);
-            if (exports != null && exports.containsKey(pn))
-                return true;
+            // exported or open to other
+            exports = reflectivelyExports.get(this, other);
+            if (exports != null) {
+                Boolean b = exports.get(pn);
+                if (b != null) {
+                    boolean isOpen = b.booleanValue();
+                    if (!open || isOpen) return true;
+                }
+            }
 
-            // other is an unnamed module && exported to all unnamed
+            // other is an unnamed module && exported or open to all unnamed
             if (!other.isNamed()) {
-                exports = transientExports.get(this, ALL_UNNAMED_MODULE);
-                if (exports != null && exports.containsKey(pn))
-                    return true;
+                exports = reflectivelyExports.get(this, ALL_UNNAMED_MODULE);
+                if (exports != null) {
+                    Boolean b = exports.get(pn);
+                    if (b != null) {
+                        boolean isOpen = b.booleanValue();
+                        if (!open || isOpen) return true;
+                    }
+                }
             }
 
         }
@@ -510,11 +631,16 @@ public final class Module {
 
     /**
      * If the caller's module is this module then update this module to export
-     * package {@code pn} to the given module.
+     * the given package to the given module.
      *
-     * <p> This method has no effect if the package is already exported to the
-     * given module. It also has no effect if invoked on an unnamed module (as
-     * unnamed modules export all packages). </p>
+     * <p> This method has no effect if the package is already exported (or
+     * <em>open</em>) to the given module. </p>
+     *
+     * @apiNote As specified in section 5.4.3 of the <cite>The Java&trade;
+     * Virtual Machine Specification </cite>, if an attempt to resolve a
+     * symbolic reference fails because of a linkage error, then subsequent
+     * attempts to resolve the reference always fail with the same error that
+     * was thrown as a result of the initial resolution attempt.
      *
      * @param  pn
      *         The package name
@@ -526,8 +652,12 @@ public final class Module {
      * @throws IllegalArgumentException
      *         If {@code pn} is {@code null}, or this is a named module and the
      *         package {@code pn} is not a package in this module
-     * @throws IllegalStateException
-     *         If this is a named module and the caller is not this module
+     * @throws IllegalCallerException
+     *         If this is a named module and the caller's module is not this
+     *         module
+     *
+     * @jvms 5.4.3 Resolution
+     * @see #isExported(String,Module)
      */
     @CallerSensitive
     public Module addExports(String pn, Module other) {
@@ -538,13 +668,60 @@ public final class Module {
         if (isNamed()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
-                throw new IllegalStateException(caller + " != " + this);
+                throw new IllegalCallerException(caller + " != " + this);
             }
-            implAddExports(pn, other, true);
+            implAddExportsOrOpens(pn, other, /*open*/false, /*syncVM*/true);
         }
 
         return this;
     }
+
+    /**
+     * If this module has <em>opened</em> a package to at least the caller
+     * module then update this module to open the package to the given module.
+     * Opening a package with this method allows all types in the package,
+     * and all their members, not just public types and their public members,
+     * to be reflected on by the given module when using APIs that support
+     * private access or a way to bypass or suppress default Java language
+     * access control checks.
+     *
+     * <p> This method has no effect if the package is already <em>open</em>
+     * to the given module. </p>
+     *
+     * @param  pn
+     *         The package name
+     * @param  other
+     *         The module
+     *
+     * @return this module
+     *
+     * @throws IllegalArgumentException
+     *         If {@code pn} is {@code null}, or this is a named module and the
+     *         package {@code pn} is not a package in this module
+     * @throws IllegalCallerException
+     *         If this is a named module and this module has not opened the
+     *         package to at least the caller's module
+     *
+     * @see #isOpen(String,Module)
+     * @see AccessibleObject#setAccessible(boolean)
+     * @see java.lang.invoke.MethodHandles#privateLookupIn
+     */
+    @CallerSensitive
+    public Module addOpens(String pn, Module other) {
+        if (pn == null)
+            throw new IllegalArgumentException("package is null");
+        Objects.requireNonNull(other);
+
+        if (isNamed()) {
+            Module caller = Reflection.getCallerClass().getModule();
+            if (caller != this && !isOpen(pn, caller))
+                throw new IllegalCallerException(pn + " is not open to " + caller);
+            implAddExportsOrOpens(pn, other, /*open*/true, /*syncVM*/true);
+        }
+
+        return this;
+    }
+
 
     /**
      * Updates the exports so that package {@code pn} is exported to module
@@ -555,7 +732,7 @@ public final class Module {
     void implAddExportsNoSync(String pn, Module other) {
         if (other == null)
             other = EVERYONE_MODULE;
-        implAddExports(pn.replace('/', '.'), other, false);
+        implAddExportsOrOpens(pn.replace('/', '.'), other, false, false);
     }
 
     /**
@@ -565,25 +742,36 @@ public final class Module {
      * @apiNote This method is for white-box testing.
      */
     void implAddExports(String pn, Module other) {
-        implAddExports(pn, other, true);
+        implAddExportsOrOpens(pn, other, false, true);
     }
 
     /**
-     * Updates the exports so that package {@code pn} is exported to module
-     * {@code other}.
+     * Updates the module to open package {@code pn} to module {@code other}.
+     *
+     * @apiNote This method is for white-box tests and jtreg
+     */
+    void implAddOpens(String pn, Module other) {
+        implAddExportsOrOpens(pn, other, true, true);
+    }
+
+    /**
+     * Updates a module to export or open a module to another module.
      *
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
-    private void implAddExports(String pn, Module other, boolean syncVM) {
+    private void implAddExportsOrOpens(String pn,
+                                       Module other,
+                                       boolean open,
+                                       boolean syncVM) {
         Objects.requireNonNull(other);
         Objects.requireNonNull(pn);
 
-        // unnamed modules export all packages
-        if (!isNamed())
+        // all packages are open in unnamed, open, and automatic modules
+        if (!isNamed() || descriptor.isOpen() || descriptor.isAutomatic())
             return;
 
-        // nothing to do if already exported to other
-        if (implIsExported(pn, other))
+        // nothing to do if already exported/open to other
+        if (implIsExportedOrOpen(pn, other, open))
             return;
 
         // can only export a package in the module
@@ -594,28 +782,32 @@ public final class Module {
 
         // update VM first, just in case it fails
         if (syncVM) {
-            String pkgInternalForm = pn.replace('.', '/');
             if (other == EVERYONE_MODULE) {
-                addExportsToAll0(this, pkgInternalForm);
+                addExportsToAll0(this, pn);
             } else if (other == ALL_UNNAMED_MODULE) {
-                addExportsToAllUnnamed0(this, pkgInternalForm);
+                addExportsToAllUnnamed0(this, pn);
             } else {
-                addExports0(this, pkgInternalForm, other);
+                addExports0(this, pn, other);
             }
         }
 
-        // add package name to transientExports if absent
-        transientExports
+        // add package name to reflectivelyExports if absent
+        Map<String, Boolean> map = reflectivelyExports
             .computeIfAbsent(this, other,
-                             (_this, _other) -> new ConcurrentHashMap<>())
-            .putIfAbsent(pn, Boolean.TRUE);
+                             (m1, m2) -> new ConcurrentHashMap<>());
+
+        if (open) {
+            map.put(pn, Boolean.TRUE);  // may need to promote from FALSE to TRUE
+        } else {
+            map.putIfAbsent(pn, Boolean.FALSE);
+        }
     }
 
 
     // -- services --
 
     // additional service type (2nd key) that some module (1st key) uses
-    private static final WeakPairMap<Module, Class<?>, Boolean> transientUses
+    private static final WeakPairMap<Module, Class<?>, Boolean> reflectivelyUses
         = new WeakPairMap<>();
 
     /**
@@ -624,57 +816,63 @@ public final class Module {
      * for use by frameworks that invoke {@link java.util.ServiceLoader
      * ServiceLoader} on behalf of other modules or where the framework is
      * passed a reference to the service type by other code. This method is
-     * a no-op when invoked on an unnamed module.
+     * a no-op when invoked on an unnamed module or an automatic module.
      *
-     * <p> This method does not cause {@link
-     * Configuration#resolveRequiresAndUses resolveRequiresAndUses} to be
-     * re-run. </p>
+     * <p> This method does not cause {@link Configuration#resolveAndBind
+     * resolveAndBind} to be re-run. </p>
      *
-     * @param  st
+     * @param  service
      *         The service type
      *
      * @return this module
      *
-     * @throws IllegalStateException
-     *         If this is a named module and the caller is not this module
+     * @throws IllegalCallerException
+     *         If this is a named module and the caller's module is not this
+     *         module
      *
      * @see #canUse(Class)
      * @see ModuleDescriptor#uses()
      */
     @CallerSensitive
-    public Module addUses(Class<?> st) {
-        Objects.requireNonNull(st);
+    public Module addUses(Class<?> service) {
+        Objects.requireNonNull(service);
 
-        if (isNamed()) {
-
+        if (isNamed() && !descriptor.isAutomatic()) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this) {
-                throw new IllegalStateException(caller + " != " + this);
+                throw new IllegalCallerException(caller + " != " + this);
             }
-
-            if (!canUse(st)) {
-                transientUses.putIfAbsent(this, st, Boolean.TRUE);
-            }
-
+            implAddUses(service);
         }
 
         return this;
     }
 
     /**
+     * Update this module to add a service dependence on the given service
+     * type.
+     */
+    void implAddUses(Class<?> service) {
+        if (!canUse(service)) {
+            reflectivelyUses.putIfAbsent(this, service, Boolean.TRUE);
+        }
+    }
+
+
+    /**
      * Indicates if this module has a service dependence on the given service
      * type. This method always returns {@code true} when invoked on an unnamed
-     * module.
+     * module or an automatic module.
      *
-     * @param  st
+     * @param  service
      *         The service type
      *
      * @return {@code true} if this module uses service type {@code st}
      *
      * @see #addUses(Class)
      */
-    public boolean canUse(Class<?> st) {
-        Objects.requireNonNull(st);
+    public boolean canUse(Class<?> service) {
+        Objects.requireNonNull(service);
 
         if (!isNamed())
             return true;
@@ -683,11 +881,11 @@ public final class Module {
             return true;
 
         // uses was declared
-        if (descriptor.uses().contains(st.getName()))
+        if (descriptor.uses().contains(service.getName()))
             return true;
 
         // uses added via addUses
-        return transientUses.containsKeyPair(this, st);
+        return reflectivelyUses.containsKeyPair(this, service);
     }
 
 
@@ -695,14 +893,13 @@ public final class Module {
     // -- packages --
 
     // Additional packages that are added to the module at run-time.
-    // The field is volatile as it may be replaced at run-time
-    private volatile Set<String> extraPackages;
+    private volatile Map<String, Boolean> extraPackages;
 
     private boolean containsPackage(String pn) {
         if (descriptor.packages().contains(pn))
             return true;
-        Set<String> extraPackages = this.extraPackages;
-        if (extraPackages != null && extraPackages.contains(pn))
+        Map<String, Boolean> extraPackages = this.extraPackages;
+        if (extraPackages != null && extraPackages.containsKey(pn))
             return true;
         return false;
     }
@@ -716,7 +913,7 @@ public final class Module {
      * added to the module, <a href="Proxy.html#dynamicmodule">dynamic modules</a>
      * for example, after it was loaded.
      *
-     * <p> For unnamed modules, this method is the equivalent of invoking the
+     * <p> For unnamed modules, this method is the equivalent to invoking the
      * {@link ClassLoader#getDefinedPackages() getDefinedPackages} method of
      * this module's class loader and returning the array of package names. </p>
      *
@@ -731,12 +928,12 @@ public final class Module {
         if (isNamed()) {
 
             Set<String> packages = descriptor.packages();
-            Set<String> extraPackages = this.extraPackages;
+            Map<String, Boolean> extraPackages = this.extraPackages;
             if (extraPackages == null) {
                 return packages.toArray(new String[0]);
             } else {
                 return Stream.concat(packages.stream(),
-                                     extraPackages.stream())
+                                     extraPackages.keySet().stream())
                         .toArray(String[]::new);
             }
 
@@ -756,10 +953,6 @@ public final class Module {
      * Add a package to this module.
      *
      * @apiNote This method is for Proxy use.
-     *
-     * @apiNote This is an expensive operation, not expected to be used often.
-     * At this time then it does not validate that the package name is a
-     * valid java identifier.
      */
     void addPackage(String pn) {
         implAddPackage(pn, true);
@@ -777,73 +970,59 @@ public final class Module {
     /**
      * Add a package to this module.
      *
-     * If {@code syncVM} is {@code true} then the VM is notified.
+     * If {@code syncVM} is {@code true} then the VM is notified. This method is
+     * a no-op if this is an unnamed module or the module already contains the
+     * package.
+     *
+     * @throws IllegalArgumentException if the package name is not legal
+     * @throws IllegalStateException if the package is defined to another module
      */
     private void implAddPackage(String pn, boolean syncVM) {
-        if (pn.length() == 0)
-            throw new IllegalArgumentException("<unnamed> package not allowed");
-
-        if (descriptor.packages().contains(pn)) {
-            // already in module
+        // no-op if unnamed module
+        if (!isNamed())
             return;
-        }
 
-        Set<String> extraPackages = this.extraPackages;
-        if (extraPackages != null && extraPackages.contains(pn)) {
-            // already added
+        // no-op if module contains the package
+        if (containsPackage(pn))
             return;
-        }
-        synchronized (this) {
-            // recheck under lock
-            extraPackages = this.extraPackages;
-            if (extraPackages != null) {
-                if (extraPackages.contains(pn)) {
-                    // already added
-                    return;
-                }
 
-                // copy the set
-                extraPackages = new HashSet<>(extraPackages);
-                extraPackages.add(pn);
-            } else {
-                extraPackages = Collections.singleton(pn);
+        // check package name is legal for named modules
+        if (pn.isEmpty())
+            throw new IllegalArgumentException("Cannot add <unnamed> package");
+        for (int i=0; i<pn.length(); i++) {
+            char c = pn.charAt(i);
+            if (c == '/' || c == ';' || c == '[') {
+                throw new IllegalArgumentException("Illegal character: " + c);
             }
-
-            // update VM first, just in case it fails
-            if (syncVM)
-                addPackage0(this, pn.replace('.', '/'));
-
-            // replace with new set
-            this.extraPackages = extraPackages; // volatile write
         }
+
+        // create extraPackages if needed
+        Map<String, Boolean> extraPackages = this.extraPackages;
+        if (extraPackages == null) {
+            synchronized (this) {
+                extraPackages = this.extraPackages;
+                if (extraPackages == null)
+                    this.extraPackages = extraPackages = new ConcurrentHashMap<>();
+            }
+        }
+
+        // update VM first in case it fails. This is a no-op if another thread
+        // beats us to add the package first
+        if (syncVM) {
+            // throws IllegalStateException if defined to another module
+            addPackage0(this, pn);
+            if (descriptor.isOpen() || descriptor.isAutomatic()) {
+                addExportsToAll0(this, pn);
+            }
+        }
+        extraPackages.putIfAbsent(pn, Boolean.TRUE);
     }
 
 
     // -- creating Module objects --
 
     /**
-     * Find the runtime Module corresponding to the given ResolvedModule
-     * in the given parent Layer (or its parents).
-     */
-    private static Module find(ResolvedModule resolvedModule, Layer layer) {
-        Configuration cf = resolvedModule.configuration();
-        String dn = resolvedModule.name();
-
-        Module m = null;
-        while (layer != null) {
-            if (layer.configuration() == cf) {
-                Optional<Module> om = layer.findModule(dn);
-                m = om.get();
-                assert m.getLayer() == layer;
-                break;
-            }
-            layer = layer.parent().orElse(null);
-        }
-        return m;
-    }
-
-    /**
-     * Defines each of the module in the given configuration to the runtime.
+     * Defines all module in a configuration to the runtime.
      *
      * @return a map of module name to runtime {@code Module}
      *
@@ -854,26 +1033,40 @@ public final class Module {
                                              Function<String, ClassLoader> clf,
                                              Layer layer)
     {
-        Map<String, Module> modules = new HashMap<>();
-        Map<String, ClassLoader> loaders = new HashMap<>();
+        Map<String, Module> nameToModule = new HashMap<>();
+        Map<String, ClassLoader> moduleToLoader = new HashMap<>();
+
+        boolean isBootLayer = (Layer.boot() == null);
+        Set<ClassLoader> loaders = new HashSet<>();
+
+        // map each module to a class loader
+        for (ResolvedModule resolvedModule : cf.modules()) {
+            String name = resolvedModule.name();
+            ClassLoader loader = clf.apply(name);
+            if (loader != null) {
+                moduleToLoader.put(name, loader);
+                loaders.add(loader);
+            } else if (!isBootLayer) {
+                throw new IllegalArgumentException("loader can't be 'null'");
+            }
+        }
 
         // define each module in the configuration to the VM
         for (ResolvedModule resolvedModule : cf.modules()) {
             ModuleReference mref = resolvedModule.reference();
             ModuleDescriptor descriptor = mref.descriptor();
             String name = descriptor.name();
-            ClassLoader loader = clf.apply(name);
             URI uri = mref.location().orElse(null);
-
+            ClassLoader loader = moduleToLoader.get(resolvedModule.name());
             Module m;
-            if (loader == null && name.equals("java.base") && Layer.boot() == null) {
+            if (loader == null && isBootLayer && name.equals("java.base")) {
+                // java.base is already defined to the VM
                 m = Object.class.getModule();
             } else {
                 m = new Module(layer, loader, descriptor, uri);
             }
-
-            modules.put(name, m);
-            loaders.put(name, loader);
+            nameToModule.put(name, m);
+            moduleToLoader.put(name, loader);
         }
 
         // setup readability and exports
@@ -882,20 +1075,24 @@ public final class Module {
             ModuleDescriptor descriptor = mref.descriptor();
 
             String mn = descriptor.name();
-            Module m = modules.get(mn);
+            Module m = nameToModule.get(mn);
             assert m != null;
 
             // reads
             Set<Module> reads = new HashSet<>();
-            for (ResolvedModule d : resolvedModule.reads()) {
-                Module m2;
-                if (d.configuration() == cf) {
-                    String dn = d.reference().descriptor().name();
-                    m2 = modules.get(dn);
-                    assert m2 != null;
+            for (ResolvedModule other : resolvedModule.reads()) {
+                Module m2 = null;
+                if (other.configuration() == cf) {
+                    String dn = other.reference().descriptor().name();
+                    m2 = nameToModule.get(dn);
                 } else {
-                    m2 = find(d, layer.parent().orElse(null));
+                    for (Layer parent: layer.parents()) {
+                        m2 = findModule(parent, other);
+                        if (m2 != null)
+                            break;
+                    }
                 }
+                assert m2 != null;
 
                 reads.add(m2);
 
@@ -904,64 +1101,271 @@ public final class Module {
             }
             m.reads = reads;
 
-            // automatic modules reads all unnamed modules
+            // automatic modules read all unnamed modules
             if (descriptor.isAutomatic()) {
                 m.implAddReads(ALL_UNNAMED_MODULE, true);
             }
 
-            // exports
-            Map<String, Set<Module>> exports = new HashMap<>();
-            for (Exports export : descriptor.exports()) {
-                String source = export.source();
-                String sourceInternalForm = source.replace('.', '/');
+            // exports and opens
+            initExportsAndOpens(descriptor, nameToModule, m);
+        }
 
-                if (export.isQualified()) {
+        // register the modules in the boot layer
+        if (isBootLayer) {
+            for (ResolvedModule resolvedModule : cf.modules()) {
+                ModuleReference mref = resolvedModule.reference();
+                ModuleDescriptor descriptor = mref.descriptor();
+                if (!descriptor.provides().isEmpty()) {
+                    String name = descriptor.name();
+                    Module m = nameToModule.get(name);
+                    ClassLoader loader = moduleToLoader.get(name);
+                    ServicesCatalog catalog;
+                    if (loader == null) {
+                        catalog = BootLoader.getServicesCatalog();
+                    } else {
+                        catalog = ServicesCatalog.getServicesCatalog(loader);
+                    }
+                    catalog.register(m);
+                }
+            }
+        }
 
-                    // qualified export
-                    Set<Module> targets = new HashSet<>();
-                    for (String target : export.targets()) {
-                        // only export to modules that are in this configuration
-                        Module m2 = modules.get(target);
-                        if (m2 != null) {
+        // record that there is a layer with modules defined to the class loader
+        for (ClassLoader loader : loaders) {
+            layer.bindToLoader(loader);
+        }
+
+        return nameToModule;
+    }
+
+
+    /**
+     * Find the runtime Module corresponding to the given ResolvedModule
+     * in the given parent layer (or its parents).
+     */
+    private static Module findModule(Layer parent, ResolvedModule resolvedModule) {
+        Configuration cf = resolvedModule.configuration();
+        String dn = resolvedModule.name();
+        return parent.layers()
+                .filter(l -> l.configuration() == cf)
+                .findAny()
+                .map(layer -> {
+                    Optional<Module> om = layer.findModule(dn);
+                    assert om.isPresent() : dn + " not found in layer";
+                    Module m = om.get();
+                    assert m.getLayer() == layer : m + " not in expected layer";
+                    return m;
+                })
+                .orElse(null);
+    }
+
+    /**
+     * Initialize the maps of exported and open packages for module m.
+     */
+    private static void initExportsAndOpens(ModuleDescriptor descriptor,
+                                            Map<String, Module> nameToModule,
+                                            Module m)
+    {
+        // The VM doesn't special case open or automatic modules so need to
+        // export all packages
+        if (descriptor.isOpen() || descriptor.isAutomatic()) {
+            assert descriptor.opens().isEmpty();
+            for (String source : descriptor.packages()) {
+                addExportsToAll0(m, source);
+            }
+            return;
+        }
+
+        Map<String, Set<Module>> openPackages = new HashMap<>();
+        Map<String, Set<Module>> exportedPackages = new HashMap<>();
+
+        // process the open packages first
+        for (Opens opens : descriptor.opens()) {
+            String source = opens.source();
+
+            if (opens.isQualified()) {
+                // qualified opens
+                Set<Module> targets = new HashSet<>();
+                for (String target : opens.targets()) {
+                    // only open to modules that are in this configuration
+                    Module m2 = nameToModule.get(target);
+                    if (m2 != null) {
+                        addExports0(m, source, m2);
+                        targets.add(m2);
+                    }
+                }
+                if (!targets.isEmpty()) {
+                    openPackages.put(source, targets);
+                }
+            } else {
+                // unqualified opens
+                addExportsToAll0(m, source);
+                openPackages.put(source, EVERYONE_SET);
+            }
+        }
+
+        // next the exports, skipping exports when the package is open
+        for (Exports exports : descriptor.exports()) {
+            String source = exports.source();
+
+            // skip export if package is already open to everyone
+            Set<Module> openToTargets = openPackages.get(source);
+            if (openToTargets != null && openToTargets.contains(EVERYONE_MODULE))
+                continue;
+
+            if (exports.isQualified()) {
+                // qualified exports
+                Set<Module> targets = new HashSet<>();
+                for (String target : exports.targets()) {
+                    // only export to modules that are in this configuration
+                    Module m2 = nameToModule.get(target);
+                    if (m2 != null) {
+                        // skip qualified export if already open to m2
+                        if (openToTargets == null || !openToTargets.contains(m2)) {
+                            addExports0(m, source, m2);
                             targets.add(m2);
-                            addExports0(m, sourceInternalForm, m2);
                         }
                     }
-                    if (!targets.isEmpty()) {
-                        exports.put(source, targets);
-                    }
-
-                } else {
-
-                    // unqualified export
-                    exports.put(source, EVERYONE);
-                    addExportsToAll0(m, sourceInternalForm);
                 }
-            }
-            m.exports = exports;
-        }
-
-        // register the modules in the service catalog if they provide services
-        for (ResolvedModule resolvedModule : cf.modules()) {
-            ModuleReference mref = resolvedModule.reference();
-            ModuleDescriptor descriptor = mref.descriptor();
-            Map<String, Provides> services = descriptor.provides();
-            if (!services.isEmpty()) {
-                String name = descriptor.name();
-                Module m = modules.get(name);
-                ClassLoader loader = loaders.get(name);
-                ServicesCatalog catalog;
-                if (loader == null) {
-                    catalog = BootLoader.getServicesCatalog();
-                } else {
-                    catalog = SharedSecrets.getJavaLangAccess()
-                                           .createOrGetServicesCatalog(loader);
+                if (!targets.isEmpty()) {
+                    exportedPackages.put(source, targets);
                 }
-                catalog.register(m);
+
+            } else {
+                // unqualified exports
+                addExportsToAll0(m, source);
+                exportedPackages.put(source, EVERYONE_SET);
             }
         }
 
-        return modules;
+        if (!openPackages.isEmpty())
+            m.openPackages = openPackages;
+        if (!exportedPackages.isEmpty())
+            m.exportedPackages = exportedPackages;
+    }
+
+
+    // -- annotations --
+
+    /**
+     * {@inheritDoc}
+     * This method returns {@code null} when invoked on an unnamed module.
+     */
+    @Override
+    public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        return moduleInfoClass().getDeclaredAnnotation(annotationClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     * This method returns an empty array when invoked on an unnamed module.
+     */
+    @Override
+    public Annotation[] getAnnotations() {
+        return moduleInfoClass().getAnnotations();
+    }
+
+    /**
+     * {@inheritDoc}
+     * This method returns an empty array when invoked on an unnamed module.
+     */
+    @Override
+    public Annotation[] getDeclaredAnnotations() {
+        return moduleInfoClass().getDeclaredAnnotations();
+    }
+
+    // cached class file with annotations
+    private volatile Class<?> moduleInfoClass;
+
+    private Class<?> moduleInfoClass() {
+        Class<?> clazz = this.moduleInfoClass;
+        if (clazz != null)
+            return clazz;
+
+        synchronized (this) {
+            clazz = this.moduleInfoClass;
+            if (clazz == null) {
+                if (isNamed()) {
+                    PrivilegedAction<Class<?>> pa = this::loadModuleInfoClass;
+                    clazz = AccessController.doPrivileged(pa);
+                }
+                if (clazz == null) {
+                    class DummyModuleInfo { }
+                    clazz = DummyModuleInfo.class;
+                }
+                this.moduleInfoClass = clazz;
+            }
+            return clazz;
+        }
+    }
+
+    private Class<?> loadModuleInfoClass() {
+        Class<?> clazz = null;
+        try (InputStream in = getResourceAsStream("module-info.class")) {
+            if (in != null)
+                clazz = loadModuleInfoClass(in);
+        } catch (Exception ignore) { }
+        return clazz;
+    }
+
+    /**
+     * Loads module-info.class as a package-private interface in a class loader
+     * that is a child of this module's class loader.
+     */
+    private Class<?> loadModuleInfoClass(InputStream in) throws IOException {
+        final String MODULE_INFO = "module-info";
+
+        ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_MAXS
+                                         + ClassWriter.COMPUTE_FRAMES);
+
+        ClassVisitor cv = new ClassVisitor(Opcodes.ASM5, cw) {
+            @Override
+            public void visit(int version,
+                              int access,
+                              String name,
+                              String signature,
+                              String superName,
+                              String[] interfaces) {
+                cw.visit(version,
+                        Opcodes.ACC_INTERFACE
+                            + Opcodes.ACC_ABSTRACT
+                            + Opcodes.ACC_SYNTHETIC,
+                        MODULE_INFO,
+                        null,
+                        "java/lang/Object",
+                        null);
+            }
+            @Override
+            public AnnotationVisitor visitAnnotation(String desc, boolean visible) {
+                // keep annotations
+                return super.visitAnnotation(desc, visible);
+            }
+            @Override
+            public void visitAttribute(Attribute attr) {
+                // drop non-annotation attributes
+            }
+        };
+
+        ClassReader cr = new ClassReader(in);
+        cr.accept(cv, 0);
+        byte[] bytes = cw.toByteArray();
+
+        ClassLoader cl = new ClassLoader(loader) {
+            @Override
+            protected Class<?> findClass(String cn)throws ClassNotFoundException {
+                if (cn.equals(MODULE_INFO)) {
+                    return super.defineClass(cn, bytes, 0, bytes.length);
+                } else {
+                    throw new ClassNotFoundException(cn);
+                }
+            }
+        };
+
+        try {
+            return cl.loadClass(MODULE_INFO);
+        } catch (ClassNotFoundException e) {
+            throw new InternalError(e);
+        }
     }
 
 
@@ -969,16 +1373,44 @@ public final class Module {
 
 
     /**
-     * Returns an input stream for reading a resource in this module. Returns
-     * {@code null} if the resource is not in this module or access to the
-     * resource is denied by the security manager.
-     * The {@code name} is a {@code '/'}-separated path name that identifies
-     * the resource.
+     * Returns an input stream for reading a resource in this module.
+     * The {@code name} parameter is a {@code '/'}-separated path name that
+     * identifies the resource. As with {@link Class#getResourceAsStream
+     * Class.getResourceAsStream}, this method delegates to the module's class
+     * loader {@link ClassLoader#findResource(String,String)
+     * findResource(String,String)} method, invoking it with the module name
+     * (or {@code null} when the module is unnamed) and the name of the
+     * resource. If the resource name has a leading slash then it is dropped
+     * before delegation.
      *
-     * <p> If this module is an unnamed module, and the {@code ClassLoader} for
-     * this module is not {@code null}, then this method is equivalent to
-     * invoking the {@link ClassLoader#getResourceAsStream(String)
-     * getResourceAsStream} method on the class loader for this module.
+     * <p> A resource in a named module may be <em>encapsulated</em> so that
+     * it cannot be located by code in other modules. Whether a resource can be
+     * located or not is determined as follows: </p>
+     *
+     * <ul>
+     *     <li> If the resource name ends with  "{@code .class}" then it is not
+     *     encapsulated. </li>
+     *
+     *     <li> A <em>package name</em> is derived from the resource name. If
+     *     the package name is a {@link #getPackages() package} in the module
+     *     then the resource can only be located by the caller of this method
+     *     when the package is {@link #isOpen(String,Module) open} to at least
+     *     the caller's module. If the resource is not in a package in the module
+     *     then the resource is not encapsulated. </li>
+     * </ul>
+     *
+     * <p> In the above, the <em>package name</em> for a resource is derived
+     * from the subsequence of characters that precedes the last {@code '/'} in
+     * the name and then replacing each {@code '/'} character in the subsequence
+     * with {@code '.'}. A leading slash is ignored when deriving the package
+     * name. As an example, the package name derived for a resource named
+     * "{@code a/b/c/foo.properties}" is "{@code a.b.c}". A resource name
+     * with the name "{@code META-INF/MANIFEST.MF}" is never encapsulated
+     * because "{@code META-INF}" is not a legal package name. </p>
+     *
+     * <p> This method returns {@code null} if the resource is not in this
+     * module, the resource is encapsulated and cannot be located by the caller,
+     * or access to the resource is denied by the security manager. </p>
      *
      * @param  name
      *         The resource name
@@ -988,38 +1420,39 @@ public final class Module {
      * @throws IOException
      *         If an I/O error occurs
      *
-     * @see java.lang.module.ModuleReader#open(String)
+     * @see Class#getResourceAsStream(String)
      */
+    @CallerSensitive
     public InputStream getResourceAsStream(String name) throws IOException {
-        Objects.requireNonNull(name);
-
-        URL url = null;
-
-        if (isNamed()) {
-            String mn = this.name;
-
-            // special-case built-in class loaders to avoid URL connection
-            if (loader == null) {
-                return BootLoader.findResourceAsStream(mn, name);
-            } else if (loader instanceof BuiltinClassLoader) {
-                return ((BuiltinClassLoader) loader).findResourceAsStream(mn, name);
-            }
-
-            // use SharedSecrets to invoke protected method
-            url = SharedSecrets.getJavaLangAccess().findResource(loader, mn, name);
-
-        } else {
-
-            // unnamed module
-            if (loader == null) {
-                url = BootLoader.findResource(name);
-            } else {
-                return loader.getResourceAsStream(name);
-            }
-
+        if (name.startsWith("/")) {
+            name = name.substring(1);
         }
 
-        // fallthrough to URL case
+        if (isNamed() && !ResourceHelper.isSimpleResource(name)) {
+            Module caller = Reflection.getCallerClass().getModule();
+            if (caller != this && caller != Object.class.getModule()) {
+                // ignore packages added for proxies via addPackage
+                Set<String> packages = getDescriptor().packages();
+                String pn = ResourceHelper.getPackageName(name);
+                if (packages.contains(pn) && !isOpen(pn, caller)) {
+                    // resource is in package not open to caller
+                    return null;
+                }
+            }
+        }
+
+        String mn = this.name;
+
+        // special-case built-in class loaders to avoid URL connection
+        if (loader == null) {
+            return BootLoader.findResourceAsStream(mn, name);
+        } else if (loader instanceof BuiltinClassLoader) {
+            return ((BuiltinClassLoader) loader).findResourceAsStream(mn, name);
+        }
+
+        // locate resource in module
+        JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
+        URL url = jla.findResource(loader, mn, name);
         if (url != null) {
             try {
                 return url.openStream();
@@ -1053,6 +1486,7 @@ public final class Module {
 
     // JVM_DefineModule
     private static native void defineModule0(Module module,
+                                             boolean isOpen,
                                              String version,
                                              String location,
                                              String[] pns);
@@ -1098,15 +1532,31 @@ public final class Module {
                 }
                 @Override
                 public void addExports(Module m, String pn, Module other) {
-                    m.implAddExports(pn, other, true);
+                    m.implAddExportsOrOpens(pn, other, false, true);
+                }
+                @Override
+                public void addOpens(Module m, String pn, Module other) {
+                    m.implAddExportsOrOpens(pn, other, true, true);
                 }
                 @Override
                 public void addExportsToAll(Module m, String pn) {
-                    m.implAddExports(pn, Module.EVERYONE_MODULE, true);
+                    m.implAddExportsOrOpens(pn, Module.EVERYONE_MODULE, false, true);
+                }
+                @Override
+                public void addOpensToAll(Module m, String pn) {
+                    m.implAddExportsOrOpens(pn, Module.EVERYONE_MODULE, true, true);
                 }
                 @Override
                 public void addExportsToAllUnnamed(Module m, String pn) {
-                    m.implAddExports(pn, Module.ALL_UNNAMED_MODULE, true);
+                    m.implAddExportsOrOpens(pn, Module.ALL_UNNAMED_MODULE, false, true);
+                }
+                @Override
+                public void addOpensToAllUnnamed(Module m, String pn) {
+                    m.implAddExportsOrOpens(pn, Module.ALL_UNNAMED_MODULE, true, true);
+                }
+                @Override
+                public void addUses(Module m, Class<?> service) {
+                    m.implAddUses(service);
                 }
                 @Override
                 public void addPackage(Module m, String pn) {
@@ -1115,6 +1565,18 @@ public final class Module {
                 @Override
                 public ServicesCatalog getServicesCatalog(Layer layer) {
                     return layer.getServicesCatalog();
+                }
+                @Override
+                public Stream<Layer> layers(Layer layer) {
+                    return layer.layers();
+                }
+                @Override
+                public Stream<Layer> layers(ClassLoader loader) {
+                    return Layer.layers(loader);
+                }
+                @Override
+                public boolean isStaticallyExported(Module module, String pn, Module other) {
+                    return module.isStaticallyExportedOrOpen(pn, other, false);
                 }
             });
     }

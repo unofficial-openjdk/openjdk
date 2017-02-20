@@ -44,7 +44,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.StampedLock;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import junit.framework.Test;
@@ -111,12 +110,12 @@ public class StampedLockTest extends JSR166TestCase {
 
     List<Function<StampedLock, Long>> readLockers() {
         List<Function<StampedLock, Long>> readLockers = new ArrayList<>();
-        readLockers.add((sl) -> sl.readLock());
-        readLockers.add((sl) -> sl.tryReadLock());
-        readLockers.add((sl) -> readLockInterruptiblyUninterrupted(sl));
-        readLockers.add((sl) -> tryReadLockUninterrupted(sl, Long.MIN_VALUE, DAYS));
-        readLockers.add((sl) -> tryReadLockUninterrupted(sl, 0L, DAYS));
-        readLockers.add((sl) -> sl.tryConvertToReadLock(sl.tryOptimisticRead()));
+        readLockers.add(sl -> sl.readLock());
+        readLockers.add(sl -> sl.tryReadLock());
+        readLockers.add(sl -> readLockInterruptiblyUninterrupted(sl));
+        readLockers.add(sl -> tryReadLockUninterrupted(sl, Long.MIN_VALUE, DAYS));
+        readLockers.add(sl -> tryReadLockUninterrupted(sl, 0L, DAYS));
+        readLockers.add(sl -> sl.tryConvertToReadLock(sl.tryOptimisticRead()));
         return readLockers;
     }
 
@@ -132,12 +131,12 @@ public class StampedLockTest extends JSR166TestCase {
 
     List<Function<StampedLock, Long>> writeLockers() {
         List<Function<StampedLock, Long>> writeLockers = new ArrayList<>();
-        writeLockers.add((sl) -> sl.writeLock());
-        writeLockers.add((sl) -> sl.tryWriteLock());
-        writeLockers.add((sl) -> writeLockInterruptiblyUninterrupted(sl));
-        writeLockers.add((sl) -> tryWriteLockUninterrupted(sl, Long.MIN_VALUE, DAYS));
-        writeLockers.add((sl) -> tryWriteLockUninterrupted(sl, 0L, DAYS));
-        writeLockers.add((sl) -> sl.tryConvertToWriteLock(sl.tryOptimisticRead()));
+        writeLockers.add(sl -> sl.writeLock());
+        writeLockers.add(sl -> sl.tryWriteLock());
+        writeLockers.add(sl -> writeLockInterruptiblyUninterrupted(sl));
+        writeLockers.add(sl -> tryWriteLockUninterrupted(sl, Long.MIN_VALUE, DAYS));
+        writeLockers.add(sl -> tryWriteLockUninterrupted(sl, 0L, DAYS));
+        writeLockers.add(sl -> sl.tryConvertToWriteLock(sl.tryOptimisticRead()));
         return writeLockers;
     }
 

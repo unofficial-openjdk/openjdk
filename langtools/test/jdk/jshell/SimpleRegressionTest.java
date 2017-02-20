@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 
 /*
- * @test 8130450 8158906 8154374
+ * @test 8130450 8158906 8154374 8166400 8171892 8173807 8173848
  * @summary simple regression test
  * @build KullaTesting TestingInputStream
  * @run testng SimpleRegressionTest
@@ -74,6 +74,15 @@ public class SimpleRegressionTest extends KullaTesting {
         assertEquals(events.get(1).value(), "6");
         assertEquals(events.get(2).value(), "600");
         assertEval("c;", "600");
+    }
+
+    public void testLessThanParsing() {
+        assertEval("int x = 3;", "3");
+        assertEval("int y = 4;", "4");
+        assertEval("int z = 5;", "5");
+        assertEval("x < y", "true");
+        assertEval("x < y;", "true");
+        assertEval("x < y && y < z", "true");
     }
 
     public void testNotStmtCannotResolve() {
@@ -148,5 +157,70 @@ public class SimpleRegressionTest extends KullaTesting {
     public void testContextClassLoader() {
         assertEval("class C {}");
         assertEval("C.class.getClassLoader() == Thread.currentThread().getContextClassLoader()", "true");
+    }
+
+    public void testArrayRepresentation() {
+        assertEval("new int[4]", "int[4] { 0, 0, 0, 0 }");
+        assertEval("new int[0]", "int[0] {  }");
+        assertEval("new byte[2]", "byte[2] { 0, 0 }");
+        assertEval("new short[] { 1234, 4321 }", "short[2] { 1234, 4321 }");
+        assertEval("new long[] { 123456789 }", "long[1] { 123456789 }");
+        assertEval("new float[] { -23.5645f, 1.0101f }", "float[2] { -23.5645, 1.0101 }");
+        assertEval("new double[] { 1/8, Math.PI }", "double[2] { 0.0, 3.141592653589793 }");
+        assertEval("new String[] { \"hi\", \"low\", null }", "String[3] { \"hi\", \"low\", null }");
+        assertEval("new char[] { 'a', 34, 77 }", "char[3] { 'a', '\"', 'M' }");
+        assertEval("new boolean[] { false, true }", "boolean[2] { false, true }");
+        assertEval("new int[][] { new int[] {44, 55}, new int[] {88,99}}",
+                "int[2][] { int[2] { 44, 55 }, int[2] { 88, 99 } }");
+        assertEval("new Object[] { \"howdy\", new int[] { 33, 44, 55 }, new String[] { \"up\", \"down\" }}",
+                "Object[3] { \"howdy\", int[3] { 33, 44, 55 }, String[2] { \"up\", \"down\" } }");
+    }
+
+    public void testMultiDimArrayRepresentation() {
+        assertEval("new int[3][1]",
+                "int[3][] { int[1] { 0 }, int[1] { 0 }, int[1] { 0 } }");
+        assertEval("new int[3][]",
+                "int[3][] { null, null, null }");
+        assertEval("new int[][] { new int[] {44}, new int[] {77, 88,99}}",
+                "int[2][] { int[1] { 44 }, int[3] { 77, 88, 99 } }");
+        assertEval("new String[3][1]",
+                "String[3][] { String[1] { null }, String[1] { null }, String[1] { null } }");
+        assertEval("class C { }");
+        assertEval("new C[3][2]",
+                "C[3][] { C[2] { null, null }, C[2] { null, null }, C[2] { null, null } }");
+        assertEval("new boolean[2][1][3]",
+                "boolean[2][][] { boolean[1][] { boolean[3] { false, false, false } }, boolean[1][] { boolean[3] { false, false, false } } }");
+    }
+
+    public void testStringRepresentation() {
+        assertEval("\"A!\\rB!\"",
+                   "\"A!\\rB!\"");
+        assertEval("\"a\\bB\\tc\\nd\\fe\\rf\\\"g'\\\\h\"",
+                   "\"a\\bB\\tc\\nd\\fe\\rf\\\"g'\\\\h\"");
+        assertEval("\"\\141\\10B\\11c\\nd\\fe\\15f\\42g\\'\\134h\"",
+                   "\"a\\bB\\tc\\nd\\fe\\rf\\\"g'\\\\h\"");
+        assertEval("\"1234567890!@#$%^&*()-_=+qwertQWERT,./<>?;:[]{}\"",
+                   "\"1234567890!@#$%^&*()-_=+qwertQWERT,./<>?;:[]{}\"");
+        assertEval("\"AA\\1\\7\\35\\25\"",
+                   "\"AA\\001\\007\\035\\025\"");
+        assertEval("\"\"",
+                   "\"\"");
+        assertEval("(String)null",
+                   "null");
+    }
+
+    public void testCharRepresentation() {
+        for (String s : new String[]{"'A'", "'Z'", "'0'", "'9'",
+            "'a'", "'z'", "'*'", "'%'",
+            "'\\b'", "'\\t'", "'\\n'", "'\\f'", "'\\r'",
+            "'\"'", "'\\\''", "'\\\\'", "'\\007'", "'\\034'",}) {
+            assertEval(s, s);
+        }
+        assertEval("'\\3'",
+                "'\\003'");
+        assertEval("'\\u001D'",
+                "'\\035'");
+        assertEval("\"a\\bb\\tc\\nd\\fe\\rf\\\"g'\\\\h\".charAt(1)",
+                "'\\b'");
     }
 }

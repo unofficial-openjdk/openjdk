@@ -1,13 +1,5 @@
-import org.testng.annotations.Test;
-import org.testng.Assert;
-
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.Platform;
-import jdk.test.lib.dcmd.CommandExecutor;
-import jdk.test.lib.dcmd.JMXExecutor;
-
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,16 +21,22 @@ import jdk.test.lib.dcmd.JMXExecutor;
  * questions.
  */
 
+import org.testng.annotations.Test;
+import org.testng.Assert;
+
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.Platform;
+import jdk.test.lib.dcmd.CommandExecutor;
+import jdk.test.lib.dcmd.JMXExecutor;
+
 /*
  * @test
  * @summary Test of VM.dynlib diagnostic command via MBean
- * @library /testlibrary
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.compiler
  *          java.management
- *          jdk.jvmstat/sun.jvmstat.monitor
- * @build jdk.test.lib.*
- * @build jdk.test.lib.dcmd.*
+ *          jdk.internal.jvmstat/sun.jvmstat.monitor
  * @run testng DynLibsTest
  */
 

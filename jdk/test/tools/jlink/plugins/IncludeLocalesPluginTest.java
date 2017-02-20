@@ -40,7 +40,7 @@ import tests.Result;
 
 /*
  * @test
- * @bug 8152143 8152704 8155649
+ * @bug 8152143 8152704 8155649 8165804
  * @summary IncludeLocalesPlugin tests
  * @author Naoto Sato
  * @library ../../lib
@@ -48,6 +48,7 @@ import tests.Result;
  *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jlink.internal.plugins
+ *          jdk.jlink/jdk.tools.jlink.plugin
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.compiler
@@ -92,7 +93,7 @@ public class IncludeLocalesPluginTest {
 
         // Asterisk works exactly the same as above
         {
-            "*",
+            "--include-locales=*",
             "jdk.localedata",
             List.of(
                 "/jdk.localedata/sun/text/resources/ext/FormatData_en_GB.class",
@@ -126,11 +127,10 @@ public class IncludeLocalesPluginTest {
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_es_419.class",
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_es_AR.class"),
             List.of(
-                "/jdk.localedata/sun/text/resources/LineBreakIteratorData_th",
-                "/jdk.localedata/sun/text/resources/thai_dict",
-                "/jdk.localedata/sun/text/resources/WordBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/LineBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/thai_dict",
+                "/jdk.localedata/sun/text/resources/ext/WordBreakIteratorData_th",
                 "/jdk.localedata/sun/text/resources/ext/BreakIteratorInfo_th.class",
-                "/jdk.localedata/sun/text/resources/ext/BreakIteratorRules_th.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_ja.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_th.class",
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_ja.class",
@@ -165,11 +165,10 @@ public class IncludeLocalesPluginTest {
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_en_001.class",
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_ja.class"),
             List.of(
-                "/jdk.localedata/sun/text/resources/LineBreakIteratorData_th",
-                "/jdk.localedata/sun/text/resources/thai_dict",
-                "/jdk.localedata/sun/text/resources/WordBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/LineBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/thai_dict",
+                "/jdk.localedata/sun/text/resources/ext/WordBreakIteratorData_th",
                 "/jdk.localedata/sun/text/resources/ext/BreakIteratorInfo_th.class",
-                "/jdk.localedata/sun/text/resources/ext/BreakIteratorRules_th.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_th.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_zh.class",
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_th.class",
@@ -206,11 +205,10 @@ public class IncludeLocalesPluginTest {
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_en_150.class",
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_en_AT.class"),
             List.of(
-                "/jdk.localedata/sun/text/resources/LineBreakIteratorData_th",
-                "/jdk.localedata/sun/text/resources/thai_dict",
-                "/jdk.localedata/sun/text/resources/WordBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/LineBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/thai_dict",
+                "/jdk.localedata/sun/text/resources/ext/WordBreakIteratorData_th",
                 "/jdk.localedata/sun/text/resources/ext/BreakIteratorInfo_th.class",
-                "/jdk.localedata/sun/text/resources/ext/BreakIteratorRules_th.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_en_GB.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_ja.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_th.class",
@@ -235,11 +233,11 @@ public class IncludeLocalesPluginTest {
                 "/jdk.localedata/sun/util/resources/cldr/ext/CalendarData_kok_IN.class",
                 "/jdk.localedata/sun/util/resources/cldr/ext/CalendarData_pa_Guru_IN.class"),
             List.of(
-                "/jdk.localedata/sun/text/resources/LineBreakIteratorData_th",
-                "/jdk.localedata/sun/text/resources/thai_dict",
-                "/jdk.localedata/sun/text/resources/WordBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/LineBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/thai_dict",
+                "/jdk.localedata/sun/text/resources/ext/WordBreakIteratorData_th",
                 "/jdk.localedata/sun/text/resources/ext/BreakIteratorInfo_th.class",
-                "/jdk.localedata/sun/text/resources/ext/BreakIteratorRules_th.class",
+                "/jdk.localedata/sun/text/resources/ext/BreakIteratorResources_th.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_en_GB.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_ja.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_th.class",
@@ -261,11 +259,11 @@ public class IncludeLocalesPluginTest {
             "--include-locales=th",
             "jdk.localedata",
             List.of(
-                "/jdk.localedata/sun/text/resources/LineBreakIteratorData_th",
-                "/jdk.localedata/sun/text/resources/thai_dict",
-                "/jdk.localedata/sun/text/resources/WordBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/LineBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/thai_dict",
+                "/jdk.localedata/sun/text/resources/ext/WordBreakIteratorData_th",
                 "/jdk.localedata/sun/text/resources/ext/BreakIteratorInfo_th.class",
-                "/jdk.localedata/sun/text/resources/ext/BreakIteratorRules_th.class",
+                "/jdk.localedata/sun/text/resources/ext/BreakIteratorResources_th.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_th.class"),
             List.of(
                 "/jdk.localedata/sun/text/resources/ext/FormatData_en_GB.class",
@@ -290,11 +288,10 @@ public class IncludeLocalesPluginTest {
                 "/jdk.localedata/sun/text/resources/ext/FormatData_zh_TW.class",
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_zh.class"),
             List.of(
-                "/jdk.localedata/sun/text/resources/LineBreakIteratorData_th",
-                "/jdk.localedata/sun/text/resources/thai_dict",
-                "/jdk.localedata/sun/text/resources/WordBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/LineBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/thai_dict",
+                "/jdk.localedata/sun/text/resources/ext/WordBreakIteratorData_th",
                 "/jdk.localedata/sun/text/resources/ext/BreakIteratorInfo_th.class",
-                "/jdk.localedata/sun/text/resources/ext/BreakIteratorRules_th.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_en_GB.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_ja.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_th.class",
@@ -318,11 +315,10 @@ public class IncludeLocalesPluginTest {
                 "/jdk.localedata/sun/text/resources/ext/FormatData_zh_SG.class",
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_zh.class"),
             List.of(
-                "/jdk.localedata/sun/text/resources/LineBreakIteratorData_th",
-                "/jdk.localedata/sun/text/resources/thai_dict",
-                "/jdk.localedata/sun/text/resources/WordBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/LineBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/thai_dict",
+                "/jdk.localedata/sun/text/resources/ext/WordBreakIteratorData_th",
                 "/jdk.localedata/sun/text/resources/ext/BreakIteratorInfo_th.class",
-                "/jdk.localedata/sun/text/resources/ext/BreakIteratorRules_th.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_en_GB.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_ja.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_th.class",
@@ -346,11 +342,10 @@ public class IncludeLocalesPluginTest {
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_nb.class",
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_nn.class"),
             List.of(
-                "/jdk.localedata/sun/text/resources/LineBreakIteratorData_th",
-                "/jdk.localedata/sun/text/resources/thai_dict",
-                "/jdk.localedata/sun/text/resources/WordBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/LineBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/thai_dict",
+                "/jdk.localedata/sun/text/resources/ext/WordBreakIteratorData_th",
                 "/jdk.localedata/sun/text/resources/ext/BreakIteratorInfo_th.class",
-                "/jdk.localedata/sun/text/resources/ext/BreakIteratorRules_th.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_en_GB.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_ja.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_th.class",
@@ -376,11 +371,10 @@ public class IncludeLocalesPluginTest {
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_iw.class",
                 "/jdk.localedata/sun/text/resources/cldr/ext/FormatData_ji.class"),
             List.of(
-                "/jdk.localedata/sun/text/resources/LineBreakIteratorData_th",
-                "/jdk.localedata/sun/text/resources/thai_dict",
-                "/jdk.localedata/sun/text/resources/WordBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/LineBreakIteratorData_th",
+                "/jdk.localedata/sun/text/resources/ext/thai_dict",
+                "/jdk.localedata/sun/text/resources/ext/WordBreakIteratorData_th",
                 "/jdk.localedata/sun/text/resources/ext/BreakIteratorInfo_th.class",
-                "/jdk.localedata/sun/text/resources/ext/BreakIteratorRules_th.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_en_GB.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_ja.class",
                 "/jdk.localedata/sun/text/resources/ext/FormatData_th.class",
@@ -440,13 +434,23 @@ public class IncludeLocalesPluginTest {
 
         for (Object[] data : testData) {
             // create image for each test data
-            System.out.println("Invoking jlink with \"" + data[INCLUDE_LOCALES_OPTION] + "\"");
-            Result result = JImageGenerator.getJLinkTask()
+            Result result;
+            if (data[INCLUDE_LOCALES_OPTION].toString().isEmpty()) {
+                System.out.println("Invoking jlink with no --include-locales option");
+                result = JImageGenerator.getJLinkTask()
+                    .modulePath(helper.defaultModulePath())
+                    .output(helper.createNewImageDir(moduleName))
+                    .addMods((String) data[ADDMODS_OPTION])
+                    .call();
+            } else {
+                System.out.println("Invoking jlink with \"" + data[INCLUDE_LOCALES_OPTION] + "\"");
+                result = JImageGenerator.getJLinkTask()
                     .modulePath(helper.defaultModulePath())
                     .output(helper.createNewImageDir(moduleName))
                     .addMods((String) data[ADDMODS_OPTION])
                     .option((String) data[INCLUDE_LOCALES_OPTION])
                     .call();
+            }
 
             String errorMsg = (String) data[ERROR_MESSAGE];
             if (errorMsg.isEmpty()) {

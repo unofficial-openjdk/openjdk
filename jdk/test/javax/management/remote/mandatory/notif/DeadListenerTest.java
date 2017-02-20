@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,8 @@
  * @test
  * @bug 6957378
  * @summary Test that a listener can be removed remotely from an MBean that no longer exists.
- * @modules java.management/com.sun.jmx.remote.internal
+ * @modules java.management.rmi/javax.management.remote.rmi:open
+ *          java.management/com.sun.jmx.remote.internal:+open
  * @author Eamonn McManus
  * @run main/othervm -XX:+UsePerfData DeadListenerTest
  */
@@ -115,9 +116,8 @@ public class DeadListenerTest {
         mbean.sendNotification(notif);
 
         // Make sure notifs are working normally.
-        long deadline = System.currentTimeMillis() + 2000;
-        while ((count1Val.get() != 1 || count2Val.get() != 1) && System.currentTimeMillis() < deadline) {
-            Thread.sleep(10);
+        while ((count1Val.get() != 1 || count2Val.get() != 1) ) {
+            Thread.sleep(20);
         }
         assertTrue("New value of count1 == 1", count1Val.get() == 1);
         assertTrue("Initial value of count2 == 1", count2Val.get() == 1);

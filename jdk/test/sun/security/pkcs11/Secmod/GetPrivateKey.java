@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,13 +21,14 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 6273877 6322208 6275523
  * @summary make sure we can access the NSS softtoken KeyStore
  *          and use a private key
  * @author Andreas Sterbenz
  * @library ..
+ * @modules jdk.crypto.cryptoki
  * @run main/othervm GetPrivateKey
  * @run main/othervm GetPrivateKey sm policy
  */

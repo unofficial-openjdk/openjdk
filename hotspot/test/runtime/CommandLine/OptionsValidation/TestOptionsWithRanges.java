@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,12 +24,11 @@
 /*
  * @test
  * @summary Test VM Options with ranges
- * @library /testlibrary /runtime/CommandLine/OptionsValidation/common
+ * @library /test/lib /runtime/CommandLine/OptionsValidation/common
  * @modules java.base/jdk.internal.misc
  *          java.management
  *          jdk.attach/sun.tools.attach
- *          jdk.jvmstat/sun.jvmstat.monitor
- * @build jdk.test.lib.* TestOptionsWithRanges
+ *          jdk.internal.jvmstat/sun.jvmstat.monitor
  * @run main/othervm/timeout=900 TestOptionsWithRanges
  */
 
@@ -90,20 +89,6 @@ public class TestOptionsWithRanges {
         excludeTestMaxRange("CICompilerCount");
 
         /*
-         * JDK-8136766
-         * Temporarily remove ThreadStackSize from testing because Windows can set it to 0
-         * (for default OS size) but other platforms insist it must be greater than 0
-        */
-        excludeTestRange("ThreadStackSize");
-
-        /*
-         * Remove the flag controlling the size of the stack because the
-         * flag has direct influence on the physical memory usage of
-         * the VM.
-         */
-        allOptionsAsMap.remove("CompilerThreadStackSize");
-
-        /*
          * Exclude MallocMaxTestWords as it is expected to exit VM at small values (>=0)
          */
         excludeTestMinRange("MallocMaxTestWords");
@@ -124,8 +109,6 @@ public class TestOptionsWithRanges {
         excludeTestMaxRange("NewSize");
         excludeTestMaxRange("OldSize");
         excludeTestMaxRange("ParallelGCThreads");
-
-        excludeTestMaxRange("VMThreadStackSize");
 
         /*
          * Remove parameters controlling the code cache. As these

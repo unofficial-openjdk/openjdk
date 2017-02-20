@@ -52,11 +52,12 @@ public class CheckModuleTest {
     private static final Path SRC_DIR = Paths.get(TEST_SRC, "src");
     private static final Path MODS_DIR = Paths.get("mods");
 
-    // m4 and m5 are analyzed.  Others are compiled to make sure they are present
+    // mIV and mV are analyzed.  Others are compiled to make sure they are present
     // on the module path for analysis
-    private static final Set<String> modules = Set.of("unsafe", "m4", "m5", "m6", "m7", "m8");
+    private static final Set<String> modules = Set.of("unsafe", "mIV", "mV", "mVI", "mVII", "mVIII");
 
     private static final String JAVA_BASE = "java.base";
+    private static final String JAVA_COMPILER = "java.compiler";
 
     /**
      * Compiles classes used by the test
@@ -72,6 +73,8 @@ public class CheckModuleTest {
     public Object[][] base() {
         return new Object[][] {
             { JAVA_BASE, new ModuleMetaData(JAVA_BASE)
+            },
+            { JAVA_COMPILER, new ModuleMetaData(JAVA_BASE)
             },
         };
     };
@@ -97,39 +100,39 @@ public class CheckModuleTest {
     @DataProvider(name = "modules")
     public Object[][] unnamed() {
         return new Object[][]{
-            { "m4", new ModuleMetaData[] {
+            { "mIV", new ModuleMetaData[] {
                         // original
-                        new ModuleMetaData("m4")
-                            .requiresPublic("java.compiler")
+                        new ModuleMetaData("mIV")
+                            .requiresTransitive("java.compiler")
                             .requires("java.logging")
                             // unnused exports
-                            .exports("p4.internal", Set.of("m6", "m7")),
+                            .exports("p4.internal", Set.of("mVI", "mVII")),
                         // suggested version
-                        new ModuleMetaData("m4")
+                        new ModuleMetaData("mIV")
                             .requires("java.compiler"),
                         // reduced version
-                        new ModuleMetaData("m4")
+                        new ModuleMetaData("mIV")
                             .requires("java.compiler")
                     }
             },
-            { "m5", new ModuleMetaData[] {
+            { "mV", new ModuleMetaData[] {
                         // original
-                        new ModuleMetaData("m5")
-                            .requiresPublic("java.compiler")
-                            .requiresPublic("java.logging")
+                        new ModuleMetaData("mV")
+                            .requiresTransitive("java.compiler")
+                            .requiresTransitive("java.logging")
                             .requires("java.sql")
-                            .requiresPublic("m4"),
+                            .requiresTransitive("mIV"),
                         // suggested version
-                        new ModuleMetaData("m5")
-                            .requiresPublic("java.compiler")
+                        new ModuleMetaData("mV")
+                            .requiresTransitive("java.compiler")
                             .requires("java.logging")
-                            .requiresPublic("java.sql")
-                            .requiresPublic("m4"),
+                            .requiresTransitive("java.sql")
+                            .requiresTransitive("mIV"),
                         // reduced version
-                        new ModuleMetaData("m5")
-                            .requiresPublic("java.compiler")
-                            .requiresPublic("java.sql")
-                            .requiresPublic("m4"),
+                        new ModuleMetaData("mV")
+                            .requiresTransitive("java.compiler")
+                            .requiresTransitive("java.sql")
+                            .requiresTransitive("mIV"),
                     }
             },
         };

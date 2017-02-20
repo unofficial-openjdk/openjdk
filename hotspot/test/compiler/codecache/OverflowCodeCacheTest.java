@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,18 +19,17 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /*
  * @test OverflowCodeCacheTest
  * @bug 8059550
  * @summary testing of code cache segments overflow
- * @library /testlibrary /test/lib
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
  *
- * @build compiler.codecache.OverflowCodeCacheTest
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
@@ -75,6 +74,7 @@ public class OverflowCodeCacheTest {
         System.out.printf("type %s%n", type);
         System.out.println("allocating till possible...");
         ArrayList<Long> blobs = new ArrayList<>();
+        int compilationActivityMode = -1;
         try {
             long addr;
             int size = (int) (getHeapSize() >> 7);
@@ -88,13 +88,16 @@ public class OverflowCodeCacheTest {
                             type + " doesn't allow using " + actualType + " when overflow");
                 }
             }
-            Asserts.assertNotEquals(WHITE_BOX.getCompilationActivityMode(), 1 /* run_compilation*/,
-                    "Compilation must be disabled when CodeCache(CodeHeap) overflows");
+            /* now, remember compilationActivityMode to check it later, after freeing, since we
+               possibly have no free cache for futher work */
+            compilationActivityMode = WHITE_BOX.getCompilationActivityMode();
         } finally {
             for (Long blob : blobs) {
                 WHITE_BOX.freeCodeBlob(blob);
             }
         }
+        Asserts.assertNotEquals(compilationActivityMode, 1 /* run_compilation*/,
+                "Compilation must be disabled when CodeCache(CodeHeap) overflows");
     }
 
     private long getHeapSize() {

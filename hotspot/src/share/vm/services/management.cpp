@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -145,16 +145,16 @@ void Management::initialize(TRAPS) {
     ResourceMark rm(THREAD);
     HandleMark hm(THREAD);
 
-    // Load and initialize the sun.management.Agent class
+    // Load and initialize the jdk.internal.agent.Agent class
     // invoke startAgent method to start the management server
     Handle loader = Handle(THREAD, SystemDictionary::java_system_loader());
-    Klass* k = SystemDictionary::resolve_or_null(vmSymbols::sun_management_Agent(),
+    Klass* k = SystemDictionary::resolve_or_null(vmSymbols::jdk_internal_agent_Agent(),
                                                    loader,
                                                    Handle(),
                                                    THREAD);
     if (k == NULL) {
       vm_exit_during_initialization("Management agent initialization failure: "
-          "class sun.management.Agent not found.");
+          "class jdk.internal.agent.Agent not found.");
     }
     instanceKlassHandle ik (THREAD, k);
 
@@ -173,6 +173,20 @@ void Management::get_optional_support(jmmOptionalSupport* support) {
 
 Klass* Management::load_and_initialize_klass(Symbol* sh, TRAPS) {
   Klass* k = SystemDictionary::resolve_or_fail(sh, true, CHECK_NULL);
+  Klass* ik = initialize_klass(k, CHECK_NULL);
+  return ik;
+}
+
+Klass* Management::load_and_initialize_klass_or_null(Symbol* sh, TRAPS) {
+  Klass* k = SystemDictionary::resolve_or_null(sh, CHECK_NULL);
+  if (k == NULL) {
+     return NULL;
+  }
+  Klass* ik = initialize_klass(k, CHECK_NULL);
+  return ik;
+}
+
+Klass* Management::initialize_klass(Klass* k, TRAPS) {
   instanceKlassHandle ik (THREAD, k);
   if (ik->should_be_initialized()) {
     ik->initialize(CHECK_NULL);
@@ -255,7 +269,8 @@ Klass* Management::sun_management_ManagementFactoryHelper_klass(TRAPS) {
 
 Klass* Management::com_sun_management_internal_GarbageCollectorExtImpl_klass(TRAPS) {
   if (_garbageCollectorExtImpl_klass == NULL) {
-    _garbageCollectorExtImpl_klass = load_and_initialize_klass(vmSymbols::com_sun_management_internal_GarbageCollectorExtImpl(), CHECK_NULL);
+    _garbageCollectorExtImpl_klass =
+                load_and_initialize_klass_or_null(vmSymbols::com_sun_management_internal_GarbageCollectorExtImpl(), CHECK_NULL);
   }
   return _garbageCollectorExtImpl_klass;
 }

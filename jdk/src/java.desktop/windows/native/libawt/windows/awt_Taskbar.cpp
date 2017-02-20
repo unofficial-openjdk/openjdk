@@ -58,7 +58,11 @@ JNIEXPORT jboolean JNICALL Java_sun_awt_windows_WTaskbarPeer_nativeInit
 JNIEXPORT void JNICALL Java_sun_awt_windows_WTaskbarPeer_setProgressValue
   (JNIEnv *, jobject, jlong window, jint value)
 {
-    m_Taskbar->SetProgressValue((HWND)window, value, 100);
+    if (value < 0 || value > 100) {
+        m_Taskbar->SetProgressState((HWND)window, TBPF_NOPROGRESS);
+    } else {
+        m_Taskbar->SetProgressValue((HWND)window, value, 100);
+    }
 }
 
 
@@ -88,6 +92,9 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_WTaskbarPeer_setProgressState
             flag = TBPF_NOPROGRESS;
         } else if (strcmp(valueNative, "NORMAL") == 0) {
             flag = TBPF_NORMAL;
+
+            // Switching from TBPF_INDETERMINATE to TBPF_NORMAL has no effect
+            m_Taskbar->SetProgressState((HWND)window, TBPF_PAUSED);
         } else if (strcmp(valueNative, "PAUSED") == 0) {
             flag = TBPF_PAUSED;
         } else if (strcmp(valueNative, "INDETERMINATE") == 0) {
@@ -108,7 +115,7 @@ JNIEXPORT void JNICALL Java_sun_awt_windows_WTaskbarPeer_setProgressState
 JNIEXPORT void JNICALL Java_sun_awt_windows_WTaskbarPeer_flashWindow
   (JNIEnv *, jobject, jlong window)
 {
-    AwtWindow::FlashWindowEx((HWND) window, 3, 0, FLASHW_TIMERNOFG);
+    ::FlashWindow((HWND) window, TRUE);
 }
 
 /*

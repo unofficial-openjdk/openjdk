@@ -23,6 +23,11 @@
  * questions.
  */
 
+/**
+ * Nashorn shell module
+ *
+ * @since 9
+ */
 module jdk.scripting.nashorn.shell {
     requires java.desktop;
     requires java.compiler;

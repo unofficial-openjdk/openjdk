@@ -82,16 +82,20 @@ ifneq ($(CREATING_BUILDJDK), true)
 
   buildtools-jdk:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileTools.gmk)
+
+  buildtools-modules:
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileModuleTools.gmk)
+
+  buildtools-hotspot:
+	+($(CD) $(HOTSPOT_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileTools.gmk)
 endif
 
 ALL_TARGETS += buildtools-langtools interim-langtools \
-    interim-rmic interim-cldrconverter buildtools-jdk
+    interim-rmic interim-cldrconverter buildtools-jdk buildtools-modules \
+    buildtools-hotspot
 
 ################################################################################
 # Special targets for certain modules
-
-import-hotspot:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Import.gmk)
 
 unpack-sec:
 	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f UnpackSecurity.gmk)
@@ -99,7 +103,7 @@ unpack-sec:
 generate-exported-symbols:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f BuildStatic.gmk)
 
-ALL_TARGETS += import-hotspot unpack-sec generate-exported-symbols
+ALL_TARGETS += unpack-sec generate-exported-symbols
 
 ################################################################################
 # Gensrc targets, generating source before java compilation can be done
@@ -236,15 +240,35 @@ ALL_TARGETS += $(LAUNCHER_TARGETS)
 ################################################################################
 # Build hotspot target
 
-ifeq ($(BUILD_HOTSPOT),true)
-hotspot:
-	+($(CD) $(HOTSPOT_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f BuildHotspot.gmk)
-endif
+HOTSPOT_VARIANT_TARGETS := $(addprefix hotspot-, $(JVM_VARIANTS))
+HOTSPOT_VARIANT_GENSRC_TARGETS := $(addsuffix -gensrc, $(HOTSPOT_VARIANT_TARGETS))
+HOTSPOT_VARIANT_LIBS_TARGETS := $(addsuffix -libs, $(HOTSPOT_VARIANT_TARGETS))
+
+define DeclareHotspotGensrcRecipe
+  hotspot-$1-gensrc:
+	$$(call LogInfo, Building JVM variant '$1' with features '$(JVM_FEATURES_$1)')
+	+($(CD) $(HOTSPOT_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f gensrc/GenerateSources.gmk \
+	    JVM_VARIANT=$1)
+endef
+
+$(foreach v, $(JVM_VARIANTS), $(eval $(call DeclareHotspotGensrcRecipe,$v)))
+
+define DeclareHotspotLibsRecipe
+  hotspot-$1-libs:
+	+($(CD) $(HOTSPOT_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f lib/CompileLibraries.gmk \
+	    JVM_VARIANT=$1)
+endef
+
+$(foreach v, $(JVM_VARIANTS), $(eval $(call DeclareHotspotLibsRecipe,$v)))
+
+hotspot-jsig:
+	+($(CD) $(HOTSPOT_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f lib/CompileLibjsig.gmk)
 
 hotspot-ide-project:
 	+($(CD) $(HOTSPOT_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f ide/CreateVSProject.gmk)
 
-ALL_TARGETS += hotspot hotspot-ide-project
+ALL_TARGETS += $(HOTSPOT_VARIANT_TARGETS) $(HOTSPOT_VARIANT_GENSRC_TARGETS) \
+    $(HOTSPOT_VARIANT_LIBS_TARGETS) hotspot-jsig hotspot-ide-project
 
 ################################################################################
 # Build demos and samples targets
@@ -261,26 +285,9 @@ ALL_TARGETS += demos-jdk samples-jdk
 # Jigsaw specific data and analysis targets.
 
 generate-summary:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) -f GenerateModuleSummary.gmk)
+	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f GenerateModuleSummary.gmk)
 
 ALL_TARGETS += generate-summary
-
-################################################################################
-# Strip binaries targets
-
-STRIP_MODULES := $(sort $(LIBS_MODULES) $(LAUNCHER_MODULES) $(COPY_MODULES) \
-    $(GENDATA_MODULES))
-STRIP_TARGETS := $(addsuffix -strip, $(STRIP_MODULES))
-
-define DeclareStripRecipe
-  $1-strip:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f StripBinaries.gmk \
-	    MODULE=$1)
-endef
-
-$(foreach m, $(STRIP_MODULES), $(eval $(call DeclareStripRecipe,$m)))
-
-ALL_TARGETS += $(STRIP_TARGETS)
 
 ################################################################################
 # Jmod targets
@@ -301,22 +308,17 @@ ALL_TARGETS += $(JMOD_TARGETS)
 ################################################################################
 # Images targets
 
-# Stores the tips for each repository. This file is be used when constructing
-# the jdk image and can be used to track the exact sources used to build that
-# image.
-source-tips: $(SUPPORT_OUTPUTDIR)/source_tips
-$(SUPPORT_OUTPUTDIR)/source_tips: FRC
-	$(call MakeDir, $(@D))
-	$(call GetSourceTips)
+store-source-revision:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f SourceRevision.gmk store-source-revision)
 
-create-hgtip-files:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CreateHgtipFiles.gmk)
+create-source-revision-tracker:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f SourceRevision.gmk create-source-revision-tracker)
 
 BOOTCYCLE_TARGET := product-images
 bootcycle-images:
         ifneq ($(COMPILE_TYPE), cross)
 	  $(call LogWarn, Boot cycle build step 2: Building a new JDK image using previously built image)
-	  +$(MAKE) -f $(SRC_ROOT)/make/Init.gmk PARALLEL_TARGETS=$(BOOTCYCLE_TARGET) \
+	  +$(MAKE) $(MAKE_ARGS) -f $(SRC_ROOT)/make/Init.gmk PARALLEL_TARGETS=$(BOOTCYCLE_TARGET) \
 	      JOBS= SPEC=$(dir $(SPEC))bootcycle-spec.gmk main
         else
 	  $(call LogWarn, Boot cycle build disabled when cross compiling)
@@ -331,31 +333,45 @@ zip-source:
 jrtfs-jar:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f JrtfsJar.gmk)
 
-jimages:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Images.gmk jimages)
+jdk-image:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Images.gmk jdk)
 
-profiles:
+jre-image:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Images.gmk jre)
+
+symbols-image:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Images.gmk symbols)
+
+profiles-image:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Images.gmk profiles)
 
 mac-bundles-jdk:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f MacBundles.gmk)
 
-ALL_TARGETS += source-tips create-hgtip-files bootcycle-images zip-security \
-     zip-source jrtfs-jar jimages profiles mac-bundles-jdk
+release-file:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f ReleaseFile.gmk)
+
+exploded-image-optimize:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f ExplodedImageOptimize.gmk)
+
+ALL_TARGETS += store-source-revision create-source-revision-tracker bootcycle-images zip-security \
+    zip-source jrtfs-jar jdk-image jre-image \
+    symbols-image profiles-image mac-bundles-jdk \
+    release-file exploded-image-optimize
 
 ################################################################################
 # Docs targets
 
 docs-javadoc:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Javadoc.gmk docs)
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Javadoc.gmk docs-javadoc)
 
-docs-jvmtidoc:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Javadoc.gmk jvmtidocs)
+docs-copy:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Javadoc.gmk docs-copy)
 
-zip-docs:
-	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Javadoc.gmk zip-docs)
+docs-zip:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f Javadoc.gmk docs-zip)
 
-ALL_TARGETS += docs-javadoc docs-jvmtidoc zip-docs
+ALL_TARGETS += docs-javadoc docs-copy docs-zip
 
 ################################################################################
 # Cross compilation support
@@ -379,18 +395,32 @@ create-buildjdk-interim-image:
 ALL_TARGETS += create-buildjdk-copy create-buildjdk-interim-image
 
 ################################################################################
-# The interim-image is a small jlinked image that is used to generate artifacts 
+# The interim-image is a small jlinked image that is used to generate artifacts
 # at build time for use when linking the real images.
+
+INTERIM_JMOD_TARGETS := $(addsuffix -interim-jmod, $(INTERIM_IMAGE_MODULES))
+
+define DeclareInterimJmodRecipe
+  $1-interim-jmod:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f CreateJmods.gmk \
+	    MODULE=$1 \
+	    JMODS_DIR=$(INTERIM_JMODS_DIR) \
+	    JMODS_TEMPDIR=$(INTERIM_JMODS_DIR)/temp \
+	    INTERIM_JMOD=true \
+	)
+endef
+
+$(foreach m, $(INTERIM_IMAGE_MODULES), $(eval $(call DeclareInterimJmodRecipe,$m)))
 
 interim-image:
 	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f InterimImage.gmk)
 
 ifeq ($(ENABLE_GENERATE_CLASSLIST), true)
-  generate-classlist:
-	+($(CD) $(JDK_TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f GenerateClasslist.gmk)
+  generate-link-opt-data:
+	+($(CD) $(SRC_ROOT)/make && $(MAKE) $(MAKE_ARGS) -f GenerateLinkOptData.gmk)
 endif
 
-ALL_TARGETS += interim-image generate-classlist
+ALL_TARGETS += $(INTERIM_JMOD_TARGETS) interim-image generate-link-opt-data
 
 ################################################################################
 # Build tests
@@ -480,13 +510,16 @@ ALL_TARGETS += test test-hotspot-jtreg test-hotspot-jtreg-native \
 product-bundles:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Bundles.gmk product-bundles)
 
+profiles-bundles:
+	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Bundles.gmk profiles-bundles)
+
 test-bundles:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Bundles.gmk test-bundles)
 
 docs-bundles:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Bundles.gmk docs-bundles)
 
-ALL_TARGETS += product-bundles test-bundles docs-bundles
+ALL_TARGETS += product-bundles profiles-bundles test-bundles docs-bundles
 
 ################################################################################
 # Install targets
@@ -521,9 +554,13 @@ else
 
   buildtools-jdk: interim-langtools interim-cldrconverter
 
+  buildtools-hotspot: interim-langtools
+
+  buildtools-modules: exploded-image-base
+
   $(CORBA_GENSRC_TARGETS): interim-langtools
 
-  $(HOTSPOT_GENSRC_TARGETS): interim-langtools
+  $(HOTSPOT_GENSRC_TARGETS): interim-langtools buildtools-hotspot
 
   $(JDK_GENSRC_TARGETS): interim-langtools buildtools-jdk
 
@@ -537,13 +574,18 @@ else
 
   $(JAVA_TARGETS): interim-langtools
 
-  hotspot-ide-project: hotspot exploded-image
+  # Declare dependencies between hotspot-<variant>* targets
+  $(foreach v, $(JVM_VARIANTS), \
+      $(eval hotspot-$v: hotspot-$v-gensrc hotspot-$v-libs) \
+      $(eval hotspot-$v-libs: hotspot-$v-gensrc) \
+  )
 
-  import-hotspot: hotspot
+  hotspot-ide-project: hotspot exploded-image
 
   generate-exported-symbols: java.base-libs jdk.jdwp.agent-libs
 
-  $(LIBS_TARGETS): import-hotspot
+  # Building one JVM variant is enough to start building the other libs
+  $(LIBS_TARGETS): hotspot-$(JVM_VARIANT_MAIN)-libs
 
   $(LAUNCHER_TARGETS): java.base-libs
 
@@ -554,7 +596,7 @@ else
   # The demos are currently linking to libjvm and libjava, just like all other
   # jdk libs, even though they don't need to. To avoid warnings, make sure they
   # aren't built until after libjava and libjvm are available to link to.
-  demos-jdk: $(JAVA_TARGETS)
+  demos-jdk: java.base-libs exploded-image-optimize
 
   # Declare dependency from <module>-java to <module>-gensrc
   $(foreach m, $(GENSRC_MODULES), $(eval $m-java: $m-gensrc))
@@ -591,63 +633,79 @@ else
   # in javadoc.
   java.desktop-gensrc-jdk: java.base-gensrc
 
-  # The annotation processing for jdk.vm.ci needs java.base classes from the
-  # current JDK.
-  jdk.vm.ci-gensrc-hotspot: java.base-java
+  # The annotation processing for jdk.vm.ci and jdk.vm.compiler needs classes
+  # from the current JDK.
+  jdk.vm.ci-gensrc-hotspot: $(addsuffix -java, \
+      $(call FindTransitiveDepsForModule, jdk.vm.ci))
+  jdk.vm.compiler-gensrc-hotspot: $(addsuffix -java, \
+      $(call FindTransitiveDepsForModule, jdk.vm.compiler))
+
+  # For jdk.vm.compiler, the gensrc step is generating a module-info.java.extra
+  # file to be processed by the gensrc-moduleinfo target.
+  jdk.vm.compiler-gensrc-moduleinfo: jdk.vm.compiler-gensrc-hotspot
 
   # Explicitly add dependencies for special targets
   java.base-java: unpack-sec
 
-  # The copy target copies files generated by gensrc
-  java.base-copy-hotspot: java.base-gensrc-hotspot
-
   jdk.jdeps-gendata: java rmic
 
-  # Declare dependencies from <module>-strip to libs, launchers, gendata and copy
-  $(foreach m, $(LIBS_MODULES), $(eval $m-strip: $m-libs))
-  $(foreach m, $(LAUNCHER_MODULES), $(eval $m-strip: $m-launchers))
-  $(foreach m, $(GENDATA_MODULES), $(eval $m-strip: $m-gendata))
-  $(foreach m, $(COPY_MODULES), $(eval $m-strip: $m-copy))
-
-  # Declare dependencies between jmod targets. Only java.base jmod needs access
-  # to the other jmods to be built.
+  # Declare dependencies between jmod targets.
+  # java.base jmod needs jrt-fs.jar and access to the other jmods to be built.
   # When creating a BUILDJDK, we don't need to add hashes to java.base, thus
   # we don't need to depend on all other jmods
   ifneq ($(CREATING_BUILDJDK), true)
-    java.base-jmod: $(filter-out java.base-jmod \
-        $(addsuffix -jmod, $(call FindAllUpgradeableModules)), $(JMOD_TARGETS))
+    java.base-jmod: jrtfs-jar $(filter-out java.base-jmod, $(JMOD_TARGETS))
   endif
+
+  # Building java.base-jmod requires all of hotspot to be built.
+  java.base-jmod: hotspot
 
   # Declare dependencies from <module>-jmod to all other module targets
-  $(foreach m, $(STRIP_MODULES), $(eval $m-jmod: $m-strip))
   # When creating a BUILDJDK, the java compilation has already been done by the
   # normal build and copied in.
   ifneq ($(CREATING_BUILDJDK), true)
-    $(foreach m, $(JAVA_MODULES), $(eval $m-jmod: $m-java))
+    $(foreach m, $(JAVA_MODULES), $(eval $m_JMOD_DEPS += $m-java))
   endif
-  $(foreach m, $(GENDATA_MODULES), $(eval $m-jmod: $m-gendata))
-  $(foreach m, $(RMIC_MODULES), $(eval $m-jmod: $m-rmic))
-  $(foreach m, $(LIBS_MODULES), $(eval $m-jmod: $m-libs))
-  $(foreach m, $(LAUNCHER_MODULES), $(eval $m-jmod: $m-launchers))
-  $(foreach m, $(COPY_MODULES), $(eval $m-jmod: $m-copy))
+  $(foreach m, $(GENDATA_MODULES), $(eval $m_JMOD_DEPS += $m-gendata))
+  $(foreach m, $(RMIC_MODULES), $(eval $m_JMOD_DEPS += $m-rmic))
+  $(foreach m, $(LIBS_MODULES), $(eval $m_JMOD_DEPS += $m-libs))
+  $(foreach m, $(LAUNCHER_MODULES), $(eval $m_JMOD_DEPS += $m-launchers))
+  $(foreach m, $(COPY_MODULES), $(eval $m_JMOD_DEPS += $m-copy))
+  $(foreach m, $(ALL_MODULES), $(eval $m-jmod: $($(m)_JMOD_DEPS)))
+  $(foreach m, $(INTERIM_IMAGE_MODULES), $(eval $m-interim-jmod: $($(m)_JMOD_DEPS)))
 
-  # Jmods cannot be created until we have the jlink tool ready to run, which requires
-  # all java modules to be compiled and jdk.jlink-launchers.
-  # And we also need to copy jvm.cfg (done in java.base-copy) and tzdb.dat (done in
-  # java.base-gendata) to the appropriate location otherwise jimage, jlink and jmod won't start.
-  $(JMOD_TARGETS): java.base-libs java.base-copy java.base-gendata jdk.jlink-launchers
-  # When creating a BUILDJDK, the java compilation has already been done by the
-  # normal build and copied in.
-  ifneq ($(CREATING_BUILDJDK), true)
-    $(JMOD_TARGETS): java
-  endif
-
+  # Jmods cannot be created until we have the jmod tool ready to run. During
+  # a normal build we run it from the exploded image, but when cross compiling
+  # it's run from the buildjdk, which is either created at build time or user
+  # supplied.
+  #
+  # For the exploded image to be runnable, all java modules and
+  # jdk.jlink-launchers need to be built. We also need to copy jvm.cfg (done
+  # in java.base-copy) and tzdb.dat (done in java.base-gendata) to the
+  # appropriate location otherwise jimage, jlink and jmod won't start. This
+  # also applies when creating the buildjdk.
+  DEFAULT_JMOD_DEPS := java.base-libs java.base-copy java.base-gendata \
+      jdk.jlink-launchers
+  # When cross compiling and buildjdk is to be created, depend on creating the
+  # buildjdk instead of the default dependencies.
   ifeq ($(CREATE_BUILDJDK), true)
-    # Avoid calling create-buildjdk from within a create-buildjdk call
+    # Avoid calling create-buildjdk from within a create-buildjdk call.
     ifneq ($(CREATING_BUILDJDK), true)
       $(JMOD_TARGETS): create-buildjdk
+      buildtools-modules: create-buildjdk
+    else
+      # While actually creating the buildjdk, the default deps applies.
+      $(JMOD_TARGETS) $(INTERIM_JMOD_TARGETS): $(DEFAULT_JMOD_DEPS)
     endif
+  else
+    # The normal non cross compilation case uses the default deps.
+    # To avoid races with the optimize target, that also needs to happen first.
+    $(JMOD_TARGETS) $(INTERIM_JMOD_TARGETS): $(DEFAULT_JMOD_DEPS) \
+        exploded-image-optimize
   endif
+
+  # All modules include the main license files from java.base.
+  $(JMOD_TARGETS): java.base-copy
 
   zip-security: java.base-java java.security.jgss-java java.security.jgss-libs \
       $(filter jdk.crypto%, $(JAVA_TARGETS))
@@ -659,44 +717,56 @@ else
   ifeq ($(ENABLE_GENERATE_CLASSLIST), true)
     ifeq ($(CREATE_BUILDJDK), true)
       # If creating a buildjdk, the interim image needs to be based on that.
-      generate-classlist: create-buildjdk
+      generate-link-opt-data: create-buildjdk
     else ifeq ($(EXTERNAL_BUILDJDK), false)
       # If an external buildjdk has been provided, we skip generating an
       # interim-image and just use the external buildjdk for generating
       # classlist.
-      generate-classlist: interim-image
+      generate-link-opt-data: interim-image
     endif
-    generate-classlist: buildtools-jdk
+    generate-link-opt-data: buildtools-jdk
 
-    jimages: generate-classlist
+    # The generated classlist needs to go into java.base-jmod.
+    java.base-jmod jdk-image jre-image: generate-link-opt-data
   endif
 
-  jimages: jmods zip-source source-tips demos samples jrtfs-jar
+  release-file: create-source-revision-tracker
 
-  profiles: jmods zip-source source-tips jrtfs-jar
+  jdk-image: jmods zip-source demos samples release-file
+  jre-image: jmods release-file
+  symbols-image: $(LIBS_TARGETS) $(LAUNCHER_TARGETS)
 
-  mac-bundles-jdk: jimages
+  profiles-image: jmods release-file
 
-  bootcycle-images: jimages
+  mac-bundles-jdk: jdk-image jre-image
+
+  # The optimize target can run as soon as the modules dir has been completely
+  # populated (java, copy and gendata targets) and the basic libs and launchers
+  # have been built.
+  exploded-image-optimize: java copy gendata java.base-libs java.base-launchers \
+      buildtools-modules
+
+  bootcycle-images: jdk-image
 
   docs-javadoc: $(GENSRC_TARGETS) rmic
 
-  docs-jvmtidoc: hotspot
+  # The gensrc step for jdk.jdi creates an html file that is used by docs-copy.
+  docs-copy: hotspot-$(JVM_VARIANT_MAIN)-gensrc jdk.jdi-gensrc
 
-  zip-docs: docs-javadoc docs-jvmtidoc
+  docs-zip: docs-javadoc docs-copy
 
-  test: jimages test-image
+  test: jdk-image test-image
 
   create-buildjdk-copy: jdk.jlink-java java.base-gendata \
       $(addsuffix -java, $(INTERIM_IMAGE_MODULES))
 
   create-buildjdk-interim-image: create-buildjdk-copy
 
-  interim-image: $(addsuffix -jmod, $(INTERIM_IMAGE_MODULES))
+  interim-image: $(INTERIM_JMOD_TARGETS)
 
   test-make: clean-test-make
 
-  build-test-lib: java
+  build-test-lib: exploded-image-optimize
 
   build-test-failure-handler: interim-langtools
 
@@ -704,7 +774,8 @@ else
 
   test-image-failure-handler: build-test-failure-handler
 
-  build-test-hotspot-jtreg-native: buildtools-jdk import-hotspot
+  build-test-hotspot-jtreg-native: buildtools-jdk \
+      hotspot-$(JVM_VARIANT_MAIN)-libs
 
   build-test-jdk-jtreg-native: buildtools-jdk
 
@@ -716,7 +787,7 @@ else
 
   test-hotspot-internal: exploded-image
 
-  test-hotspot-jtreg: jimages test-image
+  test-hotspot-jtreg: jdk-image test-image
 
   test-hotspot-gtest: exploded-image test-image-hotspot-gtest
 
@@ -724,11 +795,13 @@ else
 
   product-bundles: product-images
 
+  profiles-bundles: profiles-images
+
   test-bundles: test-image
 
   docs-bundles: docs-image
 
-  generate-summary: jmods
+  generate-summary: jmods buildtools-modules
 
 endif
 
@@ -736,7 +809,17 @@ endif
 # Virtual targets without recipes
 
 buildtools: buildtools-langtools interim-langtools interim-rmic \
-    buildtools-jdk
+    buildtools-jdk buildtools-hotspot
+
+hotspot: $(HOTSPOT_VARIANT_TARGETS) hotspot-jsig
+
+hotspot-libs: hotspot-jsig
+
+# Create targets hotspot-libs and hotspot-gensrc.
+$(foreach v, $(JVM_VARIANTS), \
+  $(eval hotspot-libs: hotspot-$v-libs) \
+  $(eval hotspot-gensrc: hotspot-$v-gensrc) \
+)
 
 gensrc: $(GENSRC_TARGETS)
 
@@ -754,8 +837,6 @@ launchers: $(LAUNCHER_TARGETS)
 
 jmods: $(JMOD_TARGETS)
 
-strip-binaries: $(STRIP_TARGETS)
-
 # Explicitly declare dependency for virtual target jdk.jdwp.agent-gensrc which
 # is actually handled by jdk.jdi-gensrc
 jdk.jdwp.agent-gensrc: jdk.jdi-gensrc
@@ -769,12 +850,22 @@ $(foreach m, $(RMIC_MODULES), $(eval $m: $m-rmic))
 $(foreach m, $(LIBS_MODULES), $(eval $m: $m-libs))
 $(foreach m, $(LAUNCHER_MODULES), $(eval $m: $m-launchers))
 $(foreach m, $(ALL_COPY_MODULES), $(eval $m: $m-copy))
+
+# Building java.base includes building all of hotspot.
+java.base: hotspot
+
 demos: demos-jdk
 
 samples: samples-jdk
 
 # The "exploded image" is a locally runnable JDK in $(BUILD_OUTPUT)/jdk.
-exploded-image: $(ALL_MODULES)
+exploded-image-base: $(ALL_MODULES)
+exploded-image: exploded-image-base release-file
+# When cross compiling, no need to optimize the exploded image since it won't
+# be runnable on the host platform anyway.
+ifneq ($(COMPILE_TYPE), cross)
+  exploded-image: exploded-image-optimize
+endif
 
 create-buildjdk: create-buildjdk-copy create-buildjdk-interim-image
 
@@ -785,7 +876,14 @@ mac-bundles: mac-bundles-jdk
 
 # This target builds the product images, e.g. the JRE and JDK image
 # (and possibly other, more specific versions)
-product-images: jimages demos samples zip-security exploded-image
+product-images: jdk-image jre-image symbols-image exploded-image
+
+# zip-security is actually a bundle, but for now it needs to be considered
+# an image until this can be cleaned up properly.
+product-images: zip-security
+
+# Declare these for backwards compatiblity and convenience.
+profiles profiles-images: profiles-image
 
 # The module summary cannot be run when:
 # * Cross compiling and building a partial BUILDJDK for the build host
@@ -802,7 +900,7 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
 endif
 
 # This target builds the documentation image
-docs-image: docs-javadoc docs-jvmtidoc
+docs-image: docs-javadoc docs-copy
 
 # This target builds the test image
 test-image: prepare-test-image test-image-hotspot-jtreg-native \
@@ -814,9 +912,13 @@ all-images: product-images test-image docs-image
 # all-bundles packages all our deliverables as tar.gz bundles.
 all-bundles: product-bundles test-bundles docs-bundles
 
-ALL_TARGETS += buildtools gensrc gendata copy java rmic libs launchers jmods \
-    jdk.jdwp.agent-gensrc $(ALL_MODULES) demos samples exploded-image \
-    create-buildjdk mac-bundles product-images docs-image test-image all-images \
+ALL_TARGETS += buildtools hotspot hotspot-libs hotspot-gensrc gensrc gendata \
+    copy java rmic libs launchers jmods \
+    jdk.jdwp.agent-gensrc $(ALL_MODULES) demos samples \
+    exploded-image-base exploded-image \
+    create-buildjdk mac-bundles product-images \
+    profiles profiles-images \
+    docs-image test-image all-images \
     all-bundles
 
 ################################################################################
@@ -849,7 +951,7 @@ CLEAN_SUPPORT_DIRS += demos
 CLEAN_SUPPORT_DIR_TARGETS := $(addprefix clean-, $(CLEAN_SUPPORT_DIRS))
 CLEAN_TESTS += hotspot-jtreg-native jdk-jtreg-native lib
 CLEAN_TEST_TARGETS += $(addprefix clean-test-, $(CLEAN_TESTS))
-CLEAN_PHASES := gensrc java native include docs
+CLEAN_PHASES := gensrc java native include
 CLEAN_PHASE_TARGETS := $(addprefix clean-, $(CLEAN_PHASES))
 CLEAN_MODULE_TARGETS := $(addprefix clean-, $(ALL_MODULES))
 # Construct targets of the form clean-$module-$phase
@@ -860,6 +962,9 @@ CLEAN_MODULE_PHASE_TARGETS := $(addprefix clean-, $(foreach m, $(ALL_MODULES), \
 clean: $(CLEAN_DIR_TARGETS)
 	($(CD) $(OUTPUT_ROOT) && $(RM) -r build*.log*)
 	$(ECHO) Cleaned all build artifacts.
+
+clean-docs:
+	$(call CleanDocs)
 
 $(CLEAN_DIR_TARGETS):
 	$(call CleanDir,$(patsubst clean-%, %, $@))
@@ -900,7 +1005,7 @@ dist-clean: clean
 	)
 	$(ECHO) Cleaned everything, you will have to re-run configure.
 
-ALL_TARGETS += clean dist-clean $(CLEAN_DIR_TARGETS) $(CLEAN_SUPPORT_DIR_TARGETS) \
+ALL_TARGETS += clean clean-docs dist-clean $(CLEAN_DIR_TARGETS) $(CLEAN_SUPPORT_DIR_TARGETS) \
     $(CLEAN_TEST_TARGETS) $(CLEAN_PHASE_TARGETS) $(CLEAN_MODULE_TARGETS) \
     $(CLEAN_MODULE_PHASE_TARGETS)
 

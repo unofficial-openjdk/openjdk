@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
 
 AC_DEFUN_ONCE([HELP_SETUP_DEPENDENCY_HELP],
 [
-  AC_CHECK_PROGS(PKGHANDLER, apt-get yum port pkgutil pkgadd)
+  AC_CHECK_PROGS(PKGHANDLER, apt-get yum brew port pkgutil pkgadd)
 ])
 
 AC_DEFUN([HELP_MSG_MISSING_DEPENDENCY],
@@ -46,6 +46,8 @@ AC_DEFUN([HELP_MSG_MISSING_DEPENDENCY],
         apt_help     $MISSING_DEPENDENCY ;;
       yum)
         yum_help     $MISSING_DEPENDENCY ;;
+      brew)
+        brew_help    $MISSING_DEPENDENCY ;;
       port)
         port_help    $MISSING_DEPENDENCY ;;
       pkgutil)
@@ -116,11 +118,13 @@ apt_help() {
     ffi)
       PKGHANDLER_COMMAND="sudo apt-get install libffi-dev" ;;
     x11)
-      PKGHANDLER_COMMAND="sudo apt-get install libX11-dev libxext-dev libxrender-dev libxtst-dev libxt-dev" ;;
+      PKGHANDLER_COMMAND="sudo apt-get install libx11-dev libxext-dev libxrender-dev libxtst-dev libxt-dev" ;;
     ccache)
       PKGHANDLER_COMMAND="sudo apt-get install ccache" ;;
     dtrace)
       PKGHANDLER_COMMAND="sudo apt-get install systemtap-sdt-dev" ;;
+    elf)
+      PKGHANDLER_COMMAND="sudo apt-get install libelf-dev" ;;
   esac
 }
 
@@ -140,6 +144,19 @@ yum_help() {
       PKGHANDLER_COMMAND="sudo yum install libXtst-devel libXt-devel libXrender-devel libXi-devel" ;;
     ccache)
       PKGHANDLER_COMMAND="sudo yum install ccache" ;;
+    elf)
+      PKGHANDLER_COMMAND="sudo yum install elfutils-libelf-devel" ;;
+  esac
+}
+
+brew_help() {
+  case $1 in
+    openjdk)
+      PKGHANDLER_COMMAND="brew cask install java" ;;
+    freetype)
+      PKGHANDLER_COMMAND="brew install freetype" ;;
+    ccache)
+      PKGHANDLER_COMMAND="brew install ccache" ;;
   esac
 }
 

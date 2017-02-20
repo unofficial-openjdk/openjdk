@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,24 +25,23 @@
  * @test
  * @bug 8050167
  * @summary Test that error is not occurred during printing problematic frame
- * @library /testlibrary
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.compiler
  *          java.management
- *          jdk.jvmstat/sun.jvmstat.monitor
- * @build jdk.test.lib.*
+ *          jdk.internal.jvmstat/sun.jvmstat.monitor
  * @run driver ProblematicFrameTest
  */
 
-import jdk.test.lib.*;
+import jdk.test.lib.process.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
 
 import jdk.internal.misc.Unsafe;
-import jdk.test.lib.Utils;
 
 public class ProblematicFrameTest {
     private static class Crasher {
         public static void main(String[] args) {
-            Utils.getUnsafe().getInt(0);
+            Unsafe.getUnsafe().getInt(0);
         }
     }
 

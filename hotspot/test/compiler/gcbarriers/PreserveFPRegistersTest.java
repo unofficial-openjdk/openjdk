@@ -19,14 +19,13 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /**
  * @test
  * @bug 8148175
  * @requires vm.gc=="G1" | vm.gc=="null"
- * @library /testlibrary /test/lib
+ * @library /test/lib
  * @run main/bootclasspath/othervm -Xbatch -XX:+UnlockDiagnosticVMOptions
  *      -XX:+WhiteBoxAPI -Xmx300m -XX:+UseG1GC
  *      compiler.gcbarriers.PreserveFPRegistersTest

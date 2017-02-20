@@ -30,7 +30,7 @@
 #include "gc/shared/cardTableModRefBS.hpp"
 #include "gc/shared/space.inline.hpp"
 #include "memory/allocation.inline.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/mutexLocker.hpp"
 
 // Check that the size of the SparsePRTEntry is evenly divisible by the maximum
@@ -283,7 +283,7 @@ size_t RSHashTable::mem_size() const {
 
 // ----------------------------------------------------------------------
 
-SparsePRT* SparsePRT::_head_expanded_list = NULL;
+SparsePRT* volatile SparsePRT::_head_expanded_list = NULL;
 
 void SparsePRT::add_to_expanded_list(SparsePRT* sprt) {
   // We could expand multiple times in a pause -- only put on list once.

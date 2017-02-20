@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1211,18 +1211,26 @@ public class KeyToolTest {
     void sqePrintcertTest() throws Exception {
         remove("x.jks");
         remove("mykey.cert");
+        remove("myweakkey.cert");
         testOK("", "-keystore x.jks -storetype JKS -storepass changeit " +
                 "-keypass changeit -genkeypair -dname CN=olala");
         testOK("", "-keystore x.jks -storetype JKS -storepass changeit " +
                 "-export -file mykey.cert -alias mykey");
+        testOK("", "-keystore x.jks -storetype JKS -storepass changeit " +
+                "-keypass changeit -genkeypair -dname CN=weak -keyalg rsa " +
+                "-keysize 512 -sigalg MD5withRSA -alias myweakkey");
+        testOK("", "-keystore x.jks -storetype JKS -storepass changeit " +
+                "-export -file myweakkey.cert -alias myweakkey");
         testFail("", "-printcert -file badkeystore");
         testFail("", "-printcert -file a/b/c/d");
         testOK("", "-printcert -file mykey.cert");
+        testOK("", "-printcert -file myweakkey.cert");
         FileInputStream fin = new FileInputStream("mykey.cert");
         testOK(fin, "-printcert");
         fin.close();
         remove("x.jks");
         remove("mykey.cert");
+        remove("myweakkey.cert");
     }
 
     // 8074935: jdk8 keytool doesn't validate pem files for RFC 1421 correctness
@@ -1761,7 +1769,7 @@ public class KeyToolTest {
         //PKCS#11 tests
 
         //   1. sccs edit cert8.db key3.db
-        //Runtime.getRuntime().exec("/usr/ccs/bin/sccs edit cert8.db key3.db");
+        //Runtime.getRuntime().exec("/usr/bin/sccs edit cert8.db key3.db");
         testOK("", p11Arg + ("-storepass test12 -genkey -alias genkey" +
                 " -dname cn=genkey -keysize 512 -keyalg rsa"));
         testOK("", p11Arg + "-storepass test12 -list");
@@ -1781,7 +1789,7 @@ public class KeyToolTest {
         testOK("", p11Arg + "-storepass test12 -list");
         assertTrue(out.indexOf("Your keystore contains 0 entries") != -1);
         //(check for empty database listing)
-        //Runtime.getRuntime().exec("/usr/ccs/bin/sccs unedit cert8.db key3.db");
+        //Runtime.getRuntime().exec("/usr/bin/sccs unedit cert8.db key3.db");
         remove("genkey.cert");
         remove("genkey.certreq");
         //  12. sccs unedit cert8.db key3.db

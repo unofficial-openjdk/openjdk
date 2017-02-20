@@ -42,7 +42,7 @@ AC_DEFUN_ONCE([LIB_SETUP_X11],
 
     if test "x${with_x}" != x &&  test "x${with_x}" != xyes; then
       # The user has specified a X11 base directory. Use it for includes and
-      # libraries, unless explicitely overridden.
+      # libraries, unless explicitly overridden.
       if test "x$x_includes" = xNONE; then
         x_includes="${with_x}/include"
       fi
@@ -91,9 +91,7 @@ AC_DEFUN_ONCE([LIB_SETUP_X11],
     if test "x$OPENJDK_TARGET_OS" = xsolaris; then
       OPENWIN_HOME="/usr/openwin"
       X_CFLAGS="-I$SYSROOT$OPENWIN_HOME/include -I$SYSROOT$OPENWIN_HOME/include/X11/extensions"
-      X_LIBS="-L$SYSROOT$OPENWIN_HOME/sfw/lib$OPENJDK_TARGET_CPU_ISADIR \
-          -L$SYSROOT$OPENWIN_HOME/lib$OPENJDK_TARGET_CPU_ISADIR \
-          -R$OPENWIN_HOME/sfw/lib$OPENJDK_TARGET_CPU_ISADIR \
+      X_LIBS="-L$SYSROOT$OPENWIN_HOME/lib$OPENJDK_TARGET_CPU_ISADIR \
           -R$OPENWIN_HOME/lib$OPENJDK_TARGET_CPU_ISADIR"
     fi
 

@@ -25,7 +25,6 @@
 package sun.swing;
 
 import java.awt.*;
-import java.awt.geom.AffineTransform;
 import java.awt.image.*;
 import java.util.*;
 
@@ -60,7 +59,11 @@ public abstract class CachedPainter {
         synchronized(CachedPainter.class) {
             ImageCache cache = cacheMap.get(key);
             if (cache == null) {
-                cache = new ImageCache(1);
+                if (key == PainterMultiResolutionCachedImage.class) {
+                    cache = new ImageCache(32);
+                } else {
+                    cache = new ImageCache(1);
+                }
                 cacheMap.put(key, cache);
             }
             return cache;
@@ -107,13 +110,16 @@ public abstract class CachedPainter {
         ImageCache cache = getCache(key);
         Image image = cache.getImage(key, config, w, h, args);
         int attempts = 0;
+        VolatileImage volatileImage = (image instanceof VolatileImage)
+                ? (VolatileImage) image
+                : null;
         do {
             boolean draw = false;
-            if (image instanceof VolatileImage) {
+            if (volatileImage != null) {
                 // See if we need to recreate the image
-                switch (((VolatileImage)image).validate(config)) {
+                switch (volatileImage.validate(config)) {
                 case VolatileImage.IMAGE_INCOMPATIBLE:
-                    ((VolatileImage)image).flush();
+                    volatileImage.flush();
                     image = null;
                     break;
                 case VolatileImage.IMAGE_RESTORED:
@@ -126,11 +132,14 @@ public abstract class CachedPainter {
                 image = createImage(c, w, h, config, args);
                 cache.setImage(key, config, w, h, args, image);
                 draw = true;
+                volatileImage = (image instanceof VolatileImage)
+                        ? (VolatileImage) image
+                        : null;
             }
             if (draw) {
                 // Render to the Image
                 Graphics2D g2 = (Graphics2D) image.getGraphics();
-                if (w != baseWidth || h != baseHeight) {
+                if (volatileImage == null && (w != baseWidth || h != baseHeight)) {
                     g2.scale((double) w / baseWidth, (double) h / baseHeight);
                 }
                 paintToImage(c, image, g2, baseWidth, baseHeight, args);
@@ -140,8 +149,8 @@ public abstract class CachedPainter {
             // If we did this 3 times and the contents are still lost
             // assume we're painting to a VolatileImage that is bogus and
             // give up.  Presumably we'll be called again to paint.
-        } while ((image instanceof VolatileImage) &&
-                 ((VolatileImage)image).contentsLost() && ++attempts < 3);
+        } while ((volatileImage != null) &&
+                 volatileImage.contentsLost() && ++attempts < 3);
 
         return image;
     }
@@ -265,7 +274,8 @@ public abstract class CachedPainter {
         public Image getResolutionVariant(double destWidth, double destHeight) {
             int w = (int) Math.ceil(destWidth);
             int h = (int) Math.ceil(destHeight);
-            return getImage(this, c, baseWidth, baseHeight, w, h, args);
+            return getImage(PainterMultiResolutionCachedImage.class,
+                    c, baseWidth, baseHeight, w, h, args);
         }
 
         @Override

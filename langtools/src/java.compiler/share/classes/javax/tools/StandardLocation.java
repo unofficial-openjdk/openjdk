@@ -64,6 +64,7 @@ public enum StandardLocation implements Location {
 
     /**
      * Location to search for modules containing annotation processors.
+     * @spec JPMS
      * @since 9
      */
     ANNOTATION_PROCESSOR_MODULE_PATH,
@@ -82,37 +83,53 @@ public enum StandardLocation implements Location {
 
     /**
      * Location to search for the source code of modules.
+     * @spec JPMS
      * @since 9
      */
     MODULE_SOURCE_PATH,
 
     /**
      * Location to search for upgradeable system modules.
+     * @spec JPMS
      * @since 9
      */
     UPGRADE_MODULE_PATH,
 
     /**
      * Location to search for system modules.
+     * @spec JPMS
      * @since 9
      */
     SYSTEM_MODULES,
 
     /**
      * Location to search for precompiled user modules.
+     * @spec JPMS
      * @since 9
      */
-    MODULE_PATH;
+    MODULE_PATH,
+
+    /**
+     * Location to search for module patches.
+     * @since 9
+     * @spec JPMS
+     */
+    PATCH_MODULE_PATH;
 
     /**
      * Returns a location object with the given name.  The following
      * property must hold: {@code locationFor(x) ==
      * locationFor(y)} if and only if {@code x.equals(y)}.
      * The returned location will be an output location if and only if
-     * name ends with {@code "_OUTPUT"}.
+     * name ends with {@code "_OUTPUT"}. It will be considered to
+     * be a module-oriented location if the name contains the word
+     * {@code "MODULE"}.
      *
      * @param name a name
      * @return a location
+     *
+     * @revised 9
+     * @spec JPMS
      */
     public static Location locationFor(final String name) {
         if (locations.isEmpty()) {
@@ -149,13 +166,14 @@ public enum StandardLocation implements Location {
     }
 
     @Override
-    public boolean isModuleLocation() {
+    public boolean isModuleOrientedLocation() {
         switch (this) {
             case MODULE_SOURCE_PATH:
             case ANNOTATION_PROCESSOR_MODULE_PATH:
             case UPGRADE_MODULE_PATH:
             case SYSTEM_MODULES:
             case MODULE_PATH:
+            case PATCH_MODULE_PATH:
                 return true;
             default:
                 return false;

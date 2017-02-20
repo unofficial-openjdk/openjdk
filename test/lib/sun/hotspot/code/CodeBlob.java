@@ -19,7 +19,6 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 package sun.hotspot.code;
@@ -50,8 +49,13 @@ public class CodeBlob {
     assert obj.length == 4;
     name = (String) obj[0];
     size = (Integer) obj[1];
-    code_blob_type = BlobType.values()[(Integer) obj[2]];
-    assert code_blob_type.id == (Integer) obj[2];
+    int blob_type_index = (Integer) obj[2];
+    if (blob_type_index == -1) { // AOT
+      code_blob_type = null;
+    } else {
+      code_blob_type = BlobType.values()[blob_type_index];
+      assert code_blob_type.id == (Integer) obj[2];
+    }
     address = (Long) obj[3];
   }
   public final String name;

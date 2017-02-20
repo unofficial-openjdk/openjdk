@@ -64,6 +64,8 @@ class G1DefaultPolicy: public G1Policy {
 
   double _full_collection_start_sec;
 
+  jlong _collection_pause_end_millis;
+
   uint _young_list_target_length;
   uint _young_list_fixed_length;
 
@@ -237,6 +239,8 @@ public:
 
   double reclaimable_bytes_perc(size_t reclaimable_bytes) const;
 
+  jlong collection_pause_end_millis() { return _collection_pause_end_millis; }
+
 private:
   // Sets up marking if proper conditions are met.
   void maybe_start_marking();
@@ -360,6 +364,8 @@ private:
 
   AgeTable _survivors_age_table;
 
+protected:
+  size_t desired_survivor_size() const;
 public:
   uint tenuring_threshold() const { return _tenuring_threshold; }
 
@@ -378,6 +384,8 @@ public:
   void record_age_table(AgeTable* age_table) {
     _survivors_age_table.merge(age_table);
   }
+
+  void print_age_table();
 
   void update_max_gc_locker_expansion();
 

@@ -49,6 +49,9 @@
   experimental(bool, UseJVMCICompiler, false,                               \
           "Use JVMCI as the default compiler")                              \
                                                                             \
+  experimental(bool, JVMCIPrintProperties, false,                           \
+          "Prints properties used by the JVMCI compiler and exits")         \
+                                                                            \
   experimental(bool, BootstrapJVMCI, false,                                 \
           "Bootstrap JVMCI before running Java main method")                \
                                                                             \
@@ -87,6 +90,9 @@
                                                                             \
   experimental(intx, JVMCINMethodSizeLimit, (80*K)*wordSize,                \
           "Maximum size of a compiled method.")                             \
+                                                                            \
+  experimental(intx, MethodProfileWidth, 0,                                 \
+          "Number of methods to record in call profile")                    \
                                                                             \
   develop(bool, TraceUncollectedSpeculations, false,                        \
           "Print message when a failed speculation was not collected")

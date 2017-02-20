@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,22 +72,22 @@ HeapRegion* HeapRegionManager::new_heap_region(uint hrm_index) {
   return g1h->new_heap_region(hrm_index, mr);
 }
 
-void HeapRegionManager::commit_regions(uint index, size_t num_regions) {
+void HeapRegionManager::commit_regions(uint index, size_t num_regions, WorkGang* pretouch_gang) {
   guarantee(num_regions > 0, "Must commit more than zero regions");
   guarantee(_num_committed + num_regions <= max_length(), "Cannot commit more than the maximum amount of regions");
 
   _num_committed += (uint)num_regions;
 
-  _heap_mapper->commit_regions(index, num_regions);
+  _heap_mapper->commit_regions(index, num_regions, pretouch_gang);
 
   // Also commit auxiliary data
-  _prev_bitmap_mapper->commit_regions(index, num_regions);
-  _next_bitmap_mapper->commit_regions(index, num_regions);
+  _prev_bitmap_mapper->commit_regions(index, num_regions, pretouch_gang);
+  _next_bitmap_mapper->commit_regions(index, num_regions, pretouch_gang);
 
-  _bot_mapper->commit_regions(index, num_regions);
-  _cardtable_mapper->commit_regions(index, num_regions);
+  _bot_mapper->commit_regions(index, num_regions, pretouch_gang);
+  _cardtable_mapper->commit_regions(index, num_regions, pretouch_gang);
 
-  _card_counts_mapper->commit_regions(index, num_regions);
+  _card_counts_mapper->commit_regions(index, num_regions, pretouch_gang);
 }
 
 void HeapRegionManager::uncommit_regions(uint start, size_t num_regions) {
@@ -117,12 +117,13 @@ void HeapRegionManager::uncommit_regions(uint start, size_t num_regions) {
   _card_counts_mapper->uncommit_regions(start, num_regions);
 }
 
-void HeapRegionManager::make_regions_available(uint start, uint num_regions) {
+void HeapRegionManager::make_regions_available(uint start, uint num_regions, WorkGang* pretouch_gang) {
   guarantee(num_regions > 0, "No point in calling this for zero regions");
-  commit_regions(start, num_regions);
+  commit_regions(start, num_regions, pretouch_gang);
   for (uint i = start; i < start + num_regions; i++) {
     if (_regions.get_by_index(i) == NULL) {
       HeapRegion* new_hr = new_heap_region(i);
+      OrderAccess::storestore();
       _regions.set_by_index(i, new_hr);
       _allocated_heapregions_length = MAX2(_allocated_heapregions_length, i + 1);
     }
@@ -162,11 +163,11 @@ MemoryUsage HeapRegionManager::get_auxiliary_data_memory_usage() const {
   return MemoryUsage(0, used_sz, committed_sz, committed_sz);
 }
 
-uint HeapRegionManager::expand_by(uint num_regions) {
-  return expand_at(0, num_regions);
+uint HeapRegionManager::expand_by(uint num_regions, WorkGang* pretouch_workers) {
+  return expand_at(0, num_regions, pretouch_workers);
 }
 
-uint HeapRegionManager::expand_at(uint start, uint num_regions) {
+uint HeapRegionManager::expand_at(uint start, uint num_regions, WorkGang* pretouch_workers) {
   if (num_regions == 0) {
     return 0;
   }
@@ -180,7 +181,7 @@ uint HeapRegionManager::expand_at(uint start, uint num_regions) {
   while (expanded < num_regions &&
          (num_last_found = find_unavailable_from_idx(cur, &idx_last_found)) > 0) {
     uint to_expand = MIN2(num_regions - expanded, num_last_found);
-    make_regions_available(idx_last_found, to_expand);
+    make_regions_available(idx_last_found, to_expand, pretouch_workers);
     expanded += to_expand;
     cur = idx_last_found + num_last_found + 1;
   }
@@ -285,7 +286,7 @@ uint HeapRegionManager::find_highest_free(bool* expanded) {
   while (true) {
     HeapRegion *hr = _regions.get_by_index(curr);
     if (hr == NULL) {
-      uint res = expand_at(curr, 1);
+      uint res = expand_at(curr, 1, NULL);
       if (res == 1) {
         *expanded = true;
         return curr;
@@ -303,7 +304,7 @@ uint HeapRegionManager::find_highest_free(bool* expanded) {
   }
 }
 
-bool HeapRegionManager::allocate_containing_regions(MemRegion range, size_t* commit_count) {
+bool HeapRegionManager::allocate_containing_regions(MemRegion range, size_t* commit_count, WorkGang* pretouch_workers) {
   size_t commits = 0;
   uint start_index = (uint)_regions.get_index_by_address(range.start());
   uint last_index = (uint)_regions.get_index_by_address(range.last());
@@ -313,7 +314,7 @@ bool HeapRegionManager::allocate_containing_regions(MemRegion range, size_t* com
   for (uint curr_index = start_index; curr_index <= last_index; curr_index++) {
     if (!is_available(curr_index)) {
       commits++;
-      expand_at(curr_index, 1);
+      expand_at(curr_index, 1, pretouch_workers);
     }
     HeapRegion* curr_region  = _regions.get_by_index(curr_index);
     if (!curr_region->is_free()) {
@@ -481,8 +482,9 @@ void HeapRegionManager::verify_optional() {
 HeapRegionClaimer::HeapRegionClaimer(uint n_workers) :
     _n_workers(n_workers), _n_regions(G1CollectedHeap::heap()->_hrm._allocated_heapregions_length), _claims(NULL) {
   assert(n_workers > 0, "Need at least one worker.");
-  _claims = NEW_C_HEAP_ARRAY(uint, _n_regions, mtGC);
-  memset(_claims, Unclaimed, sizeof(*_claims) * _n_regions);
+  uint* new_claims = NEW_C_HEAP_ARRAY(uint, _n_regions, mtGC);
+  memset(new_claims, Unclaimed, sizeof(*_claims) * _n_regions);
+  _claims = new_claims;
 }
 
 HeapRegionClaimer::~HeapRegionClaimer() {

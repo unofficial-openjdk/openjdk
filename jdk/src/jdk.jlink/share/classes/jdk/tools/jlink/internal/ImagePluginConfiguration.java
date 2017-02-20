@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import jdk.tools.jlink.builder.ImageBuilder;
-import jdk.tools.jlink.Jlink;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.Plugin.Category;
@@ -44,6 +43,9 @@ import jdk.tools.jlink.plugin.ResourcePool;
  */
 public final class ImagePluginConfiguration {
 
+    // Order in which plugins are applied. Note that COMPRESSOR type plugins should come
+    // after any plugin that reads .class resources and operate on binary data.
+    // Plugin.Category enum element order matches this order for ease of read.
     private static final List<Category> CATEGORIES_ORDER = new ArrayList<>();
 
     static {
@@ -51,8 +53,8 @@ public final class ImagePluginConfiguration {
         CATEGORIES_ORDER.add(Category.TRANSFORMER);
         CATEGORIES_ORDER.add(Category.MODULEINFO_TRANSFORMER);
         CATEGORIES_ORDER.add(Category.SORTER);
-        CATEGORIES_ORDER.add(Category.COMPRESSOR);
         CATEGORIES_ORDER.add(Category.METAINFO_ADDER);
+        CATEGORIES_ORDER.add(Category.COMPRESSOR);
         CATEGORIES_ORDER.add(Category.VERIFIER);
         CATEGORIES_ORDER.add(Category.PROCESSOR);
         CATEGORIES_ORDER.add(Category.PACKAGER);

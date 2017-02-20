@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,11 +28,10 @@
  * <P>
  * The JMX API consists of interfaces for monitoring and management of the
  * JVM and other components in the Java runtime.
+ *
+ * @since 9
  */
 module java.management {
-    requires public java.rmi;
-    requires java.logging;
-    requires java.naming;
 
     exports java.lang.management;
     exports javax.management;
@@ -42,9 +41,20 @@ module java.management {
     exports javax.management.openmbean;
     exports javax.management.relation;
     exports javax.management.remote;
-    exports javax.management.remote.rmi;
     exports javax.management.timer;
-    exports sun.management to jdk.jconsole, jdk.management;
+    exports com.sun.jmx.remote.internal to
+            java.management.rmi,
+            jdk.management.agent;
+    exports com.sun.jmx.remote.security to
+            java.management.rmi,
+            jdk.management.agent;
+    exports com.sun.jmx.remote.util to java.management.rmi;
+    exports sun.management to
+        jdk.jconsole,
+        jdk.management,
+        jdk.management.agent;
+    exports sun.management.counter to jdk.management.agent;
+    exports sun.management.counter.perf to jdk.management.agent;
     exports sun.management.spi to jdk.management;
 
     uses javax.management.remote.JMXConnectorProvider;
@@ -54,4 +64,3 @@ module java.management {
     provides javax.security.auth.spi.LoginModule
         with com.sun.jmx.remote.security.FileLoginModule;
 }
-

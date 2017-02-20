@@ -25,63 +25,153 @@
 
 package jdk.tools.jlink.internal;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.stream.Stream;
+
+import jdk.internal.jmod.JmodFile;
 import jdk.tools.jlink.internal.Archive.Entry.EntryType;
 
 /**
  * An Archive backed by a jmod file.
  */
-public class JmodArchive extends JarArchive {
-
+public class JmodArchive implements Archive {
     private static final String JMOD_EXT    = ".jmod";
-    private static final String MODULE_NAME = "module";
-    private static final String MODULE_INFO = "module-info.class";
-    private static final String CLASSES     = "classes";
-    private static final String NATIVE_LIBS = "native";
-    private static final String NATIVE_CMDS = "bin";
-    private static final String CONFIG      = "conf";
 
-    public JmodArchive(String mn, Path jmod) {
-        super(mn, jmod);
-        String filename = Objects.requireNonNull(jmod.getFileName()).toString();
-        if (!filename.endsWith(JMOD_EXT)) {
-            throw new UnsupportedOperationException("Unsupported format: " + filename);
+    /**
+     * An entry located in a jmod file.
+     */
+    public class JmodEntry extends Entry {
+        private final JmodFile.Entry entry;
+
+        JmodEntry(String path, String name, EntryType type,
+                  JmodFile.Entry entry) {
+            super(JmodArchive.this, path, name, type);
+            this.entry = Objects.requireNonNull(entry);
+        }
+
+        /**
+         * Returns the number of uncompressed bytes for this entry.
+         */
+        @Override
+        public long size() {
+            return entry.size();
+        }
+
+        @Override
+        public InputStream stream() throws IOException {
+            return jmodFile.getInputStream(entry.section(), entry.name());
         }
     }
 
+    private final Path file;
+    private final String moduleName;
+    private JmodFile jmodFile;
+
+    public JmodArchive(String mn, Path jmod) {
+        Objects.requireNonNull(mn);
+        Objects.requireNonNull(jmod.getFileName());
+        String filename = jmod.toString();
+        if (!filename.endsWith(JMOD_EXT)) {
+            throw new UnsupportedOperationException("Unsupported format: " + filename);
+        }
+        this.moduleName = mn;
+        this.file = jmod;
+    }
+
     @Override
-    EntryType toEntryType(String entryName) {
-        String section = getSection(entryName.replace('\\', '/'));
+    public String moduleName() {
+        return moduleName;
+    }
+
+    @Override
+    public Path getPath() {
+        return file;
+    }
+
+    @Override
+    public Stream<Entry> entries() {
+        ensureOpen();
+        return jmodFile.stream()
+                       .map(this::toEntry);
+    }
+
+    @Override
+    public void open() throws IOException {
+        if (jmodFile != null) {
+            jmodFile.close();
+        }
+        this.jmodFile = new JmodFile(file);
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (jmodFile != null) {
+            jmodFile.close();
+        }
+    }
+
+    private void ensureOpen() {
+        if (jmodFile == null) {
+            try {
+                open();
+            } catch(IOException ioe){
+                throw new UncheckedIOException(ioe);
+            }
+        }
+    }
+
+    private EntryType toEntryType(JmodFile.Section section) {
         switch (section) {
             case CLASSES:
                 return EntryType.CLASS_OR_RESOURCE;
+            case CONFIG:
+                return EntryType.CONFIG;
+            case HEADER_FILES:
+                return EntryType.HEADER_FILE;
+            case LEGAL_NOTICES:
+                return EntryType.LEGAL_NOTICE;
+            case MAN_PAGES:
+                return EntryType.MAN_PAGE;
             case NATIVE_LIBS:
                 return EntryType.NATIVE_LIB;
             case NATIVE_CMDS:
                 return EntryType.NATIVE_CMD;
-            case CONFIG:
-                return EntryType.CONFIG;
-            case MODULE_NAME:
-                return EntryType.MODULE_NAME;
             default:
                 throw new InternalError("unexpected entry: " + section);
         }
     }
 
-    private static String getSection(String entryName) {
-        int i = entryName.indexOf('/');
-        // Unnamed section.
-        String section = "";
-        if (i > 0) {
-            section = entryName.substring(0, entryName.indexOf('/'));
-        }
-        return section;
-    }
+    private Entry toEntry(JmodFile.Entry entry) {
+        EntryType type = toEntryType(entry.section());
+        String prefix = entry.section().jmodDir();
+        String name = entry.name();
+        String path = prefix + "/" + name;
+        String resourceName = name;
 
-    @Override
-    String getFileName(String entryName) {
-        entryName = entryName.replace('\\', '/');
-        return entryName.substring(entryName.indexOf('/') + 1);
+        // The resource name represents the path of ResourcePoolEntry
+        // and its subpath defines the ultimate path to be written
+        // to the image relative to the directory corresponding to that
+        // resource type.
+        //
+        // For classes and resources, the resource name does not have
+        // a prefix (<package>/<name>). They will be written to the jimage.
+        //
+        // For other kind of entries, it will keep the section name as
+        // the prefix for unique identification.  The subpath (taking
+        // out the section name) is the pathname to be written to the
+        // corresponding directory in the image.
+        //
+        if (type == EntryType.LEGAL_NOTICE) {
+            // legal notices are written to per-module directory
+            resourceName = prefix + "/" + moduleName + "/" + name;
+        } else if (type != EntryType.CLASS_OR_RESOURCE) {
+            resourceName = path;
+        }
+
+        return new JmodEntry(path, resourceName, type, entry);
     }
 }

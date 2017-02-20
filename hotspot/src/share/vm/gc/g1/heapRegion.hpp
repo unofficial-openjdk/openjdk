@@ -51,8 +51,9 @@
 // object is larger than a heap region, the following regions will
 // be of type ContinuesHumongous. In this case the top() of the
 // StartHumongous region and all ContinuesHumongous regions except
-// the last will point to their own end. For the last ContinuesHumongous
-// region, top() will equal the object's top.
+// the last will point to their own end. The last ContinuesHumongous
+// region may have top() equal the end of object if there isn't
+// room for filler objects to pad out to the end of the region.
 
 class G1CollectedHeap;
 class HeapRegionRemSet;
@@ -433,6 +434,8 @@ class HeapRegion: public G1ContiguousSpace {
 
   bool is_old() const { return _type.is_old(); }
 
+  bool is_old_or_humongous() const { return _type.is_old_or_humongous(); }
+
   // A pinned region contains objects which are not moved by garbage collections.
   // Humongous regions and archive regions are pinned.
   bool is_pinned() const { return _type.is_pinned(); }
@@ -653,27 +656,18 @@ class HeapRegion: public G1ContiguousSpace {
     }
   }
 
-  // Requires that "mr" be entirely within the region.
-  // Apply "cl->do_object" to all objects that intersect with "mr".
-  // If the iteration encounters an unparseable portion of the region,
-  // or if "cl->abort()" is true after a closure application,
-  // terminate the iteration and return the address of the start of the
-  // subregion that isn't done.  (The two can be distinguished by querying
-  // "cl->abort()".)  Return of "NULL" indicates that the iteration
-  // completed.
-  HeapWord*
-  object_iterate_mem_careful(MemRegion mr, ObjectClosure* cl);
-
-  // filter_young: if true and the region is a young region then we
-  // skip the iteration.
-  // card_ptr: if not NULL, and we decide that the card is not young
-  // and we iterate over it, we'll clean the card before we start the
-  // iteration.
-  HeapWord*
-  oops_on_card_seq_iterate_careful(MemRegion mr,
-                                   FilterOutOfRegionClosure* cl,
-                                   bool filter_young,
-                                   jbyte* card_ptr);
+  // Iterate over the objects overlapping part of a card, applying cl
+  // to all references in the region.  This is a helper for
+  // G1RemSet::refine_card, and is tightly coupled with it.
+  // mr: the memory region covered by the card, trimmed to the
+  // allocated space for this region.  Must not be empty.
+  // This region must be old or humongous.
+  // Returns true if the designated objects were successfully
+  // processed, false if an unparsable part of the heap was
+  // encountered; that only happens when invoked concurrently with the
+  // mutator.
+  bool oops_on_card_seq_iterate_careful(MemRegion mr,
+                                        FilterOutOfRegionClosure* cl);
 
   size_t recorded_rs_length() const        { return _recorded_rs_length; }
   double predicted_elapsed_time_ms() const { return _predicted_elapsed_time_ms; }

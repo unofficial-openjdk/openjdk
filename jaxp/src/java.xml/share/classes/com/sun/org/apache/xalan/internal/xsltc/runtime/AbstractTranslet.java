@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2016, Oracle and/or its affiliates. All rights reserved.
  */
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -16,9 +16,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-/*
- * $Id: AbstractTranslet.java,v 1.6 2006/06/19 19:49:03 spericas Exp $
  */
 
 package com.sun.org.apache.xalan.internal.xsltc.runtime;
@@ -110,6 +107,9 @@ public abstract class AbstractTranslet implements Translet {
     private final static String ID_INDEX_NAME = "##id";
 
     private boolean _useServicesMechanism;
+
+    // The OutputStream for redirect function
+    private FileOutputStream output = null;
 
     /**
      * protocols allowed for external references set by the stylesheet processing instruction, Document() function, Import and Include element.
@@ -567,9 +567,10 @@ public abstract class AbstractTranslet implements Translet {
                dir.mkdirs();
             }
 
+            output = new FileOutputStream(filename, append);
             factory.setEncoding(_encoding);
             factory.setOutputMethod(_method);
-            factory.setOutputStream(new BufferedOutputStream(new FileOutputStream(filename, append)));
+            factory.setOutputStream(new BufferedOutputStream(output));
             factory.setOutputType(TransletOutputHandlerFactory.STREAM);
 
             final SerializationHandler handler
@@ -594,6 +595,9 @@ public abstract class AbstractTranslet implements Translet {
         try {
             handler.endDocument();
             handler.close();
+            if (output != null) {
+                output.close();
+            }
         }
         catch (Exception e) {
             // what can you do?
@@ -678,7 +682,8 @@ public abstract class AbstractTranslet implements Translet {
                     handler.setVersion(_version);
                 }
                 handler.setIndent(_indent);
-                handler.setIndentAmount(_indentamount);
+                if (_indentamount >= 0)
+                    handler.setIndentAmount(_indentamount);
                 if (_doctypeSystem != null) {
                     handler.setDoctype(_doctypeSystem, _doctypePublic);
                 }

@@ -28,13 +28,13 @@
  * @library /lib/testlibrary/
  * @build jdk.testlibrary.RandomFactory
  * @run main/othervm ConfigChanges
- * @key randomness intermittent
+ * @key randomness
  * @author Martin Buchholz
  */
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 import java.security.Permission;
 import java.util.Random;
@@ -44,7 +44,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import jdk.testlibrary.RandomFactory;
 
 public class ConfigChanges {
@@ -95,10 +95,10 @@ public class ConfigChanges {
             check(tpe.getQueue().isEmpty());
             check(tpe.isTerminated());
             check(! tpe.isTerminating());
-            equal(tpe.getActiveCount(), 0);
-            equal(tpe.getPoolSize(), 0);
+            equal(0, tpe.getActiveCount());
+            equal(0, tpe.getPoolSize());
             equal(tpe.getTaskCount(), tpe.getCompletedTaskCount());
-            check(tpe.awaitTermination(0L, SECONDS));
+            check(tpe.awaitTermination(0L, MINUTES));
         } catch (Throwable t) { unexpected(t); }
     }
 
@@ -109,6 +109,37 @@ public class ConfigChanges {
     }
 
     static volatile Runnable runnableDuJour;
+
+    static void awaitIdleness(ThreadPoolExecutor tpe, long taskCount) {
+        restart: for (;;) {
+            // check twice to make chance of race vanishingly small
+            for (int i = 0; i < 2; i++) {
+                if (tpe.getQueue().size() != 0 ||
+                    tpe.getActiveCount() != 0 ||
+                    tpe.getCompletedTaskCount() != taskCount) {
+                    Thread.yield();
+                    continue restart;
+                }
+            }
+            return;
+        }
+    }
+
+    /**
+     * Waits for condition to become true, first spin-polling, then sleep-polling.
+     */
+    static void spinAwait(Supplier<Boolean> waitingForGodot) {
+        for (int spins = 0; !waitingForGodot.get(); ) {
+            if ((spins = (spins + 1) & 3) > 0) {
+                Thread.yield();
+            } else {
+                try { Thread.sleep(4); }
+                catch (InterruptedException unexpected) {
+                    throw new AssertionError(unexpected);
+                }
+            }
+        }
+    }
 
     private static void realMain(String[] args) throws Throwable {
         if (rnd.nextBoolean())
@@ -137,8 +168,9 @@ public class ConfigChanges {
 
         if (prestart) {
             tpe.prestartAllCoreThreads();
-            equal(tg.activeCount(), n);
-            equal(tg.activeCount(), tpe.getCorePoolSize());
+            equal(n, tg.activeCount());
+            equal(n, tpe.getCorePoolSize());
+            equal(n, tpe.getLargestPoolSize());
         }
 
         final Runnable runRunnableDuJour =
@@ -153,7 +185,7 @@ public class ConfigChanges {
                 tpe.execute(runRunnableDuJour);
             // Wait for prestarted threads to dequeue their initial tasks.
             while (! tpe.getQueue().isEmpty())
-                Thread.sleep(10);
+                Thread.sleep(1);
             for (int i = 0; i < 5*n; i++)
                 tpe.execute(runRunnableDuJour);
         } else {
@@ -163,73 +195,73 @@ public class ConfigChanges {
 
         //report("submitted", tpe);
         pumpedUp.await();
-        equal(tg.activeCount(), 3*n);
-        equal(tg.activeCount(), tpe.getMaximumPoolSize());
-        equal(tpe.getCorePoolSize(), n);
+        equal(3*n, tg.activeCount());
+        equal(3*n, tpe.getMaximumPoolSize());
+        equal(3*n, tpe.getLargestPoolSize());
+        equal(n, tpe.getCorePoolSize());
+        equal(3*n, tpe.getActiveCount());
+        equal(6L*n, tpe.getTaskCount());
+        equal(0L, tpe.getCompletedTaskCount());
+
         //report("pumped up", tpe);
-        equal(tpe.getMaximumPoolSize(), 3*n);
         tpe.setMaximumPoolSize(4*n);
-        equal(tpe.getMaximumPoolSize(), 4*n);
+        equal(4*n, tpe.getMaximumPoolSize());
         //report("pumped up2", tpe);
         final CyclicBarrier pumpedUp2 = new CyclicBarrier(n + 1);
         runnableDuJour = waiter(pumpedUp2);
         for (int i = 0; i < 1*n; i++)
             tpe.execute(runRunnableDuJour);
         pumpedUp2.await();
-        equal(tg.activeCount(), 4*n);
-        equal(tg.activeCount(), tpe.getMaximumPoolSize());
-        equal(tpe.getCompletedTaskCount(), 0L);
+        equal(4*n, tg.activeCount());
+        equal(4*n, tpe.getMaximumPoolSize());
+        equal(4*n, tpe.getLargestPoolSize());
+        equal(4*n, tpe.getActiveCount());
+        equal(7L*n, tpe.getTaskCount());
+        equal(0L, tpe.getCompletedTaskCount());
         //report("pumped up2", tpe);
         runnableDuJour = new Runnable() { public void run() {}};
 
         tpe.setMaximumPoolSize(2*n);
-        //report("after set", tpe);
+        //report("after setMaximumPoolSize", tpe);
 
         pumpedUp2.await();
         pumpedUp.await();
 
-//      while (tg.activeCount() != n &&
-//             tg.activeCount() != n)
-//          Thread.sleep(10);
-//      equal(tg.activeCount(), n);
-//      equal(tg.activeCount(), tpe.getCorePoolSize());
+        spinAwait(() -> tg.activeCount() == 2*n);
+        equal(2*n, tpe.getMaximumPoolSize());
+        equal(4*n, tpe.getLargestPoolSize());
 
-        while (tg.activeCount() != 2*n &&
-               tg.activeCount() != 2*n)
-            Thread.sleep(10);
-        equal(tg.activeCount(), 2*n);
-        equal(tg.activeCount(), tpe.getMaximumPoolSize());
+        //report("draining", tpe);
+        awaitIdleness(tpe, 7L*n);
 
+        equal(2*n, tg.activeCount());
+        equal(2*n, tpe.getMaximumPoolSize());
+        equal(4*n, tpe.getLargestPoolSize());
 
-//report("draining", tpe);
-        while (tpe.getCompletedTaskCount() < 7*n &&
-               tpe.getCompletedTaskCount() < 7*n)
-            Thread.sleep(10);
+        equal(7L*n, tpe.getTaskCount());
+        equal(7L*n, tpe.getCompletedTaskCount());
+        equal(0, tpe.getActiveCount());
 
-        //equal(tg.activeCount(), n);
-        //equal(tg.activeCount(), tpe.getCorePoolSize());
-        equal(tg.activeCount(), 2*n);
-        equal(tg.activeCount(), tpe.getMaximumPoolSize());
-
-        equal(tpe.getTaskCount(), 7L*n);
-        equal(tpe.getCompletedTaskCount(), 7L*n);
-
-        equal(tpe.getKeepAliveTime(MINUTES), 3L);
+        equal(3L, tpe.getKeepAliveTime(MINUTES));
+        long t0 = System.nanoTime();
         tpe.setKeepAliveTime(7L, MILLISECONDS);
-        equal(tpe.getKeepAliveTime(MILLISECONDS), 7L);
-        while (tg.activeCount() > n &&
-               tg.activeCount() > n)
-            Thread.sleep(10);
-        equal(tg.activeCount(), n);
+        equal(7L, tpe.getKeepAliveTime(MILLISECONDS));
+        spinAwait(() -> tg.activeCount() == n);
+        check(System.nanoTime() - t0 >= tpe.getKeepAliveTime(NANOSECONDS));
 
         //report("idle", tpe);
         check(! tpe.allowsCoreThreadTimeOut());
+        t0 = System.nanoTime();
         tpe.allowCoreThreadTimeOut(true);
         check(tpe.allowsCoreThreadTimeOut());
-        while (tg.activeCount() > 0 &&
-               tg.activeCount() > 0)
-            Thread.sleep(10);
-        equal(tg.activeCount(), 0);
+        spinAwait(() -> tg.activeCount() == 0);
+
+        // The following assertion is almost always true, but may
+        // exceptionally not be during a transition from core count
+        // too high to allowCoreThreadTimeOut.  Users will never
+        // notice, and we accept the small loss of testability.
+        //
+        // check(System.nanoTime() - t0 >= tpe.getKeepAliveTime(NANOSECONDS));
 
         //report("idle", tpe);
 

@@ -2133,10 +2133,6 @@ void TemplateTable::_return(TosState state) {
     // since compiled code callers expect the result to already be narrowed.
     case itos: __ narrow(R17_tos); /* fall through */
     case ltos:
-    case btos:
-    case ztos:
-    case ctos:
-    case stos:
     case atos: __ mr(R3_RET, R17_tos); break;
     case ftos:
     case dtos: __ fmr(F1_RET, F15_ftos); break;
@@ -2548,9 +2544,8 @@ void TemplateTable::getfield_or_static(int byte_no, bool is_static, RewriteContr
   assert(branch_table[ztos] == 0, "can't compute twice");
   branch_table[ztos] = __ pc(); // non-volatile_entry point
   __ lbzx(R17_tos, Rclass_or_obj, Roffset);
-  __ extsb(R17_tos, R17_tos);
   __ push(ztos);
-  if (!is_static) {
+  if (!is_static && rc == may_rewrite) {
     // use btos rewriting, no truncating to t/f bit is needed for getfield.
     patch_bytecode(Bytecodes::_fast_bgetfield, Rbc, Rscratch);
   }
@@ -2874,7 +2869,9 @@ void TemplateTable::putfield_or_static(int byte_no, bool is_static, RewriteContr
   if (!is_static) { pop_and_check_object(Rclass_or_obj); } // Kills R11_scratch1.
   __ andi(R17_tos, R17_tos, 0x1);
   __ stbx(R17_tos, Rclass_or_obj, Roffset);
-  if (!is_static) { patch_bytecode(Bytecodes::_fast_zputfield, Rbc, Rscratch, true, byte_no); }
+  if (!is_static && rc == may_rewrite) {
+    patch_bytecode(Bytecodes::_fast_zputfield, Rbc, Rscratch, true, byte_no);
+  }
   if (!support_IRIW_for_not_multiple_copy_atomic_cpu) {
     __ beq(CR_is_vol, Lvolatile); // Volatile?
   }

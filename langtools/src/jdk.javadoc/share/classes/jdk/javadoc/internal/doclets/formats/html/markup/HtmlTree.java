@@ -53,8 +53,8 @@ import jdk.javadoc.internal.doclets.toolkit.util.DocletConstants;
 public class HtmlTree extends Content {
 
     private HtmlTag htmlTag;
-    private Map<HtmlAttr,String> attrs = Collections.<HtmlAttr,String>emptyMap();
-    private List<Content> content = Collections.<Content>emptyList();
+    private Map<HtmlAttr,String> attrs = Collections.emptyMap();
+    private List<Content> content = Collections.emptyList();
     public static final Content EMPTY = new StringContent("");
 
     /**
@@ -805,6 +805,17 @@ public class HtmlTree extends Content {
      */
     public static HtmlTree TH(String scope, Content body) {
         return TH(null, scope, body);
+    }
+
+    /**
+     * Generates a TH tag with style class, scope attribute and some content.
+     *
+     * @param styleClass style for the tag
+     * @param body content for the tag
+     * @return an HtmlTree object for the TH tag
+     */
+    public static HtmlTree TH_ROW_SCOPE(HtmlStyle styleClass, Content body) {
+        return TH(styleClass, "row", body);
     }
 
     /**

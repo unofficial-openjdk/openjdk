@@ -282,21 +282,17 @@ bool os::is_allocatable(size_t bytes) {
 ///////////////////////////////////////////////////////////////////////////////
 // thread stack
 
-size_t os::Bsd::min_stack_allowed = 64 * K;
+size_t os::Posix::_compiler_thread_min_stack_allowed = 64 * K;
+size_t os::Posix::_java_thread_min_stack_allowed = 64 * K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = 64 * K;
 
-size_t os::Bsd::default_stack_size(os::ThreadType thr_type) {
+size_t os::Posix::default_stack_size(os::ThreadType thr_type) {
 #ifdef _LP64
   size_t s = (thr_type == os::compiler_thread ? 4 * M : 1 * M);
 #else
   size_t s = (thr_type == os::compiler_thread ? 2 * M : 512 * K);
 #endif // _LP64
   return s;
-}
-
-size_t os::Bsd::default_guard_size(os::ThreadType thr_type) {
-  // Only enable glibc guard pages for non-Java threads
-  // (Java threads have HotSpot guard pages)
-  return (thr_type == java_thread ? 0 : page_size());
 }
 
 static void current_stack_region(address *bottom, size_t *size) {
@@ -314,7 +310,7 @@ static void current_stack_region(address *bottom, size_t *size) {
   int rslt = pthread_stackseg_np(pthread_self(), &ss);
 
   if (rslt != 0)
-    fatal("pthread_stackseg_np failed with err = " INT32_FORMAT, rslt);
+    fatal("pthread_stackseg_np failed with error = " INT32_FORMAT, rslt);
 
   stack_top = (address) ss.ss_sp;
   stack_bytes  = ss.ss_size;
@@ -326,12 +322,12 @@ static void current_stack_region(address *bottom, size_t *size) {
 
   // JVM needs to know exact stack location, abort if it fails
   if (rslt != 0)
-    fatal("pthread_attr_init failed with err = " INT32_FORMAT, rslt);
+    fatal("pthread_attr_init failed with error = " INT32_FORMAT, rslt);
 
   rslt = pthread_attr_get_np(pthread_self(), &attr);
 
   if (rslt != 0)
-    fatal("pthread_attr_get_np failed with err = " INT32_FORMAT, rslt);
+    fatal("pthread_attr_get_np failed with error = " INT32_FORMAT, rslt);
 
   if (pthread_attr_getstackaddr(&attr, (void **) &stack_bottom) != 0 ||
       pthread_attr_getstacksize(&attr, &stack_bytes) != 0) {

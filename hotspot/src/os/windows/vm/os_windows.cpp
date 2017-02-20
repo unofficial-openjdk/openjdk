@@ -45,7 +45,7 @@
 #include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -396,6 +396,15 @@ size_t os::current_stack_size() {
 
 struct tm* os::localtime_pd(const time_t* clock, struct tm* res) {
   const struct tm* time_struct_ptr = localtime(clock);
+  if (time_struct_ptr != NULL) {
+    *res = *time_struct_ptr;
+    return res;
+  }
+  return NULL;
+}
+
+struct tm* os::gmtime_pd(const time_t* clock, struct tm* res) {
+  const struct tm* time_struct_ptr = gmtime(clock);
   if (time_struct_ptr != NULL) {
     *res = *time_struct_ptr;
     return res;
@@ -769,6 +778,11 @@ void os::set_native_thread_name(const char *name) {
   // is already attached to a debugger; debugger must observe
   // the exception below to show the correct name.
 
+  // If there is no debugger attached skip raising the exception
+  if (!IsDebuggerPresent()) {
+    return;
+  }
+
   const DWORD MS_VC_EXCEPTION = 0x406D1388;
   struct {
     DWORD dwType;     // must be 0x1000
@@ -784,7 +798,7 @@ void os::set_native_thread_name(const char *name) {
 
   __try {
     RaiseException (MS_VC_EXCEPTION, 0, sizeof(info)/sizeof(DWORD), (const ULONG_PTR*)&info );
-  } __except(EXCEPTION_CONTINUE_EXECUTION) {}
+  } __except(EXCEPTION_EXECUTE_HANDLER) {}
 }
 
 bool os::distribute_processes(uint length, uint* distribution) {
@@ -2366,7 +2380,9 @@ bool os::win32::get_frame_at_stack_banging_point(JavaThread* thread,
   if (Interpreter::contains(pc)) {
     *fr = os::fetch_frame_from_context((void*)exceptionInfo->ContextRecord);
     if (!fr->is_first_java_frame()) {
-      assert(fr->safe_for_sender(thread), "Safety check");
+      // get_frame_at_stack_banging_point() is only called when we
+      // have well defined stacks so java_sender() calls do not need
+      // to assert safe_for_sender() first.
       *fr = fr->java_sender();
     }
   } else {
@@ -2383,7 +2399,7 @@ bool os::win32::get_frame_at_stack_banging_point(JavaThread* thread,
       // has been pushed on the stack
       *fr = frame(fr->sp() + 1, fr->fp(), (address)*(fr->sp()));
       if (!fr->is_java_frame()) {
-        assert(fr->safe_for_sender(thread), "Safety check");
+        // See java_sender() comment above.
         *fr = fr->java_sender();
       }
     }
@@ -2504,13 +2520,15 @@ LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo) {
   // It write enables the page immediately after protecting it
   // so just return.
   if (exception_code == EXCEPTION_ACCESS_VIOLATION) {
-    JavaThread* thread = (JavaThread*) t;
-    PEXCEPTION_RECORD exceptionRecord = exceptionInfo->ExceptionRecord;
-    address addr = (address) exceptionRecord->ExceptionInformation[1];
-    if (os::is_memory_serialize_page(thread, addr)) {
-      // Block current thread until the memory serialize page permission restored.
-      os::block_on_serialize_page_trap();
-      return EXCEPTION_CONTINUE_EXECUTION;
+    if (t != NULL && t->is_Java_thread()) {
+      JavaThread* thread = (JavaThread*) t;
+      PEXCEPTION_RECORD exceptionRecord = exceptionInfo->ExceptionRecord;
+      address addr = (address) exceptionRecord->ExceptionInformation[1];
+      if (os::is_memory_serialize_page(thread, addr)) {
+        // Block current thread until the memory serialize page permission restored.
+        os::block_on_serialize_page_trap();
+        return EXCEPTION_CONTINUE_EXECUTION;
+      }
     }
   }
 
@@ -2564,7 +2582,7 @@ LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo) {
       }
 #endif
       if (thread->stack_guards_enabled()) {
-        if (_thread_in_Java) {
+        if (in_java) {
           frame fr;
           PEXCEPTION_RECORD exceptionRecord = exceptionInfo->ExceptionRecord;
           address addr = (address) exceptionRecord->ExceptionInformation[1];
@@ -2576,6 +2594,7 @@ LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo) {
         // Yellow zone violation.  The o/s has unprotected the first yellow
         // zone page for us.  Note:  must call disable_stack_yellow_zone to
         // update the enabled status, even if the zone contains only one page.
+        assert(thread->thread_state() != _thread_in_vm, "Undersized StackShadowPages");
         thread->disable_stack_yellow_reserved_zone();
         // If not in java code, return and hope for the best.
         return in_java
@@ -3793,6 +3812,11 @@ void os::win32::initialize_system_info() {
   GlobalMemoryStatusEx(&ms);
   _physical_memory = ms.ullTotalPhys;
 
+  if (FLAG_IS_DEFAULT(MaxRAM)) {
+    // Adjust MaxRAM according to the maximum virtual address space available.
+    FLAG_SET_DEFAULT(MaxRAM, MIN2(MaxRAM, (uint64_t) ms.ullTotalVirtual));
+  }
+
   OSVERSIONINFOEX oi;
   oi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
   GetVersionEx((OSVERSIONINFO*)&oi);
@@ -4207,7 +4231,7 @@ jint os::init_2(void) {
   min_stack_allowed = align_size_up(min_stack_allowed, os::vm_page_size());
 
   if (actual_reserve_size < min_stack_allowed) {
-    tty->print_cr("\nThe stack size specified is too small, "
+    tty->print_cr("\nThe Java thread stack size specified is too small. "
                   "Specify at least %dk",
                   min_stack_allowed / K);
     return JNI_ERR;
@@ -5257,75 +5281,6 @@ int os::fork_and_exec(char* cmd) {
     return -1;
   }
 }
-
-//--------------------------------------------------------------------------------------------------
-// Non-product code
-
-static int mallocDebugIntervalCounter = 0;
-static int mallocDebugCounter = 0;
-
-// For debugging possible bugs inside HeapWalk (a ring buffer)
-#define SAVE_COUNT 8
-static PROCESS_HEAP_ENTRY saved_heap_entries[SAVE_COUNT];
-static int saved_heap_entry_index;
-
-bool os::check_heap(bool force) {
-  if (++mallocDebugCounter < MallocVerifyStart && !force) return true;
-  if (++mallocDebugIntervalCounter >= MallocVerifyInterval || force) {
-    // Note: HeapValidate executes two hardware breakpoints when it finds something
-    // wrong; at these points, eax contains the address of the offending block (I think).
-    // To get to the exlicit error message(s) below, just continue twice.
-    //
-    // Note:  we want to check the CRT heap, which is not necessarily located in the
-    // process default heap.
-    HANDLE heap = (HANDLE) _get_heap_handle();
-    if (!heap) {
-      return true;
-    }
-
-    // If we fail to lock the heap, then gflags.exe has been used
-    // or some other special heap flag has been set that prevents
-    // locking. We don't try to walk a heap we can't lock.
-    if (HeapLock(heap) != 0) {
-      PROCESS_HEAP_ENTRY phe;
-      phe.lpData = NULL;
-      memset(saved_heap_entries, 0, sizeof(saved_heap_entries));
-      saved_heap_entry_index = 0;
-      int count = 0;
-
-      while (HeapWalk(heap, &phe) != 0) {
-        count ++;
-        if ((phe.wFlags & PROCESS_HEAP_ENTRY_BUSY) &&
-            !HeapValidate(heap, 0, phe.lpData)) {
-          tty->print_cr("C heap has been corrupted (time: %d allocations)", mallocDebugCounter);
-          tty->print_cr("corrupted block near address %#x, length %d, count %d", phe.lpData, phe.cbData, count);
-          HeapUnlock(heap);
-          fatal("corrupted C heap");
-        } else {
-          // Save previous seen entries in a ring buffer. We have seen strange
-          // heap corruption fatal errors that produced mdmp files, but when we load
-          // these mdmp files in WinDBG, "!heap -triage" shows no error.
-          // We can examine the saved_heap_entries[] array in the mdmp file to
-          // diagnose such seemingly spurious errors reported by HeapWalk.
-          saved_heap_entries[saved_heap_entry_index++] = phe;
-          if (saved_heap_entry_index >= SAVE_COUNT) {
-            saved_heap_entry_index = 0;
-          }
-        }
-      }
-      DWORD err = GetLastError();
-      if (err != ERROR_NO_MORE_ITEMS && err != ERROR_CALL_NOT_IMPLEMENTED &&
-         (err == ERROR_INVALID_FUNCTION && phe.lpData != NULL)) {
-        HeapUnlock(heap);
-        fatal("heap walk aborted with error %d", err);
-      }
-      HeapUnlock(heap);
-    }
-    mallocDebugIntervalCounter = 0;
-  }
-  return true;
-}
-
 
 bool os::find(address addr, outputStream* st) {
   int offset = -1;

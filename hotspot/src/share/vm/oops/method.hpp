@@ -27,6 +27,7 @@
 
 #include "classfile/vmSymbols.hpp"
 #include "code/compressedStream.hpp"
+#include "compiler/compilerDefinitions.hpp"
 #include "compiler/oopMap.hpp"
 #include "interpreter/invocationCounter.hpp"
 #include "oops/annotations.hpp"
@@ -74,17 +75,18 @@ class Method : public Metadata {
 
   // Flags
   enum Flags {
-    _jfr_towrite           = 1 << 0,
-    _caller_sensitive      = 1 << 1,
-    _force_inline          = 1 << 2,
-    _dont_inline           = 1 << 3,
-    _hidden                = 1 << 4,
-    _has_injected_profile  = 1 << 5,
-    _running_emcp          = 1 << 6,
-    _intrinsic_candidate   = 1 << 7,
-    _reserved_stack_access = 1 << 8
+    _caller_sensitive      = 1 << 0,
+    _force_inline          = 1 << 1,
+    _dont_inline           = 1 << 2,
+    _hidden                = 1 << 3,
+    _has_injected_profile  = 1 << 4,
+    _running_emcp          = 1 << 5,
+    _intrinsic_candidate   = 1 << 6,
+    _reserved_stack_access = 1 << 7
   };
   mutable u2 _flags;
+
+  TRACE_DEFINE_FLAG;
 
 #ifndef PRODUCT
   int               _compiled_invocation_count;  // Number of nmethod invocations so far (for perf. debugging)
@@ -101,6 +103,10 @@ class Method : public Metadata {
   // NULL only at safepoints (because of a de-opt).
   CompiledMethod* volatile _code;                       // Points to the corresponding piece of native code
   volatile address           _from_interpreted_entry; // Cache of _code ? _adapter->i2c_entry() : _i2i_entry
+
+#if INCLUDE_AOT && defined(TIERED)
+  CompiledMethod* _aot_code;
+#endif
 
   // Constructor
   Method(ConstMethod* xconst, AccessFlags access_flags);
@@ -385,7 +391,20 @@ class Method : public Metadata {
       mcs->set_rate(rate);
     }
   }
-#endif
+
+#if INCLUDE_AOT
+  void set_aot_code(CompiledMethod* aot_code) {
+    _aot_code = aot_code;
+  }
+
+  CompiledMethod* aot_code() const {
+    return _aot_code;
+  }
+#else
+  CompiledMethod* aot_code() const { return NULL; }
+#endif // INCLUDE_AOT
+#endif // TIERED
+
   int nmethod_age() const {
     if (method_counters() == NULL) {
       return INT_MAX;
@@ -436,7 +455,7 @@ class Method : public Metadata {
   address verified_code_entry();
   bool check_code() const;      // Not inline to avoid circular ref
   CompiledMethod* volatile code() const                 { assert( check_code(), "" ); return (CompiledMethod *)OrderAccess::load_ptr_acquire(&_code); }
-  void clear_code();            // Clear out any compiled code
+  void clear_code(bool acquire_lock = true);    // Clear out any compiled code
   static void set_code(methodHandle mh, CompiledMethod* code);
   void set_adapter_entry(AdapterHandlerEntry* adapter) {
     constMethod()->set_adapter_entry(adapter);
@@ -584,6 +603,7 @@ class Method : public Metadata {
   // checks method and its method holder
   bool is_final_method() const;
   bool is_final_method(AccessFlags class_access_flags) const;
+  // interface method declared with 'default' - excludes private interface methods
   bool is_default_method() const;
 
   // true if method needs no dynamic dispatch (final and/or no vtable entry)
@@ -645,6 +665,10 @@ class Method : public Metadata {
   // NOTE: code() is inherently racy as deopt can be clearing code
   // simultaneously. Use with caution.
   bool has_compiled_code() const                 { return code() != NULL; }
+
+#ifdef TIERED
+  bool has_aot_code() const                      { return aot_code() != NULL; }
+#endif
 
   // sizing
   static int header_size()                       { return sizeof(Method)/wordSize; }
@@ -810,13 +834,6 @@ class Method : public Metadata {
   void init_intrinsic_id();     // updates from _none if a match
   static vmSymbols::SID klass_id_for_intrinsics(const Klass* holder);
 
-  bool jfr_towrite() const {
-    return (_flags & _jfr_towrite) != 0;
-  }
-  void set_jfr_towrite(bool x) const {
-    _flags = x ? (_flags | _jfr_towrite) : (_flags & ~_jfr_towrite);
-  }
-
   bool caller_sensitive() {
     return (_flags & _caller_sensitive) != 0;
   }
@@ -866,6 +883,8 @@ class Method : public Metadata {
   void set_has_reserved_stack_access(bool x) {
     _flags = x ? (_flags | _reserved_stack_access) : (_flags & ~_reserved_stack_access);
   }
+
+  TRACE_DEFINE_FLAG_ACCESSOR;
 
   ConstMethod::MethodType method_type() const {
       return _constMethod->method_type();

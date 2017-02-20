@@ -36,14 +36,19 @@ endif
 ################################################################################
 
 JMODS_DIR := $(IMAGES_OUTPUTDIR)/jmods
+JMODS_TEMPDIR := $(SUPPORT_OUTPUTDIR)/jmods
 
 LIBS_DIR := $(firstword $(wildcard $(addsuffix /$(MODULE), \
-    $(SUPPORT_OUTPUTDIR)/modules_libs-stripped $(IMPORT_MODULES_LIBS))))
+    $(SUPPORT_OUTPUTDIR)/modules_libs $(IMPORT_MODULES_LIBS))))
 CMDS_DIR := $(firstword $(wildcard $(addsuffix /$(MODULE), \
-    $(SUPPORT_OUTPUTDIR)/modules_cmds-stripped $(IMPORT_MODULES_CMDS))))
+    $(SUPPORT_OUTPUTDIR)/modules_cmds $(IMPORT_MODULES_CMDS))))
 CONF_DIR := $(firstword $(wildcard $(addsuffix /$(MODULE), \
     $(SUPPORT_OUTPUTDIR)/modules_conf $(IMPORT_MODULES_CONF))))
 CLASSES_DIR := $(wildcard $(JDK_OUTPUTDIR)/modules/$(MODULE))
+INCLUDE_HEADERS_DIR := $(firstword $(wildcard $(addsuffix /$(MODULE), \
+    $(SUPPORT_OUTPUTDIR)/modules_include $(IMPORT_MODULES_INCLUDE_HEADERS))))
+MAN_DIR := $(firstword $(wildcard $(addsuffix /$(MODULE), \
+    $(SUPPORT_OUTPUTDIR)/modules_man $(IMPORT_MODULES_MAN))))
 
 $(eval $(call FillCacheFind, \
     $(LIBS_DIR) $(CMDS_DIR) $(CONF_DIR) $(CLASSES_DIR) \
@@ -65,20 +70,46 @@ ifneq ($(CLASSES_DIR), )
   JMOD_FLAGS += --class-path $(CLASSES_DIR)
   DEPS += $(call CacheFind, $(CLASSES_DIR))
 endif
+ifneq ($(INCLUDE_HEADERS_DIR), )
+  JMOD_FLAGS += --header-files $(INCLUDE_HEADERS_DIR)
+  DEPS += $(call CacheFind, $(INCLUDE_HEADERS_DIR))
+endif
+ifneq ($(MAN_DIR), )
+  JMOD_FLAGS += --man-pages $(MAN_DIR)
+  DEPS += $(call CacheFind, $(MAN_DIR))
+endif
+
+LEGAL_NOTICES := \
+    $(SUPPORT_OUTPUTDIR)/modules_legal/java.base \
+    $(call FindModuleLegalDirs, $(MODULE)) \
+    #
+
+LEGAL_NOTICES_PATH := $(call PathList, $(LEGAL_NOTICES))
+DEPS += $(call CacheFind, $(LEGAL_NOTICES))
+
+JMOD_FLAGS += --legal-notices $(LEGAL_NOTICES_PATH)
+
+ifeq ($(filter-out jdk.incubator.%, $(MODULE)), )
+  JMOD_FLAGS += --do-not-resolve-by-default
+  JMOD_FLAGS += --warn-if-resolved=incubating
+endif
 
 # Add dependencies on other jmod files. Only java.base needs access to other
 # jmods.
 ifeq ($(MODULE), java.base)
-  ALL_UPGRADEABLE_MODULES = $(call FindAllUpgradeableModules)
   # When creating a BUILDJDK, we don't need to add hashes to java.base
   ifneq ($(CREATING_BUILDJDK), true)
-    DEPS += $(patsubst %, $(JMODS_DIR)/%.jmod, \
-        $(filter-out java.base $(ALL_UPGRADEABLE_MODULES), $(call FindAllModules)))
+    # When creating interim versions of jmods, skip hashes
+    ifneq ($(INTERIM_JMOD), true)
+      ALL_UPGRADEABLE_MODULES := $(call FindAllUpgradeableModules)
+      DEPS += $(patsubst %, $(JMODS_DIR)/%.jmod, \
+          $(filter-out java.base $(ALL_UPGRADEABLE_MODULES), $(call FindAllModules)))
 
-    EXCLUDE_PATTERN := $(strip $(subst $(SPACE),|,$(strip $(ALL_UPGRADEABLE_MODULES))))
+      EXCLUDE_PATTERN := $(strip $(subst $(SPACE),|,$(strip $(ALL_UPGRADEABLE_MODULES))))
 
-    JMOD_FLAGS += --module-path $(JMODS_DIR) \
-        --hash-modules '^(?!$(EXCLUDE_PATTERN))'
+      JMOD_FLAGS += --module-path $(JMODS_DIR) \
+          --hash-modules '^(?!$(EXCLUDE_PATTERN))'
+    endif
   endif
 endif
 
@@ -90,24 +121,29 @@ ifeq ($(EXTERNAL_BUILDJDK), false)
   DEPS += $(call CacheFind, $(JDK_OUTPUTDIR)/modules/jdk.jlink/jdk/tools/jmod)
 endif
 
-# TODO: What about headers?
+# If creating interim versions of jmods, certain files need to be filtered out
+# to avoid false incremental rebuilds.
+ifeq ($(INTERIM_JMOD), true)
+  DEPS := $(filter-out $(SUPPORT_OUTPUTDIR)/modules_libs/java.base/classlist, $(DEPS))
+endif
+
 # Create jmods in a temp dir and then move them into place to keep the
 # module path in $(IMAGES_OUTPUTDIR)/jmods valid at all times.
 $(JMODS_DIR)/$(MODULE).jmod: $(DEPS)
 	$(call LogWarn, Creating $(patsubst $(OUTPUT_ROOT)/%, %, $@))
-	$(call MakeDir, $(@D) $(SUPPORT_OUTPUTDIR)/jmods)
-	$(RM) $@ $(SUPPORT_OUTPUTDIR)/jmods/$(notdir $@)
+	$(call MakeDir, $(JMODS_DIR) $(JMODS_TEMPDIR))
+	$(RM) $@ $(JMODS_TEMPDIR)/$(notdir $@)
 	$(JMOD) create \
             --module-version $(VERSION_SHORT) \
             --os-name $(REQUIRED_OS_NAME) \
             --os-arch $(OPENJDK_TARGET_CPU_LEGACY) \
             --os-version $(REQUIRED_OS_VERSION) \
             --module-path $(JMODS_DIR) \
-            --exclude '**{_the.*,*.diz,*.debuginfo,*.dSYM/**,*.pdb,*.map}' \
-	    $(JMOD_FLAGS) $(SUPPORT_OUTPUTDIR)/jmods/$(notdir $@)
-	$(MV) $(SUPPORT_OUTPUTDIR)/jmods/$(notdir $@) $@
+	    --exclude '**{_the.*,*.diz,*.debuginfo,*.dSYM/**,*.dSYM,*.pdb,*.map}' \
+	    $(JMOD_FLAGS) $(JMODS_TEMPDIR)/$(notdir $@)
+	$(MV) $(JMODS_TEMPDIR)/$(notdir $@) $@
 
-TARGETS += $(IMAGES_OUTPUTDIR)/jmods/$(MODULE).jmod
+TARGETS += $(JMODS_DIR)/$(MODULE).jmod
 
 ################################################################################
 

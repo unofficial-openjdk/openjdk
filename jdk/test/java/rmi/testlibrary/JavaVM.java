@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,8 +21,12 @@
  * questions.
  */
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.StringTokenizer;
@@ -34,15 +38,35 @@ import java.util.concurrent.TimeoutException;
  */
 public class JavaVM {
 
+    static class CachedOutputStream extends OutputStream {
+        ByteArrayOutputStream ba;
+        OutputStream os;
+
+        public CachedOutputStream(OutputStream os) {
+            this.os = os;
+            this.ba = new ByteArrayOutputStream();
+        }
+
+        public void write(int b) throws IOException {
+            ba.write(b);
+            os.write(b);
+        }
+
+        public void reset() throws IOException {
+            os.flush();
+            ba.reset();
+        }
+    }
+
     public static final long POLLTIME_MS = 100L;
 
     protected Process vm = null;
 
     private String classname = "";
-    private String args = "";
-    private String options = "";
-    private OutputStream outputStream = System.out;
-    private OutputStream errorStream = System.err;
+    protected String args = "";
+    protected String options = "";
+    protected CachedOutputStream outputStream = new CachedOutputStream(System.out);
+    protected CachedOutputStream errorStream = new CachedOutputStream(System.err);
     private String policyFileName = null;
     private StreamPipe outPipe;
     private StreamPipe errPipe;
@@ -73,8 +97,8 @@ public class JavaVM {
                   String options, String args,
                   OutputStream out, OutputStream err) {
         this(classname, options, args);
-        this.outputStream = out;
-        this.errorStream = err;
+        this.outputStream = new CachedOutputStream(out);
+        this.errorStream = new CachedOutputStream(err);
     }
 
     // Prepends passed opts array to current options
@@ -113,7 +137,9 @@ public class JavaVM {
     /**
      * Exec the VM as specified in this object's constructor.
      */
-    public void start() throws IOException {
+    private void start0() throws IOException {
+        outputStream.reset();
+        errorStream.reset();
 
         if (vm != null)
             throw new IllegalStateException("JavaVM already started");
@@ -152,17 +178,71 @@ public class JavaVM {
         mesg("command = " + Arrays.asList(javaCommand).toString());
 
         vm = Runtime.getRuntime().exec(javaCommand);
+    }
 
-        /* output from the execed process may optionally be captured. */
+    public void start() throws IOException {
+        start0();
+
+        /* output from the exec'ed process may optionally be captured. */
         outPipe = StreamPipe.plugTogether(vm.getInputStream(), this.outputStream);
         errPipe = StreamPipe.plugTogether(vm.getErrorStream(), this.errorStream);
     }
 
+    public int startAndGetPort() throws IOException {
+        start0();
+
+        int port = -1;
+        if (options.contains("java.nio.channels.spi.SelectorProvider=RMIDSelectorProvider")) {
+            // Obtain the server socket channel's ephemeral port number of the
+            // child rmid process.
+            BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(vm.getInputStream()));
+            String s;
+            while ((s = reader.readLine()) != null) {
+                System.out.println(s);
+                int i = s.indexOf(RMID.EPHEMERAL_MSG);
+                if (i != -1) {
+                    String v = s.substring(RMID.EPHEMERAL_MSG.length());
+                    port = Integer.valueOf(v);
+                    break;
+                }
+            }
+            if (port == -1) {
+                // something failed
+                reader = new BufferedReader(new InputStreamReader(vm.getErrorStream()));
+                while ((s = reader.readLine()) != null)
+                    System.err.println(s);
+            }
+        }
+
+        /* output from the exec'ed process may optionally be captured. */
+        outPipe = StreamPipe.plugTogether(vm.getInputStream(), this.outputStream);
+        errPipe = StreamPipe.plugTogether(vm.getErrorStream(), this.errorStream);
+
+        return port;
+    }
+
     public void destroy() {
         if (vm != null) {
-            vm.destroy();
+            vm.destroyForcibly();
         }
         vm = null;
+    }
+
+    /**
+     * Return exit value for vm process.
+     * @return exit value for vm process
+     * @throws IllegalThreadStateException if the vm process has not yet terminated
+     */
+    public int exitValue() {
+        return vm.exitValue();
+    }
+
+    /**
+     * Destroy the vm process, and do necessary cleanup.
+     */
+    public void cleanup() {
+        destroy();
     }
 
     /**

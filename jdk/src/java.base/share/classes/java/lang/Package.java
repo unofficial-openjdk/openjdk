@@ -111,6 +111,8 @@ import jdk.internal.reflect.Reflection;
  * @see ClassLoader#definePackage(String, String, String, String, String, String, String, URL)
  *
  * @since 1.2
+ * @revised 9
+ * @spec JPMS
  */
 public class Package extends NamedPackage implements java.lang.reflect.AnnotatedElement {
     /**
@@ -207,6 +209,9 @@ public class Package extends NamedPackage implements java.lang.reflect.Annotated
      * is returned if it is not known.
      * @return the vendor that implemented this package, {@code null}
      * is returned if it is not known.
+     *
+     * @revised 9
+     * @spec JPMS
      */
     public String getImplementationVendor() {
         return versionInfo.implVendor;
@@ -317,6 +322,9 @@ public class Package extends NamedPackage implements java.lang.reflect.Annotated
      * @return The {@code Package} of the given name defined by the caller's
      *         class loader or its ancestors, or {@code null} if not found.
      *
+     * @throws NullPointerException
+     *         if {@code name} is {@code null}.
+     *
      * @deprecated
      * If multiple class loaders delegate to each other and define classes
      * with the same package name, and one such loader relies on the lookup
@@ -331,6 +339,9 @@ public class Package extends NamedPackage implements java.lang.reflect.Annotated
      * a {@code Package} for the specified class loader.
      *
      * @see ClassLoader#getDefinedPackage
+     *
+     * @revised 9
+     * @spec JPMS
      */
     @CallerSensitive
     @Deprecated(since="9")
@@ -353,6 +364,9 @@ public class Package extends NamedPackage implements java.lang.reflect.Annotated
      *          class loader and its ancestors
      *
      * @see ClassLoader#getDefinedPackages
+     *
+     * @revised 9
+     * @spec JPMS
      */
     @CallerSensitive
     public static Package[] getPackages() {
@@ -395,10 +409,16 @@ public class Package extends NamedPackage implements java.lang.reflect.Annotated
         if (packageInfo == null) {
             // find package-info.class defined by loader
             String cn = packageName() + ".package-info";
-            PrivilegedAction<ClassLoader> pa = module()::getClassLoader;
+            Module module = module();
+            PrivilegedAction<ClassLoader> pa = module::getClassLoader;
             ClassLoader loader = AccessController.doPrivileged(pa);
-            Class<?> c = loader != null ? loader.loadLocalClass(cn)
-                                        : BootLoader.loadClassOrNull(cn);
+            Class<?> c;
+            if (loader != null) {
+                c = loader.loadClass(module, cn);
+            } else {
+                c = BootLoader.loadClass(module, cn);
+            }
+
             if (c != null) {
                 packageInfo = c;
             } else {

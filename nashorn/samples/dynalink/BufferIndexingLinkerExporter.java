@@ -29,11 +29,13 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import static jdk.dynalink.StandardNamespace.ELEMENT;
+import static jdk.dynalink.StandardNamespace.PROPERTY;
+import static jdk.dynalink.StandardOperation.GET;
+import static jdk.dynalink.StandardOperation.SET;
+
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.util.ArrayList;
-import java.util.List;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -42,17 +44,19 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import jdk.dynalink.CallSiteDescriptor;
-import jdk.dynalink.CompositeOperation;
 import jdk.dynalink.NamedOperation;
+import jdk.dynalink.NamespaceOperation;
 import jdk.dynalink.Operation;
-import jdk.dynalink.StandardOperation;
+import jdk.dynalink.StandardNamespace;
+import jdk.dynalink.linker.GuardedInvocation;
 import jdk.dynalink.linker.GuardingDynamicLinker;
 import jdk.dynalink.linker.GuardingDynamicLinkerExporter;
-import jdk.dynalink.linker.GuardedInvocation;
-import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
+import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.dynalink.linker.support.Guards;
 import jdk.dynalink.linker.support.Lookup;
 
@@ -94,7 +98,7 @@ public final class BufferIndexingLinkerExporter extends GuardingDynamicLinkerExp
     private static final MethodType GUARD_TYPE;
 
     static {
-        Lookup look = Lookup.PUBLIC;
+        final Lookup look = Lookup.PUBLIC;
         BUFFER_LIMIT = look.findVirtual(Buffer.class, "limit", MethodType.methodType(int.class));
         BYTEBUFFER_GET = look.findVirtual(ByteBuffer.class, "get",
                 MethodType.methodType(byte.class, int.class));
@@ -136,23 +140,6 @@ public final class BufferIndexingLinkerExporter extends GuardingDynamicLinkerExp
         IS_DOUBLEBUFFER = Guards.isInstance(DoubleBuffer.class, GUARD_TYPE);
     }
 
-    // locate the first standard operation from the call descriptor
-    private static StandardOperation getFirstStandardOperation(final CallSiteDescriptor desc) {
-        final Operation base = NamedOperation.getBaseOperation(desc.getOperation());
-        if (base instanceof StandardOperation) {
-            return (StandardOperation)base;
-        } else if (base instanceof CompositeOperation) {
-            final CompositeOperation cop = (CompositeOperation)base;
-            for(int i = 0; i < cop.getOperationCount(); ++i) {
-                final Operation op = cop.getOperation(i);
-                if (op instanceof StandardOperation) {
-                    return (StandardOperation)op;
-                }
-            }
-        }
-        return null;
-    }
-
     @Override
     public List<GuardingDynamicLinker> get() {
         final ArrayList<GuardingDynamicLinker> linkers = new ArrayList<>();
@@ -163,30 +150,33 @@ public final class BufferIndexingLinkerExporter extends GuardingDynamicLinkerExp
             }
 
             @Override
-            public GuardedInvocation getGuardedInvocation(LinkRequest request,
-                LinkerServices linkerServices) throws Exception {
+            public GuardedInvocation getGuardedInvocation(final LinkRequest request,
+                final LinkerServices linkerServices) throws Exception {
                 final Object self = request.getReceiver();
                 if (self == null || !canLinkType(self.getClass())) {
                     return null;
                 }
 
-                CallSiteDescriptor desc = request.getCallSiteDescriptor();
-                StandardOperation op = getFirstStandardOperation(desc);
-                if (op == null) {
+                final CallSiteDescriptor desc = request.getCallSiteDescriptor();
+                final Operation namedOp = desc.getOperation();
+                final Operation namespaceOp = NamedOperation.getBaseOperation(namedOp);
+                final Operation op = NamespaceOperation.getBaseOperation(namespaceOp);
+                final StandardNamespace ns = StandardNamespace.findFirst(namespaceOp);
+                if (ns == null) {
                     return null;
                 }
 
-                switch (op) {
-                    case GET_ELEMENT:
+                if (op == GET) {
+                    if (ns == ELEMENT) {
                         return linkGetElement(self);
-                    case SET_ELEMENT:
-                        return linkSetElement(self);
-                    case GET_PROPERTY: {
-                        Object name = NamedOperation.getName(desc.getOperation());
+                    } else if (ns == PROPERTY) {
+                        final Object name = NamedOperation.getName(desc.getOperation());
                         if ("length".equals(name)) {
                             return linkLength();
                         }
                     }
+                } else if (op == SET && ns == ELEMENT) {
+                    return linkSetElement(self);
                 }
 
                 return null;
@@ -195,7 +185,7 @@ public final class BufferIndexingLinkerExporter extends GuardingDynamicLinkerExp
         return linkers;
     }
 
-    private static GuardedInvocation linkGetElement(Object self) {
+    private static GuardedInvocation linkGetElement(final Object self) {
         MethodHandle method = null;
         MethodHandle guard = null;
         if (self instanceof ByteBuffer) {
@@ -224,7 +214,7 @@ public final class BufferIndexingLinkerExporter extends GuardingDynamicLinkerExp
         return method != null? new GuardedInvocation(method, guard) : null;
     }
 
-    private static GuardedInvocation linkSetElement(Object self) {
+    private static GuardedInvocation linkSetElement(final Object self) {
         MethodHandle method = null;
         MethodHandle guard = null;
         if (self instanceof ByteBuffer) {

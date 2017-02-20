@@ -28,8 +28,14 @@
  * @author Martin Buchholz
  */
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayDeque;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.LinkedBlockingDeque;
 
 public class ChorusLine {
     private interface Tweaker {
@@ -125,7 +131,7 @@ public class ChorusLine {
         }}};
 
     private static void realMain(String[] args) throws Throwable {
-        Collection<Deque<Integer>> deqs = new ArrayDeque<Deque<Integer>>(3);
+        Collection<Deque<Integer>> deqs = new ArrayDeque<>(3);
         deqs.add(new ArrayDeque<Integer>());
         deqs.add(new LinkedList<Integer>());
         deqs.add(new LinkedBlockingDeque<Integer>());
@@ -151,12 +157,12 @@ public class ChorusLine {
             prev = deq;
         }
 
-        Deque<Iterator<Integer>> its = new ArrayDeque<Iterator<Integer>>();
+        Deque<Iterator<Integer>> its = new ArrayDeque<>();
         for (Deque<Integer> deq : deqs)
             its.addLast(deq.iterator());
         equal(its);
 
-        Deque<Iterator<Integer>> dits = new ArrayDeque<Iterator<Integer>>();
+        Deque<Iterator<Integer>> dits = new ArrayDeque<>();
         for (Deque<Integer> deq : deqs)
             dits.addLast(deq.descendingIterator());
         equal(dits);

@@ -179,6 +179,10 @@ public final class Method extends Executable {
         return res;
     }
 
+    /**
+     * @throws InaccessibleObjectException {@inheritDoc}
+     * @throws SecurityException {@inheritDoc}
+     */
     @Override
     @CallerSensitive
     public void setAccessible(boolean flag) {
@@ -211,7 +215,8 @@ public final class Method extends Executable {
     }
 
     /**
-     * {@inheritDoc}
+     * Returns the {@code Class} object representing the class or interface
+     * that declares the method represented by this object.
      */
     @Override
     public Class<?> getDeclaringClass() {
@@ -287,6 +292,11 @@ public final class Method extends Executable {
       if (getGenericSignature() != null) {
         return getGenericInfo().getReturnType();
       } else { return getReturnType();}
+    }
+
+    @Override
+    Class<?>[] getSharedParameterTypes() {
+        return parameterTypes;
     }
 
     /**
@@ -372,7 +382,7 @@ public final class Method extends Executable {
      * the method name, followed by a parenthesized, comma-separated
      * list of the method's formal parameter types. If the method
      * throws checked exceptions, the parameter list is followed by a
-     * space, followed by the word throws followed by a
+     * space, followed by the word "{@code throws}" followed by a
      * comma-separated list of the thrown exception types.
      * For example:
      * <pre>
@@ -428,8 +438,8 @@ public final class Method extends Executable {
      * parameter list is present, a space separates the list from the
      * class name.  If the method is declared to throw exceptions, the
      * parameter list is followed by a space, followed by the word
-     * throws followed by a comma-separated list of the generic thrown
-     * exception types.
+     * "{@code throws}" followed by a comma-separated list of the generic
+     * thrown exception types.
      *
      * <p>The access modifiers are placed in canonical order as
      * specified by "The Java Language Specification".  This is
@@ -526,7 +536,9 @@ public final class Method extends Executable {
     {
         if (!override) {
             Class<?> caller = Reflection.getCallerClass();
-            checkAccess(caller, clazz, obj, modifiers);
+            checkAccess(caller, clazz,
+                        Modifier.isStatic(modifiers) ? null : obj.getClass(),
+                        modifiers);
         }
         MethodAccessor ma = methodAccessor;             // read volatile
         if (ma == null) {

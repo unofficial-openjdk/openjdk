@@ -42,6 +42,9 @@ define_pd_global(bool, UncommonNullCast,      true);  // Uncommon-trap NULLs pas
 
 #define DEFAULT_STACK_YELLOW_PAGES (2)
 #define DEFAULT_STACK_RED_PAGES (1)
+// Java_java_net_SocketOutputStream_socketWrite0() uses a 64k buffer on the
+// stack if compiled for unix and LP64. To pass stack overflow tests we need
+// 20 shadow pages.
 #define DEFAULT_STACK_SHADOW_PAGES (20 DEBUG_ONLY(+2))
 #define DEFAULT_STACK_RESERVED_PAGES (1)
 
@@ -56,10 +59,11 @@ define_pd_global(intx, StackShadowPages,      DEFAULT_STACK_SHADOW_PAGES);
 define_pd_global(intx, StackReservedPages,    DEFAULT_STACK_RESERVED_PAGES);
 
 // Use large code-entry alignment.
-define_pd_global(intx, CodeEntryAlignment,    128);
-define_pd_global(intx, OptoLoopAlignment,     16);
-define_pd_global(intx, InlineFrequencyCount,  100);
-define_pd_global(intx, InlineSmallCode,       1500);
+define_pd_global(uintx, CodeCacheSegmentSize,  128);
+define_pd_global(intx,  CodeEntryAlignment,    128);
+define_pd_global(intx,  OptoLoopAlignment,     16);
+define_pd_global(intx,  InlineFrequencyCount,  100);
+define_pd_global(intx,  InlineSmallCode,       1500);
 
 // Flags for template interpreter.
 define_pd_global(bool, RewriteBytecodes,      true);
@@ -76,7 +80,8 @@ define_pd_global(uintx, TypeProfileLevel, 111);
 
 define_pd_global(bool, CompactStrings, true);
 
-define_pd_global(intx, InitArrayShortSize, 8*BytesPerLong);
+// 2x unrolled loop is shorter with more than 9 HeapWords.
+define_pd_global(intx, InitArrayShortSize, 9*BytesPerLong);
 
 // Platform dependent flag handling: flags only defined on this platform.
 #define ARCH_FLAGS(develop, \

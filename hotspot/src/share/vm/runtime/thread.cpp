@@ -29,13 +29,11 @@
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/codeCache.hpp"
-#include "code/codeCacheExtensions.hpp"
 #include "code/scopeDesc.hpp"
 #include "compiler/compileBroker.hpp"
 #include "compiler/compileTask.hpp"
 #include "gc/shared/gcId.hpp"
 #include "gc/shared/gcLocker.inline.hpp"
-#include "gc/shared/referencePendingListLocker.hpp"
 #include "gc/shared/workgroup.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/linkResolver.hpp"
@@ -57,7 +55,7 @@
 #include "prims/jvmtiThreadState.hpp"
 #include "prims/privilegedStack.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/commandLineFlagConstraintList.hpp"
 #include "runtime/commandLineFlagWriteableList.hpp"
@@ -3718,14 +3716,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   Management::record_vm_init_completed();
 #endif // INCLUDE_MANAGEMENT
 
-  // Note that we do not use CHECK_0 here since we are inside an EXCEPTION_MARK and
-  // set_init_completed has just been called, causing exceptions not to be shortcut
-  // anymore. We call vm_exit_during_initialization directly instead.
-
-  // Initialize reference pending list locker
-  bool needs_locker_thread = Universe::heap()->needs_reference_pending_list_locker_thread();
-  ReferencePendingListLocker::initialize(needs_locker_thread, CHECK_JNI_ERR);
-
   // Signal Dispatcher needs to be started before VMInit event is posted
   os::signal_init();
 
@@ -3777,10 +3767,21 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   SystemDictionary::compute_java_system_loader(CHECK_(JNI_ERR));
 
 #if INCLUDE_JVMCI
-  if (EnableJVMCI && UseJVMCICompiler && (!UseInterpreter || !BackgroundCompilation)) {
-    // 8145270: Force initialization of JVMCI runtime otherwise requests for blocking
-    // compilations via JVMCI will not actually block until JVMCI is initialized.
-    JVMCIRuntime::force_initialization(CHECK_JNI_ERR);
+  if (EnableJVMCI) {
+    // Initialize JVMCI eagerly if JVMCIPrintProperties is enabled.
+    // The JVMCI Java initialization code will read this flag and
+    // do the printing if it's set.
+    bool init = JVMCIPrintProperties;
+
+    if (!init) {
+      // 8145270: Force initialization of JVMCI runtime otherwise requests for blocking
+      // compilations via JVMCI will not actually block until JVMCI is initialized.
+      init = UseJVMCICompiler && (!UseInterpreter || !BackgroundCompilation);
+    }
+
+    if (init) {
+      JVMCIRuntime::force_initialization(CHECK_JNI_ERR);
+    }
   }
 #endif
 
@@ -3839,8 +3840,6 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
       WatcherThread::start();
     }
   }
-
-  CodeCacheExtensions::complete_step(CodeCacheExtensionsSteps::CreateVM);
 
   create_vm_timer.end();
 #ifdef ASSERT

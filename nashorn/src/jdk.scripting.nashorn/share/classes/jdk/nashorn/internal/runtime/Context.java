@@ -39,7 +39,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -49,6 +48,7 @@ import java.lang.ref.SoftReference;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Layer;
@@ -56,6 +56,8 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.CodeSigner;
@@ -81,6 +83,8 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.script.ScriptEngine;
 import jdk.dynalink.DynamicLinker;
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -316,7 +320,7 @@ public final class Context {
     private final WeakValueCache<CodeSource, Class<?>> anonymousHostClasses = new WeakValueCache<>();
 
     private static final class AnonymousContextCodeInstaller extends ContextCodeInstaller {
-        private static final Unsafe UNSAFE = getUnsafe();
+        private static final Unsafe UNSAFE = Unsafe.getUnsafe();
         private static final String ANONYMOUS_HOST_CLASS_NAME = Compiler.SCRIPTS_PACKAGE.replace('/', '.') + ".AnonymousHost";
         private static final byte[] ANONYMOUS_HOST_CLASS_BYTES = getAnonymousHostClassBytes();
 
@@ -353,21 +357,6 @@ public final class Context {
             cw.visitEnd();
             return cw.toByteArray();
         }
-
-        private static Unsafe getUnsafe() {
-            return AccessController.doPrivileged(new PrivilegedAction<Unsafe>() {
-                @Override
-                public Unsafe run() {
-                    try {
-                        final Field theUnsafeField = Unsafe.class.getDeclaredField("theUnsafe");
-                        theUnsafeField.setAccessible(true);
-                        return (Unsafe)theUnsafeField.get(null);
-                    } catch (final ReflectiveOperationException e) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            });
-        }
     }
 
     /** Is Context global debug mode enabled ? */
@@ -384,6 +373,15 @@ public final class Context {
     // A factory for linking global properties as constant method handles. It is created when the first Global
     // is created, and invalidated forever once the second global is created.
     private final AtomicReference<GlobalConstants> globalConstantsRef = new AtomicReference<>();
+
+    // Are java.sql, java.sql.rowset modules found in the system?
+    static final boolean javaSqlFound, javaSqlRowsetFound;
+
+    static {
+        final Layer boot = Layer.boot();
+        javaSqlFound = boot.findModule("java.sql").isPresent();
+        javaSqlRowsetFound = boot.findModule("java.sql.rowset").isPresent();
+    }
 
     /**
      * Get the current global scope
@@ -614,18 +612,37 @@ public final class Context {
         }
         this.errors    = errors;
 
+        // if user passed --module-path, we create a module class loader with
+        // passed appLoader as the parent.
+        final String modulePath = env._module_path;
+        ClassLoader appCl = null;
+        if (!env._compile_only && modulePath != null && !modulePath.isEmpty()) {
+            // make sure that caller can create a class loader.
+            if (sm != null) {
+                sm.checkCreateClassLoader();
+            }
+            appCl = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+                @Override
+                public ClassLoader run() {
+                    return createModuleLoader(appLoader, modulePath, env._add_modules);
+                }
+            });
+        } else {
+            appCl = appLoader;
+        }
+
         // if user passed -classpath option, make a URLClassLoader with that and
-        // the app loader as the parent.
-        final String classPath = options.getString("classpath");
+        // the app loader or module app loader as the parent.
+        final String classPath = env._classpath;
         if (!env._compile_only && classPath != null && !classPath.isEmpty()) {
             // make sure that caller can create a class loader.
             if (sm != null) {
                 sm.checkCreateClassLoader();
             }
-            this.appLoader = NashornLoader.createClassLoader(classPath, appLoader);
-        } else {
-            this.appLoader = appLoader;
+            appCl = NashornLoader.createClassLoader(classPath, appCl);
         }
+
+        this.appLoader = appCl;
         this.dynamicLinker = Bootstrap.createDynamicLinker(this.appLoader, env._unstable_relink_threshold);
 
         final int cacheSize = env._class_cache_size;
@@ -1332,14 +1349,16 @@ public final class Context {
     static Module createModuleTrusted(final Layer parent, final ModuleDescriptor descriptor, final ClassLoader loader) {
         final String mn = descriptor.name();
 
-        final ModuleReference mref = new ModuleReference(descriptor, null, () -> {
-            IOException ioe = new IOException("<dynamic module>");
-            throw new UncheckedIOException(ioe);
-        });
+        final ModuleReference mref = new ModuleReference(descriptor, null) {
+            @Override
+            public ModuleReader open() {
+                throw new UnsupportedOperationException();
+            }
+        };
 
         final ModuleFinder finder = new ModuleFinder() {
             @Override
-            public Optional<ModuleReference> find(String name) {
+            public Optional<ModuleReference> find(final String name) {
                 if (name.equals(mn)) {
                     return Optional.of(mref);
                 } else {
@@ -1353,7 +1372,7 @@ public final class Context {
         };
 
         final Configuration cf = parent.configuration()
-                .resolveRequires(finder, ModuleFinder.of(), Set.of(mn));
+                .resolve(finder, ModuleFinder.of(), Set.of(mn));
 
         final PrivilegedAction<Layer> pa = () -> parent.defineModules(cf, name -> loader);
         final Layer layer = AccessController.doPrivileged(pa, GET_LOADER_ACC_CTXT);
@@ -1387,7 +1406,7 @@ public final class Context {
         ClassLoader loader = null;
         try {
             loader = clazz.getClassLoader();
-        } catch (SecurityException ignored) {
+        } catch (final SecurityException ignored) {
             // This could fail because of anonymous classes being used.
             // Accessing loader of anonymous class fails (for extension
             // loader class too?). In any case, for us fetching Context
@@ -1749,5 +1768,38 @@ public final class Context {
      */
     public SwitchPoint getBuiltinSwitchPoint(final String name) {
         return builtinSwitchPoints.get(name);
+    }
+
+    private static ClassLoader createModuleLoader(final ClassLoader cl,
+            final String modulePath, final String addModules) {
+        if (addModules == null) {
+            throw new IllegalArgumentException("--module-path specified with no --add-modules");
+        }
+
+        final Path[] paths = Stream.of(modulePath.split(File.pathSeparator)).
+            map(s -> Paths.get(s)).
+            toArray(sz -> new Path[sz]);
+        final ModuleFinder mf = ModuleFinder.of(paths);
+        final Set<ModuleReference> mrefs = mf.findAll();
+        if (mrefs.isEmpty()) {
+            throw new RuntimeException("No modules in script --module-path: " + modulePath);
+        }
+
+        final Set<String> rootMods;
+        if (addModules.equals("ALL-MODULE-PATH")) {
+            rootMods = mrefs.stream().
+                map(mr->mr.descriptor().name()).
+                collect(Collectors.toSet());
+        } else {
+            rootMods = Stream.of(addModules.split(",")).
+                map(String::trim).
+                collect(Collectors.toSet());
+        }
+
+        final Layer boot = Layer.boot();
+        final Configuration conf = boot.configuration().
+            resolve(mf, ModuleFinder.of(), rootMods);
+        final String firstMod = rootMods.iterator().next();
+        return boot.defineModulesWithOneLoader(conf, cl).findLoader(firstMod);
     }
 }

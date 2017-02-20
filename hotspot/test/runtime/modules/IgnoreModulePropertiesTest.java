@@ -26,10 +26,11 @@
  * @bug 8136930
  * @summary Test that the VM ignores explicitly specified module internal properties.
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary
+ * @library /test/lib
  */
 
-import jdk.test.lib.*;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 // Test that the VM ignores module related properties such as "jdk.module.addmods"
 // and jdk.module.addreads.0" that can only be set using module options.
@@ -66,10 +67,11 @@ public class IgnoreModulePropertiesTest {
     }
 
     public static void main(String[] args) throws Exception {
-        testOption("--add-modules", "java.sqlx", "jdk.module.addmods", "java.lang.module.ResolutionException");
-        testOption("--limit-modules", "java.sqlx", "jdk.module.limitmods", "java.lang.module.ResolutionException");
-        testOption("--add-reads", "xyzz=yyzd", "jdk.module.addreads.0", "java.lang.RuntimeException");
-        testOption("--add-exports", "java.base/xyzz=yyzd", "jdk.module.addexports.0", "java.lang.RuntimeException");
-        testOption("--patch-module", "=d", "jdk.module.patch.0", "IllegalArgumentException");
+        testOption("--add-modules", "java.sqlx", "jdk.module.addmods.0", "java.lang.module.FindException");
+        testOption("--limit-modules", "java.sqlx", "jdk.module.limitmods", "java.lang.module.FindException");
+        testOption("--add-reads", "xyzz=yyzd", "jdk.module.addreads.0", "WARNING: Unknown module: xyzz");
+        testOption("--add-exports", "java.base/xyzz=yyzd", "jdk.module.addexports.0",
+                   "WARNING: package xyzz not in java.base");
+        testOption("--patch-module", "=d", "jdk.module.patch.0", "Unable to parse --patch-module");
     }
 }

@@ -858,8 +858,10 @@ methodHandle LinkResolver::resolve_interface_method(const LinkInfo& link_info, B
   }
 
   if (log_develop_is_enabled(Trace, itables)) {
-    trace_method_resolution("invokeinterface resolved method: caller-class",
-                            link_info.current_klass(), resolved_klass,
+    char buf[200];
+    jio_snprintf(buf, sizeof(buf), "%s resolved interface method: caller-class:",
+                 Bytecodes::name(code));
+    trace_method_resolution(buf, link_info.current_klass(), resolved_klass,
                             resolved_method, true);
   }
 
@@ -1424,7 +1426,7 @@ void LinkResolver::runtime_resolve_interface_method(CallInfo& result,
   }
 
   if (log_develop_is_enabled(Trace, itables)) {
-    trace_method_resolution("invokeinterface selected method: receiver-class",
+    trace_method_resolution("invokeinterface selected method: receiver-class:",
                             recv_klass, resolved_klass, sel_method, true);
   }
   // setup result
@@ -1625,19 +1627,23 @@ void LinkResolver::resolve_handle_call(CallInfo& result,
 
 static void wrap_invokedynamic_exception(TRAPS) {
   if (HAS_PENDING_EXCEPTION) {
+    // See the "Linking Exceptions" section for the invokedynamic instruction
+    // in JVMS 6.5.
+    if (PENDING_EXCEPTION->is_a(SystemDictionary::Error_klass())) {
+      // Pass through an Error, including BootstrapMethodError, any other form
+      // of linkage error, or say ThreadDeath/OutOfMemoryError
+      if (TraceMethodHandles) {
+        tty->print_cr("invokedynamic passes through an Error for " INTPTR_FORMAT, p2i((void *)PENDING_EXCEPTION));
+        PENDING_EXCEPTION->print();
+      }
+      return;
+    }
+
+    // Otherwise wrap the exception in a BootstrapMethodError
     if (TraceMethodHandles) {
       tty->print_cr("invokedynamic throws BSME for " INTPTR_FORMAT, p2i((void *)PENDING_EXCEPTION));
       PENDING_EXCEPTION->print();
     }
-    if (PENDING_EXCEPTION->is_a(SystemDictionary::BootstrapMethodError_klass())) {
-      // throw these guys, since they are already wrapped
-      return;
-    }
-    if (!PENDING_EXCEPTION->is_a(SystemDictionary::LinkageError_klass())) {
-      // intercept only LinkageErrors which might have failed to wrap
-      return;
-    }
-    // See the "Linking Exceptions" section for the invokedynamic instruction in the JVMS.
     Handle nested_exception(THREAD, PENDING_EXCEPTION);
     CLEAR_PENDING_EXCEPTION;
     THROW_CAUSE(vmSymbols::java_lang_BootstrapMethodError(), nested_exception)

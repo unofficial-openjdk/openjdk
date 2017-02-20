@@ -290,8 +290,8 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      */
     @Override
     public void addAnnotationTypeDescription(Content annotationInfoTree) {
-        if(!configuration.nocomment) {
-            if (!utils.getBody(annotationType).isEmpty()) {
+        if (!configuration.nocomment) {
+            if (!utils.getFullBody(annotationType).isEmpty()) {
                 addInlineComment(annotationType, annotationInfoTree);
             }
         }
@@ -302,7 +302,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
      */
     @Override
     public void addAnnotationTypeTagInfo(Content annotationInfoTree) {
-        if(!configuration.nocomment) {
+        if (!configuration.nocomment) {
             addTagsInfo(annotationType, annotationInfoTree);
         }
     }
@@ -317,7 +317,7 @@ public class AnnotationTypeWriterImpl extends SubWriterHolderWriter
         List<? extends DocTree> deprs = utils.getBlockTags(annotationType, DocTree.Kind.DEPRECATED);
         if (utils.isDeprecated(annotationType)) {
             CommentHelper ch = utils.getCommentHelper(annotationType);
-            Content deprLabel = HtmlTree.SPAN(HtmlStyle.deprecatedLabel, contents.deprecatedPhrase);
+            Content deprLabel = HtmlTree.SPAN(HtmlStyle.deprecatedLabel, getDeprecatedPhrase(annotationType));
             Content div = HtmlTree.DIV(HtmlStyle.block, deprLabel);
             if (!deprs.isEmpty()) {
 

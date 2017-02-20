@@ -26,9 +26,9 @@
 /*
  * @test
  * @summary tests on constant folding of unsafe get operations
- * @library /testlibrary
+ * @library /test/lib
  *
- * @requires vm.flavor == "server"
+ * @requires vm.flavor == "server" & !vm.emulatedClient
  *
  * @modules java.base/jdk.internal.org.objectweb.asm
  *          java.base/jdk.internal.vm.annotation
@@ -93,8 +93,8 @@ public class UnsafeGetConstantField {
     static final Unsafe U = Unsafe.getUnsafe();
 
     public static void main(String[] args) {
-        if (!Platform.isServer()) {
-            throw new Error("TESTBUG: Not server VM");
+        if (!Platform.isServer() || Platform.isEmulatedClient()) {
+            throw new Error("TESTBUG: Not server mode");
         }
         testUnsafeGetAddress();
         testUnsafeGetField();

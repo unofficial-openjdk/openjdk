@@ -34,6 +34,8 @@
 /*
  * @test
  * @bug 8054446 8137184 8137185
+ * @modules java.base/java.util.concurrent:open
+ *          java.base/java.util.concurrent.locks:open
  * @summary Regression test for memory leak in remove(Object)
  */
 
@@ -99,13 +101,13 @@ public class RemoveLeak {
     }
 
     ConcurrentHashMap<Class<?>, Collection<Field>> classFields
-        = new ConcurrentHashMap<Class<?>, Collection<Field>>();
+        = new ConcurrentHashMap<>();
 
     Collection<Field> referenceFieldsOf(Class<?> k) {
         Collection<Field> fields = classFields.get(k);
         if (fields == null) {
             fields = new ArrayDeque<Field>();
-            ArrayDeque<Field> allFields = new ArrayDeque<Field>();
+            ArrayDeque<Field> allFields = new ArrayDeque<>();
             for (Class<?> c = k; c != null; c = c.getSuperclass())
                 for (Field field : c.getDeclaredFields())
                     if (!Modifier.isStatic(field.getModifiers())
@@ -124,7 +126,7 @@ public class RemoveLeak {
     }
 
     Set<Object> retainedObjects(Object x) {
-        ArrayDeque<Object> todo = new ArrayDeque<Object>() {
+        ArrayDeque<Object> todo = new ArrayDeque<>() {
             public void push(Object x) { if (x != null) super.push(x); }};
         Set<Object> uniqueObjects = Collections.newSetFromMap(
             new IdentityHashMap<Object, Boolean>());

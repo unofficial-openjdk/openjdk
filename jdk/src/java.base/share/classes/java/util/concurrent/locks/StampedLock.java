@@ -154,13 +154,13 @@ import jdk.internal.vm.annotation.ReservedStackAccess;
  *     long stamp = sl.tryOptimisticRead();
  *     double currentX = x, currentY = y;
  *     if (!sl.validate(stamp)) {
- *        stamp = sl.readLock();
- *        try {
- *          currentX = x;
- *          currentY = y;
- *        } finally {
- *           sl.unlockRead(stamp);
- *        }
+ *       stamp = sl.readLock();
+ *       try {
+ *         currentX = x;
+ *         currentY = y;
+ *       } finally {
+ *         sl.unlockRead(stamp);
+ *       }
  *     }
  *     return Math.sqrt(currentX * currentX + currentY * currentY);
  *   }
@@ -572,7 +572,7 @@ public class StampedLock implements java.io.Serializable {
      * before acquiring the lock
      */
     @ReservedStackAccess
-        public long readLockInterruptibly() throws InterruptedException {
+    public long readLockInterruptibly() throws InterruptedException {
         long s, next;
         if (!Thread.interrupted()
             // bypass acquireRead on common uncontended case
@@ -1123,14 +1123,14 @@ public class StampedLock implements java.io.Serializable {
             }
             else if ((p = wtail) == null) { // initialize queue
                 WNode hd = new WNode(WMODE, null);
-                if (WHEAD.weakCompareAndSetVolatile(this, null, hd))
+                if (WHEAD.weakCompareAndSet(this, null, hd))
                     wtail = hd;
             }
             else if (node == null)
                 node = new WNode(WMODE, p);
             else if (node.prev != p)
                 node.prev = p;
-            else if (WTAIL.weakCompareAndSetVolatile(this, p, node)) {
+            else if (WTAIL.weakCompareAndSet(this, p, node)) {
                 p.next = node;
                 break;
             }
@@ -1162,7 +1162,7 @@ public class StampedLock implements java.io.Serializable {
             else if (h != null) { // help release stale waiters
                 WNode c; Thread w;
                 while ((c = h.cowait) != null) {
-                    if (WCOWAIT.weakCompareAndSetVolatile(h, c, c.cowait) &&
+                    if (WCOWAIT.weakCompareAndSet(h, c, c.cowait) &&
                         (w = c.thread) != null)
                         LockSupport.unpark(w);
                 }
@@ -1247,7 +1247,7 @@ public class StampedLock implements java.io.Serializable {
             }
             if (p == null) { // initialize queue
                 WNode hd = new WNode(WMODE, null);
-                if (WHEAD.weakCompareAndSetVolatile(this, null, hd))
+                if (WHEAD.weakCompareAndSet(this, null, hd))
                     wtail = hd;
             }
             else if (node == null)
@@ -1255,7 +1255,7 @@ public class StampedLock implements java.io.Serializable {
             else if (h == p || p.mode != RMODE) {
                 if (node.prev != p)
                     node.prev = p;
-                else if (WTAIL.weakCompareAndSetVolatile(this, p, node)) {
+                else if (WTAIL.weakCompareAndSet(this, p, node)) {
                     p.next = node;
                     break;
                 }

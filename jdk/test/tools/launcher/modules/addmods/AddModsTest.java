@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@
  * @summary Basic test for java --add-modules
  */
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -97,7 +98,7 @@ public class AddModsTest {
     }
 
     /**
-     * Basic test of --add-modules ALL-DEFAULT. Module java.annotations.common
+     * Basic test of --add-modules ALL-DEFAULT. Module java.xml.ws.annotation
      * should not resolved and so the types in that module should not be
      * visible.
      */
@@ -218,6 +219,27 @@ public class AddModsTest {
                 .outputTo(System.out)
                 .errorTo(System.out)
                 .getExitValue();
+
+        assertTrue(exitValue == 0);
+    }
+
+
+    /**
+     * Tests {@code --add-modules} be specified more than once.
+     */
+    public void testWithMultipleAddModules() throws Exception {
+
+        String modulepath = MODS1_DIR.toString() + File.pathSeparator +
+                                MODS2_DIR.toString();
+        int exitValue
+            = executeTestJava("--module-path", modulepath,
+            "--add-modules", LOGGER_MODULE,
+            "--add-modules", TEST_MODULE,
+            "-m", TEST_MID,
+            "logger.Logger")
+            .outputTo(System.out)
+            .errorTo(System.out)
+            .getExitValue();
 
         assertTrue(exitValue == 0);
     }

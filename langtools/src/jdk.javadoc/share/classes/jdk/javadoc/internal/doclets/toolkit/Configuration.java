@@ -33,10 +33,13 @@ import javax.lang.model.element.ModuleElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.SimpleElementVisitor9;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 
 import com.sun.source.util.DocTreePath;
+import com.sun.tools.javac.util.DefinedBy;
+import com.sun.tools.javac.util.DefinedBy.Api;
 import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.DocletEnvironment;
 import jdk.javadoc.doclet.Reporter;
@@ -96,7 +99,7 @@ public abstract class Configuration {
     /**
      * The path to Taglets
      */
-    public String tagletpath = "";
+    public String tagletpath = null;
 
     /**
      * This is true if option "-serialwarn" is used. Defualt value is false to
@@ -225,6 +228,11 @@ public abstract class Configuration {
     public boolean showversion = false;
 
     /**
+     * Allow JavaScript in doc comments.
+     */
+    private boolean allowScriptInComments = false;
+
+    /**
      * Sourcepath from where to read the source files. Default is classpath.
      *
      */
@@ -281,6 +289,8 @@ public abstract class Configuration {
 
     private String pkglistUrlForLinkOffline;
 
+    public boolean dumpOnError = false;
+
     private List<GroupContainer> groups;
 
     public abstract Messages getMessages();
@@ -306,15 +316,11 @@ public abstract class Configuration {
     public CommentUtils cmtUtils;
 
     /**
-     * A sorted set of packages specified on the command-line merged with a
-     * collection of packages that contain the classes specified on the
-     * command-line.
+     * A sorted set of included packages.
      */
     public SortedSet<PackageElement> packages = null;
 
-    protected final List<Doclet.Option> optionsProcessed;
-
-    public final OverviewElement overviewElement;
+    public OverviewElement overviewElement;
 
     // The following three fields provide caches for use by all instances of VisibleMemberMap.
     public final Map<TypeElement, List<Element>> propertiesCache = new HashMap<>();
@@ -336,16 +342,34 @@ public abstract class Configuration {
     protected static final String sharedResourceBundleName =
             "jdk.javadoc.internal.doclets.toolkit.resources.doclets";
     /**
-     * Constructor. Constructs the message retriever with resource file.
+     * Constructs the configurations needed by the doclet.
      */
     public Configuration() {
         excludedDocFileDirs = new HashSet<>();
         excludedQualifiers = new HashSet<>();
         setTabWidth(DocletConstants.DEFAULT_TAB_STOP_LENGTH);
         metakeywords = new MetaKeywords(this);
-        optionsProcessed = new ArrayList<>();
         groups = new ArrayList<>(0);
+    }
+
+    private boolean initialized = false;
+
+    protected void initConfiguration(DocletEnvironment docEnv) {
+        if (initialized) {
+            throw new IllegalStateException("configuration previously initialized");
+        }
+        initialized = true;
+        this.docEnv = docEnv;
         overviewElement = new OverviewElement(docEnv);
+        Splitter specifiedSplitter = new Splitter(docEnv, false);
+        specifiedModuleElements = Collections.unmodifiableSet(specifiedSplitter.mset);
+        specifiedPackageElements = Collections.unmodifiableSet(specifiedSplitter.pset);
+        specifiedTypeElements = Collections.unmodifiableSet(specifiedSplitter.tset);
+
+        Splitter includedSplitter = new Splitter(docEnv, true);
+        includedModuleElements = Collections.unmodifiableSet(includedSplitter.mset);
+        includedPackageElements = Collections.unmodifiableSet(includedSplitter.pset);
+        includedTypeElements = Collections.unmodifiableSet(includedSplitter.tset);
     }
 
     /**
@@ -364,10 +388,40 @@ public abstract class Configuration {
         return this.reporter;
     }
 
+    private Set<ModuleElement> specifiedModuleElements;
+    public Set<ModuleElement> getSpecifiedModuleElements() {
+        return specifiedModuleElements;
+    }
+
+    private Set<PackageElement> specifiedPackageElements;
+    public Set<PackageElement> getSpecifiedPackageElements() {
+        return specifiedPackageElements;
+    }
+
+    private Set<TypeElement> specifiedTypeElements;
+    public Set<TypeElement> getSpecifiedTypeElements() {
+        return specifiedTypeElements;
+    }
+
+    private Set<ModuleElement> includedModuleElements;
+    public Set<ModuleElement> getIncludedModuleElements() {
+        return includedModuleElements;
+    }
+
+    private Set<PackageElement> includedPackageElements;
+    public Set<PackageElement> getIncludedPackageElements() {
+        return includedPackageElements;
+    }
+
+    private Set<TypeElement> includedTypeElements;
+    public Set<TypeElement> getIncludedTypeElements() {
+        return includedTypeElements;
+    }
+
     private void initModules() {
         // Build the modules structure used by the doclet
         modules = new TreeSet<>(utils.makeModuleComparator());
-        modules.addAll(getSpecifiedModules());
+        modules.addAll(getSpecifiedModuleElements());
 
         modulePackages = new TreeMap<>(utils.makeModuleComparator());
         for (PackageElement p: packages) {
@@ -379,7 +433,7 @@ public abstract class Configuration {
             }
         }
 
-        for (PackageElement p: docEnv.getIncludedPackageElements()) {
+        for (PackageElement p: getIncludedPackageElements()) {
             ModuleElement mdle = docEnv.getElementUtils().getModuleOf(p);
             if (mdle != null && !mdle.isUnnamed()) {
                 Set<PackageElement> s = modulePackages
@@ -397,175 +451,154 @@ public abstract class Configuration {
 
     private void initPackages() {
         packages = new TreeSet<>(utils.makePackageComparator());
-        packages.addAll(getSpecifiedPackages());
-        for (TypeElement aClass : getSpecifiedClasses()) {
-            packages.add(utils.containingPackage(aClass));
-        }
+        // add all the included packages
+        packages.addAll(includedPackageElements);
     }
 
     public Set<Doclet.Option> getSupportedOptions() {
+        Resources resources = getResources();
         Doclet.Option[] options = {
-            new Option(this, "-author") {
+            new Option(resources, "-author") {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     showauthor = true;
                     return true;
                 }
             },
-            new Option(this, "-d", 1) {
+            new Option(resources, "-d", 1) {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
-                    destDirName = addTrailingFileSep(args.next());
+                public boolean process(String opt, List<String> args) {
+                    destDirName = addTrailingFileSep(args.get(0));
                     return true;
                 }
             },
-            new Option(this, "-docencoding", 1) {
+            new Option(resources, "-docencoding", 1) {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
-                    docencoding = args.next();
+                public boolean process(String opt, List<String> args) {
+                    docencoding = args.get(0);
                     return true;
                 }
             },
-            new Option(this, "-docfilessubdirs") {
+            new Option(resources, "-docfilessubdirs") {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     copydocfilesubdirs = true;
                     return true;
                 }
             },
-            new Hidden(this, "-encoding", 1) {
+            new Hidden(resources, "-encoding", 1) {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
-                    encoding = args.next();
+                public boolean process(String opt, List<String> args) {
+                    encoding = args.get(0);
                     return true;
                 }
             },
-            new Option(this, "-excludedocfilessubdir", 1) {
+            new Option(resources, "-excludedocfilessubdir", 1) {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
-                    addToSet(excludedDocFileDirs, args.next());
+                public boolean process(String opt, List<String> args) {
+                    addToSet(excludedDocFileDirs, args.get(0));
                     return true;
                 }
             },
-            new Option(this, "-group", 2) {
+            new Option(resources, "-group", 2) {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
-                    groups.add(new GroupContainer(args.next(), args.next()));
+                public boolean process(String opt, List<String> args) {
+                    groups.add(new GroupContainer(args.get(0), args.get(1)));
                     return true;
                 }
             },
-            new Hidden(this, "-javafx") {
+            new Hidden(resources, "-javafx") {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     javafx = true;
                     return true;
                 }
             },
-            new Option(this, "-keywords") {
+            new Option(resources, "-keywords") {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     keywords = true;
                     return true;
                 }
             },
-            new Option(this, "-link", 1) {
+            new Option(resources, "-link", 1) {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
-                    urlForLink = args.next();
+                public boolean process(String opt, List<String> args) {
+                    urlForLink = args.get(0);
                     pkglistUrlForLink = urlForLink;
                     return true;
                 }
             },
-            new Option(this, "-linksource") {
+            new Option(resources, "-linksource") {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     linksource = true;
                     return true;
                 }
             },
-            new Option(this, "-linkoffline", 2) {
+            new Option(resources, "-linkoffline", 2) {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
-                    urlForLinkOffline = args.next();
-                    pkglistUrlForLinkOffline = args.next();
+                public boolean process(String opt, List<String> args) {
+                    urlForLinkOffline = args.get(0);
+                    pkglistUrlForLinkOffline = args.get(1);
                     return true;
                 }
             },
-            new Option(this, "-nocomment") {
+            new Option(resources, "-nocomment") {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     nocomment = true;
                     return true;
                 }
             },
-            new Option(this, "-nodeprecated") {
+            new Option(resources, "-nodeprecated") {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     nodeprecated = true;
                     return true;
                 }
             },
-            new Option(this, "-nosince") {
+            new Option(resources, "-nosince") {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     nosince = true;
                     return true;
                 }
             },
-            new Option(this, "-notimestamp") {
+            new Option(resources, "-notimestamp") {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     notimestamp = true;
                     return true;
                 }
             },
-            new Option(this, "-noqualifier", 1) {
+            new Option(resources, "-noqualifier", 1) {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
-                    addToSet(excludedQualifiers, args.next());
+                public boolean process(String opt, List<String> args) {
+                    addToSet(excludedQualifiers, args.get(0));
                     return true;
                 }
             },
-            new Hidden(this, "-quiet") {
+            new Hidden(resources, "-quiet") {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     quiet = true;
                     return true;
                 }
             },
-            new Option(this, "-serialwarn") {
+            new Option(resources, "-serialwarn") {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     serialwarn = true;
                     return true;
                 }
             },
-            new Option(this, "-sourcetab", 1) {
+            new Option(resources, "-sourcetab", 1) {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     linksource = true;
                     try {
-                        setTabWidth(Integer.parseInt(args.next()));
+                        setTabWidth(Integer.parseInt(args.get(0)));
                     } catch (NumberFormatException e) {
                              //Set to -1 so that warning will be printed
                         //to indicate what is valid argument.
@@ -578,41 +611,51 @@ public abstract class Configuration {
                     return true;
                 }
             },
-            new Option(this, "-tag", 1) {
+            new Option(resources, "-tag", 1) {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     ArrayList<String> list = new ArrayList<>();
                     list.add(opt);
-                    list.add(args.next());
+                    list.add(args.get(0));
                     customTagStrs.add(list);
                     return true;
                 }
             },
-             new Option(this, "-taglet", 1) {
+             new Option(resources, "-taglet", 1) {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     ArrayList<String> list = new ArrayList<>();
                     list.add(opt);
-                    list.add(args.next());
+                    list.add(args.get(0));
                     customTagStrs.add(list);
                     return true;
                 }
             },
-            new Option(this, "-tagletpath", 1) {
+            new Option(resources, "-tagletpath", 1) {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
-                    tagletpath = args.next();
+                public boolean process(String opt, List<String> args) {
+                    tagletpath = args.get(0);
                     return true;
                 }
             },
-            new Option(this, "-version") {
+            new Option(resources, "-version") {
                 @Override
-                public boolean process(String opt, ListIterator<String> args) {
-                    optionsProcessed.add(this);
+                public boolean process(String opt, List<String> args) {
                     showversion = true;
+                    return true;
+                }
+            },
+            new Hidden(resources, "--dump-on-error") {
+                @Override
+                public boolean process(String opt, List<String> args) {
+                    dumpOnError = true;
+                    return true;
+                }
+            },
+            new Option(resources, "--allow-script-in-comments") {
+                @Override
+                public boolean process(String opt, List<String> args) {
+                    allowScriptInComments = true;
                     return true;
                 }
             }
@@ -637,7 +680,7 @@ public abstract class Configuration {
         if (docencoding == null) {
             docencoding = encoding;
         }
-        typeElementCatalog = new TypeElementCatalog(getSpecifiedClasses(), this);
+        typeElementCatalog = new TypeElementCatalog(includedTypeElements, this);
         initTagletManager(customTagStrs);
         groups.stream().forEach((grp) -> {
             group.checkPackageGroups(grp.value1, grp.value2);
@@ -792,25 +835,19 @@ public abstract class Configuration {
     }
 
     /**
+     *
      * This checks for the validity of the options used by the user.
-     * This works exactly like DocErrorReporter. This will validate the options which are shared
-     * by our doclets. For example, this method will flag an error using
-     * the DocErrorReporter if user has used "-nohelp" and "-helpfile" option
-     * together.
+     * As of this writing, this checks only docencoding.
      *
      * @return true if all the options are valid.
      */
     public boolean generalValidOptions() {
-        boolean docencodingfound = false;
-        for (Doclet.Option opt : optionsProcessed) {
-            if (opt.matches("-docencoding")) {
-                docencodingfound = true;
-                if (!checkOutputFileEncoding(docencoding)) {
-                    return false;
-                }
+        if (docencoding != null) {
+            if (!checkOutputFileEncoding(docencoding)) {
+                return false;
             }
         }
-        if (!docencodingfound && (encoding != null && !encoding.isEmpty())) {
+        if (docencoding == null && (encoding != null && !encoding.isEmpty())) {
             if (!checkOutputFileEncoding(encoding)) {
                 return false;
             }
@@ -889,35 +926,6 @@ public abstract class Configuration {
         return shouldExcludeQualifier(utils.getPackageName(pkg))
                 ? utils.getSimpleName(te)
                 : utils.getFullyQualifiedName(te);
-    }
-
-    // cache these, as they are repeatedly called.
-    private Set<TypeElement> specifiedClasses = null;
-    private Set<PackageElement> specifiedPackages = null;
-    private Set<ModuleElement> specifiedModules = null;
-
-    public Set<TypeElement> getSpecifiedClasses() {
-        if (specifiedClasses == null) {
-            specifiedClasses = new LinkedHashSet<>(
-                ElementFilter.typesIn(docEnv.getSpecifiedElements()));
-        }
-        return specifiedClasses;
-    }
-
-    public Set<PackageElement> getSpecifiedPackages() {
-        if (specifiedPackages == null) {
-            specifiedPackages = new LinkedHashSet<>(
-                    ElementFilter.packagesIn(docEnv.getSpecifiedElements()));
-        }
-        return specifiedPackages;
-    }
-
-    public Set<ModuleElement> getSpecifiedModules() {
-        if (specifiedModules == null) {
-            specifiedModules = new LinkedHashSet<>(
-                    ElementFilter.modulesIn(docEnv.getSpecifiedElements()));
-        }
-        return specifiedModules;
     }
 
     /**
@@ -1052,42 +1060,35 @@ public abstract class Configuration {
     public abstract boolean showMessage(Element e, String key);
 
     public static abstract class Option implements Doclet.Option, Comparable<Option> {
-        private final String name;
+        private final String[] names;
         private final String parameters;
         private final String description;
         private final int argCount;
 
-        protected final Configuration c;
+        protected Option(Resources resources, String name, int argCount) {
+            this(resources, "doclet.usage." + name.toLowerCase().replaceAll("^-+", ""), name, argCount);
+        }
 
-        protected Option(Configuration config, String keyName, String name, int argCount) {
-            c = config;
-            this.name = name;
-            String desc = getOptionsMessage(keyName + "description");
+        protected Option(Resources resources, String keyBase, String name, int argCount) {
+            this.names = name.trim().split("\\s+");
+            String desc = getOptionsMessage(resources, keyBase + ".description");
             if (desc.isEmpty()) {
                 this.description = "<MISSING KEY>";
                 this.parameters = "<MISSING KEY>";
             } else {
                 this.description = desc;
-                this.parameters = getOptionsMessage(keyName + "parameters");
+                this.parameters = getOptionsMessage(resources, keyBase + ".parameters");
             }
             this.argCount = argCount;
         }
 
-        protected Option(String prefix, Configuration config, String name, int argCount) {
-            this(config, prefix + name.toLowerCase().replaceAll("^-*", "") + ".", name, argCount);
+        protected Option(Resources resources, String name) {
+            this(resources, name, 0);
         }
 
-        protected Option(Configuration config, String name, int argCount) {
-            this("doclet.usage.", config,  name, argCount);
-        }
-
-        protected Option(Configuration config, String name) {
-            this(config, name, 0);
-        }
-
-        private String getOptionsMessage(String key) {
+        private String getOptionsMessage(Resources resources, String key) {
             try {
-                return c.getResources().getText(key);
+                return resources.getText(key);
             } catch (MissingResourceException ignore) {
                 return "";
             }
@@ -1104,8 +1105,8 @@ public abstract class Configuration {
         }
 
         @Override
-        public String getName() {
-            return name;
+        public List<String> getNames() {
+            return Arrays.asList(names);
         }
 
         @Override
@@ -1113,19 +1114,9 @@ public abstract class Configuration {
             return parameters;
         }
 
-        /**
-         * Maintains the formatting for javadoc -help. Note the space
-         * alignment.
-         */
         @Override
         public String toString() {
-            String opt = name + (name.endsWith(":") ? "" : " ") + parameters;
-            StringBuffer sb = new StringBuffer("  ").append(opt).append(" ");
-            for (int i = opt.length(); i < 32; i++) {
-                sb.append(" ");
-            }
-            sb.append(description);
-            return sb.toString();
+            return names.toString();
         }
 
         @Override
@@ -1133,29 +1124,37 @@ public abstract class Configuration {
             return argCount;
         }
 
-        @Override
         public boolean matches(String option) {
-            return name.toLowerCase().equals(option.toLowerCase());
+            for (String name : names) {
+                boolean matchCase = name.startsWith("--");
+                if (option.startsWith("--") && option.contains("=")) {
+                    return name.equals(option.substring(option.indexOf("=") + 1));
+                } else if (matchCase) {
+                    return name.equals(option);
+                }
+                return name.toLowerCase().equals(option.toLowerCase());
+            }
+            return false;
         }
 
         @Override
         public int compareTo(Option that) {
-            return this.getName().compareTo(that.getName());
+            return this.getNames().get(0).compareTo(that.getNames().get(0));
         }
     }
 
     public abstract class XOption extends Option {
 
-        public XOption(Configuration config, String keyname, String name, int argCount) {
-            super(config, keyname, name, argCount);
+        public XOption(Resources resources, String prefix, String name, int argCount) {
+            super(resources, prefix, name, argCount);
         }
 
-        public XOption(Configuration config, String name, int argCount) {
-            super("doclet.xusage.", config, name, argCount);
+        public XOption(Resources resources, String name, int argCount) {
+            super(resources, name, argCount);
         }
 
-        public XOption(Configuration config, String name) {
-            this(config, name, 0);
+        public XOption(Resources resources, String name) {
+            this(resources, name, 0);
         }
 
         @Override
@@ -1166,12 +1165,12 @@ public abstract class Configuration {
 
     public abstract class Hidden extends Option {
 
-        public Hidden(Configuration config, String name, int argCount) {
-            super("doclet.xusage.", config, name, argCount);
+        public Hidden(Resources resources, String name, int argCount) {
+            super(resources, name, argCount);
         }
 
-        public Hidden(Configuration config, String name) {
-            this(config, name, 0);
+        public Hidden(Resources resources, String name) {
+            this(resources, name, 0);
         }
 
         @Override
@@ -1190,5 +1189,64 @@ public abstract class Configuration {
             this.value1 = value1;
             this.value2 = value2;
         }
+    }
+
+    /*
+     * Splits the elements in a collection to its individual
+     * collection.
+     */
+    static private class Splitter {
+
+        final Set<ModuleElement> mset = new LinkedHashSet<>();
+        final Set<PackageElement> pset = new LinkedHashSet<>();
+        final Set<TypeElement> tset = new LinkedHashSet<>();
+
+        Splitter(DocletEnvironment docEnv, boolean included) {
+
+            Set<? extends Element> inset = included
+                    ? docEnv.getIncludedElements()
+                    : docEnv.getSpecifiedElements();
+
+            for (Element e : inset) {
+                new SimpleElementVisitor9<Void, Void>() {
+                    @Override
+                    @DefinedBy(Api.LANGUAGE_MODEL)
+                    public Void visitModule(ModuleElement e, Void p) {
+                        mset.add(e);
+                        return null;
+                    }
+
+                    @Override
+                    @DefinedBy(Api.LANGUAGE_MODEL)
+                    public Void visitPackage(PackageElement e, Void p) {
+                        pset.add(e);
+                        return null;
+                    }
+
+                    @Override
+                    @DefinedBy(Api.LANGUAGE_MODEL)
+                    public Void visitType(TypeElement e, Void p) {
+                        tset.add(e);
+                        return null;
+                    }
+
+                    @Override
+                    @DefinedBy(Api.LANGUAGE_MODEL)
+                    protected Void defaultAction(Element e, Void p) {
+                        throw new AssertionError("unexpected element: " + e);
+                    }
+
+                }.visit(e);
+            }
+        }
+    }
+
+    /**
+     * Returns whether or not to allow JavaScript in comments.
+     * Default is off; can be set true from a command line option.
+     * @return the allowScriptInComments
+     */
+    public boolean isAllowScriptInComments() {
+        return allowScriptInComments;
     }
 }

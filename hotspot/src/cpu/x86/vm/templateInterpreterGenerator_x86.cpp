@@ -55,7 +55,7 @@
 // Run with +PrintInterpreter to get the VM to print out the size.
 // Max size with JVMTI
 #ifdef AMD64
-int TemplateInterpreter::InterpreterCodeSize = 256 * 1024;
+int TemplateInterpreter::InterpreterCodeSize = JVMCI_ONLY(268) NOT_JVMCI(256) * 1024;
 #else
 int TemplateInterpreter::InterpreterCodeSize = 224 * 1024;
 #endif // AMD64
@@ -254,8 +254,9 @@ address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state, i
   const Register thread = NOT_LP64(rcx) LP64_ONLY(r15_thread);
   NOT_LP64(__ get_thread(thread));
 #if INCLUDE_JVMCI
-  // Check if we need to take lock at entry of synchronized method.
-  if (UseJVMCICompiler) {
+  // Check if we need to take lock at entry of synchronized method.  This can
+  // only occur on method entry so emit it only for vtos with step 0.
+  if ((UseJVMCICompiler || UseAOT) && state == vtos && step == 0) {
     Label L;
     __ cmpb(Address(thread, JavaThread::pending_monitorenter_offset()), 0);
     __ jcc(Assembler::zero, L);
@@ -266,6 +267,16 @@ address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state, i
     // Take lock.
     lock_method();
     __ bind(L);
+  } else {
+#ifdef ASSERT
+    if (UseJVMCICompiler) {
+      Label L;
+      __ cmpb(Address(r15_thread, JavaThread::pending_monitorenter_offset()), 0);
+      __ jccb(Assembler::zero, L);
+      __ stop("unexpected pending monitor in deopt entry");
+      __ bind(L);
+    }
+#endif
   }
 #endif
   // handle exceptions
@@ -1167,7 +1178,12 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
   __ movl(Address(thread, JavaThread::thread_state_offset()), _thread_in_Java);
 
   // reset_last_Java_frame
-  __ reset_last_Java_frame(thread, true, true);
+  __ reset_last_Java_frame(thread, true);
+
+  if (CheckJNICalls) {
+    // clear_pending_jni_exception_check
+    __ movptr(Address(thread, JavaThread::pending_jni_exception_check_fn_offset()), NULL_WORD);
+  }
 
   // reset handle block
   __ movptr(t, Address(thread, JavaThread::active_handles_offset()));
@@ -1659,7 +1675,7 @@ void TemplateInterpreterGenerator::generate_throw_exception() {
   __ set_last_Java_frame(noreg, rbp, __ pc());
   __ super_call_VM_leaf(CAST_FROM_FN_PTR(address, InterpreterRuntime::popframe_move_outgoing_args), r15_thread, c_rarg1, c_rarg2);
 #endif
-  __ reset_last_Java_frame(thread, true, true);
+  __ reset_last_Java_frame(thread, true);
 
   // Restore the last_sp and null it out
   __ movptr(rsp, Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize));

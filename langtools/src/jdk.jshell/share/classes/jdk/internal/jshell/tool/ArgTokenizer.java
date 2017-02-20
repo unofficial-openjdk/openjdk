@@ -30,7 +30,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.Map.Entry;
+
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -78,7 +79,12 @@ class ArgTokenizer {
         while (true) {
             nextToken();
             if (sval != null && !isQuoted() && sval.startsWith("-")) {
-                foundOption(sval);
+                // allow POSIX getopt() option format,
+                // to be consistent with command-line
+                String opt = sval.startsWith("--")
+                        ? sval.substring(1)
+                        : sval;
+                foundOption(opt);
             } else {
                 break;
             }
@@ -104,28 +110,13 @@ class ArgTokenizer {
         }
     }
 
-    String[] next(String... strings) {
-        return next(Arrays.stream(strings));
-    }
-
-    String[] next(Stream<String> stream) {
-        next();
-        if (sval == null) {
-            return null;
-        }
-        String[] matches = stream
-                .filter(s -> s.startsWith(sval))
-                .toArray(size -> new String[size]);
-        return matches;
-    }
-
     /**
      * Set the allowed options. Must be called before any options would be read
      * and before calling any of the option functionality below.
      */
     void allowedOptions(String... opts) {
         for (String opt : opts) {
-            options.put(opt, false);
+            options.putIfAbsent(opt, false);
         }
     }
 
@@ -150,7 +141,7 @@ class ArgTokenizer {
      */
     int optionCount() {
         return (int) options.entrySet().stream()
-                .filter(e -> e.getValue())
+                .filter(Entry::getValue)
                 .count();
     }
 

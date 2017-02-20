@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,8 +83,6 @@ import java.time.temporal.TemporalAmount;
 import java.time.temporal.TemporalQueries;
 import java.time.temporal.TemporalUnit;
 import java.time.temporal.UnsupportedTemporalTypeException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -152,8 +150,7 @@ public final class Period
     /**
      * The set of supported units.
      */
-    private static final List<TemporalUnit> SUPPORTED_UNITS =
-            Collections.unmodifiableList(Arrays.<TemporalUnit>asList(YEARS, MONTHS, DAYS));
+    private static final List<TemporalUnit> SUPPORTED_UNITS = List.of(YEARS, MONTHS, DAYS);
 
     /**
      * The number of years.
@@ -821,7 +818,7 @@ public final class Period
      * Returns a copy of this period with the years and months normalized.
      * <p>
      * This normalizes the years and months units, leaving the days unit unchanged.
-     * The months unit is adjusted to have an absolute value less than 11,
+     * The months unit is adjusted to have an absolute value less than 12,
      * with the years unit being adjusted to compensate. For example, a period of
      * "1 Year and 15 months" will be normalized to "2 years and 3 months".
      * <p>

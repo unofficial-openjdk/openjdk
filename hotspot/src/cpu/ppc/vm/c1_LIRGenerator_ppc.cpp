@@ -157,10 +157,11 @@ LIR_Opr LIRGenerator::safepoint_poll_register() {
 LIR_Address* LIRGenerator::generate_address(LIR_Opr base, LIR_Opr index,
                                             int shift, int disp, BasicType type) {
   assert(base->is_register(), "must be");
+  intx large_disp = disp;
 
   // Accumulate fixed displacements.
   if (index->is_constant()) {
-    disp += index->as_constant_ptr()->as_jint() << shift;
+    large_disp += (intx)(index->as_constant_ptr()->as_jint()) << shift;
     index = LIR_OprFact::illegalOpr;
   }
 
@@ -171,31 +172,31 @@ LIR_Address* LIRGenerator::generate_address(LIR_Opr base, LIR_Opr index,
       __ shift_left(index, shift, tmp);
       index = tmp;
     }
-    if (disp != 0) {
+    if (large_disp != 0) {
       LIR_Opr tmp = new_pointer_register();
-      if (Assembler::is_simm16(disp)) {
-        __ add(index, LIR_OprFact::intptrConst(disp), tmp);
+      if (Assembler::is_simm16(large_disp)) {
+        __ add(index, LIR_OprFact::intptrConst(large_disp), tmp);
         index = tmp;
       } else {
-        __ move(LIR_OprFact::intptrConst(disp), tmp);
+        __ move(LIR_OprFact::intptrConst(large_disp), tmp);
         __ add(tmp, index, tmp);
         index = tmp;
       }
-      disp = 0;
+      large_disp = 0;
     }
-  } else if (!Assembler::is_simm16(disp)) {
+  } else if (!Assembler::is_simm16(large_disp)) {
     // Index is illegal so replace it with the displacement loaded into a register.
     index = new_pointer_register();
-    __ move(LIR_OprFact::intptrConst(disp), index);
-    disp = 0;
+    __ move(LIR_OprFact::intptrConst(large_disp), index);
+    large_disp = 0;
   }
 
   // At this point we either have base + index or base + displacement.
-  if (disp == 0) {
+  if (large_disp == 0) {
     return new LIR_Address(base, index, type);
   } else {
-    assert(Assembler::is_simm16(disp), "must be");
-    return new LIR_Address(base, disp, type);
+    assert(Assembler::is_simm16(large_disp), "must be");
+    return new LIR_Address(base, large_disp, type);
   }
 }
 
@@ -206,11 +207,11 @@ LIR_Address* LIRGenerator::emit_array_address(LIR_Opr array_opr, LIR_Opr index_o
   int shift = exact_log2(elem_size);
 
   LIR_Opr base_opr;
-  int offset = arrayOopDesc::base_offset_in_bytes(type);
+  intx offset = arrayOopDesc::base_offset_in_bytes(type);
 
   if (index_opr->is_constant()) {
-    int i = index_opr->as_constant_ptr()->as_jint();
-    int array_offset = i * elem_size;
+    intx i = index_opr->as_constant_ptr()->as_jint();
+    intx array_offset = i * elem_size;
     if (Assembler::is_simm16(array_offset + offset)) {
       base_opr = array_opr;
       offset = array_offset + offset;
@@ -1430,6 +1431,29 @@ void LIRGenerator::do_update_CRC32(Intrinsic* x) {
     default: {
       ShouldNotReachHere();
     }
+  }
+}
+
+void LIRGenerator::do_FmaIntrinsic(Intrinsic* x) {
+  assert(x->number_of_arguments() == 3, "wrong type");
+  assert(UseFMA, "Needs FMA instructions support.");
+  LIRItem value(x->argument_at(0), this);
+  LIRItem value1(x->argument_at(1), this);
+  LIRItem value2(x->argument_at(2), this);
+
+  value.load_item();
+  value1.load_item();
+  value2.load_item();
+
+  LIR_Opr calc_input = value.result();
+  LIR_Opr calc_input1 = value1.result();
+  LIR_Opr calc_input2 = value2.result();
+  LIR_Opr calc_result = rlock_result(x);
+
+  switch (x->id()) {
+  case vmIntrinsics::_fmaD: __ fmad(calc_input, calc_input1, calc_input2, calc_result); break;
+  case vmIntrinsics::_fmaF: __ fmaf(calc_input, calc_input1, calc_input2, calc_result); break;
+  default:                  ShouldNotReachHere();
   }
 }
 

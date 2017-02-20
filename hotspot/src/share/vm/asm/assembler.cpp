@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@
 #include "asm/codeBuffer.hpp"
 #include "asm/macroAssembler.hpp"
 #include "asm/macroAssembler.inline.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/icache.hpp"
 #include "runtime/os.hpp"
 #include "runtime/thread.hpp"
@@ -153,6 +153,8 @@ void AbstractAssembler::generate_stack_overflow_check(int frame_size_in_bytes) {
 
 void Label::add_patch_at(CodeBuffer* cb, int branch_loc) {
   assert(_loc == -1, "Label is unbound");
+  // Don't add patch locations during scratch emit.
+  if (cb->insts()->scratch_emit()) { return; }
   if (_patch_index < PatchCacheSize) {
     _patches[_patch_index] = branch_loc;
   } else {

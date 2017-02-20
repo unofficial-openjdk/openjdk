@@ -40,6 +40,7 @@ import java.lang.reflect.Modifier;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.Objects;
 import java.util.function.IntBinaryOperator;
 import java.util.function.IntUnaryOperator;
 import jdk.internal.misc.Unsafe;
@@ -59,6 +60,10 @@ import jdk.internal.reflect.Reflection;
  * are appropriate for purposes of atomic access, it can
  * guarantee atomicity only with respect to other invocations of
  * {@code compareAndSet} and {@code set} on the same updater.
+ *
+ * <p>Object arguments for parameters of type {@code T} that are not
+ * instances of the class passed to {@link #newUpdater} will result in
+ * a {@link ClassCastException} being thrown.
  *
  * @since 1.5
  * @author Doug Lea
@@ -105,8 +110,6 @@ public abstract class AtomicIntegerFieldUpdater<T> {
      * @param expect the expected value
      * @param update the new value
      * @return {@code true} if successful
-     * @throws ClassCastException if {@code obj} is not an instance
-     * of the class possessing the field established in the constructor
      */
     public abstract boolean compareAndSet(T obj, int expect, int update);
 
@@ -125,8 +128,6 @@ public abstract class AtomicIntegerFieldUpdater<T> {
      * @param expect the expected value
      * @param update the new value
      * @return {@code true} if successful
-     * @throws ClassCastException if {@code obj} is not an instance
-     * of the class possessing the field established in the constructor
      */
     public abstract boolean weakCompareAndSet(T obj, int expect, int update);
 
@@ -411,7 +412,17 @@ public abstract class AtomicIntegerFieldUpdater<T> {
             if (!Modifier.isVolatile(modifiers))
                 throw new IllegalArgumentException("Must be volatile type");
 
-            this.cclass = (Modifier.isProtected(modifiers)) ? caller : tclass;
+            // Access to protected field members is restricted to receivers only
+            // of the accessing class, or one of its subclasses, and the
+            // accessing class must in turn be a subclass (or package sibling)
+            // of the protected member's defining class.
+            // If the updater refers to a protected field of a declaring class
+            // outside the current package, the receiver argument will be
+            // narrowed to the type of the accessing class.
+            this.cclass = (Modifier.isProtected(modifiers) &&
+                           tclass.isAssignableFrom(caller) &&
+                           !isSamePackage(tclass, caller))
+                          ? caller : tclass;
             this.tclass = tclass;
             this.offset = U.objectFieldOffset(field);
         }
@@ -430,6 +441,15 @@ public abstract class AtomicIntegerFieldUpdater<T> {
                 }
             } while (acl != null);
             return false;
+        }
+
+        /**
+         * Returns true if the two classes have the same class loader and
+         * package qualifier
+         */
+        private static boolean isSamePackage(Class<?> class1, Class<?> class2) {
+            return class1.getClassLoader() == class2.getClassLoader()
+                   && Objects.equals(class1.getPackageName(), class2.getPackageName());
         }
 
         /**

@@ -81,12 +81,14 @@
 
 #define MAX_PATH (2 * K)
 
-// Minimum stack size for the VM.  It's easier to document a constant
-// but it's different for x86 and sparc because the page sizes are different.
+// Minimum usable stack sizes required to get to user code. Space for
+// HotSpot guard pages is added later.
+size_t os::Posix::_compiler_thread_min_stack_allowed = 104 * K;
+size_t os::Posix::_java_thread_min_stack_allowed = 86 * K;
 #ifdef _LP64
-size_t os::Solaris::min_stack_allowed = 128*K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = 128 * K;
 #else
-size_t os::Solaris::min_stack_allowed = 96*K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = 96 * K;
 #endif
 
 int os::Solaris::max_register_window_saves_before_flushing() {
@@ -274,8 +276,14 @@ bool os::Solaris::get_frame_at_stack_banging_point(JavaThread* thread, ucontext_
       // stack overflow handling
       return false;
     } else {
-      *fr = os::fetch_frame_from_ucontext(thread, uc);
-      *fr = frame(fr->sender_sp(), fr->sp());
+      // Returned frame will be the caller of the method that faults on the stack bang.
+      // Register window not yet rotated (happens at SAVE after stack bang), so there is no new
+      // frame to go with the faulting PC. Using caller SP that is still in SP, and caller PC
+      // that was written to O7 at call.
+      intptr_t* sp = os::Solaris::ucontext_get_sp(uc);
+      address pc = (address)uc->uc_mcontext.gregs[REG_O7];
+      *fr = frame(sp, frame::unpatchable, pc);
+
       if (!fr->is_java_frame()) {
         assert(fr->safe_for_sender(thread), "Safety check");
         *fr = fr->java_sender();
@@ -438,7 +446,7 @@ JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid,
 
 
     if (thread->thread_state() == _thread_in_vm) {
-      if (sig == SIGBUS && info->si_code == BUS_OBJERR && thread->doing_unsafe_access()) {
+      if (sig == SIGBUS && thread->doing_unsafe_access()) {
         stub = SharedRuntime::handle_unsafe_access(thread, npc);
       }
     }

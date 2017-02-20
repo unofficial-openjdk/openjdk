@@ -36,6 +36,9 @@
 #include "utilities/ostream.hpp"
 
 #define UNNAMED_MODULE "Unnamed Module"
+#define JAVAPKG "java/"
+#define JAVAPKG_LEN 5
+#define JAVA_BASE_NAME "java.base"
 
 class ModuleClosure;
 
@@ -62,6 +65,7 @@ private:
   bool _can_read_all_unnamed;
   bool _has_default_read_edges;        // JVMTI redefine/retransform support
   bool _must_walk_reads;               // walk module's reads list at GC safepoints to purge out dead modules
+  bool _is_patched;                    // whether the module is patched via --patch-module
   TRACE_DEFINE_TRACE_ID_FIELD;
   enum {MODULE_READS_SIZE = 101};      // Initial size of list of modules that the module can read.
 
@@ -76,13 +80,14 @@ public:
     _can_read_all_unnamed = false;
     _has_default_read_edges = false;
     _must_walk_reads = false;
+    _is_patched = false;
   }
 
-  Symbol*          name() const          { return literal(); }
-  void             set_name(Symbol* n)   { set_literal(n); }
+  Symbol*          name() const                        { return literal(); }
+  void             set_name(Symbol* n)                 { set_literal(n); }
 
-  jobject          module() const        { return _module; }
-  void             set_module(jobject j) { _module = j; }
+  jobject          module() const                      { return _module; }
+  void             set_module(jobject j)               { _module = j; }
 
   // The shared ProtectionDomain reference is set once the VM loads a shared class
   // originated from the current Module. The referenced ProtectionDomain object is
@@ -100,6 +105,7 @@ public:
 
   Symbol*          location() const                    { return _location; }
   void             set_location(Symbol* location);
+  bool             is_non_jdk_module();
 
   bool             can_read(ModuleEntry* m) const;
   bool             has_reads() const;
@@ -127,6 +133,13 @@ public:
     bool prev = _has_default_read_edges;
     _has_default_read_edges = true;
     return prev;
+  }
+
+  void set_is_patched() {
+      _is_patched = true;
+  }
+  bool is_patched() {
+      return _is_patched;
   }
 
   ModuleEntry* next() const {
@@ -217,13 +230,13 @@ public:
 
   // Special handling for unnamed module, one per class loader's ModuleEntryTable
   void create_unnamed_module(ClassLoaderData* loader_data);
-  ModuleEntry* unnamed_module()                           { return _unnamed_module; }
+  ModuleEntry* unnamed_module()                                { return _unnamed_module; }
 
   // Special handling for java.base
-  static ModuleEntry* javabase_module()                   { return _javabase_module; }
-  static void set_javabase_module(ModuleEntry* java_base) { _javabase_module = java_base; }
-  static bool javabase_defined()                          { return ((_javabase_module != NULL) &&
-                                                                    (_javabase_module->module() != NULL)); }
+  static ModuleEntry* javabase_moduleEntry()                   { return _javabase_module; }
+  static void set_javabase_moduleEntry(ModuleEntry* java_base) { _javabase_module = java_base; }
+  static bool javabase_defined()                               { return ((_javabase_module != NULL) &&
+                                                                         (_javabase_module->module() != NULL)); }
   static void finalize_javabase(Handle module_handle, Symbol* version, Symbol* location);
   static void patch_javabase_entries(Handle module_handle);
 

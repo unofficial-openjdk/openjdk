@@ -117,8 +117,12 @@ class HotSpotVMConfig extends HotSpotVMConfigAccess {
     final int jvmAccFieldHasGenericSignature = getConstant("JVM_ACC_FIELD_HAS_GENERIC_SIGNATURE", Integer.class);
     final int jvmAccIsCloneableFast = getConstant("JVM_ACC_IS_CLONEABLE_FAST", Integer.class);
 
-    // Modifier.SYNTHETIC is not public so we get it via vmStructs.
+    // These modifiers are not public in Modifier so we get them via vmStructs.
     final int jvmAccSynthetic = getConstant("JVM_ACC_SYNTHETIC", Integer.class);
+    final int jvmAccAnnotation = getConstant("JVM_ACC_ANNOTATION", Integer.class);
+    final int jvmAccBridge = getConstant("JVM_ACC_BRIDGE", Integer.class);
+    final int jvmAccVarargs = getConstant("JVM_ACC_VARARGS", Integer.class);
+    final int jvmAccEnum = getConstant("JVM_ACC_ENUM", Integer.class);
 
     // This is only valid on AMD64.
     final int runtimeCallStackSize = getConstant("frame::arg_reg_save_area_bytes", Integer.class, osArch.equals("amd64") ? null : 0);
@@ -144,6 +148,7 @@ class HotSpotVMConfig extends HotSpotVMConfigAccess {
 
     final int methodFlagsCallerSensitive = getConstant("Method::_caller_sensitive", Integer.class);
     final int methodFlagsForceInline = getConstant("Method::_force_inline", Integer.class);
+    final int methodFlagsIntrinsicCandidate = getConstant("Method::_intrinsic_candidate", Integer.class);
     final int methodFlagsDontInline = getConstant("Method::_dont_inline", Integer.class);
     final int methodFlagsReservedStackAccess = getConstant("Method::_reserved_stack_access", Integer.class);
     final int nonvirtualVtableIndex = getConstant("Method::nonvirtual_vtable_index", Integer.class);
@@ -154,6 +159,10 @@ class HotSpotVMConfig extends HotSpotVMConfigAccess {
     final int methodDataOopDataOffset = getFieldOffset("MethodData::_data[0]", Integer.class, "intptr_t");
     final int methodDataOopTrapHistoryOffset = getFieldOffset("MethodData::_trap_hist._array[0]", Integer.class, "u1");
     final int methodDataIRSizeOffset = getFieldOffset("MethodData::_jvmci_ir_size", Integer.class, "int");
+
+    final int methodDataDecompiles = getFieldOffset("MethodData::_nof_decompiles", Integer.class, "uint");
+    final int methodDataOverflowRecompiles = getFieldOffset("MethodData::_nof_overflow_recompiles", Integer.class, "uint");
+    final int methodDataOverflowTraps = getFieldOffset("MethodData::_nof_overflow_traps", Integer.class, "uint");
 
     final int nmethodCompLevelOffset = getFieldOffset("nmethod::_comp_level", Integer.class, "int");
 

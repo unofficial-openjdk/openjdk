@@ -262,7 +262,7 @@ void FileMapInfo::allocate_classpath_entry_table() {
         } else {
           struct stat st;
           if (os::stat(name, &st) == 0) {
-            if ((st.st_mode & S_IFDIR) == S_IFDIR) {
+            if ((st.st_mode & S_IFMT) == S_IFDIR) {
               if (!os::dir_is_empty(name)) {
                 ClassLoader::exit_with_path_failure(
                   "Cannot have non-empty directory in archived classpaths", name);
@@ -649,7 +649,7 @@ ReservedSpace FileMapInfo::reserve_shared_memory() {
 
 // Memory map a region in the address space.
 static const char* shared_region_name[] = { "ReadOnly", "ReadWrite", "MiscData", "MiscCode",
-                                            "String1", "String2" };
+                                            "String1", "String2", "OptionalData" };
 
 char* FileMapInfo::map_region(int i) {
   assert(!MetaspaceShared::is_string_region(i), "sanity");
@@ -908,11 +908,6 @@ int FileMapInfo::FileMapHeader::compute_crc() {
 bool FileMapInfo::FileMapHeader::validate() {
   if (VerifySharedSpaces && compute_crc() != _crc) {
     fail_continue("Header checksum verification failed.");
-    return false;
-  }
-
-  if (Arguments::get_patch_mod_prefix() != NULL) {
-    FileMapInfo::fail_continue("The shared archive file cannot be used with --patch-module.");
     return false;
   }
 

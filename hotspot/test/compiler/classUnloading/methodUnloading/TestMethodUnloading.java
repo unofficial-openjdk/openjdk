@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,9 @@
  * @bug 8029443
  * @summary Tests the unloading of methods to to class unloading
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  *
- * @build compiler.classUnloading.methodUnloading.TestMethodUnloading
+ * @build sun.hotspot.WhiteBox
  *        compiler.classUnloading.methodUnloading.WorkerClass
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                              sun.hotspot.WhiteBox$WhiteBoxPermission
@@ -46,14 +46,13 @@ import sun.hotspot.WhiteBox;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
+import compiler.whitebox.CompilerWhiteBoxTest;
 
 public class TestMethodUnloading {
     private static final String workerClassName = "compiler.classUnloading.methodUnloading.WorkerClass";
     private static int work = -1;
 
     private static final WhiteBox WHITE_BOX = WhiteBox.getWhiteBox();
-    private static int COMP_LEVEL_SIMPLE = 1;
-    private static int COMP_LEVEL_FULL_OPTIMIZATION = 4;
 
     /**
      * Does some work by either using the workerClass or locally producing values.
@@ -93,9 +92,9 @@ public class TestMethodUnloading {
         // Check if already compiled
         if (!WHITE_BOX.isMethodCompiled(m)) {
             // If not, try to compile it with C2
-            if(!WHITE_BOX.enqueueMethodForCompilation(m, COMP_LEVEL_FULL_OPTIMIZATION)) {
+            if(!WHITE_BOX.enqueueMethodForCompilation(m, CompilerWhiteBoxTest.COMP_LEVEL_FULL_OPTIMIZATION)) {
                 // C2 compiler not available, try to compile with C1
-                WHITE_BOX.enqueueMethodForCompilation(m, COMP_LEVEL_SIMPLE);
+                WHITE_BOX.enqueueMethodForCompilation(m, CompilerWhiteBoxTest.COMP_LEVEL_SIMPLE);
             }
             // Because background compilation is disabled, method should now be compiled
             if(!WHITE_BOX.isMethodCompiled(m)) {

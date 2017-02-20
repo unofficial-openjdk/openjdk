@@ -24,6 +24,9 @@
  */
 package jdk.dynalink.test;
 
+import static jdk.dynalink.StandardNamespace.PROPERTY;
+import static jdk.dynalink.StandardOperation.GET;
+
 import java.lang.invoke.CallSite;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -36,20 +39,23 @@ import jdk.dynalink.CallSiteDescriptor;
 import jdk.dynalink.DynamicLinker;
 import jdk.dynalink.DynamicLinkerFactory;
 import jdk.dynalink.NoSuchDynamicMethodException;
-import jdk.dynalink.NamedOperation;
 import jdk.dynalink.Operation;
+import jdk.dynalink.StandardNamespace;
 import jdk.dynalink.StandardOperation;
+import jdk.dynalink.beans.StaticClass;
+import jdk.dynalink.linker.GuardedInvocation;
 import jdk.dynalink.linker.GuardingDynamicLinker;
 import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
 import jdk.dynalink.support.SimpleRelinkableCallSite;
-import jdk.dynalink.linker.GuardedInvocation;
 import jdk.nashorn.api.scripting.AbstractJSObject;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 @SuppressWarnings("javadoc")
 public class DynamicLinkerFactoryTest {
+
+    private static final Operation GET_PROPERTY = GET.withNamespace(PROPERTY);
 
     private static DynamicLinkerFactory newDynamicLinkerFactory(final boolean resetClassLoader) {
         final DynamicLinkerFactory factory = new DynamicLinkerFactory();
@@ -80,7 +86,7 @@ public class DynamicLinkerFactoryTest {
         final Operation myOperation = new Operation() {
         };
         final boolean[] reachedFallback = { false };
-        factory.setFallbackLinkers((GuardingDynamicLinker) (LinkRequest linkRequest, LinkerServices linkerServices) -> {
+        factory.setFallbackLinkers((GuardingDynamicLinker) (final LinkRequest linkRequest, final LinkerServices linkerServices) -> {
             Assert.assertEquals(linkRequest.getCallSiteDescriptor().getOperation(), myOperation);
             reachedFallback[0] = true;
             return null;
@@ -95,10 +101,10 @@ public class DynamicLinkerFactoryTest {
         Assert.assertFalse(reachedFallback[0]);
         try {
             cs.getTarget().invoke();
-        } catch (NoSuchDynamicMethodException nsdm) {
+        } catch (final NoSuchDynamicMethodException nsdm) {
             // we do expect NoSuchDynamicMethod!
             // because our dummy fallback linker returns null!
-        } catch (Throwable th) {
+        } catch (final Throwable th) {
             throw new RuntimeException("should not reach here with: " + th);
         }
 
@@ -112,7 +118,7 @@ public class DynamicLinkerFactoryTest {
         final Operation myOperation = new Operation() {
         };
         final boolean[] reachedProrityLinker = { false };
-        factory.setPrioritizedLinker((GuardingDynamicLinker) (LinkRequest linkRequest, LinkerServices linkerServices) -> {
+        factory.setPrioritizedLinker((GuardingDynamicLinker) (final LinkRequest linkRequest, final LinkerServices linkerServices) -> {
             Assert.assertEquals(linkRequest.getCallSiteDescriptor().getOperation(), myOperation);
             reachedProrityLinker[0] = true;
             return null;
@@ -127,10 +133,10 @@ public class DynamicLinkerFactoryTest {
         Assert.assertFalse(reachedProrityLinker[0]);
         try {
             cs.getTarget().invoke();
-        } catch (NoSuchDynamicMethodException nsdm) {
+        } catch (final NoSuchDynamicMethodException nsdm) {
             // we do expect NoSuchDynamicMethod!
             // because our dummy priority linker returns null!
-        } catch (Throwable th) {
+        } catch (final Throwable th) {
             throw new RuntimeException("should not reach here with: " + th);
         }
 
@@ -144,12 +150,12 @@ public class DynamicLinkerFactoryTest {
         final Operation myOperation = new Operation() {
         };
         final int[] linkerReachCounter = { 0 };
-        factory.setPrioritizedLinker((GuardingDynamicLinker) (LinkRequest linkRequest, LinkerServices linkerServices) -> {
+        factory.setPrioritizedLinker((GuardingDynamicLinker) (final LinkRequest linkRequest, final LinkerServices linkerServices) -> {
             Assert.assertEquals(linkRequest.getCallSiteDescriptor().getOperation(), myOperation);
             linkerReachCounter[0]++;
             return null;
         });
-        factory.setFallbackLinkers((GuardingDynamicLinker) (LinkRequest linkRequest, LinkerServices linkerServices) -> {
+        factory.setFallbackLinkers((GuardingDynamicLinker) (final LinkRequest linkRequest, final LinkerServices linkerServices) -> {
             Assert.assertEquals(linkRequest.getCallSiteDescriptor().getOperation(), myOperation);
             Assert.assertEquals(linkerReachCounter[0], 1);
             linkerReachCounter[0]++;
@@ -166,9 +172,9 @@ public class DynamicLinkerFactoryTest {
 
         try {
             cs.getTarget().invoke();
-        } catch (NoSuchDynamicMethodException nsdm) {
+        } catch (final NoSuchDynamicMethodException nsdm) {
             // we do expect NoSuchDynamicMethod!
-        } catch (Throwable th) {
+        } catch (final Throwable th) {
             throw new RuntimeException("should not reach here with: " + th);
         }
 
@@ -180,7 +186,7 @@ public class DynamicLinkerFactoryTest {
         final DynamicLinkerFactory factory = newDynamicLinkerFactory(true);
         final boolean[] reachedPrelinkTransformer = { false };
 
-        factory.setPrelinkTransformer((GuardedInvocation inv, LinkRequest linkRequest, LinkerServices linkerServices) -> {
+        factory.setPrelinkTransformer((final GuardedInvocation inv, final LinkRequest linkRequest, final LinkerServices linkerServices) -> {
             reachedPrelinkTransformer[0] = true;
             // just identity transformer!
             return inv;
@@ -189,7 +195,7 @@ public class DynamicLinkerFactoryTest {
         final MethodType mt = MethodType.methodType(Object.class, Object.class, String.class);
         final DynamicLinker linker = factory.createLinker();
         final CallSite cs = linker.link(new SimpleRelinkableCallSite(new CallSiteDescriptor(
-                MethodHandles.publicLookup(), StandardOperation.GET_PROPERTY, mt)));
+                MethodHandles.publicLookup(), GET_PROPERTY, mt)));
         Assert.assertFalse(reachedPrelinkTransformer[0]);
         Assert.assertEquals(cs.getTarget().invoke(new Object(), "class"), Object.class);
         Assert.assertTrue(reachedPrelinkTransformer[0]);
@@ -200,7 +206,7 @@ public class DynamicLinkerFactoryTest {
         final DynamicLinkerFactory factory = newDynamicLinkerFactory(true);
         final boolean[] reachedInternalObjectsFilter = { false };
 
-        factory.setInternalObjectsFilter((MethodHandle mh) -> {
+        factory.setInternalObjectsFilter((final MethodHandle mh) -> {
             reachedInternalObjectsFilter[0] = true;
             return mh;
         });
@@ -208,7 +214,7 @@ public class DynamicLinkerFactoryTest {
         final MethodType mt = MethodType.methodType(Object.class, Object.class, String.class);
         final DynamicLinker linker = factory.createLinker();
         final CallSite cs = linker.link(new SimpleRelinkableCallSite(new CallSiteDescriptor(
-                MethodHandles.publicLookup(), StandardOperation.GET_PROPERTY, mt)));
+                MethodHandles.publicLookup(), GET_PROPERTY, mt)));
         Assert.assertFalse(reachedInternalObjectsFilter[0]);
         Assert.assertEquals(cs.getTarget().invoke(new Object(), "class"), Object.class);
         Assert.assertTrue(reachedInternalObjectsFilter[0]);
@@ -234,6 +240,15 @@ public class DynamicLinkerFactoryTest {
 
     @Test
     public void autoLoadedLinkerTest() {
+        testAutoLoadedLinkerInvoked(new Object(), "toString");
+    }
+
+    @Test
+    public void autoLoadedLinkerSeesStaticMethod() {
+        testAutoLoadedLinkerInvoked(StaticClass.forClass(System.class), "currentTimeMillis");
+    }
+
+    private static void testAutoLoadedLinkerInvoked(final Object target, final String methodName) {
         final DynamicLinkerFactory factory = newDynamicLinkerFactory(false);
         final DynamicLinker linker = factory.createLinker();
 
@@ -241,22 +256,21 @@ public class DynamicLinkerFactoryTest {
         checkOneAutoLoadingError(factory);
 
         final MethodType mt = MethodType.methodType(Object.class, Object.class);
-        // create a callsite with TestLinkerOperation
-        final CallSite cs = linker.link(new SimpleRelinkableCallSite(new CallSiteDescriptor(
-                MethodHandles.publicLookup(), new TestLinkerOperation(), mt)));
-        boolean reachedAutoLinker = false;
+        final CallSiteDescriptor testDescriptor = new CallSiteDescriptor(MethodHandles.publicLookup(),
+                GET.withNamespace(StandardNamespace.METHOD).named(methodName), mt);
+        final CallSite cs = linker.link(new SimpleRelinkableCallSite(testDescriptor));
 
-
+        TrustedGuardingDynamicLinkerExporter.enable();
         try {
-            cs.getTarget().invoke(new Object());
-        } catch (ReachedAutoLoadedDynamicLinkerException e) {
-            // TrustedGuardingDynamicLinkerExporter threw exception on TestLinkerOperation as expected!
-            reachedAutoLinker = true;
-        } catch (Throwable th) {
+            cs.getTarget().invoke(target);
+            // The linker was loaded and it observed our invocation
+            Assert.assertTrue(TrustedGuardingDynamicLinkerExporter.isLastCallSiteDescriptor(testDescriptor));
+        } catch (final Throwable th) {
             throw new RuntimeException(th);
+        } finally {
+            TrustedGuardingDynamicLinkerExporter.disable();
         }
 
-        Assert.assertTrue(reachedAutoLinker);
     }
 
     @Test
@@ -265,14 +279,14 @@ public class DynamicLinkerFactoryTest {
         final DynamicLinker linker = factory.createLinker();
 
         final MethodType mt = MethodType.methodType(Object.class, Object.class);
-        final NamedOperation op = new NamedOperation(StandardOperation.GET_PROPERTY, "foo");
+        final Operation op = GET_PROPERTY.named("foo");
         final CallSite cs = linker.link(new SimpleRelinkableCallSite(new CallSiteDescriptor(
                 MethodHandles.publicLookup(), op, mt)));
         final boolean[] reachedGetMember = new boolean[1];
         // check that the nashorn exported linker can be used for user defined JSObject
-        Object obj = new AbstractJSObject() {
+        final Object obj = new AbstractJSObject() {
                 @Override
-                public Object getMember(String name) {
+                public Object getMember(final String name) {
                     reachedGetMember[0] = true;
                     return name.equals("foo")? "bar" : "<unknown>";
                 }
@@ -281,7 +295,7 @@ public class DynamicLinkerFactoryTest {
         Object value = null;
         try {
             value = cs.getTarget().invoke(obj);
-        } catch (Throwable th) {
+        } catch (final Throwable th) {
             throw new RuntimeException(th);
         }
 
@@ -297,14 +311,14 @@ public class DynamicLinkerFactoryTest {
         // check that the nashorn exported linker can be used for ScriptObjectMirror
         final ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn");
         final MethodType mt = MethodType.methodType(Object.class, Object.class);
-        final NamedOperation op = new NamedOperation(StandardOperation.GET_PROPERTY, "foo");
+        final Operation op = GET_PROPERTY.named("foo");
         final CallSite cs = linker.link(new SimpleRelinkableCallSite(new CallSiteDescriptor(
                 MethodHandles.publicLookup(), op, mt)));
         Object value = null;
         try {
             final Object obj = engine.eval("({ foo: 'hello' })");
             value = cs.getTarget().invoke(obj);
-        } catch (Throwable th) {
+        } catch (final Throwable th) {
             throw new RuntimeException(th);
         }
         Assert.assertEquals(value, "hello");

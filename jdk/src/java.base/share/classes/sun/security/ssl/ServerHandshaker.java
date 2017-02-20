@@ -34,6 +34,7 @@ import java.security.cert.*;
 import java.security.interfaces.*;
 import java.security.spec.ECParameterSpec;
 import java.math.BigInteger;
+import java.util.function.BiFunction;
 
 import javax.crypto.SecretKey;
 import javax.net.ssl.*;
@@ -532,98 +533,39 @@ final class ServerHandshaker extends Handshaker {
         ALPNExtension clientHelloALPN = (ALPNExtension)
             mesg.extensions.get(ExtensionType.EXT_ALPN);
 
-        if ((clientHelloALPN != null) && (localApl.length > 0)) {
+        // Use the application protocol callback when provided.
+        // Otherwise use the local list of application protocols.
+        boolean hasAPCallback =
+            ((engine != null && appProtocolSelectorSSLEngine != null) ||
+                (conn != null && appProtocolSelectorSSLSocket != null));
 
-            // Intersect the requested and the locally supported,
-            // and save for later.
-            String negotiatedValue = null;
-            List<String> protocols = clientHelloALPN.getPeerAPs();
+        if (!hasAPCallback) {
+            if ((clientHelloALPN != null) && (localApl.length > 0)) {
 
-            // Use server preference order
-            for (String ap : localApl) {
-                if (protocols.contains(ap)) {
-                    negotiatedValue = ap;
-                    break;
-                }
-            }
+                // Intersect the requested and the locally supported,
+                // and save for later.
+                String negotiatedValue = null;
+                List<String> protocols = clientHelloALPN.getPeerAPs();
 
-            if (negotiatedValue == null) {
-                fatalSE(Alerts.alert_no_application_protocol,
-                    new SSLHandshakeException(
-                        "No matching ALPN values"));
-            }
-            applicationProtocol = negotiatedValue;
-
-        } else {
-            applicationProtocol = "";
-        }
-
-        // cookie exchange
-        if (isDTLS) {
-             HelloCookieManager hcMgr = sslContext.getHelloCookieManager();
-             if ((mesg.cookie == null) || (mesg.cookie.length == 0) ||
-                    (!hcMgr.isValid(mesg))) {
-
-                //
-                // Perform cookie exchange for DTLS handshaking if no cookie
-                // or the cookie is invalid in the ClientHello message.
-                //
-                HelloVerifyRequest m0 = new HelloVerifyRequest(hcMgr, mesg);
-
-                if (debug != null && Debug.isOn("handshake")) {
-                    m0.print(System.out);
+                // Use server preference order
+                for (String ap : localApl) {
+                    if (protocols.contains(ap)) {
+                        negotiatedValue = ap;
+                        break;
+                    }
                 }
 
-                m0.write(output);
-                handshakeState.update(m0, resumingSession);
-                output.flush();
+                if (negotiatedValue == null) {
+                    fatalSE(Alerts.alert_no_application_protocol,
+                        new SSLHandshakeException(
+                            "No matching ALPN values"));
+                }
+                applicationProtocol = negotiatedValue;
 
-                return;
+            } else {
+                applicationProtocol = "";
             }
-        }
-
-        /*
-         * FIRST, construct the ServerHello using the options and priorities
-         * from the ClientHello.  Update the (pending) cipher spec as we do
-         * so, and save the client's version to protect against rollback
-         * attacks.
-         *
-         * There are a bunch of minor tasks here, and one major one: deciding
-         * if the short or the full handshake sequence will be used.
-         */
-        ServerHello m1 = new ServerHello();
-
-        clientRequestedVersion = mesg.protocolVersion;
-
-        // select a proper protocol version.
-        ProtocolVersion selectedVersion =
-               selectProtocolVersion(clientRequestedVersion);
-        if (selectedVersion == null ||
-                selectedVersion.v == ProtocolVersion.SSL20Hello.v) {
-            fatalSE(Alerts.alert_handshake_failure,
-                "Client requested protocol " + clientRequestedVersion +
-                " not enabled or not supported");
-        }
-
-        handshakeHash.protocolDetermined(selectedVersion);
-        setVersion(selectedVersion);
-
-        m1.protocolVersion = protocolVersion;
-
-        //
-        // random ... save client and server values for later use
-        // in computing the master secret (from pre-master secret)
-        // and thence the other crypto keys.
-        //
-        // NOTE:  this use of three inputs to generating _each_ set
-        // of ciphers slows things down, but it does increase the
-        // security since each connection in the session can hold
-        // its own authenticated (and strong) keys.  One could make
-        // creation of a session a rare thing...
-        //
-        clnt_random = mesg.clnt_random;
-        svr_random = new RandomCookie(sslContext.getSecureRandom());
-        m1.svr_random = svr_random;
+        }  // Otherwise, applicationProtocol will be set by the callback.
 
         session = null; // forget about the current session
         //
@@ -731,6 +673,73 @@ final class ServerHandshaker extends Handshaker {
                 }
             }
         }   // else client did not try to resume
+
+        // cookie exchange
+        if (isDTLS && !resumingSession) {
+             HelloCookieManager hcMgr = sslContext.getHelloCookieManager();
+             if ((mesg.cookie == null) || (mesg.cookie.length == 0) ||
+                    (!hcMgr.isValid(mesg))) {
+
+                //
+                // Perform cookie exchange for DTLS handshaking if no cookie
+                // or the cookie is invalid in the ClientHello message.
+                //
+                HelloVerifyRequest m0 = new HelloVerifyRequest(hcMgr, mesg);
+
+                if (debug != null && Debug.isOn("handshake")) {
+                    m0.print(System.out);
+                }
+
+                m0.write(output);
+                handshakeState.update(m0, resumingSession);
+                output.flush();
+
+                return;
+            }
+        }
+
+        /*
+         * FIRST, construct the ServerHello using the options and priorities
+         * from the ClientHello.  Update the (pending) cipher spec as we do
+         * so, and save the client's version to protect against rollback
+         * attacks.
+         *
+         * There are a bunch of minor tasks here, and one major one: deciding
+         * if the short or the full handshake sequence will be used.
+         */
+        ServerHello m1 = new ServerHello();
+
+        clientRequestedVersion = mesg.protocolVersion;
+
+        // select a proper protocol version.
+        ProtocolVersion selectedVersion =
+               selectProtocolVersion(clientRequestedVersion);
+        if (selectedVersion == null ||
+                selectedVersion.v == ProtocolVersion.SSL20Hello.v) {
+            fatalSE(Alerts.alert_handshake_failure,
+                "Client requested protocol " + clientRequestedVersion +
+                " not enabled or not supported");
+        }
+
+        handshakeHash.protocolDetermined(selectedVersion);
+        setVersion(selectedVersion);
+
+        m1.protocolVersion = protocolVersion;
+
+        //
+        // random ... save client and server values for later use
+        // in computing the master secret (from pre-master secret)
+        // and thence the other crypto keys.
+        //
+        // NOTE:  this use of three inputs to generating _each_ set
+        // of ciphers slows things down, but it does increase the
+        // security since each connection in the session can hold
+        // its own authenticated (and strong) keys.  One could make
+        // creation of a session a rare thing...
+        //
+        clnt_random = mesg.clnt_random;
+        svr_random = new RandomCookie(sslContext.getSecureRandom());
+        m1.svr_random = svr_random;
 
         //
         // If client hasn't specified a session we can resume, start a
@@ -892,8 +901,36 @@ final class ServerHandshaker extends Handshaker {
         }
 
         // Prepare the ALPN response
-        if (applicationProtocol != null && !applicationProtocol.isEmpty()) {
-            m1.extensions.add(new ALPNExtension(applicationProtocol));
+        if (clientHelloALPN != null) {
+            List<String> peerAPs = clientHelloALPN.getPeerAPs();
+
+            // check for a callback function
+            if (hasAPCallback) {
+                if (conn != null) {
+                    applicationProtocol =
+                        appProtocolSelectorSSLSocket.apply(conn, peerAPs);
+                } else {
+                    applicationProtocol =
+                        appProtocolSelectorSSLEngine.apply(engine, peerAPs);
+                }
+            }
+
+            // check for no-match and that the selected name was also proposed
+            // by the TLS peer
+            if (applicationProtocol == null ||
+                   (!applicationProtocol.isEmpty() &&
+                        !peerAPs.contains(applicationProtocol))) {
+
+                fatalSE(Alerts.alert_no_application_protocol,
+                    new SSLHandshakeException(
+                        "No matching ALPN values"));
+
+            } else if (!applicationProtocol.isEmpty()) {
+                m1.extensions.add(new ALPNExtension(applicationProtocol));
+            }
+        } else {
+            // Nothing was negotiated, returned at end of the handshake
+            applicationProtocol = "";
         }
 
         if (debug != null && Debug.isOn("handshake")) {
@@ -1172,11 +1209,18 @@ final class ServerHandshaker extends Handshaker {
             if (trySetCipherSuite(suite) == false) {
                 continue;
             }
+
+            if (debug != null && Debug.isOn("handshake")) {
+                System.out.println("Standard ciphersuite chosen: " + suite);
+            }
             return;
         }
 
         for (CipherSuite suite : legacySuites) {
             if (trySetCipherSuite(suite)) {
+                if (debug != null && Debug.isOn("handshake")) {
+                    System.out.println("Legacy ciphersuite chosen: " + suite);
+                }
                 return;
             }
         }

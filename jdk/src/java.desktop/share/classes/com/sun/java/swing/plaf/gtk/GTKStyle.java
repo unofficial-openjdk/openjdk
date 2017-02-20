@@ -282,7 +282,17 @@ class GTKStyle extends SynthStyle implements GTKConstants {
         return getColorForState(context, type);
     }
 
+    Font getDefaultFont() {
+        return font;
+    }
+
     protected Font getFontForState(SynthContext context) {
+        Font propFont = UIManager
+                              .getFont(context.getRegion().getName() + ".font");
+        if (propFont != null) {
+            // if font property got a value then return it
+            return propFont;
+        }
         return font;
     }
 
@@ -1115,6 +1125,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
             this.methodName = methodName;
         }
 
+        @SuppressWarnings("deprecation")
         public Object createValue(UIDefaults table) {
             try {
                 Class<?> c = Class.forName(className, true,Thread.currentThread().
@@ -1126,11 +1137,7 @@ class GTKStyle extends SynthStyle implements GTKConstants {
                 Method m = c.getMethod(methodName, (Class<?>[])null);
 
                 return m.invoke(c, (Object[])null);
-            } catch (ClassNotFoundException cnfe) {
-            } catch (IllegalAccessException iae) {
-            } catch (InvocationTargetException ite) {
-            } catch (NoSuchMethodException nsme) {
-            } catch (InstantiationException ie) {
+            } catch (ReflectiveOperationException e) {
             }
             return null;
         }

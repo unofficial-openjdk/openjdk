@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import javax.lang.model.element.*;
 import javax.lang.model.element.ModuleElement.Directive;
 import javax.lang.model.element.ModuleElement.DirectiveKind;
 import javax.lang.model.element.ModuleElement.ExportsDirective;
+import javax.lang.model.element.ModuleElement.OpensDirective;
 import javax.lang.model.element.ModuleElement.ProvidesDirective;
 import javax.lang.model.element.ModuleElement.RequiresDirective;
 import javax.lang.model.element.ModuleElement.UsesDirective;
@@ -53,15 +54,6 @@ import javax.lang.model.element.ModuleElement.UsesDirective;
  * <p>If iterables and sets containing {@code null} are passed as
  * arguments to methods in this class, a {@code NullPointerException}
  * will be thrown.
- *
- * <p>Note that a <i>static import</i> statement can make the text of
- * calls to the methods in this class more concise; for example:
- *
- * <blockquote><pre>
- *     import static javax.lang.model.util.ElementFilter.*;
- *     ...
- *         {@code List<VariableElement>} fs = fieldsIn(someClass.getEnclosedElements());
- * </pre></blockquote>
  *
  * @author Joseph D. Darcy
  * @author Scott Seligman
@@ -197,6 +189,7 @@ public class ElementFilter {
      * @return a list of modules in {@code elements}
      * @param elements the elements to filter
      * @since 9
+     * @spec JPMS
      */
     public static List<ModuleElement>
             modulesIn(Iterable<? extends Element> elements) {
@@ -208,6 +201,7 @@ public class ElementFilter {
      * @return a set of modules in {@code elements}
      * @param elements the elements to filter
      * @since 9
+     * @spec JPMS
      */
     public static Set<ModuleElement>
             modulesIn(Set<? extends Element> elements) {
@@ -239,13 +233,12 @@ public class ElementFilter {
         return set;
     }
 
-
-
     /**
-     * Returns a list of export directives in {@code directives}.
-     * @return a list of export directives in {@code directives}
+     * Returns a list of {@code exports} directives in {@code directives}.
+     * @return a list of {@code exports} directives in {@code directives}
      * @param directives the directives to filter
      * @since 9
+     * @spec JPMS
      */
     public static List<ExportsDirective>
             exportsIn(Iterable<? extends Directive> directives) {
@@ -253,10 +246,22 @@ public class ElementFilter {
     }
 
     /**
-     * Returns a list of provides directives in {@code directives}.
-     * @return a list of provides directives in {@code directives}
+     * Returns a list of {@code opens} directives in {@code directives}.
+     * @return a list of {@code opens} directives in {@code directives}
      * @param directives the directives to filter
      * @since 9
+     */
+    public static List<OpensDirective>
+            opensIn(Iterable<? extends Directive> directives) {
+        return listFilter(directives, DirectiveKind.OPENS, OpensDirective.class);
+    }
+
+    /**
+     * Returns a list of {@code provides} directives in {@code directives}.
+     * @return a list of {@code provides} directives in {@code directives}
+     * @param directives the directives to filter
+     * @since 9
+     * @spec JPMS
      */
     public static List<ProvidesDirective>
             providesIn(Iterable<? extends Directive> directives) {
@@ -264,10 +269,11 @@ public class ElementFilter {
     }
 
     /**
-     * Returns a list of requires directives in {@code directives}.
-     * @return a list of requires directives in {@code directives}
+     * Returns a list of {@code requires} directives in {@code directives}.
+     * @return a list of {@code requires} directives in {@code directives}
      * @param directives the directives to filter
      * @since 9
+     * @spec JPMS
      */
     public static List<RequiresDirective>
             requiresIn(Iterable<? extends Directive> directives) {
@@ -275,10 +281,11 @@ public class ElementFilter {
     }
 
     /**
-     * Returns a list of uses directives in {@code directives}.
-     * @return a list of uses directives in {@code directives}
+     * Returns a list of {@code uses} directives in {@code directives}.
+     * @return a list of {@code uses} directives in {@code directives}
      * @param directives the directives to filter
      * @since 9
+     * @spec JPMS
      */
     public static List<UsesDirective>
             usesIn(Iterable<? extends Directive> directives) {

@@ -42,7 +42,7 @@
 #include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -534,13 +534,12 @@ void os::init_system_properties_values() {
 #define SYS_EXT_DIR     "/usr/jdk/packages"
 #define EXTENSIONS_DIR  "/lib/ext"
 
-  char cpu_arch[12];
   // Buffer that fits several sprintfs.
   // Note that the space for the colon and the trailing null are provided
   // by the nulls included by the sizeof operator.
   const size_t bufsize =
     MAX3((size_t)MAXPATHLEN,  // For dll_dir & friends.
-         sizeof(SYS_EXT_DIR) + sizeof("/lib/") + strlen(cpu_arch), // invariant ld_library_path
+         sizeof(SYS_EXT_DIR) + sizeof("/lib/"), // invariant ld_library_path
          (size_t)MAXPATHLEN + sizeof(EXTENSIONS_DIR) + sizeof(SYS_EXT_DIR) + sizeof(EXTENSIONS_DIR)); // extensions dir
   char *buf = (char *)NEW_C_HEAP_ARRAY(char, bufsize, mtInternal);
 
@@ -561,11 +560,7 @@ void os::init_system_properties_values() {
     if (pslash != NULL) {
       pslash = strrchr(buf, '/');
       if (pslash != NULL) {
-        *pslash = '\0';          // Get rid of /<arch>.
-        pslash = strrchr(buf, '/');
-        if (pslash != NULL) {
-          *pslash = '\0';        // Get rid of /lib.
-        }
+        *pslash = '\0';        // Get rid of /lib.
       }
     }
     Arguments::set_java_home(buf);
@@ -623,21 +618,8 @@ void os::init_system_properties_values() {
     // However, to prevent the proliferation of improperly built native
     // libraries, the new path component /usr/jdk/packages is added here.
 
-    // Determine the actual CPU architecture.
-    sysinfo(SI_ARCHITECTURE, cpu_arch, sizeof(cpu_arch));
-#ifdef _LP64
-    // If we are a 64-bit vm, perform the following translations:
-    //   sparc   -> sparcv9
-    //   i386    -> amd64
-    if (strcmp(cpu_arch, "sparc") == 0) {
-      strcat(cpu_arch, "v9");
-    } else if (strcmp(cpu_arch, "i386") == 0) {
-      strcpy(cpu_arch, "amd64");
-    }
-#endif
-
     // Construct the invariant part of ld_library_path.
-    sprintf(common_path, SYS_EXT_DIR "/lib/%s", cpu_arch);
+    sprintf(common_path, SYS_EXT_DIR "/lib");
 
     // Struct size is more than sufficient for the path components obtained
     // through the dlinfo() call, so only add additional space for the path
@@ -917,8 +899,15 @@ static char* describe_thr_create_attributes(char* buf, size_t buflen,
   return buf;
 }
 
+// return default stack size for thr_type
+size_t os::Posix::default_stack_size(os::ThreadType thr_type) {
+  // default stack size when not specified by caller is 1M (2M for LP64)
+  size_t s = (BytesPerWord >> 2) * K * K;
+  return s;
+}
+
 bool os::create_thread(Thread* thread, ThreadType thr_type,
-                       size_t stack_size) {
+                       size_t req_stack_size) {
   // Allocate the OSThread object
   OSThread* osthread = new OSThread(NULL, NULL);
   if (osthread == NULL) {
@@ -953,31 +942,8 @@ bool os::create_thread(Thread* thread, ThreadType thr_type,
     tty->print_cr("In create_thread, creating a %s thread\n", thrtyp);
   }
 
-  // Calculate stack size if it's not specified by caller.
-  if (stack_size == 0) {
-    // The default stack size 1M (2M for LP64).
-    stack_size = (BytesPerWord >> 2) * K * K;
-
-    switch (thr_type) {
-    case os::java_thread:
-      // Java threads use ThreadStackSize which default value can be changed with the flag -Xss
-      if (JavaThread::stack_size_at_create() > 0) stack_size = JavaThread::stack_size_at_create();
-      break;
-    case os::compiler_thread:
-      if (CompilerThreadStackSize > 0) {
-        stack_size = (size_t)(CompilerThreadStackSize * K);
-        break;
-      } // else fall through:
-        // use VMThreadStackSize if CompilerThreadStackSize is not defined
-    case os::vm_thread:
-    case os::pgc_thread:
-    case os::cgc_thread:
-    case os::watcher_thread:
-      if (VMThreadStackSize > 0) stack_size = (size_t)(VMThreadStackSize * K);
-      break;
-    }
-  }
-  stack_size = MAX2(stack_size, os::Solaris::min_stack_allowed);
+  // calculate stack size if it's not specified by caller
+  size_t stack_size = os::Posix::get_initial_stack_size(thr_type, req_stack_size);
 
   // Initial state is ALLOCATED but not INITIALIZED
   osthread->set_state(ALLOCATED);
@@ -2092,18 +2058,9 @@ void os::jvm_path(char *buf, jint buflen) {
       // Look for JAVA_HOME in the environment.
       char* java_home_var = ::getenv("JAVA_HOME");
       if (java_home_var != NULL && java_home_var[0] != 0) {
-        char cpu_arch[12];
         char* jrelib_p;
         int   len;
-        sysinfo(SI_ARCHITECTURE, cpu_arch, sizeof(cpu_arch));
-#ifdef _LP64
-        // If we are on sparc running a 64-bit vm, look in jre/lib/sparcv9.
-        if (strcmp(cpu_arch, "sparc") == 0) {
-          strcat(cpu_arch, "v9");
-        } else if (strcmp(cpu_arch, "i386") == 0) {
-          strcpy(cpu_arch, "amd64");
-        }
-#endif
+
         // Check the current module name "libjvm.so".
         p = strrchr(buf, '/');
         assert(strstr(p, "/libjvm") == p, "invalid library name");
@@ -2114,9 +2071,9 @@ void os::jvm_path(char *buf, jint buflen) {
         len = strlen(buf);
         assert(len < buflen, "Ran out of buffer space");
         jrelib_p = buf + len;
-        snprintf(jrelib_p, buflen-len, "/jre/lib/%s", cpu_arch);
+        snprintf(jrelib_p, buflen-len, "/jre/lib");
         if (0 != access(buf, F_OK)) {
-          snprintf(jrelib_p, buflen-len, "/lib/%s", cpu_arch);
+          snprintf(jrelib_p, buflen-len, "/lib");
         }
 
         if (0 == access(buf, F_OK)) {
@@ -2579,7 +2536,7 @@ bool os::get_page_info(char *start, page_info* info) {
   uint64_t outdata[2];
   uint_t validity = 0;
 
-  if (os::Solaris::meminfo(&addr, 1, info_types, 2, outdata, &validity) < 0) {
+  if (meminfo(&addr, 1, info_types, 2, outdata, &validity) < 0) {
     return false;
   }
 
@@ -2617,7 +2574,7 @@ char *os::scan_pages(char *start, char* end, page_info* page_expected,
       addrs_count++;
     }
 
-    if (os::Solaris::meminfo(addrs, addrs_count, info_types, types, outdata, validity) < 0) {
+    if (meminfo(addrs, addrs_count, info_types, types, outdata, validity) < 0) {
       return NULL;
     }
 
@@ -4176,9 +4133,6 @@ void os::Solaris::install_signal_handlers() {
 void report_error(const char* file_name, int line_no, const char* title,
                   const char* format, ...);
 
-// (Static) wrapper for getisax(2) call.
-os::Solaris::getisax_func_t os::Solaris::_getisax = 0;
-
 // (Static) wrappers for the liblgrp API
 os::Solaris::lgrp_home_func_t os::Solaris::_lgrp_home;
 os::Solaris::lgrp_init_func_t os::Solaris::_lgrp_init;
@@ -4189,9 +4143,6 @@ os::Solaris::lgrp_resources_func_t os::Solaris::_lgrp_resources;
 os::Solaris::lgrp_nlgrps_func_t os::Solaris::_lgrp_nlgrps;
 os::Solaris::lgrp_cookie_stale_func_t os::Solaris::_lgrp_cookie_stale;
 os::Solaris::lgrp_cookie_t os::Solaris::_lgrp_cookie = 0;
-
-// (Static) wrapper for meminfo() call.
-os::Solaris::meminfo_func_t os::Solaris::_meminfo = 0;
 
 static address resolve_symbol_lazy(const char* name) {
   address addr = (address) dlsym(RTLD_DEFAULT, name);
@@ -4316,27 +4267,6 @@ bool os::Solaris::liblgrp_init() {
   return false;
 }
 
-void os::Solaris::misc_sym_init() {
-  address func;
-
-  // getisax
-  func = resolve_symbol_lazy("getisax");
-  if (func != NULL) {
-    os::Solaris::_getisax = CAST_TO_FN_PTR(getisax_func_t, func);
-  }
-
-  // meminfo
-  func = resolve_symbol_lazy("meminfo");
-  if (func != NULL) {
-    os::Solaris::set_meminfo(CAST_TO_FN_PTR(meminfo_func_t, func));
-  }
-}
-
-uint_t os::Solaris::getisax(uint32_t* array, uint_t n) {
-  assert(_getisax != NULL, "_getisax not set");
-  return _getisax(array, n);
-}
-
 // int pset_getloadavg(psetid_t pset, double loadavg[], int nelem);
 typedef long (*pset_getloadavg_type)(psetid_t pset, double loadavg[], int nelem);
 static pset_getloadavg_type pset_getloadavg_ptr = NULL;
@@ -4367,10 +4297,6 @@ void os::init(void) {
 
   Solaris::initialize_system_info();
 
-  // Initialize misc. symbols as soon as possible, so we can use them
-  // if we need them.
-  Solaris::misc_sym_init();
-
   int fd = ::open("/dev/zero", O_RDWR);
   if (fd < 0) {
     fatal("os::init: cannot open /dev/zero (%s)", os::strerror(errno));
@@ -4400,7 +4326,12 @@ void os::init(void) {
   // Constant minimum stack size allowed. It must be at least
   // the minimum of what the OS supports (thr_min_stack()), and
   // enough to allow the thread to get to user bytecode execution.
-  Solaris::min_stack_allowed = MAX2(thr_min_stack(), Solaris::min_stack_allowed);
+  Posix::_compiler_thread_min_stack_allowed = MAX2(thr_min_stack(),
+                                                   Posix::_compiler_thread_min_stack_allowed);
+  Posix::_java_thread_min_stack_allowed = MAX2(thr_min_stack(),
+                                               Posix::_java_thread_min_stack_allowed);
+  Posix::_vm_internal_thread_min_stack_allowed = MAX2(thr_min_stack(),
+                                                      Posix::_vm_internal_thread_min_stack_allowed);
 
   // dynamic lookup of functions that may not be available in our lowest
   // supported Solaris release
@@ -4445,46 +4376,10 @@ jint os::init_2(void) {
     log_info(os)("Memory Serialize Page address: " INTPTR_FORMAT, p2i(mem_serialize_page));
   }
 
-  // Check minimum allowable stack size for thread creation and to initialize
-  // the java system classes, including StackOverflowError - depends on page
-  // size.  Add two 4K pages for compiler2 recursion in main thread.
-  // Add in 4*BytesPerWord 4K pages to account for VM stack during
-  // class initialization depending on 32 or 64 bit VM.
-  os::Solaris::min_stack_allowed = MAX2(os::Solaris::min_stack_allowed,
-                                        JavaThread::stack_guard_zone_size() +
-                                        JavaThread::stack_shadow_zone_size() +
-                                        (4*BytesPerWord COMPILER2_PRESENT(+2)) * 4 * K);
-
-  os::Solaris::min_stack_allowed = align_size_up(os::Solaris::min_stack_allowed, os::vm_page_size());
-
-  size_t threadStackSizeInBytes = ThreadStackSize * K;
-  if (threadStackSizeInBytes != 0 &&
-      threadStackSizeInBytes < os::Solaris::min_stack_allowed) {
-    tty->print_cr("\nThe stack size specified is too small, Specify at least %dk",
-                  os::Solaris::min_stack_allowed/K);
+  // Check and sets minimum stack sizes against command line options
+  if (Posix::set_minimum_stack_sizes() == JNI_ERR) {
     return JNI_ERR;
   }
-
-  // For 64kbps there will be a 64kb page size, which makes
-  // the usable default stack size quite a bit less.  Increase the
-  // stack for 64kb (or any > than 8kb) pages, this increases
-  // virtual memory fragmentation (since we're not creating the
-  // stack on a power of 2 boundary.  The real fix for this
-  // should be to fix the guard page mechanism.
-
-  if (vm_page_size() > 8*K) {
-    threadStackSizeInBytes = (threadStackSizeInBytes != 0)
-       ? threadStackSizeInBytes +
-         JavaThread::stack_red_zone_size() +
-         JavaThread::stack_yellow_zone_size()
-       : 0;
-    ThreadStackSize = threadStackSizeInBytes/K;
-  }
-
-  // Make the stack size a multiple of the page size so that
-  // the yellow/red zones can be guarded.
-  JavaThread::set_stack_size_at_create(round_to(threadStackSizeInBytes,
-                                                vm_page_size()));
 
   Solaris::libthread_init();
 
@@ -4588,10 +4483,6 @@ void os::make_polling_page_readable(void) {
     fatal("Could not enable polling page");
   }
 }
-
-// OS interface.
-
-bool os::check_heap(bool force) { return true; }
 
 // Is a (classpath) directory empty?
 bool os::dir_is_empty(const char* path) {

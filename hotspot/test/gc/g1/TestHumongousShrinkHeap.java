@@ -27,7 +27,7 @@
  * @requires vm.gc.G1
  * @summary Verify that heap shrinks after GC in the presence of fragmentation
  * due to humongous objects
- * @library /testlibrary
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  * @modules java.management/sun.management
  * @run main/othervm -XX:-ExplicitGCInvokesConcurrent -XX:MinHeapFreeRatio=10
@@ -40,6 +40,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryUsage;
 import java.util.ArrayList;
 import java.util.List;
+import java.text.NumberFormat;
+import gc.testlibrary.Helpers;
 import static jdk.test.lib.Asserts.*;
 
 public class TestHumongousShrinkHeap {
@@ -51,23 +53,29 @@ public class TestHumongousShrinkHeap {
     private static final int REGION_SIZE = 1024 * 1024; // 1M
     private static final int LISTS_COUNT = 10;
     private static final int HUMON_SIZE = Math.round(.9f * REGION_SIZE);
-    private static final long AVAILABLE_MEMORY
-                              = Runtime.getRuntime().freeMemory();
-    private static final int HUMON_COUNT
-                             = (int) ((AVAILABLE_MEMORY / HUMON_SIZE)
-            / LISTS_COUNT);
 
+    private static final long TOTAL_MEMORY = Runtime.getRuntime().totalMemory();
+    private static final long MAX_MEMORY = Runtime.getRuntime().maxMemory();
+
+    private static final int HUMON_COUNT = (int) ((TOTAL_MEMORY / HUMON_SIZE) / LISTS_COUNT);
 
     public static void main(String[] args) {
         if (HUMON_COUNT == 0) {
             System.out.println("Skipped. Heap is too small");
             return;
         }
-        System.out.format("Running with %s max heap size. "
-                + "Will allocate humongous object of %s size %d times.%n",
-                MemoryUsagePrinter.humanReadableByteCount(AVAILABLE_MEMORY, false),
-                MemoryUsagePrinter.humanReadableByteCount(HUMON_SIZE, false),
-                HUMON_COUNT
+
+        if (TOTAL_MEMORY + REGION_SIZE * HUMON_COUNT > MAX_MEMORY) {
+            System.out.println("Skipped. Initial heap size is to close to max heap size.");
+            return;
+        }
+
+        System.out.format("Running with %s initial heap size of %s maximum heap size. "
+                          + "Will allocate humongous object of %s size %d times.%n",
+                          MemoryUsagePrinter.NF.format(TOTAL_MEMORY),
+                          MemoryUsagePrinter.NF.format(MAX_MEMORY),
+                          MemoryUsagePrinter.NF.format(HUMON_SIZE),
+                          HUMON_COUNT
         );
         new TestHumongousShrinkHeap().test();
     }
@@ -128,24 +136,16 @@ public class TestHumongousShrinkHeap {
  */
 class MemoryUsagePrinter {
 
-    public static String humanReadableByteCount(long bytes, boolean si) {
-        int unit = si ? 1000 : 1024;
-        if (bytes < unit) {
-            return bytes + " B";
-        }
-        int exp = (int) (Math.log(bytes) / Math.log(unit));
-        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i");
-        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
-    }
+    public static final NumberFormat NF = Helpers.numberFormatter();
 
     public static void printMemoryUsage(String label) {
         MemoryUsage memusage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
         float freeratio = 1f - (float) memusage.getUsed() / memusage.getCommitted();
         System.out.format("[%-24s] init: %-7s, used: %-7s, comm: %-7s, freeRatio ~= %.1f%%%n",
                 label,
-                humanReadableByteCount(memusage.getInit(), false),
-                humanReadableByteCount(memusage.getUsed(), false),
-                humanReadableByteCount(memusage.getCommitted(), false),
+                NF.format(memusage.getInit()),
+                NF.format(memusage.getUsed()),
+                NF.format(memusage.getCommitted()),
                 freeratio * 100
         );
     }

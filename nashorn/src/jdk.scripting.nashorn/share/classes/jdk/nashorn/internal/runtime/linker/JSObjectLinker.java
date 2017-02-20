@@ -33,15 +33,20 @@ import java.lang.invoke.MethodType;
 import java.util.Map;
 import javax.script.Bindings;
 import jdk.dynalink.CallSiteDescriptor;
+import jdk.dynalink.Operation;
 import jdk.dynalink.StandardOperation;
 import jdk.dynalink.linker.GuardedInvocation;
 import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
 import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
 import jdk.nashorn.api.scripting.JSObject;
+import jdk.nashorn.api.scripting.ScriptObjectMirror;
 import jdk.nashorn.internal.lookup.MethodHandleFactory;
 import jdk.nashorn.internal.lookup.MethodHandleFunctionality;
+import jdk.nashorn.internal.runtime.Context;
 import jdk.nashorn.internal.runtime.JSType;
+import jdk.nashorn.internal.runtime.ScriptRuntime;
+import jdk.nashorn.internal.objects.Global;
 
 /**
  * A Dynalink linker to handle web browser built-in JS (DOM etc.) objects as well
@@ -92,29 +97,31 @@ final class JSObjectLinker implements TypeBasedGuardingDynamicLinker {
     }
 
     private GuardedInvocation lookup(final CallSiteDescriptor desc, final LinkRequest request, final LinkerServices linkerServices) throws Exception {
-        final StandardOperation op = NashornCallSiteDescriptor.getFirstStandardOperation(desc);
-        if (op == null) {
-            return null;
-        }
-        final String name = NashornCallSiteDescriptor.getOperand(desc);
-        switch (op) {
-        case GET_PROPERTY:
-        case GET_ELEMENT:
-        case GET_METHOD:
-            if (name != null) {
-                return findGetMethod(name);
+        final Operation op = NashornCallSiteDescriptor.getBaseOperation(desc);
+        if (op instanceof StandardOperation) {
+            final String name = NashornCallSiteDescriptor.getOperand(desc);
+            switch ((StandardOperation)op) {
+            case GET:
+                if (NashornCallSiteDescriptor.hasStandardNamespace(desc)) {
+                    if (name != null) {
+                        return findGetMethod(name);
+                    }
+                    // For indexed get, we want get GuardedInvocation beans linker and pass it.
+                    // JSObjectLinker.get uses this fallback getter for explicit signature method access.
+                    return findGetIndexMethod(nashornBeansLinker.getGuardedInvocation(request, linkerServices));
+                }
+                break;
+            case SET:
+                if (NashornCallSiteDescriptor.hasStandardNamespace(desc)) {
+                    return name != null ? findSetMethod(name) : findSetIndexMethod();
+                }
+                break;
+            case CALL:
+                return findCallMethod(desc);
+            case NEW:
+                return findNewMethod(desc);
+            default:
             }
-            // For indexed get, we want get GuardedInvocation beans linker and pass it.
-            // JSObjectLinker.get uses this fallback getter for explicit signature method access.
-            return findGetIndexMethod(nashornBeansLinker.getGuardedInvocation(request, linkerServices));
-        case SET_PROPERTY:
-        case SET_ELEMENT:
-            return name != null ? findSetMethod(name) : findSetIndexMethod();
-        case CALL:
-            return findCallMethod(desc);
-        case NEW:
-            return findNewMethod(desc);
-        default:
         }
         return null;
     }
@@ -139,9 +146,9 @@ final class JSObjectLinker implements TypeBasedGuardingDynamicLinker {
     }
 
     private static GuardedInvocation findCallMethod(final CallSiteDescriptor desc) {
-        MethodHandle mh = JSOBJECT_CALL;
+        MethodHandle mh = NashornCallSiteDescriptor.isScope(desc)? JSOBJECT_SCOPE_CALL : JSOBJECT_CALL;
         if (NashornCallSiteDescriptor.isApplyToCall(desc)) {
-            mh = MH.insertArguments(JSOBJECT_CALL_TO_APPLY, 0, JSOBJECT_CALL);
+            mh = MH.insertArguments(JSOBJECT_CALL_TO_APPLY, 0, mh);
         }
         final MethodType type = desc.getMethodType();
         mh = type.parameterType(type.parameterCount() - 1) == Object[].class ?
@@ -212,6 +219,19 @@ final class JSObjectLinker implements TypeBasedGuardingDynamicLinker {
         }
     }
 
+    // This is used when a JSObject is called as scope call to do undefined -> Global this translation.
+    @SuppressWarnings("unused")
+    private static Object jsObjectScopeCall(final JSObject jsObj, final Object thiz, final Object[] args) {
+        final Object modifiedThiz;
+        if (thiz == ScriptRuntime.UNDEFINED && !jsObj.isStrictFunction()) {
+            final Global global = Context.getGlobal();
+            modifiedThiz = ScriptObjectMirror.wrap(global, global);
+        } else {
+            modifiedThiz = thiz;
+        }
+        return jsObj.call(modifiedThiz, args);
+    }
+
     private static final MethodHandleFunctionality MH = MethodHandleFactory.getFunctionality();
 
     // method handles of the current class
@@ -223,6 +243,7 @@ final class JSObjectLinker implements TypeBasedGuardingDynamicLinker {
     private static final MethodHandle JSOBJECT_GETMEMBER     = findJSObjectMH_V("getMember", Object.class, String.class);
     private static final MethodHandle JSOBJECT_SETMEMBER     = findJSObjectMH_V("setMember", Void.TYPE, String.class, Object.class);
     private static final MethodHandle JSOBJECT_CALL          = findJSObjectMH_V("call", Object.class, Object.class, Object[].class);
+    private static final MethodHandle JSOBJECT_SCOPE_CALL    = findOwnMH_S("jsObjectScopeCall", Object.class, JSObject.class, Object.class, Object[].class);
     private static final MethodHandle JSOBJECT_CALL_TO_APPLY = findOwnMH_S("callToApply", Object.class, MethodHandle.class, JSObject.class, Object.class, Object[].class);
     private static final MethodHandle JSOBJECT_NEW           = findJSObjectMH_V("newObject", Object.class, Object[].class);
 

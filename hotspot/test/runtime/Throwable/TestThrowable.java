@@ -25,8 +25,9 @@
  * @test
  * @bug 8150778
  * @summary Test exception depths, and code to get stack traces
- * @modules java.base/jdk.internal.misc
- * @library /testlibrary
+ * @modules java.base/jdk.internal.misc:open
+ * @modules java.base/java.lang:open
+ * @library /test/lib
  * @run main/othervm -XX:MaxJavaStackTraceDepth=1024 TestThrowable
  */
 

@@ -28,7 +28,6 @@ package sun.lwawt.macosx;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.lang.reflect.Field;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -40,43 +39,36 @@ import javax.swing.event.ChangeListener;
 import static javax.accessibility.AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY;
 import static javax.accessibility.AccessibleContext.ACCESSIBLE_CARET_PROPERTY;
 import static javax.accessibility.AccessibleContext.ACCESSIBLE_SELECTION_PROPERTY;
+import static javax.accessibility.AccessibleContext.ACCESSIBLE_STATE_PROPERTY;
 import static javax.accessibility.AccessibleContext.ACCESSIBLE_TEXT_PROPERTY;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleState;
+import sun.awt.AWTAccessor;
 
 
 class CAccessible extends CFRetainedResource implements Accessible {
-    static Field getNativeAXResourceField() {
-        try {
-            final Field field = AccessibleContext.class.getDeclaredField("nativeAXResource");
-            field.setAccessible(true);
-            return field;
-        } catch (final Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    private static Field nativeAXResourceField = getNativeAXResourceField();
 
     public static CAccessible getCAccessible(final Accessible a) {
         if (a == null) return null;
         AccessibleContext context = a.getAccessibleContext();
-        try {
-            final CAccessible cachedCAX = (CAccessible) nativeAXResourceField.get(context);
-            if (cachedCAX != null) return cachedCAX;
-
-            final CAccessible newCAX = new CAccessible(a);
-            nativeAXResourceField.set(context, newCAX);
-            return newCAX;
-        }  catch (final Exception e) {
-            e.printStackTrace();
-            return null;
+        AWTAccessor.AccessibleContextAccessor accessor
+                = AWTAccessor.getAccessibleContextAccessor();
+        final CAccessible cachedCAX = (CAccessible) accessor.getNativeAXResource(context);
+        if (cachedCAX != null) {
+            return cachedCAX;
         }
+        final CAccessible newCAX = new CAccessible(a);
+        accessor.setNativeAXResource(context, newCAX);
+        return newCAX;
     }
 
     private static native void unregisterFromCocoaAXSystem(long ptr);
     private static native void valueChanged(long ptr);
     private static native void selectedTextChanged(long ptr);
     private static native void selectionChanged(long ptr);
+    private static native void menuOpened(long ptr);
+    private static native void menuClosed(long ptr);
+    private static native void menuItemSelected(long ptr);
 
     private Accessible accessible;
 
@@ -125,16 +117,45 @@ class CAccessible extends CFRetainedResource implements Accessible {
         public void propertyChange(PropertyChangeEvent e) {
             String name = e.getPropertyName();
             if ( ptr != 0 ) {
+                Object newValue = e.getNewValue();
+                Object oldValue = e.getOldValue();
                 if (name.compareTo(ACCESSIBLE_CARET_PROPERTY) == 0) {
                     selectedTextChanged(ptr);
                 } else if (name.compareTo(ACCESSIBLE_TEXT_PROPERTY) == 0 ) {
                     valueChanged(ptr);
                 } else if (name.compareTo(ACCESSIBLE_SELECTION_PROPERTY) == 0 ) {
                     selectionChanged(ptr);
-                }  else if (name.compareTo(ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY) == 0 ) {
-                    Object nv = e.getNewValue();
-                    if (nv instanceof AccessibleContext) {
-                        activeDescendant = (AccessibleContext)nv;
+                } else if (name.compareTo(ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY) == 0 ) {
+                    if (newValue instanceof AccessibleContext) {
+                        activeDescendant = (AccessibleContext)newValue;
+                    }
+                } else if (name.compareTo(ACCESSIBLE_STATE_PROPERTY) == 0) {
+                    AccessibleContext thisAC = accessible.getAccessibleContext();
+                    AccessibleRole thisRole = thisAC.getAccessibleRole();
+                    Accessible parentAccessible = thisAC.getAccessibleParent();
+                    AccessibleRole parentRole = null;
+                    if (parentAccessible != null) {
+                        parentRole = parentAccessible.getAccessibleContext().getAccessibleRole();
+                    }
+                    // At least for now don't handle combo box menu state changes.
+                    // This may change when later fixing issues which currently
+                    // exist for combo boxes, but for now the following is only
+                    // for JPopupMenus, not for combobox menus.
+                    if (parentRole != AccessibleRole.COMBO_BOX) {
+                        if (thisRole == AccessibleRole.POPUP_MENU) {
+                            if ( newValue != null &&
+                                 ((AccessibleState)newValue) == AccessibleState.VISIBLE ) {
+                                    menuOpened(ptr);
+                            } else if ( oldValue != null &&
+                                        ((AccessibleState)oldValue) == AccessibleState.VISIBLE ) {
+                                menuClosed(ptr);
+                            }
+                        } else if (thisRole == AccessibleRole.MENU_ITEM) {
+                            if ( newValue != null &&
+                                 ((AccessibleState)newValue) == AccessibleState.FOCUSED ) {
+                                menuItemSelected(ptr);
+                            }
+                        }
                     }
                 }
             }

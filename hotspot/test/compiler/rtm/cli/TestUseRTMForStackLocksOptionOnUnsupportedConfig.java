@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,6 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /**
@@ -27,11 +26,11 @@
  * @bug 8031320
  * @summary Verify UseRTMForStackLocks option processing on CPUs without
  *          rtm support and/or on VMs without rtm locking support.
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
  *
- * @build compiler.rtm.cli.TestUseRTMForStackLocksOptionOnUnsupportedConfig
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
@@ -42,8 +41,9 @@
 package compiler.rtm.cli;
 
 import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedOS;
 import compiler.testlibrary.rtm.predicate.SupportedVM;
-import jdk.test.lib.ExitCode;
+import jdk.test.lib.process.ExitCode;
 import jdk.test.lib.cli.CommandLineOptionTest;
 import jdk.test.lib.cli.predicate.AndPredicate;
 import jdk.test.lib.cli.predicate.NotPredicate;
@@ -53,8 +53,8 @@ public class TestUseRTMForStackLocksOptionOnUnsupportedConfig
     private static final String DEFAULT_VALUE = "false";
 
     private TestUseRTMForStackLocksOptionOnUnsupportedConfig() {
-        super(new NotPredicate(new AndPredicate(new SupportedCPU(),
-                        new SupportedVM())),
+        super(new NotPredicate(
+                new AndPredicate(new SupportedCPU(), new SupportedOS(), new SupportedVM())),
                 "UseRTMForStackLocks", true, true,
                 TestUseRTMForStackLocksOptionOnUnsupportedConfig.DEFAULT_VALUE,
                 "true");

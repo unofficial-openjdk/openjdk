@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,8 @@
  *  @test
  *  @bug 8031195
  *  @bug 8071657
- *  @summary  JDI: Add support for static and default methods in interfaces
+ *  @bug 8165827
+ *  @summary  JDI: Add support for static, private and default methods in interfaces
  *
  *  @modules jdk.jdi
  *  @run build TestScaffold VMConnection TargetListener TargetAdapter
@@ -35,11 +36,13 @@
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 public class InterfaceMethodsTest extends TestScaffold {
     private static final int RESULT_A = 1;
-    private static final int RESULT_B = 1;
-    private static final int RESULT_TARGET = 1;
+    private static final int RESULT_B = 2;
+    private static final int RESULT_TARGET = 3;
 
     static interface InterfaceA {
         static int staticMethodA() {
@@ -62,7 +65,10 @@ public class InterfaceMethodsTest extends TestScaffold {
             System.out.println("-InterfaceA: default interface method C-");
             return RESULT_A;
         }
-
+        private int privateMethodA() {
+            System.out.println("-InterfaceA: private interface method A-");
+            return RESULT_A;
+        }
         int implementedMethod();
     }
 
@@ -76,14 +82,16 @@ public class InterfaceMethodsTest extends TestScaffold {
             System.out.println("-InterfaceB: default interface method D-");
             return RESULT_B;
         }
-
         static int staticMethodB() {
             System.out.println("-InterfaceB: overridden static interface method B-");
             return RESULT_B;
         }
-
         static int staticMethodC() {
             System.out.println("-InterfaceB: static interface method C-");
+            return RESULT_B;
+        }
+        private int privateMethodB() {
+            System.out.println("-InterfaceB: private interface method B-");
             return RESULT_B;
         }
     }
@@ -102,7 +110,7 @@ public class InterfaceMethodsTest extends TestScaffold {
 
         @Override
         public int defaultMethodB() {
-            System.out.println("-TargetClass: overridden default interface method D");
+            System.out.println("-TargetClass: overridden default interface method B");
 
             return RESULT_TARGET;
         }
@@ -169,9 +177,18 @@ public class InterfaceMethodsTest extends TestScaffold {
     }
 
     private void testInterfaceA(ObjectReference ref) {
-        // Test non-virtual calls on InterfaceA
 
         ReferenceType ifaceClass = (ReferenceType)vm().classesByName(INTERFACEA_NAME).get(0);
+
+        /* Private method calls */
+
+        Method m = testLookup(ifaceClass, "privateMethodA", "()I", true, null); // should succeed
+
+        testInvokePos(m, ref, vm().mirrorOf(RESULT_A), false);
+        testInvokePos(m, ref, vm().mirrorOf(RESULT_A), true);
+
+        // Test non-virtual calls on InterfaceA
+
         /* Default method calls */
 
         // invoke the InterfaceA's "defaultMethodA"
@@ -185,34 +202,47 @@ public class InterfaceMethodsTest extends TestScaffold {
 
         // "defaultMethodD" from InterfaceB is not accessible from here
         testInvokeNeg(ifaceClass, ref, "defaultMethodD", "()I", vm().mirrorOf(RESULT_B),
-                "Attempted to invoke non-existing method");
+                      "Attempted to invoke non-existing method");
 
-        // trying to invoke the asbtract method "implementedMethod"
+        // non-virtual invoke of the abstract method "implementedMethod" fails
         testInvokeNeg(ifaceClass, ref, "implementedMethod", "()I", vm().mirrorOf(TARGET_CLASS_NAME),
-                "Invocation of non-default methods is not supported");
-
+                      "Invocation of abstract methods is not supported");
 
         /* Static method calls */
 
-        // invoke interface static method A
+        // invoke static interface method A
         testInvokePos(ifaceClass, null, "staticMethodA", "()I", vm().mirrorOf(RESULT_A));
 
-        // try to invoke static method A on the instance
-        testInvokePos(ifaceClass, ref, "staticMethodA", "()I", vm().mirrorOf(RESULT_A));
+        // invoking static method A on the instance fails because static method A is
+        // not inherited by TargetClass.
+        testInvokeNeg(ifaceClass, ref, "staticMethodA", "()I", vm().mirrorOf(RESULT_A),
+                      "Invalid MethodID");
 
-        // invoke interface static method B
+        // invoke static interface method B
         testInvokePos(ifaceClass, null, "staticMethodB", "()I", vm().mirrorOf(RESULT_A));
 
-        // try to invoke static method B on the instance
-        testInvokePos(ifaceClass, ref, "staticMethodB", "()I", vm().mirrorOf(RESULT_A));
+        // invoking static method B on the instance fails because static method B is
+        // not inherited by TargetClass.
+        testInvokeNeg(ifaceClass, ref, "staticMethodB", "()I", vm().mirrorOf(RESULT_A),
+                      "Invalid MethodID");
 
         // try to invoke a virtual method
-        testInvokePos(ifaceClass, ref, "implementedMethod", "()I", vm().mirrorOf(RESULT_A), true);
+        testInvokePos(ifaceClass, ref, "implementedMethod", "()I", vm().mirrorOf(RESULT_TARGET), true);
     }
 
     private void testInterfaceB(ObjectReference ref) {
         // Test non-virtual calls on InterfaceB
         ReferenceType ifaceClass = (ReferenceType)vm().classesByName(INTERFACEB_NAME).get(0);
+
+        /* private method calls */
+
+        /* These should fail but won't because of JDK-8167416
+        testLookup(ifaceClass, "privateMethodA", "()I", true, NoSuchMethodError.class); // should fail
+        testLookup(ifaceClass, "privateMethodA", "()I", false, NoSuchMethodError.class); // should fail
+        */
+        Method m = testLookup(ifaceClass, "privateMethodB", "()I", true, null); // should succeed
+        testInvokePos(m, ref, vm().mirrorOf(RESULT_B), false);
+        testInvokePos(m, ref, vm().mirrorOf(RESULT_B), true);
 
         /* Default method calls */
 
@@ -239,39 +269,45 @@ public class InterfaceMethodsTest extends TestScaffold {
         testInvokeNeg(ifaceClass, null, "staticMethodA", "()I", vm().mirrorOf(RESULT_A),
                 "Static interface methods are not inheritable");
 
-        // however it is possible to call "staticMethodA" on the actual instance
+        // "staticMethodA" is not inherited by InterfaceB even from an actual instance
         testInvokeNeg(ifaceClass, ref, "staticMethodA", "()I", vm().mirrorOf(RESULT_A),
                 "Static interface methods are not inheritable");
 
-        // "staticMethodB" is overridden in InterfaceB
+        // "staticMethodB" is re-defined in InterfaceB
         testInvokePos(ifaceClass, null, "staticMethodB", "()I", vm().mirrorOf(RESULT_B));
 
-        // the instance invokes the overriden form of "staticMethodB" from InterfaceB
-        testInvokePos(ifaceClass, ref, "staticMethodB", "()I", vm().mirrorOf(RESULT_B));
+        // the instance fails to invoke the re-defined form of "staticMethodB" from
+        // InterfaceB because staticMethodB is not inherited by TargetClass
+        testInvokeNeg(ifaceClass, ref, "staticMethodB", "()I", vm().mirrorOf(RESULT_B),
+                "Invalid MethodID");
 
         // "staticMethodC" is present only in InterfaceB
         testInvokePos(ifaceClass, null, "staticMethodC", "()I", vm().mirrorOf(RESULT_B));
 
-        // "staticMethodC" should be reachable from the instance too
-        testInvokePos(ifaceClass, ref, "staticMethodC", "()I", vm().mirrorOf(RESULT_B));
+        // "staticMethodC" is not reachable from the instance because staticMethodC
+        // is not inherited by TargetClass.
+        testInvokeNeg(ifaceClass, ref, "staticMethodC", "()I", vm().mirrorOf(RESULT_B),
+                "Invalid MethodID");
     }
 
     private void testImplementationClass(ReferenceType targetClass, ObjectReference thisObject) {
         // Test invocations on the implementation object
 
+        // Note: private interface calls have already been tested
+
         /* Default method calls */
 
         // "defaultMethodA" is accessible and not overridden
-        testInvokePos(targetClass, thisObject, "defaultMethodA", "()I", vm().mirrorOf(RESULT_TARGET));
+        testInvokePos(targetClass, thisObject, "defaultMethodA", "()I", vm().mirrorOf(RESULT_A));
 
         // "defaultMethodB" is accessible and overridden in TargetClass
         testInvokePos(targetClass, thisObject, "defaultMethodB", "()I", vm().mirrorOf(RESULT_TARGET));
 
         // "defaultMethodC" is accessible and overridden in InterfaceB
-        testInvokePos(targetClass, thisObject, "defaultMethodC", "()I", vm().mirrorOf(RESULT_TARGET));
+        testInvokePos(targetClass, thisObject, "defaultMethodC", "()I", vm().mirrorOf(RESULT_B));
 
         // "defaultMethodD" is accessible
-        testInvokePos(targetClass, thisObject, "defaultMethodD", "()I", vm().mirrorOf(RESULT_TARGET));
+        testInvokePos(targetClass, thisObject, "defaultMethodD", "()I", vm().mirrorOf(RESULT_B));
 
 
         /* Non-default instance method calls */
@@ -306,11 +342,16 @@ public class InterfaceMethodsTest extends TestScaffold {
                 "Static interface methods are not inheritable");
     }
 
+    // Non-virtual invocation
     private void testInvokePos(ReferenceType targetClass, ObjectReference ref, String methodName,
                                String methodSig, Value value) {
         testInvokePos(targetClass, ref, methodName, methodSig, value, false);
     }
 
+    // Lookup the named method in the targetClass and invoke on the given object (for instance methods)
+    // using virtual, or non-virtual, invocation mode as specified, for instance methods. Verify the
+    // expected return value.
+    // Should succeed.
     private void testInvokePos(ReferenceType targetClass, ObjectReference ref, String methodName,
                                String methodSig, Value value, boolean virtual) {
         logInvocation(ref, methodName, methodSig, targetClass);
@@ -323,11 +364,31 @@ public class InterfaceMethodsTest extends TestScaffold {
         }
     }
 
+    // Invoke the given Method on the given object (for instance methods)
+    // using virtual, or non-virtual, invocation mode as specified, for instance methods. Verify the
+    // expected return value.
+    // Should succeed.
+    private void testInvokePos(Method method, ObjectReference ref, Value value, boolean virtual) {
+        logInvocation(ref, method.name(), method.signature(), method.declaringType());
+        try {
+            invoke(method.declaringType(), ref, method, value, virtual);
+            System.err.println("--- PASSED");
+        } catch (Exception e) {
+            System.err.println("--- FAILED");
+            failure("FAILED: Invocation failed with error message " + e.getLocalizedMessage());
+        }
+    }
+
+    // Non-virtual invocation - with lookup in targetClass
     private void testInvokeNeg(ReferenceType targetClass, ObjectReference ref, String methodName,
                                String methodSig, Value value, String msg) {
         testInvokeNeg(targetClass, ref, methodName, methodSig, value, msg, false);
     }
 
+    // Lookup the named method in the targetClass and invoke on the given object (for instance methods)
+    // using virtual, or non-virtual, invocation mode as specified, for instance methods. Verify the
+    // expected return value.
+    // Should fail - with msg decribing why failure was expected
     private void testInvokeNeg(ReferenceType targetClass, ObjectReference ref, String methodName,
                                String methodSig, Value value, String msg, boolean virtual) {
         logInvocation(ref, methodName, methodSig, targetClass);
@@ -342,12 +403,17 @@ public class InterfaceMethodsTest extends TestScaffold {
     }
 
     private void invoke(ReferenceType targetClass, ObjectReference ref, String methodName,
-                        String methodSig, Value value, boolean virtual)
-    throws Exception {
+                        String methodSig, Value value, boolean virtual) throws Exception {
+
         Method method = getMethod(targetClass, methodName, methodSig);
         if (method == null) {
             throw new Exception("Can't find method: " + methodName  + " for class = " + targetClass);
         }
+        invoke(targetClass, ref, method, value, virtual);
+    }
+
+    private void invoke(ReferenceType targetClass, ObjectReference ref, Method method,
+                        Value value, boolean virtual) throws Exception {
 
         println("Invoking " + (method.isAbstract() ? "abstract " : " ") + "method: " + method);
         println(method.declaringType().toString());
@@ -357,7 +423,7 @@ public class InterfaceMethodsTest extends TestScaffold {
             if (virtual) {
                 returnValue = invokeVirtual(ref, method);
             } else {
-                returnValue = invokeInstance(ref, method);
+                returnValue = invokeNonVirtual(ref, method);
             }
         } else {
             returnValue = invokeStatic(targetClass, method);
@@ -379,7 +445,7 @@ public class InterfaceMethodsTest extends TestScaffold {
         }
     }
 
-    private Value invokeInstance(ObjectReference ref, Method method) throws Exception {
+    private Value invokeNonVirtual(ObjectReference ref, Method method) throws Exception {
         return ref.invokeMethod(mainThread, method, Collections.emptyList(), ObjectReference.INVOKE_NONVIRTUAL);
     }
 
@@ -440,5 +506,59 @@ public class InterfaceMethodsTest extends TestScaffold {
             System.err.println("Invoking static : " + targetClass.name() + "." +
                     methodName + methodSig);
         }
+    }
+
+    private Method testLookup(ReferenceType targetClass, String methodName, String methodSig,
+                              boolean declaredOnly, Class<?> expectedException) {
+
+        System.err.println("Looking up " + targetClass.name() + "." + methodName + methodSig);
+        try {
+            Method m = declaredOnly ?
+                lookupDeclaredMethod(targetClass, methodName, methodSig) :
+                lookupMethod(targetClass, methodName, methodSig);
+
+            if (expectedException == null) {
+                System.err.println("--- PASSED");
+                return m;
+            }
+            else {
+                System.err.println("--- FAILED");
+                failure("FAILED: lookup succeeded but expected exception "
+                        + expectedException.getSimpleName());
+                return null;
+            }
+        }
+        catch (Throwable t) {
+            if (t.getClass() != expectedException) {
+                System.err.println("--- FAILED");
+                failure("FAILED: got exception " + t + " but expected exception "
+                        + expectedException.getSimpleName());
+                return null;
+            }
+            else {
+                System.err.println("--- PASSED");
+                return null;
+            }
+        }
+    }
+
+    private Method lookupMethod(ReferenceType targetClass, String methodName, String methodSig) {
+        List methods = targetClass.allMethods();
+        Iterator iter = methods.iterator();
+        while (iter.hasNext()) {
+            Method method = (Method)iter.next();
+            if (method.name().equals(methodName) &&
+                method.signature().equals(methodSig)) {
+                return method;
+            }
+        }
+        throw new NoSuchMethodError();
+    }
+
+    private Method lookupDeclaredMethod(ReferenceType targetClass, String methodName, String methodSig) {
+        Method m = findMethod(targetClass, methodName, methodSig);
+        if (m == null)
+            throw new NoSuchMethodError();
+        return m;
     }
 }

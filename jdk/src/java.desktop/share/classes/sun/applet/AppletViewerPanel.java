@@ -40,7 +40,12 @@ import java.applet.*;
  * destroy() methods.
  *
  * @author      Arthur van Hoff
+ *
+ * @deprecated The Applet API is deprecated. See the
+ * <a href="../../java/applet/package-summary.html"> java.applet package
+ * documentation</a> for further information.
  */
+@Deprecated(since = "9")
 class AppletViewerPanel extends AppletPanel {
 
     /* Are we debugging? */
@@ -197,6 +202,7 @@ class AppletViewerPanel extends AppletPanel {
      * Get the applet context. For now this is
      * also implemented by the AppletPanel class.
      */
+    @SuppressWarnings("deprecation")
     public AppletContext getAppletContext() {
         return (AppletContext)getParent();
     }

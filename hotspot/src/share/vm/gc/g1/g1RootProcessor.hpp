@@ -64,6 +64,7 @@ class G1RootProcessor : public StackObj {
     G1RP_PS_ClassLoaderDataGraph_oops_do,
     G1RP_PS_jvmti_oops_do,
     G1RP_PS_CodeCache_oops_do,
+    G1RP_PS_aot_oops_do,
     G1RP_PS_filter_satb_buffers,
     G1RP_PS_refProcessor_oops_do,
     // Leave this one last.
@@ -73,6 +74,11 @@ class G1RootProcessor : public StackObj {
   void worker_has_discovered_all_strong_classes();
   void wait_until_all_strong_classes_discovered();
 
+  void process_all_roots(OopClosure* oops,
+                         CLDClosure* clds,
+                         CodeBlobClosure* blobs,
+                         bool process_string_table);
+
   void process_java_roots(G1RootClosures* closures,
                           G1GCPhaseTimes* phase_times,
                           uint worker_i);
@@ -80,6 +86,14 @@ class G1RootProcessor : public StackObj {
   void process_vm_roots(G1RootClosures* closures,
                         G1GCPhaseTimes* phase_times,
                         uint worker_i);
+
+  void process_string_table_roots(G1RootClosures* closures,
+                                  G1GCPhaseTimes* phase_times,
+                                  uint worker_i);
+
+  void process_code_cache_roots(CodeBlobClosure* code_closure,
+                                G1GCPhaseTimes* phase_times,
+                                uint worker_i);
 
 public:
   G1RootProcessor(G1CollectedHeap* g1h, uint n_workers);
@@ -98,6 +112,13 @@ public:
   void process_all_roots(OopClosure* oops,
                          CLDClosure* clds,
                          CodeBlobClosure* blobs);
+
+  // Apply oops, clds and blobs to strongly and weakly reachable roots in the system,
+  // the only thing different from process_all_roots is that we skip the string table
+  // to avoid keeping every string live when doing class unloading.
+  void process_all_roots_no_string_table(OopClosure* oops,
+                                         CLDClosure* clds,
+                                         CodeBlobClosure* blobs);
 
   // Number of worker threads used by the root processor.
   uint n_workers() const;

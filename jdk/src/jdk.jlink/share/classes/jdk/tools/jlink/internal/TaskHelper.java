@@ -46,19 +46,19 @@ import java.util.Map.Entry;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.stream.Stream;
 
-import jdk.internal.module.ConfigurableModuleFinder;
-import jdk.internal.module.ConfigurableModuleFinder.Phase;
-import jdk.tools.jlink.Jlink;
-import jdk.tools.jlink.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.internal.plugins.ExcludeJmodSectionPlugin;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.plugin.Plugin.Category;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.builder.ImageBuilder;
 import jdk.tools.jlink.plugin.PluginException;
+import jdk.tools.jlink.internal.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.internal.plugins.PluginsResourceBundle;
 import jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
 import jdk.tools.jlink.internal.plugins.StripDebugPlugin;
+import jdk.internal.module.ModulePath;
 
 /**
  *
@@ -90,8 +90,7 @@ public final class TaskHelper {
         public boolean showUsage;
     }
 
-    public static class Option<T> {
-
+    public static class Option<T> implements Comparable<T> {
         public interface Processing<T> {
 
             void process(T task, String opt, String arg) throws BadArgs;
@@ -100,17 +99,34 @@ public final class TaskHelper {
         final boolean hasArg;
         final Processing<T> processing;
         final boolean hidden;
-        final String[] aliases;
+        final String name;
+        final String shortname;
 
-        public Option(boolean hasArg, Processing<T> processing, boolean hidden, String... aliases) {
+        public Option(boolean hasArg, Processing<T> processing, boolean hidden, String name, String shortname) {
+            if (!name.startsWith("--")) {
+                throw new RuntimeException("option name missing --, " + name);
+            }
+            if (!shortname.isEmpty() && !shortname.startsWith("-")) {
+                throw new RuntimeException("short name missing -, " + shortname);
+            }
+
             this.hasArg = hasArg;
             this.processing = processing;
-            this.aliases = aliases;
             this.hidden = hidden;
+            this.name = name;
+            this.shortname = shortname;
         }
 
-        public Option(boolean hasArg, Processing<T> processing, String... aliases) {
-            this(hasArg, processing, false, aliases);
+        public Option(boolean hasArg, Processing<T> processing, String name, String shortname) {
+            this(hasArg, processing, false, name, shortname);
+        }
+
+        public Option(boolean hasArg, Processing<T> processing, boolean hidden, String name) {
+            this(hasArg, processing, hidden, name, "");
+        }
+
+        public Option(boolean hasArg, Processing<T> processing, String name) {
+            this(hasArg, processing, false, name, "");
         }
 
         public boolean isHidden() {
@@ -118,16 +134,10 @@ public final class TaskHelper {
         }
 
         public boolean matches(String opt) {
-            for (String a : aliases) {
-                if (a.equals(opt)) {
-                    return true;
-                } else if (opt.startsWith("--")
-                        && (hasArg && opt.startsWith(a + "="))) {
-                    return true;
-                }
-            }
-            return false;
-        }
+            return opt.equals(name) ||
+                   opt.equals(shortname) ||
+                   hasArg && opt.startsWith("--") && opt.startsWith(name + "=");
+         }
 
         public boolean ignoreRest() {
             return false;
@@ -137,30 +147,55 @@ public final class TaskHelper {
             processing.process(task, opt, arg);
         }
 
-        public String[] aliases() {
-            return aliases;
+        public String getName() {
+            return name;
+        }
+
+        public String resourceName() {
+            return resourcePrefix() + name.substring(2);
+        }
+
+        public String getShortname() {
+            return shortname;
+        }
+
+        public String resourcePrefix() {
+            return "main.opt.";
+        }
+
+        @Override
+        public int compareTo(Object object) {
+            if (!(object instanceof Option<?>)) {
+                throw new RuntimeException("comparing non-Option");
+            }
+
+            Option<?> option = (Option<?>)object;
+
+            return name.compareTo(option.name);
+        }
+
+    }
+
+    private static class PluginOption extends Option<PluginsHelper> {
+        public PluginOption(boolean hasArg,
+                Processing<PluginsHelper> processing, boolean hidden, String name, String shortname) {
+            super(hasArg, processing, hidden, name, shortname);
+        }
+
+        public PluginOption(boolean hasArg,
+                Processing<PluginsHelper> processing, boolean hidden, String name) {
+            super(hasArg, processing, hidden, name, "");
+        }
+
+        public String resourcePrefix() {
+            return "plugin.opt.";
         }
     }
 
-    private static class PlugOption extends Option<PluginsOptions> {
-
-        public PlugOption(boolean hasArg,
-                Processing<PluginsOptions> processing, boolean hidden, String... aliases) {
-            super(hasArg, processing, hidden, aliases);
-        }
-
-        public PlugOption(boolean hasArg,
-                Processing<PluginsOptions> processing, String... aliases) {
-            super(hasArg, processing, aliases);
-        }
-    }
-
-    private final class PluginsOptions {
-
-        private static final String PLUGINS_PATH = "--plugin-module-path";
-        private static final String POST_PROCESS = "--post-process-path";
+    private final class PluginsHelper {
 
         private Layer pluginsLayer = Layer.boot();
+        private final List<Plugin> plugins;
         private String lastSorter;
         private boolean listPlugins;
         private Path existingImage;
@@ -169,10 +204,10 @@ public final class TaskHelper {
         // Each such occurrence results in a Map of arguments. So, there could be multiple
         // args maps per plugin instance.
         private final Map<Plugin, List<Map<String, String>>> pluginToMaps = new HashMap<>();
-        private final List<PlugOption> pluginsOptions = new ArrayList<>();
-        private final List<PlugOption> mainOptions = new ArrayList<>();
+        private final List<PluginOption> pluginsOptions = new ArrayList<>();
+        private final List<PluginOption> mainOptions = new ArrayList<>();
 
-        private PluginsOptions(String pp) throws BadArgs {
+        private PluginsHelper(String pp) throws BadArgs {
 
             if (pp != null) {
                 String[] dirs = pp.split(File.pathSeparator);
@@ -184,36 +219,41 @@ public final class TaskHelper {
                 pluginsLayer = createPluginsLayer(paths);
             }
 
+            plugins = PluginRepository.getPlugins(pluginsLayer);
+
             Set<String> optionsSeen = new HashSet<>();
-            for (Plugin plugin : PluginRepository.
-                    getPlugins(pluginsLayer)) {
+            for (Plugin plugin : plugins) {
                 if (!Utils.isDisabled(plugin)) {
                     addOrderedPluginOptions(plugin, optionsSeen);
                 }
             }
-            mainOptions.add(new PlugOption(false,
-                    (task, opt, arg) -> {
-                        // This option is handled prior
-                        // to have the options parsed.
-                    },
-                    "--plugin-module-path"));
-            mainOptions.add(new PlugOption(true, (task, opt, arg) -> {
+            mainOptions.add(new PluginOption(true, (task, opt, arg) -> {
+                    for (Plugin plugin : plugins) {
+                        if (plugin.getName().equals(arg)) {
+                            pluginToMaps.remove(plugin);
+                            return;
+                        }
+                    }
+                    throw newBadArgs("err.no.such.plugin", arg);
+                },
+                false, "--disable-plugin"));
+            mainOptions.add(new PluginOption(true, (task, opt, arg) -> {
                 Path path = Paths.get(arg);
                 if (!Files.exists(path) || !Files.isDirectory(path)) {
-                    throw newBadArgs("err.existing.image.must.exist");
+                    throw newBadArgs("err.image.must.exist", path);
                 }
                 existingImage = path.toAbsolutePath();
-            }, true, POST_PROCESS));
-            mainOptions.add(new PlugOption(true,
+            }, true, "--post-process-path"));
+            mainOptions.add(new PluginOption(true,
                     (task, opt, arg) -> {
                         lastSorter = arg;
                     },
                     true, "--resources-last-sorter"));
-            mainOptions.add(new PlugOption(false,
+            mainOptions.add(new PluginOption(false,
                     (task, opt, arg) -> {
                         listPlugins = true;
                     },
-                    "--list-plugins"));
+                    false, "--list-plugins"));
         }
 
         private List<Map<String, String>> argListFor(Plugin plugin) {
@@ -249,8 +289,8 @@ public final class TaskHelper {
             }
             optionsSeen.add(option);
 
-            PlugOption plugOption
-                    = new PlugOption(plugin.hasArguments(),
+            PluginOption plugOption
+                    = new PluginOption(plugin.hasArguments(),
                             (task, opt, arg) -> {
                                 if (!Utils.isFunctional(plugin)) {
                                     throw newBadArgs("err.provider.not.functional",
@@ -300,7 +340,7 @@ public final class TaskHelper {
                                     }
                                 }
                             },
-                            "--" + option);
+                            false, "--" + option);
             pluginsOptions.add(plugOption);
 
             if (Utils.isFunctional(plugin)) {
@@ -310,30 +350,44 @@ public final class TaskHelper {
 
                 if (plugin instanceof DefaultCompressPlugin) {
                     plugOption
-                        = new PlugOption(false,
+                        = new PluginOption(false,
                             (task, opt, arg) -> {
                                 Map<String, String> m = addArgumentMap(plugin);
                                 m.put(DefaultCompressPlugin.NAME, DefaultCompressPlugin.LEVEL_2);
-                            }, "-c");
+                            }, false, "--compress", "-c");
                     mainOptions.add(plugOption);
                 } else if (plugin instanceof StripDebugPlugin) {
                     plugOption
-                        = new PlugOption(false,
+                        = new PluginOption(false,
                             (task, opt, arg) -> {
                                 addArgumentMap(plugin);
-                            }, "-G");
+                            }, false, "--strip-debug", "-G");
+                    mainOptions.add(plugOption);
+                } else if (plugin instanceof ExcludeJmodSectionPlugin) {
+                    plugOption = new PluginOption(false, (task, opt, arg) -> {
+                            Map<String, String> m = addArgumentMap(plugin);
+                            m.put(ExcludeJmodSectionPlugin.NAME,
+                                  ExcludeJmodSectionPlugin.MAN_PAGES);
+                        }, false, "--no-man-pages");
+                    mainOptions.add(plugOption);
+
+                    plugOption = new PluginOption(false, (task, opt, arg) -> {
+                        Map<String, String> m = addArgumentMap(plugin);
+                        m.put(ExcludeJmodSectionPlugin.NAME,
+                              ExcludeJmodSectionPlugin.INCLUDE_HEADER_FILES);
+                    }, false, "--no-header-files");
                     mainOptions.add(plugOption);
                 }
             }
         }
 
-        private PlugOption getOption(String name) throws BadArgs {
-            for (PlugOption o : pluginsOptions) {
+        private PluginOption getOption(String name) throws BadArgs {
+            for (PluginOption o : pluginsOptions) {
                 if (o.matches(name)) {
                     return o;
                 }
             }
-            for (PlugOption o : mainOptions) {
+            for (PluginOption o : mainOptions) {
                 if (o.matches(name)) {
                     return o;
                 }
@@ -341,7 +395,7 @@ public final class TaskHelper {
             return null;
         }
 
-        private PluginsConfiguration getPluginsConfig(Path output
+        private PluginsConfiguration getPluginsConfig(Path output, Map<String, String> launchers
                     ) throws IOException, BadArgs {
             if (output != null) {
                 if (Files.exists(output)) {
@@ -359,7 +413,15 @@ public final class TaskHelper {
                 // we call configure once for each occurrence. It is upto the plugin
                 // to 'merge' and/or 'override' arguments.
                 for (Map<String, String> map : argsMaps) {
-                    plugin.configure(Collections.unmodifiableMap(map));
+                    try {
+                        plugin.configure(Collections.unmodifiableMap(map));
+                    } catch (IllegalArgumentException e) {
+                        if (JlinkTask.DEBUG) {
+                            System.err.println("Plugin " + plugin.getName() + " threw exception with config: " + map);
+                            e.printStackTrace();
+                        }
+                        throw e;
+                    }
                 }
 
                 if (!Utils.isDisabled(plugin)) {
@@ -370,9 +432,9 @@ public final class TaskHelper {
             // recreate or postprocessing don't require an output directory.
             ImageBuilder builder = null;
             if (output != null) {
-                builder = new DefaultImageBuilder(output);
-
+                builder = new DefaultImageBuilder(output, launchers);
             }
+
             return new Jlink.PluginsConfiguration(pluginsList,
                     builder, lastSorter);
         }
@@ -433,63 +495,38 @@ public final class TaskHelper {
         }
 
         private String getPluginsPath(String[] args) throws BadArgs {
-            String pp = null;
-            for (int i = 0; i < args.length; i++) {
-                if (args[i].equals(PluginsOptions.PLUGINS_PATH)) {
-                    if (i == args.length - 1) {
-                        throw new BadArgs("err.no.plugins.path").showUsage(true);
-                    } else {
-                        i += 1;
-                        pp = args[i];
-                        if (!pp.isEmpty() && pp.charAt(0) == '-') {
-                            throw new BadArgs("err.no.plugins.path").showUsage(true);
-                        }
-                        break;
-                    }
-                }
-            }
-            return pp;
+            return null;
         }
 
+        // used by jimage. Return unhandled arguments like "create", "describe".
         public List<String> handleOptions(T task, String[] args) throws BadArgs {
+            return handleOptions(task, args, true);
+        }
+
+        // used by jlink. No unhandled arguments like "create", "describe".
+        void handleOptionsNoUnhandled(T task, String[] args) throws BadArgs {
+            handleOptions(task, args, false);
+        }
+
+        // shared code that handles options for both jlink and jimage. jimage uses arguments like
+        // "create", "describe" etc. as "task names". Those arguments are unhandled here and returned
+        // as "unhandled arguments list". jlink does not want such arguments. "collectUnhandled" flag
+        // tells whether to allow for unhandled arguments or not.
+        private List<String> handleOptions(T task, String[] args, boolean collectUnhandled) throws BadArgs {
             // findbugs warning, copy instead of keeping a reference.
             command = Arrays.copyOf(args, args.length);
 
             // Must extract it prior to do any option analysis.
             // Required to interpret custom plugin options.
             // Unit tests can call Task multiple time in same JVM.
-            pluginOptions = new PluginsOptions(getPluginsPath(args));
+            pluginOptions = new PluginsHelper(null);
 
-            // First extract plugins path if any
-            String pp = null;
-            List<String> filteredArgs = new ArrayList<>();
-            for (int i = 0; i < args.length; i++) {
-                if (args[i].equals(PluginsOptions.PLUGINS_PATH)) {
-                    if (i == args.length - 1) {
-                        throw new BadArgs("err.no.plugins.path").showUsage(true);
-                    } else {
-                        warning("warn.thirdparty.plugins.enabled");
-                        log.println(bundleHelper.getMessage("warn.thirdparty.plugins"));
-                        i += 1;
-                        String arg = args[i];
-                        if (!arg.isEmpty() && arg.charAt(0) == '-') {
-                            throw new BadArgs("err.no.plugins.path").showUsage(true);
-                        }
-                        pp = args[i];
-                    }
-                } else {
-                    filteredArgs.add(args[i]);
-                }
-            }
-            String[] arr = new String[filteredArgs.size()];
-            args = filteredArgs.toArray(arr);
-
-            List<String> rest = new ArrayList<>();
+            List<String> rest = collectUnhandled? new ArrayList<>() : null;
             // process options
             for (int i = 0; i < args.length; i++) {
-                if (!args[i].isEmpty() && args[i].charAt(0) == '-') {
+                if (args[i].charAt(0) == '-') {
                     String name = args[i];
-                    PlugOption pluginOption = null;
+                    PluginOption pluginOption = null;
                     Option<T> option = getOption(name);
                     if (option == null) {
                         pluginOption = pluginOptions.getOption(name);
@@ -524,7 +561,12 @@ public final class TaskHelper {
                         i = args.length;
                     }
                 } else {
-                    rest.add(args[i]);
+                    if (collectUnhandled) {
+                        rest.add(args[i]);
+                    } else {
+                        throw new BadArgs("err.orphan.argument", args[i]).
+                            showUsage(true);
+                    }
                 }
             }
             return rest;
@@ -540,32 +582,13 @@ public final class TaskHelper {
         }
 
         public void showHelp(String progName) {
-            showHelp(progName, true);
-        }
-
-        private void showHelp(String progName, boolean showsImageBuilder) {
             log.println(bundleHelper.getMessage("main.usage", progName));
-            for (Option<?> o : options) {
-                String name = o.aliases[0].substring(1); // there must always be at least one name
-                name = name.charAt(0) == '-' ? name.substring(1) : name;
-                if (o.isHidden() || name.equals("h")) {
-                    continue;
-                }
-                log.println(bundleHelper.getMessage("main.opt." + name));
-            }
-
-            for (Option<?> o : pluginOptions.mainOptions) {
-                if (o.aliases[0].equals(PluginsOptions.POST_PROCESS)
-                        && !showsImageBuilder) {
-                    continue;
-                }
-                String name = o.aliases[0].substring(1); // there must always be at least one name
-                name = name.charAt(0) == '-' ? name.substring(1) : name;
-                if (o.isHidden()) {
-                    continue;
-                }
-                log.println(bundleHelper.getMessage("plugin.opt." + name));
-            }
+            Stream.concat(options.stream(), pluginOptions.mainOptions.stream())
+                .filter(option -> !option.isHidden())
+                .sorted()
+                .forEach(option -> {
+                     log.println(bundleHelper.getMessage(option.resourceName()));
+                });
 
             log.println(bundleHelper.getMessage("main.command.files"));
         }
@@ -574,6 +597,7 @@ public final class TaskHelper {
             log.println("\n" + bundleHelper.getMessage("main.extended.help"));
             List<Plugin> pluginList = PluginRepository.
                     getPlugins(pluginOptions.pluginsLayer);
+
             for (Plugin plugin : Utils.getSortedPlugins(pluginList)) {
                 showPlugin(plugin, log);
             }
@@ -626,7 +650,7 @@ public final class TaskHelper {
         }
     }
 
-    private PluginsOptions pluginOptions;
+    private PluginsHelper pluginOptions;
     private PrintWriter log;
     private final ResourceBundleHelper bundleHelper;
 
@@ -674,9 +698,9 @@ public final class TaskHelper {
                 + bundleHelper.getMessage(key, args));
     }
 
-    public PluginsConfiguration getPluginsConfig(Path output)
+    public PluginsConfiguration getPluginsConfig(Path output, Map<String, String> launchers)
             throws IOException, BadArgs {
-        return pluginOptions.getPluginsConfig(output);
+        return pluginOptions.getPluginsConfig(output, launchers);
     }
 
     public Path getExistingImage() {
@@ -692,21 +716,15 @@ public final class TaskHelper {
     }
 
     static Layer createPluginsLayer(List<Path> paths) {
-        Path[] arr = new Path[paths.size()];
-        paths.toArray(arr);
-        ModuleFinder finder = ModuleFinder.of(arr);
 
-        // jmods are located at link-time
-        if (finder instanceof ConfigurableModuleFinder) {
-            ((ConfigurableModuleFinder) finder).configurePhase(Phase.LINK_TIME);
-        }
-
+        Path[] dirs = paths.toArray(new Path[0]);
+        ModuleFinder finder = ModulePath.of(Runtime.version(), true, dirs);
         Configuration bootConfiguration = Layer.boot().configuration();
         try {
             Configuration cf = bootConfiguration
-                .resolveRequiresAndUses(ModuleFinder.of(),
-                                        finder,
-                                        Collections.emptySet());
+                .resolveAndBind(ModuleFinder.of(),
+                                finder,
+                                Collections.emptySet());
             ClassLoader scl = ClassLoader.getSystemClassLoader();
             return Layer.boot().defineModulesWithOneLoader(cf, scl);
         } catch (Exception ex) {

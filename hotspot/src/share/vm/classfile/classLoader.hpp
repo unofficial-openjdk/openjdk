@@ -50,12 +50,14 @@ class ClassFileStream;
 
 class ClassPathEntry : public CHeapObj<mtClass> {
 private:
-  ClassPathEntry* _next;
+  ClassPathEntry* volatile _next;
 public:
   // Next entry in class path
-  ClassPathEntry* next() const { return _next; }
+  ClassPathEntry* next() const {
+    return (ClassPathEntry*) OrderAccess::load_ptr_acquire(&_next);
+  }
   void set_next(ClassPathEntry* next) {
-    // may have unlocked readers, so write atomically.
+    // may have unlocked readers, so ensure visibility.
     OrderAccess::release_store_ptr(&_next, next);
   }
   virtual bool is_jrt() = 0;
@@ -411,6 +413,8 @@ class ClassLoader: AllStatic {
     }
   }
 
+  static bool is_in_patch_mod_entries(Symbol* module_name);
+
 #if INCLUDE_CDS
   // Sharing dump and restore
 
@@ -441,7 +445,7 @@ class ClassLoader: AllStatic {
   static void set_first_append_entry(ClassPathEntry* entry);
 
   // indicates if class path already contains a entry (exact match by name)
-  static bool contains_entry(ClassPathEntry* entry);
+  static bool contains_append_entry(const char* name);
 
   // adds a class path list
   static void add_to_list(ClassPathEntry* new_entry);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@ import java.nio.file.Paths;
 import java.security.AccessController;
 import java.security.Permission;
 import java.security.PrivilegedAction;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,12 +42,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import jdk.internal.module.ModuleBootstrap;
+import jdk.internal.module.ModulePath;
+import jdk.internal.module.SystemModuleFinder;
 import sun.security.action.GetPropertyAction;
 
 /**
  * A finder of modules. A {@code ModuleFinder} is used to find modules during
- * <a href="Configuration.html#resolution">resolution</a> or
- * <a href="Configuration.html#servicebinding">service binding</a>.
+ * <a href="package-summary.html#resolution">resolution</a> or
+ * <a href="package-summary.html#servicebinding">service binding</a>.
  *
  * <p> A {@code ModuleFinder} can only find one module with a given name. A
  * {@code ModuleFinder} that finds modules in a sequence of directories, for
@@ -84,6 +86,7 @@ import sun.security.action.GetPropertyAction;
  * <p> A {@code ModuleFinder} is not required to be thread safe. </p>
  *
  * @since 9
+ * @spec JPMS
  */
 
 public interface ModuleFinder {
@@ -123,8 +126,8 @@ public interface ModuleFinder {
      * to find that module. </p>
      *
      * @apiNote This is important to have for methods such as {@link
-     * Configuration#resolveRequiresAndUses resolveRequiresAndUses} that need
-     * to scan the module path to find modules that provide a specific service.
+     * Configuration#resolveAndBind resolveAndBind} that need to scan the
+     * module path to find modules that provide a specific service.
      *
      * @return The set of all module references that this finder locates
      *
@@ -138,7 +141,7 @@ public interface ModuleFinder {
 
     /**
      * Returns a module finder that locates the <em>system modules</em>. The
-     * system modules are typically linked into the Java run-time image.
+     * system modules are the modules in the Java run-time image.
      * The module finder will always find {@code java.base}.
      *
      * <p> If there is a security manager set then its {@link
@@ -167,11 +170,12 @@ public interface ModuleFinder {
 
         Path modules = Paths.get(home, "lib", "modules");
         if (Files.isRegularFile(modules)) {
-            return new SystemModuleFinder();
+            return SystemModuleFinder.getInstance();
         } else {
             Path mlib = Paths.get(home, "modules");
             if (Files.isDirectory(mlib)) {
-                return of(mlib);
+                // exploded build may be patched
+                return ModulePath.of(ModuleBootstrap.patcher(), mlib);
             } else {
                 throw new InternalError("Unable to detect the run-time image");
             }
@@ -197,13 +201,9 @@ public interface ModuleFinder {
      *
      * <p> If an element is a path to a directory of modules then each entry in
      * the directory is a packaged module or the top-level directory of an
-     * exploded module. The module finder's {@link #find(String) find} or
-     * {@link #findAll() findAll} methods throw {@link FindException} if a
-     * directory containing more than one module with the same name is
-     * encountered. </p>
-     *
-     * <p> If an element in the array is a path to a directory, and that
-     * directory contains a file named {@code module-info.class}, then the
+     * exploded module. It it an error if a directory contains more than one
+     * module with the same name. If an element is a path to a directory, and
+     * that directory contains a file named {@code module-info.class}, then the
      * directory is treated as an exploded module rather than a directory of
      * modules. </p>
      *
@@ -213,9 +213,8 @@ public interface ModuleFinder {
      * entry in a {@link java.util.jar.JarFile#isMultiRelease() multi-release}
      * JAR file) is a modular JAR and is an <em>explicit module</em>.
      * A JAR file that does not have a {@code module-info.class} in the
-     * top-level directory is an {@link ModuleDescriptor#isAutomatic automatic}
-     * module. The {@link ModuleDescriptor} for an automatic module is created as
-     * follows:
+     * top-level directory is created as an automatic module. The components
+     * for the automatic module are derived as follows:
      *
      * <ul>
      *
@@ -229,15 +228,16 @@ public interface ModuleFinder {
      *
      *         <li><p> If the name matches the regular expression {@code
      *         "-(\\d+(\\.|$))"} then the module name will be derived from the
-     *         subsequence proceeding the hyphen of the first occurrence. The
+     *         subsequence preceding the hyphen of the first occurrence. The
      *         subsequence after the hyphen is parsed as a {@link
      *         ModuleDescriptor.Version} and ignored if it cannot be parsed as
      *         a {@code Version}. </p></li>
      *
-     *         <li><p> For the module name, then all non-alphanumeric
-     *         characters ({@code [^A-Za-z0-9])} are replaced with a dot
-     *         ({@code "."}), all repeating dots are replaced with one dot,
-     *         and all leading and trailing dots are removed. </p></li>
+     *         <li><p> For the module name, then any trailing digits and dots
+     *         are removed, all non-alphanumeric characters ({@code [^A-Za-z0-9]})
+     *         are replaced with a dot ({@code "."}), all repeating dots are
+     *         replaced with one dot, and all leading and trailing dots are
+     *         removed. </p></li>
      *
      *         <li><p> As an example, a JAR file named {@code foo-bar.jar} will
      *         derive a module name {@code foo.bar} and no version. A JAR file
@@ -246,46 +246,55 @@ public interface ModuleFinder {
      *
      *     </ul></li>
      *
-     *     <li><p> It {@link ModuleDescriptor#requires() requires} {@code
-     *     java.base}. </p></li>
+     *     <li><p> The set of packages in the module is derived from the
+     *     non-directory entries in the JAR file that have names ending in
+     *     "{@code .class}". A candidate package name is derived from the name
+     *     using the characters up to, but not including, the last forward slash.
+     *     All remaining forward slashes are replaced with dot ({@code "."}). If
+     *     the resulting string is a legal package name then it is assumed to be
+     *     a package name. For example, if the JAR file contains the entry
+     *     "{@code p/q/Foo.class}" then the package name derived is
+     *     "{@code p.q}".</p></li>
      *
-     *     <li><p> All entries in the JAR file with names ending with {@code
-     *     .class} are assumed to be class files where the name corresponds
-     *     to the fully qualified name of the class. The packages of all
-     *     classes are {@link ModuleDescriptor#exports() exported}. </p></li>
-     *
-     *     <li><p> The contents of all entries starting with {@code
+     *     <li><p> The contents of entries starting with {@code
      *     META-INF/services/} are assumed to be service configuration files
-     *     (see {@link java.util.ServiceLoader}). The name of the file
-     *     (that follows {@code META-INF/services/}) is assumed to be the
-     *     fully-qualified binary name of a service type. The entries in the
-     *     file are assumed to be the fully-qualified binary names of
-     *     provider classes. </p></li>
+     *     (see {@link java.util.ServiceLoader}). If the name of a file
+     *     (that follows {@code META-INF/services/}) is a legal class name
+     *     then it is assumed to be the fully-qualified class name of a service
+     *     type. The entries in the file are assumed to be the fully-qualified
+     *     class names of provider classes. </p></li>
      *
      *     <li><p> If the JAR file has a {@code Main-Class} attribute in its
-     *     main manifest then its value is the {@link
+     *     main manifest then its value is the module {@link
      *     ModuleDescriptor#mainClass() main class}. </p></li>
      *
      * </ul>
      *
      * <p> If a {@code ModuleDescriptor} cannot be created (by means of the
      * {@link ModuleDescriptor.Builder ModuleDescriptor.Builder} API) for an
-     * automatic module then {@code FindException} is thrown. This can arise,
-     * for example, when a legal Java identifier name cannot be derived from
-     * the file name of the JAR file or where a package name derived from an
-     * entry ending with {@code .class} is not a legal Java identifier. </p>
+     * automatic module then {@code FindException} is thrown. This can arise
+     * when a legal module name cannot be derived from the file name of the JAR
+     * file, where the JAR file contains a {@code .class} in the top-level
+     * directory of the JAR file, where an entry in a service configuration
+     * file is not a legal class name or its package name is not in the set of
+     * packages derived for the module, or where the module main class is not
+     * a legal class name or its package is not in the module. </p>
      *
      * <p> In addition to JAR files, an implementation may also support modules
-     * that are packaged in other implementation specific module formats. When
-     * a file is encountered that is not recognized as a packaged module then
-     * {@code FindException} is thrown. An implementation may choose to ignore
-     * some files, {@link java.nio.file.Files#isHidden hidden} files for
-     * example. Paths to files that do not exist are always ignored. </p>
+     * that are packaged in other implementation specific module formats. If
+     * an element in the array specified to this method is a path to a directory
+     * of modules then entries in the directory that not recognized as modules
+     * are ignored. If an element in the array is a path to a packaged module
+     * that is not recognized then a {@code FindException} is thrown when the
+     * file is encountered. Paths to files that do not exist are always ignored.
+     * </p>
      *
      * <p> As with automatic modules, the contents of a packaged or exploded
      * module may need to be <em>scanned</em> in order to determine the packages
-     * in the module. If a {@code .class} file that corresponds to a class in an
-     * unnamed package is encountered then {@code FindException} is thrown. </p>
+     * in the module. If a {@code .class} file (other than {@code
+     * module-info.class}) is found in the top-level directory then it is
+     * assumed to be a class in the unnamed package and so {@code FindException}
+     * is thrown. </p>
      *
      * <p> Finders created by this method are lazy and do not eagerly check
      * that the given file paths are directories or packaged modules.
@@ -316,7 +325,7 @@ public interface ModuleFinder {
             };
         }
 
-        return new ModulePath(entries);
+        return ModulePath.of(entries);
     }
 
     /**
@@ -333,7 +342,7 @@ public interface ModuleFinder {
      *
      * <p> When locating modules then any exceptions or errors thrown by the
      * {@code find} or {@code findAll} methods of the underlying module finders
-     * will be propogated to the caller of the resulting module finder's
+     * will be propagated to the caller of the resulting module finder's
      * {@code find} or {@code findAll} methods. </p>
      *
      * @param finders
@@ -342,8 +351,8 @@ public interface ModuleFinder {
      * @return A {@code ModuleFinder} that composes a sequence of module finders
      */
     static ModuleFinder compose(ModuleFinder... finders) {
-        final List<ModuleFinder> finderList = Arrays.asList(finders);
-        finderList.forEach(Objects::requireNonNull);
+        // copy the list and check for nulls
+        final List<ModuleFinder> finderList = List.of(finders);
 
         return new ModuleFinder() {
             private final Map<String, ModuleReference> nameToModule = new HashMap<>();

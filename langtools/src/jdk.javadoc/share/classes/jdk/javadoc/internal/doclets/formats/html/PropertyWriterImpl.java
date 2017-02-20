@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,6 @@
  */
 
 package jdk.javadoc.internal.doclets.formats.html;
-
-import java.io.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -74,6 +72,11 @@ public class PropertyWriterImpl extends AbstractMemberWriter
         Content memberTree = writer.getMemberTreeHeader();
         writer.addSummaryHeader(this, typeElement, memberTree);
         return memberTree;
+    }
+
+    @Override
+    public boolean showTabs() {
+        return false;
     }
 
     /**
@@ -149,7 +152,7 @@ public class PropertyWriterImpl extends AbstractMemberWriter
     @Override
     public void addComments(ExecutableElement property, Content propertyDocTree) {
         TypeElement holder = (TypeElement)property.getEnclosingElement();
-        if (!utils.getBody(property).isEmpty()) {
+        if (!utils.getFullBody(property).isEmpty()) {
             if (holder.equals(typeElement) ||
                     (!utils.isPublic(holder) || utils.isLinkable(holder))) {
                 writer.addInlineComment(property, propertyDocTree);
@@ -235,10 +238,8 @@ public class PropertyWriterImpl extends AbstractMemberWriter
      */
     @Override
     public List<String> getSummaryTableHeader(Element member) {
-        List<String> header = Arrays.asList(configuration.getText("doclet.Type"),
-                configuration.getText("doclet.0_and_1",
-                        configuration.getText("doclet.Property"),
-                        configuration.getText("doclet.Description")));
+        List<String> header = Arrays.asList(resources.getText("doclet.Type"),
+                resources.getText("doclet.Property"), resources.getText("doclet.Description"));
         return header;
     }
 

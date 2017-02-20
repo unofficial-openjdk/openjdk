@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -735,7 +735,11 @@ public class PNGImageReader extends ImageReader {
                     parse_iCCP_chunk(chunkLength);
                     break;
                 case iTXt_TYPE:
-                    parse_iTXt_chunk(chunkLength);
+                    if (ignoreMetadata) {
+                        stream.skipBytes(chunkLength);
+                    } else {
+                        parse_iTXt_chunk(chunkLength);
+                    }
                     break;
                 case pHYs_TYPE:
                     parse_pHYs_chunk();
@@ -759,7 +763,11 @@ public class PNGImageReader extends ImageReader {
                     parse_tRNS_chunk(chunkLength);
                     break;
                 case zTXt_TYPE:
-                    parse_zTXt_chunk(chunkLength);
+                    if (ignoreMetadata) {
+                        stream.skipBytes(chunkLength);
+                    } else {
+                        parse_zTXt_chunk(chunkLength);
+                    }
                     break;
                 default:
                     // Read an unknown chunk
@@ -937,12 +945,6 @@ public class PNGImageReader extends ImageReader {
         for (int srcY = 0; srcY < passHeight; srcY++) {
             // Skip filter byte and the remaining row bytes
             pixelStream.skipBytes(1 + bytesPerRow);
-
-            // If read has been aborted, just return
-            // processReadAborted will be called later
-            if (abortRequested()) {
-                return;
-            }
         }
     }
 
@@ -996,6 +998,13 @@ public class PNGImageReader extends ImageReader {
             for (int srcY = 0; srcY < passHeight; srcY++) {
                 // Update count of pixels read
                 updateImageProgress(passWidth);
+                /*
+                 * If read has been aborted, just return
+                 * processReadAborted will be called later
+                 */
+                if (abortRequested()) {
+                    return;
+                }
                 // Skip filter byte and the remaining row bytes
                 pixelStream.skipBytes(1 + bytesPerRow);
             }
@@ -1105,7 +1114,13 @@ public class PNGImageReader extends ImageReader {
         for (int srcY = 0; srcY < passHeight; srcY++) {
             // Update count of pixels read
             updateImageProgress(passWidth);
-
+            /*
+             * If read has been aborted, just return
+             * processReadAborted will be called later
+             */
+            if (abortRequested()) {
+                return;
+            }
             // Read the filter type byte and a row of data
             int filter = pixelStream.read();
             try {
@@ -1195,12 +1210,6 @@ public class PNGImageReader extends ImageReader {
                                    updateWidth, 1,
                                    updateXStep, updateYStep,
                                    destinationBands);
-
-                // If read has been aborted, just return
-                // processReadAborted will be called later
-                if (abortRequested()) {
-                    return;
-                }
             }
         }
 
@@ -1214,8 +1223,6 @@ public class PNGImageReader extends ImageReader {
 
         this.pixelsDone = 0;
         this.totalPixels = width*height;
-
-        clearAbortRequest();
 
         if (metadata.IHDR_interlaceMethod == 0) {
             decodePass(0, 0, 0, 1, 1, width, height);
@@ -1241,8 +1248,10 @@ public class PNGImageReader extends ImageReader {
                              (height + ybump)/YSubsampling);
                 }
 
-                // If read has been aborted, just return
-                // processReadAborted will be called later
+                /*
+                 * If read has been aborted, just return
+                 * processReadAborted will be called later
+                 */
                 if (abortRequested()) {
                     return;
                 }
@@ -1332,13 +1341,19 @@ public class PNGImageReader extends ImageReader {
                                        inputBandsForColorType[colorType],
                                       theImage.getSampleModel().getNumBands());
 
+            clearAbortRequest();
             processImageStarted(0);
-            decodeImage();
             if (abortRequested()) {
                 processReadAborted();
             } else {
-                processImageComplete();
+                decodeImage();
+                if (abortRequested()) {
+                    processReadAborted();
+                } else {
+                    processImageComplete();
+                }
             }
+
         } catch (IOException e) {
             throw new IIOException("Error reading PNG image data", e);
         } finally {

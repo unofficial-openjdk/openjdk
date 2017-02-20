@@ -75,7 +75,8 @@ inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
   if (original_pc != NULL) {
     _pc = original_pc;
-    assert(((CompiledMethod*)_cb)->insts_contains(_pc), "original PC must be in CompiledMethod");
+    assert(_cb->as_compiled_method()->insts_contains_inclusive(_pc),
+           "original PC must be in the main code section of the the compiled method (or must be immediately following it)");
     _deopt_state = is_deoptimized;
   } else {
     if (_cb->is_deoptimization_stub()) {
@@ -101,6 +102,7 @@ inline frame::frame(intptr_t* sp, intptr_t* fp) {
   // call a specialized frame constructor instead of this one.
   // Then we could use the assert below. However this assert is of somewhat dubious
   // value.
+  // UPDATE: this constructor is only used by trace_method_handle_stub() now.
   // assert(_pc != NULL, "no pc?");
 
   _cb = CodeCache::find_blob(_pc);

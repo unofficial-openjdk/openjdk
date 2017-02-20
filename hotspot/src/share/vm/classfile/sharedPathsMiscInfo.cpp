@@ -146,6 +146,9 @@ bool SharedPathsMiscInfo::check(jint type, const char* path) {
           // But we want it to not exist -> fail
           return fail("File must not exist");
         }
+        if ((st.st_mode & S_IFMT) != S_IFREG) {
+          return fail("Did not get a regular file as expected.");
+        }
         time_t    timestamp;
         long      filesize;
 
@@ -161,7 +164,6 @@ bool SharedPathsMiscInfo::check(jint type, const char* path) {
       }
     }
     break;
-
   default:
     return fail("Corrupted archive file header");
   }

@@ -447,6 +447,7 @@ public final class AWTUtilities {
      * @param shape the new 'mixing-cutout' shape
      * @throws NullPointerException if the component argument is {@code null}
      */
+    @Deprecated(since = "9")
     public static void setComponentMixingCutoutShape(Component component,
             Shape shape)
     {
@@ -455,8 +456,7 @@ public final class AWTUtilities {
                     "The component argument should not be null.");
         }
 
-        AWTAccessor.getComponentAccessor().setMixingCutoutShape(component,
-                shape);
+        component.setMixingCutoutShape(shape);
     }
 }
 

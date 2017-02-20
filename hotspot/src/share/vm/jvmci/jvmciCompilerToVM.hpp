@@ -58,7 +58,7 @@ class CompilerToVM {
 
     static bool _supports_inline_contig_alloc;
     static HeapWord** _heap_end_addr;
-    static HeapWord** _heap_top_addr;
+    static HeapWord* volatile* _heap_top_addr;
     static int _max_oop_map_stack_offset;
 
     static jbyte* cardtable_start_address;
@@ -83,8 +83,10 @@ class CompilerToVM {
     }
   };
 
- public:
   static JNINativeMethod methods[];
+
+  static objArrayHandle initialize_intrinsics(TRAPS);
+ public:
   static int methods_count();
 
   static inline Method* asMethod(jobject jvmci_method) {
@@ -121,6 +123,10 @@ class CompilerToVM {
 
   static inline Klass* asKlass(oop jvmci_type) {
     return java_lang_Class::as_Klass(HotSpotResolvedObjectTypeImpl::javaClass(jvmci_type));
+  }
+
+  static inline Klass* asKlass(jlong metaspaceKlass) {
+    return (Klass*) (address) metaspaceKlass;
   }
 
   static inline MethodData* asMethodData(jlong metaspaceMethodData) {

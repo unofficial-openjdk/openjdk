@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,8 @@
  * @summary test RMI-IIOP call with ConcurrentHashMap as an argument
  * @library /lib/testlibrary
  * @modules java.corba
+ *          java.naming
+ *          java.rmi
  * @build jdk.testlibrary.*
  * @compile Test.java HelloInterface.java HelloServer.java HelloClient.java
  *    HelloImpl.java _HelloImpl_Tie.java _HelloInterface_Stub.java ConcurrentHashMapTest.java
@@ -59,8 +61,11 @@ public class ConcurrentHashMapTest {
     private static Process rmiServerProcess;
 
     public static void main(String[] args) throws Exception {
-        startTestComponents();
-        stopTestComponents();
+        try {
+            startTestComponents();
+        } finally {
+            stopTestComponents();
+        }
         System.err.println("Test completed OK ");
     }
 
@@ -122,17 +127,21 @@ public class ConcurrentHashMapTest {
     }
 
     static void stopRmiIiopServer() throws Exception {
-        rmiServerProcess.destroyForcibly();
-        rmiServerProcess.waitFor();
-        System.out.println("serverProcess exitCode:"
-            + rmiServerProcess.exitValue());
+        if (rmiServerProcess != null) {
+            rmiServerProcess.destroyForcibly();
+            rmiServerProcess.waitFor();
+            System.out.println("serverProcess exitCode:"
+                + rmiServerProcess.exitValue());
+        }
     }
 
     static void stopOrbd() throws Exception {
-        orbdProcess.destroyForcibly();
-        orbdProcess.waitFor();
-        System.out.println("orbd exitCode:"
-            + orbdProcess.exitValue());
+        if (orbdProcess != null) {
+            orbdProcess.destroyForcibly();
+            orbdProcess.waitFor();
+            System.out.println("orbd exitCode:"
+                + orbdProcess.exitValue());
+        }
     }
 
     static void executeRmiIiopClient() throws Exception {

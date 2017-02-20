@@ -29,13 +29,16 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import javax.lang.model.SourceVersion;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
+import javax.tools.JavaFileObject.Kind;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
 
@@ -119,10 +122,6 @@ public class ClassFinder {
      */
     final Name completionFailureName;
 
-    /** Module specified with -Xmodule:
-     */
-    final Name moduleOverride;
-
     /** Access to files
      */
     private final JavaFileManager fileManager;
@@ -164,12 +163,7 @@ public class ClassFinder {
     /**
      * Completer that delegates to the complete-method of this class.
      */
-    private final Completer thisCompleter = new Completer() {
-        @Override
-        public void complete(Symbol sym) throws CompletionFailure {
-            ClassFinder.this.complete(sym);
-        }
-    };
+    private final Completer thisCompleter = this::complete;
 
     public Completer getCompleter() {
         return thisCompleter;
@@ -209,9 +203,6 @@ public class ClassFinder {
             options.isSet("failcomplete")
             ? names.fromString(options.get("failcomplete"))
             : null;
-
-        moduleOverride = options.isSet(Option.XMODULE) ? names.fromString(options.get(Option.XMODULE))
-                                                : null;
 
         // Temporary, until more info is available from the module system.
         boolean useCtProps;
@@ -520,23 +511,22 @@ public class ClassFinder {
 
         ModuleSymbol msym = p.modle;
 
-        Assert.checkNonNull(msym, () -> p.toString());
+        Assert.checkNonNull(msym, p::toString);
 
         msym.complete();
 
         if (msym == syms.noModule) {
             preferCurrent = false;
             if (userPathsFirst) {
-                scanUserPaths(p);
+                scanUserPaths(p, true);
                 preferCurrent = true;
                 scanPlatformPath(p);
             } else {
                 scanPlatformPath(p);
-                scanUserPaths(p);
+                scanUserPaths(p, true);
             }
         } else if (msym.classLocation == StandardLocation.CLASS_PATH) {
-            // assert p.modle.sourceLocation == StandardLocation.SOURCE_PATH);
-            scanUserPaths(p);
+            scanUserPaths(p, msym.sourceLocation == StandardLocation.SOURCE_PATH);
         } else {
             scanModulePaths(p, msym);
         }
@@ -561,46 +551,56 @@ public class ClassFinder {
 
         String packageName = p.fullname.toString();
 
-        if (msym.name == moduleOverride) {
-            if (wantClassFiles) {
-                fillIn(p, CLASS_PATH,
-                       fileManager.list(CLASS_PATH,
-                                        packageName,
-                                        classKinds,
-                                        false));
-            }
-            if (wantSourceFiles && fileManager.hasLocation(SOURCE_PATH)) {
-                fillIn(p, SOURCE_PATH,
-                        fileManager.list(SOURCE_PATH,
-                                        packageName,
-                                        sourceKinds,
-                                        false));
-            }
-        }
-
         Location classLocn = msym.classLocation;
         Location sourceLocn = msym.sourceLocation;
+        Location patchLocn = msym.patchLocation;
+        Location patchOutLocn = msym.patchOutputLocation;
 
-        if (wantClassFiles && (classLocn != null)) {
-            fillIn(p, classLocn,
-                   fileManager.list(classLocn,
-                                    packageName,
-                                    classKinds,
-                                    false));
-        }
-        if (wantSourceFiles && (sourceLocn != null)) {
-            fillIn(p, sourceLocn,
-                   fileManager.list(sourceLocn,
-                                    packageName,
-                                    sourceKinds,
-                                    false));
+        boolean prevPreferCurrent = preferCurrent;
+
+        try {
+            preferCurrent = false;
+            if (wantClassFiles && (patchOutLocn != null)) {
+                fillIn(p, patchOutLocn,
+                       list(patchOutLocn,
+                            p,
+                            packageName,
+                            classKinds));
+            }
+            if ((wantClassFiles || wantSourceFiles) && (patchLocn != null)) {
+                Set<JavaFileObject.Kind> combined = EnumSet.noneOf(JavaFileObject.Kind.class);
+                combined.addAll(classKinds);
+                combined.addAll(sourceKinds);
+                fillIn(p, patchLocn,
+                       list(patchLocn,
+                            p,
+                            packageName,
+                            combined));
+            }
+            preferCurrent = true;
+            if (wantClassFiles && (classLocn != null)) {
+                fillIn(p, classLocn,
+                       list(classLocn,
+                            p,
+                            packageName,
+                            classKinds));
+            }
+            if (wantSourceFiles && (sourceLocn != null)) {
+                fillIn(p, sourceLocn,
+                       list(sourceLocn,
+                            p,
+                            packageName,
+                            sourceKinds));
+            }
+        } finally {
+            preferCurrent = prevPreferCurrent;
         }
     }
 
     /**
      * Scans class path and source path for files in given package.
      */
-    private void scanUserPaths(PackageSymbol p) throws IOException {
+    private void scanUserPaths(PackageSymbol p, boolean includeSourcePath) throws IOException {
         Set<JavaFileObject.Kind> kinds = getPackageFileKinds();
 
         Set<JavaFileObject.Kind> classKinds = EnumSet.copyOf(kinds);
@@ -611,7 +611,7 @@ public class ClassFinder {
         sourceKinds.remove(JavaFileObject.Kind.CLASS);
         boolean wantSourceFiles = !sourceKinds.isEmpty();
 
-        boolean haveSourcePath = fileManager.hasLocation(SOURCE_PATH);
+        boolean haveSourcePath = includeSourcePath && fileManager.hasLocation(SOURCE_PATH);
 
         if (verbose && verbosePath) {
             if (fileManager instanceof StandardJavaFileManager) {
@@ -645,23 +645,23 @@ public class ClassFinder {
         String packageName = p.fullname.toString();
         if (wantSourceFiles && !haveSourcePath) {
             fillIn(p, CLASS_PATH,
-                   fileManager.list(CLASS_PATH,
-                                    packageName,
-                                    kinds,
-                                    false));
+                   list(CLASS_PATH,
+                        p,
+                        packageName,
+                        kinds));
         } else {
             if (wantClassFiles)
                 fillIn(p, CLASS_PATH,
-                       fileManager.list(CLASS_PATH,
-                                        packageName,
-                                        classKinds,
-                                        false));
+                       list(CLASS_PATH,
+                            p,
+                            packageName,
+                            classKinds));
             if (wantSourceFiles)
                 fillIn(p, SOURCE_PATH,
-                       fileManager.list(SOURCE_PATH,
-                                        packageName,
-                                        sourceKinds,
-                                        false));
+                       list(SOURCE_PATH,
+                            p,
+                            packageName,
+                            sourceKinds));
         }
     }
 
@@ -670,12 +670,12 @@ public class ClassFinder {
      */
     private void scanPlatformPath(PackageSymbol p) throws IOException {
         fillIn(p, PLATFORM_CLASS_PATH,
-               fileManager.list(PLATFORM_CLASS_PATH,
-                                p.fullname.toString(),
-                                allowSigFiles ? EnumSet.of(JavaFileObject.Kind.CLASS,
-                                                           JavaFileObject.Kind.OTHER)
-                                              : EnumSet.of(JavaFileObject.Kind.CLASS),
-                                false));
+               list(PLATFORM_CLASS_PATH,
+                    p,
+                    p.fullname.toString(),
+                    allowSigFiles ? EnumSet.of(JavaFileObject.Kind.CLASS,
+                                               JavaFileObject.Kind.OTHER)
+                                  : EnumSet.of(JavaFileObject.Kind.CLASS)));
     }
     // where
         @SuppressWarnings("fallthrough")
@@ -687,10 +687,7 @@ public class ClassFinder {
             for (JavaFileObject fo : files) {
                 switch (fo.getKind()) {
                 case OTHER:
-                    boolean sigFile = location == PLATFORM_CLASS_PATH &&
-                                      allowSigFiles &&
-                                      fo.getName().endsWith(".sig");
-                    if (!sigFile) {
+                    if (!isSigFile(location, fo)) {
                         extraFileActions(p, fo);
                         break;
                     }
@@ -707,8 +704,59 @@ public class ClassFinder {
                 }
                 default:
                     extraFileActions(p, fo);
+                    break;
                 }
             }
+        }
+
+        boolean isSigFile(Location location, JavaFileObject fo) {
+            return location == PLATFORM_CLASS_PATH &&
+                   allowSigFiles &&
+                   fo.getName().endsWith(".sig");
+        }
+
+        Iterable<JavaFileObject> list(Location location,
+                                      PackageSymbol p,
+                                      String packageName,
+                                      Set<Kind> kinds) throws IOException {
+            Iterable<JavaFileObject> listed = fileManager.list(location,
+                                                               packageName,
+                                                               EnumSet.allOf(Kind.class),
+                                                               false);
+            return () -> new Iterator<JavaFileObject>() {
+                private final Iterator<JavaFileObject> original = listed.iterator();
+                private JavaFileObject next;
+                @Override
+                public boolean hasNext() {
+                    if (next == null) {
+                        while (original.hasNext()) {
+                            JavaFileObject fo = original.next();
+
+                            if (fo.getKind() != Kind.CLASS &&
+                                fo.getKind() != Kind.SOURCE &&
+                                !isSigFile(currentLoc, fo)) {
+                                p.flags_field |= Flags.HAS_RESOURCE;
+                            }
+
+                            if (kinds.contains(fo.getKind())) {
+                                next = fo;
+                                break;
+                            }
+                        }
+                    }
+                    return next != null;
+                }
+
+                @Override
+                public JavaFileObject next() {
+                    if (!hasNext())
+                        throw new NoSuchElementException();
+                    JavaFileObject result = next;
+                    next = null;
+                    return result;
+                }
+
+            };
         }
 
     /**

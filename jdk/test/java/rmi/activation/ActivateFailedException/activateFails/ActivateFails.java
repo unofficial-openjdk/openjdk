@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,8 @@
  *          java.rmi/sun.rmi.server
  *          java.rmi/sun.rmi.transport
  *          java.rmi/sun.rmi.transport.tcp
- * @build TestLibrary RMID ActivationLibrary
+ *          java.base/sun.nio.ch
+ * @build TestLibrary RMID RMIDSelectorProvider ActivationLibrary
  *     ActivateMe ActivateFails_Stub ShutdownThread
  * @run main/othervm/java.security.policy=security.policy/timeout=240 ActivateFails
  */
@@ -93,7 +94,7 @@ public class ActivateFails
              * First run "rmid" and wait for it to start up.
              */
             RMID.removeLog();
-            rmid = RMID.createRMID();
+            rmid = RMID.createRMIDOnEphemeralPort();
             rmid.start();
 
             /* Cause activation groups to have a security policy that will
@@ -139,7 +140,7 @@ public class ActivateFails
             System.err.println("invoking method on activatable object...");
             try {
                 obj1.ping();
-
+                throw new RuntimeException("ActivateFailedException is expected");
             } catch (ActivateFailedException e) {
 
                 /*

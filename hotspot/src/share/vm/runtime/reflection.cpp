@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -412,13 +412,13 @@ oop Reflection::array_component_type(oop mirror, TRAPS) {
   return result;
 }
 
-static bool under_host_klass(const InstanceKlass* ik, const Klass* host_klass) {
+static bool under_host_klass(const InstanceKlass* ik, const InstanceKlass* host_klass) {
   DEBUG_ONLY(int inf_loop_check = 1000 * 1000 * 1000);
   for (;;) {
-    const Klass* hc = (const Klass*)ik->host_klass();
+    const InstanceKlass* hc = ik->host_klass();
     if (hc == NULL)        return false;
     if (hc == host_klass)  return true;
-    ik = InstanceKlass::cast(hc);
+    ik = hc;
 
     // There's no way to make a host class loop short of patching memory.
     // Therefore there cannot be a loop here unless there's another bug.
@@ -436,8 +436,8 @@ static bool can_relax_access_check_for(const Klass* accessor,
 
   // If either is on the other's host_klass chain, access is OK,
   // because one is inside the other.
-  if (under_host_klass(accessor_ik, accessee) ||
-    under_host_klass(accessee_ik, accessor))
+  if (under_host_klass(accessor_ik, accessee_ik) ||
+    under_host_klass(accessee_ik, accessor_ik))
     return true;
 
   if ((RelaxAccessControlCheck &&
@@ -446,7 +446,7 @@ static bool can_relax_access_check_for(const Klass* accessor,
     (accessor_ik->major_version() < Verifier::STRICTER_ACCESS_CTRL_CHECK_VERSION &&
     accessee_ik->major_version() < Verifier::STRICTER_ACCESS_CTRL_CHECK_VERSION)) {
     return classloader_only &&
-      Verifier::relax_verify_for(accessor_ik->class_loader()) &&
+      Verifier::relax_access_for(accessor_ik->class_loader()) &&
       accessor_ik->protection_domain() == accessee_ik->protection_domain() &&
       accessor_ik->class_loader() == accessee_ik->class_loader();
   }
@@ -534,22 +534,26 @@ Reflection::VerifyClassAccessResults Reflection::verify_class_access(
     PackageEntry* package_to = new_class->package();
     assert(package_to != NULL, "can not obtain new_class' package");
 
-    // Once readability is established, if module_to exports T unqualifiedly,
-    // (to all modules), than whether module_from is in the unnamed module
-    // or not does not matter, access is allowed.
-    if (package_to->is_unqual_exported()) {
-      return ACCESS_OK;
-    }
+    {
+      MutexLocker m1(Module_lock);
 
-    // Access is allowed if both 1 & 2 hold:
-    //   1. Readability, module_from can read module_to (established above).
-    //   2. Either module_to exports T to module_from qualifiedly.
-    //      or
-    //      module_to exports T to all unnamed modules and module_from is unnamed.
-    //      or
-    //      module_to exports T unqualifiedly to all modules (checked above).
-    if (!package_to->is_qexported_to(module_from)) {
-      return TYPE_NOT_EXPORTED;
+      // Once readability is established, if module_to exports T unqualifiedly,
+      // (to all modules), than whether module_from is in the unnamed module
+      // or not does not matter, access is allowed.
+      if (package_to->is_unqual_exported()) {
+        return ACCESS_OK;
+      }
+
+      // Access is allowed if both 1 & 2 hold:
+      //   1. Readability, module_from can read module_to (established above).
+      //   2. Either module_to exports T to module_from qualifiedly.
+      //      or
+      //      module_to exports T to all unnamed modules and module_from is unnamed.
+      //      or
+      //      module_to exports T unqualifiedly to all modules (checked above).
+      if (!package_to->is_qexported_to(module_from)) {
+        return TYPE_NOT_EXPORTED;
+      }
     }
     return ACCESS_OK;
   }

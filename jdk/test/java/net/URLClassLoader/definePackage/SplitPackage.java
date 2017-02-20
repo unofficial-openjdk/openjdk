@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -27,6 +27,7 @@
  * @summary Test two URLClassLoader define Package object of the same name
  * @library /lib/testlibrary
  * @build CompilerUtils
+ * @modules jdk.compiler
  * @run testng SplitPackage
  */
 

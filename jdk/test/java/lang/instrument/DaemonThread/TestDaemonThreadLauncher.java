@@ -1,6 +1,6 @@
 /*
  * Copyright 2014 Goldman Sachs.
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,9 +29,10 @@ import jdk.testlibrary.ProcessTools;
 public class TestDaemonThreadLauncher {
     public static void main(String args[]) throws Exception {
         for(int i=0; i<50; i++) {
-            ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-javaagent:DummyAgent.jar", "TestDaemonThread", ".");
+            ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(true, "-javaagent:DummyAgent.jar", "TestDaemonThread", ".");
             OutputAnalyzer analyzer = ProcessTools.executeProcess(pb);
             analyzer.shouldNotContain("ASSERTION FAILED");
+            analyzer.shouldHaveExitValue(0);
         }
     }
 }

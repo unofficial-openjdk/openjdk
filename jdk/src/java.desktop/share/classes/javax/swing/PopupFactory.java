@@ -260,6 +260,7 @@ public class PopupFactory {
      * Obtains the appropriate <code>Popup</code> based on
      * <code>popupType</code>.
      */
+    @SuppressWarnings("deprecation")
     private Popup getPopup(Component owner, Component contents,
                            int ownerX, int ownerY, int popupType) {
         if (GraphicsEnvironment.isHeadless()) {
@@ -614,6 +615,7 @@ public class PopupFactory {
          * Returns true if popup can fit the screen and the owner's top parent.
          * It determines can popup be lightweight or mediumweight.
          */
+        @SuppressWarnings("deprecation")
         boolean fitsOnScreen() {
             boolean result = false;
             Component component = getComponent();
@@ -783,6 +785,8 @@ public class PopupFactory {
             component.removeAll();
             recycleLightWeightPopup(this);
         }
+
+        @SuppressWarnings("deprecation")
         public void show() {
             Container parent = null;
 
@@ -938,6 +942,8 @@ public class PopupFactory {
             rootPane.getContentPane().removeAll();
             recycleMediumWeightPopup(this);
         }
+
+        @SuppressWarnings("deprecation")
         public void show() {
             Component component = getComponent();
             Container parent = null;

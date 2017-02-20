@@ -24,7 +24,7 @@
  */
 
 /**
-  * This is a test description for the module1 module.<br>
+  * This is a test description for the moduleA module.<br>
   * Type Link: {@link testpkgmdltags.TestClassInModuleTags}.<br>
   * Member Link: {@link testpkgmdltags.TestClassInModuleTags#testMethod(String)}.<br>
   * Package Link: {@link testpkgmdltags}.<br>
@@ -37,8 +37,9 @@
   * @moduletag Just a simple module tag.
   * @version 1.0
   */
+@Deprecated
 module moduletags {
-    requires module2;
+    requires transitive static moduleA;
 
     exports testpkgmdltags;
 }

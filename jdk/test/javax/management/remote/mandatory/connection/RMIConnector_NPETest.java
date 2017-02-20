@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@
  * @summary NPE IN RMIConnector.connect
  * @bug 6984520
  * @library /java/rmi/testlibrary
- * @modules java.management
+ * @modules java.management.rmi
  *          java.rmi/sun.rmi.registry
  *          java.rmi/sun.rmi.server
  *          java.rmi/sun.rmi.transport
@@ -43,12 +43,12 @@ import javax.management.remote.rmi.*;
 public class RMIConnector_NPETest {
     public static void main(String argv[]) throws Exception {
         RMID rmid = RMID.createRMID();
-        rmid.start();
-        int rmidPort = rmid.getPort();
         Exception failureCause = null;
         RMIConnector agent = null;
 
         try {
+            rmid.start();
+            int rmidPort = rmid.getPort();
             MBeanServer mbs = MBeanServerFactory.createMBeanServer();
             RMIJRMPServerImpl rmiserver = new RMIJRMPServerImpl(rmidPort, null, null, null);
             rmiserver.setMBeanServer(mbs);

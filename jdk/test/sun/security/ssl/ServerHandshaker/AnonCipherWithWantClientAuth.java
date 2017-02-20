@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,241 +29,60 @@
 /*
  * @test
  * @bug 4392475
+ * @modules jdk.crypto.ec
+ * @library /javax/net/ssl/templates
  * @summary Calling setWantClientAuth(true) disables anonymous suites
- * @run main/othervm/timeout=180 AnonCipherWithWantClientAuth
+ * @run main/othervm -Djavax.net.debug=all AnonCipherWithWantClientAuth
  */
 
-import java.io.*;
-import java.net.*;
-import javax.net.ssl.*;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.security.Security;
+import javax.net.ssl.SSLSocket;
 
-public class AnonCipherWithWantClientAuth {
-
+public class AnonCipherWithWantClientAuth extends SSLSocketTemplate {
     /*
-     * =============================================================
-     * Set the various variables needed for the tests, then
-     * specify what tests to run on each side.
+     * Run the test case.
      */
-
-    /*
-     * Should we run the client or server in a separate thread?
-     * Both sides can throw exceptions, but do you have a preference
-     * as to which side should be the main thread.
-     */
-    static boolean separateServerThread = false;
-
-    /*
-     * Where do we find the keystores?
-     */
-    static String pathToStores = "../../../../javax/net/ssl/etc";
-    static String keyStoreFile = "keystore";
-    static String trustStoreFile = "truststore";
-    static String passwd = "passphrase";
-
-    /*
-     * Is the server ready to serve?
-     */
-    volatile static boolean serverReady = false;
-
-    /*
-     * Turn on SSL debugging?
-     */
-    static boolean debug = false;
-
-    /*
-     * If the client or server is doing some kind of object creation
-     * that the other side depends on, and that thread prematurely
-     * exits, you may experience a hang.  The test harness will
-     * terminate all hung threads after its timeout has expired,
-     * currently 3 minutes by default, but you might try to be
-     * smart about it....
-     */
-
-    /*
-     * Define the server side of the test.
-     *
-     * If the server prematurely exits, serverReady will be set to true
-     * to avoid infinite hangs.
-     */
-    void doServerSide() throws Exception {
-        SSLServerSocketFactory sslssf =
-            (SSLServerSocketFactory) SSLServerSocketFactory.getDefault();
-        SSLServerSocket sslServerSocket =
-            (SSLServerSocket) sslssf.createServerSocket(serverPort);
-        serverPort = sslServerSocket.getLocalPort();
-        String ciphers[]={"SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA",
-                          "SSL_DH_anon_EXPORT_WITH_RC4_40_MD5",
-                          "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA"};
-        sslServerSocket.setEnabledCipherSuites(ciphers);
-        sslServerSocket.setWantClientAuth(true);
-        /*
-         * Signal Client, we're ready for his connect.
-         */
-        serverReady = true;
-
-        SSLSocket sslSocket = (SSLSocket) sslServerSocket.accept();
-        InputStream sslIS = sslSocket.getInputStream();
-        OutputStream sslOS = sslSocket.getOutputStream();
-
-        sslIS.read();
-        sslOS.write(85);
-        sslOS.flush();
-
-        sslSocket.close();
-    }
-
-    /*
-     * Define the client side of the test.
-     *
-     * If the server prematurely exits, serverReady will be set to true
-     * to avoid infinite hangs.
-     */
-    void doClientSide() throws Exception {
-
-        /*
-         * Wait for server to get started.
-         */
-        while (!serverReady) {
-            Thread.sleep(50);
-        }
-
-        SSLSocketFactory sslsf =
-            (SSLSocketFactory) SSLSocketFactory.getDefault();
-        SSLSocket sslSocket = (SSLSocket)
-            sslsf.createSocket("localhost", serverPort);
-        String ciphers[] = {"SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA",
-                            "SSL_DH_anon_EXPORT_WITH_RC4_40_MD5"};
-        sslSocket.setEnabledCipherSuites(ciphers);
-        sslSocket.setUseClientMode(true);
-
-        InputStream sslIS = sslSocket.getInputStream();
-        OutputStream sslOS = sslSocket.getOutputStream();
-
-        sslOS.write(280);
-        sslOS.flush();
-        sslIS.read();
-
-        sslSocket.close();
-    }
-
-    /*
-     * =============================================================
-     * The remainder is just support stuff
-     */
-
-    // use any free port by default
-    volatile int serverPort = 0;
-
-    volatile Exception serverException = null;
-    volatile Exception clientException = null;
-
     public static void main(String[] args) throws Exception {
-        // reset security properties to make sure that the algorithms
+        // reset the security property to make sure that the algorithms
         // and keys used in this test are not disabled.
         Security.setProperty("jdk.tls.disabledAlgorithms", "");
         Security.setProperty("jdk.certpath.disabledAlgorithms", "");
 
-        String keyFilename =
-            System.getProperty("test.src", "./") + "/" + pathToStores +
-                "/" + keyStoreFile;
-        String trustFilename =
-            System.getProperty("test.src", "./") + "/" + pathToStores +
-                "/" + trustStoreFile;
-
-        System.setProperty("javax.net.ssl.keyStore", keyFilename);
-        System.setProperty("javax.net.ssl.keyStorePassword", passwd);
-        System.setProperty("javax.net.ssl.trustStore", trustFilename);
-        System.setProperty("javax.net.ssl.trustStorePassword", passwd);
-
-        if (debug)
-            System.setProperty("javax.net.debug", "all");
-
-        /*
-         * Start the tests.
-         */
-        new AnonCipherWithWantClientAuth();
+        (new AnonCipherWithWantClientAuth()).run();
     }
 
-    Thread clientThread = null;
-    Thread serverThread = null;
+    @Override
+    protected void runServerApplication(SSLSocket socket) throws Exception {
+        String ciphers[] = {
+                "SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA",
+                "SSL_DH_anon_EXPORT_WITH_RC4_40_MD5",
+                "SSL_DHE_DSS_EXPORT_WITH_DES40_CBC_SHA" };
+        socket.setEnabledCipherSuites(ciphers);
+        socket.setWantClientAuth(true);
 
-    /*
-     * Primary constructor, used to drive remainder of the test.
-     *
-     * Fork off the other side, then do your work.
-     */
-    AnonCipherWithWantClientAuth () throws Exception {
-        if (separateServerThread) {
-            startServer(true);
-            startClient(false);
-        } else {
-            startClient(true);
-            startServer(false);
-        }
+        InputStream sslIS = socket.getInputStream();
+        OutputStream sslOS = socket.getOutputStream();
 
-        /*
-         * Wait for other side to close down.
-         */
-        if (separateServerThread) {
-            serverThread.join();
-        } else {
-            clientThread.join();
-        }
-
-        /*
-         * When we get here, the test is pretty much over.
-         *
-         * If the main thread excepted, that propagates back
-         * immediately.  If the other thread threw an exception, we
-         * should report back.
-         */
-        if (serverException != null)
-            throw serverException;
-        if (clientException != null)
-            throw clientException;
+        sslIS.read();
+        sslOS.write(85);
+        sslOS.flush();
     }
 
-    void startServer(boolean newThread) throws Exception {
-        if (newThread) {
-            serverThread = new Thread() {
-                public void run() {
-                    try {
-                        doServerSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our server thread just died.
-                         */
-                        System.err.println("Server died...");
-                        serverReady = true;
-                        serverException = e;
-                    }
-                }
-            };
-            serverThread.start();
-        } else {
-            doServerSide();
-        }
-    }
+    @Override
+    protected void runClientApplication(SSLSocket socket) throws Exception {
+        String ciphers[] = {
+                "SSL_DH_anon_EXPORT_WITH_DES40_CBC_SHA",
+                "SSL_DH_anon_EXPORT_WITH_RC4_40_MD5" };
+        socket.setEnabledCipherSuites(ciphers);
+        socket.setUseClientMode(true);
 
-    void startClient(boolean newThread) throws Exception {
-        if (newThread) {
-            clientThread = new Thread() {
-                public void run() {
-                    try {
-                        doClientSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our client thread just died.
-                         */
-                        System.err.println("Client died...");
-                        clientException = e;
-                    }
-                }
-            };
-            clientThread.start();
-        } else {
-            doClientSide();
-        }
+        InputStream sslIS = socket.getInputStream();
+        OutputStream sslOS = socket.getOutputStream();
+
+        sslOS.write(280);
+        sslOS.flush();
+        sslIS.read();
     }
 }

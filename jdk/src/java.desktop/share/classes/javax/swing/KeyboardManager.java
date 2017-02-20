@@ -137,6 +137,7 @@ class KeyboardManager {
      /**
        * Find the top focusable Window, Applet, or InternalFrame
        */
+     @SuppressWarnings("deprecation")
      private static Container getTopAncestor(JComponent c) {
         for(Container p = c.getParent(); p != null; p = p.getParent()) {
             if (p instanceof Window && ((Window)p).isFocusableWindow() ||
@@ -206,6 +207,7 @@ class KeyboardManager {
       * want a crack at the event.
       * If one of them wants it, then it will "DO-THE-RIGHT-THING"
       */
+    @SuppressWarnings("deprecation")
     public boolean fireKeyboardAction(KeyEvent e, boolean pressed, Container topAncestor) {
 
          if (e.isConsumed()) {

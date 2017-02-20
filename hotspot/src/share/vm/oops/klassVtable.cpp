@@ -60,7 +60,7 @@ bool klassVtable::is_preinitialized_vtable() {
 void klassVtable::compute_vtable_size_and_num_mirandas(
     int* vtable_length_ret, int* num_new_mirandas,
     GrowableArray<Method*>* all_mirandas, const Klass* super,
-    Array<Method*>* methods, AccessFlags class_flags,
+    Array<Method*>* methods, AccessFlags class_flags, u2 major_version,
     Handle classloader, Symbol* classname, Array<Klass*>* local_interfaces,
     TRAPS) {
   NoSafepointVerifier nsv;
@@ -77,7 +77,7 @@ void klassVtable::compute_vtable_size_and_num_mirandas(
     assert(methods->at(i)->is_method(), "must be a Method*");
     methodHandle mh(THREAD, methods->at(i));
 
-    if (needs_new_vtable_entry(mh, super, classloader, classname, class_flags, THREAD)) {
+    if (needs_new_vtable_entry(mh, super, classloader, classname, class_flags, major_version, THREAD)) {
       vtable_length += vtableEntry::size(); // we need a new entry
     }
   }
@@ -226,7 +226,7 @@ void klassVtable::initialize_vtable(bool checkconstraints, TRAPS) {
           HandleMark hm(THREAD);
           assert(default_methods->at(i)->is_method(), "must be a Method*");
           methodHandle mh(THREAD, default_methods->at(i));
-
+          assert(!mh->is_private(), "private interface method in the default method list");
           bool needs_new_entry = update_inherited_vtable(ik(), mh, super_vtable_len, i, checkconstraints, CHECK);
 
           // needs new entry
@@ -256,10 +256,15 @@ void klassVtable::initialize_vtable(bool checkconstraints, TRAPS) {
 
     // In class hierarchies where the accessibility is not increasing (i.e., going from private ->
     // package_private -> public/protected), the vtable might actually be smaller than our initial
-    // calculation.
-    assert(initialized <= _length, "vtable initialization failed");
-    for(;initialized < _length; initialized++) {
-      put_method_at(NULL, initialized);
+    // calculation, for classfile versions for which we do not do transitive override
+    // calculations.
+    if (ik()->major_version() >= VTABLE_TRANSITIVE_OVERRIDE_VERSION) {
+      assert(initialized == _length, "vtable initialization failed");
+    } else {
+      assert(initialized <= _length, "vtable initialization failed");
+      for(;initialized < _length; initialized++) {
+        table()[initialized].clear();
+      }
     }
     NOT_PRODUCT(verify(tty, true));
   }
@@ -298,9 +303,9 @@ InstanceKlass* klassVtable::find_transitive_override(InstanceKlass* initialsuper
           ResourceMark rm(THREAD);
           outputStream* logst = Log(vtables)::trace_stream();
           char* sig = target_method()->name_and_sig_as_C_string();
-          logst->print("transitive overriding superclass %s with %s::%s index %d, original flags: ",
+          logst->print("transitive overriding superclass %s with %s index %d, original flags: ",
                        supersuperklass->internal_name(),
-                       _klass->internal_name(), sig, vtable_index);
+                       sig, vtable_index);
           super_method->print_linkage_flags(logst);
           logst->print("overriders flags: ");
           target_method->print_linkage_flags(logst);
@@ -330,11 +335,11 @@ static void log_vtables(int i, bool overrides, methodHandle target_method,
     outputStream* logst = Log(vtables)::trace_stream();
     char* sig = target_method()->name_and_sig_as_C_string();
     if (overrides) {
-      logst->print("overriding with %s::%s index %d, original flags: ",
-                   target_klass->internal_name(), sig, i);
+      logst->print("overriding with %s index %d, original flags: ",
+                   sig, i);
     } else {
-      logst->print("NOT overriding with %s::%s index %d, original flags: ",
-                   target_klass->internal_name(), sig, i);
+      logst->print("NOT overriding with %s index %d, original flags: ",
+                   sig, i);
     }
     super_method->print_linkage_flags(logst);
     logst->print("overriders flags: ");
@@ -357,14 +362,16 @@ bool klassVtable::update_inherited_vtable(InstanceKlass* klass, methodHandle tar
 
   Array<int>* def_vtable_indices = NULL;
   bool is_default = false;
-  // default methods are concrete methods in superinterfaces which are added to the vtable
-  // with their real method_holder
+
+  // default methods are non-private concrete methods in superinterfaces which are added
+  // to the vtable with their real method_holder.
   // Since vtable and itable indices share the same storage, don't touch
-  // the default method's real vtable/itable index
+  // the default method's real vtable/itable index.
   // default_vtable_indices stores the vtable value relative to this inheritor
   if (default_index >= 0 ) {
     is_default = true;
     def_vtable_indices = klass->default_vtable_indices();
+    assert(!target_method()->is_private(), "private interface method flagged as default");
     assert(def_vtable_indices != NULL, "def vtable alloc?");
     assert(default_index <= def_vtable_indices->length(), "def vtable len?");
   } else {
@@ -390,12 +397,15 @@ bool klassVtable::update_inherited_vtable(InstanceKlass* klass, methodHandle tar
     // This method will either be assigned its own itable index later,
     // or be assigned an inherited vtable index in the loop below.
     // default methods inherited by classes store their vtable indices
-    // in the inheritor's default_vtable_indices
+    // in the inheritor's default_vtable_indices.
     // default methods inherited by interfaces may already have a
-    // valid itable index, if so, don't change it
-    // overpass methods in an interface will be assigned an itable index later
-    // by an inheriting class
-    if (!is_default || !target_method()->has_itable_index()) {
+    // valid itable index, if so, don't change it.
+    // Overpass methods in an interface will be assigned an itable index later
+    // by an inheriting class.
+    // Private interface methods have no itable index and are always invoked nonvirtually,
+    // so they retain their nonvirtual_vtable_index value, and therefore can_be_statically_bound()
+    // will return true.
+    if ((!is_default || !target_method()->has_itable_index()) && !target_method()->is_private()) {
       target_method()->set_vtable_index(Method::pending_itable_index);
     }
   }
@@ -566,6 +576,7 @@ bool klassVtable::needs_new_vtable_entry(methodHandle target_method,
                                          Handle classloader,
                                          Symbol* classname,
                                          AccessFlags class_flags,
+                                         u2 major_version,
                                          TRAPS) {
   if (class_flags.is_interface()) {
     // Interfaces do not use vtables, except for java.lang.Object methods,
@@ -591,7 +602,9 @@ bool klassVtable::needs_new_vtable_entry(methodHandle target_method,
   // abstract method entries using default inheritance rules
   if (target_method()->method_holder() != NULL &&
       target_method()->method_holder()->is_interface()  &&
-      !target_method()->is_abstract() ) {
+      !target_method()->is_abstract()) {
+    assert(target_method()->is_default_method() || target_method()->is_private(),
+           "unexpected interface method type");
     return false;
   }
 
@@ -600,10 +613,8 @@ bool klassVtable::needs_new_vtable_entry(methodHandle target_method,
     return true;
   }
 
-  // private methods in classes always have a new entry in the vtable
-  // specification interpretation since classic has
-  // private methods not overriding
-  // JDK8 adds private  methods in interfaces which require invokespecial
+  // private methods in classes always have a new entry in the vtable.
+  // Specification interpretation since classic has private methods not overriding.
   if (target_method()->is_private()) {
     return true;
   }
@@ -646,8 +657,12 @@ bool klassVtable::needs_new_vtable_entry(methodHandle target_method,
       }
     }
 
-    // Start with lookup result and continue to search up
-    k = superk->super(); // haven't found an override match yet; continue to look
+    // Start with lookup result and continue to search up, for versions supporting transitive override
+    if (major_version >= VTABLE_TRANSITIVE_OVERRIDE_VERSION) {
+      k = superk->super(); // haven't found an override match yet; continue to look
+    } else {
+      break;
+    }
   }
 
   // if the target method is public or protected it may have a matching
@@ -1078,6 +1093,7 @@ void klassItable::initialize_itable(bool checkconstraints, TRAPS) {
 inline bool interface_method_needs_itable_index(Method* m) {
   if (m->is_static())           return false;   // e.g., Stream.empty
   if (m->is_initializer())      return false;   // <init> or <clinit>
+  if (m->is_private())          return false;   // requires invokeSpecial
   // If an interface redeclares a method from java.lang.Object,
   // it should already have a vtable index, don't touch it.
   // e.g., CharSequence.toString (from initialize_vtable)
@@ -1500,15 +1516,22 @@ void klassVtable::print() {
 
 void vtableEntry::verify(klassVtable* vt, outputStream* st) {
   NOT_PRODUCT(FlagSetting fs(IgnoreLockingAssertions, true));
-  assert(method() != NULL, "must have set method");
-  method()->verify();
-  // we sub_type, because it could be a miranda method
-  if (!vt->klass()->is_subtype_of(method()->method_holder())) {
-#ifndef PRODUCT
-    print();
-#endif
-    fatal("vtableEntry " PTR_FORMAT ": method is from subclass", p2i(this));
+  KlassHandle vtklass_h = vt->klass();
+  Klass* vtklass = vtklass_h();
+  if (vtklass->is_instance_klass() &&
+     (InstanceKlass::cast(vtklass)->major_version() >= klassVtable::VTABLE_TRANSITIVE_OVERRIDE_VERSION)) {
+    assert(method() != NULL, "must have set method");
   }
+  if (method() != NULL) {
+    method()->verify();
+    // we sub_type, because it could be a miranda method
+    if (!vtklass_h->is_subtype_of(method()->method_holder())) {
+#ifndef PRODUCT
+      print();
+#endif
+      fatal("vtableEntry " PTR_FORMAT ": method is from subclass", p2i(this));
+    }
+ }
 }
 
 #ifndef PRODUCT

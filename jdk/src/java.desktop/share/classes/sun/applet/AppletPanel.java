@@ -52,9 +52,14 @@ import sun.security.util.SecurityConstants;
  * thread group to call the applet's init(), start(), stop(), and
  * destroy() methods.
  *
+ * @deprecated The Applet API is deprecated. See the
+ * <a href="../../java/applet/package-summary.html"> java.applet package
+ * documentation</a> for further information.
+ *
  * @author      Arthur van Hoff
  */
-@SuppressWarnings("serial") // JDK implementation class
+@SuppressWarnings({"serial"}) // JDK implementation class
+@Deprecated(since = "9")
 public
 abstract class AppletPanel extends Panel implements AppletStub, Runnable {
 
@@ -616,34 +621,8 @@ abstract class AppletPanel extends Panel implements AppletStub, Runnable {
      * calls KeyboardFocusManager directly.
      */
     private Component getMostRecentFocusOwnerForWindow(Window w) {
-        Method meth = AccessController.doPrivileged(
-            new PrivilegedAction<Method>() {
-                @Override
-                public Method run() {
-                    Method meth = null;
-                    try {
-                        meth = KeyboardFocusManager.class.getDeclaredMethod(
-                                "getMostRecentFocusOwner",
-                                new Class<?>[]{Window.class});
-                        meth.setAccessible(true);
-                    } catch (Exception e) {
-                        // Must never happen
-                        e.printStackTrace();
-                    }
-                    return meth;
-                }
-            });
-        if (meth != null) {
-            // Meth refers static method
-            try {
-                return (Component)meth.invoke(null, new Object[] {w});
-            } catch (Exception e) {
-                // Must never happen
-                e.printStackTrace();
-            }
-        }
-        // Will get here if exception was thrown or meth is null
-        return w.getMostRecentFocusOwner();
+        return AWTAccessor.getKeyboardFocusManagerAccessor()
+                .getMostRecentFocusOwner(w);
     }
 
     /*

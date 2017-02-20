@@ -38,10 +38,8 @@
  */
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.PriorityQueue;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -53,7 +51,7 @@ import java.util.concurrent.PriorityBlockingQueue;
 public class NoNulls {
     void test(String[] args) throws Throwable {
         final Comparator<String> nullTolerantComparator
-            = new Comparator<String>() {
+            = new Comparator<>() {
             public int compare(String x, String y) {
                 return (x == null ? -1 :
                         y == null ? 1 :
@@ -65,7 +63,7 @@ public class NoNulls {
         nullSortedSet.add(null);
 
         final PriorityQueue<String> nullPriorityQueue
-            = new PriorityQueue<String>() {
+            = new PriorityQueue<>() {
             public Object[] toArray() { return new Object[] { null };}};
 
         final Collection<String> nullCollection = new ArrayList<>();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +81,6 @@ typedef void * * (JNICALL *ZipOpen_t)(const char *name, char **pmsg);
 typedef void (JNICALL *ZipClose_t)(jzfile *zip);
 typedef jzentry* (JNICALL *FindEntry_t)(jzfile *zip, const char *name, jint *sizeP, jint *nameLen);
 typedef jboolean (JNICALL *ReadEntry_t)(jzfile *zip, jzentry *entry, unsigned char *buf, char *namebuf);
-typedef jboolean (JNICALL *ReadMappedEntry_t)(jzfile *zip, jzentry *entry, unsigned char **buf, char *namebuf);
 typedef jzentry* (JNICALL *GetNextEntry_t)(jzfile *zip, jint n);
 typedef jboolean (JNICALL *ZipInflateFully_t)(void *inBuf, jlong inLen, void *outBuf, jlong outLen, char **pmsg);
 typedef jint     (JNICALL *Crc32_t)(jint crc, const jbyte *buf, jint len);
@@ -90,7 +89,6 @@ static ZipOpen_t         ZipOpen            = NULL;
 static ZipClose_t        ZipClose           = NULL;
 static FindEntry_t       FindEntry          = NULL;
 static ReadEntry_t       ReadEntry          = NULL;
-static ReadMappedEntry_t ReadMappedEntry    = NULL;
 static GetNextEntry_t    GetNextEntry       = NULL;
 static canonicalize_fn_t CanonicalizeEntry  = NULL;
 static ZipInflateFully_t ZipInflateFully    = NULL;
@@ -336,15 +334,10 @@ u1* ClassPathZipEntry::open_entry(const char* name, jint* filesize, bool nul_ter
     filename = NEW_RESOURCE_ARRAY(char, name_len + 1);
   }
 
-  // file found, get pointer to the entry in mmapped jar file.
-  if (ReadMappedEntry == NULL ||
-      !(*ReadMappedEntry)(_zip, entry, &buffer, filename)) {
-      // mmapped access not available, perhaps due to compression,
-      // read contents into resource array
-      int size = (*filesize) + ((nul_terminate) ? 1 : 0);
-      buffer = NEW_RESOURCE_ARRAY(u1, size);
-      if (!(*ReadEntry)(_zip, entry, buffer, filename)) return NULL;
-  }
+  // read contents into resource array
+  int size = (*filesize) + ((nul_terminate) ? 1 : 0);
+  buffer = NEW_RESOURCE_ARRAY(u1, size);
+  if (!(*ReadEntry)(_zip, entry, buffer, filename)) return NULL;
 
   // return result
   if (nul_terminate) {
@@ -371,7 +364,12 @@ u1* ClassPathZipEntry::open_versioned_entry(const char* name, jint* filesize, TR
     if (verstr != NULL) {
       version = atoi(verstr);
       if (version < base_version || version > cur_ver) {
-        is_multi_ver = false;
+        // If the specified version is lower than the base version, the base
+        // entry will be used; if the version is higher than the current
+        // jdk version, the highest versioned entry will be used.
+        if (version < base_version) {
+          is_multi_ver = false;
+        }
         // print out warning, do not use assertion here since it will continue to look
         // for proper version.
         warning("JDK%d is not supported in multiple version jars", version);
@@ -494,7 +492,7 @@ ClassFileStream* ClassPathImageEntry::open_stream(const char* name, TRAPS) {
 
     if (pkg_name != NULL) {
       if (!Universe::is_module_initialized()) {
-        location = (*JImageFindResource)(_jimage, "java.base", get_jimage_version_string(), name, &size);
+        location = (*JImageFindResource)(_jimage, JAVA_BASE_NAME, get_jimage_version_string(), name, &size);
 #if INCLUDE_CDS
         // CDS uses the boot class loader to load classes whose packages are in
         // modules defined for other class loaders.  So, for now, get their module
@@ -640,7 +638,7 @@ void ClassLoader::check_shared_classpath(const char *path) {
 
   struct stat st;
   if (os::stat(path, &st) == 0) {
-    if ((st.st_mode & S_IFREG) != S_IFREG) { // is directory
+    if ((st.st_mode & S_IFMT) != S_IFREG) { // is not a regular file
       if (!os::dir_is_empty(path)) {
         tty->print_cr("Error: non-empty directory '%s'", path);
         exit_with_path_failure("CDS allows only empty directories in archived classpaths", NULL);
@@ -693,8 +691,6 @@ void ClassLoader::setup_patch_mod_entries() {
   GrowableArray<ModulePatchPath*>* patch_mod_args = Arguments::get_patch_mod_prefix();
   int num_of_entries = patch_mod_args->length();
 
-  assert(!DumpSharedSpaces, "DumpSharedSpaces not supported with --patch-module");
-  assert(!UseSharedSpaces, "UseSharedSpaces not supported with --patch-module");
 
   // Set up the boot loader's _patch_mod_entries list
   _patch_mod_entries = new (ResourceObj::C_HEAP, mtModule) GrowableArray<ModuleClassPathList*>(num_of_entries, true);
@@ -743,6 +739,21 @@ void ClassLoader::setup_patch_mod_entries() {
   }
 }
 
+// Determine whether the module has been patched via the command-line
+// option --patch-module
+bool ClassLoader::is_in_patch_mod_entries(Symbol* module_name) {
+  if (_patch_mod_entries != NULL && _patch_mod_entries->is_nonempty()) {
+    int table_len = _patch_mod_entries->length();
+    for (int i = 0; i < table_len; i++) {
+      ModuleClassPathList* patch_mod = _patch_mod_entries->at(i);
+      if (module_name->fast_compare(patch_mod->module_name()) == 0) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 void ClassLoader::setup_search_path(const char *class_path, bool bootstrap_search) {
   int len = (int)strlen(class_path);
   int end = 0;
@@ -763,8 +774,8 @@ void ClassLoader::setup_search_path(const char *class_path, bool bootstrap_searc
     // what the base or core piece of the boot loader search is.  Either a java runtime
     // image is present or this is an exploded module build situation.
     if (set_base_piece) {
-      assert(string_ends_with(path, MODULES_IMAGE_NAME) || string_ends_with(path, "java.base"),
-             "Incorrect boot loader search path, no java runtime image or java.base exploded build");
+      assert(string_ends_with(path, MODULES_IMAGE_NAME) || string_ends_with(path, JAVA_BASE_NAME),
+             "Incorrect boot loader search path, no java runtime image or " JAVA_BASE_NAME " exploded build");
       struct stat st;
       if (os::stat(path, &st) == 0) {
         // Directory found
@@ -851,7 +862,7 @@ ClassPathEntry* ClassLoader::create_class_path_entry(const char *path, const str
                                                      bool is_boot_append, TRAPS) {
   JavaThread* thread = JavaThread::current();
   ClassPathEntry* new_entry = NULL;
-  if ((st->st_mode & S_IFREG) == S_IFREG) {
+  if ((st->st_mode & S_IFMT) == S_IFREG) {
     ResourceMark rm(thread);
     // Regular file, should be a zip or jimage file
     // Canonicalized filename
@@ -914,7 +925,7 @@ ClassPathZipEntry* ClassLoader::create_class_path_zip_entry(const char *path, bo
   // check for a regular file
   struct stat st;
   if (os::stat(path, &st) == 0) {
-    if ((st.st_mode & S_IFREG) == S_IFREG) {
+    if ((st.st_mode & S_IFMT) == S_IFREG) {
       char canonical_path[JVM_MAXPATHLEN];
       if (get_canonical_path(path, canonical_path, JVM_MAXPATHLEN)) {
         char* error_msg = NULL;
@@ -937,11 +948,11 @@ ClassPathZipEntry* ClassLoader::create_class_path_zip_entry(const char *path, bo
 }
 
 // returns true if entry already on class path
-bool ClassLoader::contains_entry(ClassPathEntry *entry) {
+bool ClassLoader::contains_append_entry(const char* name) {
   ClassPathEntry* e = _first_append_entry;
   while (e != NULL) {
     // assume zip entries have been canonicalized
-    if (strcmp(entry->name(), e->name()) == 0) {
+    if (strcmp(name, e->name()) == 0) {
       return true;
     }
     e = e->next();
@@ -983,7 +994,7 @@ bool ClassLoader::update_class_path_entry_list(const char *path,
 
     // Do not reorder the bootclasspath which would break get_system_package().
     // Add new entry to linked list
-    if (!check_for_duplicates || !contains_entry(new_entry)) {
+    if (!check_for_duplicates || !contains_append_entry(new_entry->name())) {
       ClassLoaderExt::add_class_path_entry(path, check_for_duplicates, new_entry);
     }
     return true;
@@ -1064,7 +1075,6 @@ void ClassLoader::load_zip_library() {
   ZipClose     = CAST_TO_FN_PTR(ZipClose_t, os::dll_lookup(handle, "ZIP_Close"));
   FindEntry    = CAST_TO_FN_PTR(FindEntry_t, os::dll_lookup(handle, "ZIP_FindEntry"));
   ReadEntry    = CAST_TO_FN_PTR(ReadEntry_t, os::dll_lookup(handle, "ZIP_ReadEntry"));
-  ReadMappedEntry = CAST_TO_FN_PTR(ReadMappedEntry_t, os::dll_lookup(handle, "ZIP_ReadMappedEntry"));
   GetNextEntry = CAST_TO_FN_PTR(GetNextEntry_t, os::dll_lookup(handle, "ZIP_GetNextEntry"));
   ZipInflateFully = CAST_TO_FN_PTR(ZipInflateFully_t, os::dll_lookup(handle, "ZIP_InflateFully"));
   Crc32        = CAST_TO_FN_PTR(Crc32_t, os::dll_lookup(handle, "ZIP_CRC32"));
@@ -1133,7 +1143,7 @@ void ClassLoader::initialize_module_loader_map(JImageFile* jimage) {
 
   ResourceMark rm;
   jlong size;
-  JImageLocationRef location = (*JImageFindResource)(jimage, "java.base", get_jimage_version_string(), MODULE_LOADER_MAP, &size);
+  JImageLocationRef location = (*JImageFindResource)(jimage, JAVA_BASE_NAME, get_jimage_version_string(), MODULE_LOADER_MAP, &size);
   if (location == 0) {
     vm_exit_during_initialization(
       "Cannot find ModuleLoaderMap location from modules jimage.", NULL);
@@ -1358,7 +1368,7 @@ ClassFileStream* ClassLoader::search_module_entries(const GrowableArray<ModuleCl
   if (!Universe::is_module_initialized() &&
       !ModuleEntryTable::javabase_defined() &&
       mod_entry == NULL) {
-    mod_entry = ModuleEntryTable::javabase_module();
+    mod_entry = ModuleEntryTable::javabase_moduleEntry();
   }
 
   // The module must be a named module
@@ -1420,8 +1430,6 @@ instanceKlassHandle ClassLoader::load_class(Symbol* name, bool search_append_onl
 
   // If DumpSharedSpaces is true boot loader visibility boundaries are set to:
   //   - [jimage] + [_first_append_entry to _last_append_entry] (all path entries).
-  // No --patch-module entries or exploded module builds are included since CDS
-  // is not supported if --patch-module or exploded module builds are used.
   //
   // If search_append_only is true, boot loader visibility boundaries are
   // set to be _first_append_entry to the end. This includes:
@@ -1444,8 +1452,15 @@ instanceKlassHandle ClassLoader::load_class(Symbol* name, bool search_append_onl
   // found within its module specification, the search should continue to Load Attempt #2.
   // Note: The --patch-module entries are never searched if the boot loader's
   //       visibility boundary is limited to only searching the append entries.
-  if (_patch_mod_entries != NULL && !search_append_only && !DumpSharedSpaces) {
-    stream = search_module_entries(_patch_mod_entries, class_name, file_name, CHECK_NULL);
+  if (_patch_mod_entries != NULL && !search_append_only) {
+    // At CDS dump time, the --patch-module entries are ignored. That means a
+    // class is still loaded from the runtime image even if it might
+    // appear in the _patch_mod_entries. The runtime shared class visibility
+    // check will determine if a shared class is visible based on the runtime
+    // environemnt, including the runtime --patch-module setting.
+    if (!DumpSharedSpaces) {
+      stream = search_module_entries(_patch_mod_entries, class_name, file_name, CHECK_NULL);
+    }
   }
 
   // Load Attempt #2: [jimage | exploded build]
@@ -1647,15 +1662,16 @@ void classLoader_init1() {
 
 // Complete the ClassPathEntry setup for the boot loader
 void ClassLoader::classLoader_init2(TRAPS) {
-  // Create the moduleEntry for java.base
-  create_javabase();
-
   // Setup the list of module/path pairs for --patch-module processing
   // This must be done after the SymbolTable is created in order
   // to use fast_compare on module names instead of a string compare.
   if (Arguments::get_patch_mod_prefix() != NULL) {
     setup_patch_mod_entries();
   }
+
+  // Create the ModuleEntry for java.base (must occur after setup_patch_mod_entries
+  // to successfully determine if java.base has been patched)
+  create_javabase();
 
   // Setup the initial java.base/path pair for the exploded build entries.
   // As more modules are defined during module system initialization, more
@@ -1706,9 +1722,9 @@ void ClassLoader::create_javabase() {
     MutexLocker ml(Module_lock, THREAD);
     ModuleEntry* jb_module = null_cld_modules->locked_create_entry_or_null(Handle(NULL), vmSymbols::java_base(), NULL, NULL, null_cld);
     if (jb_module == NULL) {
-      vm_exit_during_initialization("Unable to create ModuleEntry for java.base");
+      vm_exit_during_initialization("Unable to create ModuleEntry for " JAVA_BASE_NAME);
     }
-    ModuleEntryTable::set_javabase_module(jb_module);
+    ModuleEntryTable::set_javabase_moduleEntry(jb_module);
   }
 }
 
@@ -1924,7 +1940,6 @@ void ClassLoader::compile_the_world_in(char* name, Handle loader, TRAPS) {
                 if (nm != NULL && !m->is_method_handle_intrinsic()) {
                   // Throw out the code so that the code cache doesn't fill up
                   nm->make_not_entrant();
-                  m->clear_code();
                 }
                 CompileBroker::compile_method(m, InvocationEntryBci, CompLevel_full_optimization,
                                               methodHandle(), 0, CompileTask::Reason_CTW, THREAD);
@@ -1943,7 +1958,6 @@ void ClassLoader::compile_the_world_in(char* name, Handle loader, TRAPS) {
             if (nm != NULL && !m->is_method_handle_intrinsic()) {
               // Throw out the code so that the code cache doesn't fill up
               nm->make_not_entrant();
-              m->clear_code();
             }
           }
         }

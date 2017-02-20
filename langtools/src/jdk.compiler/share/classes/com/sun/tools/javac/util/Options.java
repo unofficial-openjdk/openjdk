@@ -26,6 +26,7 @@
 package com.sun.tools.javac.util;
 
 import java.util.*;
+
 import com.sun.tools.javac.main.Option;
 import static com.sun.tools.javac.main.Option.*;
 
@@ -111,6 +112,18 @@ public class Options {
         return (values.get(option.primaryName + value) != null);
     }
 
+    /** Check if the value for a lint option has been explicitly set, either with -Xlint:opt
+     *  or if all lint options have enabled and this one not disabled with -Xlint:-opt.
+     */
+    public boolean isLintSet(String s) {
+        // return true if either the specific option is enabled, or
+        // they are all enabled without the specific one being
+        // disabled
+        return
+            isSet(XLINT_CUSTOM, s) ||
+            (isSet(XLINT) || isSet(XLINT_CUSTOM, "all")) && isUnset(XLINT_CUSTOM, "-" + s);
+    }
+
     /**
      * Check if the value for an undocumented option has not been set.
      */
@@ -167,16 +180,5 @@ public class Options {
     public void notifyListeners() {
         for (Runnable r: listeners)
             r.run();
-    }
-
-    /** Check for a lint suboption. */
-    public boolean lint(String s) {
-        // return true if either the specific option is enabled, or
-        // they are all enabled without the specific one being
-        // disabled
-        return
-            isSet(XLINT_CUSTOM, s) ||
-            (isSet(XLINT) || isSet(XLINT_CUSTOM, "all")) &&
-                isUnset(XLINT_CUSTOM, "-" + s);
     }
 }

@@ -54,6 +54,7 @@
 //      indicating where oops are located in instances of this klass.
 //    [EMBEDDED implementor of the interface] only exist for interface
 //    [EMBEDDED host klass        ] only exist for an anonymous class (JSR 292 enabled)
+//    [EMBEDDED fingerprint       ] only if should_store_fingerprint()==true
 
 
 // forward declaration for class -- see below for definition
@@ -148,7 +149,7 @@ class InstanceKlass: public Klass {
   // Package this class is defined in
   PackageEntry*   _package_entry;
   // Array classes holding elements of this class.
-  Klass*          _array_klasses;
+  Klass* volatile _array_klasses;
   // Constant pool for this class.
   ConstantPool* _constants;
   // The InnerClasses attribute and EnclosingMethod attribute. The
@@ -207,18 +208,20 @@ class InstanceKlass: public Klass {
 
   // Start after _misc_kind field.
   enum {
-    _misc_rewritten                = 1 << 2,  // methods rewritten.
-    _misc_has_nonstatic_fields     = 1 << 3,  // for sizing with UseCompressedOops
-    _misc_should_verify_class      = 1 << 4,  // allow caching of preverification
-    _misc_is_anonymous             = 1 << 5,  // has embedded _host_klass field
-    _misc_is_contended             = 1 << 6,  // marked with contended annotation
-    _misc_has_default_methods      = 1 << 7,  // class/superclass/implemented interfaces has default methods
-    _misc_declares_default_methods = 1 << 8,  // directly declares default methods (any access)
-    _misc_has_been_redefined       = 1 << 9,  // class has been redefined
-    _misc_is_scratch_class         = 1 << 10, // class is the redefined scratch class
-    _misc_is_shared_boot_class     = 1 << 11, // defining class loader is boot class loader
-    _misc_is_shared_platform_class = 1 << 12, // defining class loader is platform class loader
-    _misc_is_shared_app_class      = 1 << 13  // defining class loader is app class loader
+    _misc_rewritten                           = 1 << 2,  // methods rewritten.
+    _misc_has_nonstatic_fields                = 1 << 3,  // for sizing with UseCompressedOops
+    _misc_should_verify_class                 = 1 << 4,  // allow caching of preverification
+    _misc_is_anonymous                        = 1 << 5,  // has embedded _host_klass field
+    _misc_is_contended                        = 1 << 6,  // marked with contended annotation
+    _misc_has_nonstatic_concrete_methods      = 1 << 7,  // class/superclass/implemented interfaces has non-static, concrete methods
+    _misc_declares_nonstatic_concrete_methods = 1 << 8,  // directly declares non-static, concrete methods
+    _misc_has_been_redefined                  = 1 << 9,  // class has been redefined
+    _misc_has_passed_fingerprint_check        = 1 << 10, // when this class was loaded, the fingerprint computed from its
+                                                         // code source was found to be matching the value recorded by AOT.
+    _misc_is_scratch_class                    = 1 << 11, // class is the redefined scratch class
+    _misc_is_shared_boot_class                = 1 << 12, // defining class loader is boot class loader
+    _misc_is_shared_platform_class            = 1 << 13, // defining class loader is platform class loader
+    _misc_is_shared_app_class                 = 1 << 14  // defining class loader is app class loader
   };
   u2 loader_type_bits() {
     return _misc_is_shared_boot_class|_misc_is_shared_platform_class|_misc_is_shared_app_class;
@@ -230,7 +233,7 @@ class InstanceKlass: public Klass {
   OopMapCache*    volatile _oop_map_cache;   // OopMapCache for all methods in the klass (allocated lazily)
   MemberNameTable* _member_names;        // Member names
   JNIid*          _jni_ids;              // First JNI identifier for static fields in this class
-  jmethodID*      _methods_jmethod_ids;  // jmethodIDs corresponding to method_idnum, or NULL if none
+  jmethodID*      volatile _methods_jmethod_ids;  // jmethodIDs corresponding to method_idnum, or NULL if none
   intptr_t        _dep_context;          // packed DependencyContext structure
   nmethod*        _osr_nmethods_head;    // Head of list of on-stack replacement nmethods for this class
 #if INCLUDE_JVMTI
@@ -368,7 +371,9 @@ class InstanceKlass: public Klass {
 
   // array klasses
   Klass* array_klasses() const             { return _array_klasses; }
+  inline Klass* array_klasses_acquire() const; // load with acquire semantics
   void set_array_klasses(Klass* k)         { _array_klasses = k; }
+  inline void release_set_array_klasses(Klass* k); // store with release semantics
 
   // methods
   Array<Method*>* methods() const          { return _methods; }
@@ -617,8 +622,8 @@ class InstanceKlass: public Klass {
   objArrayOop signers() const;
 
   // host class
-  Klass* host_klass() const              {
-    Klass** hk = (Klass**)adr_host_klass();
+  InstanceKlass* host_klass() const              {
+    InstanceKlass** hk = adr_host_klass();
     if (hk == NULL) {
       return NULL;
     } else {
@@ -626,9 +631,9 @@ class InstanceKlass: public Klass {
       return *hk;
     }
   }
-  void set_host_klass(const Klass* host) {
+  void set_host_klass(const InstanceKlass* host) {
     assert(is_anonymous(), "not anonymous");
-    const Klass** addr = (const Klass**)adr_host_klass();
+    const InstanceKlass** addr = (const InstanceKlass **)adr_host_klass();
     assert(addr != NULL, "no reversed space");
     if (addr != NULL) {
       *addr = host;
@@ -707,6 +712,7 @@ class InstanceKlass: public Klass {
 
   // RedefineClasses() support for previous versions:
   void add_previous_version(instanceKlassHandle ikh, int emcp_method_count);
+  void purge_previous_version_list();
 
   InstanceKlass* previous_versions() const { return _previous_versions; }
 #else
@@ -728,6 +734,23 @@ class InstanceKlass: public Klass {
   void set_has_been_redefined() {
     _misc_flags |= _misc_has_been_redefined;
   }
+
+  bool has_passed_fingerprint_check() const {
+    return (_misc_flags & _misc_has_passed_fingerprint_check) != 0;
+  }
+  void set_has_passed_fingerprint_check(bool b) {
+    if (b) {
+      _misc_flags |= _misc_has_passed_fingerprint_check;
+    } else {
+      _misc_flags &= ~_misc_has_passed_fingerprint_check;
+    }
+  }
+  bool supers_have_passed_fingerprint_checks();
+
+  static bool should_store_fingerprint();
+  bool has_stored_fingerprint() const;
+  uint64_t get_stored_fingerprint() const;
+  void store_fingerprint(uint64_t fingerprint);
 
   bool is_scratch_class() const {
     return (_misc_flags & _misc_is_scratch_class) != 0;
@@ -766,16 +789,21 @@ public:
   }
 
  private:
-  static int  _previous_version_count;
+  static bool  _has_previous_versions;
  public:
-  static void purge_previous_versions(InstanceKlass* ik);
-  static bool has_previous_versions() { return _previous_version_count > 0; }
+  static void purge_previous_versions(InstanceKlass* ik) {
+    if (ik->has_been_redefined()) {
+      ik->purge_previous_version_list();
+    }
+  }
+
+  static bool has_previous_versions_and_reset();
 
   // JVMTI: Support for caching a class file before it is modified by an agent that can do retransformation
   void set_cached_class_file(JvmtiCachedClassFileData *data) {
     _cached_class_file = data;
   }
-  JvmtiCachedClassFileData * get_cached_class_file() { return _cached_class_file; }
+  JvmtiCachedClassFileData * get_cached_class_file();
   jint get_cached_class_file_len();
   unsigned char * get_cached_class_file_bytes();
 
@@ -787,10 +815,17 @@ public:
     return _jvmti_cached_class_field_map;
   }
 
+#if INCLUDE_CDS
+  void set_archived_class_data(JvmtiCachedClassFileData* data) {
+    _cached_class_file = data;
+  }
+
+  JvmtiCachedClassFileData * get_archived_class_data();
+#endif // INCLUDE_CDS
 #else // INCLUDE_JVMTI
 
   static void purge_previous_versions(InstanceKlass* ik) { return; };
-  static bool has_previous_versions() { return false; }
+  static bool has_previous_versions_and_reset() { return false; }
 
   void set_cached_class_file(JvmtiCachedClassFileData *data) {
     assert(data == NULL, "unexpected call with JVMTI disabled");
@@ -799,25 +834,25 @@ public:
 
 #endif // INCLUDE_JVMTI
 
-  bool has_default_methods() const {
-    return (_misc_flags & _misc_has_default_methods) != 0;
+  bool has_nonstatic_concrete_methods() const {
+    return (_misc_flags & _misc_has_nonstatic_concrete_methods) != 0;
   }
-  void set_has_default_methods(bool b) {
+  void set_has_nonstatic_concrete_methods(bool b) {
     if (b) {
-      _misc_flags |= _misc_has_default_methods;
+      _misc_flags |= _misc_has_nonstatic_concrete_methods;
     } else {
-      _misc_flags &= ~_misc_has_default_methods;
+      _misc_flags &= ~_misc_has_nonstatic_concrete_methods;
     }
   }
 
-  bool declares_default_methods() const {
-    return (_misc_flags & _misc_declares_default_methods) != 0;
+  bool declares_nonstatic_concrete_methods() const {
+    return (_misc_flags & _misc_declares_nonstatic_concrete_methods) != 0;
   }
-  void set_declares_default_methods(bool b) {
+  void set_declares_nonstatic_concrete_methods(bool b) {
     if (b) {
-      _misc_flags |= _misc_declares_default_methods;
+      _misc_flags |= _misc_declares_nonstatic_concrete_methods;
     } else {
-      _misc_flags &= ~_misc_declares_default_methods;
+      _misc_flags &= ~_misc_declares_nonstatic_concrete_methods;
     }
   }
 
@@ -1013,19 +1048,21 @@ public:
 
   static int size(int vtable_length, int itable_length,
                   int nonstatic_oop_map_size,
-                  bool is_interface, bool is_anonymous) {
+                  bool is_interface, bool is_anonymous, bool has_stored_fingerprint) {
     return align_metadata_size(header_size() +
            vtable_length +
            itable_length +
            nonstatic_oop_map_size +
            (is_interface ? (int)sizeof(Klass*)/wordSize : 0) +
-           (is_anonymous ? (int)sizeof(Klass*)/wordSize : 0));
+           (is_anonymous ? (int)sizeof(Klass*)/wordSize : 0) +
+           (has_stored_fingerprint ? (int)sizeof(uint64_t*)/wordSize : 0));
   }
   int size() const                    { return size(vtable_length(),
                                                itable_length(),
                                                nonstatic_oop_map_size(),
                                                is_interface(),
-                                               is_anonymous());
+                                               is_anonymous(),
+                                               has_stored_fingerprint());
   }
 #if INCLUDE_SERVICES
   virtual void collect_statistics(KlassSizeStats *sz) const;
@@ -1055,14 +1092,32 @@ public:
     }
   };
 
-  Klass** adr_host_klass() const {
+  InstanceKlass** adr_host_klass() const {
     if (is_anonymous()) {
-      Klass** adr_impl = adr_implementor();
+      InstanceKlass** adr_impl = (InstanceKlass **)adr_implementor();
       if (adr_impl != NULL) {
         return adr_impl + 1;
       } else {
-        return end_of_nonstatic_oop_maps();
+        return (InstanceKlass **)end_of_nonstatic_oop_maps();
       }
+    } else {
+      return NULL;
+    }
+  }
+
+  address adr_fingerprint() const {
+    if (has_stored_fingerprint()) {
+      InstanceKlass** adr_host = adr_host_klass();
+      if (adr_host != NULL) {
+        return (address)(adr_host + 1);
+      }
+
+      Klass** adr_impl = adr_implementor();
+      if (adr_impl != NULL) {
+        return (address)(adr_impl + 1);
+      }
+
+      return (address)end_of_nonstatic_oop_maps();
     } else {
       return NULL;
     }
@@ -1238,10 +1293,8 @@ private:
   // cache management logic if the caches can grow instead of just
   // going from NULL to non-NULL.
   bool idnum_can_increment() const      { return has_been_redefined(); }
-  jmethodID* methods_jmethod_ids_acquire() const
-         { return (jmethodID*)OrderAccess::load_ptr_acquire(&_methods_jmethod_ids); }
-  void release_set_methods_jmethod_ids(jmethodID* jmeths)
-         { OrderAccess::release_store_ptr(&_methods_jmethod_ids, jmeths); }
+  inline jmethodID* methods_jmethod_ids_acquire() const;
+  inline void release_set_methods_jmethod_ids(jmethodID* jmeths);
 
   // Lock during initialization
 public:

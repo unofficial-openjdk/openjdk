@@ -62,7 +62,7 @@ public class ConcurrentSkipListSetTest extends JSR166TestCase {
 
     /**
      * Returns a new set of given size containing consecutive
-     * Integers 0 ... n.
+     * Integers 0 ... n - 1.
      */
     private ConcurrentSkipListSet<Integer> populatedSet(int n) {
         ConcurrentSkipListSet<Integer> q =
@@ -725,7 +725,8 @@ public class ConcurrentSkipListSetTest extends JSR166TestCase {
     }
 
     static NavigableSet<Integer> newSet(Class cl) throws Exception {
-        NavigableSet<Integer> result = (NavigableSet<Integer>) cl.newInstance();
+        NavigableSet<Integer> result =
+            (NavigableSet<Integer>) cl.getConstructor().newInstance();
         assertEquals(0, result.size());
         assertFalse(result.iterator().hasNext());
         return result;

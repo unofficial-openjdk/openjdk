@@ -23,21 +23,38 @@
 
 /*
  * @test
+ * @bug 8166744
  * @summary Test Completion
  * @modules jdk.internal.le/jdk.internal.jline.extra
- *          jdk.jshell/jdk.internal.jshell.tool
+ *          jdk.jshell/jdk.internal.jshell.tool:+open
  * @build HistoryTest
  * @run testng HistoryTest
  */
 
 import java.lang.reflect.Field;
+import java.util.Locale;
 import jdk.internal.jline.extra.EditingHistory;
 import org.testng.annotations.Test;
+import jdk.internal.jshell.tool.JShellTool;
+import jdk.internal.jshell.tool.JShellToolBuilder;
 import static org.testng.Assert.*;
 
-@Test
 public class HistoryTest extends ReplToolTesting {
 
+    private JShellTool repl;
+
+    @Override
+    protected void testRawRun(Locale locale, String[] args) {
+        repl = ((JShellToolBuilder) builder(locale))
+                .rawTool();
+        try {
+            repl.start(args);
+        } catch (Exception ex) {
+            fail("Repl tool died with exception", ex);
+        }
+    }
+
+    @Test
     public void testHistory() {
         test(
              a -> {if (!a) setCommandInput("void test() {\n");},
@@ -67,6 +84,45 @@ public class HistoryTest extends ReplToolTesting {
                          previousSnippetAndAssert(getHistory(), "/exit");
                          previousSnippetAndAssert(getHistory(), "int dummy;");
                          previousSnippetAndAssert(getHistory(), "void test() {");
+                     } catch (Exception ex) {
+                         throw new IllegalStateException(ex);
+                     }
+                 }
+                 assertCommand(a, "int dummy;", "dummy ==> 0");
+             });
+    }
+
+    @Test
+    public void test8166744() {
+        test(
+             a -> {if (!a) setCommandInput("class C {\n");},
+             a -> {if (!a) setCommandInput("void f() {\n");},
+             a -> {if (!a) setCommandInput("}\n");},
+             a -> {assertCommand(a, "}", "|  created class C");},
+             a -> {
+                 if (!a) {
+                     try {
+                         previousAndAssert(getHistory(), "}");
+                         previousAndAssert(getHistory(), "}");
+                         previousAndAssert(getHistory(), "void f() {");
+                         previousAndAssert(getHistory(), "class C {");
+                         getHistory().add("class C{");
+                     } catch (Exception ex) {
+                         throw new IllegalStateException(ex);
+                     }
+                 }
+                 assertCommand(a, "int dummy;", "dummy ==> 0");
+             });
+        test(
+             a -> {if (!a) setCommandInput("class C {\n");},
+             a -> {if (!a) setCommandInput("void f() {\n");},
+             a -> {if (!a) setCommandInput("}\n");},
+             a -> {assertCommand(a, "}", "|  created class C");},
+             a -> {
+                 if (!a) {
+                     try {
+                         previousSnippetAndAssert(getHistory(), "class C {");
+                         getHistory().add("class C{");
                      } catch (Exception ex) {
                          throw new IllegalStateException(ex);
                      }

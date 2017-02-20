@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,16 @@ public final class SwingAccessor {
     }
 
     /**
+     * An accessor for the JComponent class.
+     */
+    public interface JComponentAccessor {
+
+        boolean getFlag(JComponent comp, int aFlag);
+
+        void compWriteObjectNotify(JComponent comp);
+    }
+
+    /**
      * An accessor for the JTextComponent class.
      * Note that we intentionally introduce the JTextComponentAccessor,
      * and not the JComponentAccessor because the needed methods
@@ -82,6 +92,16 @@ public final class SwingAccessor {
     }
 
     /**
+     * An accessor for the UIDefaults class.
+     */
+    public interface UIDefaultsAccessor {
+        /**
+         * Adds a resource bundle to the list of resource bundles.
+         */
+        void addInternalBundle(UIDefaults uiDefaults, String bundleName);
+    }
+
+    /**
      * An accessor for the RepaintManager class.
      */
     public interface RepaintManagerAccessor {
@@ -103,6 +123,29 @@ public final class SwingAccessor {
     public interface KeyStrokeAccessor {
 
         KeyStroke create();
+    }
+
+    /**
+     * The javax.swing.JComponent class accessor object.
+     */
+    private static JComponentAccessor jComponentAccessor;
+
+    /**
+     * Set an accessor object for the javax.swing.JComponent class.
+     */
+    public static void setJComponentAccessor(JComponentAccessor jCompAccessor) {
+        jComponentAccessor = jCompAccessor;
+    }
+
+    /**
+     * Retrieve the accessor object for the javax.swing.JComponent class.
+     */
+    public static JComponentAccessor getJComponentAccessor() {
+        if (jComponentAccessor == null) {
+            unsafe.ensureClassInitialized(JComponent.class);
+        }
+
+        return jComponentAccessor;
     }
 
     /**
@@ -148,6 +191,28 @@ public final class SwingAccessor {
             unsafe.ensureClassInitialized(JLightweightFrame.class);
         }
         return jLightweightFrameAccessor;
+    }
+
+    /**
+     * The UIDefaults class accessor object
+     */
+    private static UIDefaultsAccessor uiDefaultsAccessor;
+
+    /**
+     * Set an accessor object for the UIDefaults class.
+     */
+    public static void setUIDefaultsAccessor(UIDefaultsAccessor accessor) {
+        uiDefaultsAccessor = accessor;
+    }
+
+    /**
+     * Retrieve the accessor object for the JLightweightFrame class
+     */
+    public static UIDefaultsAccessor getUIDefaultsAccessor() {
+        if (uiDefaultsAccessor == null) {
+            unsafe.ensureClassInitialized(UIDefaults.class);
+        }
+        return uiDefaultsAccessor;
     }
 
     /**

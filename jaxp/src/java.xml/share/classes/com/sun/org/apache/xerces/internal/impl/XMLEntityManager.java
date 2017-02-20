@@ -217,7 +217,8 @@ public class XMLEntityManager implements XMLComponent, XMLEntityResolver {
                 JdkXmlUtils.CATALOG_DEFER,
                 JdkXmlUtils.CATALOG_FILES,
                 JdkXmlUtils.CATALOG_PREFER,
-                JdkXmlUtils.CATALOG_RESOLVE
+                JdkXmlUtils.CATALOG_RESOLVE,
+                JdkXmlUtils.CDATA_CHUNK_SIZE
     };
 
     /** Property defaults. */
@@ -232,7 +233,8 @@ public class XMLEntityManager implements XMLComponent, XMLEntityResolver {
                 null,
                 null,
                 null,
-                null
+                null,
+                JdkXmlUtils.CDATA_CHUNK_SIZE_DEFAULT
     };
 
     private static final String XMLEntity = "[xml]".intern();
@@ -965,7 +967,7 @@ public class XMLEntityManager implements XMLComponent, XMLEntityResolver {
      */
 
     public void setEntityHandler(com.sun.org.apache.xerces.internal.impl.XMLEntityHandler entityHandler) {
-        fEntityHandler = (XMLEntityHandler) entityHandler;
+        fEntityHandler = entityHandler;
     } // setEntityHandler(XMLEntityHandler)
 
     //this function returns StaxXMLInputSource
@@ -1033,12 +1035,12 @@ public class XMLEntityManager implements XMLComponent, XMLEntityResolver {
             staxInputSource = new StaxXMLInputSource(xmlInputSource, fISCreatedByResolver);
         }
 
-        if (staxInputSource == null) {
+        if (staxInputSource == null && fUseCatalog) {
             if (fCatalogFeatures == null) {
                 fCatalogFeatures = JdkXmlUtils.getCatalogFeatures(fDefer, fCatalogFile, fPrefer, fResolve);
             }
             fCatalogFile = fCatalogFeatures.get(Feature.FILES);
-            if (fUseCatalog && fCatalogFile != null) {
+            if (fCatalogFile != null) {
                 try {
                     if (fCatalogResolver == null) {
                         fCatalogResolver = CatalogManager.catalogResolver(fCatalogFeatures);
@@ -1133,12 +1135,12 @@ public class XMLEntityManager implements XMLComponent, XMLEntityResolver {
             xmlInputSource = fEntityResolver.resolveEntity(resourceIdentifier);
         }
 
-        if (xmlInputSource == null) {
+        if (xmlInputSource == null && fUseCatalog) {
             if (fCatalogFeatures == null) {
                 fCatalogFeatures = JdkXmlUtils.getCatalogFeatures(fDefer, fCatalogFile, fPrefer, fResolve);
             }
             fCatalogFile = fCatalogFeatures.get(Feature.FILES);
-            if (fUseCatalog && fCatalogFile != null) {
+            if (fCatalogFile != null) {
                 /*
                  since the method can be called from various processors, both
                  EntityResolver and URIResolver are used to attempt to find
@@ -1264,11 +1266,11 @@ public class XMLEntityManager implements XMLComponent, XMLEntityResolver {
         for (int i = size; i >= 0; i--) {
             Entity activeEntity = i == size
                     ? fCurrentEntity
-                    : (Entity)fEntityStack.elementAt(i);
+                    : fEntityStack.elementAt(i);
             if (activeEntity.name == entityName) {
                 String path = entityName;
                 for (int j = i + 1; j < size; j++) {
-                    activeEntity = (Entity)fEntityStack.elementAt(j);
+                    activeEntity = fEntityStack.elementAt(j);
                     path = path + " -> " + activeEntity.name;
                 }
                 path = path + " -> " + fCurrentEntity.name;
@@ -1702,7 +1704,7 @@ public class XMLEntityManager implements XMLComponent, XMLEntityResolver {
      * are recognized by this component.
      */
     public String[] getRecognizedFeatures() {
-        return (String[])(RECOGNIZED_FEATURES.clone());
+        return RECOGNIZED_FEATURES.clone();
     } // getRecognizedFeatures():String[]
 
     /**
@@ -1822,7 +1824,7 @@ public class XMLEntityManager implements XMLComponent, XMLEntityResolver {
      * are recognized by this component.
      */
     public String[] getRecognizedProperties() {
-        return (String[])(RECOGNIZED_PROPERTIES.clone());
+        return RECOGNIZED_PROPERTIES.clone();
     } // getRecognizedProperties():String[]
     /**
      * Returns the default state for a feature, or null if this
@@ -2950,7 +2952,7 @@ public class XMLEntityManager implements XMLComponent, XMLEntityResolver {
         public CharacterBuffer getBuffer(boolean external) {
             if (external) {
                 if (fExternalTop > -1) {
-                    return (CharacterBuffer)fExternalBufferPool[fExternalTop--];
+                    return fExternalBufferPool[fExternalTop--];
                 }
                 else {
                     return new CharacterBuffer(true, fExternalBufferSize);
@@ -2958,7 +2960,7 @@ public class XMLEntityManager implements XMLComponent, XMLEntityResolver {
             }
             else {
                 if (fInternalTop > -1) {
-                    return (CharacterBuffer)fInternalBufferPool[fInternalTop--];
+                    return fInternalBufferPool[fInternalTop--];
                 }
                 else {
                     return new CharacterBuffer(false, fInternalBufferSize);

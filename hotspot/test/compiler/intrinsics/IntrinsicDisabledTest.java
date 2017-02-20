@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,9 @@
  * @test
  * @bug 8138651
  * @modules java.base/jdk.internal.misc
- * @library /testlibrary /test/lib
+ * @library /test/lib /
  *
- * @build compiler.intrinsics.IntrinsicDisabledTest
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:.
@@ -44,6 +44,7 @@ package compiler.intrinsics;
 
 import jdk.test.lib.Platform;
 import sun.hotspot.WhiteBox;
+import compiler.whitebox.CompilerWhiteBoxTest;
 
 import java.lang.reflect.Executable;
 import java.util.Objects;
@@ -51,12 +52,6 @@ import java.util.Objects;
 public class IntrinsicDisabledTest {
 
     private static final WhiteBox wb = WhiteBox.getWhiteBox();
-
-    /* Compilation level corresponding to C1. */
-    private static final int COMP_LEVEL_SIMPLE = 1;
-
-    /* Compilation level corresponding to C2. */
-    private static final int COMP_LEVEL_FULL_OPTIMIZATION = 4;
 
     /* Determine if tiered compilation is enabled. */
     private static final boolean TIERED_COMPILATION = wb.getBooleanVMFlag("TieredCompilation");
@@ -202,13 +197,14 @@ public class IntrinsicDisabledTest {
     }
 
     public static void main(String args[]) {
-        if (Platform.isServer() && (TIERED_STOP_AT_LEVEL == COMP_LEVEL_FULL_OPTIMIZATION)) {
+        if (Platform.isServer() && !Platform.isEmulatedClient() &&
+                                   (TIERED_STOP_AT_LEVEL == CompilerWhiteBoxTest.COMP_LEVEL_FULL_OPTIMIZATION)) {
             if (TIERED_COMPILATION) {
-                test(COMP_LEVEL_SIMPLE);
+                test(CompilerWhiteBoxTest.COMP_LEVEL_SIMPLE);
             }
-            test(COMP_LEVEL_FULL_OPTIMIZATION);
+            test(CompilerWhiteBoxTest.COMP_LEVEL_FULL_OPTIMIZATION);
         } else {
-            test(COMP_LEVEL_SIMPLE);
+            test(CompilerWhiteBoxTest.COMP_LEVEL_SIMPLE);
         }
     }
 }

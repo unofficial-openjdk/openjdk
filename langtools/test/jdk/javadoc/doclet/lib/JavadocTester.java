@@ -41,6 +41,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -326,15 +327,27 @@ public abstract class JavadocTester {
         outputDirectoryCheck = c;
     }
 
+    /**
+     * The exit codes returned by the javadoc tool.
+     * @see jdk.javadoc.internal.tool.Main.Result
+     */
     public enum Exit {
-        OK(0),
-        FAILED(1);
+        OK(0),        // Javadoc completed with no errors.
+        ERROR(1),     // Completed but reported errors.
+        CMDERR(2),    // Bad command-line arguments
+        SYSERR(3),    // System error or resource exhaustion.
+        ABNORMAL(4);  // Javadoc terminated abnormally
 
         Exit(int code) {
             this.code = code;
         }
 
         final int code;
+
+        @Override
+        public String toString() {
+            return name() + '(' + code + ')';
+        }
     }
 
     /**
@@ -348,7 +361,26 @@ public abstract class JavadocTester {
         if (exitCode == expected.code) {
             passed("return code " + exitCode);
         } else {
-            failed("return code " + exitCode +"; expected " + expected.code + " (" + expected + ")");
+            failed("return code " + exitCode +"; expected " + expected);
+        }
+    }
+
+    /**
+     * Check for content in (or not in) the generated output.
+     * Within the search strings, the newline character \n
+     * will be translated to the platform newline character sequence.
+     * @param path a path within the most recent output directory
+     *  or the name of one of the output buffers, identifying
+     *  where to look for the search strings.
+     * @param expectedFound true if all of the search strings are expected
+     *  to be found, or false if the file is not expected to be found
+     * @param strings the strings to be searched for
+     */
+    public void checkFileAndOutput(String path, boolean expectedFound, String... strings) {
+        if (expectedFound) {
+            checkOutput(path, true, strings);
+        } else {
+            checkFiles(false, path);
         }
     }
 
@@ -370,11 +402,9 @@ public abstract class JavadocTester {
         try {
             fileString = readFile(outputDir, path);
         } catch (Error e) {
-            if (!expectedFound) {
-                failed("Error reading file: " + e);
-                return;
-            }
-            throw e;
+            checking("Read file");
+            failed("Error reading file: " + e);
+            return;
         }
         checkOutput(path, fileString, expectedFound, strings);
     }
@@ -400,13 +430,30 @@ public abstract class JavadocTester {
             // Find string in file's contents
             boolean isFound = findString(fileString, stringToFind);
             if (isFound == expectedFound) {
-                passed(path + ": " + (isFound ? "found:" : "not found:") + "\n"
+                passed(path + ": following text " + (isFound ? "found:" : "not found:") + "\n"
                         + stringToFind + "\n");
             } else {
-                failed(path + ": " + (isFound ? "found:" : "not found:") + "\n"
+                failed(path + ": following text " + (isFound ? "found:" : "not found:") + "\n"
                         + stringToFind + "\n");
             }
         }
+    }
+
+    /**
+     * Get the content of the one of the output streams written by
+     * javadoc.
+     */
+    public String getOutput(Output output) {
+        return outputMap.get(output);
+    }
+
+    /**
+     * Get the content of the one of the output streams written by
+     * javadoc.
+     */
+    public List<String> getOutputLines(Output output) {
+        String text = outputMap.get(output);
+        return (text == null) ? Collections.emptyList() : Arrays.asList(text.split(NL));
     }
 
     /**
@@ -434,9 +481,9 @@ public abstract class JavadocTester {
             File file = new File(outputDir, path);
             boolean isFound = file.exists();
             if (isFound == expectedFound) {
-                passed(path + ": " + (isFound ? "found:" : "not found:") + "\n");
+                passed(path + ": file " + (isFound ? "found:" : "not found:") + "\n");
             } else {
-                failed(path + ": " + (isFound ? "found:" : "not found:") + "\n");
+                failed(path + ": file " + (isFound ? "found:" : "not found:") + "\n");
             }
         }
     }
@@ -589,11 +636,9 @@ public abstract class JavadocTester {
             fileContentCache.put(file, new SoftReference<>(content));
             return content;
         } catch (FileNotFoundException e) {
-            System.err.println(e);
-            throw new Error("File not found: " + fileName);
+            throw new Error("File not found: " + fileName + ": " + e);
         } catch (IOException e) {
-            System.err.println(e);
-            throw new Error("Error reading file: " + fileName);
+            throw new Error("Error reading file: " + fileName + ": " + e);
         }
     }
 

@@ -31,7 +31,7 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.net.URI;
-import java.util.function.Supplier;
+import java.util.Set;
 
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
@@ -39,95 +39,44 @@ import static org.testng.Assert.*;
 @Test
 public class ModuleReferenceTest {
 
-    private Supplier<ModuleReader> makeSupplier() {
-        return () -> { throw new UnsupportedOperationException(); };
+    private ModuleReference newModuleReference(ModuleDescriptor descriptor, URI uri) {
+        return new ModuleReference(descriptor, uri) {
+            @Override
+            public ModuleReader open() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     public void testBasic() throws Exception {
         ModuleDescriptor descriptor
-            = new ModuleDescriptor.Builder("m")
+            = ModuleDescriptor.newModule("m")
                 .exports("p")
                 .exports("q")
-                .conceals("p.internal")
+                .packages(Set.of("p.internal"))
                 .build();
 
         URI uri = URI.create("module:/m");
 
-        Supplier<ModuleReader> supplier = makeSupplier();
-
-        ModuleReference mref = new ModuleReference(descriptor, uri, supplier);
+        ModuleReference mref = newModuleReference(descriptor, uri);
 
         assertTrue(mref.descriptor().equals(descriptor));
         assertTrue(mref.location().get().equals(uri));
-
-        // check that the supplier is called
-        try {
-            mref.open();
-            assertTrue(false);
-        } catch (UnsupportedOperationException expected) { }
     }
-
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNullDescriptor() throws Exception {
         URI location = URI.create("module:/m");
-        new ModuleReference(null, location, makeSupplier());
+        newModuleReference(null, location);
     }
 
     public void testNullLocation() {
         ModuleDescriptor descriptor
-            = new ModuleDescriptor.Builder("m")
+            = ModuleDescriptor.newModule("m")
                 .exports("p")
                 .build();
-        Supplier<ModuleReader> supplier = makeSupplier();
-        ModuleReference mref = new ModuleReference(descriptor, null, supplier);
+        ModuleReference mref = newModuleReference(descriptor, null);
         assertTrue(!mref.location().isPresent());
-    }
-
-    @Test(expectedExceptions = { NullPointerException.class })
-    public void testNullSupplier() throws Exception {
-        ModuleDescriptor descriptor = new ModuleDescriptor.Builder("m").build();
-        URI location = URI.create("module:/m");
-        new ModuleReference(descriptor, location, null);
-    }
-
-
-    public void testEqualsAndHashCode() {
-        ModuleDescriptor descriptor1
-            = new ModuleDescriptor.Builder("m1")
-                .exports("p")
-                .build();
-        ModuleDescriptor descriptor2
-            = new ModuleDescriptor.Builder("m1")
-                .exports("p")
-                .build();
-
-        URI uri = URI.create("module:/m1");
-        Supplier<ModuleReader> supplier = makeSupplier();
-
-        ModuleReference mref1 = new ModuleReference(descriptor1, uri, supplier);
-        ModuleReference mref2 = new ModuleReference(descriptor2, uri, supplier);
-        ModuleReference mref3 = new ModuleReference(descriptor1, null, supplier);
-
-        assertTrue(mref1.equals(mref1));
-        assertTrue(mref1.equals(mref2));
-        assertTrue(mref2.equals(mref1));
-        assertTrue(mref1.hashCode() == mref2.hashCode());
-
-        assertTrue(mref3.equals(mref3));
-        assertFalse(mref3.equals(mref1));
-        assertFalse(mref1.equals(mref3));
-    }
-
-
-    public void testToString() {
-        ModuleDescriptor descriptor = new ModuleDescriptor.Builder("m1").build();
-        URI uri = URI.create("module:/m1");
-        Supplier<ModuleReader> supplier = makeSupplier();
-        ModuleReference mref = new ModuleReference(descriptor, uri, supplier);
-        String s = mref.toString();
-        assertTrue(s.contains("m1"));
-        assertTrue(s.contains(uri.toString()));
     }
 
 }

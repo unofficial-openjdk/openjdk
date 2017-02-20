@@ -37,14 +37,14 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Function;
-import jdk.tools.jlink.Jlink;
-import jdk.tools.jlink.Jlink.JlinkConfiguration;
-import jdk.tools.jlink.Jlink.PluginsConfiguration;
+import jdk.tools.jlink.internal.Jlink;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.internal.ExecutableImage;
+import jdk.tools.jlink.internal.Jlink.JlinkConfiguration;
+import jdk.tools.jlink.internal.Jlink.PluginsConfiguration;
 import jdk.tools.jlink.internal.PostProcessor;
 import jdk.tools.jlink.internal.plugins.DefaultCompressPlugin;
 import jdk.tools.jlink.internal.plugins.StripDebugPlugin;
@@ -59,10 +59,10 @@ import tests.JImageGenerator;
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
- *          jdk.jlink/jdk.tools.jlink
  *          jdk.jlink/jdk.tools.jlink.builder
  *          jdk.jlink/jdk.tools.jlink.internal
  *          jdk.jlink/jdk.tools.jlink.internal.plugins
+ *          jdk.jlink/jdk.tools.jlink.plugin
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.compiler
@@ -187,7 +187,7 @@ public class IntegrationTest {
             lst.add(new MyPostProcessor());
         }
         // Image builder
-        DefaultImageBuilder builder = new DefaultImageBuilder(output);
+        DefaultImageBuilder builder = new DefaultImageBuilder(output, Collections.emptyMap());
         PluginsConfiguration plugins
                 = new Jlink.PluginsConfiguration(lst, builder, null);
 
@@ -210,25 +210,29 @@ public class IntegrationTest {
             props.load(reader);
         }
 
-        if (props.getProperty("JAVA_VERSION") == null) {
-            throw new AssertionError("release file does not contain JAVA_VERSION");
-        }
-
-        if (props.getProperty("OS_NAME") == null) {
-            throw new AssertionError("release file does not contain OS_NAME");
-        }
-
-        if (props.getProperty("OS_ARCH") == null) {
-            throw new AssertionError("release file does not contain OS_ARCH");
-        }
-
-        if (props.getProperty("OS_VERSION") == null) {
-            throw new AssertionError("release file does not contain OS_VERSION");
-        }
+        checkReleaseProperty(props, "JAVA_VERSION");
+        checkReleaseProperty(props, "JAVA_FULL_VERSION");
+        checkReleaseProperty(props, "OS_NAME");
+        checkReleaseProperty(props, "OS_ARCH");
+        checkReleaseProperty(props, "OS_VERSION");
 
         if (!Files.exists(output.resolve("toto.txt"))) {
             throw new AssertionError("Post processing not called");
         }
 
+    }
+
+    static void checkReleaseProperty(Properties props, String name) {
+        if (! props.containsKey(name)) {
+            throw new AssertionError("release file does not contain property : " + name);
+        }
+
+        // property value is of min. length 3 and double quoted at the ends.
+        String value = props.getProperty(name);
+        if (value.length() < 3 ||
+            value.charAt(0) != '"' ||
+            value.charAt(value.length() - 1) != '"') {
+            throw new AssertionError("release property " + name + " is not quoted property");
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,14 +49,14 @@ public class PackageMultipleModules extends ModuleTestBase {
 
     @Test
     public void testSimple(Path base) throws Exception {
-        Path m1 = base.resolve("m1");
-        Path m2 = base.resolve("m2");
+        Path m1 = base.resolve("m1x");
+        Path m2 = base.resolve("m2x");
         tb.writeJavaFiles(m1,
-                          "module m1 {}",
+                          "module m1x {}",
                           "package test; import test.B; public class A {}",
                           "package test; public class A1 extends A {}");
         tb.writeJavaFiles(m2,
-                          "module m2 {}",
+                          "module m2x {}",
                           "package test; import test.A; public class B {}",
                           "package test; public class B1 extends B {}");
         Path classes = base.resolve("classes");
@@ -70,9 +70,10 @@ public class PackageMultipleModules extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(Task.OutputKind.DIRECT);
 
-        List<String> expected = Arrays.asList("A.java:1:26: compiler.err.not.def.access.package.cant.access: test.B, test",
-                                              "B.java:1:26: compiler.err.not.def.access.package.cant.access: test.A, test",
-                                              "2 errors");
+        List<String> expected = Arrays.asList(
+                "A.java:1:26: compiler.err.cant.resolve.location: kindname.class, B, , , (compiler.misc.location: kindname.package, test, null)",
+                "B.java:1:26: compiler.err.cant.resolve.location: kindname.class, A, , , (compiler.misc.location: kindname.package, test, null)",
+                "2 errors");
         if (!log.equals(expected))
             throw new Exception("expected output not found");
     }

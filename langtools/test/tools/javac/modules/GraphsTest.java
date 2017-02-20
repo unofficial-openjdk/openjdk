@@ -55,19 +55,19 @@ public class GraphsTest extends ModuleTestBase {
 
     /**
      * Tests diamond graph with an automatic module added in.
-     * +-------------+          +--------------------+         +------------------+
-     * | module M    |          | module N           |         | module O         |
-     * |             | ----->   |                    | --->    |                  |  --> J.jar
-     * | require N   |          | requires public  O |         |                  |
-     * | require L   |          |                    |         +------------------+
-     * +-------------+          +--------------------+                  ^
+     * +-------------+          +-----------------------+         +------------------+
+     * | module M    |          | module N              |         | module O         |
+     * |             | ----->   |                       | --->    |                  |  --> J.jar
+     * | require N   |          | requires transitive O |         |                  |
+     * | require L   |          |                       |         +------------------+
+     * +-------------+          +-----------------------+                  ^
      *       |                                                          |
-     *       |                  +--------------------+                  |
-     *       ------------------>| module L           |                  |
-     *                          |                    |------------------
-     *                          | requires public O  |
-     *                          |                    |
-     *                          +--------------------+
+     *       |                  +-----------------------+                  |
+     *       ------------------>| module L              |                  |
+     *                          |                       |------------------
+     *                          | requires transitive O |
+     *                          |                       |
+     *                          +-----------------------+
      *
      */
     @Test
@@ -92,18 +92,18 @@ public class GraphsTest extends ModuleTestBase {
 
         new ModuleBuilder(tb, "O")
                 .exports("openO")
-                .requiresPublic("J", jarModules)
+                .requiresTransitive("J", jarModules)
                 .classes("package openO; public class O { openJ.J j; }")
                 .classes("package closedO; public class O { }")
                 .build(modSrc, modules);
         new ModuleBuilder(tb, "N")
-                .requiresPublic("O", modules, jarModules)
+                .requiresTransitive("O", modules, jarModules)
                 .exports("openN")
                 .classes("package openN; public class N { }")
                 .classes("package closedN; public class N { }")
                 .build(modSrc, modules);
         new ModuleBuilder(tb, "L")
-                .requiresPublic("O", modules, jarModules)
+                .requiresTransitive("O", modules, jarModules)
                 .exports("openL")
                 .classes("package openL; public class L { }")
                 .classes("package closedL; public class L { }")
@@ -134,9 +134,9 @@ public class GraphsTest extends ModuleTestBase {
                 .getOutputLines(Task.OutputKind.DIRECT);
 
         List<String> expected = Arrays.asList(
-                "Negative.java:1:43: compiler.err.doesnt.exist: closedO",
-                "Negative.java:1:56: compiler.err.doesnt.exist: closedN",
-                "Negative.java:1:69: compiler.err.doesnt.exist: closedL");
+                "Negative.java:1:36: compiler.err.package.not.visible: closedO, (compiler.misc.not.def.access.not.exported: closedO, O)",
+                "Negative.java:1:49: compiler.err.package.not.visible: closedN, (compiler.misc.not.def.access.not.exported: closedN, N)",
+                "Negative.java:1:62: compiler.err.package.not.visible: closedL, (compiler.misc.not.def.access.not.exported: closedL, L)");
         if (!log.containsAll(expected)) {
             throw new Exception("Expected output not found");
         }
@@ -153,9 +153,9 @@ public class GraphsTest extends ModuleTestBase {
                 .writeAll()
                 .getOutputLines(Task.OutputKind.DIRECT);
         expected = Arrays.asList(
-                "Negative.java:1:43: compiler.err.not.def.access.package.cant.access: closedO.O, closedO",
-                "Negative.java:1:56: compiler.err.not.def.access.package.cant.access: closedN.N, closedN",
-                "Negative.java:1:69: compiler.err.not.def.access.package.cant.access: closedL.L, closedL");
+                "Negative.java:1:36: compiler.err.package.not.visible: closedO, (compiler.misc.not.def.access.not.exported: closedO, O)",
+                "Negative.java:1:49: compiler.err.package.not.visible: closedN, (compiler.misc.not.def.access.not.exported: closedN, N)",
+                "Negative.java:1:62: compiler.err.package.not.visible: closedL, (compiler.misc.not.def.access.not.exported: closedL, L)");
         if (!out.containsAll(expected)) {
             throw new Exception("Expected output not found");
         }
@@ -171,18 +171,18 @@ public class GraphsTest extends ModuleTestBase {
     /**
      * Tests graph where module M reexport package of N, but N export the package only to M.
      *
-    +-------------+        +--------------------+        +---------------+
-    | module L    |        | module M           |        | module N      |
-    |             | -----> |                    | -----> |               |
-    |  requires M |        |  requires public N |        | exports P to M|
-    +-------------+        |                    |        +---------------+
-                           +--------------------+
+    +-------------+        +------------------------+        +---------------+
+    | module L    |        | module M               |        | module N      |
+    |             | -----> |                        | -----> |               |
+    |  requires M |        |  requires transitive N |        | exports P to M|
+    +-------------+        |                        |        +---------------+
+                           +------------------------+
     */
     @Test
     public void reexportOfQualifiedExport(Path base) throws Exception {
         Path modSrc = base.resolve("modSrc");
         new ModuleBuilder(tb, "M")
-                .requiresPublic("N")
+                .requiresTransitive("N")
                 .write(modSrc);
         new ModuleBuilder(tb, "N")
                 .exportsTo("pack", "M")
@@ -201,7 +201,7 @@ public class GraphsTest extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        String expected = "A.java:1:35: compiler.err.not.def.access.package.cant.access: pack.Clazz, pack";
+        String expected = "A.java:1:31: compiler.err.package.not.visible: pack, (compiler.misc.not.def.access.not.exported.to.module: pack, N, L)";
         if (!log.contains(expected)) {
             throw new Exception("Expected output not found");
         }

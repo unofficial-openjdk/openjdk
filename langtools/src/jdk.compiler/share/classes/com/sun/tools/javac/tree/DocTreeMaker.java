@@ -44,6 +44,8 @@ import com.sun.source.doctree.IdentifierTree;
 import com.sun.source.doctree.ReferenceTree;
 import com.sun.source.doctree.StartElementTree;
 import com.sun.source.doctree.TextTree;
+import com.sun.source.doctree.ProvidesTree;
+import com.sun.source.doctree.UsesTree;
 import com.sun.source.util.DocTreeFactory;
 import com.sun.tools.doclint.HtmlTag;
 import com.sun.tools.javac.api.JavacTrees;
@@ -67,6 +69,7 @@ import com.sun.tools.javac.tree.DCTree.DCInheritDoc;
 import com.sun.tools.javac.tree.DCTree.DCLink;
 import com.sun.tools.javac.tree.DCTree.DCLiteral;
 import com.sun.tools.javac.tree.DCTree.DCParam;
+import com.sun.tools.javac.tree.DCTree.DCProvides;
 import com.sun.tools.javac.tree.DCTree.DCReference;
 import com.sun.tools.javac.tree.DCTree.DCReturn;
 import com.sun.tools.javac.tree.DCTree.DCSee;
@@ -79,6 +82,7 @@ import com.sun.tools.javac.tree.DCTree.DCText;
 import com.sun.tools.javac.tree.DCTree.DCThrows;
 import com.sun.tools.javac.tree.DCTree.DCUnknownBlockTag;
 import com.sun.tools.javac.tree.DCTree.DCUnknownInlineTag;
+import com.sun.tools.javac.tree.DCTree.DCUses;
 import com.sun.tools.javac.tree.DCTree.DCValue;
 import com.sun.tools.javac.tree.DCTree.DCVersion;
 import com.sun.tools.javac.util.Context;
@@ -203,11 +207,10 @@ public class DocTreeMaker implements DocTreeFactory {
      * where the trees are being synthesized by a tool.
      */
     @Override @DefinedBy(Api.COMPILER_TREE)
-    public DCDocComment newDocCommentTree(List<? extends DocTree> firstSentence, List<? extends DocTree> body, List<? extends DocTree> tags) {
+    public DCDocComment newDocCommentTree(List<? extends DocTree> fullBody, List<? extends DocTree> tags) {
         ListBuffer<DCTree> lb = new ListBuffer<>();
-        lb.addAll(cast(firstSentence));
-        lb.addAll(cast(body));
-        List<DCTree> fullBody = lb.toList();
+        lb.addAll(cast(fullBody));
+        List<DCTree> fBody = lb.toList();
 
         // A dummy comment to keep the diagnostics logic happy.
         Comment c = new Comment() {
@@ -231,8 +234,8 @@ public class DocTreeMaker implements DocTreeFactory {
                 return false;
             }
         };
-
-        DCDocComment tree = new DCDocComment(c, fullBody, cast(firstSentence), cast(body), cast(tags));
+        Pair<List<DCTree>, List<DCTree>> pair = splitBody(fullBody);
+        DCDocComment tree = new DCDocComment(c, fBody, pair.fst, pair.snd, cast(tags));
         return tree;
     }
 
@@ -335,6 +338,13 @@ public class DocTreeMaker implements DocTreeFactory {
     }
 
     @Override @DefinedBy(Api.COMPILER_TREE)
+    public DCProvides newProvidesTree(ReferenceTree name, List<? extends DocTree> description) {
+        DCProvides tree = new DCProvides((DCReference) name, cast(description));
+        tree.pos = pos;
+        return tree;
+    }
+
+    @Override @DefinedBy(Api.COMPILER_TREE)
     public DCReference newReferenceTree(String signature) {
         try {
             ReferenceParser.Reference ref = referenceParser.parse(signature);
@@ -426,6 +436,13 @@ public class DocTreeMaker implements DocTreeFactory {
     @Override @DefinedBy(Api.COMPILER_TREE)
     public DCUnknownInlineTag newUnknownInlineTagTree(Name name, List<? extends DocTree> content) {
         DCUnknownInlineTag tree = new DCUnknownInlineTag(name, cast(content));
+        tree.pos = pos;
+        return tree;
+    }
+
+    @Override @DefinedBy(Api.COMPILER_TREE)
+    public DCUses newUsesTree(ReferenceTree name, List<? extends DocTree> description) {
+        DCUses tree = new DCUses((DCReference) name, cast(description));
         tree.pos = pos;
         return tree;
     }

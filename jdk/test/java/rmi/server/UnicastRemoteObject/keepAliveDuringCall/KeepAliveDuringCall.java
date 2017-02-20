@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,12 +75,13 @@ public class KeepAliveDuringCall implements ShutdownMonitor {
         System.err.println("\nRegression test for bug 4308492\n");
 
         KeepAliveDuringCall obj = new KeepAliveDuringCall();
+        JavaVM jvm = null;
 
         try {
             UnicastRemoteObject.exportObject(obj);
             System.err.println("exported shutdown monitor");
 
-            Registry localRegistry = TestLibrary.createRegistryOnUnusedPort();
+            Registry localRegistry = TestLibrary.createRegistryOnEphemeralPort();
             int registryPort = TestLibrary.getRegistryPort(localRegistry);
             System.err.println("created local registry");
 
@@ -88,9 +89,10 @@ public class KeepAliveDuringCall implements ShutdownMonitor {
             System.err.println("bound shutdown monitor in local registry");
 
             System.err.println("starting remote ShutdownImpl VM...");
-            (new JavaVM("ShutdownImpl",
+            jvm = new JavaVM("ShutdownImpl",
                         "-Drmi.registry.port=" +
-                        registryPort, "")).start();
+                        registryPort, "");
+            jvm.start();
 
             Shutdown s;
             synchronized (obj.lock) {
@@ -132,6 +134,9 @@ public class KeepAliveDuringCall implements ShutdownMonitor {
                     "TEST FAILED: unexpected exception", e);
             }
         } finally {
+            if (jvm != null) {
+                jvm.destroy();
+            }
             try {
                 UnicastRemoteObject.unexportObject(obj, true);
             } catch (RemoteException e) {

@@ -26,16 +26,54 @@
 #ifndef NET_UTILS_MD_H
 #define NET_UTILS_MD_H
 
-#include <sys/socket.h>
-#include <sys/types.h>
 #include <netdb.h>
-#include <netinet/in.h>
-#include <unistd.h>
-
 #include <sys/poll.h>
+#include <sys/socket.h>
+
+/************************************************************************
+ * Macros and constants
+ */
+
+/* Defines SO_REUSEPORT */
+#ifndef SO_REUSEPORT
+#ifdef __linux__
+#define SO_REUSEPORT 15
+#elif __solaris__
+#define SO_REUSEPORT 0x100e
+#elif defined(AIX) || defined(MACOSX)
+#define SO_REUSEPORT 0x0200
+#else
+#define SO_REUSEPORT 0
+#endif
+#endif
+
+/*
+ * On 64-bit JDKs we use a much larger stack and heap buffer.
+ */
+#ifdef _LP64
+#define MAX_BUFFER_LEN 65536
+#define MAX_HEAP_BUFFER_LEN 131072
+#else
+#define MAX_BUFFER_LEN 8192
+#define MAX_HEAP_BUFFER_LEN 65536
+#endif
+
+typedef union {
+    struct sockaddr     sa;
+    struct sockaddr_in  sa4;
+    struct sockaddr_in6 sa6;
+} SOCKETADDRESS;
+
+/************************************************************************
+ * Functions
+ */
 
 int NET_Timeout(int s, long timeout);
+int NET_Timeout0(int s, long timeout, long currentTime);
 int NET_Read(int s, void* buf, size_t len);
+int NET_NonBlockingRead(int s, void* buf, size_t len);
+int NET_TimeoutWithCurrentTime(int s, long timeout, long currentTime);
+long NET_GetCurrentTime();
 int NET_RecvFrom(int s, void *buf, int len, unsigned int flags,
                  struct sockaddr *from, socklen_t *fromlen);
 int NET_ReadV(int s, const struct iovec * vector, int count);
@@ -55,67 +93,11 @@ void NET_ThrowUnknownHostExceptionWithGaiError(JNIEnv *env,
                                                int gai_error);
 void NET_ThrowByNameWithLastError(JNIEnv *env, const char *name,
                                   const char *defaultDetail);
-
-#define NET_WAIT_READ    0x01
-#define NET_WAIT_WRITE   0x02
-#define NET_WAIT_CONNECT 0x04
-
-/* Defines SO_REUSEPORT */
-#ifndef SO_REUSEPORT
-#ifdef __linux__
-#define SO_REUSEPORT 15
-#elif __solaris__
-#define SO_REUSEPORT 0x100e
-#elif defined(AIX) || defined(MACOSX)
-#define SO_REUSEPORT 0x0200
-#else
-#define SO_REUSEPORT 0
-#endif
-#endif
-
-jint NET_Wait(JNIEnv *env, jint fd, jint flags, jint timeout);
-
-/************************************************************************
- * Macros and constants
- */
-
-/*
- * On 64-bit JDKs we use a much larger stack and heap buffer.
- */
-#ifdef _LP64
-#define MAX_BUFFER_LEN 65536
-#define MAX_HEAP_BUFFER_LEN 131072
-#else
-#define MAX_BUFFER_LEN 8192
-#define MAX_HEAP_BUFFER_LEN 65536
-#endif
-
-#ifdef AF_INET6
-
-#define SOCKADDR        union { \
-                            struct sockaddr_in him4; \
-                            struct sockaddr_in6 him6; \
-                        }
-
-#define SOCKADDR_LEN    (ipv6_available() ? sizeof(SOCKADDR) : \
-                         sizeof(struct sockaddr_in))
-
-#else
-
-#define SOCKADDR        union { struct sockaddr_in him4; }
-#define SOCKADDR_LEN    sizeof(SOCKADDR)
-
-#endif
-
-/************************************************************************
- *  Utilities
- */
+void NET_SetTrafficClass(SOCKETADDRESS *sa, int trafficClass);
 
 #ifdef __linux__
 int kernelIsV24();
-#ifdef AF_INET6
 int getDefaultIPv6Interface(struct in6_addr *target_addr);
-#endif
 #endif
 
 #ifdef __solaris__

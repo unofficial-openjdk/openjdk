@@ -23,7 +23,7 @@
 
 /* @test
  * @key headful
- * @bug 8129940 8132770 8161470
+ * @bug 8129940 8132770 8161470 8163169
  * @summary JRadioButton should run custom FocusTraversalKeys for all LaFs
  * @run main FocusTraversal
  */
@@ -42,7 +42,6 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
-import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
@@ -61,6 +60,7 @@ public class FocusTraversal {
     public static void main(String[] args) throws Exception {
 
         robot = new Robot();
+        robot.setAutoDelay(100);
         robot.waitForIdle();
         UIManager.LookAndFeelInfo[] lookAndFeelArray
                 = UIManager.getInstalledLookAndFeels();
@@ -132,41 +132,19 @@ public class FocusTraversal {
     }
 
     private static void runTestCase() throws Exception {
-        LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
         focusOn(a);
-        if (isExcludedLookAndFeel(lookAndFeel)) {
-            robot.keyPress(KeyEvent.VK_ENTER);
-            robot.keyRelease(KeyEvent.VK_ENTER);
-            robot.waitForIdle();
-            isFocusOwner(b, "forward");
-            robot.keyPress(KeyEvent.VK_SHIFT);
-            robot.keyPress(KeyEvent.VK_TAB);
-            robot.keyRelease(KeyEvent.VK_TAB);
-            robot.keyRelease(KeyEvent.VK_SHIFT);
-            robot.waitForIdle();
-            isFocusOwner(a, "backward");
 
-        } else {
+        robot.keyPress(KeyEvent.VK_ENTER);
+        robot.keyRelease(KeyEvent.VK_ENTER);
+        robot.waitForIdle();
+        isFocusOwner(next, "forward");
+        robot.keyPress(KeyEvent.VK_SHIFT);
+        robot.keyPress(KeyEvent.VK_TAB);
+        robot.keyRelease(KeyEvent.VK_TAB);
+        robot.keyRelease(KeyEvent.VK_SHIFT);
+        robot.waitForIdle();
+        isFocusOwner(a, "backward");
 
-            robot.keyPress(KeyEvent.VK_ENTER);
-            robot.keyRelease(KeyEvent.VK_ENTER);
-            robot.waitForIdle();
-            isFocusOwner(next, "forward");
-            robot.keyPress(KeyEvent.VK_SHIFT);
-            robot.keyPress(KeyEvent.VK_TAB);
-            robot.keyRelease(KeyEvent.VK_TAB);
-            robot.keyRelease(KeyEvent.VK_SHIFT);
-            robot.waitForIdle();
-            isFocusOwner(d, "backward");
-        }
-
-    }
-
-    private static boolean isExcludedLookAndFeel(LookAndFeel lookAndFeel) {
-
-        return lookAndFeel.toString().toLowerCase().contains("aqua")
-                || lookAndFeel.toString().toLowerCase().contains("nimbus")
-                || lookAndFeel.toString().toLowerCase().contains("gtk");
     }
 
     private static void focusOn(Component component)

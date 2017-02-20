@@ -29,6 +29,7 @@
  *      4947220 7018606 7034570 4244896 5049299 8003488 8054494 8058464
  *      8067796
  * @summary Basic tests for Process and Environment Variable code
+ * @modules java.base/java.lang:open
  * @run main/othervm/timeout=300 Basic
  * @run main/othervm/timeout=300 -Djdk.lang.Process.launchMechanism=fork Basic
  * @author Martin Buchholz
@@ -2226,6 +2227,33 @@ public class Basic {
                     reader.join();
                 }
             }
+
+            //----------------------------------------------------------------
+            // Check the Process toString() method
+            //----------------------------------------------------------------
+            {
+                List<String> childArgs = new ArrayList<String>(javaChildArgs);
+                childArgs.add("testIO");
+                ProcessBuilder pb = new ProcessBuilder(childArgs);
+                pb.redirectInput(Redirect.PIPE);
+                pb.redirectOutput(DISCARD);
+                pb.redirectError(DISCARD);
+                final Process p = pb.start();
+                // Child process waits until it gets input
+                String s = p.toString();
+                check(s.contains("not exited"));
+                check(s.contains("pid=" + p.getPid() + ","));
+
+                new PrintStream(p.getOutputStream()).print("standard input");
+                p.getOutputStream().close();
+
+                // Check the toString after it exits
+                int exitValue = p.waitFor();
+                s = p.toString();
+                check(s.contains("pid=" + p.getPid() + ","));
+                check(s.contains("exitValue=" + exitValue) &&
+                        !s.contains("not exited"));
+            }
         } catch (Throwable t) { unexpected(t); }
 
         //----------------------------------------------------------------
@@ -2377,16 +2405,6 @@ public class Basic {
                 fail("Test failed: waitFor didn't take long enough (" + (end - start) + "ns)");
 
             p.destroy();
-
-            start = System.nanoTime();
-            p.waitFor(8, TimeUnit.SECONDS);
-            end = System.nanoTime();
-
-            int exitValue = p.exitValue();
-
-            if ((end - start) > TimeUnit.SECONDS.toNanos(7))
-                fail("Test failed: waitFor took too long on a dead process. (" + (end - start) + "ns)"
-                + ", exitValue: " + exitValue);
         } catch (Throwable t) { unexpected(t); }
 
         //----------------------------------------------------------------

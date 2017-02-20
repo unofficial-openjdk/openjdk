@@ -19,7 +19,6 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 package gc.logging;
@@ -44,7 +43,7 @@ import java.util.Random;
  * @key gc
  * @key stress
  * @requires !vm.flightRecorder
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  * @modules java.management java.base/jdk.internal.misc
  *
  * @run main/othervm -Xmx256M -Xms256M

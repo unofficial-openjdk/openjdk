@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,13 +19,12 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 package compiler.testlibrary.rtm;
 
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 import jdk.test.lib.Utils;
 import jdk.test.lib.cli.CommandLineOptionTest;
 
@@ -241,7 +240,8 @@ public class RTMTestBase {
                 "-XX:-TieredCompilation", "-XX:+UseRTMLocking",
                 CommandLineOptionTest.UNLOCK_DIAGNOSTIC_VM_OPTIONS,
                 CommandLineOptionTest.UNLOCK_EXPERIMENTAL_VM_OPTIONS,
-                "-Xbootclasspath/a:.", "-XX:+WhiteBoxAPI");
+                "-Xbootclasspath/a:.", "-XX:+WhiteBoxAPI",
+                "--add-exports", "java.base/jdk.internal.misc=ALL-UNNAMED");
 
         if (test != null) {
             for (String method : test.getMethodsToCompileNames()) {

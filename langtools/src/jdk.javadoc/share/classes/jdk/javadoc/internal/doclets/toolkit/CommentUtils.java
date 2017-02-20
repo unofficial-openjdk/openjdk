@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,21 @@
 
 package jdk.javadoc.internal.doclets.toolkit;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Name;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.util.Elements;
+import javax.tools.FileObject;
+import javax.tools.JavaFileObject;
+import javax.tools.SimpleJavaFileObject;
+
 import com.sun.source.doctree.DocCommentTree;
 import com.sun.source.doctree.DocTree;
 import com.sun.source.doctree.IdentifierTree;
@@ -43,17 +58,8 @@ import com.sun.source.util.DocTreeFactory;
 import com.sun.source.util.DocTreePath;
 import com.sun.source.util.DocTrees;
 import com.sun.source.util.TreePath;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Name;
-import javax.lang.model.element.PackageElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.util.Elements;
-import javax.tools.FileObject;
+import com.sun.tools.javac.util.DefinedBy;
+import com.sun.tools.javac.util.DefinedBy.Api;
 import jdk.javadoc.internal.doclets.toolkit.util.Utils;
 
 public class CommentUtils {
@@ -108,27 +114,22 @@ public class CommentUtils {
         Utils utils = config.utils;
         String klassName = utils.getSimpleName(utils.getEnclosingTypeElement(e));
 
-        List<DocTree> fs = new ArrayList<>();
-        fs.add(treeFactory.newTextTree(config.getText("doclet.enum_values_doc.firstsentence")));
-
-        List<DocTree> body = new ArrayList<>();
-        body.add(treeFactory.newTextTree(config.getText("doclet.enum_values_doc.body", klassName)));
+        List<DocTree> fullBody = new ArrayList<>();
+        fullBody.add(treeFactory.newTextTree(config.getText("doclet.enum_values_doc.fullbody", klassName)));
 
         List<DocTree> descriptions = new ArrayList<>();
         descriptions.add(treeFactory.newTextTree(config.getText("doclet.enum_values_doc.return")));
 
         List<DocTree> tags = new ArrayList<>();
         tags.add(treeFactory.newReturnTree(descriptions));
-        DocCommentTree docTree = treeFactory.newDocCommentTree(fs, body, tags);
+        DocCommentTree docTree = treeFactory.newDocCommentTree(fullBody, tags);
         dcTreesMap.put(e, new DocCommentDuo(null, docTree));
     }
 
     public void setEnumValueOfTree(Configuration config, Element e) {
-        List<DocTree> fs = new ArrayList<>();
-        fs.add(treeFactory.newTextTree(config.getText("doclet.enum_valueof_doc.firstsentence")));
 
-        List<DocTree> body = new ArrayList<>();
-        body.add(treeFactory.newTextTree(config.getText("doclet.enum_valueof_doc.body")));
+        List<DocTree> fullBody = new ArrayList<>();
+        fullBody.add(treeFactory.newTextTree(config.getText("doclet.enum_valueof_doc.fullbody")));
 
         List<DocTree> tags = new ArrayList<>();
 
@@ -156,7 +157,7 @@ public class CommentUtils {
         ref = treeFactory.newReferenceTree("java.lang.NullPointerException");
         tags.add(treeFactory.newThrowsTree(ref, throwsDescs));
 
-        DocCommentTree docTree = treeFactory.newDocCommentTree(fs, body, tags);
+        DocCommentTree docTree = treeFactory.newDocCommentTree(fullBody, tags);
 
         dcTreesMap.put(e, new DocCommentDuo(null, docTree));
     }
@@ -173,10 +174,18 @@ public class CommentUtils {
      */
     public DocCommentDuo getHtmlCommentDuo(Element e) {
         FileObject fo = null;
-        if (e.getKind().equals(ElementKind.OTHER)) {
-            fo = configuration.getOverviewPath();
-        } else if (e.getKind().equals(ElementKind.PACKAGE)) {
-            fo = configuration.workArounds.getJavaFileObject((PackageElement)e);
+        PackageElement pe = null;
+        switch (e.getKind()) {
+            case OTHER:
+                fo = configuration.getOverviewPath();
+                pe = configuration.workArounds.getUnnamedPackage();
+                break;
+            case PACKAGE:
+                fo = configuration.workArounds.getJavaFileObject((PackageElement)e);
+                pe = (PackageElement)e;
+                break;
+            default:
+                return null;
         }
         if (fo == null) {
             return null;
@@ -186,15 +195,23 @@ public class CommentUtils {
         if (dcTree == null) {
             return null;
         }
-        DocTreePath treePath = trees.getDocTreePath(fo);
+        DocTreePath treePath = trees.getDocTreePath(fo, pe);
         return new DocCommentDuo(treePath.getTreePath(), dcTree);
     }
 
-    public void setDocCommentTree(Element element, List<DocTree> firstSentence,
-            List<DocTree> bodyTags, List<DocTree> blockTags, Utils utils) {
-        DocCommentTree docTree = treeFactory.newDocCommentTree(firstSentence,
-                                                      bodyTags,
-                                                      blockTags);
+    public DocCommentTree parse(URI uri, String text) {
+        return trees.getDocCommentTree(new SimpleJavaFileObject(
+                uri, JavaFileObject.Kind.SOURCE) {
+            @Override @DefinedBy(Api.COMPILER)
+            public CharSequence getCharContent(boolean ignoreEncoding) {
+                return text;
+            }
+        });
+    }
+
+    public void setDocCommentTree(Element element, List<DocTree> fullBody,
+            List<DocTree> blockTags, Utils utils) {
+        DocCommentTree docTree = treeFactory.newDocCommentTree(fullBody, blockTags);
         dcTreesMap.put(element, new DocCommentDuo(null, docTree));
         // There maybe an entry with the original comments usually null,
         // therefore remove that entry if it exists, and allow a new one

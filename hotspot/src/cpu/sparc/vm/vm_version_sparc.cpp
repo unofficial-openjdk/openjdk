@@ -89,8 +89,18 @@ void VM_Version::initialize() {
     if (is_niagara_plus()) {
       if (has_blk_init() && (cache_line_size > 0) && UseTLAB &&
           FLAG_IS_DEFAULT(AllocatePrefetchInstr)) {
-        // Use BIS instruction for TLAB allocation prefetch.
-        FLAG_SET_DEFAULT(AllocatePrefetchInstr, 1);
+        if (!has_sparc5_instr()) {
+          // Use BIS instruction for TLAB allocation prefetch
+          // on Niagara plus processors other than those based on CoreS4
+          FLAG_SET_DEFAULT(AllocatePrefetchInstr, 1);
+        } else {
+          // On CoreS4 processors use prefetch instruction
+          // to avoid partial RAW issue, also use prefetch style 3
+          FLAG_SET_DEFAULT(AllocatePrefetchInstr, 0);
+          if (FLAG_IS_DEFAULT(AllocatePrefetchStyle)) {
+            FLAG_SET_DEFAULT(AllocatePrefetchStyle, 3);
+          }
+        }
       }
       if (FLAG_IS_DEFAULT(AllocatePrefetchDistance)) {
         if (AllocatePrefetchInstr == 0) {
@@ -179,7 +189,7 @@ void VM_Version::initialize() {
   assert((OptoLoopAlignment % relocInfo::addr_unit()) == 0, "alignment is not a multiple of NOP size");
 
   char buf[512];
-  jio_snprintf(buf, sizeof(buf), "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+  jio_snprintf(buf, sizeof(buf), "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
                (has_v9() ? ", v9" : (has_v8() ? ", v8" : "")),
                (has_hardware_popc() ? ", popc" : ""),
                (has_vis1() ? ", vis1" : ""),
@@ -193,6 +203,7 @@ void VM_Version::initialize() {
                (has_sha512() ? ", sha512" : ""),
                (has_crc32c() ? ", crc32c" : ""),
                (is_ultra3() ? ", ultra3" : ""),
+               (has_sparc5_instr() ? ", sparc5" : ""),
                (is_sun4v() ? ", sun4v" : ""),
                (is_niagara_plus() ? ", niagara_plus" : (is_niagara() ? ", niagara" : "")),
                (is_sparc64() ? ", sparc64" : ""),
@@ -264,6 +275,11 @@ void VM_Version::initialize() {
     if (!FLAG_IS_DEFAULT(UseGHASHIntrinsics))
       warning("GHASH intrinsics require VIS3 instruction support. Intrinsics will be disabled");
     FLAG_SET_DEFAULT(UseGHASHIntrinsics, false);
+  }
+
+  if (UseFMA) {
+    warning("FMA instructions are not available on this CPU");
+    FLAG_SET_DEFAULT(UseFMA, false);
   }
 
   // SHA1, SHA256, and SHA512 instructions were added to SPARC T-series at different times
@@ -345,7 +361,7 @@ void VM_Version::initialize() {
       FLAG_SET_DEFAULT(UseCRC32Intrinsics, true);
     }
   } else if (UseCRC32Intrinsics) {
-    warning("SPARC CRC32 intrinsics require VIS3 insructions support. Intriniscs will be disabled");
+    warning("SPARC CRC32 intrinsics require VIS3 instructions support. Intrinsics will be disabled");
     FLAG_SET_DEFAULT(UseCRC32Intrinsics, false);
   }
 
@@ -451,9 +467,10 @@ void VM_Version::revert() {
 
 unsigned int VM_Version::calc_parallel_worker_threads() {
   unsigned int result;
-  if (is_M_series()) {
-    // for now, use same gc thread calculation for M-series as for niagara-plus
-    // in future, we may want to tweak parameters for nof_parallel_worker_thread
+  if (is_M_series() || is_S_series()) {
+    // for now, use same gc thread calculation for M-series and S-series as for
+    // niagara-plus. In future, we may want to tweak parameters for
+    // nof_parallel_worker_thread
     result = nof_parallel_worker_threads(5, 16, 8);
   } else if (is_niagara_plus()) {
     result = nof_parallel_worker_threads(5, 16, 8);
@@ -477,21 +494,19 @@ int VM_Version::parse_features(const char* implementation) {
   } else if (strstr(impl, "SPARC-M") != NULL) {
     // M-series SPARC is based on T-series.
     features |= (M_family_m | T_family_m);
+  } else if (strstr(impl, "SPARC-S") != NULL) {
+    // S-series SPARC is based on T-series.
+    features |= (S_family_m | T_family_m);
   } else if (strstr(impl, "SPARC-T") != NULL) {
     features |= T_family_m;
     if (strstr(impl, "SPARC-T1") != NULL) {
       features |= T1_model_m;
     }
+  } else if (strstr(impl, "SUN4V-CPU") != NULL) {
+    // Generic or migration class LDOM
+    features |= T_family_m;
   } else {
-    if (strstr(impl, "SPARC") == NULL) {
-#ifndef PRODUCT
-      // kstat on Solaris 8 virtual machines (branded zones)
-      // returns "(unsupported)" implementation. Solaris 8 is not
-      // supported anymore, but include this check to be on the
-      // safe side.
-      warning("Can't parse CPU implementation = '%s', assume generic SPARC", impl);
-#endif
-    }
+    log_info(os, cpu)("Failed to parse CPU implementation = '%s'", impl);
   }
   os::free((void*)impl);
   return features;

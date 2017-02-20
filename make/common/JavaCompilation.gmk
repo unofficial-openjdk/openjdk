@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -172,6 +172,7 @@ endef
 #   KEEP_DUPS:=Do not remove duplicate file names from different source roots.
 #   FAIL_NO_SRC:=Set to false to not fail the build if no source files are found,
 #        default is true.
+#   DEBUG_SYMBOLS:=Set to false to disable generation of debug symbols.
 SetupJavaCompilation = $(NamedParamsMacroTemplate)
 define SetupJavaCompilationBody
 
@@ -183,7 +184,11 @@ define SetupJavaCompilationBody
   # Extract the info from the java compiler setup.
   $1_JVM := $$($$($1_SETUP)_JVM)
   $1_JAVAC := $$($$($1_SETUP)_JAVAC)
-  $1_FLAGS := $$($$($1_SETUP)_FLAGS) $$($1_ADD_JAVAC_FLAGS) $(JAVAC_FLAGS)
+  $1_FLAGS :=
+  ifneq ($$($1_DEBUG_SYMBOLS), false)
+    $1_FLAGS := -g
+  endif
+  $1_FLAGS += $$($$($1_SETUP)_FLAGS) $$($1_ADD_JAVAC_FLAGS) $(JAVAC_FLAGS)
   ifneq ($$($1_CLASSPATH), )
     $1_FLAGS += -cp $$(call PathList, $$($1_CLASSPATH))
   endif

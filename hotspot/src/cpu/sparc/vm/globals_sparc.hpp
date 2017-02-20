@@ -44,6 +44,7 @@ define_pd_global(bool, ImplicitNullChecks,          true);  // Generate code for
 define_pd_global(bool, TrapBasedNullChecks,         false); // Not needed on sparc.
 define_pd_global(bool, UncommonNullCast,            true);  // Uncommon-trap NULLs passed to check cast
 
+define_pd_global(uintx, CodeCacheSegmentSize, 64 TIERED_ONLY(+64)); // Tiered compilation has large code-entry alignment.
 define_pd_global(intx, CodeEntryAlignment,    32);
 // The default setting 16/16 seems to work best.
 // (For _228_jack 16/16 is 2% better than 4/4, 16/4, 32/32, 32/16, or 16/32.)
@@ -57,10 +58,12 @@ define_pd_global(intx, InlineSmallCode,       1500);
 
 #ifdef _LP64
 // Stack slots are 2X larger in LP64 than in the 32 bit VM.
+define_pd_global(intx, CompilerThreadStackSize, 1024);
 define_pd_global(intx, ThreadStackSize,       1024);
 define_pd_global(intx, VMThreadStackSize,     1024);
 #define DEFAULT_STACK_SHADOW_PAGES (20 DEBUG_ONLY(+2))
 #else
+define_pd_global(intx, CompilerThreadStackSize, 512);
 define_pd_global(intx, ThreadStackSize,       512);
 define_pd_global(intx, VMThreadStackSize,     512);
 #define DEFAULT_STACK_SHADOW_PAGES (6 DEBUG_ONLY(+2))

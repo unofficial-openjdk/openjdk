@@ -78,7 +78,7 @@ public class MethodBuilder extends AbstractMemberBuilder {
     /**
      * The methods being documented.
      */
-    private final SortedSet<Element> methods;
+    private final List<Element> methods;
 
 
     /**
@@ -98,7 +98,7 @@ public class MethodBuilder extends AbstractMemberBuilder {
                 typeElement,
                 VisibleMemberMap.Kind.METHODS,
                 configuration);
-        methods = visibleMemberMap.getLeafClassMembers();
+        methods = visibleMemberMap.getLeafMembers();
     }
 
     /**
@@ -124,27 +124,6 @@ public class MethodBuilder extends AbstractMemberBuilder {
     }
 
     /**
-     * Returns a list of methods that will be documented for the given class.
-     * This information can be used for doclet specific documentation
-     * generation.
-     *
-     * @param typeElement the {@link TypeElement} we want to check.
-     * @return a list of methods that will be documented.
-     */
-    public SortedSet<Element> members(TypeElement typeElement) {
-        return visibleMemberMap.getMembersFor(typeElement);
-    }
-
-    /**
-     * Returns the visible member map for the methods of this class.
-     *
-     * @return the visible member map for the methods of this class.
-     */
-    public VisibleMemberMap getVisibleMemberMap() {
-        return visibleMemberMap;
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
@@ -163,18 +142,17 @@ public class MethodBuilder extends AbstractMemberBuilder {
         if (writer == null) {
             return;
         }
-        if (!methods.isEmpty()) {
+        if (hasMembersToDocument()) {
             Content methodDetailsTree = writer.getMethodDetailsTreeHeader(typeElement,
                     memberDetailsTree);
-            Set<Element> methodDetailSet = ((ConfigurationImpl)configuration).sortedMethodDetails
-                    ? methods
-                    : visibleMemberMap.getLeafClassMembersSourceOrder();
-            for (Element e : methodDetailSet) {
-                currentMethod = (ExecutableElement) e;
+
+            Element lastElement = methods.get(methods.size() - 1);
+            for (Element method : methods) {
+                currentMethod = (ExecutableElement)method;
                 Content methodDocTree = writer.getMethodDocTreeHeader(currentMethod, methodDetailsTree);
                 buildChildren(node, methodDocTree);
                 methodDetailsTree.addContent(writer.getMethodDoc(
-                        methodDocTree, currentMethod == methods.last()));
+                        methodDocTree, currentMethod == lastElement));
             }
             memberDetailsTree.addContent(writer.getMethodDetails(methodDetailsTree));
         }
@@ -210,7 +188,7 @@ public class MethodBuilder extends AbstractMemberBuilder {
     public void buildMethodComments(XMLNode node, Content methodDocTree) {
         if (!configuration.nocomment) {
             ExecutableElement method = currentMethod;
-            if (utils.getBody(currentMethod).isEmpty()) {
+            if (utils.getFullBody(currentMethod).isEmpty()) {
                 DocFinder.Output docs = DocFinder.search(configuration,
                         new DocFinder.Input(utils, currentMethod));
                 if (docs.inlineTags != null && !docs.inlineTags.isEmpty())

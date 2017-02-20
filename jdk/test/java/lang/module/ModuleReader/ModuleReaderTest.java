@@ -25,7 +25,6 @@
  * @test
  * @library /lib/testlibrary
  * @modules java.base/jdk.internal.module
- *          jdk.jlink/jdk.tools.jmod
  *          jdk.compiler
  * @build ModuleReaderTest CompilerUtils JarUtils
  * @run testng ModuleReaderTest
@@ -47,10 +46,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.spi.ToolProvider;
 
-import jdk.internal.module.ConfigurableModuleFinder;
-import jdk.internal.module.ConfigurableModuleFinder.Phase;
+import jdk.internal.module.ModulePath;
 
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -76,14 +79,52 @@ public class ModuleReaderTest {
         "java/lang/Object.class"
     };
 
+    // resource names that should not be found in the base module
+    private static final String[] BAD_BASE_RESOURCES = {
+        "NotFound",
+        "java",
+        "/java",
+        "//java",
+        "java/",
+        "java/lang",
+        "/java/lang",
+        "//java/lang",
+        "java/lang/",
+        "java//lang",
+        "/java/lang/Object.class",
+        "//java/lang/Object.class",
+        "java/lang/Object.class/",
+        "java//lang//Object.class",
+        "./java/lang/Object.class",
+        "java/./lang/Object.class",
+        "java/lang/./Object.class",
+        "../java/lang/Object.class",
+        "java/../lang/Object.class",
+        "java/lang/../Object.class",
+    };
+
     // resources in test module (can't use module-info.class as a test
     // resource as it will be modified by the jmod tool)
     private static final String[] TEST_RESOURCES = {
         "p/Main.class"
     };
 
-    // a resource that is not in the base or test module
-    private static final String NOT_A_RESOURCE = "NotAResource";
+    // resource names that should not be found in the test module
+    private static final String[] BAD_TEST_RESOURCES = {
+        "NotFound",
+        "p",
+        "/p",
+        "//p",
+        "p/",
+        "/p/Main.class",
+        "//p/Main.class",
+        "p/Main.class/",
+        "p//Main.class",
+        "./p/Main.class",
+        "p/./Main.class",
+        "../p/Main.class",
+        "p/../p/Main.class"
+    };
 
 
     @BeforeTest
@@ -100,7 +141,7 @@ public class ModuleReaderTest {
     /**
      * Test ModuleReader to module in runtime image
      */
-    public void testImage() throws Exception {
+    public void testImage() throws IOException {
 
         ModuleFinder finder = ModuleFinder.ofSystem();
         ModuleReference mref = finder.find(BASE_MODULE).get();
@@ -118,14 +159,16 @@ public class ModuleReaderTest {
                 testFind(reader, name, expectedBytes);
                 testOpen(reader, name, expectedBytes);
                 testRead(reader, name, expectedBytes);
+                testList(reader, name);
 
             }
 
             // test "not found"
-            assertFalse(reader.find(NOT_A_RESOURCE).isPresent());
-            assertFalse(reader.open(NOT_A_RESOURCE).isPresent());
-            assertFalse(reader.read(NOT_A_RESOURCE).isPresent());
-
+            for (String name : BAD_BASE_RESOURCES) {
+                assertFalse(reader.find(name).isPresent());
+                assertFalse(reader.open(name).isPresent());
+                assertFalse(reader.read(name).isPresent());
+            }
 
             // test nulls
             try {
@@ -167,7 +210,7 @@ public class ModuleReaderTest {
     /**
      * Test ModuleReader to exploded module
      */
-    public void testExplodedModule() throws Exception {
+    public void testExplodedModule() throws IOException {
         test(MODS_DIR);
     }
 
@@ -175,7 +218,7 @@ public class ModuleReaderTest {
     /**
      * Test ModuleReader to modular JAR
      */
-    public void testModularJar() throws Exception {
+    public void testModularJar() throws IOException {
         Path dir = Files.createTempDirectory(USER_DIR, "mlib");
 
         // jar cf mlib/${TESTMODULE}.jar -C mods .
@@ -189,15 +232,18 @@ public class ModuleReaderTest {
     /**
      * Test ModuleReader to JMOD
      */
-    public void testJMod() throws Exception {
+    public void testJMod() throws IOException {
         Path dir = Files.createTempDirectory(USER_DIR, "mlib");
 
         // jmod create --class-path mods/${TESTMODULE}  mlib/${TESTMODULE}.jmod
         String cp = MODS_DIR.resolve(TEST_MODULE).toString();
         String jmod = dir.resolve("m.jmod").toString();
         String[] args = { "create", "--class-path", cp, jmod };
-        jdk.tools.jmod.JmodTask task = new jdk.tools.jmod.JmodTask();
-        assertEquals(task.run(args), 0);
+        ToolProvider jmodTool = ToolProvider.findFirst("jmod")
+            .orElseThrow(() ->
+                new RuntimeException("jmod tool not found")
+            );
+        assertEquals(jmodTool.run(System.out, System.out, args), 0);
 
         test(dir);
     }
@@ -207,14 +253,9 @@ public class ModuleReaderTest {
      * The test module is found on the given module path. Open a ModuleReader
      * to the test module and test the reader.
      */
-    void test(Path mp) throws Exception {
+    void test(Path mp) throws IOException {
 
-        ModuleFinder finder = ModuleFinder.of(mp);
-        if (finder instanceof ConfigurableModuleFinder) {
-            // need ModuleFinder to be in the phase to find JMOD files
-            ((ConfigurableModuleFinder)finder).configurePhase(Phase.LINK_TIME);
-        }
-
+        ModuleFinder finder = ModulePath.of(Runtime.version(), true, mp);
         ModuleReference mref = finder.find(TEST_MODULE).get();
         ModuleReader reader = mref.open();
 
@@ -230,12 +271,15 @@ public class ModuleReaderTest {
                 testFind(reader, name, expectedBytes);
                 testOpen(reader, name, expectedBytes);
                 testRead(reader, name, expectedBytes);
+                testList(reader, name);
             }
 
             // test "not found"
-            assertFalse(reader.find(NOT_A_RESOURCE).isPresent());
-            assertFalse(reader.open(NOT_A_RESOURCE).isPresent());
-            assertFalse(reader.read(NOT_A_RESOURCE).isPresent());
+            for (String name : BAD_TEST_RESOURCES) {
+                assertFalse(reader.find(name).isPresent());
+                assertFalse(reader.open(name).isPresent());
+                assertFalse(reader.read(name).isPresent());
+            }
 
             // test nulls
             try {
@@ -271,13 +315,18 @@ public class ModuleReaderTest {
             reader.read(TEST_RESOURCES[0]);
             assertTrue(false);
         } catch (IOException expected) { }
+
+        try {
+            reader.list();
+            assertTrue(false);
+        } catch (IOException expected) { }
     }
 
     /**
      * Test ModuleReader#find
      */
     void testFind(ModuleReader reader, String name, byte[] expectedBytes)
-        throws Exception
+        throws IOException
     {
         Optional<URI> ouri = reader.find(name);
         assertTrue(ouri.isPresent());
@@ -297,7 +346,7 @@ public class ModuleReaderTest {
      * Test ModuleReader#open
      */
     void testOpen(ModuleReader reader, String name, byte[] expectedBytes)
-        throws Exception
+        throws IOException
     {
         Optional<InputStream> oin = reader.open(name);
         assertTrue(oin.isPresent());
@@ -313,7 +362,7 @@ public class ModuleReaderTest {
      * Test ModuleReader#read
      */
     void testRead(ModuleReader reader, String name, byte[] expectedBytes)
-        throws Exception
+        throws IOException
     {
         Optional<ByteBuffer> obb = reader.read(name);
         assertTrue(obb.isPresent());
@@ -328,6 +377,26 @@ public class ModuleReaderTest {
         } finally {
             reader.release(bb);
         }
+    }
+
+    /**
+     * Test ModuleReader#list
+     */
+    void testList(ModuleReader reader, String name) throws IOException {
+        List<String> list = reader.list().collect(Collectors.toList());
+        Set<String> names = new HashSet<>(list);
+        assertTrue(names.size() == list.size()); // no duplicates
+
+        assertTrue(names.contains("module-info.class"));
+        assertTrue(names.contains(name));
+
+        // all resources should be locatable via find
+        for (String e : names) {
+            assertTrue(reader.find(e).isPresent());
+        }
+
+        // should not contain directories
+        names.forEach(e -> assertFalse(e.endsWith("/")));
     }
 
 }

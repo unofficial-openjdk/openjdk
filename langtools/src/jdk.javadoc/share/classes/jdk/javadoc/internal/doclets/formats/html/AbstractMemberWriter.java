@@ -36,7 +36,6 @@ import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.type.TypeMirror;
 
 import com.sun.source.doctree.DocTree;
-
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlAttr;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlConstants;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
@@ -258,7 +257,7 @@ public abstract class AbstractMemberWriter {
             }
         }
         if (!set.isEmpty()) {
-            String mods = set.stream().map(m -> m.toString()).collect(Collectors.joining(" "));
+            String mods = set.stream().map(Modifier::toString).collect(Collectors.joining(" "));
             htmltree.addContent(mods);
             htmltree.addContent(Contents.SPACE);
         }
@@ -368,7 +367,7 @@ public abstract class AbstractMemberWriter {
      * @param htmltree the content tree to which the comment will be added.
      */
     protected void addComment(Element member, Content htmltree) {
-        if (!utils.getBody(member).isEmpty()) {
+        if (!utils.getFullBody(member).isEmpty()) {
             writer.addInlineComment(member, htmltree);
         }
     }
@@ -402,43 +401,6 @@ public abstract class AbstractMemberWriter {
         return (!utils.isPrivate(ped) &&
                 (!utils.isPackagePrivate(ped) ||
                     ped.getEnclosingElement().equals(ped.getEnclosingElement())));
-    }
-
-    /**
-     * Add deprecated information to the documentation tree
-     *
-     * @param deprmembers list of deprecated members
-     * @param headingKey the caption for the deprecated members table
-     * @param tableSummary the summary for the deprecated members table
-     * @param tableHeader table headers for the deprecated members table
-     * @param contentTree the content tree to which the deprecated members table will be added
-     */
-    protected void addDeprecatedAPI(Collection<Element> deprmembers, String headingKey,
-            String tableSummary, List<String> tableHeader, Content contentTree) {
-        if (deprmembers.size() > 0) {
-            Content caption = writer.getTableCaption(configuration.getContent(headingKey));
-            Content table = (configuration.isOutputHtml5())
-                    ? HtmlTree.TABLE(HtmlStyle.deprecatedSummary, caption)
-                    : HtmlTree.TABLE(HtmlStyle.deprecatedSummary, tableSummary, caption);
-            table.addContent(writer.getSummaryTableHeader(tableHeader, "col"));
-            Content tbody = new HtmlTree(HtmlTag.TBODY);
-            boolean altColor = true;
-            for (Element member : deprmembers) {
-                HtmlTree td = HtmlTree.TD(HtmlStyle.colOne, getDeprecatedLink(member));
-                List<? extends DocTree> deprTrees = utils.getBlockTags(member, DocTree.Kind.DEPRECATED);
-                if (!deprTrees.isEmpty()) {
-                    writer.addInlineDeprecatedComment(member, deprTrees.get(0), td);
-                }
-                HtmlTree tr = HtmlTree.TR(td);
-                tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
-                altColor = !altColor;
-                tbody.addContent(tr);
-            }
-            table.addContent(tbody);
-            Content li = HtmlTree.LI(HtmlStyle.blockList, table);
-            Content ul = HtmlTree.UL(HtmlStyle.blockList, li);
-            contentTree.addContent(ul);
-        }
     }
 
     /**
@@ -477,8 +439,9 @@ public abstract class AbstractMemberWriter {
                 tdFirst.addStyle(HtmlStyle.colFirst);
                 writer.addSummaryType(this, element, tdFirst);
                 tr.addContent(tdFirst);
-                HtmlTree tdLast = new HtmlTree(HtmlTag.TD);
-                tdLast.addStyle(HtmlStyle.colLast);
+                HtmlTree thType = new HtmlTree(HtmlTag.TH);
+                thType.addStyle(HtmlStyle.colSecond);
+                thType.addAttr(HtmlAttr.SCOPE, "row");
                 if (te != null
                         && !utils.isConstructor(element)
                         && !utils.isClass(element)
@@ -487,14 +450,17 @@ public abstract class AbstractMemberWriter {
                     HtmlTree name = new HtmlTree(HtmlTag.SPAN);
                     name.addStyle(HtmlStyle.typeNameLabel);
                     name.addContent(name(te) + ".");
-                    tdLast.addContent(name);
+                    thType.addContent(name);
                 }
                 addSummaryLink(utils.isClass(element) || utils.isInterface(element)
                         ? LinkInfoImpl.Kind.CLASS_USE
                         : LinkInfoImpl.Kind.MEMBER,
-                    te, element, tdLast);
-                writer.addSummaryLinkComment(this, element, tdLast);
-                tr.addContent(tdLast);
+                        te, element, thType);
+                tr.addContent(thType);
+                HtmlTree tdDesc = new HtmlTree(HtmlTag.TD);
+                tdDesc.addStyle(HtmlStyle.colLast);
+                writer.addSummaryLinkComment(this, element, tdDesc);
+                tr.addContent(tdDesc);
                 tbody.addContent(tr);
             }
             table.addContent(tbody);
@@ -528,7 +494,7 @@ public abstract class AbstractMemberWriter {
 
         TypeElement superClass = utils.getSuperClass(typeElement);
         while (superClass != null) {
-            if (visibleMemberMap.hasMembersFor(superClass)) {
+            if (visibleMemberMap.hasMembers(superClass)) {
                 liNav.addContent(getNavSummaryLink(superClass, true));
                 return;
             }
@@ -557,26 +523,29 @@ public abstract class AbstractMemberWriter {
         HtmlTree tdSummaryType = new HtmlTree(HtmlTag.TD);
         tdSummaryType.addStyle(HtmlStyle.colFirst);
         writer.addSummaryType(this, member, tdSummaryType);
-        HtmlTree tdSummary = new HtmlTree(HtmlTag.TD);
-        setSummaryColumnStyle(tdSummary);
-        addSummaryLink(tElement, member, tdSummary);
-        writer.addSummaryLinkComment(this, member, firstSentenceTags, tdSummary);
         HtmlTree tr = HtmlTree.TR(tdSummaryType);
-        tr.addContent(tdSummary);
+        HtmlTree thSummaryLink = new HtmlTree(HtmlTag.TH);
+        setSummaryColumnStyleAndScope(thSummaryLink);
+        addSummaryLink(tElement, member, thSummaryLink);
+        tr.addContent(thSummaryLink);
+        HtmlTree tdDesc = new HtmlTree(HtmlTag.TD);
+        tdDesc.addStyle(HtmlStyle.colLast);
+        writer.addSummaryLinkComment(this, member, firstSentenceTags, tdDesc);
+        tr.addContent(tdDesc);
         if (utils.isMethod(member) && !utils.isAnnotationType(member)) {
-            int methodType = utils.isStatic(member) ? MethodTypes.STATIC.value() :
-                    MethodTypes.INSTANCE.value();
+            int methodType = utils.isStatic(member) ? MethodTypes.STATIC.tableTabs().value() :
+                    MethodTypes.INSTANCE.tableTabs().value();
             if (utils.isInterface(member.getEnclosingElement())) {
                 methodType = utils.isAbstract(member)
-                        ? methodType | MethodTypes.ABSTRACT.value()
-                        : methodType | MethodTypes.DEFAULT.value();
+                        ? methodType | MethodTypes.ABSTRACT.tableTabs().value()
+                        : methodType | MethodTypes.DEFAULT.tableTabs().value();
             } else {
                 methodType = utils.isAbstract(member)
-                        ? methodType | MethodTypes.ABSTRACT.value()
-                        : methodType | MethodTypes.CONCRETE.value();
+                        ? methodType | MethodTypes.ABSTRACT.tableTabs().value()
+                        : methodType | MethodTypes.CONCRETE.tableTabs().value();
             }
             if (utils.isDeprecated(member) || utils.isDeprecated(typeElement)) {
-                methodType = methodType | MethodTypes.DEPRECATED.value();
+                methodType = methodType | MethodTypes.DEPRECATED.tableTabs().value();
             }
             methodTypesOr = methodTypesOr | methodType;
             String tableId = "i" + counter;
@@ -599,7 +568,7 @@ public abstract class AbstractMemberWriter {
     public boolean showTabs() {
         int value;
         for (MethodTypes type : EnumSet.allOf(MethodTypes.class)) {
-            value = type.value();
+            value = type.tableTabs().value();
             if ((value & methodTypesOr) == value) {
                 methodTypes.add(type);
             }
@@ -612,12 +581,13 @@ public abstract class AbstractMemberWriter {
     }
 
     /**
-     * Set the style for the summary column.
+     * Set the style and scope attribute for the summary column.
      *
-     * @param tdTree the column for which the style will be set
+     * @param thTree the column for which the style and scope attribute will be set
      */
-    public void setSummaryColumnStyle(HtmlTree tdTree) {
-        tdTree.addStyle(HtmlStyle.colLast);
+    public void setSummaryColumnStyleAndScope(HtmlTree thTree) {
+        thTree.addStyle(HtmlStyle.colSecond);
+        thTree.addAttr(HtmlAttr.SCOPE, "row");
     }
 
     /**

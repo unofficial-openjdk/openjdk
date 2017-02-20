@@ -24,7 +24,9 @@
  */
 package jdk.jshell.execution;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  *
@@ -39,7 +41,10 @@ class PipeInputStream extends InputStream {
     private boolean closed;
 
     @Override
-    public synchronized int read() {
+    public synchronized int read() throws IOException {
+        if (start == end && !closed) {
+            inputNeeded();
+        }
         while (start == end) {
             if (closed) {
                 return -1;
@@ -57,7 +62,35 @@ class PipeInputStream extends InputStream {
         }
     }
 
-    public synchronized void write(int b) {
+    @Override
+    public synchronized int read(byte[] b, int off, int len) throws IOException {
+        if (b == null) {
+            throw new NullPointerException();
+        } else if (off < 0 || len < 0 || len > b.length - off) {
+            throw new IndexOutOfBoundsException();
+        } else if (len == 0) {
+            return 0;
+        }
+
+        int c = read();
+        if (c == -1) {
+            return -1;
+        }
+        b[off] = (byte)c;
+
+        int totalRead = 1;
+        while (totalRead < len && start != end) {
+            int r = read();
+            if (r == (-1))
+                break;
+            b[off + totalRead++] = (byte) r;
+        }
+        return totalRead;
+    }
+
+    protected void inputNeeded() throws IOException {}
+
+    private synchronized void write(int b) {
         if (closed) {
             throw new IllegalStateException("Already closed.");
         }
@@ -83,6 +116,24 @@ class PipeInputStream extends InputStream {
     public synchronized void close() {
         closed = true;
         notifyAll();
+    }
+
+    public OutputStream createOutput() {
+        return new OutputStream() {
+            @Override public void write(int b) throws IOException {
+                PipeInputStream.this.write(b);
+            }
+            @Override
+            public void write(byte[] b, int off, int len) throws IOException {
+                for (int i = 0 ; i < len ; i++) {
+                    write(Byte.toUnsignedInt(b[off + i]));
+                }
+            }
+            @Override
+            public void close() throws IOException {
+                PipeInputStream.this.close();
+            }
+        };
     }
 
 }

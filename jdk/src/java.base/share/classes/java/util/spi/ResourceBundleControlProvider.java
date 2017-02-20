@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,20 +35,20 @@ import java.util.ResourceBundle;
  * no {@link java.util.ResourceBundle.Control} instance can be modified with {@code
  * ResourceBundleControlProvider} implementations.
  *
- * <p>Provider implementations must be packaged using the <a
- * href="../../../../technotes/guides/extensions/index.html">Java Extension
- * Mechanism</a> as installed extensions. Refer to {@link java.util.ServiceLoader}
- * for the extension packaging. Any installed {@code
- * ResourceBundleControlProvider} implementations are loaded using {@link
- * java.util.ServiceLoader} at the {@code ResourceBundle} class loading time.
+ * <p>Provider implementations are loaded from the application's class path
+ * using {@link java.util.ServiceLoader} at the first invocation of the
+ * {@code ResourceBundle.getBundle} factory method that takes no
+ * {@link java.util.ResourceBundle.Control} instance.
  *
  * <p>All {@code ResourceBundleControlProvider}s are ignored in named modules.
  *
  * @author Masayoshi Okutsu
  * @since 1.8
+ * @revised 9
+ * @spec JPMS
  * @see ResourceBundle#getBundle(String, java.util.Locale, ClassLoader, ResourceBundle.Control)
  *      ResourceBundle.getBundle
- * @see java.util.ServiceLoader#loadInstalled(Class)
+ * @see java.util.ServiceLoader#load(Class)
  */
 public interface ResourceBundleControlProvider {
     /**

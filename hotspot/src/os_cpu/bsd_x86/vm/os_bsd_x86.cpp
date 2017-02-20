@@ -378,7 +378,9 @@ bool os::Bsd::get_frame_at_stack_banging_point(JavaThread* thread, ucontext_t* u
     // method returns the Java sender of the current frame.
     *fr = os::fetch_frame_from_ucontext(thread, uc);
     if (!fr->is_first_java_frame()) {
-      assert(fr->safe_for_sender(thread), "Safety check");
+      // get_frame_at_stack_banging_point() is only called when we
+      // have well defined stacks so java_sender() calls do not need
+      // to assert safe_for_sender() first.
       *fr = fr->java_sender();
     }
   } else {
@@ -395,7 +397,7 @@ bool os::Bsd::get_frame_at_stack_banging_point(JavaThread* thread, ucontext_t* u
       // has been pushed on the stack
       *fr = frame(fr->sp() + 1, fr->fp(), (address)*(fr->sp()));
       if (!fr->is_java_frame()) {
-        assert(fr->safe_for_sender(thread), "Safety check");
+        // See java_sender() comment above.
         *fr = fr->java_sender();
       }
     }
@@ -837,19 +839,24 @@ bool os::is_allocatable(size_t bytes) {
 ////////////////////////////////////////////////////////////////////////////////
 // thread stack
 
-#ifdef AMD64
-size_t os::Bsd::min_stack_allowed  = 64 * K;
+// Minimum usable stack sizes required to get to user code. Space for
+// HotSpot guard pages is added later.
+size_t os::Posix::_compiler_thread_min_stack_allowed = 48 * K;
+size_t os::Posix::_java_thread_min_stack_allowed = 48 * K;
+#ifdef _LP64
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = 64 * K;
 #else
-size_t os::Bsd::min_stack_allowed  =  (48 DEBUG_ONLY(+4))*K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = (48 DEBUG_ONLY(+ 4)) * K;
+#endif // _LP64
 
+#ifndef AMD64
 #ifdef __GNUC__
 #define GET_GS() ({int gs; __asm__ volatile("movw %%gs, %w0":"=q"(gs)); gs&0xffff;})
 #endif
-
 #endif // AMD64
 
 // return default stack size for thr_type
-size_t os::Bsd::default_stack_size(os::ThreadType thr_type) {
+size_t os::Posix::default_stack_size(os::ThreadType thr_type) {
   // default stack size (compiler thread needs larger stack)
 #ifdef AMD64
   size_t s = (thr_type == os::compiler_thread ? 4 * M : 1 * M);
@@ -859,24 +866,19 @@ size_t os::Bsd::default_stack_size(os::ThreadType thr_type) {
   return s;
 }
 
-size_t os::Bsd::default_guard_size(os::ThreadType thr_type) {
-  // Creating guard page is very expensive. Java thread has HotSpot
-  // guard page, only enable glibc guard page for non-Java threads.
-  return (thr_type == java_thread ? 0 : page_size());
-}
 
 // Java thread:
 //
 //   Low memory addresses
 //    +------------------------+
-//    |                        |\  JavaThread created by VM does not have glibc
+//    |                        |\  Java thread created by VM does not have glibc
 //    |    glibc guard page    | - guard, attached Java thread usually has
-//    |                        |/  1 page glibc guard.
+//    |                        |/  1 glibc guard page.
 // P1 +------------------------+ Thread::stack_base() - Thread::stack_size()
 //    |                        |\
-//    |  HotSpot Guard Pages   | - red and yellow pages
+//    |  HotSpot Guard Pages   | - red, yellow and reserved pages
 //    |                        |/
-//    +------------------------+ JavaThread::stack_yellow_zone_base()
+//    +------------------------+ JavaThread::stack_reserved_zone_base()
 //    |                        |\
 //    |      Normal Stack      | -
 //    |                        |/
@@ -924,7 +926,7 @@ static void current_stack_region(address * bottom, size_t * size) {
   int rslt = pthread_stackseg_np(pthread_self(), &ss);
 
   if (rslt != 0)
-    fatal("pthread_stackseg_np failed with err = %d", rslt);
+    fatal("pthread_stackseg_np failed with error = %d", rslt);
 
   *bottom = (address)((char *)ss.ss_sp - ss.ss_size);
   *size   = ss.ss_size;
@@ -935,12 +937,12 @@ static void current_stack_region(address * bottom, size_t * size) {
 
   // JVM needs to know exact stack location, abort if it fails
   if (rslt != 0)
-    fatal("pthread_attr_init failed with err = %d", rslt);
+    fatal("pthread_attr_init failed with error = %d", rslt);
 
   rslt = pthread_attr_get_np(pthread_self(), &attr);
 
   if (rslt != 0)
-    fatal("pthread_attr_get_np failed with err = %d", rslt);
+    fatal("pthread_attr_get_np failed with error = %d", rslt);
 
   if (pthread_attr_getstackaddr(&attr, (void **)bottom) != 0 ||
     pthread_attr_getstacksize(&attr, size) != 0) {

@@ -44,7 +44,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Queue;
-import java.util.Random;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -52,10 +51,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.ThreadLocalRandom;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class IteratorWeakConsistency {
-    final Random rnd = new Random();
+    final ThreadLocalRandom rnd = ThreadLocalRandom.current();
 
     void test(String[] args) throws Throwable {
         test(new LinkedBlockingQueue());
@@ -71,6 +71,9 @@ public class IteratorWeakConsistency {
     void checkExhausted(Iterator it) {
         if (rnd.nextBoolean()) {
             check(!it.hasNext());
+        }
+        if (rnd.nextBoolean()) {
+            it.forEachRemaining(e -> { throw new AssertionError(); });
         }
         if (rnd.nextBoolean())
             try { it.next(); fail("should throw"); }
@@ -192,7 +195,7 @@ public class IteratorWeakConsistency {
                 ((BlockingQueue)q).remainingCapacity() :
                 Integer.MAX_VALUE;
             final int capacity = Math.min(20, remainingCapacity);
-            List<Iterator> its = new ArrayList<Iterator>();
+            List<Iterator> its = new ArrayList<>();
             // Move to "middle"
             for (int i = 0; i < capacity/2; i++) {
                 check(q.add(i));
@@ -226,7 +229,7 @@ public class IteratorWeakConsistency {
                         it.remove();
                 }
                 break;
-            default: throw new Error();
+            default: throw new AssertionError();
             }
 
             for (int i = 0; i < capacity; i++) {

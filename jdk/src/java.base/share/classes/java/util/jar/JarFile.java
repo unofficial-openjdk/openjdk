@@ -48,8 +48,8 @@ import sun.security.util.SignatureFileVerifier;
  * processing multi-release jar files.  The {@code Manifest} can be used
  * to specify meta-information about the jar file and its entries.
  *
- * <p>A multi-release jar file is a jar file that contains
- * a manifest with a main attribute named "Multi-Release",
+ * <p><a name="multirelease">A multi-release jar file</a> is a jar file that
+ * contains a manifest with a main attribute named "Multi-Release",
  * a set of "base" entries, some of which are public classes with public
  * or protected methods that comprise the public interface of the jar file,
  * and a set of "versioned" entries contained in subdirectories of the
@@ -192,9 +192,10 @@ class JarFile extends ZipFile {
     public static final String MANIFEST_NAME = META_INF + "MANIFEST.MF";
 
     /**
-     * The version that represents the unversioned configuration of a multi-release jar file.
+     * Returns the version that represents the unversioned configuration of a
+     * multi-release jar file.
      *
-     * @return Runtime.Version that represents the unversioned configuration
+     * @return the version that represents the unversioned configuration
      *
      * @since 9
      */
@@ -203,13 +204,16 @@ class JarFile extends ZipFile {
     }
 
     /**
-     * The version that represents the effective runtime versioned configuration of a
-     * multi-release jar file.  In most cases, {@code runtimeVersion()} is equal to
-     * {@code Runtime.version()}.  However, if the {@code jdk.util.jar.version} property is set,
-     * {@code runtimeVersion()} is derived from that property and may not be equal to
-     * {@code Runtime.version()}.
+     * Returns the version that represents the effective runtime versioned
+     * configuration of a multi-release jar file.
+     * <p>
+     * By default the major version number of the returned {@code Version} will
+     * be equal to the major version number of {@code Runtime.version()}.
+     * However, if the {@code jdk.util.jar.version} property is set, the
+     * returned {@code Version} is derived from that property and major version
+     * numbers may not be equal.
      *
-     * @return Runtime.Version that represents the runtime versioned configuration
+     * @return the version that represents the runtime versioned configuration
      *
      * @since 9
      */
@@ -335,6 +339,10 @@ class JarFile extends ZipFile {
 
     /**
      * Returns the maximum version used when searching for versioned entries.
+     * <p>
+     * If this {@code JarFile} is not a multi-release jar file or is not
+     * configured to be processed as such, then the version returned will be the
+     * same as that returned from {@link #baseVersion()}.
      *
      * @return the maximum version
      * @since 9
@@ -536,19 +544,6 @@ class JarFile extends ZipFile {
      * @return an ordered {@code Stream} of entries in this jar file
      * @throws IllegalStateException if the jar file has been closed
      * @since 1.8
-     *
-     * @apiNote  A versioned view of the stream obtained from a {@code JarFile}
-     * configured to process a multi-release jar file can be created with code
-     * similar to the following:
-     * <pre>
-     * {@code
-     *     Stream<JarEntry> versionedStream(JarFile jf) {
-     *         return jf.stream().map(JarEntry::getName)
-     *                  .filter(name -> !name.startsWith("META-INF/versions/"))
-     *                  .map(jf::getJarEntry);
-     *     }
-     * }
-     * </pre>
      */
     public Stream<JarEntry> stream() {
         return StreamSupport.stream(Spliterators.spliterator(
@@ -571,7 +566,7 @@ class JarFile extends ZipFile {
 
     private ZipEntry getVersionedEntry(ZipEntry ze) {
         ZipEntry vze = null;
-        if (BASE_VERSION_MAJOR < versionMajor && !ze.isDirectory()) {
+        if (BASE_VERSION_MAJOR < versionMajor) {
             String name = ze.getName();
             if (!name.startsWith(META_INF)) {
                 vze = searchForVersionedEntry(versionMajor, name);
@@ -836,18 +831,25 @@ class JarFile extends ZipFile {
     private static final byte[] CLASSPATH_CHARS =
             {'C','L','A','S','S','-','P','A','T','H', ':', ' '};
 
-    // The bad character shift for "class-path:"
+    // The bad character shift for "class-path: "
     private static final byte[] CLASSPATH_LASTOCC;
+
+    // The good suffix shift for "class-path: "
+    private static final byte[] CLASSPATH_OPTOSFT;
 
     private static final byte[] MULTIRELEASE_CHARS =
             {'M','U','L','T','I','-','R','E','L','E', 'A', 'S', 'E', ':',
                     ' ', 'T', 'R', 'U', 'E'};
 
-    // The bad character shift for "multi-release: "
+    // The bad character shift for "multi-release: true"
     private static final byte[] MULTIRELEASE_LASTOCC;
+
+    // The good suffix shift for "multi-release: true"
+    private static final byte[] MULTIRELEASE_OPTOSFT;
 
     static {
         CLASSPATH_LASTOCC = new byte[64];
+        CLASSPATH_OPTOSFT = new byte[12];
         CLASSPATH_LASTOCC[(int)'C' - 32] = 1;
         CLASSPATH_LASTOCC[(int)'L' - 32] = 2;
         CLASSPATH_LASTOCC[(int)'S' - 32] = 5;
@@ -858,8 +860,13 @@ class JarFile extends ZipFile {
         CLASSPATH_LASTOCC[(int)'H' - 32] = 10;
         CLASSPATH_LASTOCC[(int)':' - 32] = 11;
         CLASSPATH_LASTOCC[(int)' ' - 32] = 12;
+        for (int i = 0; i < 11; i++) {
+            CLASSPATH_OPTOSFT[i] = 12;
+        }
+        CLASSPATH_OPTOSFT[11] = 1;
 
         MULTIRELEASE_LASTOCC = new byte[64];
+        MULTIRELEASE_OPTOSFT = new byte[19];
         MULTIRELEASE_LASTOCC[(int)'M' - 32] = 1;
         MULTIRELEASE_LASTOCC[(int)'I' - 32] = 5;
         MULTIRELEASE_LASTOCC[(int)'-' - 32] = 6;
@@ -872,6 +879,11 @@ class JarFile extends ZipFile {
         MULTIRELEASE_LASTOCC[(int)'R' - 32] = 17;
         MULTIRELEASE_LASTOCC[(int)'U' - 32] = 18;
         MULTIRELEASE_LASTOCC[(int)'E' - 32] = 19;
+        for (int i = 0; i < 17; i++) {
+            MULTIRELEASE_OPTOSFT[i] = 19;
+        }
+        MULTIRELEASE_OPTOSFT[17] = 6;
+        MULTIRELEASE_OPTOSFT[18] = 1;
     }
 
     private JarEntry getManEntry() {
@@ -913,7 +925,7 @@ class JarFile extends ZipFile {
      * Since there are no repeated substring in our search strings,
      * the good suffix shifts can be replaced with a comparison.
      */
-    private int match(byte[] src, byte[] b, byte[] lastOcc) {
+    private int match(byte[] src, byte[] b, byte[] lastOcc, byte[] optoSft) {
         int len = src.length;
         int last = b.length - len;
         int i = 0;
@@ -926,9 +938,8 @@ class JarFile extends ZipFile {
 
                     if (c != src[j]) {
                         // no match
-                        int goodShift = (j < len - 1) ? len : 1;
                         int badShift = lastOcc[c - 32];
-                        i += Math.max(j + 1 - badShift, goodShift);
+                        i += Math.max(j + 1 - badShift, optoSft[j]);
                         continue next;
                     }
                 } else {
@@ -958,10 +969,11 @@ class JarFile extends ZipFile {
             if (manEntry != null) {
                 byte[] b = getBytes(manEntry);
                 hasClassPathAttribute = match(CLASSPATH_CHARS, b,
-                        CLASSPATH_LASTOCC) != -1;
+                        CLASSPATH_LASTOCC, CLASSPATH_OPTOSFT) != -1;
                 // is this a multi-release jar file
                 if (MULTI_RELEASE_ENABLED) {
-                    int i = match(MULTIRELEASE_CHARS, b, MULTIRELEASE_LASTOCC);
+                    int i = match(MULTIRELEASE_CHARS, b, MULTIRELEASE_LASTOCC,
+                            MULTIRELEASE_OPTOSFT);
                     if (i != -1) {
                         i += MULTIRELEASE_CHARS.length;
                         if (i < b.length) {

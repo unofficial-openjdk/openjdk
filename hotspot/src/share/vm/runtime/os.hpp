@@ -197,10 +197,11 @@ class os: AllStatic {
   // information may require a lock on some platforms.
   static char*      local_time_string(char *buf, size_t buflen);
   static struct tm* localtime_pd     (const time_t* clock, struct tm*  res);
+  static struct tm* gmtime_pd        (const time_t* clock, struct tm*  res);
   // Fill in buffer with current local time as an ISO-8601 string.
   // E.g., YYYY-MM-DDThh:mm:ss.mmm+zzzz.
   // Returns buffer, or NULL if it failed.
-  static char* iso8601_time(char* buffer, size_t buffer_length);
+  static char* iso8601_time(char* buffer, size_t buffer_length, bool utc = false);
 
   // Interface for detecting multiprocessor system
   static inline bool is_MP() {
@@ -324,7 +325,7 @@ class os: AllStatic {
   // to make the OS back the memory range with actual memory.
   // Current implementation may not touch the last page if unaligned addresses
   // are passed.
-  static void   pretouch_memory(void* start, void* end);
+  static void   pretouch_memory(void* start, void* end, size_t page_size = vm_page_size());
 
   enum ProtType { MEM_PROT_NONE, MEM_PROT_READ, MEM_PROT_RW, MEM_PROT_RWX };
   static bool   protect_memory(char* addr, size_t bytes, ProtType prot,
@@ -435,7 +436,7 @@ class os: AllStatic {
     vm_thread,
     cgc_thread,        // Concurrent GC thread
     pgc_thread,        // Parallel GC thread
-    java_thread,
+    java_thread,       // Java, CodeCacheSweeper, JVMTIAgent and Service threads.
     compiler_thread,
     watcher_thread,
     os_thread
@@ -443,7 +444,7 @@ class os: AllStatic {
 
   static bool create_thread(Thread* thread,
                             ThreadType thr_type,
-                            size_t stack_size = 0);
+                            size_t req_stack_size = 0);
   static bool create_main_thread(JavaThread* thread);
   static bool create_attached_thread(JavaThread* thread);
   static void pd_start_thread(Thread* thread);
@@ -709,7 +710,6 @@ class os: AllStatic {
   static void* realloc (void *memblock, size_t size, MEMFLAGS flag);
 
   static void  free    (void *memblock);
-  static bool  check_heap(bool force = false);      // verify C heap integrity
   static char* strdup(const char *, MEMFLAGS flags = mtInternal);  // Like strdup
   // Like strdup, but exit VM when strdup() returns NULL
   static char* strdup_check_oom(const char*, MEMFLAGS flags = mtInternal);

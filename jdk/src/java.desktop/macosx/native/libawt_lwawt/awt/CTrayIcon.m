@@ -139,9 +139,9 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize, BOOL autosize) {
     jint clickCount;
 
     clickCount = [event clickCount];
-
+        
     static JNF_CLASS_CACHE(jc_NSEvent, "sun/lwawt/macosx/NSEvent");
-    static JNF_CTOR_CACHE(jctor_NSEvent, jc_NSEvent, "(IIIIIIIIDD)V");
+    static JNF_CTOR_CACHE(jctor_NSEvent, jc_NSEvent, "(IIIIIIIIDDI)V");
     jobject jEvent = JNFNewObject(env, jctor_NSEvent,
                                   [event type],
                                   [event modifierFlags],
@@ -150,7 +150,8 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize, BOOL autosize) {
                                   (jint)localPoint.x, (jint)localPoint.y,
                                   (jint)absP.x, (jint)absP.y,
                                   [event deltaY],
-                                  [event deltaX]);
+                                  [event deltaX],
+                                  [AWTToolkit scrollStateWithEvent: event]);
     CHECK_NULL(jEvent);
 
     static JNF_CLASS_CACHE(jc_TrayIcon, "sun/lwawt/macosx/CTrayIcon");
@@ -170,12 +171,27 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize, BOOL autosize) {
     [self setTrayIcon: theTrayIcon];
     isHighlighted = NO;
     image = nil;
-
+    trackingArea = nil;
+	
+    [self addTrackingArea];
+	
     return self;
+}
+
+- (void)addTrackingArea {
+    NSTrackingAreaOptions options = NSTrackingMouseMoved | 
+                                    NSTrackingInVisibleRect | 
+                                    NSTrackingActiveAlways;
+    trackingArea = [[NSTrackingArea alloc] initWithRect: CGRectZero
+                                                options: options
+                                                owner: self
+                                                userInfo: nil];
+    [self addTrackingArea:trackingArea];
 }
 
 -(void) dealloc {
     [image release];
+    [trackingArea release];
     [super dealloc];
 }
 
@@ -265,6 +281,10 @@ static NSSize ScaledImageSizeForStatusBar(NSSize imageSize, BOOL autosize) {
 }
 
 - (void) mouseDragged:(NSEvent *)event {
+    [trayIcon deliverJavaMouseEvent: event];
+}
+
+- (void) mouseMoved: (NSEvent *)event {
     [trayIcon deliverJavaMouseEvent: event];
 }
 

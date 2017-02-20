@@ -72,8 +72,8 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  *   protected synchronized Object getNextAvailableItem() {
  *     for (int i = 0; i < MAX_AVAILABLE; ++i) {
  *       if (!used[i]) {
- *          used[i] = true;
- *          return items[i];
+ *         used[i] = true;
+ *         return items[i];
  *       }
  *     }
  *     return null; // not reached
@@ -82,11 +82,11 @@ import java.util.concurrent.locks.AbstractQueuedSynchronizer;
  *   protected synchronized boolean markAsUnused(Object item) {
  *     for (int i = 0; i < MAX_AVAILABLE; ++i) {
  *       if (item == items[i]) {
- *          if (used[i]) {
- *            used[i] = false;
- *            return true;
- *          } else
- *            return false;
+ *         if (used[i]) {
+ *           used[i] = false;
+ *           return true;
+ *         } else
+ *           return false;
  *       }
  *     }
  *     return false;
@@ -631,9 +631,12 @@ public class Semaphore implements java.io.Serializable {
     }
 
     /**
-     * Acquires and returns all permits that are immediately available.
+     * Acquires and returns all permits that are immediately
+     * available, or if negative permits are available, releases them.
+     * Upon return, zero permits are available.
      *
-     * @return the number of permits acquired
+     * @return the number of permits acquired or, if negative, the
+     * number released
      */
     public int drainPermits() {
         return sync.drainPermits();

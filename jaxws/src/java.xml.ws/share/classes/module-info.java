@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,16 +26,17 @@
 /**
  * Defines the Java API for XML-Based Web Services (JAX-WS), and
  * the Web Services Metadata API.
+ *
+ * @since 9
  */
 module java.xml.ws {
-    requires public java.activation;
-    requires public java.xml;
-    requires public java.xml.bind;
-    requires java.annotations.common;
+    requires transitive java.activation;
+    requires transitive java.xml;
+    requires transitive java.xml.bind;
+    requires java.xml.ws.annotation;
     requires java.desktop;
     requires java.logging;
     requires java.management;
-    requires java.rmi;
     requires jdk.httpserver;
 
     uses javax.xml.ws.spi.Provider;
@@ -55,6 +56,8 @@ module java.xml.ws {
     exports javax.xml.ws.spi;
     exports javax.xml.ws.spi.http;
     exports javax.xml.ws.wsaddressing;
+
+    opens javax.xml.ws.wsaddressing to java.xml.bind;
 
     exports com.oracle.webservices.internal.api.databinding to
         jdk.xml.ws;
@@ -103,10 +106,13 @@ module java.xml.ws {
         jdk.xml.ws;
 
     // XML document content needs to be exported
-    exports com.sun.xml.internal.ws.runtime.config to java.xml.bind;
+    opens com.sun.xml.internal.ws.runtime.config to java.xml.bind;
 
     // com.sun.xml.internal.ws.fault.SOAPFaultBuilder uses JAXBContext.newInstance
-    exports com.sun.xml.internal.ws.fault to java.xml.bind;
+    opens com.sun.xml.internal.ws.fault to java.xml.bind;
+
+    // classes passed to JAXBContext.newInstance for deep reflection
+    opens com.sun.xml.internal.ws.addressing to java.xml.bind;
 
     // JAF data handlers
     exports com.sun.xml.internal.messaging.saaj.soap to

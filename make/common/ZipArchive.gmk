@@ -73,6 +73,11 @@ define SetupZipArchiveBody
     else
       $1_ZIP_INCLUDES := $$(addprefix -i$(SPACE)$(DQUOTE),$$(addsuffix /*$(DQUOTE),$$($1_INCLUDES)))
     endif
+  else
+    ifneq ($$($1_SUFFIXES),)
+      $1_ZIP_INCLUDES := $$(foreach s,$$($1_SUFFIXES), \
+          $$(addprefix -i$(SPACE)$(DQUOTE),*$$s$(DQUOTE)))
+    endif
   endif
   ifneq ($$($1_INCLUDE_FILES),)
     $1_ZIP_INCLUDES += $$(addprefix -i$(SPACE),$$($1_INCLUDE_FILES))
@@ -102,7 +107,7 @@ define SetupZipArchiveBody
   $$($1_ZIP) : $$($1_ALL_SRCS) $$($1_EXTRA_DEPS)
 	$(MKDIR) -p $$(@D)
 	$(ECHO) Updating $$($1_NAME)
-	$$(foreach i,$$($1_SRC),(cd $$i && $(ZIP) -qru $$($1_ZIP_OPTIONS) $$@ . $$($1_ZIP_INCLUDES) \
+	$$(foreach i,$$($1_SRC),(cd $$i && $(ZIPEXE) -qru $$($1_ZIP_OPTIONS) $$@ . $$($1_ZIP_INCLUDES) \
 	    $$($1_ZIP_EXCLUDES) -x \*_the.\* \
 	    $$(addprefix -x$(SPACE), $$(patsubst $$i/%,%, $$($1_EXCLUDE_FILES))) \
 	    || test "$$$$?" = "12" )$$(NEWLINE)) true

@@ -42,7 +42,7 @@
 #include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -218,9 +218,6 @@ bool os::have_special_privileges() {
   #endif
 #endif
 
-// Cpu architecture string
-static char cpu_arch[] = HOTSPOT_LIB_ARCH;
-
 
 // pid_t gettid()
 //
@@ -263,7 +260,7 @@ void os::init_system_properties_values() {
   //
   // Obtain the JAVA_HOME value from the location of libjvm.so.
   // This library should be located at:
-  // <JAVA_HOME>/jre/lib/<arch>/{client|server}/libjvm.so.
+  // <JAVA_HOME>/lib/{client|server}/libjvm.so.
   //
   // If "/jre/lib/" appears at the right place in the path, then we
   // assume libjvm.so is installed in a JDK and we use this path.
@@ -291,7 +288,7 @@ void os::init_system_properties_values() {
   //        1: ...
   //        ...
   //        7: The default directories, normally /lib and /usr/lib.
-#if defined(AMD64) || defined(_LP64) && (defined(SPARC) || defined(PPC) || defined(S390))
+#if defined(AMD64) || (defined(_LP64) && defined(SPARC)) || defined(PPC64) || defined(S390)
   #define DEFAULT_LIBPATH "/usr/lib64:/lib64:/lib:/usr/lib"
 #else
   #define DEFAULT_LIBPATH "/lib:/usr/lib"
@@ -329,11 +326,7 @@ void os::init_system_properties_values() {
     if (pslash != NULL) {
       pslash = strrchr(buf, '/');
       if (pslash != NULL) {
-        *pslash = '\0';          // Get rid of /<arch>.
-        pslash = strrchr(buf, '/');
-        if (pslash != NULL) {
-          *pslash = '\0';        // Get rid of /lib.
-        }
+        *pslash = '\0';        // Get rid of /lib.
       }
     }
     Arguments::set_java_home(buf);
@@ -360,9 +353,9 @@ void os::init_system_properties_values() {
     // That's +1 for the colon and +1 for the trailing '\0'.
     char *ld_library_path = (char *)NEW_C_HEAP_ARRAY(char,
                                                      strlen(v) + 1 +
-                                                     sizeof(SYS_EXT_DIR) + sizeof("/lib/") + strlen(cpu_arch) + sizeof(DEFAULT_LIBPATH) + 1,
+                                                     sizeof(SYS_EXT_DIR) + sizeof("/lib/") + sizeof(DEFAULT_LIBPATH) + 1,
                                                      mtInternal);
-    sprintf(ld_library_path, "%s%s" SYS_EXT_DIR "/lib/%s:" DEFAULT_LIBPATH, v, v_colon, cpu_arch);
+    sprintf(ld_library_path, "%s%s" SYS_EXT_DIR "/lib:" DEFAULT_LIBPATH, v, v_colon);
     Arguments::set_library_path(ld_library_path);
     FREE_C_HEAP_ARRAY(char, ld_library_path);
   }
@@ -701,7 +694,7 @@ static void *thread_native_entry(Thread *thread) {
 }
 
 bool os::create_thread(Thread* thread, ThreadType thr_type,
-                       size_t stack_size) {
+                       size_t req_stack_size) {
   assert(thread->osthread() == NULL, "caller responsible");
 
   // Allocate the OSThread object
@@ -723,37 +716,18 @@ bool os::create_thread(Thread* thread, ThreadType thr_type,
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
 
-  // stack size
-  // calculate stack size if it's not specified by caller
-  if (stack_size == 0) {
-    stack_size = os::Linux::default_stack_size(thr_type);
-
-    switch (thr_type) {
-    case os::java_thread:
-      // Java threads use ThreadStackSize which default value can be
-      // changed with the flag -Xss
-      assert(JavaThread::stack_size_at_create() > 0, "this should be set");
-      stack_size = JavaThread::stack_size_at_create();
-      break;
-    case os::compiler_thread:
-      if (CompilerThreadStackSize > 0) {
-        stack_size = (size_t)(CompilerThreadStackSize * K);
-        break;
-      } // else fall through:
-        // use VMThreadStackSize if CompilerThreadStackSize is not defined
-    case os::vm_thread:
-    case os::pgc_thread:
-    case os::cgc_thread:
-    case os::watcher_thread:
-      if (VMThreadStackSize > 0) stack_size = (size_t)(VMThreadStackSize * K);
-      break;
-    }
-  }
-
-  stack_size = MAX2(stack_size, os::Linux::min_stack_allowed);
+  // Calculate stack size if it's not specified by caller.
+  size_t stack_size = os::Posix::get_initial_stack_size(thr_type, req_stack_size);
+  // In the Linux NPTL pthread implementation the guard size mechanism
+  // is not implemented properly. The posix standard requires adding
+  // the size of the guard pages to the stack size, instead Linux
+  // takes the space out of 'stacksize'. Thus we adapt the requested
+  // stack_size by the size of the guard pages to mimick proper
+  // behaviour.
+  stack_size = align_size_up(stack_size + os::Linux::default_guard_size(thr_type), vm_page_size());
   pthread_attr_setstacksize(&attr, stack_size);
 
-  // glibc guard page
+  // Configure glibc guard page.
   pthread_attr_setguardsize(&attr, os::Linux::default_guard_size(thr_type));
 
   ThreadState state;
@@ -953,30 +927,30 @@ static bool find_vma(address addr, address* vma_low, address* vma_high) {
 
 // Locate initial thread stack. This special handling of initial thread stack
 // is needed because pthread_getattr_np() on most (all?) Linux distros returns
-// bogus value for initial thread.
+// bogus value for the primordial process thread. While the launcher has created
+// the VM in a new thread since JDK 6, we still have to allow for the use of the
+// JNI invocation API from a primordial thread.
 void os::Linux::capture_initial_stack(size_t max_size) {
-  // stack size is the easy part, get it from RLIMIT_STACK
-  size_t stack_size;
+
+  // max_size is either 0 (which means accept OS default for thread stacks) or
+  // a user-specified value known to be at least the minimum needed. If we
+  // are actually on the primordial thread we can make it appear that we have a
+  // smaller max_size stack by inserting the guard pages at that location. But we
+  // cannot do anything to emulate a larger stack than what has been provided by
+  // the OS or threading library. In fact if we try to use a stack greater than
+  // what is set by rlimit then we will crash the hosting process.
+
+  // Maximum stack size is the easy part, get it from RLIMIT_STACK.
+  // If this is "unlimited" then it will be a huge value.
   struct rlimit rlim;
   getrlimit(RLIMIT_STACK, &rlim);
-  stack_size = rlim.rlim_cur;
+  size_t stack_size = rlim.rlim_cur;
 
   // 6308388: a bug in ld.so will relocate its own .data section to the
   //   lower end of primordial stack; reduce ulimit -s value a little bit
   //   so we won't install guard page on ld.so's data section.
   stack_size -= 2 * page_size();
 
-  // 4441425: avoid crash with "unlimited" stack size on SuSE 7.1 or Redhat
-  //   7.1, in both cases we will get 2G in return value.
-  // 4466587: glibc 2.2.x compiled w/o "--enable-kernel=2.4.0" (RH 7.0,
-  //   SuSE 7.2, Debian) can not handle alternate signal stack correctly
-  //   for initial thread if its stack size exceeds 6M. Cap it at 2M,
-  //   in case other parts in glibc still assumes 2M max stack size.
-  // FIXME: alt signal stack is gone, maybe we can relax this constraint?
-  // Problem still exists RH7.2 (IA64 anyway) but 2MB is a little small
-  if (stack_size > 2 * K * K IA64_ONLY(*2)) {
-    stack_size = 2 * K * K IA64_ONLY(*2);
-  }
   // Try to figure out where the stack base (top) is. This is harder.
   //
   // When an application is started, glibc saves the initial stack pointer in
@@ -1136,14 +1110,29 @@ void os::Linux::capture_initial_stack(size_t max_size) {
   // stack_top could be partially down the page so align it
   stack_top = align_size_up(stack_top, page_size());
 
-  if (max_size && stack_size > max_size) {
-    _initial_thread_stack_size = max_size;
+  // Allowed stack value is minimum of max_size and what we derived from rlimit
+  if (max_size > 0) {
+    _initial_thread_stack_size = MIN2(max_size, stack_size);
   } else {
-    _initial_thread_stack_size = stack_size;
+    // Accept the rlimit max, but if stack is unlimited then it will be huge, so
+    // clamp it at 8MB as we do on Solaris
+    _initial_thread_stack_size = MIN2(stack_size, 8*M);
   }
-
   _initial_thread_stack_size = align_size_down(_initial_thread_stack_size, page_size());
   _initial_thread_stack_bottom = (address)stack_top - _initial_thread_stack_size;
+
+  assert(_initial_thread_stack_bottom < (address)stack_top, "overflow!");
+
+  if (log_is_enabled(Info, os, thread)) {
+    // See if we seem to be on primordial process thread
+    bool primordial = uintptr_t(&rlim) > uintptr_t(_initial_thread_stack_bottom) &&
+                      uintptr_t(&rlim) < stack_top;
+
+    log_info(os, thread)("Capturing initial stack in %s thread: req. size: " SIZE_FORMAT "K, actual size: "
+                         SIZE_FORMAT "K, top=" INTPTR_FORMAT ", bottom=" INTPTR_FORMAT,
+                         primordial ? "primordial" : "user", max_size / K,  _initial_thread_stack_size / K,
+                         stack_top, intptr_t(_initial_thread_stack_bottom));
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1239,8 +1228,8 @@ void os::Linux::clock_init() {
 }
 
 #ifndef SYS_clock_getres
-  #if defined(IA32) || defined(AMD64)
-    #define SYS_clock_getres IA32_ONLY(266)  AMD64_ONLY(229)
+  #if defined(X86) || defined(PPC64) || defined(S390)
+    #define SYS_clock_getres AMD64_ONLY(229) IA32_ONLY(266) PPC64_ONLY(247) S390_ONLY(261)
     #define sys_clock_getres(x,y)  ::syscall(SYS_clock_getres, x, y)
   #else
     #warning "SYS_clock_getres not defined for this platform, disabling fast_thread_cpu_time"
@@ -1793,6 +1782,8 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
   static  Elf32_Half running_arch_code=EM_PPC64;
 #elif  (defined __powerpc__)
   static  Elf32_Half running_arch_code=EM_PPC;
+#elif  (defined AARCH64)
+  static  Elf32_Half running_arch_code=EM_AARCH64;
 #elif  (defined ARM)
   static  Elf32_Half running_arch_code=EM_ARM;
 #elif  (defined S390)
@@ -1807,11 +1798,9 @@ void * os::dll_load(const char *filename, char *ebuf, int ebuflen) {
   static  Elf32_Half running_arch_code=EM_MIPS;
 #elif  (defined M68K)
   static  Elf32_Half running_arch_code=EM_68K;
-#elif  (defined AARCH64)
-  static  Elf32_Half running_arch_code=EM_AARCH64;
 #else
     #error Method os::dll_load requires that one of following is defined:\
-         IA32, AMD64, IA64, __sparc, __powerpc__, ARM, S390, ALPHA, MIPS, MIPSEL, PARISC, M68K, AARCH64
+        AARCH64, ALPHA, ARM, AMD64, IA32, IA64, M68K, MIPS, MIPSEL, PARISC, __powerpc__, __powerpc64__, S390, __sparc
 #endif
 
   // Identify compatability class for VM's architecture and library's architecture
@@ -2219,9 +2208,11 @@ void os::pd_print_cpu_info(outputStream* st, char* buf, size_t buflen) {
 
 #if defined(AMD64) || defined(IA32) || defined(X32)
 const char* search_string = "model name";
-#elif defined(SPARC)
-const char* search_string = "cpu";
 #elif defined(PPC64)
+const char* search_string = "cpu";
+#elif defined(S390)
+const char* search_string = "processor";
+#elif defined(SPARC)
 const char* search_string = "cpu";
 #else
 const char* search_string = "Processor";
@@ -2260,20 +2251,22 @@ void os::get_summary_cpu_info(char* cpuinfo, size_t length) {
   }
   // cpuinfo not found or parsing failed, just print generic string.  The entire
   // /proc/cpuinfo file will be printed later in the file (or enough of it for x86)
-#if defined(AMD64)
+#if   defined(AARCH64)
+  strncpy(cpuinfo, "AArch64", length);
+#elif defined(AMD64)
   strncpy(cpuinfo, "x86_64", length);
+#elif defined(ARM)  // Order wrt. AARCH64 is relevant!
+  strncpy(cpuinfo, "ARM", length);
 #elif defined(IA32)
   strncpy(cpuinfo, "x86_32", length);
 #elif defined(IA64)
   strncpy(cpuinfo, "IA64", length);
-#elif defined(SPARC)
-  strncpy(cpuinfo, "sparcv9", length);
-#elif defined(AARCH64)
-  strncpy(cpuinfo, "AArch64", length);
-#elif defined(ARM)
-  strncpy(cpuinfo, "ARM", length);
 #elif defined(PPC)
   strncpy(cpuinfo, "PPC64", length);
+#elif defined(S390)
+  strncpy(cpuinfo, "S390", length);
+#elif defined(SPARC)
+  strncpy(cpuinfo, "sparcv9", length);
 #elif defined(ZERO_LIBARCH)
   strncpy(cpuinfo, ZERO_LIBARCH, length);
 #else
@@ -2333,7 +2326,7 @@ void os::jvm_path(char *buf, jint buflen) {
 
   if (Arguments::sun_java_launcher_is_altjvm()) {
     // Support for the java launcher's '-XXaltjvm=<path>' option. Typical
-    // value for buf is "<JAVA_HOME>/jre/lib/<arch>/<vmtype>/libjvm.so".
+    // value for buf is "<JAVA_HOME>/jre/lib/<vmtype>/libjvm.so".
     // If "/jre/lib/" appears at the right place in the string, then
     // assume we are installed in a JDK and we're done. Otherwise, check
     // for a JAVA_HOME environment variable and fix up the path so it
@@ -2369,9 +2362,9 @@ void os::jvm_path(char *buf, jint buflen) {
         len = strlen(buf);
         assert(len < buflen, "Ran out of buffer room");
         jrelib_p = buf + len;
-        snprintf(jrelib_p, buflen-len, "/jre/lib/%s", cpu_arch);
+        snprintf(jrelib_p, buflen-len, "/jre/lib");
         if (0 != access(buf, F_OK)) {
-          snprintf(jrelib_p, buflen-len, "/lib/%s", cpu_arch);
+          snprintf(jrelib_p, buflen-len, "/lib");
         }
 
         if (0 == access(buf, F_OK)) {
@@ -2863,6 +2856,13 @@ bool os::Linux::libnuma_init() {
   return false;
 }
 
+size_t os::Linux::default_guard_size(os::ThreadType thr_type) {
+  // Creating guard page is very expensive. Java thread has HotSpot
+  // guard pages, only enable glibc guard page for non-Java threads.
+  // (Remember: compiler thread is a Java thread, too!)
+  return ((thr_type == java_thread || thr_type == compiler_thread) ? 0 : page_size());
+}
+
 // rebuild_cpu_to_node_map() constructs a table mapping cpud id to node id.
 // The table is later used in get_node_by_cpu().
 void os::Linux::rebuild_cpu_to_node_map() {
@@ -2875,7 +2875,7 @@ void os::Linux::rebuild_cpu_to_node_map() {
                               // in the library.
   const size_t BitsPerCLong = sizeof(long) * CHAR_BIT;
 
-  size_t cpu_num = os::active_processor_count();
+  size_t cpu_num = processor_count();
   size_t cpu_map_size = NCPUS / BitsPerCLong;
   size_t cpu_map_valid_size =
     MIN2((cpu_num + BitsPerCLong - 1) / BitsPerCLong, cpu_map_size);
@@ -3269,8 +3269,15 @@ size_t os::Linux::find_large_page_size() {
   // the processor.
 
 #ifndef ZERO
-  large_page_size = IA32_ONLY(4 * M) AMD64_ONLY(2 * M) IA64_ONLY(256 * M) SPARC_ONLY(4 * M)
-                     ARM32_ONLY(2 * M) PPC_ONLY(4 * M) AARCH64_ONLY(2 * M);
+  large_page_size =
+    AARCH64_ONLY(2 * M)
+    AMD64_ONLY(2 * M)
+    ARM32_ONLY(2 * M)
+    IA32_ONLY(4 * M)
+    IA64_ONLY(256 * M)
+    PPC_ONLY(4 * M)
+    S390_ONLY(1 * M)
+    SPARC_ONLY(4 * M);
 #endif // ZERO
 
   FILE *fp = fopen("/proc/meminfo", "r");
@@ -4793,32 +4800,10 @@ jint os::init_2(void) {
   Linux::signal_sets_init();
   Linux::install_signal_handlers();
 
-  // Check minimum allowable stack size for thread creation and to initialize
-  // the java system classes, including StackOverflowError - depends on page
-  // size.  Add two 4K pages for compiler2 recursion in main thread.
-  // Add in 4*BytesPerWord 4K pages to account for VM stack during
-  // class initialization depending on 32 or 64 bit VM.
-  os::Linux::min_stack_allowed = MAX2(os::Linux::min_stack_allowed,
-                                      JavaThread::stack_guard_zone_size() +
-                                      JavaThread::stack_shadow_zone_size() +
-                                      (4*BytesPerWord COMPILER2_PRESENT(+2)) * 4 * K);
-
-  os::Linux::min_stack_allowed = align_size_up(os::Linux::min_stack_allowed, os::vm_page_size());
-
-  size_t threadStackSizeInBytes = ThreadStackSize * K;
-  if (threadStackSizeInBytes != 0 &&
-      threadStackSizeInBytes < os::Linux::min_stack_allowed) {
-    tty->print_cr("\nThe stack size specified is too small, "
-                  "Specify at least " SIZE_FORMAT "k",
-                  os::Linux::min_stack_allowed/ K);
+  // Check and sets minimum stack sizes against command line options
+  if (Posix::set_minimum_stack_sizes() == JNI_ERR) {
     return JNI_ERR;
   }
-
-  // Make the stack size a multiple of the page size so that
-  // the yellow/red zones can be guarded.
-  JavaThread::set_stack_size_at_create(round_to(threadStackSizeInBytes,
-                                                vm_page_size()));
-
   Linux::capture_initial_stack(JavaThread::stack_size_at_create());
 
 #if defined(IA32)
@@ -5172,10 +5157,6 @@ int os::stat(const char *path, struct stat *sbuf) {
   }
   os::native_path(strcpy(pathbuf, path));
   return ::stat(pathbuf, sbuf);
-}
-
-bool os::check_heap(bool force) {
-  return true;
 }
 
 // Is a (classpath) directory empty?
@@ -6113,6 +6094,101 @@ bool os::start_debugging(char *buf, int buflen) {
   }
   return yes;
 }
+
+
+// Java/Compiler thread:
+//
+//   Low memory addresses
+// P0 +------------------------+
+//    |                        |\  Java thread created by VM does not have glibc
+//    |    glibc guard page    | - guard page, attached Java thread usually has
+//    |                        |/  1 glibc guard page.
+// P1 +------------------------+ Thread::stack_base() - Thread::stack_size()
+//    |                        |\
+//    |  HotSpot Guard Pages   | - red, yellow and reserved pages
+//    |                        |/
+//    +------------------------+ JavaThread::stack_reserved_zone_base()
+//    |                        |\
+//    |      Normal Stack      | -
+//    |                        |/
+// P2 +------------------------+ Thread::stack_base()
+//
+// Non-Java thread:
+//
+//   Low memory addresses
+// P0 +------------------------+
+//    |                        |\
+//    |  glibc guard page      | - usually 1 page
+//    |                        |/
+// P1 +------------------------+ Thread::stack_base() - Thread::stack_size()
+//    |                        |\
+//    |      Normal Stack      | -
+//    |                        |/
+// P2 +------------------------+ Thread::stack_base()
+//
+// ** P1 (aka bottom) and size (P2 = P1 - size) are the address and stack size
+//    returned from pthread_attr_getstack().
+// ** Due to NPTL implementation error, linux takes the glibc guard page out
+//    of the stack size given in pthread_attr. We work around this for
+//    threads created by the VM. (We adapt bottom to be P1 and size accordingly.)
+//
+#ifndef ZERO
+static void current_stack_region(address * bottom, size_t * size) {
+  if (os::Linux::is_initial_thread()) {
+    // initial thread needs special handling because pthread_getattr_np()
+    // may return bogus value.
+    *bottom = os::Linux::initial_thread_stack_bottom();
+    *size   = os::Linux::initial_thread_stack_size();
+  } else {
+    pthread_attr_t attr;
+
+    int rslt = pthread_getattr_np(pthread_self(), &attr);
+
+    // JVM needs to know exact stack location, abort if it fails
+    if (rslt != 0) {
+      if (rslt == ENOMEM) {
+        vm_exit_out_of_memory(0, OOM_MMAP_ERROR, "pthread_getattr_np");
+      } else {
+        fatal("pthread_getattr_np failed with error = %d", rslt);
+      }
+    }
+
+    if (pthread_attr_getstack(&attr, (void **)bottom, size) != 0) {
+      fatal("Cannot locate current stack attributes!");
+    }
+
+    // Work around NPTL stack guard error.
+    size_t guard_size = 0;
+    rslt = pthread_attr_getguardsize(&attr, &guard_size);
+    if (rslt != 0) {
+      fatal("pthread_attr_getguardsize failed with error = %d", rslt);
+    }
+    *bottom += guard_size;
+    *size   -= guard_size;
+
+    pthread_attr_destroy(&attr);
+
+  }
+  assert(os::current_stack_pointer() >= *bottom &&
+         os::current_stack_pointer() < *bottom + *size, "just checking");
+}
+
+address os::current_stack_base() {
+  address bottom;
+  size_t size;
+  current_stack_region(&bottom, &size);
+  return (bottom + size);
+}
+
+size_t os::current_stack_size() {
+  // This stack size includes the usable stack and HotSpot guard pages
+  // (for the threads that have Hotspot guard pages).
+  address bottom;
+  size_t size;
+  current_stack_region(&bottom, &size);
+  return size;
+}
+#endif
 
 static inline struct timespec get_mtime(const char* filename) {
   struct stat st;

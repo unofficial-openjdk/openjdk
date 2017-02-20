@@ -54,7 +54,6 @@
 #include "gc/shared/genCollectedHeap.hpp"
 #include "gc/shared/generation.hpp"
 #include "gc/shared/generationSpec.hpp"
-#include "gc/shared/referencePendingListLocker.hpp"
 #include "gc/shared/space.hpp"
 #include "interpreter/bytecodeInterpreter.hpp"
 #include "interpreter/bytecodes.hpp"
@@ -242,7 +241,7 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   nonstatic_field(ConstantPool,                _reference_map,                                Array<u2>*)                            \
   nonstatic_field(ConstantPoolCache,           _length,                                       int)                                   \
   nonstatic_field(ConstantPoolCache,           _constant_pool,                                ConstantPool*)                         \
-  nonstatic_field(InstanceKlass,               _array_klasses,                                Klass*)                                \
+  volatile_nonstatic_field(InstanceKlass,      _array_klasses,                                Klass*)                                \
   nonstatic_field(InstanceKlass,               _methods,                                      Array<Method*>*)                       \
   nonstatic_field(InstanceKlass,               _default_methods,                              Array<Method*>*)                       \
   nonstatic_field(InstanceKlass,               _local_interfaces,                             Array<Klass*>*)                        \
@@ -271,7 +270,7 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   nonstatic_field(InstanceKlass,               _osr_nmethods_head,                            nmethod*)                              \
   JVMTI_ONLY(nonstatic_field(InstanceKlass,    _breakpoints,                                  BreakpointInfo*))                      \
   nonstatic_field(InstanceKlass,               _generic_signature_index,                      u2)                                    \
-  nonstatic_field(InstanceKlass,               _methods_jmethod_ids,                          jmethodID*)                            \
+  volatile_nonstatic_field(InstanceKlass,      _methods_jmethod_ids,                          jmethodID*)                            \
   volatile_nonstatic_field(InstanceKlass,      _idnum_allocated_count,                        u2)                                    \
   nonstatic_field(InstanceKlass,               _annotations,                                  Annotations*)                          \
   nonstatic_field(InstanceKlass,               _method_ordering,                              Array<int>*)                           \
@@ -289,7 +288,8 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   nonstatic_field(Klass,                       _access_flags,                                 AccessFlags)                           \
   nonstatic_field(Klass,                       _prototype_header,                             markOop)                               \
   nonstatic_field(Klass,                       _next_sibling,                                 Klass*)                                \
-  nonstatic_field(Klass,                       _vtable_len,                                   int)                                \
+  nonstatic_field(Klass,                       _next_link,                                    Klass*)                                \
+  nonstatic_field(Klass,                       _vtable_len,                                   int)                                   \
   nonstatic_field(vtableEntry,                 _method,                                       Method*)                               \
   nonstatic_field(MethodData,                  _size,                                         int)                                   \
   nonstatic_field(MethodData,                  _method,                                       Method*)                               \
@@ -713,6 +713,8 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
                                                                                                                                      \
   nonstatic_field(ClassLoaderData,             _class_loader,                                 oop)                                   \
   nonstatic_field(ClassLoaderData,             _next,                                         ClassLoaderData*)                      \
+  volatile_nonstatic_field(ClassLoaderData,    _klasses,                                      Klass*)                                \
+  nonstatic_field(ClassLoaderData,             _is_anonymous,                                 bool)                                  \
                                                                                                                                      \
      static_field(ClassLoaderDataGraph,        _head,                                         ClassLoaderData*)                      \
                                                                                                                                      \
@@ -1637,7 +1639,6 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
            declare_type(JavaThread, Thread)                               \
            declare_type(JvmtiAgentThread, JavaThread)                     \
            declare_type(ServiceThread, JavaThread)                        \
-           declare_type(ReferencePendingListLockerThread, JavaThread)     \
   declare_type(CompilerThread, JavaThread)                                \
   declare_type(CodeCacheSweeperThread, JavaThread)                        \
   declare_toplevel_type(OSThread)                                         \
@@ -2105,6 +2106,8 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_c2_type(OverflowAddLNode, OverflowLNode)                        \
   declare_c2_type(OverflowSubLNode, OverflowLNode)                        \
   declare_c2_type(OverflowMulLNode, OverflowLNode)                        \
+  declare_c2_type(FmaDNode, Node)                                         \
+  declare_c2_type(FmaFNode, Node)                                         \
                                                                           \
   /*********************/                                                 \
   /* Adapter Blob Entries */                                              \
@@ -2450,7 +2453,6 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   /* ConstMethod anon-enum */                                             \
   /********************************/                                      \
                                                                           \
-  declare_constant(Method::_jfr_towrite)                                  \
   declare_constant(Method::_caller_sensitive)                             \
   declare_constant(Method::_force_inline)                                 \
   declare_constant(Method::_dont_inline)                                  \
@@ -2536,6 +2538,24 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_constant(InstanceKlass::being_initialized)                      \
   declare_constant(InstanceKlass::fully_initialized)                      \
   declare_constant(InstanceKlass::initialization_error)                   \
+                                                                          \
+  /***************************************/                               \
+  /* InstanceKlass enums for _misc_flags */                               \
+  /***************************************/                               \
+                                                                          \
+  declare_constant(InstanceKlass::_misc_rewritten)                        \
+  declare_constant(InstanceKlass::_misc_has_nonstatic_fields)             \
+  declare_constant(InstanceKlass::_misc_should_verify_class)              \
+  declare_constant(InstanceKlass::_misc_is_anonymous)                     \
+  declare_constant(InstanceKlass::_misc_is_contended)                     \
+  declare_constant(InstanceKlass::_misc_has_nonstatic_concrete_methods)   \
+  declare_constant(InstanceKlass::_misc_declares_nonstatic_concrete_methods)\
+  declare_constant(InstanceKlass::_misc_has_been_redefined)               \
+  declare_constant(InstanceKlass::_misc_has_passed_fingerprint_check)     \
+  declare_constant(InstanceKlass::_misc_is_scratch_class)                 \
+  declare_constant(InstanceKlass::_misc_is_shared_boot_class)             \
+  declare_constant(InstanceKlass::_misc_is_shared_platform_class)         \
+  declare_constant(InstanceKlass::_misc_is_shared_app_class)              \
                                                                           \
   /*********************************/                                     \
   /* Symbol* - symbol max length */                                       \
@@ -2628,6 +2648,11 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_constant(Deoptimization::Reason_rtm_state_change)               \
   declare_constant(Deoptimization::Reason_unstable_if)                    \
   declare_constant(Deoptimization::Reason_unstable_fused_if)              \
+  NOT_ZERO(JVMCI_ONLY(declare_constant(Deoptimization::Reason_aliasing)))                       \
+  NOT_ZERO(JVMCI_ONLY(declare_constant(Deoptimization::Reason_transfer_to_interpreter)))        \
+  NOT_ZERO(JVMCI_ONLY(declare_constant(Deoptimization::Reason_not_compiled_exception_handler))) \
+  NOT_ZERO(JVMCI_ONLY(declare_constant(Deoptimization::Reason_unresolved)))                     \
+  NOT_ZERO(JVMCI_ONLY(declare_constant(Deoptimization::Reason_jsr_mismatch)))                   \
   declare_constant(Deoptimization::Reason_tenured)                        \
   declare_constant(Deoptimization::Reason_LIMIT)                          \
   declare_constant(Deoptimization::Reason_RECORDED_LIMIT)                 \
@@ -2680,6 +2705,7 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_constant(CompLevel_limited_profile)                             \
   declare_constant(CompLevel_full_profile)                                \
   declare_constant(CompLevel_full_optimization)                           \
+  declare_constant(CompLevel_aot)                                         \
                                                                           \
   /***************/                                                       \
   /* OopMapValue */                                                       \
@@ -2752,7 +2778,13 @@ typedef CompactHashtable<Symbol*, char>       SymbolCompactHashTable;
   declare_constant(ConcreteRegisterImpl::number_of_registers)             \
   declare_preprocessor_constant("REG_COUNT", REG_COUNT)                \
   declare_c2_preprocessor_constant("SAVED_ON_ENTRY_REG_COUNT", SAVED_ON_ENTRY_REG_COUNT) \
-  declare_c2_preprocessor_constant("C_SAVED_ON_ENTRY_REG_COUNT", C_SAVED_ON_ENTRY_REG_COUNT)
+  declare_c2_preprocessor_constant("C_SAVED_ON_ENTRY_REG_COUNT", C_SAVED_ON_ENTRY_REG_COUNT) \
+                                                                          \
+  /****************/                                                      \
+  /* JVMCI */                                                             \
+  /****************/                                                      \
+                                                                          \
+  declare_preprocessor_constant("INCLUDE_JVMCI", INCLUDE_JVMCI)
 
 
 //--------------------------------------------------------------------------------
@@ -2961,6 +2993,7 @@ VMStructEntry VMStructs::localHotSpotVMStructs[] = {
 
 #if INCLUDE_ALL_GCS
   VM_STRUCTS_PARALLELGC(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
+                        GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
                         GENERATE_STATIC_VM_STRUCT_ENTRY)
 
   VM_STRUCTS_CMS(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
@@ -2973,7 +3006,7 @@ VMStructEntry VMStructs::localHotSpotVMStructs[] = {
 
 #if INCLUDE_TRACE
   VM_STRUCTS_TRACE(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
-                GENERATE_STATIC_VM_STRUCT_ENTRY)
+                   GENERATE_STATIC_VM_STRUCT_ENTRY)
 #endif
 
   VM_STRUCTS_EXT(GENERATE_NONSTATIC_VM_STRUCT_ENTRY,
@@ -3159,11 +3192,12 @@ VMStructs::init() {
 
 #if INCLUDE_ALL_GCS
   VM_STRUCTS_PARALLELGC(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
-             CHECK_STATIC_VM_STRUCT_ENTRY);
+                        CHECK_VOLATILE_NONSTATIC_VM_STRUCT_ENTRY,
+                        CHECK_STATIC_VM_STRUCT_ENTRY);
 
   VM_STRUCTS_CMS(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
-             CHECK_VOLATILE_NONSTATIC_VM_STRUCT_ENTRY,
-             CHECK_STATIC_VM_STRUCT_ENTRY);
+                 CHECK_VOLATILE_NONSTATIC_VM_STRUCT_ENTRY,
+                 CHECK_STATIC_VM_STRUCT_ENTRY);
 
   VM_STRUCTS_G1(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
                 CHECK_STATIC_VM_STRUCT_ENTRY);
@@ -3172,7 +3206,7 @@ VMStructs::init() {
 
 #if INCLUDE_TRACE
   VM_STRUCTS_TRACE(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
-                CHECK_STATIC_VM_STRUCT_ENTRY);
+                   CHECK_STATIC_VM_STRUCT_ENTRY);
 #endif
 
   VM_STRUCTS_EXT(CHECK_NONSTATIC_VM_STRUCT_ENTRY,
@@ -3284,6 +3318,7 @@ VMStructs::init() {
                         CHECK_NO_OP));
 #if INCLUDE_ALL_GCS
   debug_only(VM_STRUCTS_PARALLELGC(ENSURE_FIELD_TYPE_PRESENT,
+                                   ENSURE_FIELD_TYPE_PRESENT,
                                    ENSURE_FIELD_TYPE_PRESENT));
   debug_only(VM_STRUCTS_CMS(ENSURE_FIELD_TYPE_PRESENT,
                             ENSURE_FIELD_TYPE_PRESENT,

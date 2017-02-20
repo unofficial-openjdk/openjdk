@@ -26,9 +26,11 @@
 package jdk.nashorn.internal.runtime;
 
 import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Modifier;
 import java.lang.reflect.Module;
 import java.security.CodeSource;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Responsible for loading script generated classes.
@@ -68,12 +70,22 @@ final class ScriptLoader extends NashornLoader {
 
     private Module createModule(final String moduleName) {
         final Module structMod = context.getStructLoader().getModule();
-        final ModuleDescriptor descriptor
-                = new ModuleDescriptor.Builder(moduleName)
+        final ModuleDescriptor.Builder builder =
+            ModuleDescriptor.newModule(moduleName, Set.of(Modifier.SYNTHETIC))
+                    .requires("java.logging")
                     .requires(NASHORN_MODULE.getName())
                     .requires(structMod.getName())
-                    .conceals(SCRIPTS_PKG)
-                    .build();
+                    .packages(Set.of(SCRIPTS_PKG));
+
+        if (Context.javaSqlFound) {
+            builder.requires("java.sql");
+        }
+
+        if (Context.javaSqlRowsetFound) {
+            builder.requires("java.sql.rowset");
+        }
+
+        final ModuleDescriptor descriptor = builder.build();
 
         final Module mod = Context.createModuleTrusted(structMod.getLayer(), descriptor, this);
         loadModuleManipulator();
@@ -95,7 +107,7 @@ final class ScriptLoader extends NashornLoader {
     }
 
     @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
+    protected Class<?> findClass(final String name) throws ClassNotFoundException {
         final ClassLoader appLoader = context.getAppLoader();
 
         /*

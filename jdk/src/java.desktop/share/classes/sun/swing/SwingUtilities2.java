@@ -30,7 +30,11 @@ import java.awt.*;
 import static java.awt.RenderingHints.*;
 import java.awt.event.*;
 import java.awt.font.*;
+import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
+import static java.awt.geom.AffineTransform.TYPE_FLIP;
+import static java.awt.geom.AffineTransform.TYPE_MASK_SCALE;
+import static java.awt.geom.AffineTransform.TYPE_TRANSLATION;
 import java.awt.print.PrinterGraphics;
 import java.text.BreakIterator;
 import java.text.CharacterIterator;
@@ -315,7 +319,21 @@ public class SwingUtilities2 {
      * @param fm FontMetrics used to measure the String width
      * @param string String to get the width of
      */
-    public static int stringWidth(JComponent c, FontMetrics fm, String string){
+    public static int stringWidth(JComponent c, FontMetrics fm, String string) {
+        return (int) stringWidth(c, fm, string, false);
+    }
+
+    /**
+     * Returns the width of the passed in String.
+     * If the passed String is {@code null}, returns zero.
+     *
+     * @param c JComponent that will display the string, may be null
+     * @param fm FontMetrics used to measure the String width
+     * @param string String to get the width of
+     * @param useFPAPI use floating point API
+     */
+    public static float stringWidth(JComponent c, FontMetrics fm, String string,
+            boolean useFPAPI){
         if (string == null || string.equals("")) {
             return 0;
         }
@@ -330,9 +348,9 @@ public class SwingUtilities2 {
         if (needsTextLayout) {
             TextLayout layout = createTextLayout(c, string,
                                     fm.getFont(), fm.getFontRenderContext());
-            return (int) layout.getAdvance();
+            return layout.getAdvance();
         } else {
-            return fm.stringWidth(string);
+            return getFontStringWidth(string, fm, useFPAPI);
         }
     }
 
@@ -423,6 +441,21 @@ public class SwingUtilities2 {
      */
     public static void drawString(JComponent c, Graphics g, String text,
                                   int x, int y) {
+        drawString(c, g, text, x, y, false);
+    }
+
+    /**
+     * Draws the string at the specified location.
+     *
+     * @param c JComponent that will display the string, may be null
+     * @param g Graphics to draw the text to
+     * @param text String to display
+     * @param x X coordinate to draw the text at
+     * @param y Y coordinate to draw the text at
+     * @param useFPAPI use floating point API
+     */
+    public static void drawString(JComponent c, Graphics g, String text,
+                                  float x, float y, boolean useFPAPI) {
         // c may be null
 
         // All non-editable widgets that draw strings call into this
@@ -506,7 +539,7 @@ public class SwingUtilities2 {
                                                     g2.getFontRenderContext());
                     layout.draw(g2, x, y);
                 } else {
-                    g.drawString(text, x, y);
+                    g2.drawString(text, x, y);
                 }
 
                 if (oldAAValue != null) {
@@ -527,7 +560,7 @@ public class SwingUtilities2 {
             }
         }
 
-        g.drawString(text, x, y);
+        g.drawString(text, (int) x, (int) y);
     }
 
     /**
@@ -541,17 +574,36 @@ public class SwingUtilities2 {
      * @param x X coordinate to draw the text at
      * @param y Y coordinate to draw the text at
      */
+
     public static void drawStringUnderlineCharAt(JComponent c,Graphics g,
-                           String text, int underlinedIndex, int x,int y) {
+                           String text, int underlinedIndex, int x, int y) {
+        drawStringUnderlineCharAt(c, g, text, underlinedIndex, x, y, false);
+    }
+    /**
+     * Draws the string at the specified location underlining the specified
+     * character.
+     *
+     * @param c JComponent that will display the string, may be null
+     * @param g Graphics to draw the text to
+     * @param text String to display
+     * @param underlinedIndex Index of a character in the string to underline
+     * @param x X coordinate to draw the text at
+     * @param y Y coordinate to draw the text at
+     * @param useFPAPI use floating point API
+     */
+    public static void drawStringUnderlineCharAt(JComponent c, Graphics g,
+                                                 String text, int underlinedIndex,
+                                                 float x, float y,
+                                                 boolean useFPAPI) {
         if (text == null || text.length() <= 0) {
             return;
         }
-        SwingUtilities2.drawString(c, g, text, x, y);
+        SwingUtilities2.drawString(c, g, text, x, y, useFPAPI);
         int textLength = text.length();
         if (underlinedIndex >= 0 && underlinedIndex < textLength ) {
-            int underlineRectY = y;
+            float underlineRectY = y;
             int underlineRectHeight = 1;
-            int underlineRectX = 0;
+            float underlineRectX = 0;
             int underlineRectWidth = 0;
             boolean isPrinting = isPrinting(g);
             boolean needsTextLayout = isPrinting;
@@ -591,7 +643,7 @@ public class SwingUtilities2 {
                     underlineRectWidth = rect.width;
                 }
             }
-            g.fillRect(underlineRectX, underlineRectY + 1,
+            g.fillRect((int) underlineRectX, (int) underlineRectY + 1,
                        underlineRectWidth, underlineRectHeight);
         }
     }
@@ -721,10 +773,31 @@ public class SwingUtilities2 {
                                  int length,
                                  int x,
                                  int y) {
+        return (int) drawChars(c, g, data, offset, length, x, y, false);
+    }
+
+    public static float drawChars(JComponent c, Graphics g,
+                                 char[] data,
+                                 int offset,
+                                 int length,
+                                 float x,
+                                 float y) {
+        return drawChars(c, g, data, offset, length, x, y, true);
+    }
+
+    public static float drawChars(JComponent c, Graphics g,
+                                 char[] data,
+                                 int offset,
+                                 int length,
+                                 float x,
+                                 float y,
+                                 boolean useFPAPI) {
         if ( length <= 0 ) { //no need to paint empty strings
             return x;
         }
-        int nextX = x + getFontMetrics(c, g).charsWidth(data, offset, length);
+        float nextX = x + getFontCharsWidth(data, offset, length,
+                                            getFontMetrics(c, g),
+                                            useFPAPI);
         if (isPrinting(g)) {
             Graphics2D g2d = getGraphics2D(g);
             if (g2d != null) {
@@ -764,8 +837,14 @@ public class SwingUtilities2 {
         Object aaHint = (c == null)
                             ? null
                             : c.getClientProperty(KEY_TEXT_ANTIALIASING);
-        if (aaHint != null && (g instanceof Graphics2D)) {
-            Graphics2D g2 = (Graphics2D)g;
+
+        if (!(g instanceof Graphics2D)) {
+            g.drawChars(data, offset, length, (int) x, (int) y);
+            return nextX;
+        }
+
+        Graphics2D g2 = (Graphics2D) g;
+        if (aaHint != null) {
 
             Object oldContrast = null;
             Object oldAAValue = g2.getRenderingHint(KEY_TEXT_ANTIALIASING);
@@ -786,7 +865,7 @@ public class SwingUtilities2 {
                 }
             }
 
-            g.drawChars(data, offset, length, x, y);
+            g2.drawString(new String(data, offset, length), x, y);
 
             if (oldAAValue != null) {
                 g2.setRenderingHint(KEY_TEXT_ANTIALIASING, oldAAValue);
@@ -796,9 +875,35 @@ public class SwingUtilities2 {
             }
         }
         else {
-            g.drawChars(data, offset, length, x, y);
+            g2.drawString(new String(data, offset, length), x, y);
         }
         return nextX;
+    }
+
+    public static float getFontCharWidth(char c, FontMetrics fm,
+                                         boolean useFPAPI)
+    {
+        return getFontCharsWidth(new char[]{c}, 0, 1, fm, useFPAPI);
+    }
+
+    public static float getFontCharsWidth(char[] data, int offset, int len,
+                                          FontMetrics fm,
+                                          boolean useFPAPI)
+    {
+        return len == 0 ? 0 : getFontStringWidth(new String(data, offset, len),
+                                                 fm, useFPAPI);
+    }
+
+    public static float getFontStringWidth(String data, FontMetrics fm,
+                                           boolean useFPAPI)
+    {
+        if (useFPAPI) {
+            Rectangle2D bounds = fm.getFont()
+                    .getStringBounds(data, fm.getFontRenderContext());
+            return (float) bounds.getWidth();
+        } else {
+            return fm.stringWidth(data);
+        }
     }
 
     /*
@@ -807,8 +912,22 @@ public class SwingUtilities2 {
      */
     public static float drawString(JComponent c, Graphics g,
                                    AttributedCharacterIterator iterator,
-                                   int x,
-                                   int y) {
+                                   int x, int y)
+    {
+        return drawStringImpl(c, g, iterator, x, y);
+    }
+
+    public static float drawString(JComponent c, Graphics g,
+                                   AttributedCharacterIterator iterator,
+                                   float x, float y)
+    {
+        return drawStringImpl(c, g, iterator, x, y);
+    }
+
+    private static float drawStringImpl(JComponent c, Graphics g,
+                                   AttributedCharacterIterator iterator,
+                                   float x, float y)
+    {
 
         float retVal;
         boolean isPrinting = isPrinting(g);
@@ -823,8 +942,8 @@ public class SwingUtilities2 {
 
         Graphics2D g2d = getGraphics2D(g);
         if (g2d == null) {
-            g.drawString(iterator,x,y); //for the cases where advance
-                                        //matters it should not happen
+            g.drawString(iterator, (int)x, (int)y); //for the cases where advance
+                                                    //matters it should not happen
             retVal = x;
 
         } else {
@@ -1341,7 +1460,7 @@ public class SwingUtilities2 {
      *
      * @param ie InputEvent to check
      */
-
+    @SuppressWarnings("deprecation")
     private static boolean isAccessClipboardGesture(InputEvent ie) {
         boolean allowedGesture = false;
         if (ie instanceof KeyEvent) { //we can validate only keyboard gestures
@@ -2010,6 +2129,7 @@ public class SwingUtilities2 {
         return -1;
     }
 
+    @SuppressWarnings("deprecation")
     public static int getSystemMnemonicKeyMask() {
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         if (toolkit instanceof SunToolkit) {
@@ -2034,6 +2154,46 @@ public class SwingUtilities2 {
             }
         }
         return path;
+    }
+
+    public static boolean isScaledGraphics(Graphics g) {
+        if (g instanceof Graphics2D) {
+            AffineTransform tx = ((Graphics2D) g).getTransform();
+            return (tx.getType() & ~(TYPE_TRANSLATION | TYPE_FLIP)) != 0;
+        }
+        return false;
+    }
+
+    public static boolean isFloatingPointScale(AffineTransform tx) {
+        int type = tx.getType() & ~(TYPE_FLIP | TYPE_TRANSLATION);
+        if (type == 0) {
+            return false;
+        } else if ((type & ~TYPE_MASK_SCALE) == 0) {
+            double scaleX = tx.getScaleX();
+            double scaleY = tx.getScaleY();
+            return (scaleX != (int) scaleX) || (scaleY != (int) scaleY);
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Returns the client property for the given key if it is set; otherwise
+     * returns the {@L&F} property.
+     *
+     * @param component the component
+     * @param key an {@code String} specifying the key for the desired boolean value
+     * @return the boolean value of the client property if it is set or the {@L&F}
+     *         property in other case.
+     */
+    public static boolean getBoolean(JComponent component, String key) {
+        Object clientProperty = component.getClientProperty(key);
+
+        if (clientProperty instanceof Boolean) {
+            return Boolean.TRUE.equals(clientProperty);
+        }
+
+        return UIManager.getBoolean(key);
     }
 
     /**

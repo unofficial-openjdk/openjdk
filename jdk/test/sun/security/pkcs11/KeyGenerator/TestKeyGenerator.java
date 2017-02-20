@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,13 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 4917233 6461727 6490213 6720456
  * @summary test the KeyGenerator
  * @author Andreas Sterbenz
  * @library ..
+ * @modules jdk.crypto.cryptoki
  * @run main/othervm TestKeyGenerator
  * @run main/othervm TestKeyGenerator sm
  */

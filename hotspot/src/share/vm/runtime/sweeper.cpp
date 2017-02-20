@@ -30,7 +30,7 @@
 #include "compiler/compileBroker.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/method.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/compilationPolicy.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/orderAccess.inline.hpp"
@@ -213,6 +213,8 @@ void NMethodSweeper::mark_active_nmethods() {
   if (_current.method() != NULL) {
     if (_current.method()->is_nmethod()) {
       assert(CodeCache::find_blob_unsafe(_current.method()) == _current.method(), "Sweeper nmethod cached state invalid");
+    } else if (_current.method()->is_aot()) {
+      assert(CodeCache::find_blob_unsafe(_current.method()->code_begin()) == _current.method(), "Sweeper AOT method cached state invalid");
     } else {
       ShouldNotReachHere();
     }
@@ -485,7 +487,7 @@ void NMethodSweeper::sweep_code_cache() {
   if (event.should_commit()) {
     event.set_starttime(sweep_start_counter);
     event.set_endtime(sweep_end_counter);
-    event.set_sweepIndex(_traversals);
+    event.set_sweepId(_traversals);
     event.set_sweptCount(swept_count);
     event.set_flushedCount(flushed_count);
     event.set_zombifiedCount(zombified_count);
@@ -570,7 +572,7 @@ void NMethodSweeper::release_compiled_method(CompiledMethod* nm) {
     RelocIterator iter(nm);
     while (iter.next()) {
       if (iter.type() == relocInfo::virtual_call_type) {
-        CompiledIC::cleanup_call_site(iter.virtual_call_reloc());
+        CompiledIC::cleanup_call_site(iter.virtual_call_reloc(), nm);
       }
     }
   }

@@ -66,7 +66,8 @@ G1DefaultPolicy::G1DefaultPolicy() :
   _phase_times(new G1GCPhaseTimes(ParallelGCThreads)),
   _tenuring_threshold(MaxTenuringThreshold),
   _max_survivor_regions(0),
-  _survivors_age_table(true) { }
+  _survivors_age_table(true),
+  _collection_pause_end_millis(os::javaTimeNanos() / NANOSECS_PER_MILLISEC) { }
 
 G1DefaultPolicy::~G1DefaultPolicy() {
   delete _ihop_control;
@@ -575,6 +576,8 @@ void G1DefaultPolicy::record_collection_pause_end(double pause_time_ms, size_t c
 
   record_pause(young_gc_pause_kind(), end_time_sec - pause_time_ms / 1000.0, end_time_sec);
 
+  _collection_pause_end_millis = os::javaTimeNanos() / NANOSECS_PER_MILLISEC;
+
   last_pause_included_initial_mark = collector_state()->during_initial_mark_pause();
   if (last_pause_included_initial_mark) {
     record_concurrent_mark_init_end(0.0);
@@ -885,6 +888,15 @@ bool G1DefaultPolicy::adaptive_young_list_length() const {
   return _young_gen_sizer.adaptive_young_list_length();
 }
 
+size_t G1DefaultPolicy::desired_survivor_size() const {
+  size_t const survivor_capacity = HeapRegion::GrainWords * _max_survivor_regions;
+  return (size_t)((((double)survivor_capacity) * TargetSurvivorRatio) / 100);
+}
+
+void G1DefaultPolicy::print_age_table() {
+  _survivors_age_table.print_age_table(_tenuring_threshold);
+}
+
 void G1DefaultPolicy::update_max_gc_locker_expansion() {
   uint expansion_region_num = 0;
   if (GCLockerEdenExpansionPercent > 0) {
@@ -908,8 +920,11 @@ void G1DefaultPolicy::update_survivors_policy() {
   // smaller than 1.0) we'll get 1.
   _max_survivor_regions = (uint) ceil(max_survivor_regions_d);
 
-  _tenuring_threshold = _survivors_age_table.compute_tenuring_threshold(
-      HeapRegion::GrainWords * _max_survivor_regions, _policy_counters);
+  _tenuring_threshold = _survivors_age_table.compute_tenuring_threshold(desired_survivor_size());
+  if (UsePerfData) {
+    _policy_counters->tenuring_threshold()->set_value(_tenuring_threshold);
+    _policy_counters->desired_survivor_size()->set_value(desired_survivor_size() * oopSize);
+  }
 }
 
 bool G1DefaultPolicy::force_initial_mark_if_outside_cycle(GCCause::Cause gc_cause) {

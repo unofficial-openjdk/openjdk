@@ -26,6 +26,9 @@
  * @bug 8000612
  * @summary need test program to validate javadoc resource bundles
  * @modules jdk.javadoc/jdk.javadoc.internal.tool
+ *          jdk.javadoc/jdk.javadoc.internal.doclets.formats.html.resources:open
+ *          jdk.javadoc/jdk.javadoc.internal.doclets.toolkit.resources:open
+ *          jdk.javadoc/jdk.javadoc.internal.tool.resources:open
  *          jdk.jdeps/com.sun.tools.classfile
  */
 
@@ -145,6 +148,9 @@ public class CheckResourceKeys {
             // ignore these synthesized keys, tested by usageTests
             if (rk.startsWith("doclet.usage.") || rk.startsWith("doclet.xusage"))
                 continue;
+            // ignore these synthesized keys, tested by usageTests
+            if (rk.matches("main\\.opt\\..*\\.(arg|desc)"))
+                continue;
             if (codeKeys.contains(rk))
                 continue;
 
@@ -160,6 +166,9 @@ public class CheckResourceKeys {
         for (String ck: codeKeys) {
             // ignore these synthesized keys, tested by usageTests
             if (ck.startsWith("doclet.usage.") || ck.startsWith("doclet.xusage."))
+                continue;
+            // ignore this partial key, tested by usageTests
+            if (ck.equals("main.opt."))
                 continue;
             if (resourceKeys.contains(ck))
                 continue;

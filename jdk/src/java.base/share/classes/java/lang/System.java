@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Layer;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.net.URL;
@@ -69,7 +70,6 @@ import jdk.internal.logger.LazyLoggers;
 import jdk.internal.logger.LocalizedLoggerWrapper;
 
 import jdk.internal.module.ModuleBootstrap;
-import jdk.internal.module.ServicesCatalog;
 
 /**
  * The <code>System</code> class contains several useful class fields
@@ -310,12 +310,13 @@ public final class System {
      * @see SecurityManager#checkPermission
      * @see java.lang.RuntimePermission
      */
-    public static
-    void setSecurityManager(final SecurityManager s) {
-        try {
-            s.checkPackageAccess("java.lang");
-        } catch (Exception e) {
-            // no-op
+    public static void setSecurityManager(final SecurityManager s) {
+        if (s != null) {
+            try {
+                s.checkPackageAccess("java.lang");
+            } catch (Exception e) {
+                // no-op
+            }
         }
         setSecurityManager0(s);
     }
@@ -1941,13 +1942,12 @@ public final class System {
      * the application classpath or modulepath.
      */
     private static void initPhase3() {
-        // Initialize publicLookup early, to avoid bootstrapping circularities
-        // with security manager using java.lang.invoke infrastructure.
-        java.lang.invoke.MethodHandles.publicLookup();
-
         // set security manager
         String cn = System.getProperty("java.security.manager");
         if (cn != null) {
+            // ensure image reader for java.base is initialized before security manager
+            Object.class.getResource("module-info.class");
+
             if (cn.isEmpty() || "default".equals(cn)) {
                 System.setSecurityManager(new SecurityManager());
             } else {
@@ -1987,7 +1987,10 @@ public final class System {
 
     private static void setJavaLangAccess() {
         // Allow privileged classes outside of java.lang
-        SharedSecrets.setJavaLangAccess(new JavaLangAccess(){
+        SharedSecrets.setJavaLangAccess(new JavaLangAccess() {
+            public Method getMethodOrNull(Class<?> klass, String name, Class<?>... parameterTypes) {
+                return klass.getMethodOrNull(name, parameterTypes);
+            }
             public jdk.internal.reflect.ConstantPool getConstantPool(Class<?> klass) {
                 return klass.getConstantPool();
             }
@@ -2031,12 +2034,6 @@ public final class System {
             public Layer getBootLayer() {
                 return bootLayer;
             }
-            public ServicesCatalog getServicesCatalog(ClassLoader cl) {
-                return cl.getServicesCatalog();
-            }
-            public ServicesCatalog createOrGetServicesCatalog(ClassLoader cl) {
-                return cl.createOrGetServicesCatalog();
-            }
             public ConcurrentHashMap<?, ?> createOrGetClassLoaderValueMap(ClassLoader cl) {
                 return cl.createOrGetClassLoaderValueMap();
             }
@@ -2054,6 +2051,9 @@ public final class System {
             }
             public String fastUUID(long lsb, long msb) {
                 return Long.fastUUID(lsb, msb);
+            }
+            public void invalidatePackageAccessCache() {
+                SecurityManager.invalidatePackageAccessCache();
             }
         });
     }

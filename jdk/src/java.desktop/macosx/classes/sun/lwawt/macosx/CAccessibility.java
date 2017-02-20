@@ -29,14 +29,13 @@ import sun.lwawt.LWWindowPeer;
 
 import java.awt.*;
 import java.beans.*;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.Callable;
-import sun.awt.AWTAccessor;
 
 import javax.accessibility.*;
 import javax.swing.*;
+import sun.awt.AWTAccessor;
 
 class CAccessibility implements PropertyChangeListener {
     private static Set<String> ignoredRoles;
@@ -72,8 +71,20 @@ class CAccessibility implements PropertyChangeListener {
     }
 
     public void propertyChange(final PropertyChangeEvent evt) {
-        if (evt.getNewValue() == null) return;
-        focusChanged();
+        Object newValue = evt.getNewValue();
+        if (newValue == null) return;
+        // Don't post focus on things that don't matter, i.e. alert, colorchooser,
+        // desktoppane, dialog, directorypane, filechooser, filler, fontchoose,
+        // frame, glasspane, layeredpane, optionpane, panel, rootpane, separator,
+        // tooltip, viewport, window.
+        // List taken from initializeRoles() in JavaComponentUtilities.m.
+        if (newValue instanceof Accessible) {
+            AccessibleContext nvAC = ((Accessible) newValue).getAccessibleContext();
+            AccessibleRole nvRole = nvAC.getAccessibleRole();
+            if (!ignoredRoles.contains(roleKey(nvRole))) {
+                focusChanged();
+            }
+        }
     }
 
     private native void focusChanged();
@@ -83,6 +94,15 @@ class CAccessibility implements PropertyChangeListener {
             return LWCToolkit.invokeAndWait(callable, c);
         } catch (final Exception e) { e.printStackTrace(); }
         return null;
+    }
+
+    static <T> T invokeAndWait(final Callable<T> callable, final Component c, final T defValue) {
+        T value = null;
+        try {
+            value = LWCToolkit.invokeAndWait(callable, c);
+        } catch (final Exception e) { e.printStackTrace(); }
+
+        return value != null ? value : defValue;
     }
 
     static void invokeLater(final Runnable runnable, final Component c) {
@@ -180,7 +200,7 @@ class CAccessibility implements PropertyChangeListener {
 
                 return as.isAccessibleChildSelected(index);
             }
-        }, c);
+        }, c, false);
     }
 
     public static AccessibleStateSet getAccessibleStateSet(final AccessibleContext ac, final Component c) {
@@ -202,36 +222,15 @@ class CAccessibility implements PropertyChangeListener {
                 if (ass == null) return null;
                 return ass.contains(as);
             }
-        }, c);
+        }, c, false);
     }
-
-    static Field getAccessibleBundleKeyFieldWithReflection() {
-        try {
-            final Field fieldKey = AccessibleBundle.class.getDeclaredField("key");
-            fieldKey.setAccessible(true);
-            return fieldKey;
-        } catch (final SecurityException e) {
-            e.printStackTrace();
-        } catch (final NoSuchFieldException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-    private static final Field FIELD_KEY = getAccessibleBundleKeyFieldWithReflection();
 
     static String getAccessibleRoleFor(final Accessible a) {
         final AccessibleContext ac = a.getAccessibleContext();
         if (ac == null) return null;
 
         final AccessibleRole role = ac.getAccessibleRole();
-        try {
-            return (String)FIELD_KEY.get(role);
-        } catch (final IllegalArgumentException e) {
-            e.printStackTrace();
-        } catch (final IllegalAccessException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return AWTAccessor.getAccessibleBundleAccessor().getKey(role);
     }
 
     public static String getAccessibleRole(final Accessible a, final Component c) {
@@ -268,7 +267,7 @@ class CAccessibility implements PropertyChangeListener {
             public Integer call() throws Exception {
                 return at.getCharCount();
             }
-        }, c);
+        }, c, 0);
     }
 
     // Accessibility Threadsafety for JavaComponentAccessibility.m
@@ -293,7 +292,7 @@ class CAccessibility implements PropertyChangeListener {
                 if (ac == null) return null;
                 return ac.getAccessibleIndexInParent();
             }
-        }, c);
+        }, c, -1);
     }
 
     public static AccessibleComponent getAccessibleComponent(final Accessible a, final Component c) {
@@ -389,7 +388,7 @@ class CAccessibility implements PropertyChangeListener {
 
                 return aComp.isFocusTraversable();
             }
-        }, c);
+        }, c, false);
     }
 
     public static Accessible accessibilityHitTest(final Container parent, final float hitPointX, final float hitPointY) {
@@ -448,7 +447,7 @@ class CAccessibility implements PropertyChangeListener {
 
                 return aComp.isEnabled();
             }
-        }, c);
+        }, c, false);
     }
 
     // KCH - can we make this a postEvent instead?
@@ -694,9 +693,15 @@ class CAccessibility implements PropertyChangeListener {
             if (context == null) continue;
 
             if (whichChildren == JAVA_AX_VISIBLE_CHILDREN) {
-                if (!context.getAccessibleComponent().isVisible()) continue;
+                AccessibleComponent acomp = context.getAccessibleComponent();
+                if (acomp == null || !acomp.isVisible()) {
+                    continue;
+                }
             } else if (whichChildren == JAVA_AX_SELECTED_CHILDREN) {
-                if (!ac.getAccessibleSelection().isAccessibleChildSelected(i)) continue;
+                AccessibleSelection sel = ac.getAccessibleSelection();
+                if (sel == null || !sel.isAccessibleChildSelected(i)) {
+                    continue;
+                }
             }
 
             if (!allowIgnored) {

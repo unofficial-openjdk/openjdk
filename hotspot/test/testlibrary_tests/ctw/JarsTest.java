@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,24 +24,24 @@
 /*
  * @test
  * @bug 8012447
- * @library /testlibrary /test/lib /testlibrary/ctw/src
+ * @library /test/lib /testlibrary/ctw/src
  * @modules java.base/jdk.internal.jimage
  *          java.base/jdk.internal.misc
  *          java.base/jdk.internal.reflect
  *          java.compiler
  *          java.management
- *          jdk.jvmstat/sun.jvmstat.monitor
- * @build ClassFileInstaller jdk.test.lib.* sun.hotspot.tools.ctw.CompileTheWorld sun.hotspot.WhiteBox Foo Bar
- * @run main ClassFileInstaller sun.hotspot.WhiteBox Foo Bar
- *                              sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main JarsTest prepare
- * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Dsun.hotspot.tools.ctw.logfile=ctw.log sun.hotspot.tools.ctw.CompileTheWorld foo.jar bar.jar
- * @run main JarsTest check ctw.log
+ *          jdk.internal.jvmstat/sun.jvmstat.monitor
+ * @build sun.hotspot.WhiteBox Foo Bar
+ * @run driver ClassFileInstaller sun.hotspot.WhiteBox Foo Bar
+ *                                sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run driver JarsTest prepare
+ * @run driver JarsTest compile foo.jar bar.jar
+ * @run driver JarsTest check
  * @summary testing of CompileTheWorld :: jars
  * @author igor.ignatyev@oracle.com
  */
 
-import jdk.test.lib.OutputAnalyzer;
+import jdk.test.lib.process.OutputAnalyzer;
 
 public class JarsTest extends CtwTest {
     private static final String[] SHOULD_CONTAIN

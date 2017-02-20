@@ -46,6 +46,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.security.AccessController;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Locale;
@@ -370,26 +371,6 @@ public abstract class SunToolkit extends Toolkit
                 getDefaultFocusTraversalPolicy();
 
         cont.setFocusTraversalPolicy(defaultPolicy);
-    }
-
-    private static FocusTraversalPolicy createLayoutPolicy() {
-        FocusTraversalPolicy policy = null;
-        try {
-            Class<?> layoutPolicyClass =
-                Class.forName("javax.swing.LayoutFocusTraversalPolicy");
-            policy = (FocusTraversalPolicy)layoutPolicyClass.newInstance();
-        }
-        catch (ClassNotFoundException e) {
-            assert false;
-        }
-        catch (InstantiationException e) {
-            assert false;
-        }
-        catch (IllegalAccessException e) {
-            assert false;
-        }
-
-        return policy;
     }
 
     /*
@@ -907,12 +888,21 @@ public abstract class SunToolkit extends Toolkit
         if (width == 0 || height == 0) {
             return null;
         }
+        java.util.List<Image> multiResAndnormalImages = new ArrayList<>(imageList.size());
+        for (Image image : imageList) {
+            if ((image instanceof MultiResolutionImage)) {
+                Image im = ((MultiResolutionImage) image).getResolutionVariant(width, height);
+                multiResAndnormalImages.add(im);
+            } else {
+                multiResAndnormalImages.add(image);
+            }
+        }
         Image bestImage = null;
         int bestWidth = 0;
         int bestHeight = 0;
         double bestSimilarity = 3; //Impossibly high value
         double bestScaleFactor = 0;
-        for (Iterator<Image> i = imageList.iterator();i.hasNext();) {
+        for (Iterator<Image> i = multiResAndnormalImages.iterator();i.hasNext();) {
             //Iterate imageList looking for best matching image.
             //'Similarity' measure is defined as good scale factor and small insets.
             //best possible similarity is 0 (no scale, no insets).
@@ -1059,6 +1049,7 @@ public abstract class SunToolkit extends Toolkit
     /**
      * Returns key modifiers used by Swing to set up a focus accelerator key stroke.
      */
+    @SuppressWarnings("deprecation")
     public int getFocusAcceleratorKeyMask() {
         return InputEvent.ALT_MASK;
     }
@@ -1069,6 +1060,7 @@ public abstract class SunToolkit extends Toolkit
      * the way things work on Windows: here, pressing ctrl + alt allows user to enter
      * characters from the extended character set (like euro sign or math symbols)
      */
+    @SuppressWarnings("deprecation")
     public boolean isPrintableCharacterModifiersMask(int mods) {
         return ((mods & InputEvent.ALT_MASK) == (mods & InputEvent.CTRL_MASK));
     }
@@ -1522,9 +1514,9 @@ public abstract class SunToolkit extends Toolkit
      */
     protected abstract boolean syncNativeQueue(final long timeout);
 
-    private boolean eventDispatched = false;
-    private boolean queueEmpty = false;
-    private final Object waitLock = "Wait Lock";
+    private boolean eventDispatched;
+    private boolean queueEmpty;
+    private final Object waitLock = new Object();
 
     private boolean isEQEmpty() {
         EventQueue queue = getSystemEventQueueImpl();
@@ -1541,10 +1533,11 @@ public abstract class SunToolkit extends Toolkit
     @SuppressWarnings("serial")
     protected final boolean waitForIdle(final long timeout) {
         flushPendingEvents();
-        boolean queueWasEmpty = isEQEmpty();
-        queueEmpty = false;
-        eventDispatched = false;
-        synchronized(waitLock) {
+        final boolean queueWasEmpty;
+        synchronized (waitLock) {
+            queueWasEmpty = isEQEmpty();
+            queueEmpty = false;
+            eventDispatched = false;
             postEvent(AppContext.getAppContext(),
                       new PeerEvent(getSystemEventQueueImpl(), null, PeerEvent.LOW_PRIORITY_EVENT) {
                           @Override
@@ -1864,6 +1857,9 @@ public abstract class SunToolkit extends Toolkit
         }
         Long time = map.get(w);
         return time == null ? -1 : time;
+    }
+
+    public void updateScreenMenuBarUI() {
     }
 
     // Cosntant alpha

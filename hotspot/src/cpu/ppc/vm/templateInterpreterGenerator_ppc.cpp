@@ -915,7 +915,9 @@ void TemplateInterpreterGenerator::lock_method(Register Rflags, Register Rscratc
     __ b(Ldone);
 
     __ bind(Lstatic); // Static case: Lock the java mirror
-    __ load_mirror(Robj_to_lock, R19_method);
+    // Load mirror from interpreter frame.
+    __ ld(Robj_to_lock, _abi(callers_sp), R1_SP);
+    __ ld(Robj_to_lock, _ijava_state_neg(mirror), Robj_to_lock);
 
     __ bind(Ldone);
     __ verify_oop(Robj_to_lock);
@@ -1077,11 +1079,11 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call, Regist
   __ resize_frame(parent_frame_resize, R11_scratch1);
   __ std(R12_scratch2, _abi(lr), R1_SP);
 
+  // Get mirror and store it in the frame as GC root for this Method*.
+  __ load_mirror_from_const_method(R12_scratch2, Rconst_method);
+
   __ addi(R26_monitor, R1_SP, - frame::ijava_state_size);
   __ addi(R15_esp, R26_monitor, - Interpreter::stackElementSize);
-
-  // Get mirror and store it in the frame as GC root for this Method*.
-  __ load_mirror(R12_scratch2, R19_method);
 
   // Store values.
   // R15_esp, R14_bcp, R26_monitor, R28_mdx are saved at java calls
@@ -1132,14 +1134,57 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call, Regist
 // End of helpers
 
 address TemplateInterpreterGenerator::generate_math_entry(AbstractInterpreter::MethodKind kind) {
-  if (!Interpreter::math_entry_available(kind)) {
-    NOT_PRODUCT(__ should_not_reach_here();)
-    return NULL;
+
+  // Decide what to do: Use same platform specific instructions and runtime calls as compilers.
+  bool use_instruction = false;
+  address runtime_entry = NULL;
+  int num_args = 1;
+  bool double_precision = true;
+
+  // PPC64 specific:
+  switch (kind) {
+    case Interpreter::java_lang_math_sqrt: use_instruction = VM_Version::has_fsqrt(); break;
+    case Interpreter::java_lang_math_abs:  use_instruction = true; break;
+    case Interpreter::java_lang_math_fmaF:
+    case Interpreter::java_lang_math_fmaD: use_instruction = UseFMA; break;
+    default: break; // Fall back to runtime call.
   }
+
+  switch (kind) {
+    case Interpreter::java_lang_math_sin  : runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dsin);   break;
+    case Interpreter::java_lang_math_cos  : runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dcos);   break;
+    case Interpreter::java_lang_math_tan  : runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dtan);   break;
+    case Interpreter::java_lang_math_abs  : /* run interpreted */ break;
+    case Interpreter::java_lang_math_sqrt : runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dsqrt);  break;
+    case Interpreter::java_lang_math_log  : runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dlog);   break;
+    case Interpreter::java_lang_math_log10: runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dlog10); break;
+    case Interpreter::java_lang_math_pow  : runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dpow); num_args = 2; break;
+    case Interpreter::java_lang_math_exp  : runtime_entry = CAST_FROM_FN_PTR(address, SharedRuntime::dexp);   break;
+    case Interpreter::java_lang_math_fmaF : /* run interpreted */ num_args = 3; double_precision = false; break;
+    case Interpreter::java_lang_math_fmaD : /* run interpreted */ num_args = 3; break;
+    default: ShouldNotReachHere();
+  }
+
+  // Use normal entry if neither instruction nor runtime call is used.
+  if (!use_instruction && runtime_entry == NULL) return NULL;
 
   address entry = __ pc();
 
-  __ lfd(F1_RET, Interpreter::stackElementSize, R15_esp);
+  // Load arguments
+  assert(num_args <= 13, "passed in registers");
+  if (double_precision) {
+    int offset = (2 * num_args - 1) * Interpreter::stackElementSize;
+    for (int i = 0; i < num_args; ++i) {
+      __ lfd(as_FloatRegister(F1_ARG1->encoding() + i), offset, R15_esp);
+      offset -= 2 * Interpreter::stackElementSize;
+    }
+  } else {
+    int offset = num_args * Interpreter::stackElementSize;
+    for (int i = 0; i < num_args; ++i) {
+      __ lfs(as_FloatRegister(F1_ARG1->encoding() + i), offset, R15_esp);
+      offset -= Interpreter::stackElementSize;
+    }
+  }
 
   // Pop c2i arguments (if any) off when we return.
 #ifdef ASSERT
@@ -1150,15 +1195,30 @@ address TemplateInterpreterGenerator::generate_math_entry(AbstractInterpreter::M
 #endif // ASSERT
   __ mr(R1_SP, R21_sender_SP); // Cut the stack back to where the caller started.
 
-  if (kind == Interpreter::java_lang_math_sqrt) {
-    __ fsqrt(F1_RET, F1_RET);
-  } else if (kind == Interpreter::java_lang_math_abs) {
-    __ fabs(F1_RET, F1_RET);
+  if (use_instruction) {
+    switch (kind) {
+      case Interpreter::java_lang_math_sqrt: __ fsqrt(F1_RET, F1);          break;
+      case Interpreter::java_lang_math_abs:  __ fabs(F1_RET, F1);           break;
+      case Interpreter::java_lang_math_fmaF: __ fmadds(F1_RET, F1, F2, F3); break;
+      case Interpreter::java_lang_math_fmaD: __ fmadd(F1_RET, F1, F2, F3);  break;
+      default: ShouldNotReachHere();
+    }
   } else {
-    ShouldNotReachHere();
+    // Comment: Can use tail call if the unextended frame is always C ABI compliant:
+    //__ load_const_optimized(R12_scratch2, runtime_entry, R0);
+    //__ call_c_and_return_to_caller(R12_scratch2);
+
+    // Push a new C frame and save LR.
+    __ save_LR_CR(R0);
+    __ push_frame_reg_args(0, R11_scratch1);
+
+    __ call_VM_leaf(runtime_entry);
+
+    // Pop the C frame and restore LR.
+    __ pop_frame();
+    __ restore_LR_CR(R0);
   }
 
-  // And we're done.
   __ blr();
 
   __ flush();
@@ -1380,13 +1440,12 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
     __ testbitdi(CCR0, R0, access_flags, JVM_ACC_STATIC_BIT);
     __ bfalse(CCR0, method_is_not_static);
 
-    __ load_mirror(R12_scratch2, R19_method);
-    // state->_native_mirror = mirror;
-
-    __ ld(R11_scratch1, 0, R1_SP);
-    __ std(R12_scratch2/*mirror*/, _ijava_state_neg(oop_tmp), R11_scratch1);
+    __ ld(R11_scratch1, _abi(callers_sp), R1_SP);
+    // Load mirror from interpreter frame.
+    __ ld(R12_scratch2, _ijava_state_neg(mirror), R11_scratch1);
     // R4_ARG2 = &state->_oop_temp;
     __ addi(R4_ARG2, R11_scratch1, _ijava_state_neg(oop_tmp));
+    __ std(R12_scratch2/*mirror*/, _ijava_state_neg(oop_tmp), R11_scratch1);
     BIND(method_is_not_static);
   }
 
@@ -1542,6 +1601,12 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
   __ stw(R0/*thread_state*/, thread_(thread_state));
   if (UseMembar) {
     __ fence();
+  }
+
+  if (CheckJNICalls) {
+    // clear_pending_jni_exception_check
+    __ load_const_optimized(R0, 0L);
+    __ st_ptr(R0, JavaThread::pending_jni_exception_check_fn_offset(), R16_thread);
   }
 
   __ reset_last_Java_frame();
@@ -2151,12 +2216,12 @@ address TemplateInterpreterGenerator::generate_earlyret_entry_for(TosState state
   // Restoration of lr done by remove_activation.
   switch (state) {
     // Narrow result if state is itos but result type is smaller.
-    case itos: __ narrow(R17_tos); /* fall through */
-    case ltos:
     case btos:
     case ztos:
     case ctos:
     case stos:
+    case itos: __ narrow(R17_tos); /* fall through */
+    case ltos:
     case atos: __ mr(R3_RET, R17_tos); break;
     case ftos:
     case dtos: __ fmr(F1_RET, F15_ftos); break;

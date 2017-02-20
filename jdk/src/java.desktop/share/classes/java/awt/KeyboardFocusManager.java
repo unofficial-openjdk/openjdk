@@ -40,8 +40,6 @@ import java.beans.VetoableChangeSupport;
 
 import java.lang.ref.WeakReference;
 
-import java.lang.reflect.Field;
-
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
@@ -139,6 +137,10 @@ public abstract class KeyboardFocusManager
                 }
                 public void removeLastFocusRequest(Component heavyweight) {
                     KeyboardFocusManager.removeLastFocusRequest(heavyweight);
+                }
+                @Override
+                public Component getMostRecentFocusOwner(Window window) {
+                    return KeyboardFocusManager.getMostRecentFocusOwner(window);
                 }
                 public void setMostRecentFocusOwner(Window window, Component component) {
                     KeyboardFocusManager.setMostRecentFocusOwner(window, component);
@@ -413,6 +415,7 @@ public abstract class KeyboardFocusManager
      * Initializes a KeyboardFocusManager.
      */
     public KeyboardFocusManager() {
+        @SuppressWarnings("deprecation")
         AWTKeyStroke[][] defaultFocusTraversalKeyStrokes = {
                 {
                         AWTKeyStroke.getAWTKeyStroke(KeyEvent.VK_TAB, 0, false),
@@ -3053,32 +3056,9 @@ public abstract class KeyboardFocusManager
         }
     }
 
-    static Field proxyActive;
     // Accessor to private field isProxyActive of KeyEvent
     private static boolean isProxyActiveImpl(KeyEvent e) {
-        if (proxyActive == null) {
-            proxyActive =  AccessController.doPrivileged(new PrivilegedAction<Field>() {
-                    public Field run() {
-                        Field field = null;
-                        try {
-                            field = KeyEvent.class.getDeclaredField("isProxyActive");
-                            if (field != null) {
-                                field.setAccessible(true);
-                            }
-                        } catch (NoSuchFieldException nsf) {
-                            assert(false);
-                        }
-                        return field;
-                    }
-                });
-        }
-
-        try {
-            return proxyActive.getBoolean(e);
-        } catch (IllegalAccessException iae) {
-            assert(false);
-        }
-        return false;
+        return AWTAccessor.getKeyEventAccessor().isProxyActive(e);
     }
 
     // Returns the value of this KeyEvent's field isProxyActive

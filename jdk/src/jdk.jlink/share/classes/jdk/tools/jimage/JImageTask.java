@@ -32,6 +32,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.PathMatcher;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.MissingResourceException;
@@ -190,19 +191,12 @@ class JImageTask {
             if (options.help) {
                 if (unhandled.isEmpty()) {
                     log.println(TASK_HELPER.getMessage("main.usage", PROGNAME));
-
-                    for (Option<?> o : RECOGNIZED_OPTIONS) {
-                        String name = o.aliases()[0];
-
-                        if (name.startsWith("--")) {
-                            name = name.substring(2);
-                        } else if (name.startsWith("-")) {
-                            name = name.substring(1);
-                        }
-
-                        log.println(TASK_HELPER.getMessage("main.opt." + name));
-                    }
-
+                    Arrays.asList(RECOGNIZED_OPTIONS).stream()
+                        .filter(option -> !option.isHidden())
+                        .sorted()
+                        .forEach(option -> {
+                             log.println(TASK_HELPER.getMessage(option.resourceName()));
+                        });
                     log.println(TASK_HELPER.getMessage("main.opt.footer"));
                 } else {
                     try {
@@ -359,9 +353,9 @@ class JImageTask {
         if (name.endsWith(".class") && !name.endsWith("module-info.class")) {
             try {
                 byte[] bytes = reader.getResource(location);
-                ClassReader cr =new ClassReader(bytes);
+                ClassReader cr = new ClassReader(bytes);
                 ClassNode cn = new ClassNode();
-                cr.accept(cn, ClassReader.EXPAND_FRAMES);
+                cr.accept(cn, 0);
             } catch (Exception ex) {
                 log.println("Error(s) in Class: " + name);
             }

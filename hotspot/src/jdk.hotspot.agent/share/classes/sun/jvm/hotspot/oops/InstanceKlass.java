@@ -29,6 +29,7 @@ import java.util.*;
 import sun.jvm.hotspot.classfile.ClassLoaderData;
 import sun.jvm.hotspot.debugger.*;
 import sun.jvm.hotspot.memory.*;
+import sun.jvm.hotspot.memory.Dictionary;
 import sun.jvm.hotspot.runtime.*;
 import sun.jvm.hotspot.types.*;
 import sun.jvm.hotspot.utilities.*;
@@ -64,10 +65,26 @@ public class InstanceKlass extends Klass {
   private static int CLASS_STATE_FULLY_INITIALIZED;
   private static int CLASS_STATE_INITIALIZATION_ERROR;
 
+  // _misc_flags constants
+  private static int MISC_REWRITTEN;
+  private static int MISC_HAS_NONSTATIC_FIELDS;
+  private static int MISC_SHOULD_VERIFY_CLASS;
+  private static int MISC_IS_ANONYMOUS;
+  private static int MISC_IS_CONTENDED;
+  private static int MISC_HAS_NONSTATIC_CONCRETE_METHODS;
+  private static int MISC_DECLARES_NONSTATIC_CONCRETE_METHODS;
+  private static int MISC_HAS_BEEN_REDEFINED;
+  private static int MISC_HAS_PASSED_FINGERPRINT_CHECK;
+  private static int MISC_IS_SCRATCH_CLASS;
+  private static int MISC_IS_SHARED_BOOT_CLASS;
+  private static int MISC_IS_SHARED_PLATFORM_CLASS;
+  private static int MISC_IS_SHARED_APP_CLASS;
+
   private static synchronized void initialize(TypeDataBase db) throws WrongTypeException {
     Type type            = db.lookupType("InstanceKlass");
     arrayKlasses         = new MetadataField(type.getAddressField("_array_klasses"), 0);
     methods              = type.getAddressField("_methods");
+    defaultMethods       = type.getAddressField("_default_methods");
     methodOrdering       = type.getAddressField("_method_ordering");
     localInterfaces      = type.getAddressField("_local_interfaces");
     transitiveInterfaces = type.getAddressField("_transitive_interfaces");
@@ -89,6 +106,7 @@ public class InstanceKlass extends Klass {
       breakpoints        = type.getAddressField("_breakpoints");
     }
     genericSignatureIndex = new CIntField(type.getCIntegerField("_generic_signature_index"), 0);
+    miscFlags            = new CIntField(type.getCIntegerField("_misc_flags"), 0);
     majorVersion         = new CIntField(type.getCIntegerField("_major_version"), 0);
     minorVersion         = new CIntField(type.getCIntegerField("_minor_version"), 0);
     headerSize           = type.getSize();
@@ -113,6 +131,19 @@ public class InstanceKlass extends Klass {
     CLASS_STATE_FULLY_INITIALIZED = db.lookupIntConstant("InstanceKlass::fully_initialized").intValue();
     CLASS_STATE_INITIALIZATION_ERROR = db.lookupIntConstant("InstanceKlass::initialization_error").intValue();
 
+    MISC_REWRITTEN                    = db.lookupIntConstant("InstanceKlass::_misc_rewritten").intValue();
+    MISC_HAS_NONSTATIC_FIELDS         = db.lookupIntConstant("InstanceKlass::_misc_has_nonstatic_fields").intValue();
+    MISC_SHOULD_VERIFY_CLASS          = db.lookupIntConstant("InstanceKlass::_misc_should_verify_class").intValue();
+    MISC_IS_ANONYMOUS                 = db.lookupIntConstant("InstanceKlass::_misc_is_anonymous").intValue();
+    MISC_IS_CONTENDED                 = db.lookupIntConstant("InstanceKlass::_misc_is_contended").intValue();
+    MISC_HAS_NONSTATIC_CONCRETE_METHODS      = db.lookupIntConstant("InstanceKlass::_misc_has_nonstatic_concrete_methods").intValue();
+    MISC_DECLARES_NONSTATIC_CONCRETE_METHODS = db.lookupIntConstant("InstanceKlass::_misc_declares_nonstatic_concrete_methods").intValue();
+    MISC_HAS_BEEN_REDEFINED           = db.lookupIntConstant("InstanceKlass::_misc_has_been_redefined").intValue();
+    MISC_HAS_PASSED_FINGERPRINT_CHECK = db.lookupIntConstant("InstanceKlass::_misc_has_passed_fingerprint_check").intValue();
+    MISC_IS_SCRATCH_CLASS             = db.lookupIntConstant("InstanceKlass::_misc_is_scratch_class").intValue();
+    MISC_IS_SHARED_BOOT_CLASS         = db.lookupIntConstant("InstanceKlass::_misc_is_shared_boot_class").intValue();
+    MISC_IS_SHARED_PLATFORM_CLASS     = db.lookupIntConstant("InstanceKlass::_misc_is_shared_platform_class").intValue();
+    MISC_IS_SHARED_APP_CLASS          = db.lookupIntConstant("InstanceKlass::_misc_is_shared_app_class").intValue();
   }
 
   public InstanceKlass(Address addr) {
@@ -128,6 +159,7 @@ public class InstanceKlass extends Klass {
 
   private static MetadataField arrayKlasses;
   private static AddressField  methods;
+  private static AddressField  defaultMethods;
   private static AddressField  methodOrdering;
   private static AddressField  localInterfaces;
   private static AddressField  transitiveInterfaces;
@@ -147,6 +179,7 @@ public class InstanceKlass extends Klass {
   private static CIntField itableLen;
   private static AddressField breakpoints;
   private static CIntField genericSignatureIndex;
+  private static CIntField miscFlags;
   private static CIntField majorVersion;
   private static CIntField minorVersion;
 
@@ -241,7 +274,7 @@ public class InstanceKlass extends Klass {
     return getSizeHelper() * VM.getVM().getAddressSize();
   }
 
-  public long getSize() {
+  public long getSize() { // in number of bytes
     long wordLength = VM.getVM().getBytesPerWord();
     long size = getHeaderSize() +
                 (getVtableLen() +
@@ -250,7 +283,57 @@ public class InstanceKlass extends Klass {
     if (isInterface()) {
       size += wordLength;
     }
+    if (isAnonymous()) {
+      size += wordLength;
+    }
+    if (hasStoredFingerprint()) {
+      size += 8; // uint64_t
+    }
     return alignSize(size);
+  }
+
+  private int getMiscFlags() {
+    return (int) miscFlags.getValue(this);
+  }
+
+  public boolean isAnonymous() {
+    return (getMiscFlags() & MISC_IS_ANONYMOUS) != 0;
+  }
+
+  public static boolean shouldStoreFingerprint() {
+    VM vm = VM.getVM();
+    if (vm.getCommandLineBooleanFlag("EnableJVMCI") && !vm.getCommandLineBooleanFlag("UseJVMCICompiler")) {
+      return true;
+    }
+    if (vm.getCommandLineBooleanFlag("DumpSharedSpaces")) {
+      return true;
+    }
+    return false;
+  }
+
+  public boolean hasStoredFingerprint() {
+    return shouldStoreFingerprint() || isShared();
+  }
+
+  public boolean isShared() {
+    VM vm = VM.getVM();
+    if (vm.isSharingEnabled()) {
+      // This is not the same implementation as the C++ function MetaspaceObj::is_shared()
+      //     bool MetaspaceObj::is_shared() const {
+      //       return MetaspaceShared::is_in_shared_space(this);
+      //     }
+      // However, MetaspaceShared::is_in_shared_space is complicated and hard to emulate in
+      // Java code, so let's do this by looking up from the shared dictionary. Of course,
+      // this works for shared InstanceKlass only and does not work for other types of
+      // MetaspaceObj in the CDS shared archive.
+      Dictionary sharedDictionary = vm.getSystemDictionary().sharedDictionary();
+      if (sharedDictionary != null) {
+        if (sharedDictionary.contains(this, null)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public static long getHeaderSize() { return headerSize; }
@@ -335,6 +418,20 @@ public class InstanceKlass extends Klass {
   // Accessors for declared fields
   public Klass     getArrayKlasses()        { return (Klass)        arrayKlasses.getValue(this); }
   public MethodArray  getMethods()              { return new MethodArray(methods.getValue(getAddress())); }
+
+  public MethodArray  getDefaultMethods() {
+    if (defaultMethods != null) {
+      Address addr = defaultMethods.getValue(getAddress());
+      if ((addr != null) && (addr.getAddressAt(0) != null)) {
+        return new MethodArray(addr);
+      } else {
+        return null;
+      }
+    } else {
+      return null;
+    }
+  }
+
   public KlassArray   getLocalInterfaces()      { return new KlassArray(localInterfaces.getValue(getAddress())); }
   public KlassArray   getTransitiveInterfaces() { return new KlassArray(transitiveInterfaces.getValue(getAddress())); }
   public int       getJavaFieldsCount()     { return                (int) javaFieldsCount.getValue(this); }
@@ -959,7 +1056,7 @@ public class InstanceKlass extends Klass {
     while (l <= h) {
       int mid = (l + h) >> 1;
       Method m = methods.at(mid);
-      int res = m.getName().fastCompare(name);
+      long res = m.getName().fastCompare(name);
       if (res == 0) {
         // found matching name; do linear search to find matching signature
         // first, quick check for common case

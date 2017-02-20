@@ -8,7 +8,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.    See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -25,7 +25,7 @@
  * @test
  * @bug 8141564
  * @summary vtables=trace should have logging from each of the statements in the code
- * @library /testlibrary
+ * @library /test/lib
  * @compile ClassB.java
  *          p1/A.java
  *          p2/B.jcod
@@ -36,7 +36,9 @@
  * @run driver VtablesTest
  */
 
-import jdk.test.lib.*;
+import jdk.test.lib.Platform;
+import jdk.test.lib.process.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
 
 public class VtablesTest {
     public static void main(String[] args) throws Exception {
@@ -46,10 +48,10 @@ public class VtablesTest {
             output.shouldContain("copy vtable from ClassA to ClassB");
             output.shouldContain("Initializing: ClassB");
             output.shouldContain("adding ClassB.Method1()V");
-            output.shouldContain("] overriding with ClassB::ClassB.Method2()V");
+            output.shouldContain("] overriding with ClassB.Method2()V");
             output.shouldContain("invokevirtual resolved method: caller-class:ClassB");
             output.shouldContain("invokevirtual selected method: receiver-class:ClassB");
-            output.shouldContain("NOT overriding with p2.D::p2.D.nooverride()V");
+            output.shouldContain("NOT overriding with p2.D.nooverride()V");
             output.shouldHaveExitValue(0);
 
             pb = ProcessTools.createJavaProcessBuilder("-Xlog:vtables=trace", "p1/C");

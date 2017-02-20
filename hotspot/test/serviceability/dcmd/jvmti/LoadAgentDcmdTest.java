@@ -26,7 +26,8 @@ import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import jdk.test.lib.*;
+import jdk.test.lib.Platform;
+import jdk.test.lib.process.OutputAnalyzer;
 import jdk.test.lib.dcmd.*;
 import org.testng.annotations.Test;
 
@@ -35,14 +36,13 @@ import org.testng.annotations.Test;
  *
  * @test
  * @bug 8147388
- * @library /testlibrary
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.compiler
  *          java.instrument
  *          java.management
- *          jdk.jvmstat/sun.jvmstat.monitor
- * @build ClassFileInstaller jdk.test.lib.* SimpleJvmtiAgent
- * @ignore 8150318
+ *          jdk.internal.jvmstat/sun.jvmstat.monitor
+ * @build SimpleJvmtiAgent
  * @run main ClassFileInstaller SimpleJvmtiAgent
  * @run testng LoadAgentDcmdTest
  */
@@ -59,7 +59,7 @@ public class LoadAgentDcmdTest {
                       "'-Dtest.jdk=/path/to/jdk'.");
         }
 
-        Path libpath = Paths.get(jdkPath, Platform.jdkLibPath(), Platform.sharedObjectName("instrument"));
+        Path libpath = Paths.get(jdkPath, jdkLibPath(), sharedObjectName("instrument"));
 
         if (!libpath.toFile().exists()) {
             throw new FileNotFoundException(
@@ -128,6 +128,28 @@ public class LoadAgentDcmdTest {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+    /**
+     * return path to library inside jdk tree
+     */
+    public static String jdkLibPath() {
+        if (Platform.isWindows()) {
+            return "bin";
+        }
+        return "lib";
+    }
+
+    /**
+     * Build name of shared object according to platform rules
+     */
+    public static String sharedObjectName(String name) {
+        if (Platform.isWindows()) {
+            return name + ".dll";
+        }
+        if (Platform.isOSX()) {
+            return "lib" + name + ".dylib";
+        }
+        return "lib" + name + ".so";
     }
 
     @Test

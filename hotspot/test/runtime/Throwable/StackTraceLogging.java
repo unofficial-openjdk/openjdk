@@ -8,7 +8,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.    See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -25,18 +25,17 @@
  * @test
  * @bug 8150778
  * @summary check stacktrace logging
- * @library /testlibrary
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
- * @build jdk.test.lib.OutputAnalyzer jdk.test.lib.ProcessTools
  * @compile TestThrowable.java
  * @run driver StackTraceLogging
  */
 
 import java.io.File;
 import java.util.Map;
-import jdk.test.lib.OutputAnalyzer;
-import jdk.test.lib.ProcessTools;
+import jdk.test.lib.process.OutputAnalyzer;
+import jdk.test.lib.process.ProcessTools;
 
 public class StackTraceLogging {
     static void analyzeOutputOn(ProcessBuilder pb) throws Exception {
@@ -53,6 +52,8 @@ public class StackTraceLogging {
     public static void main(String[] args) throws Exception {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-Xlog:stacktrace=info",
                                                                   "-XX:MaxJavaStackTraceDepth=1024",
+                                                                  "--add-opens",
+                                                                  "java.base/java.lang=ALL-UNNAMED",
                                                                   "TestThrowable");
         analyzeOutputOn(pb);
     }

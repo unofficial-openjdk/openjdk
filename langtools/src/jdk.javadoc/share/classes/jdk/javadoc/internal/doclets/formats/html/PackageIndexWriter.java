@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -134,6 +134,7 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
         Content div = HtmlTree.DIV(HtmlStyle.contentContainer, table);
         if (configuration.allowTag(HtmlTag.MAIN)) {
             htmlTree.addContent(div);
+            body.addContent(htmlTree);
         } else {
             body.addContent(div);
         }
@@ -151,11 +152,11 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
             if (!pkg.isUnnamed()) {
                 if (!(configuration.nodeprecated && utils.isDeprecated(pkg))) {
                     Content packageLinkContent = getPackageLink(pkg, getPackageName(pkg));
-                    Content tdPackage = HtmlTree.TD(HtmlStyle.colFirst, packageLinkContent);
+                    Content thPackage = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst, packageLinkContent);
                     HtmlTree tdSummary = new HtmlTree(HtmlTag.TD);
                     tdSummary.addStyle(HtmlStyle.colLast);
                     addSummaryComment(pkg, tdSummary);
-                    HtmlTree tr = HtmlTree.TR(tdPackage);
+                    HtmlTree tr = HtmlTree.TR(thPackage);
                     tr.addContent(tdSummary);
                     tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
                     tbody.addContent(tr);
@@ -175,22 +176,13 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
     @Override
     protected void addOverviewHeader(Content body) {
         addConfigurationTitle(body);
-        if (!utils.getBody(configuration.overviewElement).isEmpty()) {
-            HtmlTree subTitleDiv = new HtmlTree(HtmlTag.DIV);
-            subTitleDiv.addStyle(HtmlStyle.subTitle);
-            addSummaryComment(configuration.overviewElement, subTitleDiv);
-            Content div = HtmlTree.DIV(HtmlStyle.header, subTitleDiv);
-            Content descBody = new ContentBuilder();
-            descBody.addContent(contents.seeLabel);
-            descBody.addContent(" ");
-            Content descPara = HtmlTree.P(descBody);
-            Content descLink = getHyperLink(getDocLink(
-                    SectionName.OVERVIEW_DESCRIPTION),
-                    contents.descriptionLabel, "", "");
-            descPara.addContent(descLink);
-            div.addContent(descPara);
+        if (!utils.getFullBody(configuration.overviewElement).isEmpty()) {
+            HtmlTree div = new HtmlTree(HtmlTag.DIV);
+            div.addStyle(HtmlStyle.contentContainer);
+            addOverviewComment(div);
             if (configuration.allowTag(HtmlTag.MAIN)) {
                 htmlTree.addContent(div);
+                body.addContent(htmlTree);
             } else {
                 body.addContent(div);
             }
@@ -205,30 +197,18 @@ public class PackageIndexWriter extends AbstractPackageIndexWriter {
      *                 be added
      */
     protected void addOverviewComment(Content htmltree) {
-        if (!utils.getBody(configuration.overviewElement).isEmpty()) {
-            htmltree.addContent(getMarkerAnchor(SectionName.OVERVIEW_DESCRIPTION));
+        if (!utils.getFullBody(configuration.overviewElement).isEmpty()) {
             addInlineComment(configuration.overviewElement, htmltree);
         }
     }
 
     /**
-     * Adds the tag information as provided in the file specified by the
-     * "-overview" option on the command line.
+     * Not required for this page.
      *
      * @param body the documentation tree to which the overview will be added
      */
     @Override
-    protected void addOverview(Content body) {
-        HtmlTree div = new HtmlTree(HtmlTag.DIV);
-        div.addStyle(HtmlStyle.contentContainer);
-        addOverviewComment(div);
-        if (configuration.allowTag(HtmlTag.MAIN)) {
-            htmlTree.addContent(div);
-            body.addContent(htmlTree);
-        } else {
-            body.addContent(div);
-        }
-    }
+    protected void addOverview(Content body) {}
 
     /**
      * Adds the top text (from the -top option), the upper

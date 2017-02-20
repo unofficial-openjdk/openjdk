@@ -63,7 +63,7 @@
 #include "memory/resourceArea.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jniHandles.hpp"
 #include "runtime/mutex.hpp"
@@ -94,10 +94,10 @@ ClassLoaderData::ClassLoaderData(Handle h_class_loader, bool is_anonymous, Depen
   _metaspace(NULL), _unloading(false), _klasses(NULL),
   _modules(NULL), _packages(NULL),
   _claimed(0), _jmethod_ids(NULL), _handles(NULL), _deallocate_list(NULL),
-  _next(NULL), _dependencies(dependencies), _shared_class_loader_id(-1),
+  _next(NULL), _dependencies(dependencies),
   _metaspace_lock(new Mutex(Monitor::leaf+1, "Metaspace allocation lock", true,
                             Monitor::_safepoint_check_never)) {
-    // empty
+  TRACE_INIT_ID(this);
 }
 
 void ClassLoaderData::init_dependencies(TRAPS) {
@@ -167,9 +167,10 @@ void ClassLoaderData::classes_do(KlassClosure* klass_closure) {
 }
 
 void ClassLoaderData::classes_do(void f(Klass * const)) {
-  assert_locked_or_safepoint(_metaspace_lock);
-  for (Klass* k = _klasses; k != NULL; k = k->next_link()) {
+  // Lock-free access requires load_ptr_acquire
+  for (Klass* k = load_ptr_acquire(&_klasses); k != NULL; k = k->next_link()) {
     f(k);
+    assert(k != k->next_link(), "no loops!");
   }
 }
 
@@ -639,7 +640,6 @@ const char* ClassLoaderData::loader_name() {
 #undef CLD_DUMP_KLASSES
 
 void ClassLoaderData::dump(outputStream * const out) {
-  ResourceMark rm;
   out->print("ClassLoaderData CLD: " PTR_FORMAT ", loader: " PTR_FORMAT ", loader_klass: " PTR_FORMAT " %s {",
       p2i(this), p2i((void *)class_loader()),
       p2i(class_loader() != NULL ? class_loader()->klass() : NULL), loader_name());
@@ -656,7 +656,6 @@ void ClassLoaderData::dump(outputStream * const out) {
 
 #ifdef CLD_DUMP_KLASSES
   if (Verbose) {
-    ResourceMark rm;
     Klass* k = _klasses;
     while (k != NULL) {
       out->print_cr("klass " PTR_FORMAT ", %s, CT: %d, MUT: %d", k, k->name()->as_C_string(),
@@ -814,6 +813,16 @@ void ClassLoaderDataGraph::cld_do(CLDClosure* cl) {
   }
 }
 
+void ClassLoaderDataGraph::cld_unloading_do(CLDClosure* cl) {
+  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint!");
+  // Only walk the head until any clds not purged from prior unloading
+  // (CMS doesn't purge right away).
+  for (ClassLoaderData* cld = _unloading; cld != _saved_unloading; cld = cld->next()) {
+    assert(cld->is_unloading(), "invariant");
+    cl->do_cld(cld);
+  }
+}
+
 void ClassLoaderDataGraph::roots_cld_do(CLDClosure* strong, CLDClosure* weak) {
   for (ClassLoaderData* cld = _head;  cld != NULL; cld = cld->_next) {
     CLDClosure* closure = cld->keep_alive() ? strong : weak;
@@ -966,7 +975,7 @@ bool ClassLoaderDataGraph::do_unloading(BoolObjectClosure* is_alive_closure,
   // Klasses to delete.
   bool walk_all_metadata = clean_previous_versions &&
                            JvmtiExport::has_redefined_a_class() &&
-                           InstanceKlass::has_previous_versions();
+                           InstanceKlass::has_previous_versions_and_reset();
   MetadataOnStackMark md_on_stack(walk_all_metadata);
 
   // Save previous _unloading pointer for CMS which may add to unloading list before
@@ -1044,7 +1053,7 @@ void ClassLoaderDataGraph::purge() {
   }
 }
 
-void ClassLoaderDataGraph::post_class_unload_events(void) {
+void ClassLoaderDataGraph::post_class_unload_events() {
 #if INCLUDE_TRACE
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint!");
   if (Tracing::enabled()) {
@@ -1193,9 +1202,7 @@ void ClassLoaderDataGraph::class_unload_event(Klass* const k) {
   EventClassUnload event(UNTIMED);
   event.set_endtime(_class_unload_time);
   event.set_unloadedClass(k);
-  oop defining_class_loader = k->class_loader();
-  event.set_definingClassLoader(defining_class_loader != NULL ?
-                                defining_class_loader->klass() : (Klass*)NULL);
+  event.set_definingClassLoader(k->class_loader_data());
   event.commit();
 }
 

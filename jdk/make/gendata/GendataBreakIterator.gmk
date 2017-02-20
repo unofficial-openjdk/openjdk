@@ -1,5 +1,5 @@
 
-# Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -55,7 +55,6 @@ $(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR_BASE, \
 $(eval $(call SetupJavaCompilation,BUILD_BREAKITERATOR_LD, \
     SETUP := GENERATE_OLDBYTECODE, \
     SRC := $(JDK_TOPDIR)/src/jdk.localedata/share/classes, \
-    INCLUDES := $(TEXT_PKG_LD), \
     INCLUDE_FILES := \
         $(TEXT_PKG_LD)/BreakIteratorRules_th.java \
         $(TEXT_PKG_LD)/BreakIteratorInfo_th.java, \
@@ -81,7 +80,7 @@ UNICODEDATA := $(JDK_TOPDIR)/make/data/unicodedata/UnicodeData.txt
 
 # output
 BASE_DATA_PKG_DIR := $(JDK_OUTPUTDIR)/modules/java.base/sun/text/resources
-LD_DATA_PKG_DIR := $(JDK_OUTPUTDIR)/modules/jdk.localedata/sun/text/resources
+LD_DATA_PKG_DIR := $(JDK_OUTPUTDIR)/modules/jdk.localedata/sun/text/resources/ext
 BIFILES := $(BASE_DATA_PKG_DIR)/CharacterBreakIteratorData \
     $(BASE_DATA_PKG_DIR)/WordBreakIteratorData \
     $(BASE_DATA_PKG_DIR)/LineBreakIteratorData \

@@ -41,10 +41,11 @@ import static jdk.jshell.execution.Util.forwardExecutionControlAndIO;
  * process). This agent loads code over a socket from the main JShell process,
  * executes the code, and other misc, Specialization of
  * {@link DirectExecutionControl} which adds stop support controlled by
- * an external process. Designed to work with {@link JDIDefaultExecutionControl}.
+ * an external process. Designed to work with {@link JdiDefaultExecutionControl}.
  *
  * @author Jan Lahoda
  * @author Robert Field
+ * @since 9
  */
 public class RemoteExecutionControl extends DirectExecutionControl implements ExecutionControl {
 
@@ -61,10 +62,12 @@ public class RemoteExecutionControl extends DirectExecutionControl implements Ex
         Socket socket = new Socket(loopBack, Integer.parseInt(args[0]));
         InputStream inStream = socket.getInputStream();
         OutputStream outStream = socket.getOutputStream();
-        Map<String, Consumer<OutputStream>> chans = new HashMap<>();
-        chans.put("out", st -> System.setOut(new PrintStream(st, true)));
-        chans.put("err", st -> System.setErr(new PrintStream(st, true)));
-        forwardExecutionControlAndIO(new RemoteExecutionControl(), inStream, outStream, chans);
+        Map<String, Consumer<OutputStream>> outputs = new HashMap<>();
+        outputs.put("out", st -> System.setOut(new PrintStream(st, true)));
+        outputs.put("err", st -> System.setErr(new PrintStream(st, true)));
+        Map<String, Consumer<InputStream>> input = new HashMap<>();
+        input.put("in", System::setIn);
+        forwardExecutionControlAndIO(new RemoteExecutionControl(), inStream, outStream, outputs, input);
     }
 
     // These three variables are used by the main JShell process in interrupting

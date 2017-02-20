@@ -25,11 +25,10 @@
  * @test
  * @bug 8073480
  * @summary explicit range checks should be recognized by C2
- * @library /testlibrary /test/lib /
- * @modules java.base/jdk.internal.misc
- * @build compiler.rangechecks.TestExplicitRangeChecks
+ * @library /test/lib /
+ * @modules java.base/jdk.internal.misc:+open
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
- *                                jdk.test.lib.Platform
  * @run main/othervm -ea -Xmixed -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI
  *                   -XX:-BackgroundCompilation -XX:-UseOnStackReplacement
  *                   -XX:CompileCommand=compileonly,compiler.rangechecks.TestExplicitRangeChecks::test*
@@ -446,7 +445,7 @@ public class TestExplicitRangeChecks {
                 success = false;
             }
             // Only perform these additional checks if C2 is available
-            if (Platform.isServer() &&
+            if (Platform.isServer() && !Platform.isEmulatedClient() &&
                 TIERED_STOP_AT_LEVEL == CompilerWhiteBoxTest.COMP_LEVEL_FULL_OPTIMIZATION) {
                 if (deoptimize && WHITE_BOX.isMethodCompiled(m)) {
                     System.out.println(name + " not deoptimized on invalid access");

@@ -52,6 +52,10 @@
 #include <strings.h>
 #endif
 
+#ifdef __linux__
+#include <sys/syscall.h>
+#endif
+
 #if defined(__linux__) || defined(_AIX)
 #include <string.h>
 #endif
@@ -76,6 +80,12 @@
 #include "jlong.h"
 
 #include "sun_nio_fs_UnixNativeDispatcher.h"
+
+#if defined(_AIX)
+  #define DIR DIR64
+  #define opendir opendir64
+  #define closedir closedir64
+#endif
 
 /**
  * Size of password or group entry when not available via sysconf
@@ -157,14 +167,11 @@ static int fstatat64_wrapper(int dfd, const char *path,
 }
 #endif
 
-#if defined(__linux__) && defined(__x86_64__)
+#if defined(__linux__) && defined(_LP64) && defined(__NR_newfstatat)
 #define FSTATAT64_SYSCALL_AVAILABLE
 static int fstatat64_wrapper(int dfd, const char *path,
                              struct stat64 *statbuf, int flag)
 {
-    #ifndef __NR_newfstatat
-    #define __NR_newfstatat  262
-    #endif
     return syscall(__NR_newfstatat, dfd, path, statbuf, flag);
 }
 #endif
@@ -263,7 +270,11 @@ Java_sun_nio_fs_UnixNativeDispatcher_init(JNIEnv* env, jclass this)
     my_unlinkat_func = (unlinkat_func*) dlsym(RTLD_DEFAULT, "unlinkat");
     my_renameat_func = (renameat_func*) dlsym(RTLD_DEFAULT, "renameat");
     my_futimesat_func = (futimesat_func*) dlsym(RTLD_DEFAULT, "futimesat");
+#if defined(_AIX)
+    my_fdopendir_func = (fdopendir_func*) dlsym(RTLD_DEFAULT, "fdopendir64");
+#else
     my_fdopendir_func = (fdopendir_func*) dlsym(RTLD_DEFAULT, "fdopendir");
+#endif
 
 #if defined(FSTATAT64_SYSCALL_AVAILABLE)
     /* fstatat64 missing from glibc */

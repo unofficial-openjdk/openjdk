@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,13 +24,13 @@
 /*
  * @test TestLogRotation.java
  * @summary test flags for log rotation
- * @library /testlibrary
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  *          java.management
  * @run main/othervm/timeout=600 TestLogRotation
  *
  */
-import jdk.test.lib.*;
+import jdk.test.lib.process.ProcessTools;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
@@ -41,8 +41,8 @@ class GCLoggingGenerator {
     public static void main(String[] args) throws Exception {
 
         long sizeOfLog = Long.parseLong(args[0]);
-        long lines = sizeOfLog / 80;
-        // full.GC generates ad least 1-line which is not shorter then 80 chars
+        long lines = sizeOfLog / 70;
+        // full.GC generates ad least 1-line which is not shorter then 70 chars
         // for some GC 2 shorter lines are generated
         for (long i = 0; i < lines; i++) {
             System.gc();

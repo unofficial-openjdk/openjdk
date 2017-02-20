@@ -44,9 +44,21 @@ public final class ReflectUtil {
         return Class.forName(name);
     }
 
-    /*
-     * Reflection.ensureMemberAccess is overly-restrictive
-     * due to a bug. We awkwardly work around it for now.
+    /**
+     * Ensures that access to a method or field is granted and throws
+     * IllegalAccessException if not. This method is not suitable for checking
+     * access to constructors.
+     *
+     * @param currentClass the class performing the access
+     * @param memberClass the declaring class of the member being accessed
+     * @param target the target object if accessing instance field or method;
+     *               or null if accessing static field or method or if target
+     *               object access rights will be checked later
+     * @param modifiers the member's access modifiers
+     * @throws IllegalAccessException if access to member is denied
+     * @implNote Delegates directly to
+     *           {@link Reflection#ensureMemberAccess(Class, Class, Class, int)}
+     *           which should be used instead.
      */
     public static void ensureMemberAccess(Class<?> currentClass,
                                           Class<?> memberClass,
@@ -54,62 +66,10 @@ public final class ReflectUtil {
                                           int modifiers)
         throws IllegalAccessException
     {
-        if (target == null && Modifier.isProtected(modifiers)) {
-            int mods = modifiers;
-            mods = mods & (~Modifier.PROTECTED);
-            mods = mods | Modifier.PUBLIC;
-
-            /*
-             * See if we fail because of class modifiers
-             */
-            Reflection.ensureMemberAccess(currentClass,
-                                          memberClass,
-                                          target,
-                                          mods);
-            try {
-                /*
-                 * We're still here so class access was ok.
-                 * Now try with default field access.
-                 */
-                mods = mods & (~Modifier.PUBLIC);
-                Reflection.ensureMemberAccess(currentClass,
-                                              memberClass,
-                                              target,
-                                              mods);
-                /*
-                 * We're still here so access is ok without
-                 * checking for protected.
-                 */
-                return;
-            } catch (IllegalAccessException e) {
-                /*
-                 * Access failed but we're 'protected' so
-                 * if the test below succeeds then we're ok.
-                 */
-                if (isSubclassOf(currentClass, memberClass)) {
-                    return;
-                } else {
-                    throw e;
-                }
-            }
-        } else {
-            Reflection.ensureMemberAccess(currentClass,
-                                          memberClass,
-                                          target,
-                                          modifiers);
-        }
-    }
-
-    private static boolean isSubclassOf(Class<?> queryClass,
-                                        Class<?> ofClass)
-    {
-        while (queryClass != null) {
-            if (queryClass == ofClass) {
-                return true;
-            }
-            queryClass = queryClass.getSuperclass();
-        }
-        return false;
+        Reflection.ensureMemberAccess(currentClass,
+                                      memberClass,
+                                      target == null ? null : target.getClass(),
+                                      modifiers);
     }
 
     /**
@@ -136,7 +96,7 @@ public final class ReflectUtil {
 
         final Class<?> declaringClass = m.getDeclaringClass();
 
-        checkPackageAccess(declaringClass);
+        privateCheckPackageAccess(sm, declaringClass);
 
         if (Modifier.isPublic(m.getModifiers()) &&
                 Modifier.isPublic(declaringClass.getModifiers()))
@@ -154,9 +114,27 @@ public final class ReflectUtil {
      * also check the package access on the proxy interfaces.
      */
     public static void checkPackageAccess(Class<?> clazz) {
-        checkPackageAccess(clazz.getName());
+        SecurityManager s = System.getSecurityManager();
+        if (s != null) {
+            privateCheckPackageAccess(s, clazz);
+        }
+    }
+
+    /**
+     * NOTE: should only be called if a SecurityManager is installed
+     */
+    private static void privateCheckPackageAccess(SecurityManager s, Class<?> clazz) {
+        while (clazz.isArray()) {
+            clazz = clazz.getComponentType();
+        }
+
+        String pkg = clazz.getPackageName();
+        if (pkg != null && !pkg.isEmpty()) {
+            s.checkPackageAccess(pkg);
+        }
+
         if (isNonPublicProxyClass(clazz)) {
-            checkProxyPackageAccess(clazz);
+            privateCheckProxyPackageAccess(s, clazz);
         }
     }
 
@@ -235,15 +213,21 @@ public final class ReflectUtil {
     public static void checkProxyPackageAccess(Class<?> clazz) {
         SecurityManager s = System.getSecurityManager();
         if (s != null) {
-            // check proxy interfaces if the given class is a proxy class
-            if (Proxy.isProxyClass(clazz)) {
-                for (Class<?> intf : clazz.getInterfaces()) {
-                    checkPackageAccess(intf);
-                }
-            }
+            privateCheckProxyPackageAccess(s, clazz);
         }
     }
 
+    /**
+     * NOTE: should only be called if a SecurityManager is installed
+     */
+    private static void privateCheckProxyPackageAccess(SecurityManager s, Class<?> clazz) {
+        // check proxy interfaces if the given class is a proxy class
+        if (Proxy.isProxyClass(clazz)) {
+            for (Class<?> intf : clazz.getInterfaces()) {
+                privateCheckPackageAccess(s, intf);
+            }
+        }
+    }
     /**
      * Access check on the interfaces that a proxy class implements and throw
      * {@code SecurityException} if it accesses a restricted package from
@@ -260,7 +244,7 @@ public final class ReflectUtil {
             for (Class<?> intf : interfaces) {
                 ClassLoader cl = intf.getClassLoader();
                 if (needsPackageAccessCheck(ccl, cl)) {
-                    checkPackageAccess(intf);
+                    privateCheckPackageAccess(sm, intf);
                 }
             }
         }
@@ -276,10 +260,11 @@ public final class ReflectUtil {
      * package that bypasses checkPackageAccess.
      */
     public static boolean isNonPublicProxyClass(Class<?> cls) {
-        String name = cls.getName();
-        int i = name.lastIndexOf('.');
-        String pkg = (i != -1) ? name.substring(0, i) : "";
-        return Proxy.isProxyClass(cls) && !pkg.startsWith(PROXY_PACKAGE);
+        if (!Proxy.isProxyClass(cls)) {
+            return false;
+        }
+        String pkg = cls.getPackageName();
+        return pkg == null || !pkg.startsWith(PROXY_PACKAGE);
     }
 
     /**
@@ -295,7 +280,7 @@ public final class ReflectUtil {
         // check if it is a valid proxy instance
         if (proxy == null || !Proxy.isProxyClass(proxy.getClass())) {
             throw new IllegalArgumentException("Not a Proxy instance");
-}
+        }
         if (Modifier.isStatic(method.getModifiers())) {
             throw new IllegalArgumentException("Can't handle static method");
         }

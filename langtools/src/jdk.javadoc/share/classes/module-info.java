@@ -28,8 +28,8 @@
  *  and its command line equivalent, <em>javadoc</em>.
  */
 module jdk.javadoc {
-    requires public java.compiler;
-    requires public jdk.compiler;
+    requires transitive java.compiler;
+    requires transitive jdk.compiler;
     requires java.xml;
 
     exports com.sun.javadoc;
@@ -41,7 +41,13 @@ module jdk.javadoc {
     exports jdk.javadoc.doclet.taglet;
     exports jdk.javadoc.doclets;
 
+    provides java.util.spi.ToolProvider
+        with jdk.javadoc.internal.tool.JavadocToolProvider;
+
     provides javax.tools.DocumentationTool
+        with jdk.javadoc.internal.api.JavadocTool;
+
+    provides javax.tools.Tool
         with jdk.javadoc.internal.api.JavadocTool;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,8 @@
  *          java.rmi/sun.rmi.server
  *          java.rmi/sun.rmi.transport
  *          java.rmi/sun.rmi.transport.tcp
- * @build TestLibrary RMID MyRMI CheckAnnotations_Stub
+ *          java.base/sun.nio.ch
+ * @build TestLibrary RMID RMIDSelectorProvider MyRMI CheckAnnotations_Stub
  * @run main/othervm/policy=security.policy/timeout=480 CheckAnnotations
  */
 
@@ -48,6 +49,7 @@ import java.util.StringTokenizer;
 public class CheckAnnotations
     extends Activatable implements MyRMI, Runnable
 {
+    private static final double TIME_FACTOR = TestLibrary.getTimeoutFactor();
 
     private static Object dummy = new Object();
     private static MyRMI myRMI = null;
@@ -77,7 +79,7 @@ public class CheckAnnotations
 
             // start an rmid.
             RMID.removeLog();
-            rmid = RMID.createRMID(rmidOut, rmidErr, false);
+            rmid = RMID.createRMIDOnEphemeralPort(rmidOut, rmidErr, false);
             rmid.start();
 
             /* Cause activation groups to have a security policy that will
@@ -110,9 +112,7 @@ public class CheckAnnotations
             for (int i = 0; i < 3; i++) {
 
                 // object activated in annotation check via method call
-                if(!checkAnnotations(i-1)) {
-                    TestLibrary.bomb("Test failed: output improperly annotated.");
-                }
+                checkAnnotations(i-1);
 
                 /*
                  * Clean up object too.
@@ -142,24 +142,27 @@ public class CheckAnnotations
      * check to make sure that the output from a spawned vm is
      * formatted/annotated properly.
      */
-    public static boolean checkAnnotations(int iteration)
+    public static void checkAnnotations(int iteration)
         throws IOException
     {
         try {
-            Thread.sleep(5000);
+            Thread.sleep((long)(5000 * TIME_FACTOR));
         } catch(Exception e) {
             System.err.println(e.getMessage());
         }
 
+        final String FAIL_MSG = "Test failed: output improperly annotated.";
+        final String OUT = "outABC";
+        final String ERR = "errXYZ";
         /**
          * cause the spawned vm to generate output that will
          * be checked for proper annotation.  printOut is
          * actually being called on an activated implementation.
          */
-        myRMI.printOut("out" + iteration);
-        myRMI.printErr("err" + iteration);
-        myRMI.printOut("out" + iteration);
-        myRMI.printErr("err" + iteration);
+        myRMI.printOut(OUT + iteration);
+        myRMI.printErr(ERR + iteration);
+        myRMI.printOut(OUT + iteration);
+        myRMI.printErr(ERR + iteration);
 
         /* we have to wait for output to filter down
          * from children so we can read it before we
@@ -173,7 +176,7 @@ public class CheckAnnotations
             // have to give output from rmid time to trickle down to
             // this process
             try {
-                Thread.sleep(4000);
+                Thread.sleep((long)(4000 * TIME_FACTOR));
             } catch(InterruptedException e) {
             }
 
@@ -221,26 +224,24 @@ public class CheckAnnotations
 
             if ((execErr == null)||(errTmp == null)||
                 (destErr == null)) {
-                return false;
+                TestLibrary.bomb(FAIL_MSG);
             }
             if ((execOut == null)||(outTmp == null)||
                 (destOut == null)) {
-                return false;
+                TestLibrary.bomb(FAIL_MSG);
             }
 
+
             // just make sure that last two strings are what we expect.
-            if (execOut.equals("ExecGroup-" + iteration)
-                && (new String(destOut.substring(0,4)).equals("out" +
+            if (!execOut.equals("ExecGroup-" + iteration)
+                || !(new String(destOut.substring(0,OUT.length()+1)).equals(OUT +
                                                               iteration))
-                && (execErr.equals("ExecGroup-"+iteration))
-                && (new String(destErr.substring(0,4)).equals("err" +
+                || !(execErr.equals("ExecGroup-"+iteration))
+                || !(new String(destErr.substring(0,ERR.length()+1)).equals(ERR +
                                                               iteration)) ) {
-                return true;
-            } else {
-                return false;
+                TestLibrary.bomb(FAIL_MSG);
             }
         }
-        return true;
     }
 
     // implementation of MyRMI, make this object activatable.

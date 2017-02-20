@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,13 @@
 
 package com.sun.tools.javac.model;
 
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import javax.lang.model.AnnotatedConstruct;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
@@ -37,6 +42,13 @@ import static javax.lang.model.util.ElementFilter.methodsIn;
 import com.sun.source.util.JavacTask;
 import com.sun.tools.javac.api.JavacTaskImpl;
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Attribute.Compound;
+import com.sun.tools.javac.code.Directive.ExportsDirective;
+import com.sun.tools.javac.code.Directive.ExportsFlag;
+import com.sun.tools.javac.code.Directive.OpensDirective;
+import com.sun.tools.javac.code.Directive.OpensFlag;
+import com.sun.tools.javac.code.Directive.RequiresDirective;
+import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Scope.WriteableScope;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.comp.AttrContext;
@@ -54,9 +66,10 @@ import com.sun.tools.javac.util.Name;
 import static com.sun.tools.javac.code.Kinds.Kind.*;
 import static com.sun.tools.javac.code.Scope.LookupKind.NON_RECURSIVE;
 import static com.sun.tools.javac.code.TypeTag.CLASS;
-import com.sun.tools.javac.comp.CompileStates;
-import com.sun.tools.javac.comp.CompileStates.CompileState;
 import com.sun.tools.javac.comp.Modules;
+import com.sun.tools.javac.comp.Resolve;
+import com.sun.tools.javac.comp.Resolve.RecoveryLoadClass;
+import com.sun.tools.javac.resources.CompilerProperties.Notes;
 import static com.sun.tools.javac.tree.JCTree.Tag.*;
 
 /**
@@ -75,8 +88,10 @@ public class JavacElements implements Elements {
     private final Names names;
     private final Types types;
     private final Enter enter;
+    private final Resolve resolve;
     private final JavacTaskImpl javacTaskImpl;
-    private final CompileStates compileStates;
+    private final Log log;
+    private final boolean allowModules;
 
     public static JavacElements instance(Context context) {
         JavacElements instance = context.get(JavacElements.class);
@@ -93,14 +108,19 @@ public class JavacElements implements Elements {
         names = Names.instance(context);
         types = Types.instance(context);
         enter = Enter.instance(context);
+        resolve = Resolve.instance(context);
         JavacTask t = context.get(JavacTask.class);
         javacTaskImpl = t instanceof JavacTaskImpl ? (JavacTaskImpl) t : null;
-        compileStates = CompileStates.instance(context);
+        log = Log.instance(context);
+        Source source = Source.instance(context);
+        allowModules = source.allowModules();
     }
 
     @Override @DefinedBy(Api.LANGUAGE_MODEL)
     public ModuleSymbol getModuleElement(CharSequence name) {
         ensureEntered("getModuleElement");
+        if (modules.getDefaultModule() == syms.noModule)
+            return null;
         String strName = name.toString();
         if (strName.equals(""))
             return syms.unnamedModule;
@@ -109,32 +129,88 @@ public class JavacElements implements Elements {
 
     @Override @DefinedBy(Api.LANGUAGE_MODEL)
     public PackageSymbol getPackageElement(CharSequence name) {
-        ensureEntered("getPackageElement");
-        return getPackageElement(modules.getDefaultModule(), name);
+        return doGetPackageElement(null, name);
     }
 
     @Override @DefinedBy(Api.LANGUAGE_MODEL)
     public PackageSymbol getPackageElement(ModuleElement module, CharSequence name) {
-        String strName = name.toString();
-        if (strName.equals(""))
-            return syms.unnamedModule.unnamedPackage;
-        return SourceVersion.isName(strName)
-            ? nameToSymbol((ModuleSymbol) module, strName, PackageSymbol.class)
-            : null;
+        module.getClass();
+        return doGetPackageElement(module, name);
+    }
+
+    private PackageSymbol doGetPackageElement(ModuleElement module, CharSequence name) {
+        ensureEntered("getPackageElement");
+        return doGetElement(module, "getPackageElement", name, PackageSymbol.class);
     }
 
     @Override @DefinedBy(Api.LANGUAGE_MODEL)
     public ClassSymbol getTypeElement(CharSequence name) {
-        ensureEntered("getTypeElement");
-        return getTypeElement(modules.getDefaultModule(), name);
+        return doGetTypeElement(null, name);
     }
 
     @Override @DefinedBy(Api.LANGUAGE_MODEL)
     public ClassSymbol getTypeElement(ModuleElement module, CharSequence name) {
+        module.getClass();
+
+        return doGetTypeElement(module, name);
+    }
+
+    private ClassSymbol doGetTypeElement(ModuleElement module, CharSequence name) {
+        ensureEntered("getTypeElement");
+        return doGetElement(module, "getTypeElement", name, ClassSymbol.class);
+    }
+
+    private <S extends Symbol> S doGetElement(ModuleElement module, String methodName,
+                                              CharSequence name, Class<S> clazz) {
         String strName = name.toString();
-        return SourceVersion.isName(strName)
-            ? nameToSymbol((ModuleSymbol) module, strName, ClassSymbol.class)
-            : null;
+        if (!SourceVersion.isName(strName) && (!strName.isEmpty() || clazz == ClassSymbol.class)) {
+            return null;
+        }
+        if (module == null) {
+            return unboundNameToSymbol(methodName, strName, clazz);
+        } else {
+            return nameToSymbol((ModuleSymbol) module, strName, clazz);
+        }
+    }
+
+    private final Set<String> alreadyWarnedDuplicates = new HashSet<>();
+
+    private <S extends Symbol> S unboundNameToSymbol(String methodName,
+                                                     String nameStr,
+                                                     Class<S> clazz) {
+        if (modules.getDefaultModule() == syms.noModule) { //not a modular mode:
+            return nameToSymbol(syms.noModule, nameStr, clazz);
+        }
+
+        Set<S> found = new LinkedHashSet<>();
+
+        for (ModuleSymbol msym : modules.allModules()) {
+            S sym = nameToSymbol(msym, nameStr, clazz);
+
+            if (sym != null) {
+                if (!allowModules || clazz == ClassSymbol.class || !sym.members().isEmpty()) {
+                    //do not add packages without members:
+                    found.add(sym);
+                }
+            }
+        }
+
+        if (found.size() == 1) {
+            return found.iterator().next();
+        } else if (found.size() > 1) {
+            //more than one element found, produce a note:
+            if (alreadyWarnedDuplicates.add(methodName + ":" + nameStr)) {
+                String moduleNames = found.stream()
+                                          .map(s -> s.packge().modle)
+                                          .map(m -> m.toString())
+                                          .collect(Collectors.joining(", "));
+                log.note(Notes.MultipleElements(methodName, nameStr, moduleNames));
+            }
+            return null;
+        } else {
+            //not found, or more than one element found:
+            return null;
+        }
     }
 
     /**
@@ -163,41 +239,6 @@ public class JavacElements implements Elements {
         } catch (CompletionFailure e) {
             return null;
         }
-    }
-
-    public JavacSourcePosition getSourcePosition(Element e) {
-        Pair<JCTree, JCCompilationUnit> treeTop = getTreeAndTopLevel(e);
-        if (treeTop == null)
-            return null;
-        JCTree tree = treeTop.fst;
-        JCCompilationUnit toplevel = treeTop.snd;
-        JavaFileObject sourcefile = toplevel.sourcefile;
-        if (sourcefile == null)
-            return null;
-        return new JavacSourcePosition(sourcefile, tree.pos, toplevel.lineMap);
-    }
-
-    public JavacSourcePosition getSourcePosition(Element e, AnnotationMirror a) {
-        Pair<JCTree, JCCompilationUnit> treeTop = getTreeAndTopLevel(e);
-        if (treeTop == null)
-            return null;
-        JCTree tree = treeTop.fst;
-        JCCompilationUnit toplevel = treeTop.snd;
-        JavaFileObject sourcefile = toplevel.sourcefile;
-        if (sourcefile == null)
-            return null;
-
-        JCTree annoTree = matchAnnoToTree(a, e, tree);
-        if (annoTree == null)
-            return null;
-        return new JavacSourcePosition(sourcefile, annoTree.pos,
-                                       toplevel.lineMap);
-    }
-
-    public JavacSourcePosition getSourcePosition(Element e, AnnotationMirror a,
-                                            AnnotationValue v) {
-        // TODO: better accuracy in getSourcePosition(... AnnotationValue)
-        return getSourcePosition(e, a);
     }
 
     /**
@@ -247,7 +288,9 @@ public class JavacElements implements Elements {
                                    List<JCAnnotation> trees) {
         for (Attribute.Compound anno : annos) {
             for (JCAnnotation tree : trees) {
-                JCTree match = matchAnnoToTree(findme, anno, tree);
+                if (tree.type.tsym != anno.type.tsym)
+                    continue;
+                JCTree match = matchAttributeToTree(findme, anno, tree);
                 if (match != null)
                     return match;
             }
@@ -256,15 +299,15 @@ public class JavacElements implements Elements {
     }
 
     /**
-     * Returns the tree for an annotation given an Attribute to
-     * search (recursively) and its corresponding tree.
+     * Returns the tree for an attribute given an enclosing attribute to
+     * search (recursively) and the enclosing attribute's corresponding tree.
      * Returns null if the tree cannot be found.
      */
-    private JCTree matchAnnoToTree(final Attribute.Compound findme,
-                                   final Attribute attr,
-                                   final JCTree tree) {
+    private JCTree matchAttributeToTree(final Attribute findme,
+                                        final Attribute attr,
+                                        final JCTree tree) {
         if (attr == findme)
-            return (tree.type.tsym == findme.type.tsym) ? tree : null;
+            return tree;
 
         class Vis implements Attribute.Visitor {
             JCTree result = null;
@@ -276,7 +319,7 @@ public class JavacElements implements Elements {
                 for (Pair<MethodSymbol, Attribute> pair : anno.values) {
                     JCExpression expr = scanForAssign(pair.fst, tree);
                     if (expr != null) {
-                        JCTree match = matchAnnoToTree(findme, pair.snd, expr);
+                        JCTree match = matchAttributeToTree(findme, pair.snd, expr);
                         if (match != null) {
                             result = match;
                             return;
@@ -285,16 +328,19 @@ public class JavacElements implements Elements {
                 }
             }
             public void visitArray(Attribute.Array array) {
-                if (tree.hasTag(NEWARRAY) &&
-                        types.elemtype(array.type).tsym == findme.type.tsym) {
-                    List<JCExpression> elems = ((JCNewArray) tree).elems;
+                if (tree.hasTag(NEWARRAY)) {
+                    List<JCExpression> elems = ((JCNewArray)tree).elems;
                     for (Attribute value : array.values) {
-                        if (value == findme) {
-                            result = elems.head;
+                        JCTree match = matchAttributeToTree(findme, value, elems.head);
+                        if (match != null) {
+                            result = match;
                             return;
                         }
                         elems = elems.tail;
                     }
+                } else if (array.values.length == 1) {
+                    // the tree may not be a NEWARRAY for single-element array initializers
+                    result = matchAttributeToTree(findme, array.values[0], tree);
                 }
             }
             public void visitEnum(Attribute.Enum e) {
@@ -369,13 +415,62 @@ public class JavacElements implements Elements {
     @DefinedBy(Api.LANGUAGE_MODEL)
     public ModuleElement getModuleOf(Element e) {
         Symbol sym = cast(Symbol.class, e);
+        if (modules.getDefaultModule() == syms.noModule)
+            return null;
         return (sym.kind == MDL) ? ((ModuleElement) e) : sym.packge().modle;
     }
 
     @DefinedBy(Api.LANGUAGE_MODEL)
     public boolean isDeprecated(Element e) {
         Symbol sym = cast(Symbol.class, e);
-        return (sym.flags() & Flags.DEPRECATED) != 0;
+        sym.complete();
+        return sym.isDeprecated();
+    }
+
+    @Override @DefinedBy(Api.LANGUAGE_MODEL)
+    public Origin getOrigin(Element e) {
+        Symbol sym = cast(Symbol.class, e);
+        if ((sym.flags() & Flags.GENERATEDCONSTR) != 0)
+            return Origin.MANDATED;
+        //TypeElement.getEnclosedElements does not return synthetic elements,
+        //and most synthetic elements are not read from the classfile anyway:
+        return Origin.EXPLICIT;
+    }
+
+    @Override @DefinedBy(Api.LANGUAGE_MODEL)
+    public Origin getOrigin(AnnotatedConstruct c, AnnotationMirror a) {
+        Compound ac = cast(Compound.class, a);
+        if (ac.isSynthesized())
+            return Origin.MANDATED;
+        return Origin.EXPLICIT;
+    }
+
+    @Override @DefinedBy(Api.LANGUAGE_MODEL)
+    public Origin getOrigin(ModuleElement m, ModuleElement.Directive directive) {
+        switch (directive.getKind()) {
+            case REQUIRES:
+                RequiresDirective rd = cast(RequiresDirective.class, directive);
+                if (rd.flags.contains(RequiresFlag.MANDATED))
+                    return Origin.MANDATED;
+                if (rd.flags.contains(RequiresFlag.SYNTHETIC))
+                    return Origin.SYNTHETIC;
+                return Origin.EXPLICIT;
+            case EXPORTS:
+                ExportsDirective ed = cast(ExportsDirective.class, directive);
+                if (ed.flags.contains(ExportsFlag.MANDATED))
+                    return Origin.MANDATED;
+                if (ed.flags.contains(ExportsFlag.SYNTHETIC))
+                    return Origin.SYNTHETIC;
+                return Origin.EXPLICIT;
+            case OPENS:
+                OpensDirective od = cast(OpensDirective.class, directive);
+                if (od.flags.contains(OpensFlag.MANDATED))
+                    return Origin.MANDATED;
+                if (od.flags.contains(OpensFlag.SYNTHETIC))
+                    return Origin.SYNTHETIC;
+                return Origin.EXPLICIT;
+        }
+        return Origin.EXPLICIT;
     }
 
     @DefinedBy(Api.LANGUAGE_MODEL)
@@ -620,10 +715,15 @@ public class JavacElements implements Elements {
         if (annoTree == null)
             return elemTreeTop;
 
-        // 6388543: if v != null, we should search within annoTree to find
-        // the tree matching v. For now, we ignore v and return the tree of
-        // the annotation.
-        return new Pair<>(annoTree, elemTreeTop.snd);
+        if (v == null)
+            return new Pair<>(annoTree, elemTreeTop.snd);
+
+        JCTree valueTree = matchAttributeToTree(
+                cast(Attribute.class, v), cast(Attribute.class, a), annoTree);
+        if (valueTree == null)
+            return new Pair<>(annoTree, elemTreeTop.snd);
+
+        return new Pair<>(valueTree, elemTreeTop.snd);
     }
 
     /**

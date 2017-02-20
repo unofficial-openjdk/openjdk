@@ -27,9 +27,8 @@ package jdk.internal.module;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Version;
 import java.nio.ByteBuffer;
-import java.util.Optional;
+import java.util.stream.Stream;
 
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
@@ -50,29 +49,32 @@ public final class ModuleInfoWriter {
      * returning it in a byte array.
      */
     private static byte[] toModuleInfo(ModuleDescriptor md) {
-
         ClassWriter cw = new ClassWriter(0);
-
-        String name = md.name().replace('.', '/') + "/module-info";
-        cw.visit(Opcodes.V1_9, ACC_MODULE, name, null, null, null);
-
+        cw.visit(Opcodes.V1_9, ACC_MODULE, "module-info", null, null, null);
         cw.visitAttribute(new ModuleAttribute(md));
-        cw.visitAttribute(new ConcealedPackagesAttribute(md.conceals()));
-        md.version().ifPresent(v -> cw.visitAttribute(new VersionAttribute(v)));
-        md.mainClass().ifPresent(mc -> cw.visitAttribute(new MainClassAttribute(mc)));
 
-        // write the TargetPlatform attribute if have any of OS name/arch/version
+        // for tests: write the ModulePackages attribute when there are packages
+        // that aren't exported or open
+        Stream<String> exported = md.exports().stream()
+                .map(ModuleDescriptor.Exports::source);
+        Stream<String> open = md.opens().stream()
+                .map(ModuleDescriptor.Opens::source);
+        long exportedOrOpen = Stream.concat(exported, open).distinct().count();
+        if (md.packages().size() > exportedOrOpen)
+            cw.visitAttribute(new ModulePackagesAttribute(md.packages()));
+
+        // write ModuleMainClass if the module has a main class
+        md.mainClass().ifPresent(mc -> cw.visitAttribute(new ModuleMainClassAttribute(mc)));
+
+        // write ModuleTarget attribute if have any of OS name/arch/version
         String osName = md.osName().orElse(null);
         String osArch = md.osArch().orElse(null);
         String osVersion = md.osVersion().orElse(null);
         if (osName != null || osArch != null || osVersion != null) {
-            cw.visitAttribute(new TargetPlatformAttribute(osName,
-                                                          osArch,
-                                                          osVersion));
+            cw.visitAttribute(new ModuleTargetAttribute(osName, osArch, osVersion));
         }
 
         cw.visitEnd();
-
         return cw.toByteArray();
     }
 

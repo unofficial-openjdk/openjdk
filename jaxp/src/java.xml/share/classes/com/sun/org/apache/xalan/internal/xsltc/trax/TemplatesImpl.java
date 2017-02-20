@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
  */
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -32,20 +32,25 @@ import com.sun.org.apache.xalan.internal.xsltc.compiler.Constants;
 import com.sun.org.apache.xalan.internal.xsltc.compiler.util.ErrorMsg;
 import com.sun.org.apache.xalan.internal.xsltc.runtime.AbstractTranslet;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.io.NotSerializableException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.ObjectStreamField;
 import java.io.Serializable;
+import java.lang.RuntimePermission;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
+import java.lang.module.ModuleReader;
 import java.lang.reflect.Layer;
 import java.lang.reflect.Module;
 import java.security.AccessController;
+import java.security.CodeSigner;
+import java.security.CodeSource;
+import java.security.PermissionCollection;
 import java.security.PrivilegedAction;
+import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -165,18 +170,19 @@ public final class TemplatesImpl implements Templates, Serializable {
         };
 
     static final class TransletClassLoader extends ClassLoader {
-        private final Map<String,Class> _loadedExternalExtensionFunctions;
+        private final Map<String, Class<?>> _loadedExternalExtensionFunctions;
 
          TransletClassLoader(ClassLoader parent) {
              super(parent);
             _loadedExternalExtensionFunctions = null;
         }
 
-        TransletClassLoader(ClassLoader parent,Map<String, Class> mapEF) {
+        TransletClassLoader(ClassLoader parent, Map<String, Class<?>> mapEF) {
             super(parent);
             _loadedExternalExtensionFunctions = mapEF;
         }
 
+        @Override
         public Class<?> loadClass(String name) throws ClassNotFoundException {
             Class<?> ret = null;
             // The _loadedExternalExtensionFunctions will be empty when the
@@ -195,6 +201,10 @@ public final class TemplatesImpl implements Templates, Serializable {
          */
         Class defineClass(final byte[] b) {
             return defineClass(null, b, 0, b.length);
+        }
+
+        Class defineClass(final byte[] b, ProtectionDomain pd) {
+            return defineClass(null, b, 0, b.length, pd);
         }
     }
 
@@ -215,7 +225,7 @@ public final class TemplatesImpl implements Templates, Serializable {
     /**
      * Create an XSLTC template object from the translet class definition(s).
      */
-    protected TemplatesImpl(Class[] transletClasses, String transletName,
+    protected TemplatesImpl(Class<?>[] transletClasses, String transletName,
         Properties outputProperties, int indentNumber,
         TransformerFactoryImpl tfactory)
     {
@@ -403,10 +413,12 @@ public final class TemplatesImpl implements Templates, Serializable {
     private Module createModule(ModuleDescriptor descriptor, ClassLoader loader) {
         String mn = descriptor.name();
 
-        ModuleReference mref = new ModuleReference(descriptor, null, () -> {
-            IOException ioe = new IOException("<dynamic module>");
-            throw new UncheckedIOException(ioe);
-        });
+        ModuleReference mref = new ModuleReference(descriptor, null) {
+            @Override
+            public ModuleReader open() {
+                throw new UnsupportedOperationException();
+            }
+        };
 
         ModuleFinder finder = new ModuleFinder() {
             @Override
@@ -426,7 +438,7 @@ public final class TemplatesImpl implements Templates, Serializable {
         Layer bootLayer = Layer.boot();
 
         Configuration cf = bootLayer.configuration()
-                .resolveRequires(finder, ModuleFinder.of(), Set.of(mn));
+                .resolve(finder, ModuleFinder.of(), Set.of(mn));
 
         PrivilegedAction<Layer> pa = () -> bootLayer.defineModules(cf, name -> loader);
         Layer layer = AccessController.doPrivileged(pa);
@@ -471,25 +483,34 @@ public final class TemplatesImpl implements Templates, Serializable {
             String pn = _tfactory.getPackageName();
             assert pn != null && pn.length() > 0;
 
-            ModuleDescriptor descriptor
-                = new ModuleDescriptor.Builder(mn)
-                    .requires("java.xml")
-                    .exports(pn)
-                    .build();
+            ModuleDescriptor descriptor =
+                ModuleDescriptor.newModule(mn, Set.of(ModuleDescriptor.Modifier.SYNTHETIC))
+                                .requires("java.xml")
+                                .exports(pn)
+                                .build();
 
             Module m = createModule(descriptor, loader);
 
             // the module needs access to runtime classes
             Module thisModule = TemplatesImpl.class.getModule();
+            // the module also needs permission to access each package
+            // that is exported to it
+            PermissionCollection perms =
+                new RuntimePermission("*").newPermissionCollection();
             Arrays.asList(Constants.PKGS_USED_BY_TRANSLET_CLASSES).forEach(p -> {
                 thisModule.addExports(p, m);
+                perms.add(new RuntimePermission("accessClassInPackage." + p));
             });
 
-            // java.xml needs to instanitate the translet class
+            CodeSource codeSource = new CodeSource(null, (CodeSigner[])null);
+            ProtectionDomain pd = new ProtectionDomain(codeSource, perms,
+                                                       loader, null);
+
+            // java.xml needs to instantiate the translet class
             thisModule.addReads(m);
 
             for (int i = 0; i < classCount; i++) {
-                _class[i] = loader.defineClass(_bytecodes[i]);
+                _class[i] = loader.defineClass(_bytecodes[i], pd);
                 final Class superClass = _class[i].getSuperclass();
 
                 // Check if this is the main class

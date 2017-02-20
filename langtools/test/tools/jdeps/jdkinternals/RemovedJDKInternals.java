@@ -26,7 +26,7 @@
  * @bug 8153042
  * @summary Tests JDK internal APIs that have been removed.
  * @library ../lib
- * @build CompilerUtils JdepsUtil ModuleMetaData
+ * @build CompilerUtils JdepsRunner JdepsUtil ModuleMetaData
  * @modules jdk.jdeps/com.sun.tools.jdeps
  * @run testng RemovedJDKInternals
  */
@@ -63,7 +63,7 @@ public class RemovedJDKInternals {
         Path sunMiscSrc = Paths.get(TEST_SRC, "patches", JDK_UNSUPPORTED);
         Path patchDir = PATCHES_DIR.resolve(JDK_UNSUPPORTED);
         assertTrue(CompilerUtils.compile(sunMiscSrc, patchDir,
-                                         "-Xmodule:" + JDK_UNSUPPORTED));
+                                         "--patch-module", JDK_UNSUPPORTED + "=" + sunMiscSrc.toString()));
 
         // compile com.sun.image.codec.jpeg types
         Path codecSrc = Paths.get(TEST_SRC, "patches", "java.desktop");
@@ -123,7 +123,8 @@ public class RemovedJDKInternals {
 
     @Test
     public void checkReplacement() {
-        String[] output = JdepsUtil.jdeps("-jdkinternals", CLASSES_DIR.toString());
+        JdepsRunner jdeps = JdepsRunner.run("-jdkinternals", CLASSES_DIR.toString());
+        String[] output = jdeps.output();
         int i = 0;
         while (!output[i].contains("Suggested Replacement")) {
             i++;

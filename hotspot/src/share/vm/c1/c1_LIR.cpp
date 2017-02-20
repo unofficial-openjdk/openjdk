@@ -209,6 +209,17 @@ void LIR_Op2::verify() const {
   }
 
   if (TwoOperandLIRForm) {
+
+#ifdef ASSERT
+    bool threeOperandForm = false;
+#ifdef S390
+    // There are 3 operand shifts on S390 (see LIR_Assembler::shift_op()).
+    threeOperandForm =
+      code() == lir_shl ||
+      ((code() == lir_shr || code() == lir_ushr) && (result_opr()->is_double_cpu() || in_opr1()->type() == T_OBJECT));
+#endif
+#endif
+
     switch (code()) {
     case lir_add:
     case lir_sub:
@@ -222,13 +233,13 @@ void LIR_Op2::verify() const {
     case lir_logic_xor:
     case lir_shl:
     case lir_shr:
-      assert(in_opr1() == result_opr(), "opr1 and result must match");
+      assert(in_opr1() == result_opr() || threeOperandForm, "opr1 and result must match");
       assert(in_opr1()->is_valid() && in_opr2()->is_valid(), "must be valid");
       break;
 
     // special handling for lir_ushr because of write barriers
     case lir_ushr:
-      assert(in_opr1() == result_opr() || in_opr2()->is_constant(), "opr1 and result must match or shift count is constant");
+      assert(in_opr1() == result_opr() || in_opr2()->is_constant() || threeOperandForm, "opr1 and result must match or shift count is constant");
       assert(in_opr1()->is_valid() && in_opr2()->is_valid(), "must be valid");
       break;
 
@@ -684,6 +695,17 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
       break;
     }
 
+    case lir_fmad:
+    case lir_fmaf: {
+      assert(op->as_Op3() != NULL, "must be");
+      LIR_Op3* op3= (LIR_Op3*)op;
+      assert(op3->_info == NULL, "no info");
+      do_input(op3->_opr1);
+      do_input(op3->_opr2);
+      do_input(op3->_opr3);
+      do_output(op3->_result);
+      break;
+    }
 
 // LIR_OpJavaCall
     case lir_static_call:
@@ -1391,6 +1413,17 @@ void LIR_List::store_check(LIR_Opr object, LIR_Opr array, LIR_Opr tmp1, LIR_Opr 
   append(c);
 }
 
+void LIR_List::null_check(LIR_Opr opr, CodeEmitInfo* info, bool deoptimize_on_null) {
+  if (deoptimize_on_null) {
+    // Emit an explicit null check and deoptimize if opr is null
+    CodeStub* deopt = new DeoptimizeStub(info, Deoptimization::Reason_null_check, Deoptimization::Action_none);
+    cmp(lir_cond_equal, opr, LIR_OprFact::oopConst(NULL));
+    branch(lir_cond_equal, T_OBJECT, deopt);
+  } else {
+    // Emit an implicit null check
+    append(new LIR_Op1(lir_null_check, opr, info));
+  }
+}
 
 void LIR_List::cas_long(LIR_Opr addr, LIR_Opr cmp_value, LIR_Opr new_value,
                         LIR_Opr t1, LIR_Opr t2, LIR_Opr result) {
@@ -1663,6 +1696,8 @@ const char * LIR_Op::name() const {
      // LIR_Op3
      case lir_idiv:                  s = "idiv";          break;
      case lir_irem:                  s = "irem";          break;
+     case lir_fmad:                  s = "fmad";          break;
+     case lir_fmaf:                  s = "fmaf";          break;
      // LIR_OpJavaCall
      case lir_static_call:           s = "static";        break;
      case lir_optvirtual_call:       s = "optvirtual";    break;

@@ -38,6 +38,7 @@ import sun.jvm.hotspot.oops.*;
 import sun.jvm.hotspot.types.*;
 import sun.jvm.hotspot.utilities.*;
 import sun.jvm.hotspot.runtime.*;
+import sun.jvm.hotspot.classfile.*;
 
 /** <P> This class encapsulates the global state of the VM; the
     universe, object heap, interpreter, etc. It is a Singleton and
@@ -80,6 +81,7 @@ public class VM {
   private SymbolTable  symbols;
   private StringTable  strings;
   private SystemDictionary dict;
+  private ClassLoaderDataGraph cldGraph;
   private Threads      threads;
   private ObjectSynchronizer synchronizer;
   private JNIHandles   handles;
@@ -660,6 +662,13 @@ public class VM {
     return dict;
   }
 
+  public ClassLoaderDataGraph getClassLoaderDataGraph() {
+    if (cldGraph == null) {
+      cldGraph = new ClassLoaderDataGraph();
+    }
+    return cldGraph;
+  }
+
   public Threads     getThreads() {
     if (threads == null) {
       threads = new Threads();
@@ -859,6 +868,12 @@ public class VM {
   public boolean getUseTLAB() {
       Flag flag = getCommandLineFlag("UseTLAB");
       return (flag == null) ? false: flag.getBool();
+  }
+
+  public boolean getCommandLineBooleanFlag(String name) {
+    Flag flag = getCommandLineFlag(name);
+    return (flag == null) ? Boolean.FALSE:
+      (flag.getBool()? Boolean.TRUE: Boolean.FALSE);
   }
 
   // returns null, if not available.

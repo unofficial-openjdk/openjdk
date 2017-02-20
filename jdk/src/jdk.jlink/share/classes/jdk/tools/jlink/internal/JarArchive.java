@@ -30,9 +30,11 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.jar.JarFile;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import jdk.internal.util.jar.VersionedStream;
 import jdk.tools.jlink.internal.Archive.Entry.EntryType;
 
 /**
@@ -43,7 +45,7 @@ public abstract class JarArchive implements Archive {
     /**
      * An entry located in a jar file.
      */
-    private class JarEntry extends Entry {
+    public class JarEntry extends Entry {
 
         private final long size;
         private final ZipEntry entry;
@@ -70,12 +72,10 @@ public abstract class JarArchive implements Archive {
         }
     }
 
-    private static final String MODULE_INFO = "module-info.class";
-
     private final Path file;
     private final String moduleName;
-    // currently processed ZipFile
-    private ZipFile zipFile;
+    // currently processed JarFile
+    private JarFile jarFile;
 
     protected JarArchive(String mn, Path file) {
         Objects.requireNonNull(mn);
@@ -97,47 +97,39 @@ public abstract class JarArchive implements Archive {
     @Override
     public Stream<Entry> entries() {
         try {
-            if (zipFile == null) {
+            if (jarFile == null) {
                 open();
             }
         } catch (IOException ioe) {
             throw new UncheckedIOException(ioe);
         }
-        return zipFile.stream().map(this::toEntry).filter(n -> n != null);
+        return VersionedStream.stream(jarFile)
+                .filter(je -> !je.isDirectory())
+                .map(this::toEntry);
     }
 
     abstract EntryType toEntryType(String entryName);
 
     abstract String getFileName(String entryName);
 
-    private Entry toEntry(ZipEntry ze) {
-        String name = ze.getName();
-        String fn = getFileName(name);
-
-        if (ze.isDirectory() || fn.startsWith("_")) {
-            return null;
-        }
-
-        EntryType rt = toEntryType(name);
-
-        if (fn.equals(MODULE_INFO)) {
-            fn = moduleName + "/" + MODULE_INFO;
-        }
-        return new JarEntry(ze.getName(), fn, rt, zipFile, ze);
-    }
+    abstract Entry toEntry(ZipEntry ze);
 
     @Override
     public void close() throws IOException {
-        if (zipFile != null) {
-            zipFile.close();
+        if (jarFile != null) {
+            jarFile.close();
         }
     }
 
     @Override
     public void open() throws IOException {
-        if (zipFile != null) {
-            zipFile.close();
+        if (jarFile != null) {
+            jarFile.close();
         }
-        zipFile = new ZipFile(file.toFile());
+        jarFile = new JarFile(file.toFile(), true, ZipFile.OPEN_READ, JarFile.runtimeVersion());
+    }
+
+    protected JarFile getJarFile() {
+        return jarFile;
     }
 }

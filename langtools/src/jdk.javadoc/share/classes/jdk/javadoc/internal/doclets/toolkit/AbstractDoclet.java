@@ -40,7 +40,7 @@ import jdk.javadoc.internal.doclets.toolkit.builders.AbstractBuilder;
 import jdk.javadoc.internal.doclets.toolkit.builders.BuilderFactory;
 import jdk.javadoc.internal.doclets.toolkit.util.ClassTree;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
-import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
+import jdk.javadoc.internal.doclets.toolkit.util.UncheckedDocletException;
 import jdk.javadoc.internal.doclets.toolkit.util.InternalException;
 import jdk.javadoc.internal.doclets.toolkit.util.PackageListWriter;
 import jdk.javadoc.internal.doclets.toolkit.util.ResourceIOException;
@@ -100,8 +100,8 @@ public abstract class AbstractDoclet implements Doclet {
      */
     @Override
     public boolean run(DocletEnvironment docEnv) {
-        configuration = configuration();
-        configuration.docEnv = docEnv;
+        configuration = getConfiguration();
+        configuration.initConfiguration(docEnv);
         configuration.cmtUtils = new CommentUtils(configuration);
         configuration.utils = new Utils(configuration);
         utils = configuration.utils;
@@ -112,11 +112,13 @@ public abstract class AbstractDoclet implements Doclet {
             return false;
         }
 
-        boolean dumpOnError = false;  // set true to always show stack traces
-
         try {
-            startGeneration(docEnv);
-            return true;
+            try {
+                startGeneration(docEnv);
+                return true;
+            } catch (UncheckedDocletException e) {
+                throw (DocletException) e.getCause();
+            }
 
         } catch (DocFileIOException e) {
             switch (e.mode) {
@@ -128,16 +130,16 @@ public abstract class AbstractDoclet implements Doclet {
                     messages.error("doclet.exception.write.file",
                             e.fileName.getPath(), e.getCause());
             }
-            dumpStack(dumpOnError, e);
+            dumpStack(configuration.dumpOnError, e);
 
         } catch (ResourceIOException e) {
             messages.error("doclet.exception.read.resource",
                     e.resource.getPath(), e.getCause());
-            dumpStack(dumpOnError, e);
+            dumpStack(configuration.dumpOnError, e);
 
         } catch (SimpleDocletException e) {
             configuration.reporter.print(ERROR, e.getMessage());
-            dumpStack(dumpOnError, e);
+            dumpStack(configuration.dumpOnError, e);
 
         } catch (InternalException e) {
             configuration.reporter.print(ERROR, e.getMessage());
@@ -174,13 +176,12 @@ public abstract class AbstractDoclet implements Doclet {
         return SourceVersion.RELEASE_9;
     }
 
-
     /**
      * Create the configuration instance and returns it.
      *
      * @return the configuration of the doclet.
      */
-    public abstract Configuration configuration();
+    public abstract Configuration getConfiguration();
 
     /**
      * Start the generation of files. Call generate methods in the individual
@@ -192,7 +193,7 @@ public abstract class AbstractDoclet implements Doclet {
      * @throws DocletException if there is a problem while generating the documentation
      */
     private void startGeneration(DocletEnvironment docEnv) throws DocletException {
-        if (docEnv.getIncludedTypeElements().isEmpty()) {
+        if (configuration.getIncludedTypeElements().isEmpty()) {
             messages.error("doclet.No_Public_Classes_To_Document");
             return;
         }
@@ -266,10 +267,8 @@ public abstract class AbstractDoclet implements Doclet {
             throws DocletException {
         generateClassFiles(classtree);
         SortedSet<PackageElement> packages = new TreeSet<>(utils.makePackageComparator());
-        packages.addAll(configuration.getSpecifiedPackages());
-        configuration.modulePackages.values().stream().forEach(pset -> {
-            packages.addAll(pset);
-        });
+        packages.addAll(configuration.getSpecifiedPackageElements());
+        configuration.modulePackages.values().stream().forEach(packages::addAll);
         for (PackageElement pkg : packages) {
             generateClassFiles(utils.getAllClasses(pkg), classtree);
         }

@@ -35,7 +35,6 @@ import java.util.function.Supplier;
 
 import jdk.jshell.EvalException;
 import jdk.jshell.JShell;
-import jdk.jshell.PersistentSnippet;
 import jdk.jshell.SnippetEvent;
 import jdk.jshell.UnresolvedReferenceException;
 import jdk.jshell.VarSnippet;
@@ -88,7 +87,7 @@ public class IdGeneratorTest {
         try (JShell jShell = builder.build()) {
             List<SnippetEvent> eval = jShell.eval("int a, b;");
             checkIds(eval);
-            checkIds(jShell.drop((PersistentSnippet) eval.get(0).snippet()));
+            checkIds(jShell.drop(eval.get(0).snippet()));
         }
     }
 
@@ -99,19 +98,18 @@ public class IdGeneratorTest {
         }
     }
 
-    @Test(enabled = false) // TODO 8133507
     public void testIdInException() {
         JShell.Builder builder = getBuilder().idGenerator(((snippet, id) -> "custom" + id));
         try (JShell jShell = builder.build()) {
             EvalException evalException = (EvalException) jShell.eval("throw new Error();").get(0).exception();
             for (StackTraceElement ste : evalException.getStackTrace()) {
-                assertTrue(ste.getFileName().startsWith("custom"), "Not started with \"custom\": "
+                assertTrue(ste.getFileName().startsWith("#custom"), "Not started with \"#custom\": "
                         + ste.getFileName());
             }
             jShell.eval("void f() { g(); }");
             UnresolvedReferenceException unresolvedException = (UnresolvedReferenceException) jShell.eval("f();").get(0).exception();
             for (StackTraceElement ste : unresolvedException.getStackTrace()) {
-                assertTrue(ste.getFileName().startsWith("custom"), "Not started with \"custom\": "
+                assertTrue(ste.getFileName().startsWith("#custom"), "Not started with \"#custom\": "
                         + ste.getFileName());
             }
         }

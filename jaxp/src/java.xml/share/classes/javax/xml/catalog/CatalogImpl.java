@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -72,12 +73,9 @@ class CatalogImpl extends GroupEntry implements Catalog {
     //System Id for this catalog
     String systemId;
 
-    //The parent
-    CatalogImpl parent = null;
-
     /*
      A list of catalog entry files from the input, excluding the current catalog.
-     Paths in the List are normalized.
+     URIs in the List are verified during input validation or property retrieval.
      */
     List<String> inputFiles;
 
@@ -88,43 +86,44 @@ class CatalogImpl extends GroupEntry implements Catalog {
     SAXParser parser;
 
     /**
-     * Construct a Catalog with specified path.
+     * Construct a Catalog with specified URI.
      *
-     * @param file The path to a catalog file.
+     * @param uris the uri(s) to one or more catalogs
      * @throws CatalogException If an error happens while parsing the specified
      * catalog file.
      */
-    public CatalogImpl(CatalogFeatures f, String... file) throws CatalogException {
-        this(null, f, file);
+    public CatalogImpl(CatalogFeatures f, URI... uris) throws CatalogException {
+        this(null, f, uris);
     }
 
     /**
-     * Construct a Catalog with specified path.
+     * Construct a Catalog with specified URI.
      *
      * @param parent The parent catalog
-     * @param file The path to a catalog file.
+     * @param uris the uri(s) to one or more catalogs
      * @throws CatalogException If an error happens while parsing the specified
      * catalog file.
      */
-    public CatalogImpl(CatalogImpl parent, CatalogFeatures f, String... file) throws CatalogException {
-        super(CatalogEntryType.CATALOG);
+    public CatalogImpl(CatalogImpl parent, CatalogFeatures f, URI... uris) throws CatalogException {
+        super(CatalogEntryType.CATALOG, parent);
         if (f == null) {
             throw new NullPointerException(
                     formatMessage(CatalogMessages.ERR_NULL_ARGUMENT, new Object[]{"CatalogFeatures"}));
         }
 
-        if (file.length > 0) {
-            CatalogMessages.reportNPEOnNull("The path to the catalog file", file[0]);
-        }
-
-        init(parent, f);
+        init(f);
 
         //Path of catalog files
-        String[] catalogFile = file;
-        if (level == 0 && file.length == 0) {
+        String[] catalogFile = null;
+        if (level == 0 && uris.length == 0) {
             String files = features.get(Feature.FILES);
             if (files != null) {
-                catalogFile = files.split(";[ ]*");
+                catalogFile = files.split(";");
+            }
+        } else {
+            catalogFile = new String[uris.length];
+            for (int i=0; i<uris.length; i++) {
+                catalogFile[i] = uris[i].toASCIIString();
             }
         }
 
@@ -136,10 +135,10 @@ class CatalogImpl extends GroupEntry implements Catalog {
             int start = 0;
             URI uri = null;
             for (String temp : catalogFile) {
-                uri = getSystemId(temp);
+                uri = URI.create(temp);
                 start++;
                 if (verifyCatalogFile(uri)) {
-                    systemId = uri.toASCIIString();
+                    systemId = temp;
                     try {
                         baseURI = new URL(systemId);
                     } catch (MalformedURLException e) {
@@ -159,19 +158,34 @@ class CatalogImpl extends GroupEntry implements Catalog {
                     }
                 }
             }
-
-            if (systemId != null) {
-                parse(systemId);
-            }
         }
     }
 
-    private void init(CatalogImpl parent, CatalogFeatures f) {
-        this.parent = parent;
+    /**
+     * Loads the catalog
+     */
+    void load() {
+        if (systemId != null) {
+            parse(systemId);
+        }
+
+        //save this catalog before loading the next
+        loadedCatalogs.put(systemId, this);
+
+        //Load delegate and alternative catalogs if defer is false.
+        if (!isDeferred()) {
+           loadDelegateCatalogs();
+           loadNextCatalogs();
+        }
+    }
+
+    private void init(CatalogFeatures f) {
         if (parent == null) {
             level = 0;
         } else {
             level = parent.level + 1;
+            this.loadedCatalogs = parent.loadedCatalogs;
+            this.catalogsSearched = parent.catalogsSearched;
         }
         if (f == null) {
             this.features = CatalogFeatures.defaults();
@@ -196,11 +210,6 @@ class CatalogImpl extends GroupEntry implements Catalog {
         entries.stream().filter((entry) -> (entry.type == CatalogEntryType.GROUP)).forEach((entry) -> {
             ((GroupEntry) entry).reset();
         });
-
-        if (parent != null) {
-            this.loadedCatalogs = parent.loadedCatalogs;
-            this.catalogsSearched = parent.catalogsSearched;
-        }
     }
 
     /**
@@ -286,29 +295,6 @@ class CatalogImpl extends GroupEntry implements Catalog {
     }
 
     /**
-     * Resolves the specified file path to an absolute systemId. If it is
-     * relative, it shall be resolved using the base or user.dir property if
-     * base is not specified.
-     *
-     * @param file The specified file path
-     * @return The systemId of the file
-     * @throws CatalogException if the specified file path can not be converted
-     * to a system id
-     */
-    private URI getSystemId(String file) {
-        URI temp = null;
-
-        try {
-            temp = Util.verifyAndGetURI(file, baseURI);
-        } catch (MalformedURLException | URISyntaxException | IllegalArgumentException e) {
-            CatalogMessages.reportRunTimeError(CatalogMessages.ERR_INVALID_PATH,
-                    new Object[]{file}, e);
-        }
-
-        return temp;
-    }
-
-    /**
      * Returns a SAXParser instance
      * @return a SAXParser instance
      * @throws CatalogException if constructing a SAXParser failed
@@ -386,7 +372,7 @@ class CatalogImpl extends GroupEntry implements Catalog {
                 //Check the input list
                 if (c == null && inputFiles != null) {
                     while (c == null && inputFilesIndex < inputFiles.size()) {
-                        c = getCatalog(getSystemId(inputFiles.get(inputFilesIndex++)));
+                        c = getCatalog(URI.create(inputFiles.get(inputFilesIndex++)));
                     }
                 }
 
@@ -421,16 +407,16 @@ class CatalogImpl extends GroupEntry implements Catalog {
     void loadNextCatalogs() {
         //loads catalogs specified in nextCatalogs
         if (nextCatalogs != null) {
-            for (NextCatalog next : nextCatalogs) {
+            nextCatalogs.stream().forEach((next) -> {
                 getCatalog(next.getCatalogURI());
-            }
+            });
         }
 
         //loads catalogs from the input list
         if (inputFiles != null) {
-            for (String file : inputFiles) {
-                getCatalog(getSystemId(file));
-            }
+            inputFiles.stream().forEach((uri) -> {
+                getCatalog(URI.create(uri));
+            });
         }
     }
 
@@ -445,14 +431,13 @@ class CatalogImpl extends GroupEntry implements Catalog {
             return null;
         }
 
-        Catalog c = null;
-        String path = uri.toASCIIString();
+        CatalogImpl c = null;
 
         if (verifyCatalogFile(uri)) {
-            c = getLoadedCatalog(path);
+            c = getLoadedCatalog(uri.toASCIIString());
             if (c == null) {
-                c = new CatalogImpl(this, features, path);
-                saveLoadedCatalog(path, c);
+                c = new CatalogImpl(this, features, uri);
+                c.load();
             }
         }
         return c;
@@ -464,7 +449,7 @@ class CatalogImpl extends GroupEntry implements Catalog {
      * @param catalogId the catalogId associated with the Catalog object
      * @param c the Catalog to be saved
      */
-    void saveLoadedCatalog(String catalogId, Catalog c) {
+    void saveLoadedCatalog(String catalogId, CatalogImpl c) {
         loadedCatalogs.put(catalogId, c);
     }
 

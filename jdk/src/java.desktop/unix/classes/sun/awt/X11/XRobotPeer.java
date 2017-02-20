@@ -26,6 +26,8 @@ package sun.awt.X11;
 
 import java.awt.*;
 import java.awt.peer.*;
+import java.security.AccessController;
+import sun.security.action.GetPropertyAction;
 
 import sun.awt.AWTAccessor;
 import sun.awt.SunToolkit;
@@ -38,10 +40,11 @@ class XRobotPeer implements RobotPeer {
     static final boolean tryGtk;
     static {
         loadNativeLibraries();
-        tryGtk = Boolean.getBoolean("awt.robot.gtk");
+        tryGtk = Boolean.parseBoolean(
+                            AccessController.doPrivileged(
+                                    new GetPropertyAction("awt.robot.gtk", "true")
+                            ));
     }
-
-    private static boolean isGtkSupported =  false;
     private static volatile boolean useGtk;
     private X11GraphicsConfig   xgc = null;
 

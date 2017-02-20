@@ -1902,11 +1902,7 @@ public final class SunGraphics2D
             clipRegion = devClip;
         } else if (usrClip instanceof Rectangle2D) {
             clipState = CLIP_RECTANGULAR;
-            if (usrClip instanceof Rectangle) {
-                clipRegion = devClip.getIntersection((Rectangle)usrClip);
-            } else {
-                clipRegion = devClip.getIntersection(usrClip.getBounds());
-            }
+            clipRegion = devClip.getIntersection((Rectangle2D) usrClip);
         } else {
             PathIterator cpi = usrClip.getPathIterator(null);
             int box[] = new int[4];
@@ -3105,10 +3101,10 @@ public final class SunGraphics2D
             if (scaleX == 1 && scaleY == 1) {
                 return null;
             }
-            sx1 = Region.clipScale(sx1, scaleX);
-            sx2 = Region.clipScale(sx2, scaleX);
-            sy1 = Region.clipScale(sy1, scaleY);
-            sy2 = Region.clipScale(sy2, scaleY);
+            sx1 = Region.clipRound(sx1 * scaleX);
+            sx2 = Region.clipRound(sx2 * scaleX);
+            sy1 = Region.clipRound(sy1 * scaleY);
+            sy2 = Region.clipRound(sy2 * scaleY);
 
             AffineTransform tx = null;
             if (xform != null) {

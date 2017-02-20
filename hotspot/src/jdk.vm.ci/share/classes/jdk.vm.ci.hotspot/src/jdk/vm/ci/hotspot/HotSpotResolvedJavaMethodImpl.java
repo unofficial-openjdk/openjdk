@@ -24,15 +24,19 @@ package jdk.vm.ci.hotspot;
 
 import static jdk.vm.ci.hotspot.CompilerToVM.compilerToVM;
 import static jdk.vm.ci.hotspot.HotSpotJVMCIRuntime.runtime;
+import static jdk.vm.ci.hotspot.HotSpotModifiers.BRIDGE;
+import static jdk.vm.ci.hotspot.HotSpotModifiers.SYNTHETIC;
+import static jdk.vm.ci.hotspot.HotSpotModifiers.VARARGS;
+import static jdk.vm.ci.hotspot.HotSpotModifiers.jvmMethodModifiers;
 import static jdk.vm.ci.hotspot.HotSpotVMConfig.config;
 import static jdk.vm.ci.hotspot.UnsafeAccess.UNSAFE;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Executable;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,13 +46,11 @@ import jdk.vm.ci.meta.Constant;
 import jdk.vm.ci.meta.ConstantPool;
 import jdk.vm.ci.meta.DefaultProfilingInfo;
 import jdk.vm.ci.meta.ExceptionHandler;
-import jdk.vm.ci.meta.JavaConstant;
 import jdk.vm.ci.meta.JavaMethod;
 import jdk.vm.ci.meta.JavaType;
 import jdk.vm.ci.meta.LineNumberTable;
 import jdk.vm.ci.meta.Local;
 import jdk.vm.ci.meta.LocalVariableTable;
-import jdk.vm.ci.meta.ModifiersProvider;
 import jdk.vm.ci.meta.ProfilingInfo;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 import jdk.vm.ci.meta.ResolvedJavaType;
@@ -210,7 +212,7 @@ final class HotSpotResolvedJavaMethodImpl extends HotSpotMethod implements HotSp
 
     @Override
     public int getModifiers() {
-        return getAllModifiers() & ModifiersProvider.jvmMethodModifiers();
+        return getAllModifiers() & jvmMethodModifiers();
     }
 
     @Override
@@ -294,15 +296,6 @@ final class HotSpotResolvedJavaMethodImpl extends HotSpotMethod implements HotSp
      */
     public boolean isForceInline() {
         return (getFlags() & config().methodFlagsForceInline) != 0;
-    }
-
-    /**
-     * Returns true if this method has a {@code DontInline} annotation.
-     *
-     * @return true if DontInline annotation present, false otherwise
-     */
-    public boolean isDontInline() {
-        return (getFlags() & config().methodFlagsDontInline) != 0;
     }
 
     /**
@@ -428,13 +421,12 @@ final class HotSpotResolvedJavaMethodImpl extends HotSpotMethod implements HotSp
     public ProfilingInfo getProfilingInfo(boolean includeNormal, boolean includeOSR) {
         ProfilingInfo info;
 
-        if (methodData == null) {
+        if (Option.UseProfilingInformation.getBoolean() && methodData == null) {
             long metaspaceMethodData = UNSAFE.getAddress(metaspaceMethod + config().methodDataOffset);
             if (metaspaceMethodData != 0) {
                 methodData = new HotSpotMethodData(metaspaceMethodData, this);
                 String methodDataFilter = Option.TraceMethodDataFilter.getString();
                 if (methodDataFilter != null && this.format("%H.%n").contains(methodDataFilter)) {
-                    System.out.println("Raw method data for " + this.format("%H.%n(%p)") + ":");
                     System.out.println(methodData.toString());
                 }
             }
@@ -458,6 +450,23 @@ final class HotSpotResolvedJavaMethodImpl extends HotSpotMethod implements HotSp
     @Override
     public ConstantPool getConstantPool() {
         return constantPool;
+    }
+
+    @Override
+    public Parameter[] getParameters() {
+        Executable javaMethod = toJava();
+        if (javaMethod == null) {
+            return null;
+        }
+
+        java.lang.reflect.Parameter[] javaParameters = javaMethod.getParameters();
+        Parameter[] res = new Parameter[javaParameters.length];
+        for (int i = 0; i < res.length; i++) {
+            java.lang.reflect.Parameter src = javaParameters[i];
+            String paramName = src.isNamePresent() ? src.getName() : null;
+            res[i] = new Parameter(paramName, src.getModifiers(), this, i);
+        }
+        return res;
     }
 
     @Override
@@ -490,6 +499,19 @@ final class HotSpotResolvedJavaMethodImpl extends HotSpotMethod implements HotSp
         return javaMethod == null ? null : javaMethod.getAnnotation(annotationClass);
     }
 
+    public boolean isBridge() {
+        return (BRIDGE & getModifiers()) != 0;
+    }
+
+    @Override
+    public boolean isSynthetic() {
+        return (SYNTHETIC & getModifiers()) != 0;
+    }
+
+    public boolean isVarArgs() {
+        return (VARARGS & getModifiers()) != 0;
+    }
+
     public boolean isDefault() {
         if (isConstructor()) {
             return false;
@@ -517,13 +539,31 @@ final class HotSpotResolvedJavaMethodImpl extends HotSpotMethod implements HotSp
         return result;
     }
 
+    private static Method searchMethods(Method[] methods, String name, Class<?> returnType, Class<?>[] parameterTypes) {
+        for (Method m : methods) {
+            if (m.getName().equals(name) && returnType.equals(m.getReturnType()) && Arrays.equals(m.getParameterTypes(), parameterTypes)) {
+                return m;
+            }
+        }
+        return null;
+    }
+
     private Executable toJava() {
         if (toJavaCache != null) {
             return toJavaCache;
         }
         try {
             Class<?>[] parameterTypes = signatureToTypes();
-            Executable result = isConstructor() ? holder.mirror().getDeclaredConstructor(parameterTypes) : holder.mirror().getDeclaredMethod(name, parameterTypes);
+            Class<?> returnType = ((HotSpotResolvedJavaType) getSignature().getReturnType(holder).resolve(holder)).mirror();
+
+            Executable result;
+            if (isConstructor()) {
+                result = holder.mirror().getDeclaredConstructor(parameterTypes);
+            } else {
+                // Do not use Method.getDeclaredMethod() as it can return a bridge method
+                // when this.isBridge() is false and vice versa.
+                result = searchMethods(holder.mirror().getDeclaredMethods(), name, returnType, parameterTypes);
+            }
             toJavaCache = result;
             return result;
         } catch (NoSuchMethodException | NoClassDefFoundError e) {
@@ -533,10 +573,15 @@ final class HotSpotResolvedJavaMethodImpl extends HotSpotMethod implements HotSp
 
     @Override
     public boolean canBeInlined() {
-        if (isDontInline()) {
+        if (hasNeverInlineDirective()) {
             return false;
         }
-        return compilerToVM().canInlineMethod(this);
+        return compilerToVM().isCompilable(this);
+    }
+
+    @Override
+    public boolean hasNeverInlineDirective() {
+        return compilerToVM().hasNeverInlineDirective(this);
     }
 
     @Override
@@ -693,25 +738,8 @@ final class HotSpotResolvedJavaMethodImpl extends HotSpotMethod implements HotSp
         return UNSAFE.getChar(metaspaceMethod + config.methodIntrinsicIdOffset);
     }
 
-    @Override
-    public JavaConstant invoke(JavaConstant receiver, JavaConstant[] arguments) {
-        assert !isConstructor();
-        Method javaMethod = (Method) toJava();
-        javaMethod.setAccessible(true);
-
-        Object[] objArguments = new Object[arguments.length];
-        for (int i = 0; i < arguments.length; i++) {
-            objArguments[i] = HotSpotObjectConstantImpl.asBoxedValue(arguments[i]);
-        }
-        Object objReceiver = receiver != null && !receiver.isNull() ? ((HotSpotObjectConstantImpl) receiver).object() : null;
-
-        try {
-            Object objResult = javaMethod.invoke(objReceiver, objArguments);
-            return javaMethod.getReturnType() == void.class ? null : HotSpotObjectConstantImpl.forBoxedValue(getSignature().getReturnKind(), objResult);
-
-        } catch (IllegalAccessException | InvocationTargetException ex) {
-            throw new IllegalArgumentException(ex);
-        }
+    public boolean isIntrinsicCandidate() {
+        return (getFlags() & config().methodFlagsIntrinsicCandidate) != 0;
     }
 
     /**

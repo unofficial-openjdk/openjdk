@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -20,12 +18,16 @@
  *
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 
-/**
+/*
  * @test
  * @bug 8087112
  * @library /lib/testlibrary/
+ * @modules jdk.incubator.httpclient
+ *          java.logging
+ *          jdk.httpserver
  * @build jdk.testlibrary.SimpleSSLContext jdk.testlibrary.Utils
  * @compile ../../../../com/sun/net/httpserver/LogFilter.java
  * @compile ../../../../com/sun/net/httpserver/FileServerHandler.java
@@ -42,11 +44,14 @@
  * The tests are in Security.java and port number supplied in -Dport.number
  * and -Dport.number1 for tests that require a second free port
  */
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.io.*;
-import java.net.*;
 
 import jdk.testlibrary.OutputAnalyzer;
 import jdk.testlibrary.Utils;
@@ -55,6 +60,8 @@ import jdk.testlibrary.Utils;
  * Driver for tests
  */
 public class Driver {
+    // change the default value to "true" to get the subprocess traces.
+    final static boolean DEBUG = Boolean.parseBoolean(System.getProperty("test.debug", "false"));
 
     public static void main(String[] args) throws Throwable {
         System.out.println("Starting Driver");
@@ -72,12 +79,16 @@ public class Driver {
         Logger(String cmdLine, Process p, String dir) throws IOException {
             super();
             setDaemon(true);
-            cmdLine = "Command line = [" + cmdLine + "]";
+            cmdLine = "Command line = [" + cmdLine + "]\n";
             stdout = p.getInputStream();
             File f = File.createTempFile("debug", ".txt", new File(dir));
             ps = new FileOutputStream(f);
             ps.write(cmdLine.getBytes());
             ps.flush();
+            if (DEBUG) {
+                System.out.print(cmdLine);
+                System.out.flush();
+            }
         }
 
         public void run() {
@@ -85,6 +96,10 @@ public class Driver {
                 byte[] buf = new byte[128];
                 int c;
                 while ((c = stdout.read(buf)) != -1) {
+                    if (DEBUG) {
+                        System.out.write(buf, 0, c);
+                        System.out.flush();
+                    }
                     ps.write(buf, 0, c);
                     ps.flush();
                 }
@@ -112,9 +127,11 @@ public class Driver {
             cmd.add("-Dtest.src=" + testSrc);
             cmd.add("-Dtest.classes=" + testClasses);
             cmd.add("-Djava.security.manager");
+            cmd.add("--add-modules=jdk.incubator.httpclient");
             cmd.add("-Djava.security.policy=" + testSrc + sep + policy);
             cmd.add("-Dport.number=" + Integer.toString(Utils.getFreePort()));
             cmd.add("-Dport.number1=" + Integer.toString(Utils.getFreePort()));
+            cmd.add("-Djdk.httpclient.HttpClient.log=all,frames:all");
             cmd.add("-cp");
             cmd.add(testClassPath);
             cmd.add("Security");

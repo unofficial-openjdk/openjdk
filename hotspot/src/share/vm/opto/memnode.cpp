@@ -1112,7 +1112,7 @@ Node* LoadNode::Identity(PhaseGVN* phase) {
     for (DUIterator_Fast imax, i = region->fast_outs(imax); i < imax; i++) {
       Node* phi = region->fast_out(i);
       if (phi->is_Phi() && phi != mem &&
-          phi->as_Phi()->is_same_inst_field(this_type, this_iid, this_index, this_offset)) {
+          phi->as_Phi()->is_same_inst_field(this_type, (int)mem->_idx, this_iid, this_index, this_offset)) {
         return phi;
       }
     }
@@ -1395,7 +1395,7 @@ Node *LoadNode::split_through_phi(PhaseGVN *phase) {
     this_iid = base->_idx;
   }
   PhaseIterGVN* igvn = phase->is_IterGVN();
-  Node* phi = new PhiNode(region, this_type, NULL, this_iid, this_index, this_offset);
+  Node* phi = new PhiNode(region, this_type, NULL, mem->_idx, this_iid, this_index, this_offset);
   for (uint i = 1; i < region->req(); i++) {
     Node* x;
     Node* the_clone = NULL;
@@ -2717,9 +2717,9 @@ Node* ClearArrayNode::Identity(PhaseGVN* phase) {
 
 //------------------------------Idealize---------------------------------------
 // Clearing a short array is faster with stores
-Node *ClearArrayNode::Ideal(PhaseGVN *phase, bool can_reshape){
+Node *ClearArrayNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   // Already know this is a large node, do not try to ideal it
-  if (_is_large) return NULL;
+  if (!IdealizeClearArrayNode || _is_large) return NULL;
 
   const int unit = BytesPerLong;
   const TypeX* t = phase->type(in(2))->isa_intptr_t();

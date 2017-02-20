@@ -23,10 +23,9 @@
 
 /*
  * @test ReservedStackTest
- * @library /testlibrary
+ * @library /test/lib
  * @modules java.base/jdk.internal.misc
  * @modules java.base/jdk.internal.vm.annotation
- * @build jdk.test.lib.*
  * @run main/othervm -Xint ReservedStackTest
  * @run main/othervm -XX:-Inline -XX:CompileCommand=exclude,java/util/concurrent/locks/AbstractOwnableSynchronizer.setExclusiveOwnerThread ReservedStackTest
  */
@@ -200,7 +199,9 @@ public class ReservedStackTest {
             // corruptions are still possible.
             boolean supportedPlatform =
                 Platform.isAix() ||
-                (Platform.isLinux() && (Platform.isPPC() || Platform.isX64() || Platform.isX86())) ||
+                (Platform.isLinux() &&
+                  (Platform.isPPC() || Platform.isS390x() || Platform.isX64() ||
+                   Platform.isX86() || Platform.isAArch64())) ||
                 Platform.isOSX() ||
                 Platform.isSolaris();
             if (supportedPlatform && !result.contains("PASSED")) {

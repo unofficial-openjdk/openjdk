@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,18 +19,16 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /*
  * @test OverloadCompileQueueTest
  * @summary stressing code cache by overloading compile queues
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
  *
- * @ignore 8071905
- * @build compiler.codecache.stress.OverloadCompileQueueTest
+ * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions
@@ -67,9 +65,9 @@ public class OverloadCompileQueueTest implements Runnable {
             AVAILABLE_LEVELS = IntStream
                     .rangeClosed(LEVEL_SIMPLE, TIERED_STOP_AT_LEVEL)
                     .toArray();
-        } else if (Platform.isServer()) {
+        } else if (Platform.isServer() && !Platform.isEmulatedClient()) {
             AVAILABLE_LEVELS = new int[] { LEVEL_FULL_OPTIMIZATION };
-        } else if (Platform.isClient() || Platform.isMinimal()) {
+        } else if (Platform.isClient() || Platform.isMinimal() || Platform.isEmulatedClient()) {
             AVAILABLE_LEVELS = new int[] { LEVEL_SIMPLE };
         } else {
             throw new Error("TESTBUG: unknown VM: " + Platform.vmName);

@@ -230,6 +230,10 @@ void VM_Version::initialize() {
     FLAG_SET_DEFAULT(UseGHASHIntrinsics, false);
   }
 
+  if (FLAG_IS_DEFAULT(UseFMA)) {
+    FLAG_SET_DEFAULT(UseFMA, true);
+  }
+
   if (UseSHA) {
     warning("SHA instructions are not available on this CPU");
     FLAG_SET_DEFAULT(UseSHA, false);
@@ -274,7 +278,14 @@ void VM_Version::initialize() {
     }
     bool os_too_old = true;
 #ifdef AIX
-    if (os::Aix::os_version() >= 0x0701031e) { // at least AIX 7.1.3.30
+    // Actually, this is supported since AIX 7.1.. Unfortunately, this first
+    // contained bugs, so that it can only be enabled after AIX 7.1.3.30.
+    // The Java property os.version, which is used in RTM tests to decide
+    // whether the feature is available, only knows major and minor versions.
+    // We don't want to change this property, as user code might depend on it.
+    // So the tests can not check on subversion 3.30, and we only enable RTM
+    // with AIX 7.2.
+    if (os::Aix::os_version() >= 0x07020000) { // At least AIX 7.2.
       os_too_old = false;
     }
 #endif
@@ -316,7 +327,10 @@ void VM_Version::initialize() {
       warning("RTMAbortRatio must be in the range 0 to 100, resetting it to 50");
       FLAG_SET_DEFAULT(RTMAbortRatio, 50);
     }
-    guarantee(RTMSpinLoopCount > 0, "unsupported");
+    if (RTMSpinLoopCount < 0) {
+      warning("RTMSpinLoopCount must not be a negative value, resetting it to 0");
+      FLAG_SET_DEFAULT(RTMSpinLoopCount, 0);
+    }
 #else
     // Only C2 does RTM locking optimization.
     // Can't continue because UseRTMLocking affects UseBiasedLocking flag
@@ -644,7 +658,7 @@ void VM_Version::determine_features() {
   a->vpmsumb(VR0, VR1, VR2);                   // code[11] -> vpmsumb
   a->tcheck(0);                                // code[12] -> tcheck
   a->mfdscr(R0);                               // code[13] -> mfdscr
-  a->lxvd2x(VSR0, 0, R3_ARG1);                 // code[14] -> vsx
+  a->lxvd2x(VSR0, R3_ARG1);                    // code[14] -> vsx
   a->blr();
 
   // Emit function to set one cache line to zero. Emit function descriptor and get pointer to it.

@@ -664,7 +664,10 @@ class GraphKit : public Phase {
   // callee (with all arguments still on the stack).
   Node* null_check_receiver_before_call(ciMethod* callee) {
     assert(!callee->is_static(), "must be a virtual method");
-    const int nargs = callee->arg_size();
+    // Callsite signature can be different from actual method being called (i.e _linkTo* sites).
+    // Use callsite signature always.
+    ciMethod* declared_method = method()->get_method_at_bci(bci());
+    const int nargs = declared_method->arg_size();
     inc_sp(nargs);
     Node* n = null_check_receiver();
     dec_sp(nargs);
@@ -834,7 +837,6 @@ class GraphKit : public Phase {
   int next_monitor();
   Node* insert_mem_bar(int opcode, Node* precedent = NULL);
   Node* insert_mem_bar_volatile(int opcode, int alias_idx, Node* precedent = NULL);
-  void insert_store_load_for_barrier();
   // Optional 'precedent' is appended as an extra edge, to force ordering.
   FastLockNode* shared_lock(Node* obj);
   void shared_unlock(Node* box, Node* obj);

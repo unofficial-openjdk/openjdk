@@ -19,7 +19,6 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 package gc.g1.humongousObjects;
@@ -36,12 +35,9 @@ import java.util.stream.Collectors;
  * @test TestNoAllocationsInHRegions
  * @summary Checks that no additional allocations are made in humongous regions
  * @requires vm.gc.G1
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  * @modules java.management java.base/jdk.internal.misc
  * @build sun.hotspot.WhiteBox
- *        gc.testlibrary.Helpers
- *        gc.g1.humongousObjects.TestNoAllocationsInHRegions
- *
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *      sun.hotspot.WhiteBox$WhiteBoxPermission
  *

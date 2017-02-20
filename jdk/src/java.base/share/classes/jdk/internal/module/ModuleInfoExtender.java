@@ -53,37 +53,44 @@ public final class ModuleInfoExtender {
     // the input stream to read the original module-info.class
     private final InputStream in;
 
-    // the packages in the ConcealedPackages attribute
-    private Set<String> conceals;
+    // the packages in the ModulePackages attribute
+    private Set<String> packages;
 
-    // the value of the Version attribute
+    // the value for the module version in the Module attribute
     private Version version;
 
-    // the value of the MainClass attribute
+    // the value of the ModuleMainClass attribute
     private String mainClass;
 
-    // the values for the TargetPlatform attribute
+    // the values for the ModuleTarget attribute
     private String osName;
     private String osArch;
     private String osVersion;
 
-    // the hashes for the Hashes attribute
+    // the hashes for the ModuleHashes attribute
     private ModuleHashes hashes;
+
+    // the value of the ModuleResolution attribute
+    private ModuleResolution moduleResolution;
 
     private ModuleInfoExtender(InputStream in) {
         this.in = in;
     }
 
     /**
-     * Sets the set of packages for the ConcealedPackages attribute
+     * Sets the packages for the ModulePackages attribute
+     *
+     * @apiNote This method does not check that the package names are legal
+     * package names or that the set of packages is a super set of the
+     * packages in the module.
      */
-    public ModuleInfoExtender conceals(Set<String> packages) {
-        this.conceals = Collections.unmodifiableSet(packages);
+    public ModuleInfoExtender packages(Set<String> packages) {
+        this.packages = Collections.unmodifiableSet(packages);
         return this;
     }
 
     /**
-     * Sets the value of the Version attribute.
+     * Sets the value for the module version in the Module attribute
      */
     public ModuleInfoExtender version(Version version) {
         this.version = version;
@@ -91,7 +98,10 @@ public final class ModuleInfoExtender {
     }
 
     /**
-     * Sets the value of the MainClass attribute.
+     * Sets the value of the ModuleMainClass attribute.
+     *
+     * @apiNote This method does not check that the main class is a legal
+     * class name in a named package.
      */
     public ModuleInfoExtender mainClass(String mainClass) {
         this.mainClass = mainClass;
@@ -99,7 +109,7 @@ public final class ModuleInfoExtender {
     }
 
     /**
-     * Sets the values for the TargetPlatform attribute.
+     * Sets the values for the ModuleTarget attribute.
      */
     public ModuleInfoExtender targetPlatform(String osName,
                                              String osArch,
@@ -111,7 +121,7 @@ public final class ModuleInfoExtender {
     }
 
     /**
-     * The Hashes attribute will be emitted to the module-info with
+     * The ModuleHashes attribute will be emitted to the module-info with
      * the hashes encapsulated in the given {@code ModuleHashes}
      * object.
      */
@@ -121,8 +131,16 @@ public final class ModuleInfoExtender {
     }
 
     /**
+     * Sets the value for the ModuleResolution attribute.
+     */
+    public ModuleInfoExtender moduleResolution(ModuleResolution mres) {
+        this.moduleResolution = mres;
+        return this;
+    }
+
+    /**
      * A ClassVisitor that supports adding class file attributes. If an
-     * attribute already exists then the first occurence of the attribute
+     * attribute already exists then the first occurrence of the attribute
      * is replaced.
      */
     private static class AttributeAddingClassVisitor extends ClassVisitor {
@@ -163,6 +181,16 @@ public final class ModuleInfoExtender {
      * be discarded.
      */
     public void write(OutputStream out) throws IOException {
+        // emit to the output stream
+        out.write(toByteArray());
+    }
+
+    /**
+     * Returns the bytes of the modified module-info.class.
+     * Once this method has been called then the Extender object should
+     * be discarded.
+     */
+    public byte[] toByteArray() throws IOException {
         ClassWriter cw
             = new ClassWriter(ClassWriter.COMPUTE_MAXS + ClassWriter.COMPUTE_FRAMES);
 
@@ -171,34 +199,32 @@ public final class ModuleInfoExtender {
 
         ClassReader cr = new ClassReader(in);
 
-        if (conceals != null)
-            cv.addAttribute(new ConcealedPackagesAttribute(conceals));
-        if (version != null)
-            cv.addAttribute(new VersionAttribute(version));
+        if (packages != null)
+            cv.addAttribute(new ModulePackagesAttribute(packages));
         if (mainClass != null)
-            cv.addAttribute(new MainClassAttribute(mainClass));
+            cv.addAttribute(new ModuleMainClassAttribute(mainClass));
         if (osName != null || osArch != null || osVersion != null)
-            cv.addAttribute(new TargetPlatformAttribute(osName, osArch, osVersion));
+            cv.addAttribute(new ModuleTargetAttribute(osName, osArch, osVersion));
         if (hashes != null)
-            cv.addAttribute(new HashesAttribute(hashes));
+            cv.addAttribute(new ModuleHashesAttribute(hashes));
+        if (moduleResolution != null)
+            cv.addAttribute(new ModuleResolutionAttribute(moduleResolution.value()));
 
         List<Attribute> attrs = new ArrayList<>();
 
         // prototypes of attributes that should be parsed
-        attrs.add(new ModuleAttribute());
-        attrs.add(new ConcealedPackagesAttribute());
-        attrs.add(new VersionAttribute());
-        attrs.add(new MainClassAttribute());
-        attrs.add(new TargetPlatformAttribute());
-        attrs.add(new HashesAttribute());
+        attrs.add(new ModuleAttribute(version));
+        attrs.add(new ModulePackagesAttribute());
+        attrs.add(new ModuleMainClassAttribute());
+        attrs.add(new ModuleTargetAttribute());
+        attrs.add(new ModuleHashesAttribute());
 
         cr.accept(cv, attrs.toArray(new Attribute[0]), 0);
 
         // add any attributes that didn't replace previous attributes
         cv.finish();
 
-        // emit to the output stream
-        out.write(cw.toByteArray());
+        return cw.toByteArray();
     }
 
     /**

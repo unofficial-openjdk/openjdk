@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,12 +27,16 @@ package sun.tools.jar;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleDescriptor.Version;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+
+import jdk.internal.module.ModulePath;
+import jdk.internal.module.ModuleResolution;
 
 /**
  * Parser for GNU Style Options.
@@ -57,14 +61,14 @@ class GNUStyleOptions {
             // Main operations
             new Option(false, OptionType.MAIN_OPERATION, "--create", "-c") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
-                    if (tool.iflag || tool.tflag || tool.uflag || tool.xflag || tool.printModuleDescriptor)
+                    if (tool.iflag || tool.tflag || tool.uflag || tool.xflag || tool.dflag)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
                     tool.cflag = true;
                 }
             },
             new Option(true, OptionType.MAIN_OPERATION, "--generate-index", "-i") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
-                    if (tool.cflag || tool.tflag || tool.uflag || tool.xflag || tool.printModuleDescriptor)
+                    if (tool.cflag || tool.tflag || tool.uflag || tool.xflag || tool.dflag)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
                     tool.iflag = true;
                     tool.rootjar = arg;
@@ -72,21 +76,21 @@ class GNUStyleOptions {
             },
             new Option(false, OptionType.MAIN_OPERATION, "--list", "-t") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
-                    if (tool.cflag || tool.iflag || tool.uflag || tool.xflag || tool.printModuleDescriptor)
+                    if (tool.cflag || tool.iflag || tool.uflag || tool.xflag || tool.dflag)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
                     tool.tflag = true;
                 }
             },
             new Option(false, OptionType.MAIN_OPERATION, "--update", "-u") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
-                    if (tool.cflag || tool.iflag || tool.tflag || tool.xflag || tool.printModuleDescriptor)
+                    if (tool.cflag || tool.iflag || tool.tflag || tool.xflag || tool.dflag)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
                     tool.uflag = true;
                 }
             },
             new Option(false, OptionType.MAIN_OPERATION, "--extract", "-x") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
-                    if (tool.cflag || tool.iflag  || tool.tflag || tool.uflag || tool.printModuleDescriptor)
+                    if (tool.cflag || tool.iflag  || tool.tflag || tool.uflag || tool.dflag)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
                     tool.xflag = true;
                 }
@@ -95,7 +99,7 @@ class GNUStyleOptions {
                 void process(Main tool, String opt, String arg) throws BadArgs {
                     if (tool.cflag || tool.iflag  || tool.tflag || tool.uflag || tool.xflag)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
-                    tool.printModuleDescriptor = true;
+                    tool.dflag = true;
                 }
             },
 
@@ -153,9 +157,33 @@ class GNUStyleOptions {
                     for (String dir : dirs) {
                         paths[i++] = Paths.get(dir);
                     }
-                    jartool.moduleFinder = ModuleFinder.compose(jartool.moduleFinder,
-                                                                ModuleFinder.of(paths));
+                    jartool.moduleFinder = ModulePath.of(Runtime.version(), true, paths);
                 }
+            },
+            new Option(false, OptionType.CREATE_UPDATE, "--do-not-resolve-by-default") {
+                void process(Main jartool, String opt, String arg) {
+                    ModuleResolution mres = jartool.moduleResolution;
+                    jartool.moduleResolution = mres.withDoNotResolveByDefault();
+                }
+                boolean isExtra() { return true; }
+            },
+            new Option(true, OptionType.CREATE_UPDATE, "--warn-if-resolved") {
+                void process(Main jartool, String opt, String arg) throws BadArgs {
+                    ModuleResolution mres = ModuleResolution.empty();
+                    if (jartool.moduleResolution.doNotResolveByDefault()) {
+                        mres.withDoNotResolveByDefault();
+                    }
+                    if (arg.equals("deprecated")) {
+                        jartool.moduleResolution = mres.withDeprecated();
+                    } else if (arg.equals("deprecated-for-removal")) {
+                        jartool.moduleResolution = mres.withDeprecatedForRemoval();
+                    } else if (arg.equals("incubating")) {
+                        jartool.moduleResolution = mres.withIncubating();
+                    } else {
+                        throw new BadArgs("error.bad.reason", arg);
+                    }
+                }
+                boolean isExtra() { return true; }
             },
             new Option(false, OptionType.CREATE_UPDATE_INDEX, "--no-compress", "-0") {
                 void process(Main jartool, String opt, String arg) {
@@ -176,21 +204,25 @@ class GNUStyleOptions {
                 void process(Main jartool, String opt, String arg) throws BadArgs {
                     if (jartool.info == null) {
                         if (arg == null) {
-                            jartool.info = Main.Info.HELP;
+                            jartool.info = GNUStyleOptions::printHelp;  //  Main.Info.HELP;
                             return;
                         }
-
                         if (!arg.equals("compat"))
                             throw new BadArgs("error.illegal.option", arg).showUsage(true);
-
-                        jartool.info = Main.Info.COMPAT_HELP;
+                        // jartool.info = Main.Info.COMPAT_HELP;
+                        jartool.info = GNUStyleOptions::printCompatHelp;
                     }
+                }
+            },
+            new Option(false, OptionType.OTHER, "--help-extra") {
+                void process(Main jartool, String opt, String arg) throws BadArgs {
+                    jartool.info = GNUStyleOptions::printHelpExtra;
                 }
             },
             new Option(false, OptionType.OTHER, "--version") {
                 void process(Main jartool, String opt, String arg) {
                     if (jartool.info == null)
-                        jartool.info = Main.Info.VERSION;
+                        jartool.info = GNUStyleOptions::printVersion;
                 }
             }
     };
@@ -228,6 +260,8 @@ class GNUStyleOptions {
 
         boolean isHidden() { return false; }
 
+        boolean isExtra() { return false; }
+
         boolean matches(String opt) {
             for (String a : aliases) {
                 if (a.equals(opt)) {
@@ -247,13 +281,14 @@ class GNUStyleOptions {
     static int parseOptions(Main jartool, String[] args) throws BadArgs {
         int count = 0;
         if (args.length == 0) {
-            jartool.info = Main.Info.USAGE_SUMMARY;
+            jartool.info = GNUStyleOptions::printUsageTryHelp;  //  never be here
             return 0;
         }
 
         // process options
         for (; count < args.length; count++) {
-            if (args[count].charAt(0) != '-' || args[count].equals("-C"))
+            if (args[count].charAt(0) != '-' || args[count].equals("-C") ||
+                args[count].equals("--release"))
                 break;
 
             String name = args[count];
@@ -289,7 +324,15 @@ class GNUStyleOptions {
         throw new BadArgs("error.unrecognized.option", name).showUsage(true);
     }
 
-    static void printHelp(PrintStream out) {
+    static void printHelpExtra(PrintWriter out) {
+        printHelp0(out, true);
+    }
+
+    static void printHelp(PrintWriter out) {
+        printHelp0(out, false);
+    }
+
+    private static void printHelp0(PrintWriter out, boolean printExtra) {
         out.format("%s%n", Main.getMsg("main.help.preopt"));
         for (OptionType type : OptionType.values()) {
             boolean typeHeadingWritten = false;
@@ -302,6 +345,9 @@ class GNUStyleOptions {
                 if (o.isHidden() || name.equals("h")) {
                     continue;
                 }
+                if (o.isExtra() && !printExtra) {
+                    continue;
+                }
                 if (!typeHeadingWritten) {
                     out.format("%n%s%n", Main.getMsg("main.help.opt." + type.name));
                     typeHeadingWritten = true;
@@ -312,16 +358,15 @@ class GNUStyleOptions {
         out.format("%n%s%n%n", Main.getMsg("main.help.postopt"));
     }
 
-    static void printCompatHelp(PrintStream out) {
+    static void printCompatHelp(PrintWriter out) {
         out.format("%s%n", Main.getMsg("usage.compat"));
     }
 
-    static void printUsageSummary(PrintStream out) {
-        out.format("%s%n", Main.getMsg("main.usage.summary"));
+    static void printUsageTryHelp(PrintWriter out) {
         out.format("%s%n", Main.getMsg("main.usage.summary.try"));
     }
 
-    static void printVersion(PrintStream out) {
+    static void printVersion(PrintWriter out) {
         out.format("%s %s%n", "jar", System.getProperty("java.version"));
     }
 }

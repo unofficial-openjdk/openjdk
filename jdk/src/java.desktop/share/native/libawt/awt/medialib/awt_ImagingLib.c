@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -772,6 +772,7 @@ Java_sun_awt_image_ImagingLib_transformBI(JNIEnv *env, jobject this,
     mlib_image *src;
     mlib_image *dst;
     int i;
+    int j = 0;
     int retStatus = 1;
     mlib_status status;
     double *matrix;
@@ -822,6 +823,15 @@ Java_sun_awt_image_ImagingLib_transformBI(JNIEnv *env, jobject this,
     if (matrix == NULL) {
         /* out of memory error already thrown */
         return 0;
+    }
+
+    /* Check for invalid double value in transformation matrix */
+    for (j = 0; j < 6; j++) {
+
+        if (!(IS_FINITE(matrix[j]))) {
+            (*env)->ReleasePrimitiveArrayCritical(env, jmatrix, matrix, JNI_ABORT);
+            return 0;
+        }
     }
 
     if (s_printIt) {
@@ -980,6 +990,7 @@ Java_sun_awt_image_ImagingLib_transformRaster(JNIEnv *env, jobject this,
     mlib_image *src;
     mlib_image *dst;
     int i;
+    int j = 0;
     int retStatus = 1;
     mlib_status status;
     double *matrix;
@@ -1042,6 +1053,18 @@ Java_sun_awt_image_ImagingLib_transformRaster(JNIEnv *env, jobject this,
         free(srcRasterP);
         free(dstRasterP);
         return 0;
+    }
+
+    /* Check for invalid double value in transformation matrix */
+    for (j = 0; j < 6; j++) {
+
+        if (!(IS_FINITE(matrix[j]))) {
+            (*env)->ReleasePrimitiveArrayCritical(env, jmatrix, matrix, JNI_ABORT);
+            free(srcRasterP);
+            free(dstRasterP);
+
+            return 0;
+        }
     }
 
     if (s_printIt) {
@@ -2396,7 +2419,7 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
     case sun_awt_image_IntegerComponentRaster_TYPE_INT_8BIT_SAMPLES:
         if (!((rasterP->chanOffsets[0] == 0 || SAFE_TO_ALLOC_2(rasterP->chanOffsets[0], 4)) &&
               SAFE_TO_ALLOC_2(width, 4) &&
-              SAFE_TO_ALLOC_3(height, rasterP->scanlineStride, 4)))
+              SAFE_TO_ALLOC_3(rasterP->scanlineStride, height, 4)))
         {
             return -1;
         }
@@ -2405,7 +2428,7 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
 
         if (offset < 0 || offset >= dataSize ||
             width > rasterP->scanlineStride ||
-            height * rasterP->scanlineStride * 4 > dataSize - offset)
+            ((width + (height - 1) * rasterP->scanlineStride) * 4) > dataSize - offset)
         {
             // raster data buffer is too short
             return -1;
@@ -2423,7 +2446,7 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
         return 0;
     case sun_awt_image_IntegerComponentRaster_TYPE_BYTE_SAMPLES:
         if (!(SAFE_TO_ALLOC_2(width, rasterP->numBands) &&
-              SAFE_TO_ALLOC_2(height, rasterP->scanlineStride)))
+              SAFE_TO_ALLOC_2(rasterP->scanlineStride, height)))
         {
             return -1;
         }
@@ -2432,7 +2455,8 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
 
         if (offset < 0 || offset >= dataSize ||
             width * rasterP->numBands > rasterP->scanlineStride ||
-            height * rasterP->scanlineStride > dataSize - offset)
+            ((width * rasterP->numBands) +
+             (height - 1) * rasterP->scanlineStride) > dataSize - offset)
         {
             // raster data buffer is too short
             return -1;
@@ -2451,7 +2475,7 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
     case sun_awt_image_IntegerComponentRaster_TYPE_USHORT_SAMPLES:
         if (!((rasterP->chanOffsets[0] == 0 || SAFE_TO_ALLOC_2(rasterP->chanOffsets[0], 2)) &&
               SAFE_TO_ALLOC_3(width, rasterP->numBands, 2) &&
-              SAFE_TO_ALLOC_3(height, rasterP->scanlineStride, 2)))
+              SAFE_TO_ALLOC_3(rasterP->scanlineStride, height, 2)))
         {
               return -1;
         }
@@ -2460,7 +2484,8 @@ allocateRasterArray(JNIEnv *env, RasterS_t *rasterP,
 
         if (offset < 0 || offset >= dataSize ||
             width * rasterP->numBands > rasterP->scanlineStride ||
-            height * rasterP->scanlineStride * 2 > dataSize - offset)
+            (((width * rasterP->numBands) +
+             (height - 1) * rasterP->scanlineStride)) * 2 > dataSize - offset)
         {
             // raster data buffer is too short
              return -1;

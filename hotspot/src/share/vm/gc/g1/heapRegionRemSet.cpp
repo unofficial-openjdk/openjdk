@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@
 #include "memory/allocation.hpp"
 #include "memory/padded.inline.hpp"
 #include "oops/oop.inline.hpp"
-#include "runtime/atomic.inline.hpp"
+#include "runtime/atomic.hpp"
 #include "utilities/bitMap.inline.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/growableArray.hpp"
@@ -56,7 +56,7 @@ class PerRegionTable: public CHeapObj<mtGC> {
   PerRegionTable * _collision_list_next;
 
   // Global free list of PRTs
-  static PerRegionTable* _free_list;
+  static PerRegionTable* volatile _free_list;
 
 protected:
   // We need access in order to union things into the base table.
@@ -249,7 +249,7 @@ public:
   static void test_fl_mem_size();
 };
 
-PerRegionTable* PerRegionTable::_free_list = NULL;
+PerRegionTable* volatile PerRegionTable::_free_list = NULL;
 
 size_t OtherRegionsTable::_max_fine_entries = 0;
 size_t OtherRegionsTable::_mod_max_fine_entries_mask = 0;
@@ -711,29 +711,6 @@ void HeapRegionRemSet::setup_remset_size() {
   guarantee(G1RSetSparseRegionEntries > 0 && G1RSetRegionEntries > 0 , "Sanity");
 }
 
-#ifndef PRODUCT
-void HeapRegionRemSet::print() {
-  HeapRegionRemSetIterator iter(this);
-  size_t card_index;
-  while (iter.has_next(card_index)) {
-    HeapWord* card_start = _bot->address_for_index(card_index);
-    tty->print_cr("  Card " PTR_FORMAT, p2i(card_start));
-  }
-  if (iter.n_yielded() != occupied()) {
-    tty->print_cr("Yielded disagrees with occupied:");
-    tty->print_cr("  " SIZE_FORMAT_W(6) " yielded (" SIZE_FORMAT_W(6)
-                  " coarse, " SIZE_FORMAT_W(6) " fine).",
-                  iter.n_yielded(),
-                  iter.n_yielded_coarse(), iter.n_yielded_fine());
-    tty->print_cr("  " SIZE_FORMAT_W(6) " occ     (" SIZE_FORMAT_W(6)
-                           " coarse, " SIZE_FORMAT_W(6) " fine).",
-                  occupied(), occ_coarse(), occ_fine());
-  }
-  guarantee(iter.n_yielded() == occupied(),
-            "We should have yielded all the represented cards.");
-}
-#endif
-
 void HeapRegionRemSet::cleanup() {
   SparsePRT::cleanup_all();
 }
@@ -917,10 +894,6 @@ bool HeapRegionRemSetIterator::has_next(size_t& card_index) {
     // Otherwise...
     break;
   }
-  assert(ParallelGCThreads > 1 ||
-         n_yielded() == _hrrs->occupied(),
-         "Should have yielded all the cards in the rem set "
-         "(in the non-par case).");
   return false;
 }
 

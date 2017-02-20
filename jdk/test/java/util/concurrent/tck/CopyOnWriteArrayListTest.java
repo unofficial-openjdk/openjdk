@@ -36,7 +36,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -54,11 +53,26 @@ public class CopyOnWriteArrayListTest extends JSR166TestCase {
     }
 
     public static Test suite() {
-        return new TestSuite(CopyOnWriteArrayListTest.class);
+        class Implementation implements CollectionImplementation {
+            public Class<?> klazz() { return CopyOnWriteArrayList.class; }
+            public List emptyCollection() { return new CopyOnWriteArrayList(); }
+            public Object makeElement(int i) { return i; }
+            public boolean isConcurrent() { return true; }
+            public boolean permitsNulls() { return true; }
+        }
+        class SubListImplementation extends Implementation {
+            public List emptyCollection() {
+                return super.emptyCollection().subList(0, 0);
+            }
+        }
+        return newTestSuite(
+                CopyOnWriteArrayListTest.class,
+                CollectionTest.testSuite(new Implementation()),
+                CollectionTest.testSuite(new SubListImplementation()));
     }
 
     static CopyOnWriteArrayList<Integer> populatedArray(int n) {
-        CopyOnWriteArrayList<Integer> a = new CopyOnWriteArrayList<Integer>();
+        CopyOnWriteArrayList<Integer> a = new CopyOnWriteArrayList<>();
         assertTrue(a.isEmpty());
         for (int i = 0; i < n; i++)
             a.add(i);
@@ -68,7 +82,7 @@ public class CopyOnWriteArrayListTest extends JSR166TestCase {
     }
 
     static CopyOnWriteArrayList<Integer> populatedArray(Integer[] elements) {
-        CopyOnWriteArrayList<Integer> a = new CopyOnWriteArrayList<Integer>();
+        CopyOnWriteArrayList<Integer> a = new CopyOnWriteArrayList<>();
         assertTrue(a.isEmpty());
         for (int i = 0; i < elements.length; i++)
             a.add(elements[i]);

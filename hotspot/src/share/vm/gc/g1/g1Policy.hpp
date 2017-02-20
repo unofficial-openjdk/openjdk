@@ -119,6 +119,8 @@ public:
   virtual void record_full_collection_start() = 0;
   virtual void record_full_collection_end() = 0;
 
+  virtual jlong collection_pause_end_millis() = 0;
+
   // Must currently be called while the world is stopped.
   virtual void record_concurrent_mark_init_end(double mark_init_elapsed_time_ms) = 0;
 
@@ -181,6 +183,9 @@ public:
   virtual void note_stop_adding_survivor_regions() = 0;
 
   virtual void record_age_table(AgeTable* age_table) = 0;
+  virtual void print_age_table() = 0;
+protected:
+  virtual size_t desired_survivor_size() const = 0;
 };
 
 #endif // SHARE_VM_GC_G1_G1POLICY_HPP

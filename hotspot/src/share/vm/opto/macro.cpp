@@ -426,7 +426,7 @@ static Node *scan_mem_chain(Node *mem, int alias_idx, int offset, Node *start_me
 
 // Generate loads from source of the arraycopy for fields of
 // destination needed at a deoptimization point
-Node* PhaseMacroExpand::make_arraycopy_load(ArrayCopyNode* ac, intptr_t offset, Node* ctl, BasicType ft, const Type *ftype, AllocateNode *alloc) {
+Node* PhaseMacroExpand::make_arraycopy_load(ArrayCopyNode* ac, intptr_t offset, Node* ctl, Node* mem, BasicType ft, const Type *ftype, AllocateNode *alloc) {
   BasicType bt = ft;
   const Type *type = ftype;
   if (ft == T_NARROWOOP) {
@@ -438,14 +438,7 @@ Node* PhaseMacroExpand::make_arraycopy_load(ArrayCopyNode* ac, intptr_t offset, 
     Node* base = ac->in(ArrayCopyNode::Src)->in(AddPNode::Base);
     Node* adr = _igvn.transform(new AddPNode(base, base, MakeConX(offset)));
     const TypePtr* adr_type = _igvn.type(base)->is_ptr()->add_offset(offset);
-    Node* m = ac->in(TypeFunc::Memory);
-    while (m->is_MergeMem()) {
-      m = m->as_MergeMem()->memory_at(C->get_alias_index(adr_type));
-      if (m->is_Proj() && m->in(0)->is_MemBar()) {
-        m = m->in(0)->in(TypeFunc::Memory);
-      }
-    }
-    res = LoadNode::make(_igvn, ctl, m, adr, adr_type, type, bt, MemNode::unordered, LoadNode::Pinned);
+    res = LoadNode::make(_igvn, ctl, mem, adr, adr_type, type, bt, MemNode::unordered, LoadNode::Pinned);
   } else {
     if (ac->modifies(offset, offset, &_igvn, true)) {
       assert(ac->in(ArrayCopyNode::Dest) == alloc->result_cast(), "arraycopy destination should be allocation's result");
@@ -460,8 +453,7 @@ Node* PhaseMacroExpand::make_arraycopy_load(ArrayCopyNode* ac, intptr_t offset, 
       Node* base = ac->in(ArrayCopyNode::Src);
       Node* adr = _igvn.transform(new AddPNode(base, base, off));
       const TypePtr* adr_type = _igvn.type(base)->is_ptr()->add_offset(offset);
-      Node* m = ac->in(TypeFunc::Memory);
-      res = LoadNode::make(_igvn, ctl, m, adr, adr_type, type, bt, MemNode::unordered, LoadNode::Pinned);
+      res = LoadNode::make(_igvn, ctl, mem, adr, adr_type, type, bt, MemNode::unordered, LoadNode::Pinned);
     }
   }
   if (res != NULL) {
@@ -491,7 +483,7 @@ Node *PhaseMacroExpand::value_from_mem_phi(Node *mem, BasicType ft, const Type *
   for (DUIterator_Fast kmax, k = region->fast_outs(kmax); k < kmax; k++) {
     Node* phi = region->fast_out(k);
     if (phi->is_Phi() && phi != mem &&
-        phi->as_Phi()->is_same_inst_field(phi_type, instance_id, alias_idx, offset)) {
+        phi->as_Phi()->is_same_inst_field(phi_type, (int)mem->_idx, instance_id, alias_idx, offset)) {
       return phi;
     }
   }
@@ -510,7 +502,7 @@ Node *PhaseMacroExpand::value_from_mem_phi(Node *mem, BasicType ft, const Type *
   GrowableArray <Node *> values(length, length, NULL, false);
 
   // create a new Phi for the value
-  PhiNode *phi = new PhiNode(mem->in(0), phi_type, NULL, instance_id, alias_idx, offset);
+  PhiNode *phi = new PhiNode(mem->in(0), phi_type, NULL, mem->_idx, instance_id, alias_idx, offset);
   transform_later(phi);
   value_phis->push(phi, mem->_idx);
 
@@ -550,7 +542,7 @@ Node *PhaseMacroExpand::value_from_mem_phi(Node *mem, BasicType ft, const Type *
         assert(false, "Object is not scalar replaceable if a LoadStore node accesses its field");
         return NULL;
       } else if (val->is_ArrayCopy()) {
-        Node* res = make_arraycopy_load(val->as_ArrayCopy(), offset, val->in(0), ft, phi_type, alloc);
+        Node* res = make_arraycopy_load(val->as_ArrayCopy(), offset, val->in(0), val->in(TypeFunc::Memory), ft, phi_type, alloc);
         if (res == NULL) {
           return NULL;
         }
@@ -663,11 +655,13 @@ Node *PhaseMacroExpand::value_from_mem(Node *sfpt_mem, Node *sfpt_ctl, BasicType
       }
     } else if (mem->is_ArrayCopy()) {
       Node* ctl = mem->in(0);
+      Node* m = mem->in(TypeFunc::Memory);
       if (sfpt_ctl->is_Proj() && sfpt_ctl->as_Proj()->is_uncommon_trap_proj(Deoptimization::Reason_none)) {
         // pin the loads in the uncommon trap path
         ctl = sfpt_ctl;
+        m = sfpt_mem;
       }
-      return make_arraycopy_load(mem->as_ArrayCopy(), offset, ctl, ft, ftype, alloc);
+      return make_arraycopy_load(mem->as_ArrayCopy(), offset, ctl, m, ft, ftype, alloc);
     }
   }
   // Something go wrong.
@@ -978,6 +972,17 @@ bool PhaseMacroExpand::scalar_replacement(AllocateNode *alloc, GrowableArray <Sa
   return true;
 }
 
+static void disconnect_projections(MultiNode* n, PhaseIterGVN& igvn) {
+  Node* ctl_proj = n->proj_out(TypeFunc::Control);
+  Node* mem_proj = n->proj_out(TypeFunc::Memory);
+  if (ctl_proj != NULL) {
+    igvn.replace_node(ctl_proj, n->in(0));
+  }
+  if (mem_proj != NULL) {
+    igvn.replace_node(mem_proj, n->in(TypeFunc::Memory));
+  }
+}
+
 // Process users of eliminated allocation.
 void PhaseMacroExpand::process_users_of_allocation(CallNode *alloc) {
   Node* res = alloc->result_cast();
@@ -1008,13 +1013,13 @@ void PhaseMacroExpand::process_users_of_allocation(CallNode *alloc) {
             // Disconnect ArrayCopy node
             ArrayCopyNode* ac = n->as_ArrayCopy();
             assert(ac->is_clonebasic(), "unexpected array copy kind");
-            Node* ctl_proj = ac->proj_out(TypeFunc::Control);
-            Node* mem_proj = ac->proj_out(TypeFunc::Memory);
-            if (ctl_proj != NULL) {
-              _igvn.replace_node(ctl_proj, n->in(0));
-            }
-            if (mem_proj != NULL) {
-              _igvn.replace_node(mem_proj, n->in(TypeFunc::Memory));
+            Node* membar_after = ac->proj_out(TypeFunc::Control)->unique_ctrl_out();
+            disconnect_projections(ac, _igvn);
+            assert(alloc->in(0)->is_Proj() && alloc->in(0)->in(0)->Opcode() == Op_MemBarCPUOrder, "mem barrier expected before allocation");
+            Node* membar_before = alloc->in(0)->in(0);
+            disconnect_projections(membar_before->as_MemBar(), _igvn);
+            if (membar_after->is_MemBar()) {
+              disconnect_projections(membar_after->as_MemBar(), _igvn);
             }
           } else {
             eliminate_card_mark(n);
@@ -1947,7 +1952,7 @@ Node* PhaseMacroExpand::prefetch_allocation(Node* i_o, Node*& needgc_false,
       i_o = pf_phi_abio;
    } else if( UseTLAB && AllocatePrefetchStyle == 3 ) {
       // Insert a prefetch instruction for each allocation.
-      // This code is used for SPARC with BIS.
+      // This code is used to generate 1 prefetch instruction per cache line.
 
       // Generate several prefetch instructions.
       uint lines = (length != NULL) ? AllocatePrefetchLines : AllocateInstancePrefetchLines;
@@ -1960,11 +1965,8 @@ Node* PhaseMacroExpand::prefetch_allocation(Node* i_o, Node*& needgc_false,
       transform_later(cache_adr);
       cache_adr = new CastP2XNode(needgc_false, cache_adr);
       transform_later(cache_adr);
-      // For BIS instructions to be emitted, the address must be aligned at cache line size.
-      // (The VM sets AllocatePrefetchStepSize to the cache line size, unless a value is
-      // specified at the command line.) If the address is not aligned at cache line size
-      // boundary, a standard store instruction is triggered (instead of the BIS). For the
-      // latter, 8-byte alignment is necessary.
+      // Address is aligned to execute prefetch to the beginning of cache line size
+      // (it is important when BIS instruction is used on SPARC as prefetch).
       Node* mask = _igvn.MakeConX(~(intptr_t)(step_size-1));
       cache_adr = new AndXNode(cache_adr, mask);
       transform_later(cache_adr);

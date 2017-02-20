@@ -182,7 +182,9 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
      * @see VisibleMemberMap
      */
     public SortedSet<Element> members(VisibleMemberMap.Kind type) {
-        return visibleMemberMaps.get(type).getLeafClassMembers();
+        TreeSet<Element> out = new TreeSet<>(comparator);
+        out.addAll(visibleMemberMaps.get(type).getLeafMembers());
+        return out;
     }
 
     /**
@@ -336,7 +338,7 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
      */
     private void buildSummary(MemberSummaryWriter writer,
             VisibleMemberMap visibleMemberMap, LinkedList<Content> summaryTreeList) {
-        SortedSet<Element> members = visibleMemberMap.getLeafClassMembers();
+        SortedSet<Element> members = asSortedSet(visibleMemberMap.getLeafMembers());
         if (!members.isEmpty()) {
             List<Content> tableContents = new LinkedList<>();
             int counter = 0;
@@ -386,8 +388,8 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
         CommentUtils cmtutils = configuration.cmtUtils;
         final boolean isSetter = isSetter(member);
         final boolean isGetter = isGetter(member);
-        List<DocTree> firstSentence = new ArrayList<>();
-        List<DocTree> bodyTags = new ArrayList<>();
+
+        List<DocTree> fullBody = new ArrayList<>();
         List<DocTree> blockTags = new ArrayList<>();
         if (isGetter || isSetter) {
             //add "[GS]ets the value of the property PROPERTY_NAME."
@@ -395,21 +397,21 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
                 String text = MessageFormat.format(
                         configuration.getText("doclet.PropertySetterWithName"),
                         utils.propertyName((ExecutableElement)member));
-                firstSentence.addAll(cmtutils.makeFirstSentenceTree(text));
+                fullBody.addAll(cmtutils.makeFirstSentenceTree(text));
             }
             if (isGetter) {
                 String text = MessageFormat.format(
                         configuration.getText("doclet.PropertyGetterWithName"),
                         utils.propertyName((ExecutableElement) member));
-                firstSentence.addAll(cmtutils.makeFirstSentenceTree(text));
+                fullBody.addAll(cmtutils.makeFirstSentenceTree(text));
             }
             List<? extends DocTree> propertyTags = utils.getBlockTags(property, "propertyDescription");
             if (propertyTags.isEmpty()) {
-                List<? extends DocTree> comment = utils.getBody(property);
+                List<? extends DocTree> comment = utils.getFullBody(property);
                 blockTags.addAll(cmtutils.makePropertyDescriptionTree(comment));
             }
         } else {
-            firstSentence.addAll(utils.getBody(property));
+            fullBody.addAll(utils.getFullBody(property));
         }
 
         // copy certain tags
@@ -452,7 +454,7 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
                 blockTags.add(cmtutils.makeSeeTree(sb.toString(), setter));
             }
         }
-        cmtutils.setDocCommentTree(member, firstSentence, bodyTags, blockTags, utils);
+        cmtutils.setDocCommentTree(member, fullBody, blockTags, utils);
     }
 
     /**
@@ -492,7 +494,7 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
             if (inhclass == typeElement) {
                 continue;
             }
-            SortedSet<Element> inhmembers = visibleMemberMap.getMembersFor(inhclass);
+            SortedSet<Element> inhmembers = asSortedSet(visibleMemberMap.getMembers(inhclass));
             if (!inhmembers.isEmpty()) {
                 Content inheritedTree = writer.getInheritedSummaryHeader(inhclass);
                 Content linksTree = writer.getInheritedSummaryLinksTree();
@@ -527,9 +529,7 @@ public class MemberSummaryBuilder extends AbstractMemberBuilder {
             buildInheritedSummary(writer, visibleMemberMap, summaryTreeList);
         if (!summaryTreeList.isEmpty()) {
             Content memberTree = writer.getMemberSummaryHeader(typeElement, memberSummaryTree);
-            summaryTreeList.stream().forEach((aSummaryTreeList) -> {
-                memberTree.addContent(aSummaryTreeList);
-            });
+            summaryTreeList.stream().forEach(memberTree::addContent);
             writer.addMemberTree(memberSummaryTree, memberTree);
         }
     }

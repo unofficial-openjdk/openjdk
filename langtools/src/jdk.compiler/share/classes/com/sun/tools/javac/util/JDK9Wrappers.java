@@ -25,6 +25,7 @@
 
 package com.sun.tools.javac.util;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
@@ -85,6 +86,58 @@ public class JDK9Wrappers {
     }
 
     /**
+     * Wrapper class for java.lang.module.ModuleDescriptor and ModuleDescriptor.Version.
+     */
+    public static class ModuleDescriptor {
+        public static class Version {
+            public static final String CLASSNAME = "java.lang.module.ModuleDescriptor$Version";
+            private final Object theRealVersion;
+
+            private Version(Object version) {
+                this.theRealVersion = version;
+            }
+
+            public static Version parse(String v) {
+                try {
+                    init();
+                    Object result = parseMethod.invoke(null, v);
+                    Version version = new Version(result);
+                    return version;
+                } catch (InvocationTargetException ex) {
+                    if (ex.getCause() instanceof IllegalArgumentException) {
+                        throw (IllegalArgumentException) ex.getCause();
+                    } else {
+                        throw new Abort(ex);
+                    }
+                } catch (IllegalAccessException | IllegalArgumentException | SecurityException ex) {
+                    throw new Abort(ex);
+                }
+            }
+
+            @Override
+            public String toString() {
+                return theRealVersion.toString();
+            }
+
+            // -----------------------------------------------------------------------------------------
+
+            private static Class<?> versionClass = null;
+            private static Method parseMethod = null;
+
+            private static void init() {
+                if (versionClass == null) {
+                    try {
+                        versionClass = Class.forName(CLASSNAME, false, null);
+                        parseMethod = versionClass.getDeclaredMethod("parse", String.class);
+                    } catch (ClassNotFoundException | NoSuchMethodException | SecurityException ex) {
+                        throw new Abort(ex);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Wrapper class for java.lang.module.ModuleFinder.
      */
     public static class ModuleFinder {
@@ -130,6 +183,85 @@ public class JDK9Wrappers {
     }
 
     /**
+     * Wrapper class for java.lang.reflect.Module. To materialize a handle use the static factory
+     * methods Module#getModule(Class<?>) or Module#getUnnamedModule(ClassLoader).
+     */
+    public static class Module {
+
+        private final Object theRealModule;
+
+        private Module(Object module) {
+            this.theRealModule = module;
+            init();
+        }
+
+        public static Module getModule(Class<?> clazz) {
+            try {
+                init();
+                Object result = getModuleMethod.invoke(clazz, new Object[0]);
+                return new Module(result);
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+                    | SecurityException ex) {
+                throw new Abort(ex);
+            }
+        }
+
+        public static Module getUnnamedModule(ClassLoader classLoader) {
+            try {
+                init();
+                Object result = getUnnamedModuleMethod.invoke(classLoader, new Object[0]);
+                return new Module(result);
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException
+                    | SecurityException ex) {
+                throw new Abort(ex);
+            }
+        }
+
+        public Module addExports(String pn, Module other) {
+            try {
+                addExportsMethod.invoke(theRealModule, new Object[] { pn, other.theRealModule});
+            } catch (IllegalAccessException | InvocationTargetException ex) {
+                throw new Abort(ex);
+            }
+            return this;
+        }
+
+        public Module addUses(Class<?> st) {
+            try {
+                addUsesMethod.invoke(theRealModule, new Object[] { st });
+            } catch (IllegalAccessException | InvocationTargetException ex) {
+                throw new Abort(ex);
+            }
+            return this;
+        }
+
+        // -----------------------------------------------------------------------------------------
+        // on java.lang.reflect.Module
+        private static Method addExportsMethod = null;
+        // on java.lang.reflect.Module
+        private static Method addUsesMethod = null;
+        // on java.lang.Class
+        private static Method getModuleMethod;
+        // on java.lang.ClassLoader
+        private static Method getUnnamedModuleMethod;
+
+        private static void init() {
+            if (addExportsMethod == null) {
+                try {
+                    Class<?> moduleClass = Class.forName("java.lang.reflect.Module", false, null);
+                    addUsesMethod = moduleClass.getDeclaredMethod("addUses", new Class<?>[] { Class.class });
+                    addExportsMethod = moduleClass.getDeclaredMethod("addExports",
+                                                        new Class<?>[] { String.class, moduleClass });
+                    getModuleMethod = Class.class.getDeclaredMethod("getModule", new Class<?>[0]);
+                    getUnnamedModuleMethod = ClassLoader.class.getDeclaredMethod("getUnnamedModule", new Class<?>[0]);
+                } catch (ClassNotFoundException | NoSuchMethodException | SecurityException ex) {
+                    throw new Abort(ex);
+                }
+            }
+        }
+    }
+
+    /**
      * Wrapper class for java.lang.module.Configuration.
      */
     public static final class Configuration {
@@ -140,12 +272,12 @@ public class JDK9Wrappers {
             init();
         }
 
-        public Configuration resolveRequiresAndUses(
+        public Configuration resolveAndBind(
                 ModuleFinder beforeFinder,
                 ModuleFinder afterFinder,
                 Collection<String> roots) {
             try {
-                Object result = resolveRequiresAndUsesMethod.invoke(theRealConfiguration,
+                Object result = resolveAndBindMethod.invoke(theRealConfiguration,
                                     beforeFinder.theRealModuleFinder,
                                     afterFinder.theRealModuleFinder,
                                     roots
@@ -161,7 +293,7 @@ public class JDK9Wrappers {
         // -----------------------------------------------------------------------------------------
 
         private static Class<?> configurationClass = null;
-        private static Method resolveRequiresAndUsesMethod;
+        private static Method resolveAndBindMethod;
 
         static final Class<?> getConfigurationClass() {
             init();
@@ -173,7 +305,7 @@ public class JDK9Wrappers {
                 try {
                     configurationClass = Class.forName("java.lang.module.Configuration", false, null);
                     Class<?> moduleFinderInterface = ModuleFinder.getModuleFinderClass();
-                    resolveRequiresAndUsesMethod = configurationClass.getDeclaredMethod("resolveRequiresAndUses",
+                    resolveAndBindMethod = configurationClass.getDeclaredMethod("resolveAndBind",
                                 moduleFinderInterface,
                                 moduleFinderInterface,
                                 Collection.class
@@ -258,7 +390,7 @@ public class JDK9Wrappers {
      * Helper class for new method in jdk.internal.misc.VM.
      */
     public static final class VMHelper {
-        public static final String VM_CLASSNAME = "jdk.internal.misc.VM";
+        public static final String CLASSNAME = "jdk.internal.misc.VM";
 
         @SuppressWarnings("unchecked")
         public static String[] getRuntimeArguments() {
@@ -280,8 +412,45 @@ public class JDK9Wrappers {
         private static void init() {
             if (vmClass == null) {
                 try {
-                    vmClass = Class.forName(VM_CLASSNAME, false, null);
+                    vmClass = Class.forName(CLASSNAME, false, null);
                     getRuntimeArgumentsMethod = vmClass.getDeclaredMethod("getRuntimeArguments");
+                } catch (ClassNotFoundException | NoSuchMethodException | SecurityException ex) {
+                    throw new Abort(ex);
+                }
+            }
+        }
+    }
+
+    /**
+     * Helper class for new method in jdk.internal.jmod.JmodFile
+     */
+    public static final class JmodFile {
+        public static final String JMOD_FILE_CLASSNAME = "jdk.internal.jmod.JmodFile";
+
+        public static void checkMagic(Path file) throws IOException {
+            try {
+                init();
+                checkMagicMethod.invoke(null, file);
+            } catch (InvocationTargetException ex) {
+                if (ex.getCause() instanceof IOException) {
+                    throw IOException.class.cast(ex.getCause());
+                }
+                throw new Abort(ex);
+            } catch (IllegalAccessException | IllegalArgumentException | SecurityException ex) {
+                throw new Abort(ex);
+            }
+        }
+
+        // -----------------------------------------------------------------------------------------
+
+        private static Class<?> jmodFileClass = null;
+        private static Method checkMagicMethod = null;
+
+        private static void init() {
+            if (jmodFileClass == null) {
+                try {
+                    jmodFileClass = Class.forName(JMOD_FILE_CLASSNAME, false, null);
+                    checkMagicMethod = jmodFileClass.getDeclaredMethod("checkMagic", Path.class);
                 } catch (ClassNotFoundException | NoSuchMethodException | SecurityException ex) {
                     throw new Abort(ex);
                 }

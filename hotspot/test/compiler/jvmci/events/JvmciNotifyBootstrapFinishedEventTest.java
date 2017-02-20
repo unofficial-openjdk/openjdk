@@ -24,8 +24,8 @@
 /**
  * @test
  * @bug 8156034
- * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
- * @library / /testlibrary
+ * @requires vm.jvmci
+ * @library / /test/lib
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
  *          java.base/jdk.internal.org.objectweb.asm
@@ -37,18 +37,13 @@
  *
  * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
  * @build compiler.jvmci.common.JVMCIHelpers
- *        compiler.jvmci.events.JvmciNotifyBootstrapFinishedEventTest
- * @run driver jdk.test.lib.FileInstaller ../common/services/ ./META-INF/services/
  * @run driver jdk.test.lib.FileInstaller ./JvmciNotifyBootstrapFinishedEventTest.config
- *     ./META-INF/services/jdk.vm.ci.hotspot.services.HotSpotVMEventListener
+ *     ./META-INF/services/jdk.vm.ci.services.JVMCIServiceLocator
  * @run driver ClassFileInstaller
  *      compiler.jvmci.common.JVMCIHelpers$EmptyHotspotCompiler
  *      compiler.jvmci.common.JVMCIHelpers$EmptyCompilerFactory
  *      compiler.jvmci.common.JVMCIHelpers$EmptyCompilationRequestResult
  *      compiler.jvmci.common.JVMCIHelpers$EmptyVMEventListener
- *      compiler.jvmci.events.JvmciNotifyBootstrapFinishedEventTest
- *      jdk.test.lib.Asserts
- *      jdk.test.lib.Utils
  * @run main/othervm -XX:+UnlockExperimentalVMOptions
  *     -Djvmci.Compiler=EmptyCompiler -Xbootclasspath/a:.
  *     -XX:+UseJVMCICompiler -XX:-BootstrapJVMCI
@@ -64,9 +59,10 @@
 package compiler.jvmci.events;
 
 import jdk.test.lib.Asserts;
-import jdk.vm.ci.hotspot.services.HotSpotVMEventListener;
+import jdk.vm.ci.services.JVMCIServiceLocator;
+import jdk.vm.ci.hotspot.HotSpotVMEventListener;
 
-public class JvmciNotifyBootstrapFinishedEventTest extends HotSpotVMEventListener {
+public class JvmciNotifyBootstrapFinishedEventTest extends JVMCIServiceLocator implements HotSpotVMEventListener {
     private static final boolean BOOTSTRAP = Boolean
             .getBoolean("compiler.jvmci.events.JvmciNotifyBootstrapFinishedEventTest.bootstrap");
     private static volatile int gotBoostrapNotification = 0;
@@ -77,6 +73,14 @@ public class JvmciNotifyBootstrapFinishedEventTest extends HotSpotVMEventListene
         } else {
             Asserts.assertEQ(gotBoostrapNotification, 0, "Got unexpected bootstrap event");
         }
+    }
+
+    @Override
+    public <S> S getProvider(Class<S> service) {
+        if (service == HotSpotVMEventListener.class) {
+            return service.cast(this);
+        }
+        return null;
     }
 
     @Override

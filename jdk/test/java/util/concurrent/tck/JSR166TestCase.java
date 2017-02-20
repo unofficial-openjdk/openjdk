@@ -35,12 +35,34 @@
 
 /*
  * @test
- * @summary JSR-166 tck tests
- * @modules java.management
+ * @summary JSR-166 tck tests (conformance testing mode)
  * @build *
- * @run junit/othervm/timeout=1000 -Djsr166.testImplementationDetails=true JSR166TestCase
- * @run junit/othervm/timeout=1000 -Djava.util.concurrent.ForkJoinPool.common.parallelism=0 -Djsr166.testImplementationDetails=true JSR166TestCase
- * @run junit/othervm/timeout=1000 -Djava.util.concurrent.ForkJoinPool.common.parallelism=1 -Djava.util.secureRandomSeed=true JSR166TestCase
+ * @modules java.management
+ * @run junit/othervm/timeout=1000 JSR166TestCase
+ */
+
+/*
+ * @test
+ * @summary JSR-166 tck tests (whitebox tests allowed)
+ * @build *
+ * @modules java.base/java.util.concurrent:open
+ *          java.base/java.lang:open
+ *          java.management
+ * @run junit/othervm/timeout=1000
+ *      -Djsr166.testImplementationDetails=true
+ *      JSR166TestCase
+ * @run junit/othervm/timeout=1000
+ *      -Djsr166.testImplementationDetails=true
+ *      -Djava.util.concurrent.ForkJoinPool.common.parallelism=0
+ *      JSR166TestCase
+ * @run junit/othervm/timeout=1000
+ *      -Djsr166.testImplementationDetails=true
+ *      -Djava.util.concurrent.ForkJoinPool.common.parallelism=1
+ *      -Djava.util.secureRandomSeed=true
+ *      JSR166TestCase
+ * @run junit/othervm/timeout=1000/policy=tck.policy
+ *      -Djsr166.testImplementationDetails=true
+ *      JSR166TestCase
  */
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -68,6 +90,7 @@ import java.security.ProtectionDomain;
 import java.security.SecurityPermission;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -474,6 +497,7 @@ public class JSR166TestCase extends TestCase {
             AbstractQueuedLongSynchronizerTest.suite(),
             ArrayBlockingQueueTest.suite(),
             ArrayDequeTest.suite(),
+            ArrayListTest.suite(),
             AtomicBooleanTest.suite(),
             AtomicIntegerArrayTest.suite(),
             AtomicIntegerFieldUpdaterTest.suite(),
@@ -496,6 +520,7 @@ public class JSR166TestCase extends TestCase {
             CopyOnWriteArrayListTest.suite(),
             CopyOnWriteArraySetTest.suite(),
             CountDownLatchTest.suite(),
+            CountedCompleterTest.suite(),
             CyclicBarrierTest.suite(),
             DelayQueueTest.suite(),
             EntryTest.suite(),
@@ -524,19 +549,23 @@ public class JSR166TestCase extends TestCase {
             TreeMapTest.suite(),
             TreeSetTest.suite(),
             TreeSubMapTest.suite(),
-            TreeSubSetTest.suite());
+            TreeSubSetTest.suite(),
+            VectorTest.suite());
 
         // Java8+ test classes
         if (atLeastJava8()) {
             String[] java8TestClassNames = {
+                "ArrayDeque8Test",
                 "Atomic8Test",
                 "CompletableFutureTest",
                 "ConcurrentHashMap8Test",
-                "CountedCompleterTest",
+                "CountedCompleter8Test",
                 "DoubleAccumulatorTest",
                 "DoubleAdderTest",
                 "ForkJoinPool8Test",
                 "ForkJoinTask8Test",
+                "LinkedBlockingDeque8Test",
+                "LinkedBlockingQueue8Test",
                 "LongAccumulatorTest",
                 "LongAdderTest",
                 "SplittableRandomTest",
@@ -559,6 +588,7 @@ public class JSR166TestCase extends TestCase {
                 "AtomicReference9Test",
                 "AtomicReferenceArray9Test",
                 "ExecutorCompletionService9Test",
+                "ForkJoinPool9Test",
             };
             addNamedTestClasses(suite, java9TestClassNames);
         }
@@ -569,7 +599,7 @@ public class JSR166TestCase extends TestCase {
     /** Returns list of junit-style test method names in given class. */
     public static ArrayList<String> testMethodNames(Class<?> testClass) {
         Method[] methods = testClass.getDeclaredMethods();
-        ArrayList<String> names = new ArrayList<String>(methods.length);
+        ArrayList<String> names = new ArrayList<>(methods.length);
         for (Method method : methods) {
             if (method.getName().startsWith("test")
                 && Modifier.isPublic(method.getModifiers())
@@ -675,7 +705,7 @@ public class JSR166TestCase extends TestCase {
      * The first exception encountered if any threadAssertXXX method fails.
      */
     private final AtomicReference<Throwable> threadFailure
-        = new AtomicReference<Throwable>(null);
+        = new AtomicReference<>(null);
 
     /**
      * Records an exception so that it can be rethrown later in the test
@@ -1032,14 +1062,17 @@ public class JSR166TestCase extends TestCase {
         ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
         System.err.println("------ stacktrace dump start ------");
         for (ThreadInfo info : threadMXBean.dumpAllThreads(true, true)) {
-            String name = info.getThreadName();
+            final String name = info.getThreadName();
+            String lockName;
             if ("Signal Dispatcher".equals(name))
                 continue;
             if ("Reference Handler".equals(name)
-                && info.getLockName().startsWith("java.lang.ref.Reference$Lock"))
+                && (lockName = info.getLockName()) != null
+                && lockName.startsWith("java.lang.ref.Reference$Lock"))
                 continue;
             if ("Finalizer".equals(name)
-                && info.getLockName().startsWith("java.lang.ref.ReferenceQueue$Lock"))
+                && (lockName = info.getLockName()) != null
+                && lockName.startsWith("java.lang.ref.ReferenceQueue$Lock"))
                 continue;
             if ("checkForWedgedTest".equals(name))
                 continue;
@@ -1234,7 +1267,7 @@ public class JSR166TestCase extends TestCase {
         }
         public void refresh() {}
         public String toString() {
-            List<Permission> ps = new ArrayList<Permission>();
+            List<Permission> ps = new ArrayList<>();
             for (Enumeration<Permission> e = perms.elements(); e.hasMoreElements();)
                 ps.add(e.nextElement());
             return "AdjustablePolicy with permissions " + ps;
@@ -1264,7 +1297,7 @@ public class JSR166TestCase extends TestCase {
      * Sleeps until the given time has elapsed.
      * Throws AssertionFailedError if interrupted.
      */
-    void sleep(long millis) {
+    static void sleep(long millis) {
         try {
             delay(millis);
         } catch (InterruptedException fail) {
@@ -1783,7 +1816,7 @@ public class JSR166TestCase extends TestCase {
      * A CyclicBarrier that uses timed await and fails with
      * AssertionFailedErrors instead of throwing checked exceptions.
      */
-    public class CheckedBarrier extends CyclicBarrier {
+    public static class CheckedBarrier extends CyclicBarrier {
         public CheckedBarrier(int parties) { super(parties); }
 
         public int await() {
@@ -1847,18 +1880,68 @@ public class JSR166TestCase extends TestCase {
         }
     }
 
+    void assertImmutable(final Object o) {
+        if (o instanceof Collection) {
+            assertThrows(
+                UnsupportedOperationException.class,
+                new Runnable() { public void run() {
+                        ((Collection) o).add(null);}});
+        }
+    }
+
     @SuppressWarnings("unchecked")
     <T> T serialClone(T o) {
         try {
             ObjectInputStream ois = new ObjectInputStream
                 (new ByteArrayInputStream(serialBytes(o)));
             T clone = (T) ois.readObject();
+            if (o == clone) assertImmutable(o);
             assertSame(o.getClass(), clone.getClass());
             return clone;
         } catch (Throwable fail) {
             threadUnexpectedException(fail);
             return null;
         }
+    }
+
+    /**
+     * A version of serialClone that leaves error handling (for
+     * e.g. NotSerializableException) up to the caller.
+     */
+    @SuppressWarnings("unchecked")
+    <T> T serialClonePossiblyFailing(T o)
+        throws ReflectiveOperationException, java.io.IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+        oos.writeObject(o);
+        oos.flush();
+        oos.close();
+        ObjectInputStream ois = new ObjectInputStream
+            (new ByteArrayInputStream(bos.toByteArray()));
+        T clone = (T) ois.readObject();
+        if (o == clone) assertImmutable(o);
+        assertSame(o.getClass(), clone.getClass());
+        return clone;
+    }
+
+    /**
+     * If o implements Cloneable and has a public clone method,
+     * returns a clone of o, else null.
+     */
+    @SuppressWarnings("unchecked")
+    <T> T cloneableClone(T o) {
+        if (!(o instanceof Cloneable)) return null;
+        final T clone;
+        try {
+            clone = (T) o.getClass().getMethod("clone").invoke(o);
+        } catch (NoSuchMethodException ok) {
+            return null;
+        } catch (ReflectiveOperationException unexpected) {
+            throw new Error(unexpected);
+        }
+        assertNotSame(o, clone); // not 100% guaranteed by spec
+        assertSame(o.getClass(), clone.getClass());
+        return clone;
     }
 
     public void assertThrows(Class<? extends Throwable> expectedExceptionClass,

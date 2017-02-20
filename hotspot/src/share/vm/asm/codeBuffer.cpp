@@ -331,6 +331,8 @@ void CodeSection::relocate(address at, relocInfo::relocType rtype, int format, j
 }
 
 void CodeSection::relocate(address at, RelocationHolder const& spec, int format) {
+  // Do not relocate in scratch buffers.
+  if (scratch_emit()) { return; }
   Relocation* reloc = spec.reloc();
   relocInfo::relocType rtype = (relocInfo::relocType) reloc->type();
   if (rtype == relocInfo::none)  return;
@@ -745,6 +747,10 @@ void CodeBuffer::copy_code_to(CodeBlob* dest_blob) {
   CodeBuffer dest(dest_blob);
   assert(dest_blob->content_size() >= total_content_size(), "good sizing");
   this->compute_final_layout(&dest);
+
+  // Set beginning of constant table before relocating.
+  dest_blob->set_ctable_begin(dest.consts()->start());
+
   relocate_code_to(&dest);
 
   // transfer strings and comments from buffer to blob
@@ -937,6 +943,9 @@ void CodeBuffer::expand(CodeSection* which_cs, csize_t amount) {
       cb_sect->set_mark(cb_start + this_sect->mark_off());
     }
   }
+
+  // Needs to be initialized when calling fix_relocation_after_move.
+  cb.blob()->set_ctable_begin(cb.consts()->start());
 
   // Move all the code and relocations to the new blob:
   relocate_code_to(&cb);

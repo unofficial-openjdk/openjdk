@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,12 +35,12 @@
 #include "manifest_info.h"
 #include "jli_util.h"
 
-#define PATH_SEPARATOR          ':'
-#define FILESEP                 "/"
-#define FILE_SEPARATOR          '/'
+#define PATH_SEPARATOR       ':'
+#define FILESEP              "/"
+#define FILE_SEPARATOR       '/'
 #define IS_FILE_SEPARATOR(c) ((c) == '/')
 #ifndef MAXNAMELEN
-#define MAXNAMELEN              PATH_MAX
+#define MAXNAMELEN           PATH_MAX
 #endif
 
 #ifdef _LP64
@@ -54,15 +54,16 @@ char *FindExecName(char *program);
 const char *SetExecname(char **argv);
 const char *GetExecName();
 static jboolean GetJVMPath(const char *jrepath, const char *jvmtype,
-                           char *jvmpath, jint jvmpathsize, const char * arch,
-                           int bitsWanted);
-static jboolean GetJREPath(char *path, jint pathsize, const char * arch,
-                           jboolean speculative);
+                           char *jvmpath, jint jvmpathsize, int bitsWanted);
+static jboolean GetJREPath(char *path, jint pathsize, jboolean speculative);
+
+#if defined(_AIX)
+#include "java_md_aix.h"
+#endif
 
 #ifdef MACOSX
 #include "java_md_macosx.h"
 #else  /* !MACOSX */
 #include "java_md_solinux.h"
 #endif /* MACOSX */
-
 #endif /* JAVA_MD_H */

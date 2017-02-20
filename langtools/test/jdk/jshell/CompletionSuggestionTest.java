@@ -23,12 +23,13 @@
 
 /*
  * @test
- * @bug 8141092 8153761
- * @summary Test Completion
+ * @bug 8131025 8141092 8153761 8145263 8131019
+ * @summary Test Completion and Documentation
+ * @library /tools/lib
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
  *          jdk.jdeps/com.sun.tools.javap
- * @library /tools/lib
+ *          jdk.jshell/jdk.jshell:open
  * @build toolbox.ToolBox toolbox.JarTask toolbox.JavacTask
  * @build KullaTesting TestingInputStream Compiler
  * @run testng CompletionSuggestionTest
@@ -43,6 +44,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -303,40 +306,41 @@ public class CompletionSuggestionTest extends KullaTesting {
 
     public void testDocumentation() throws Exception {
         dontReadParameterNamesFromClassFile();
-        assertDocumentation("System.getProperty(|",
-                "java.lang.System.getProperty(java.lang.String key)",
-                "java.lang.System.getProperty(java.lang.String key, java.lang.String def)");
+        assertSignature("System.getProperty(|",
+                "String System.getProperty(String key)",
+                "String System.getProperty(String key, String def)");
         assertEval("char[] chars = null;");
-        assertDocumentation("new String(chars, |",
-                "java.lang.String(char[] arg0, int arg1, int arg2)");
-        assertDocumentation("String.format(|",
-                "java.lang.String.format(java.lang.String arg0, java.lang.Object... arg1)",
-                "java.lang.String.format(java.util.Locale arg0, java.lang.String arg1, java.lang.Object... arg2)");
-        assertDocumentation("\"\".getBytes(\"\"|", "java.lang.String.getBytes(int arg0, int arg1, byte[] arg2, int arg3)",
-                                                    "java.lang.String.getBytes(java.lang.String arg0)",
-                                                    "java.lang.String.getBytes(java.nio.charset.Charset arg0)");
-        assertDocumentation("\"\".getBytes(\"\" |", "java.lang.String.getBytes(int arg0, int arg1, byte[] arg2, int arg3)",
-                                                     "java.lang.String.getBytes(java.lang.String arg0)",
-                                                     "java.lang.String.getBytes(java.nio.charset.Charset arg0)");
+        assertSignature("new String(chars, |",
+                "String(char[], int, int)");
+        assertSignature("String.format(|",
+                "String String.format(String, Object...)",
+                "String String.format(java.util.Locale, String, Object...)");
+        assertSignature("\"\".getBytes(\"\"|", "void String.getBytes(int, int, byte[], int)",
+                                                    "byte[] String.getBytes(String) throws java.io.UnsupportedEncodingException",
+                                                    "byte[] String.getBytes(java.nio.charset.Charset)");
+        assertSignature("\"\".getBytes(\"\" |", "void String.getBytes(int, int, byte[], int)",
+                                                     "byte[] String.getBytes(String) throws java.io.UnsupportedEncodingException",
+                                                     "byte[] String.getBytes(java.nio.charset.Charset)");
     }
 
     public void testMethodsWithNoArguments() throws Exception {
         dontReadParameterNamesFromClassFile();
-        assertDocumentation("System.out.println(|",
-                "java.io.PrintStream.println()",
-                "java.io.PrintStream.println(boolean arg0)",
-                "java.io.PrintStream.println(char arg0)",
-                "java.io.PrintStream.println(int arg0)",
-                "java.io.PrintStream.println(long arg0)",
-                "java.io.PrintStream.println(float arg0)",
-                "java.io.PrintStream.println(double arg0)",
-                "java.io.PrintStream.println(char[] arg0)",
-                "java.io.PrintStream.println(java.lang.String arg0)",
-                "java.io.PrintStream.println(java.lang.Object arg0)");
+        assertSignature("System.out.println(|",
+                "void java.io.PrintStream.println()",
+                "void java.io.PrintStream.println(boolean)",
+                "void java.io.PrintStream.println(char)",
+                "void java.io.PrintStream.println(int)",
+                "void java.io.PrintStream.println(long)",
+                "void java.io.PrintStream.println(float)",
+                "void java.io.PrintStream.println(double)",
+                "void java.io.PrintStream.println(char[])",
+                "void java.io.PrintStream.println(String)",
+                "void java.io.PrintStream.println(Object)");
     }
 
     public void testErroneous() {
         assertCompletion("Undefined.|");
+        assertSignature("does.not.exist|");
     }
 
     public void testClinit() {
@@ -419,9 +423,9 @@ public class CompletionSuggestionTest extends KullaTesting {
     public void testUncompletedDeclaration() {
         assertCompletion("class Clazz { Claz|", "Clazz");
         assertCompletion("class Clazz { class A extends Claz|", "Clazz");
-        assertCompletion("class Clazz { Clazz clazz; Object o = cla|", "clazz");
-        assertCompletion("class Clazz { static Clazz clazz; Object o = cla|", "clazz");
-        assertCompletion("class Clazz { Clazz clazz; static Object o = cla|", true);
+        assertCompletion("class Clazz { Clazz clazz; Object o = claz|", "clazz");
+        assertCompletion("class Clazz { static Clazz clazz; Object o = claz|", "clazz");
+        assertCompletion("class Clazz { Clazz clazz; static Object o = claz|", true);
         assertCompletion("class Clazz { void method(Claz|", "Clazz");
         assertCompletion("class A { int method() { return 0; } int a = meth|", "method()");
         assertCompletion("class A { int field = 0; int method() { return fiel|", "field");
@@ -472,59 +476,63 @@ public class CompletionSuggestionTest extends KullaTesting {
 
     public void testDocumentationOfUserDefinedMethods() {
         assertEval("void f() {}");
-        assertDocumentation("f(|", "f()");
+        assertSignature("f(|", "void f()");
         assertEval("void f(int i) {}");
-        assertDocumentation("f(|", "f()", "f(int i)");
+        assertSignature("f(|", "void f()", "void f(int i)");
         assertEval("<T> void f(T... ts) {}", DiagCheck.DIAG_WARNING, DiagCheck.DIAG_OK);
-        assertDocumentation("f(|", "f()", "f(int i)", "f(T... ts)");
+        assertSignature("f(|", "void f()", "void f(int i)", "void <T>f(T... ts)");
         assertEval("class A {}");
         assertEval("void f(A a) {}");
-        assertDocumentation("f(|", "f()", "f(int i)", "f(T... ts)", "f(A a)");
+        assertSignature("f(|", "void f()", "void f(int i)", "void <T>f(T... ts)", "void f(A a)");
+    }
+
+    public void testClass() {
+        assertSignature("String|", "java.lang.String");
     }
 
     public void testDocumentationOfUserDefinedConstructors() {
         Snippet a = classKey(assertEval("class A {}"));
-        assertDocumentation("new A(|", "A()");
+        assertSignature("new A(|", "A()");
         Snippet a2 = classKey(assertEval("class A { A() {} A(int i) {}}",
                 ste(MAIN_SNIPPET, VALID, VALID, true, null),
                 ste(a, VALID, OVERWRITTEN, false, MAIN_SNIPPET)));
-        assertDocumentation("new A(|", "A()", "A(int i)");
-        assertEval("class A<T> { A(T t) {} A(int i) {}}",
+        assertSignature("new A(|", "A()", "A(int i)");
+        assertEval("class A<T> { A(T a) {} A(int i) {} <U> A(T t, U u) {}}",
                 ste(MAIN_SNIPPET, VALID, VALID, true, null),
                 ste(a2, VALID, OVERWRITTEN, false, MAIN_SNIPPET));
-        assertDocumentation("new A(|", "A(T t)", "A(int i)");
+        assertSignature("new A(|", "A<T>(T a)", "A<T>(int i)", "<U> A<T>(T t, U u)");
     }
 
     public void testDocumentationOfOverriddenMethods() throws Exception {
         dontReadParameterNamesFromClassFile();
-        assertDocumentation("\"\".wait(|",
-            "java.lang.Object.wait(long arg0)",
-            "java.lang.Object.wait(long arg0, int arg1)",
-            "java.lang.Object.wait()");
+        assertSignature("\"\".wait(|",
+            "void Object.wait(long) throws InterruptedException",
+            "void Object.wait(long, int) throws InterruptedException",
+            "void Object.wait() throws InterruptedException");
         assertEval("class Base {void method() {}}");
         Snippet e = classKey(assertEval("class Extend extends Base {}"));
-        assertDocumentation("new Extend().method(|", "Base.method()");
+        assertSignature("new Extend().method(|", "void Base.method()");
         assertEval("class Extend extends Base {void method() {}}",
                 ste(MAIN_SNIPPET, VALID, VALID, true, null),
                 ste(e, VALID, OVERWRITTEN, false, MAIN_SNIPPET));
-        assertDocumentation("new Extend().method(|", "Extend.method()");
+        assertSignature("new Extend().method(|", "void Extend.method()");
     }
 
     public void testDocumentationOfInvisibleMethods() {
-        assertDocumentation("Object.wait(|", "");
-        assertDocumentation("\"\".indexOfSupplementary(|", "");
+        assertSignature("Object.wait(|");
+        assertSignature("\"\".indexOfSupplementary(|");
         Snippet a = classKey(assertEval("class A {void method() {}}"));
-        assertDocumentation("A.method(|", "");
+        assertSignature("A.method(|");
         assertEval("class A {private void method() {}}",
                 ste(MAIN_SNIPPET, VALID, VALID, true, null),
                 ste(a, VALID, OVERWRITTEN, false, MAIN_SNIPPET));
-        assertDocumentation("new A().method(|", "");
+        assertSignature("new A().method(|");
     }
 
     public void testDocumentationOfInvisibleConstructors() {
-        assertDocumentation("new Compiler(|", "");
+        assertSignature("new Compiler(|");
         assertEval("class A { private A() {} }");
-        assertDocumentation("new A(|", "");
+        assertSignature("new A(|");
     }
 
     public void testDocumentationWithBoxing() {
@@ -533,14 +541,68 @@ public class CompletionSuggestionTest extends KullaTesting {
         assertEval("Object object = null;");
         assertEval("void method(int n, Object o) { }");
         assertEval("void method(Object n, int o) { }");
-        assertDocumentation("method(primitive,|",
-                "method(int n, java.lang.Object o)",
-                "method(java.lang.Object n, int o)");
-        assertDocumentation("method(boxed,|",
-                "method(int n, java.lang.Object o)",
-                "method(java.lang.Object n, int o)");
-        assertDocumentation("method(object,|",
-                "method(java.lang.Object n, int o)");
+        assertSignature("method(primitive,|",
+                "void method(int n, Object o)",
+                "void method(Object n, int o)");
+        assertSignature("method(boxed,|",
+                "void method(int n, Object o)",
+                "void method(Object n, int o)");
+        assertSignature("method(object,|",
+                "void method(Object n, int o)");
+    }
+
+    public void testDocumentationWithGenerics() {
+        class TestDocumentationWithGenerics {
+            private final Function<Integer, String> codeFacotry;
+            private final BiFunction<String, Integer, String> evalFormatter;
+            private final BiFunction<String, Integer, String> docFormatter;
+            int count;
+
+            TestDocumentationWithGenerics(
+                    Function<Integer, String> codeFactory,
+                    BiFunction<String, Integer, String> evalFormatter,
+                    BiFunction<String, Integer, String> documentationFormatter) {
+                this.codeFacotry = codeFactory;
+                this.evalFormatter = evalFormatter;
+                this.docFormatter = documentationFormatter;
+            }
+
+            void assertDoc(String generics) {
+                assertDoc(generics, generics);
+            }
+
+            void assertDoc(String generics, String expectedGenerics) {
+                assertEval(evalFormatter.apply(generics, count));
+                assertSignature(codeFacotry.apply(count), docFormatter.apply(expectedGenerics, count));
+                count++;
+            }
+        }
+
+        TestDocumentationWithGenerics[] tests = {
+            new TestDocumentationWithGenerics(
+                    i -> "f" + i + "(|",
+                    (g, i) -> "<" + g + "> void f" + i + "() {}",
+                    (g, i) -> "void <" + g + ">f" + i + "()"
+            ),
+            new TestDocumentationWithGenerics(
+                    i -> "new C" + i + "().f(|",
+                    (g, i) -> "class C" + i + "<" + g + "> { void f() {} }",
+                    (g, i) -> "void C" + i + "<" + g + ">.f()"
+            )
+        };
+
+        Arrays.stream(tests).forEach(t -> {
+                t.assertDoc("T");
+                t.assertDoc("T extends Object",
+                        "T");
+                t.assertDoc("T extends String");
+                t.assertDoc("T extends java.lang.String",
+                        "T extends String");
+                t.assertDoc("T extends Number & Comparable<T>");
+                t.assertDoc("T extends java.io.Serializable & CharSequence");
+                t.assertDoc("K, D, M extends java.util.Map<K, D>",
+                        "K, D, M extends java.util.Map<K,D>");
+        });
     }
 
     public void testVarArgs() {
@@ -609,5 +671,28 @@ public class CompletionSuggestionTest extends KullaTesting {
         Field keepParameterNames = getAnalysis().getClass().getDeclaredField("keepParameterNames");
         keepParameterNames.setAccessible(true);
         keepParameterNames.set(getAnalysis(), new String[0]);
+    }
+
+    @Test(enabled = false) //TODO 8171829
+    public void testBrokenClassFile2() throws IOException {
+        Path broken = outDir.resolve("broken");
+        compiler.compile(broken,
+                "package p;\n" +
+                "public class BrokenA {\n" +
+                "}",
+                "package p.q;\n" +
+                "public class BrokenB {\n" +
+                "}",
+                "package p;\n" +
+                "public class BrokenC {\n" +
+                "}");
+        Path cp = compiler.getPath(broken);
+        Path target = cp.resolve("p").resolve("BrokenB.class");
+        Files.deleteIfExists(target);
+        Files.move(cp.resolve("p").resolve("q").resolve("BrokenB.class"), target);
+        addToClasspath(cp);
+
+        assertEval("import p.*;");
+        assertCompletion("Broke|", "BrokenA", "BrokenC");
     }
 }

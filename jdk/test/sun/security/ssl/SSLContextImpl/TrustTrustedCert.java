@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,16 +30,17 @@
 
 /*
  * @test
- * @bug 7113275
+ * @bug 7113275 8164846
  * @summary compatibility issue with MD2 trust anchor and old X509TrustManager
- * @run main/othervm TrustTrustedCert PKIX TLSv1.1
- * @run main/othervm TrustTrustedCert SunX509 TLSv1.1
- * @run main/othervm TrustTrustedCert PKIX TLSv1.2
- * @run main/othervm TrustTrustedCert SunX509 TLSv1.2
+ * @library /javax/net/ssl/templates
+ * @run main/othervm TrustTrustedCert PKIX TLSv1.1 true
+ * @run main/othervm TrustTrustedCert PKIX TLSv1.1 false
+ * @run main/othervm TrustTrustedCert SunX509 TLSv1.1 false
+ * @run main/othervm TrustTrustedCert PKIX TLSv1.2 false
+ * @run main/othervm TrustTrustedCert SunX509 TLSv1.2 false
  */
 
 import java.net.*;
-import java.util.*;
 import java.io.*;
 import javax.net.ssl.*;
 import java.security.*;
@@ -48,21 +49,7 @@ import java.security.spec.*;
 import java.security.interfaces.*;
 import java.util.Base64;
 
-
-public class TrustTrustedCert {
-
-    /*
-     * =============================================================
-     * Set the various variables needed for the tests, then
-     * specify what tests to run on each side.
-     */
-
-    /*
-     * Should we run the client or server in a separate thread?
-     * Both sides can throw exceptions, but do you have a preference
-     * as to which side should be the main thread.
-     */
-    static boolean separateServerThread = false;
+public class TrustTrustedCert extends SSLSocketTemplate {
 
     /*
      * Certificates and key used in the test.
@@ -123,81 +110,62 @@ public class TrustTrustedCert {
         "A5kokFb+E3Gplu29tJvCUpfwgBFRS+wmkvtiaU/tiyDcVgDO+An5DwedxxdVzqiE\n" +
         "njWHoKY3axDQ8OU=\n";
 
-
     static char passphrase[] = "passphrase".toCharArray();
 
-    /*
-     * Is the server ready to serve?
-     */
-    volatile static boolean serverReady = false;
-
-    /*
-     * Turn on SSL debugging?
-     */
-    static boolean debug = false;
-
-    /*
-     * Define the server side of the test.
-     *
-     * If the server prematurely exits, serverReady will be set to true
-     * to avoid infinite hangs.
-     */
-    void doServerSide() throws Exception {
-        SSLContext context = generateSSLContext();
-        SSLServerSocketFactory sslssf = context.getServerSocketFactory();
-        SSLServerSocket sslServerSocket =
-            (SSLServerSocket)sslssf.createServerSocket(serverPort);
-        sslServerSocket.setNeedClientAuth(true);
-        serverPort = sslServerSocket.getLocalPort();
-
-        /*
-         * Signal Client, we're ready for his connect.
-         */
-        serverReady = true;
-
-        SSLSocket sslSocket = (SSLSocket)sslServerSocket.accept();
-        InputStream sslIS = sslSocket.getInputStream();
-        OutputStream sslOS = sslSocket.getOutputStream();
-
-        sslIS.read();
-        sslOS.write('A');
-        sslOS.flush();
-
-        sslSocket.close();
+    @Override
+    protected SSLContext createServerSSLContext() throws Exception {
+        return generateSSLContext();
     }
 
-    /*
-     * Define the client side of the test.
-     *
-     * If the server prematurely exits, serverReady will be set to true
-     * to avoid infinite hangs.
-     */
-    void doClientSide() throws Exception {
+    @Override
+    protected void configureServerSocket(SSLServerSocket socket) {
+        socket.setNeedClientAuth(true);
+    }
 
-        /*
-         * Wait for server to get started.
-         */
-        while (!serverReady) {
-            Thread.sleep(50);
+    @Override
+    protected void runServerApplication(SSLSocket socket) throws Exception {
+        InputStream sslIS = socket.getInputStream();
+        OutputStream sslOS = socket.getOutputStream();
+
+        try {
+            sslIS.read();
+            sslOS.write('A');
+            sslOS.flush();
+        } catch (SSLHandshakeException e) {
+            if (expectFail && !e.toString().contains("certificate_unknown")) {
+                throw new RuntimeException(
+                        "Expected to see certificate_unknown in exception output",
+                        e);
+            }
         }
+    }
 
-        SSLContext context = generateSSLContext();
-        SSLSocketFactory sslsf = context.getSocketFactory();
+    @Override
+    protected SSLContext createClientSSLContext() throws Exception {
+        return generateSSLContext();
+    }
 
-        SSLSocket sslSocket =
-            (SSLSocket)sslsf.createSocket("localhost", serverPort);
-
+    @Override
+    protected void runClientApplication(SSLSocket socket) throws Exception {
         // enable the specified TLS protocol
-        sslSocket.setEnabledProtocols(new String[] {tlsProtocol});
+        socket.setEnabledProtocols(new String[] { tlsProtocol });
 
-        InputStream sslIS = sslSocket.getInputStream();
-        OutputStream sslOS = sslSocket.getOutputStream();
+        InputStream sslIS = socket.getInputStream();
+        OutputStream sslOS = socket.getOutputStream();
 
-        sslOS.write('B');
-        sslOS.flush();
-        sslIS.read();
-
-        sslSocket.close();
+        try {
+            sslOS.write('B');
+            sslOS.flush();
+            sslIS.read();
+        } catch (SSLHandshakeException e) {
+            // focus on the CertPathValidatorException
+            Throwable t = e.getCause().getCause();
+            if ((t == null)
+                    || (expectFail && !t.toString().contains("MD5withRSA"))) {
+                throw new RuntimeException(
+                        "Expected to see MD5withRSA in exception output", t);
+            }
+        }
     }
 
     /*
@@ -206,10 +174,13 @@ public class TrustTrustedCert {
      */
     private static String tmAlgorithm;        // trust manager
     private static String tlsProtocol;        // trust manager
+    // set this flag to test context of CertificateException
+    private static boolean expectFail;
 
     private static void parseArguments(String[] args) {
         tmAlgorithm = args[0];
         tlsProtocol = args[1];
+        expectFail = Boolean.parseBoolean(args[2]);
     }
 
     private static SSLContext generateSSLContext() throws Exception {
@@ -232,7 +203,7 @@ public class TrustTrustedCert {
 
         // generate the private key.
         PKCS8EncodedKeySpec priKeySpec = new PKCS8EncodedKeySpec(
-                                Base64.getMimeDecoder().decode(targetPrivateKey));
+                            Base64.getMimeDecoder().decode(targetPrivateKey));
         KeyFactory kf = KeyFactory.getInstance("RSA");
         RSAPrivateKey priKey =
                 (RSAPrivateKey)kf.generatePrivate(priKeySpec);
@@ -330,154 +301,26 @@ public class TrustTrustedCert {
         }
     }
 
-
-    // use any free port by default
-    volatile int serverPort = 0;
-
-    volatile Exception serverException = null;
-    volatile Exception clientException = null;
-
     public static void main(String[] args) throws Exception {
-        // MD5 is used in this test case, don't disable MD5 algorithm.
-        Security.setProperty("jdk.certpath.disabledAlgorithms",
-                "MD2, RSA keySize < 1024");
-        Security.setProperty("jdk.tls.disabledAlgorithms",
-                "SSLv3, RC4, DH keySize < 768");
-
-        if (debug)
-            System.setProperty("javax.net.debug", "all");
-
         /*
          * Get the customized arguments.
          */
         parseArguments(args);
 
         /*
+         * MD5 is used in this test case, don't disable MD5 algorithm.
+         * if expectFail is set, we're testing exception message
+         */
+        if (!expectFail) {
+            Security.setProperty("jdk.certpath.disabledAlgorithms",
+                "MD2, RSA keySize < 1024");
+        }
+        Security.setProperty("jdk.tls.disabledAlgorithms",
+                "SSLv3, RC4, DH keySize < 768");
+
+        /*
          * Start the tests.
          */
-        new TrustTrustedCert();
-    }
-
-    Thread clientThread = null;
-    Thread serverThread = null;
-
-    /*
-     * Primary constructor, used to drive remainder of the test.
-     *
-     * Fork off the other side, then do your work.
-     */
-    TrustTrustedCert() throws Exception {
-        try {
-            if (separateServerThread) {
-                startServer(true);
-                startClient(false);
-            } else {
-                startClient(true);
-                startServer(false);
-            }
-        } catch (Exception e) {
-            // swallow for now.  Show later
-        }
-
-        /*
-         * Wait for other side to close down.
-         */
-        if (separateServerThread) {
-            serverThread.join();
-        } else {
-            clientThread.join();
-        }
-
-        /*
-         * When we get here, the test is pretty much over.
-         * Which side threw the error?
-         */
-        Exception local;
-        Exception remote;
-        String whichRemote;
-
-        if (separateServerThread) {
-            remote = serverException;
-            local = clientException;
-            whichRemote = "server";
-        } else {
-            remote = clientException;
-            local = serverException;
-            whichRemote = "client";
-        }
-
-        /*
-         * If both failed, return the curthread's exception, but also
-         * print the remote side Exception
-         */
-        if ((local != null) && (remote != null)) {
-            System.out.println(whichRemote + " also threw:");
-            remote.printStackTrace();
-            System.out.println();
-            throw local;
-        }
-
-        if (remote != null) {
-            throw remote;
-        }
-
-        if (local != null) {
-            throw local;
-        }
-    }
-
-    void startServer(boolean newThread) throws Exception {
-        if (newThread) {
-            serverThread = new Thread() {
-                public void run() {
-                    try {
-                        doServerSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our server thread just died.
-                         *
-                         * Release the client, if not active already...
-                         */
-                        System.err.println("Server died...");
-                        serverReady = true;
-                        serverException = e;
-                    }
-                }
-            };
-            serverThread.start();
-        } else {
-            try {
-                doServerSide();
-            } catch (Exception e) {
-                serverException = e;
-            } finally {
-                serverReady = true;
-            }
-        }
-    }
-
-    void startClient(boolean newThread) throws Exception {
-        if (newThread) {
-            clientThread = new Thread() {
-                public void run() {
-                    try {
-                        doClientSide();
-                    } catch (Exception e) {
-                        /*
-                         * Our client thread just died.
-                         */
-                        System.err.println("Client died...");
-                        clientException = e;
-                    }
-                }
-            };
-            clientThread.start();
-        } else {
-            try {
-                doClientSide();
-            } catch (Exception e) {
-                clientException = e;
-            }
-        }
+        new TrustTrustedCert().run();
     }
 }

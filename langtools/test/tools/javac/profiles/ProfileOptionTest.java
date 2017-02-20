@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,7 +75,7 @@ public class ProfileOptionTest {
     void testInvalidProfile_API() throws Exception {
         JavaFileObject fo = new StringJavaFileObject("Test.java", "class Test { }");
         String badName = "foo";
-        List<String> opts = Arrays.asList("-profile", badName);
+        List<String> opts = Arrays.asList("--release", "8", "-profile", badName);
         StringWriter sw = new StringWriter();
         try {
             JavacTask task = (JavacTask) javac.getTask(sw, fm, null, opts, null,
@@ -89,7 +89,7 @@ public class ProfileOptionTest {
     @Test
     void testInvalidProfile_CommandLine() throws Exception {
         String badName = "foo";
-        String[] opts = { "-profile", badName };
+        String[] opts = { "--release", "8", "-profile", badName };
         StringWriter sw = new StringWriter();
         PrintWriter pw = new PrintWriter(sw);
         int rc = com.sun.tools.javac.Main.compile(opts, pw);
@@ -144,9 +144,18 @@ public class ProfileOptionTest {
 
                 switch (t) {
                     case JDK1_8:
-                    case JDK1_9:
                         if (ise != null)
                             error("unexpected exception from compiler: " + ise);
+                        break;
+                    case JDK1_9:
+                        if (p == Profile.DEFAULT)
+                            break;
+                        if (ise == null)
+                            error("IllegalStateException not thrown as expected");
+                        else if (!ise.getMessage().contains("option -profile " +
+                                "not allowed with target " + t.name)) {
+                            error("exception not thrown as expected: " + ise);
+                        }
                         break;
                     default:
                         if (p == Profile.DEFAULT)
@@ -157,6 +166,7 @@ public class ProfileOptionTest {
                                     + " is not valid for target release " + t.name)) {
                             error("exception not thrown as expected: " + ise);
                         }
+                        break;
                 }
             }
         }
@@ -171,14 +181,19 @@ public class ProfileOptionTest {
                             new DiagnosticCollector<JavaFileObject>();
                     List<String> opts = (p == Profile.DEFAULT)
                             ? Collections.<String>emptyList()
-                            : Arrays.asList("-profile", p.name);
+                            : Arrays.asList("--release", "8", "-profile", p.name);
                     JavacTask task = (JavacTask) javac.getTask(null, fm, dl, opts, null,
                             Arrays.asList(fo));
                     task.analyze();
 
-                    List<String> expectDiagCodes = (p.value >= e.getKey().value)
-                            ? Collections.<String>emptyList()
-                            : Arrays.asList("compiler.err.not.in.profile");
+                    List<String> expectDiagCodes = new ArrayList<>();
+                    if (fo.getName().equals("TPolicyFile.java")) {
+                        expectDiagCodes.add("compiler.warn.has.been.deprecated.for.removal");
+                    }
+
+                    if (p.value < e.getKey().value) {
+                        expectDiagCodes.add("compiler.err.not.in.profile");
+                    }
 
                     checkDiags(opts + " " + fo.getName(), dl.getDiagnostics(), expectDiagCodes);
                 }
@@ -198,9 +213,12 @@ public class ProfileOptionTest {
         init(Profile.COMPACT2,
                 javax.xml.XMLConstants.class);
 
+        //init(Profile.COMPACT3,
+        //        javax.sql.rowset.Predicate.class,
+        //        com.sun.security.auth.PolicyFile.class); // specifically included in 3
+
         init(Profile.COMPACT3,
-                javax.sql.rowset.Predicate.class,
-                com.sun.security.auth.PolicyFile.class); // specifically included in 3
+                javax.sql.rowset.Predicate.class);
 
         init(Profile.DEFAULT,
                 java.beans.BeanInfo.class);

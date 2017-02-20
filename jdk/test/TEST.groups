@@ -189,7 +189,6 @@ jdk_security3 = \
     -sun/security/krb5 \
     -sun/security/jgss \
     javax/net \
-    sun/net/www/protocol/https \
     com/sun/net/ssl \
     lib/security
 
@@ -274,6 +273,7 @@ jdk_other = \
     jdk/internal/jline \
     com/sun/jndi \
     com/sun/corba \
+    org/omg/CORBA \
     lib/testlibrary \
     sample
 
@@ -741,7 +741,8 @@ needs_compact2 = \
   java/util/ResourceBundle/Bug6359330.java  \
   java/util/Spliterator/SpliteratorCharacteristics.java  \
   java/util/Spliterator/SpliteratorCollisions.java  \
-  java/util/Spliterator/SpliteratorLateBindingFailFastTest.java  \
+  java/util/Spliterator/SpliteratorLateBindingTest.java  \
+  java/util/Spliterator/SpliteratorFailFastTest.java  \
   java/util/Spliterator/SpliteratorTraversingAndSplittingTest.java  \
   java/util/StringJoiner/MergeTest.java  \
   java/util/StringJoiner/StringJoinerTest.java  \

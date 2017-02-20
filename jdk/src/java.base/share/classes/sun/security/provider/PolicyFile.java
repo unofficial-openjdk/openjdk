@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import java.net.URL;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.*;
-import java.text.MessageFormat;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -45,11 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import jdk.internal.misc.JavaSecurityProtectionDomainAccess;
 import static jdk.internal.misc.JavaSecurityProtectionDomainAccess.ProtectionDomainCache;
 import jdk.internal.misc.SharedSecrets;
-import sun.security.util.PolicyUtil;
-import sun.security.util.PropertyExpander;
-import sun.security.util.Debug;
-import sun.security.util.ResourcesMgr;
-import sun.security.util.SecurityConstants;
+import sun.security.util.*;
 import sun.net.www.ParseUtil;
 
 /**
@@ -534,8 +529,6 @@ public class PolicyFile extends java.security.Policy {
     /**
      * Reads a policy configuration into the Policy object using a
      * Reader object.
-     *
-     * @param policyFile the policy Reader object.
      */
     private boolean init(URL policy, PolicyInfo newInfo, boolean defPolicy) {
 
@@ -585,10 +578,9 @@ public class PolicyFile extends java.security.Policy {
                 k.add(policy);
                 return k;
             });
-            MessageFormat form = new MessageFormat(ResourcesMgr.getString
-                (POLICY + ".error.parsing.policy.message"));
             Object[] source = {policy, pe.getLocalizedMessage()};
-            System.err.println(form.format(source));
+            System.err.println(LocalizedMessage.getMessage
+                (POLICY + ".error.parsing.policy.message", source));
             if (debug != null) {
                 pe.printStackTrace();
             }
@@ -811,32 +803,30 @@ public class PolicyFile extends java.security.Policy {
                         }
                     }
                 } catch (java.lang.reflect.InvocationTargetException ite) {
-                    MessageFormat form = new MessageFormat
-                        (ResourcesMgr.getString
-                         (POLICY +
-                          ".error.adding.Permission.perm.message"));
                     Object[] source = {pe.permission,
                                        ite.getTargetException().toString()};
-                    System.err.println(form.format(source));
+                    System.err.println(
+                        LocalizedMessage.getMessage(
+                            POLICY + ".error.adding.Permission.perm.message",
+                            source));
                 } catch (Exception e) {
-                    MessageFormat form = new MessageFormat
-                        (ResourcesMgr.getString
-                         (POLICY +
-                          ".error.adding.Permission.perm.message"));
                     Object[] source = {pe.permission,
                                        e.toString()};
-                    System.err.println(form.format(source));
+                    System.err.println(
+                        LocalizedMessage.getMessage(
+                            POLICY + ".error.adding.Permission.perm.message",
+                            source));
                 }
             }
 
             // No need to sync because noone has access to newInfo yet
             newInfo.policyEntries.add(entry);
         } catch (Exception e) {
-            MessageFormat form = new MessageFormat(ResourcesMgr.getString
-                                         (POLICY
-                                         + ".error.adding.Entry.message"));
             Object[] source = {e.toString()};
-            System.err.println(form.format(source));
+            System.err.println(
+                LocalizedMessage.getMessage(
+                    POLICY + ".error.adding.Entry.message",
+                    source));
         }
         if (debug != null)
             debug.println();
@@ -1099,7 +1089,7 @@ public class PolicyFile extends java.security.Policy {
             synchronized (pc) {
                 Enumeration<Permission> e = pc.elements();
                 while (e.hasMoreElements()) {
-                    perms.add(e.nextElement());
+                    perms.add(FilePermCompat.newPermPlusAltPath(e.nextElement()));
                 }
             }
         }
@@ -1127,7 +1117,7 @@ public class PolicyFile extends java.security.Policy {
      * object with additional permissions granted to the specified
      * ProtectionDomain.
      *
-     * @param perm the Permissions to populate
+     * @param perms the Permissions to populate
      * @param pd the ProtectionDomain associated with the caller.
      *
      * @return the set of Permissions according to the policy.
@@ -1157,8 +1147,8 @@ public class PolicyFile extends java.security.Policy {
      * object with additional permissions granted to the specified
      * CodeSource.
      *
-     * @param permissions the permissions to populate
-     * @param codesource the codesource associated with the caller.
+     * @param perms the permissions to populate
+     * @param cs the codesource associated with the caller.
      * This encapsulates the original location of the code (where the code
      * came from) and the public key(s) of its signer.
      *
@@ -1386,7 +1376,7 @@ public class PolicyFile extends java.security.Policy {
                         accPs,
                         perms);
             } else {
-                perms.add(p);
+                perms.add(FilePermCompat.newPermPlusAltPath(p));
             }
         }
     }
@@ -1458,9 +1448,9 @@ public class PolicyFile extends java.security.Policy {
         }
         try {
             // first try to instantiate the permission
-            perms.add(getInstance(sp.getSelfType(),
+            perms.add(FilePermCompat.newPermPlusAltPath(getInstance(sp.getSelfType(),
                                   sb.toString(),
-                                  sp.getSelfActions()));
+                                  sp.getSelfActions())));
         } catch (ClassNotFoundException cnfe) {
             // ok, the permission is not in the bootclasspath.
             // before we add an UnresolvedPermission, check to see
@@ -1809,29 +1799,29 @@ public class PolicyFile extends java.security.Policy {
             } else if (prefix.equalsIgnoreCase("alias")) {
                 // get the suffix and perform keystore alias replacement
                 if (colonIndex == -1) {
-                    MessageFormat form = new MessageFormat
-                        (ResourcesMgr.getString
-                        ("alias.name.not.provided.pe.name."));
                     Object[] source = {pe.name};
-                    throw new Exception(form.format(source));
+                    throw new Exception(
+                        LocalizedMessage.getMessage(
+                            "alias.name.not.provided.pe.name.",
+                            source));
                 }
                 suffix = value.substring(colonIndex+1);
                 if ((suffix = getDN(suffix, keystore)) == null) {
-                    MessageFormat form = new MessageFormat
-                        (ResourcesMgr.getString
-                        ("unable.to.perform.substitution.on.alias.suffix"));
                     Object[] source = {value.substring(colonIndex+1)};
-                    throw new Exception(form.format(source));
+                    throw new Exception(
+                        LocalizedMessage.getMessage(
+                            "unable.to.perform.substitution.on.alias.suffix",
+                            source));
                 }
 
                 sb.append(X500PRINCIPAL + " \"" + suffix + "\"");
                 startIndex = e+2;
             } else {
-                MessageFormat form = new MessageFormat
-                        (ResourcesMgr.getString
-                        ("substitution.value.prefix.unsupported"));
                 Object[] source = {prefix};
-                throw new Exception(form.format(source));
+                throw new Exception(
+                    LocalizedMessage.getMessage(
+                        "substitution.value.prefix.unsupported",
+                        source));
             }
         }
 
@@ -2045,7 +2035,7 @@ public class PolicyFile extends java.security.Policy {
             super(type);
             if (type == null) {
                 throw new NullPointerException
-                    (ResourcesMgr.getString("type.can.t.be.null"));
+                    (LocalizedMessage.getMessage("type.can.t.be.null"));
             }
             this.type = type;
             this.name = name;

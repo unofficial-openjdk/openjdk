@@ -27,8 +27,7 @@
  * @author Andrei Eremeev
  * @library /lib/testlibrary
  * @modules java.base/jdk.internal.module
- *          jdk.jlink/jdk.tools.jlink.internal
- *          jdk.jlink/jdk.tools.jmod
+ *          jdk.jlink
  *          jdk.compiler
  * @build jdk.testlibrary.ProcessTools
  *        jdk.testlibrary.OutputAnalyzer
@@ -44,16 +43,27 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.spi.ToolProvider;
 
 import jdk.testlibrary.OutputAnalyzer;
 import jdk.testlibrary.ProcessTools;
 
 public class BasicTest {
+    static final ToolProvider JMOD_TOOL = ToolProvider.findFirst("jmod")
+        .orElseThrow(() ->
+            new RuntimeException("jmod tool not found")
+        );
 
+    static final ToolProvider JLINK_TOOL = ToolProvider.findFirst("jlink")
+        .orElseThrow(() ->
+            new RuntimeException("jlink tool not found")
+        );
+
+    private final String TEST_MODULE = "test";
     private final Path jdkHome = Paths.get(System.getProperty("test.jdk"));
     private final Path jdkMods = jdkHome.resolve("jmods");
     private final Path testSrc = Paths.get(System.getProperty("test.src"));
-    private final Path src = testSrc.resolve("src");
+    private final Path src = testSrc.resolve("src").resolve(TEST_MODULE);
     private final Path classes = Paths.get("classes");
     private final Path jmods = Paths.get("jmods");
     private final Path jars = Paths.get("jars");
@@ -71,27 +81,35 @@ public class BasicTest {
             throw new AssertionError("Compilation failure. See log.");
         }
 
-        String modName = "test";
         Files.createDirectories(jmods);
         Files.createDirectories(jars);
         Path jarfile = jars.resolve("test.jar");
         JarUtils.createJarFile(jarfile, classes);
 
         Path image = Paths.get("mysmallimage");
-        runJmod(jarfile.toString(), modName);
-        runJlink(image, modName, "--compress", "2");
-        execute(image, modName);
+        runJmod(jarfile.toString(), TEST_MODULE, true);
+        runJlink(image, TEST_MODULE, "--compress", "2", "--launcher", "foo=" + TEST_MODULE);
+        execute(image, "foo");
 
-        Files.delete(jmods.resolve(modName + ".jmod"));
+        Files.delete(jmods.resolve(TEST_MODULE + ".jmod"));
 
         image = Paths.get("myimage");
-        runJmod(classes.toString(), modName);
-        runJlink(image, modName);
-        execute(image, modName);
+        runJmod(classes.toString(), TEST_MODULE, true);
+        runJlink(image, TEST_MODULE, "--launcher", "bar=" + TEST_MODULE);
+        execute(image, "bar");
+
+        Files.delete(jmods.resolve(TEST_MODULE + ".jmod"));
+
+        image = Paths.get("myimage2");
+        runJmod(classes.toString(), TEST_MODULE, false /* no ModuleMainClass! */);
+        // specify main class in --launcher command line
+        runJlink(image, TEST_MODULE, "--launcher", "bar2=" + TEST_MODULE + "/jdk.test.Test");
+        execute(image, "bar2");
+
     }
 
-    private void execute(Path image, String moduleName) throws Throwable {
-        String cmd = image.resolve("bin").resolve(moduleName).toString();
+    private void execute(Path image, String scriptName) throws Throwable {
+        String cmd = image.resolve("bin").resolve(scriptName).toString();
         OutputAnalyzer analyzer;
         if (System.getProperty("os.name").startsWith("Windows")) {
             analyzer = ProcessTools.executeProcess("sh.exe", cmd, "1", "2", "3");
@@ -110,20 +128,33 @@ public class BasicTest {
                 "--add-modules", modName,
                 "--output", image.toString());
         Collections.addAll(args, options);
-        int rc = jdk.tools.jlink.internal.Main.run(args.toArray(new String[args.size()]), new PrintWriter(System.out));
+
+        PrintWriter pw = new PrintWriter(System.out);
+        int rc = JLINK_TOOL.run(pw, pw, args.toArray(new String[args.size()]));
         if (rc != 0) {
             throw new AssertionError("Jlink failed: rc = " + rc);
         }
     }
 
-    private void runJmod(String cp, String modName) {
-        int rc = jdk.tools.jmod.Main.run(new String[] {
+    private void runJmod(String cp, String modName, boolean main) {
+        int rc;
+        if (main) {
+            rc = JMOD_TOOL.run(System.out, System.out, new String[] {
                 "create",
                 "--class-path", cp,
                 "--module-version", "1.0",
                 "--main-class", "jdk.test.Test",
+                jmods.resolve(modName + ".jmod").toString()
+            });
+        } else {
+            rc = JMOD_TOOL.run(System.out, System.out, new String[] {
+                "create",
+                "--class-path", cp,
+                "--module-version", "1.0",
                 jmods.resolve(modName + ".jmod").toString(),
-        }, System.out);
+            });
+        }
+
         if (rc != 0) {
             throw new AssertionError("Jmod failed: rc = " + rc);
         }

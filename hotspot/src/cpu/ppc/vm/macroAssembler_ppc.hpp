@@ -723,7 +723,7 @@ class MacroAssembler: public Assembler {
   void store_klass(Register dst_oop, Register klass, Register tmp = R0);
   void store_klass_gap(Register dst_oop, Register val = noreg); // Will store 0 if val not specified.
 
-  void load_mirror(Register mirror, Register method);
+  void load_mirror_from_const_method(Register mirror, Register const_method);
 
   static int instr_size_for_decode_klass_not_null();
   void decode_klass_not_null(Register dst, Register src = noreg);
@@ -755,7 +755,9 @@ class MacroAssembler: public Assembler {
            is_trap_range_check_g(x) || is_trap_range_check_ge(x);
   }
 
-  void clear_memory_doubleword(Register base_ptr, Register cnt_dwords, Register tmp = R0);
+  void clear_memory_unrolled(Register base_ptr, int cnt_dwords, Register tmp = R0, int offset = 0);
+  void clear_memory_constlen(Register base_ptr, int cnt_dwords, Register tmp = R0);
+  void clear_memory_doubleword(Register base_ptr, Register cnt_dwords, Register tmp = R0, long const_cnt = -1);
 
 #ifdef COMPILER2
   // Intrinsics for CompactStrings
@@ -834,6 +836,13 @@ class MacroAssembler: public Assembler {
                           Register tc0, Register tc1, Register tc2, Register tc3);
   void kernel_crc32_1byte(Register crc, Register buf, Register len, Register table,
                           Register t0,  Register t1,  Register t2,  Register t3);
+  void kernel_crc32_1word_vpmsumd(Register crc, Register buf, Register len, Register table,
+                          Register constants, Register barretConstants,
+                          Register t0,  Register t1, Register t2, Register t3, Register t4);
+  void kernel_crc32_1word_aligned(Register crc, Register buf, Register len,
+                          Register constants, Register barretConstants,
+                          Register t0, Register t1, Register t2);
+
   void kernel_crc32_singleByte(Register crc, Register buf, Register len, Register table, Register tmp);
 
   //

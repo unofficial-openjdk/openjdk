@@ -21,11 +21,13 @@
  * questions.
  */
 
-/**
+/*
  * @test
- * @bug 8046343
+ * @bug 8046343 8168851
  * @summary Make sure that direct protocol is available
+ * @modules java.smartcardio/javax.smartcardio
  * @run main/manual TestDirect
+ * @run main/othervm/manual/java.security.policy==test.policy TestDirect
  */
 
 // This test requires special hardware.

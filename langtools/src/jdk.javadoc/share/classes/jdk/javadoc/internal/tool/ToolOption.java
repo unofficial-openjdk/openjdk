@@ -35,8 +35,13 @@ import java.util.Map;
 import javax.lang.model.element.ElementKind;
 
 import com.sun.tools.javac.main.Option;
+import com.sun.tools.javac.main.Option.InvalidValueException;
+import com.sun.tools.javac.main.Option.OptionKind;
 import com.sun.tools.javac.main.OptionHelper;
 import com.sun.tools.javac.util.Options;
+
+import static com.sun.tools.javac.main.Option.OptionKind.*;
+import static jdk.javadoc.internal.tool.Main.Result.*;
 
 /**
  * javadoc tool options.
@@ -50,267 +55,155 @@ public enum ToolOption {
 
     // ----- options for underlying compiler -----
 
-    BOOTCLASSPATH("-bootclasspath", true) {
+    BOOTCLASSPATH("-bootclasspath", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.BOOT_CLASS_PATH, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.BOOT_CLASS_PATH.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    CLASSPATH("-classpath", true) {
+    CLASS_PATH("--class-path -classpath -cp", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.CLASS_PATH, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.CLASS_PATH.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    CP("-cp", true) {
+    EXTDIRS("-extdirs", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.CLASS_PATH, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.EXTDIRS.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    CLASS_PATH("--class-path", true) {
+    SOURCE_PATH("--source-path -sourcepath", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.CLASS_PATH, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.SOURCE_PATH.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    EXTDIRS("-extdirs", true) {
+    MODULE_SOURCE_PATH("--module-source-path", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.EXTDIRS, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.MODULE_SOURCE_PATH.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    SOURCEPATH("-sourcepath", true) {
+    UPGRADE_MODULE_PATH("--upgrade-module-path", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.SOURCE_PATH, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.UPGRADE_MODULE_PATH.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    SOURCE_PATH("--source-path", true) {
+    SYSTEM("--system", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.SOURCE_PATH, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.SYSTEM.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    SYSCLASSPATH("-sysclasspath", true) {
+    MODULE_PATH("--module-path -p", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.BOOT_CLASS_PATH, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.MODULE_PATH.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    MODULESOURCEPATH("-modulesourcepath", true) {
+    ADD_MODULES("--add-modules", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.MODULE_SOURCE_PATH, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.ADD_MODULES.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    MODULE_SOURCE_PATH("--module-source-path", true) {
+    LIMIT_MODULES("--limit-modules", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.MODULE_SOURCE_PATH, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.LIMIT_MODULES.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    UPGRADEMODULEPATH("-upgrademodulepath", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.UPGRADE_MODULE_PATH, arg);
-        }
-    },
-
-    UPGRADE_MODULE_PATH("--upgrade-module-path", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.UPGRADE_MODULE_PATH, arg);
-        }
-    },
-
-    SYSTEM("-system", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.SYSTEM, arg);
-        }
-    },
-
-    SYSTEM_("--system", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.SYSTEM, arg);
-        }
-    },
-
-    MODULEPATH("-modulepath", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.MODULE_PATH, arg);
-        }
-    },
-
-    MODULE_PATH("--module-path", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.MODULE_PATH, arg);
-        }
-    },
-
-    P("-p", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.MODULE_PATH, arg);
-        }
-    },
-
-    ADDMODS("-addmods", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            Option.ADD_MODULES.process(helper.getOptionHelper(), opt, arg);
-        }
-    },
-
-    ADD_MODULES("--add-modules", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            Option.ADD_MODULES.process(helper.getOptionHelper(), opt, arg);
-        }
-    },
-
-    LIMITMODS("-limitmods", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            Option.LIMIT_MODULES.process(helper.getOptionHelper(), opt, arg);
-        }
-    },
-
-    LIMIT_MODULES("--limit-modules", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            Option.LIMIT_MODULES.process(helper.getOptionHelper(), opt, arg);
-        }
-    },
-
-    MODULE("--module", true) {
+    MODULE("--module", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
             helper.addToList(this, ",", arg);
         }
     },
 
-    ENCODING("-encoding", true) {
+    ENCODING("-encoding", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setFileManagerOpt(Option.ENCODING, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.ENCODING.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    RELEASE("--release", true) {
+    RELEASE("--release", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            Option.RELEASE.process(helper.getOptionHelper(), opt, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.RELEASE.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    RELEASE_OLD("-release", true) {
+    SOURCE("-source", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            Option.RELEASE.process(helper.getOptionHelper(), opt, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.SOURCE.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    SOURCE("-source", true) {
+    XMAXERRS("-Xmaxerrs", EXTENDED, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            Option.SOURCE.process(helper.getOptionHelper(), opt, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.XMAXERRS.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    XMAXERRS("-Xmaxerrs", true) {
+    XMAXWARNS("-Xmaxwarns", EXTENDED, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            Option.XMAXERRS.process(helper.getOptionHelper(), opt, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.XMAXWARNS.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    XMAXWARNS("-Xmaxwarns", true) {
+    ADD_READS("--add-reads", EXTENDED, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            Option.XMAXWARNS.process(helper.getOptionHelper(), opt, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.ADD_READS.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    XADDREADS("-XaddReads:", false) {
+    ADD_EXPORTS("--add-exports", EXTENDED, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            Option.ADD_READS.process(helper.getOptionHelper(), arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.ADD_EXPORTS.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
-    ADD_READS("--add-reads", true) {
+    PATCH_MODULE("--patch-module", EXTENDED, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            Option.ADD_READS.process(helper.getOptionHelper(), opt, arg);
-        }
-    },
-
-    ADDEXPORTS("-XaddExports:", false) {
-        @Override
-        public void process(Helper helper, String arg) {
-            Option.ADD_EXPORTS.process(helper.getOptionHelper(), arg);
-        }
-    },
-
-    ADD_EXPORTS("--add-exports", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            Option.ADD_EXPORTS.process(helper.getOptionHelper(), opt, arg);
-        }
-    },
-
-    XMODULE("-Xmodule:", false) {
-        @Override
-        public void process(Helper helper, String arg) {
-            Option.XMODULE.process(helper.getOptionHelper(), arg);
-        }
-    },
-
-    XPATCH("-Xpatch:", false) {
-        @Override
-        public void process(Helper helper, String arg) {
-            Option.XMODULE.process(helper.getOptionHelper(), arg);
-        }
-    },
-
-    PATCH_MODULE("--patch-module", true) {
-        @Override
-        public void process(Helper helper, String arg) {
-            Option.PATCH_MODULE.process(helper.getOptionHelper(), opt, arg);
+        public void process(Helper helper, String arg) throws InvalidValueException {
+            Option.PATCH_MODULE.process(helper.getOptionHelper(), primaryName, arg);
         }
     },
 
     // ----- doclet options -----
 
-    DOCLET("-doclet", true), // handled in setDocletInvoker
+    DOCLET("-doclet", STANDARD, true), // handled in setDocletInvoker
 
-    DOCLETPATH("-docletpath", true), // handled in setDocletInvoker
+    DOCLETPATH("-docletpath", STANDARD, true), // handled in setDocletInvoker
 
     // ----- selection options -----
 
-    SUBPACKAGES("-subpackages", true) {
+    SUBPACKAGES("-subpackages", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
             helper.addToList(this, ":", arg);
         }
     },
 
-    EXCLUDE("-exclude", true) {
+    EXCLUDE("-exclude", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
             helper.addToList(this, ":", arg);
@@ -319,94 +212,86 @@ public enum ToolOption {
 
     // ----- filtering options -----
 
-    PACKAGE("-package") {
+    PACKAGE("-package", STANDARD) {
         @Override
-        public void process(Helper helper) {
+        public void process(Helper helper) throws OptionException {
             helper.setSimpleFilter("package");
         }
     },
 
-    PRIVATE("-private") {
+    PRIVATE("-private", STANDARD) {
         @Override
-        public void process(Helper helper) {
+        public void process(Helper helper) throws OptionException {
             helper.setSimpleFilter("private");
         }
     },
 
-    PROTECTED("-protected") {
+    PROTECTED("-protected", STANDARD) {
         @Override
-        public void process(Helper helper) {
+        public void process(Helper helper) throws OptionException {
             helper.setSimpleFilter("protected");
         }
     },
 
-    PUBLIC("-public") {
+    PUBLIC("-public", STANDARD) {
         @Override
-        public void process(Helper helper) {
+        public void process(Helper helper) throws OptionException {
             helper.setSimpleFilter("public");
         }
     },
 
-    SHOW_MEMBERS("--show-members:") {
+    SHOW_MEMBERS("--show-members", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
+        public void process(Helper helper, String arg) throws OptionException {
             helper.setFilter(this, arg);
         }
     },
 
-    SHOW_TYPES("--show-types:") {
+    SHOW_TYPES("--show-types", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
+        public void process(Helper helper, String arg) throws OptionException {
             helper.setFilter(this, arg);
         }
     },
 
-    SHOW_PACKAGES("--show-packages:") {
+    SHOW_PACKAGES("--show-packages", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setShowPackageAccess(SHOW_PACKAGES, helper.getOptionArgumentValue(arg));
+        public void process(Helper helper, String arg) throws OptionException {
+            helper.setShowPackageAccess(SHOW_PACKAGES, arg);
         }
     },
 
-    SHOW_MODULE_CONTENTS("--show-module-contents:") {
+    SHOW_MODULE_CONTENTS("--show-module-contents", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setShowModuleContents(SHOW_MODULE_CONTENTS, helper.getOptionArgumentValue(arg));
+        public void process(Helper helper, String arg) throws OptionException {
+            helper.setShowModuleContents(SHOW_MODULE_CONTENTS, arg);
         }
     },
 
-    EXPAND_REQUIRES("--expand-requires:") {
+    EXPAND_REQUIRES("--expand-requires", STANDARD, true) {
         @Override
-        public void process(Helper helper, String arg) {
-            helper.setExpandRequires(EXPAND_REQUIRES, helper.getOptionArgumentValue(arg));
+        public void process(Helper helper, String arg) throws OptionException {
+            helper.setExpandRequires(EXPAND_REQUIRES, arg);
         }
     },
 
     // ----- output control options -----
 
-    PROMPT("-prompt") {
-        @Override
-        public void process(Helper helper) {
-            helper.compOpts.put("-prompt", "-prompt");
-            helper.promptOnError = true;
-        }
-    },
-
-    QUIET("-quiet") {
+    QUIET("-quiet", STANDARD) {
         @Override
         public void process(Helper helper) {
             helper.jdtoolOpts.put(QUIET, true);
         }
     },
 
-    VERBOSE("-verbose") {
+    VERBOSE("-verbose", STANDARD) {
         @Override
         public void process(Helper helper) {
             helper.compOpts.put("-verbose", "");
         }
     },
 
-    XWERROR("-Xwerror") {
+    XWERROR("-Xwerror", HIDDEN) {
         @Override
         public void process(Helper helper) {
             helper.rejectWarnings = true;
@@ -416,72 +301,127 @@ public enum ToolOption {
 
     // ----- other options -----
 
-    BREAKITERATOR("-breakiterator") {
+    BREAKITERATOR("-breakiterator", STANDARD) {
         @Override
         public void process(Helper helper) {
             helper.breakiterator = true;
         }
     },
 
-    LOCALE("-locale", true) {
+    LOCALE("-locale", STANDARD, true) {
         @Override
         public void process(Helper helper, String arg) {
             helper.docLocale = arg;
         }
     },
 
-    XCLASSES("-Xclasses") {
+    XCLASSES("-Xclasses", HIDDEN) {
         @Override
         public void process(Helper helper) {
             helper.jdtoolOpts.put(XCLASSES, true);
         }
     },
 
-    // ----- help options -----
-
-    HELP("-help") {
+    DUMPONERROR("--dump-on-error", HIDDEN) {
         @Override
         public void process(Helper helper) {
-            helper.usage();
+            helper.dumpOnError = true;
         }
     },
 
-    X("-X") {
+    // ----- help options -----
+
+    HELP("--help -help", STANDARD) {
+        @Override
+        public void process(Helper helper) throws OptionException {
+            throw new OptionException(OK, helper::usage);
+        }
+    },
+
+    X("-X", STANDARD) {
+        @Override
+        public void process(Helper helper) throws OptionException {
+           throw new OptionException(OK, helper::Xusage);
+        }
+    },
+
+    // This option exists only for the purpose of documenting itself.
+    // It's actually implemented by the launcher.
+    J("-J", STANDARD, true) {
         @Override
         public void process(Helper helper) {
-            helper.Xusage();
+            throw new AssertionError("the -J flag should be caught by the launcher.");
+        }
+    },
+
+    // This option exists only for the purpose of documenting itself.
+    // It's actually implemented ahead of the normal option decoding loop.
+    Xold("-Xold", EXTENDED) {
+        @Override
+        public void process(Helper helper) {
+            throw new AssertionError("the -Xold flag should be handled earlier.");
         }
     };
 
-    public final String opt;
+    public final String primaryName;
+    public final List<String> names;
+    public final OptionKind kind;
     public final boolean hasArg;
     public final boolean hasSuffix; // ex: foo:bar or -foo=bar
 
-    ToolOption(String opt) {
-        this(opt, false);
+    ToolOption(String opt, OptionKind kind) {
+        this(opt, kind, false);
     }
 
-    ToolOption(String opt, boolean hasArg) {
-        this.opt = opt;
+    ToolOption(String names, OptionKind kind, boolean hasArg) {
+        this.names = Arrays.asList(names.split("\\s+"));
+        this.primaryName = this.names.get(0);
+        this.kind = kind;
         this.hasArg = hasArg;
-        char lastChar = opt.charAt(opt.length() - 1);
+        char lastChar = names.charAt(names.length() - 1);
         this.hasSuffix = lastChar == ':' || lastChar == '=';
     }
 
-    void process(Helper helper, String arg) { }
+    void process(Helper helper, String arg) throws OptionException, Option.InvalidValueException { }
 
-    void process(Helper helper) { }
+    void process(Helper helper) throws OptionException { }
+
+    List<String> getNames() {
+        return names;
+    }
+
+    String getParameters(Messager messager) {
+        return (hasArg || primaryName.endsWith(":"))
+                ? messager.getText(getKey(primaryName, ".arg"))
+                : null;
+    }
+
+    String getDescription(Messager messager) {
+        return messager.getText(getKey(primaryName, ".desc"));
+    }
+
+    private String getKey(String optionName, String suffix) {
+        return "main.opt."
+                + optionName
+                .replaceAll("^-*", "")              // remove leading '-'
+                .replaceAll("[^A-Za-z0-9]+$", "")   // remove trailing non-alphanumeric
+                .replaceAll("[^A-Za-z0-9]", ".")    // replace internal non-alphanumeric
+                + suffix;
+    }
+
 
     static ToolOption get(String name) {
         String oname = name;
         if (name.contains(":")) {
             oname = name.substring(0, name.indexOf(':') + 1);
         } else if (name.contains("=")) {
-            oname = name.substring(0, name.indexOf('=') + 1);
+            oname = name.substring(0, name.indexOf('='));
         }
         for (ToolOption o : values()) {
-            if (oname.equals(o.opt)) {
-                return o;
+            for (String n : o.names) {
+                if (oname.equals(n)) {
+                    return o;
+                }
             }
         }
         return null;
@@ -497,6 +437,9 @@ public enum ToolOption {
 
         /** Javadoc tool options */
         final Map<ToolOption, Object> jdtoolOpts = new EnumMap<>(ToolOption.class);
+
+        /** dump stack traces for debugging etc.*/
+        boolean dumpOnError = false;
 
         /** Set by -breakiterator. */
         boolean breakiterator = false;
@@ -517,7 +460,8 @@ public enum ToolOption {
         abstract void usage();
         abstract void Xusage();
 
-        abstract void usageError(String msg, Object... args);
+        abstract String getLocalizedMessage(String msg, Object... args);
+
         abstract OptionHelper getOptionHelper();
 
         @SuppressWarnings("unchecked")
@@ -527,25 +471,21 @@ public enum ToolOption {
             jdtoolOpts.put(opt, list);
         }
 
-        String getOptionArgumentValue(String in) {
-            String[] values = in.trim().split(":");
-            return values[1];
-        }
-
-        void setExpandRequires(ToolOption opt, String arg) {
+        void setExpandRequires(ToolOption opt, String arg) throws OptionException {
             switch (arg) {
-                case "public":
+                case "transitive":
                     jdtoolOpts.put(opt, AccessKind.PUBLIC);
                     break;
                 case "all":
                     jdtoolOpts.put(opt, AccessKind.PRIVATE);
                     break;
                 default:
-                    usageError("main.illegal_option_value", arg);
+                    String text = getLocalizedMessage("main.illegal_option_value", arg);
+                    throw new IllegalOptionValue(this::usage, text);
             }
         }
 
-        void setShowModuleContents(ToolOption opt, String arg) {
+        void setShowModuleContents(ToolOption opt, String arg) throws OptionException {
             switch (arg) {
                 case "api":
                     jdtoolOpts.put(opt, AccessKind.PUBLIC);
@@ -554,11 +494,12 @@ public enum ToolOption {
                     jdtoolOpts.put(opt, AccessKind.PRIVATE);
                     break;
                 default:
-                    usageError("main.illegal_option_value", arg);
+                    String text = getLocalizedMessage("main.illegal_option_value", arg);
+                    throw new IllegalOptionValue(this::usage, text);
             }
         }
 
-        void setShowPackageAccess(ToolOption opt, String arg) {
+        void setShowPackageAccess(ToolOption opt, String arg) throws OptionException {
             switch (arg) {
                 case "exported":
                     jdtoolOpts.put(opt, AccessKind.PUBLIC);
@@ -567,16 +508,17 @@ public enum ToolOption {
                     jdtoolOpts.put(opt, AccessKind.PRIVATE);
                     break;
                 default:
-                    usageError("main.illegal_option_value", arg);
+                    String text = getLocalizedMessage("main.illegal_option_value", arg);
+                    throw new IllegalOptionValue(this::usage, text);
             }
         }
 
 
-        void setFilter(ToolOption opt, String arg) {
+        void setFilter(ToolOption opt, String arg) throws OptionException {
             jdtoolOpts.put(opt, getAccessValue(arg));
         }
 
-        void setSimpleFilter(String arg) {
+        void setSimpleFilter(String arg) throws OptionException {
             handleSimpleOption(arg);
         }
 
@@ -584,7 +526,7 @@ public enum ToolOption {
             fileManagerOpts.put(opt, arg);
         }
 
-        void handleSimpleOption(String arg) {
+        void handleSimpleOption(String arg) throws OptionException {
             populateSimpleAccessMap(getAccessValue(arg));
         }
 
@@ -593,7 +535,7 @@ public enum ToolOption {
          * -private, so on, in addition to the new ones such as
          * --show-types:public and so on.
          */
-        private AccessKind getAccessValue(String arg) {
+        private AccessKind getAccessValue(String arg) throws OptionException {
             int colon = arg.indexOf(':');
             String value = (colon > 0)
                     ? arg.substring(colon + 1)
@@ -608,8 +550,8 @@ public enum ToolOption {
                 case "private":
                     return AccessKind.PRIVATE;
                 default:
-                    usageError("main.illegal_option_value", value);
-                    return null;
+                    String text = getLocalizedMessage("main.illegal_option_value", value);
+                    throw new IllegalOptionValue(this::usage, text);
             }
         }
 

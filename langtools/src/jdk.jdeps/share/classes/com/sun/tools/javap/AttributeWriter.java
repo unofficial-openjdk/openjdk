@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ import com.sun.tools.classfile.CharacterRangeTable_attribute;
 import com.sun.tools.classfile.CharacterRangeTable_attribute.Entry;
 import com.sun.tools.classfile.Code_attribute;
 import com.sun.tools.classfile.CompilationID_attribute;
-import com.sun.tools.classfile.ConcealedPackages_attribute;
 import com.sun.tools.classfile.ConstantPool;
 import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.ConstantValue_attribute;
@@ -42,18 +41,22 @@ import com.sun.tools.classfile.DefaultAttribute;
 import com.sun.tools.classfile.Deprecated_attribute;
 import com.sun.tools.classfile.EnclosingMethod_attribute;
 import com.sun.tools.classfile.Exceptions_attribute;
-import com.sun.tools.classfile.Hashes_attribute;
 import com.sun.tools.classfile.InnerClasses_attribute;
 import com.sun.tools.classfile.InnerClasses_attribute.Info;
 import com.sun.tools.classfile.LineNumberTable_attribute;
 import com.sun.tools.classfile.LocalVariableTable_attribute;
 import com.sun.tools.classfile.LocalVariableTypeTable_attribute;
-import com.sun.tools.classfile.MainClass_attribute;
 import com.sun.tools.classfile.MethodParameters_attribute;
 import com.sun.tools.classfile.Module_attribute;
+import com.sun.tools.classfile.ModuleHashes_attribute;
+import com.sun.tools.classfile.ModuleMainClass_attribute;
+import com.sun.tools.classfile.ModulePackages_attribute;
+import com.sun.tools.classfile.ModuleResolution_attribute;
+import com.sun.tools.classfile.ModuleTarget_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleParameterAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeInvisibleTypeAnnotations_attribute;
+import com.sun.tools.classfile.RuntimeParameterAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeVisibleAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeVisibleParameterAnnotations_attribute;
 import com.sun.tools.classfile.RuntimeVisibleTypeAnnotations_attribute;
@@ -64,8 +67,6 @@ import com.sun.tools.classfile.SourceID_attribute;
 import com.sun.tools.classfile.StackMapTable_attribute;
 import com.sun.tools.classfile.StackMap_attribute;
 import com.sun.tools.classfile.Synthetic_attribute;
-import com.sun.tools.classfile.TargetPlatform_attribute;
-import com.sun.tools.classfile.Version_attribute;
 
 import static com.sun.tools.classfile.AccessFlags.*;
 
@@ -164,6 +165,7 @@ public class AttributeWriter extends BasicWriter
         print("default_value: ");
         annotationWriter.write(attr.default_value);
         indent(-1);
+        println();
         return null;
     }
 
@@ -237,27 +239,6 @@ public class AttributeWriter extends BasicWriter
         return null;
     }
 
-    private String getJavaPackage(ConcealedPackages_attribute attr, int index) {
-        try {
-            return getJavaName(attr.getPackage(index, constant_pool));
-        } catch (ConstantPoolException e) {
-            return report(e);
-        }
-    }
-
-    @Override
-    public Void visitConcealedPackages(ConcealedPackages_attribute attr, Void ignore) {
-        println("ConcealedPackages: ");
-        indent(+1);
-        for (int i = 0; i < attr.packages_count; i++) {
-            print("#" + attr.packages_index[i]);
-            tab();
-            println("// " + getJavaPackage(attr, i));
-        }
-        indent(-1);
-        return null;
-    }
-
     @Override
     public Void visitConstantValue(ConstantValue_attribute attr, Void ignore) {
         print("ConstantValue: ");
@@ -322,45 +303,6 @@ public class AttributeWriter extends BasicWriter
         }
     }
 
-    @Override
-    public Void visitHashes(Hashes_attribute attr, Void ignore) {
-        println("Hashes:");
-        indent(+1);
-        print("algorithm #" + attr.algorithm_index);
-        tab();
-        println("// " + getAlgorithm(attr));
-        for (Hashes_attribute.Entry e : attr.hashes_table) {
-            print("#" + e.requires_index + ", #" + e.hash_index);
-            tab();
-            println("// " + getRequires(e) + ": " + getHash(e));
-        }
-        indent(-1);
-        return null;
-    }
-
-    private String getAlgorithm(Hashes_attribute attr) {
-        try {
-            return constant_pool.getUTF8Value(attr.algorithm_index);
-        } catch (ConstantPoolException e) {
-            return report(e);
-        }
-    }
-
-    private String getRequires(Hashes_attribute.Entry entry) {
-        try {
-            return constant_pool.getUTF8Value(entry.requires_index);
-        } catch (ConstantPoolException e) {
-            return report(e);
-        }
-    }
-
-    private String getHash(Hashes_attribute.Entry entry) {
-        try {
-            return constant_pool.getUTF8Value(entry.hash_index);
-        } catch (ConstantPoolException e) {
-            return report(e);
-        }
-    }
 
     @Override
     public Void visitInnerClasses(InnerClasses_attribute attr, Void ignore) {
@@ -455,16 +397,7 @@ public class AttributeWriter extends BasicWriter
         return null;
     }
 
-    @Override
-    public Void visitMainClass(MainClass_attribute attr, Void ignore) {
-        print("MainClass: #" + attr.main_class_index);
-        tab();
-        print("// " + getJavaClassName(attr));
-        println();
-        return null;
-    }
-
-    private String getJavaClassName(MainClass_attribute a) {
+    private String getJavaClassName(ModuleMainClass_attribute a) {
         try {
             return getJavaName(a.getMainClassName(constant_pool));
         } catch (ConstantPoolException e) {
@@ -477,7 +410,6 @@ public class AttributeWriter extends BasicWriter
     @Override
     public Void visitMethodParameters(MethodParameters_attribute attr,
                                       Void ignore) {
-
         final String header = String.format(format, "Name", "Flags");
         println("MethodParameters:");
         indent(+1);
@@ -501,8 +433,29 @@ public class AttributeWriter extends BasicWriter
     public Void visitModule(Module_attribute attr, Void ignore) {
         println("Module:");
         indent(+1);
+
+        print("#" + attr.module_name);
+        print(",");
+        print(String.format("%x", attr.module_flags));
+        tab();
+        print("// " + constantWriter.stringValue(attr.module_name));
+        if ((attr.module_flags & Module_attribute.ACC_OPEN) != 0)
+            print(" ACC_OPEN");
+        if ((attr.module_flags & Module_attribute.ACC_MANDATED) != 0)
+            print(" ACC_MANDATED");
+        if ((attr.module_flags & Module_attribute.ACC_SYNTHETIC) != 0)
+            print(" ACC_SYNTHETIC");
+        println();
+        print("#" + attr.module_version_index);
+        if (attr.module_version_index != 0) {
+            tab();
+            print("// " + constantWriter.stringValue(attr.module_version_index));
+        }
+        println();
+
         printRequiresTable(attr);
         printExportsTable(attr);
+        printOpensTable(attr);
         printUsesTable(attr);
         printProvidesTable(attr);
         indent(-1);
@@ -511,65 +464,254 @@ public class AttributeWriter extends BasicWriter
 
     protected void printRequiresTable(Module_attribute attr) {
         Module_attribute.RequiresEntry[] entries = attr.requires;
-        println(entries.length + "\t// " + "requires");
+        print(entries.length);
+        tab();
+        println("// " + "requires");
         indent(+1);
         for (Module_attribute.RequiresEntry e: entries) {
-            print("#" + e.requires_index + "," +
-                    String.format("%x", e.requires_flags)+ "\t// requires");
-            if ((e.requires_flags & Module_attribute.ACC_PUBLIC) != 0)
-                print(" public");
+            print("#" + e.requires_index + "," + String.format("%x", e.requires_flags));
+            tab();
+            print("// " + constantWriter.stringValue(e.requires_index));
+            if ((e.requires_flags & Module_attribute.ACC_TRANSITIVE) != 0)
+                print(" ACC_TRANSITIVE");
+            if ((e.requires_flags & Module_attribute.ACC_STATIC_PHASE) != 0)
+                print(" ACC_STATIC_PHASE");
             if ((e.requires_flags & Module_attribute.ACC_SYNTHETIC) != 0)
-                print(" synthetic");
+                print(" ACC_SYNTHETIC");
             if ((e.requires_flags & Module_attribute.ACC_MANDATED) != 0)
-                print(" mandated");
-            println(" " + constantWriter.stringValue(e.requires_index));
+                print(" ACC_MANDATED");
+            println();
+            print("#" + e.requires_version_index);
+            if (e.requires_version_index != 0) {
+                tab();
+                print("// " + constantWriter.stringValue(e.requires_version_index));
+            }
+            println();
         }
         indent(-1);
     }
 
     protected void printExportsTable(Module_attribute attr) {
         Module_attribute.ExportsEntry[] entries = attr.exports;
-        println(entries.length + "\t// " + "exports");
+        print(entries.length);
+        tab();
+        println("// exports");
         indent(+1);
         for (Module_attribute.ExportsEntry e: entries) {
-            print("#" + e.exports_index + "\t// exports");
-            print(" " + constantWriter.stringValue(e.exports_index));
-            if (e.exports_to_index.length == 0) {
-                println();
-            } else {
-                println(" to ... " + e.exports_to_index.length);
-                indent(+1);
-                for (int to: e.exports_to_index) {
-                    println("#" + to + "\t// ... to " + constantWriter.stringValue(to));
-                }
-                indent(-1);
-            }
+            printExportOpenEntry(e.exports_index, e.exports_flags, e.exports_to_index);
         }
         indent(-1);
     }
 
+    protected void printOpensTable(Module_attribute attr) {
+        Module_attribute.OpensEntry[] entries = attr.opens;
+        print(entries.length);
+        tab();
+        println("// opens");
+        indent(+1);
+        for (Module_attribute.OpensEntry e: entries) {
+            printExportOpenEntry(e.opens_index, e.opens_flags, e.opens_to_index);
+        }
+        indent(-1);
+    }
+
+    protected void printExportOpenEntry(int index, int flags, int[] to_index) {
+        print("#" + index + "," + String.format("%x", flags));
+        tab();
+        print("// ");
+        print(constantWriter.stringValue(index));
+        if ((flags & Module_attribute.ACC_MANDATED) != 0)
+            print(" ACC_MANDATED");
+        if ((flags & Module_attribute.ACC_SYNTHETIC) != 0)
+            print(" ACC_SYNTHETIC");
+        if (to_index.length == 0) {
+            println();
+        } else {
+            println(" to ... " + to_index.length);
+            indent(+1);
+            for (int to: to_index) {
+                print("#" + to);
+                tab();
+                println("// ... to " + constantWriter.stringValue(to));
+            }
+            indent(-1);
+        }
+    }
+
     protected void printUsesTable(Module_attribute attr) {
         int[] entries = attr.uses_index;
-        println(entries.length + "\t// " + "uses services");
+        print(entries.length);
+        tab();
+        println("// " + "uses");
         indent(+1);
         for (int e: entries) {
-            println("#" + e + "\t// uses " + constantWriter.stringValue(e));
+            print("#" + e);
+            tab();
+            println("// " + constantWriter.stringValue(e));
         }
         indent(-1);
     }
 
     protected void printProvidesTable(Module_attribute attr) {
         Module_attribute.ProvidesEntry[] entries = attr.provides;
-        println(entries.length + "\t// " + "provides services");
+        print(entries.length);
+        tab();
+        println("// " + "provides");
         indent(+1);
         for (Module_attribute.ProvidesEntry e: entries) {
-            print("#" + e.provides_index + ",#" +
-                    e.with_index + "\t// provides ");
+            print("#" + e.provides_index);
+            tab();
+            print("// ");
             print(constantWriter.stringValue(e.provides_index));
-            print (" with ");
-            println(constantWriter.stringValue(e.with_index));
+            println(" with ... " + e.with_count);
+            indent(+1);
+            for (int with : e.with_index) {
+                print("#" + with);
+                tab();
+                println("// ... with " + constantWriter.stringValue(with));
+            }
+            indent(-1);
         }
         indent(-1);
+    }
+
+    @Override
+    public Void visitModuleHashes(ModuleHashes_attribute attr, Void ignore) {
+        println("ModuleHashes:");
+        indent(+1);
+        print("algorithm: #" + attr.algorithm_index);
+        tab();
+        println("// " + getAlgorithm(attr));
+        print(attr.hashes_table_length);
+        tab();
+        println("// hashes");
+        for (ModuleHashes_attribute.Entry e : attr.hashes_table) {
+            print("#" + e.module_name_index);
+            tab();
+            println("// " + getModuleName(e));
+            println("hash_length: " + e.hash.length);
+            println("hash: [" + toHex(e.hash) + "]");
+        }
+        indent(-1);
+        return null;
+    }
+
+    private String getAlgorithm(ModuleHashes_attribute attr) {
+        try {
+            return constant_pool.getUTF8Value(attr.algorithm_index);
+        } catch (ConstantPoolException e) {
+            return report(e);
+        }
+    }
+
+    private String getModuleName(ModuleHashes_attribute.Entry entry) {
+        try {
+            int utf8Index = constant_pool.getModuleInfo(entry.module_name_index).name_index;
+            return constant_pool.getUTF8Value(utf8Index);
+        } catch (ConstantPoolException e) {
+            return report(e);
+        }
+    }
+
+    @Override
+    public Void visitModuleMainClass(ModuleMainClass_attribute attr, Void ignore) {
+        print("ModuleMainClass: #" + attr.main_class_index);
+        tab();
+        print("// " + getJavaClassName(attr));
+        println();
+        return null;
+    }
+
+    @Override
+    public Void visitModulePackages(ModulePackages_attribute attr, Void ignore) {
+        println("ModulePackages: ");
+        indent(+1);
+        for (int i = 0; i < attr.packages_count; i++) {
+            print("#" + attr.packages_index[i]);
+            tab();
+            println("// " + getJavaPackage(attr, i));
+        }
+        indent(-1);
+        return null;
+    }
+
+    private String getJavaPackage(ModulePackages_attribute attr, int index) {
+        try {
+            return getJavaName(attr.getPackage(index, constant_pool));
+        } catch (ConstantPoolException e) {
+            return report(e);
+        }
+    }
+
+    @Override
+    public Void visitModuleResolution(ModuleResolution_attribute attr, Void ignore) {
+        println("ModuleResolution:");
+        indent(+1);
+        print(String.format("%x", attr.resolution_flags));
+        tab();
+        print("// ");
+        int flags = attr.resolution_flags;
+        if ((flags & ModuleResolution_attribute.DO_NOT_RESOLVE_BY_DEFAULT) != 0)
+            print(" DO_NOT_RESOLVE_BY_DEFAULT");
+        if ((flags & ModuleResolution_attribute.WARN_DEPRECATED) != 0)
+            print(" WARN_DEPRECATED");
+        if ((flags & ModuleResolution_attribute.WARN_DEPRECATED_FOR_REMOVAL) != 0)
+            print(" WARN_DEPRECATED_FOR_REMOVAL");
+        if ((flags & ModuleResolution_attribute.WARN_INCUBATING) != 0)
+            print(" WARN_INCUBATING");
+        println();
+        indent(-1);
+        return null;
+    }
+
+    @Override
+    public Void visitModuleTarget(ModuleTarget_attribute attr, Void ignore) {
+        println("ModuleTarget:");
+        indent(+1);
+        print("os_name: #" + attr.os_name_index);
+        if (attr.os_name_index != 0) {
+            tab();
+            print("// " + getOSName(attr));
+        }
+        println();
+        print("os_arch: #" + attr.os_arch_index);
+        if (attr.os_arch_index != 0) {
+            tab();
+            print("// " + getOSArch(attr));
+        }
+        println();
+        print("os_version: #" + attr.os_version_index);
+        if (attr.os_version_index != 0) {
+            tab();
+            print("// " + getOSVersion(attr));
+        }
+        println();
+        indent(-1);
+        return null;
+    }
+
+    private String getOSName(ModuleTarget_attribute attr) {
+        try {
+            return constant_pool.getUTF8Value(attr.os_name_index);
+        } catch (ConstantPoolException e) {
+            return report(e);
+        }
+    }
+
+    private String getOSArch(ModuleTarget_attribute attr) {
+        try {
+            return constant_pool.getUTF8Value(attr.os_arch_index);
+        } catch (ConstantPoolException e) {
+            return report(e);
+        }
+    }
+
+    private String getOSVersion(ModuleTarget_attribute attr) {
+        try {
+            return constant_pool.getUTF8Value(attr.os_version_index);
+        } catch (ConstantPoolException e) {
+            return report(e);
+        }
     }
 
     @Override
@@ -624,9 +766,8 @@ public class AttributeWriter extends BasicWriter
         return null;
     }
 
-    @Override
-    public Void visitRuntimeVisibleParameterAnnotations(RuntimeVisibleParameterAnnotations_attribute attr, Void ignore) {
-        println("RuntimeVisibleParameterAnnotations:");
+    private void visitParameterAnnotations(String message, RuntimeParameterAnnotations_attribute attr) {
+        println(message);
         indent(+1);
         for (int param = 0; param < attr.parameter_annotations.length; param++) {
             println("parameter " + param + ": ");
@@ -639,24 +780,17 @@ public class AttributeWriter extends BasicWriter
             indent(-1);
         }
         indent(-1);
+    }
+
+    @Override
+    public Void visitRuntimeVisibleParameterAnnotations(RuntimeVisibleParameterAnnotations_attribute attr, Void ignore) {
+        visitParameterAnnotations("RuntimeVisibleParameterAnnotations:", (RuntimeParameterAnnotations_attribute) attr);
         return null;
     }
 
     @Override
     public Void visitRuntimeInvisibleParameterAnnotations(RuntimeInvisibleParameterAnnotations_attribute attr, Void ignore) {
-        println("RuntimeInvisibleParameterAnnotations:");
-        indent(+1);
-        for (int param = 0; param < attr.parameter_annotations.length; param++) {
-            println(param + ": ");
-            indent(+1);
-            for (int i = 0; i < attr.parameter_annotations[param].length; i++) {
-                print(i + ": ");
-                annotationWriter.write(attr.parameter_annotations[param][i]);
-                println();
-            }
-            indent(-1);
-        }
-        indent(-1);
+        visitParameterAnnotations("RuntimeInvisibleParameterAnnotations:", (RuntimeParameterAnnotations_attribute) attr);
         return null;
     }
 
@@ -875,74 +1009,6 @@ public class AttributeWriter extends BasicWriter
         return null;
     }
 
-    @Override
-    public Void visitTargetPlatform(TargetPlatform_attribute attr, Void ignore) {
-        println("TargetPlatform:");
-        indent(+1);
-        print("os_name: #" + attr.os_name_index);
-        if (attr.os_name_index != 0) {
-            tab();
-            print("// " + getOSName(attr));
-        }
-        println();
-        print("os_arch: #" + attr.os_arch_index);
-        if (attr.os_arch_index != 0) {
-            tab();
-            print("// " + getOSArch(attr));
-        }
-        println();
-        print("os_version: #" + attr.os_version_index);
-        if (attr.os_version_index != 0) {
-            tab();
-            print("// " + getOSVersion(attr));
-        }
-        println();
-        indent(-1);
-        return null;
-    }
-
-    private String getOSName(TargetPlatform_attribute attr) {
-        try {
-            return constant_pool.getUTF8Value(attr.os_name_index);
-        } catch (ConstantPoolException e) {
-            return report(e);
-        }
-    }
-
-    private String getOSArch(TargetPlatform_attribute attr) {
-        try {
-            return constant_pool.getUTF8Value(attr.os_arch_index);
-        } catch (ConstantPoolException e) {
-            return report(e);
-        }
-    }
-
-    private String getOSVersion(TargetPlatform_attribute attr) {
-        try {
-            return constant_pool.getUTF8Value(attr.os_version_index);
-        } catch (ConstantPoolException e) {
-            return report(e);
-        }
-    }
-
-    @Override
-    public Void visitVersion(Version_attribute attr, Void ignore) {
-        print("Version: #" + attr.version_index);
-        indent(+1);
-        tab();
-        println("// " + getVersion(attr));
-        indent(-1);
-        return null;
-    }
-
-    private String getVersion(Version_attribute attr) {
-        try {
-            return constant_pool.getUTF8Value(attr.version_index);
-        } catch (ConstantPoolException e) {
-            return report(e);
-        }
-    }
-
     static String getJavaName(String name) {
         return name.replace('/', '.');
     }
@@ -960,6 +1026,14 @@ public class AttributeWriter extends BasicWriter
         while (s.length() < w)
             s = "0" + s;
         return StringUtils.toUpperCase(s);
+    }
+
+    static String toHex(byte[] ba) {
+        StringBuilder sb = new StringBuilder(ba.length);
+        for (byte b: ba) {
+            sb.append(String.format("%02x", b & 0xff));
+        }
+        return sb.toString();
     }
 
     private final AnnotationWriter annotationWriter;

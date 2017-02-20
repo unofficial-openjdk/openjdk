@@ -22,11 +22,13 @@
  *
  */
 #include "precompiled.hpp"
+#include "aot/aotLoader.hpp"
 #include "classfile/classFileParser.hpp"
 #include "classfile/classFileStream.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/classLoaderData.inline.hpp"
 #include "classfile/defaultMethods.hpp"
+#include "classfile/dictionary.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "classfile/moduleEntry.hpp"
 #include "classfile/symbolTable.hpp"
@@ -95,7 +97,6 @@
 #define JAVA_6_VERSION                    50
 
 // Used for backward compatibility reasons:
-// - to check NameAndType_info signatures more aggressively
 // - to disallow argument and require ACC_STATIC for <clinit> methods
 #define JAVA_7_VERSION                    51
 
@@ -564,7 +565,7 @@ void ClassFileParser::parse_constant_pool(const ClassFileStream* const stream,
         break;
       }
       case JVM_CONSTANT_NameAndType: {
-        if (_need_verify && _major_version >= JAVA_7_VERSION) {
+        if (_need_verify) {
           const int sig_index = cp->signature_ref_index_at(index);
           const int name_index = cp->name_ref_index_at(index);
           const Symbol* const name = cp->symbol_at(name_index);
@@ -572,9 +573,17 @@ void ClassFileParser::parse_constant_pool(const ClassFileStream* const stream,
           guarantee_property(sig->utf8_length() != 0,
             "Illegal zero length constant pool entry at %d in class %s",
             sig_index, CHECK);
+          guarantee_property(name->utf8_length() != 0,
+            "Illegal zero length constant pool entry at %d in class %s",
+            name_index, CHECK);
+
           if (sig->byte_at(0) == JVM_SIGNATURE_FUNC) {
+            // Format check method name and signature
+            verify_legal_method_name(name, CHECK);
             verify_legal_method_signature(name, sig, CHECK);
           } else {
+            // Format check field name and signature
+            verify_legal_field_name(name, CHECK);
             verify_legal_field_signature(name, sig, CHECK);
           }
         }
@@ -595,42 +604,32 @@ void ClassFileParser::parse_constant_pool(const ClassFileStream* const stream,
         const Symbol* const name = cp->symbol_at(name_ref_index);
         const Symbol* const signature = cp->symbol_at(signature_ref_index);
         if (tag == JVM_CONSTANT_Fieldref) {
-          verify_legal_field_name(name, CHECK);
-          if (_need_verify && _major_version >= JAVA_7_VERSION) {
-            // Signature is verified above, when iterating NameAndType_info.
-            // Need only to be sure it's non-zero length and the right type.
+          if (_need_verify) {
+            // Field name and signature are verified above, when iterating NameAndType_info.
+            // Need only to be sure signature is non-zero length and the right type.
             if (signature->utf8_length() == 0 ||
                 signature->byte_at(0) == JVM_SIGNATURE_FUNC) {
-              throwIllegalSignature(
-                "Field", name, signature, CHECK);
+              throwIllegalSignature("Field", name, signature, CHECK);
             }
-          } else {
-            verify_legal_field_signature(name, signature, CHECK);
           }
         } else {
-          verify_legal_method_name(name, CHECK);
-          if (_need_verify && _major_version >= JAVA_7_VERSION) {
-            // Signature is verified above, when iterating NameAndType_info.
-            // Need only to be sure it's non-zero length and the right type.
+          if (_need_verify) {
+            // Method name and signature are verified above, when iterating NameAndType_info.
+            // Need only to be sure signature is non-zero length and the right type.
             if (signature->utf8_length() == 0 ||
                 signature->byte_at(0) != JVM_SIGNATURE_FUNC) {
-              throwIllegalSignature(
-                "Method", name, signature, CHECK);
+              throwIllegalSignature("Method", name, signature, CHECK);
             }
-          } else {
-            verify_legal_method_signature(name, signature, CHECK);
           }
-          if (tag == JVM_CONSTANT_Methodref) {
-            // 4509014: If a class method name begins with '<', it must be "<init>".
-            assert(name != NULL, "method name in constant pool is null");
-            const unsigned int name_len = name->utf8_length();
-            if (name_len != 0 && name->byte_at(0) == '<') {
-              if (name != vmSymbols::object_initializer_name()) {
-                classfile_parse_error(
-                  "Bad method name at constant pool index %u in class file %s",
-                  name_ref_index, CHECK);
-              }
-            }
+          // 4509014: If a class method name begins with '<', it must be "<init>"
+          const unsigned int name_len = name->utf8_length();
+          if (tag == JVM_CONSTANT_Methodref &&
+              name_len != 0 &&
+              name->byte_at(0) == '<' &&
+              name != vmSymbols::object_initializer_name()) {
+            classfile_parse_error(
+              "Bad method name at constant pool index %u in class file %s",
+              name_ref_index, CHECK);
           }
         }
         break;
@@ -801,11 +800,11 @@ static bool put_after_lookup(const Symbol* name, const Symbol* sig, NameSigHash*
 void ClassFileParser::parse_interfaces(const ClassFileStream* const stream,
                                        const int itfs_len,
                                        ConstantPool* const cp,
-                                       bool* const has_default_methods,
+                                       bool* const has_nonstatic_concrete_methods,
                                        TRAPS) {
   assert(stream != NULL, "invariant");
   assert(cp != NULL, "invariant");
-  assert(has_default_methods != NULL, "invariant");
+  assert(has_nonstatic_concrete_methods != NULL, "invariant");
 
   if (itfs_len == 0) {
     _local_interfaces = Universe::the_empty_klass_array();
@@ -847,8 +846,8 @@ void ClassFileParser::parse_interfaces(const ClassFileStream* const stream,
                    "Implementing class");
       }
 
-      if (InstanceKlass::cast(interf())->has_default_methods()) {
-        *has_default_methods = true;
+      if (InstanceKlass::cast(interf())->has_nonstatic_concrete_methods()) {
+        *has_nonstatic_concrete_methods = true;
       }
       _local_interfaces->at_put(index, interf());
     }
@@ -1026,16 +1025,20 @@ public:
 
 static int skip_annotation_value(const u1*, int, int); // fwd decl
 
+// Safely increment index by val if does not pass limit
+#define SAFE_ADD(index, limit, val) \
+if (index >= limit - val) return limit; \
+index += val;
+
 // Skip an annotation.  Return >=limit if there is any problem.
 static int skip_annotation(const u1* buffer, int limit, int index) {
   assert(buffer != NULL, "invariant");
   // annotation := atype:u2 do(nmem:u2) {member:u2 value}
   // value := switch (tag:u1) { ... }
-  index += 2;  // skip atype
-  if ((index += 2) >= limit)  return limit;  // read nmem
+  SAFE_ADD(index, limit, 4); // skip atype and read nmem
   int nmem = Bytes::get_Java_u2((address)buffer + index - 2);
   while (--nmem >= 0 && index < limit) {
-    index += 2; // skip member
+    SAFE_ADD(index, limit, 2); // skip member
     index = skip_annotation_value(buffer, limit, index);
   }
   return index;
@@ -1053,7 +1056,7 @@ static int skip_annotation_value(const u1* buffer, int limit, int index) {
   //   case @: annotation;
   //   case s: s_con:u2;
   // }
-  if ((index += 1) >= limit)  return limit;  // read tag
+  SAFE_ADD(index, limit, 1); // read tag
   const u1 tag = buffer[index - 1];
   switch (tag) {
     case 'B':
@@ -1066,14 +1069,14 @@ static int skip_annotation_value(const u1* buffer, int limit, int index) {
     case 'J':
     case 'c':
     case 's':
-      index += 2;  // skip con or s_con
+      SAFE_ADD(index, limit, 2);  // skip con or s_con
       break;
     case 'e':
-      index += 4;  // skip e_class, e_name
+      SAFE_ADD(index, limit, 4);  // skip e_class, e_name
       break;
     case '[':
     {
-      if ((index += 2) >= limit)  return limit;  // read nval
+      SAFE_ADD(index, limit, 2); // read nval
       int nval = Bytes::get_Java_u2((address)buffer + index - 2);
       while (--nval >= 0 && index < limit) {
         index = skip_annotation_value(buffer, limit, index);
@@ -1102,8 +1105,8 @@ static void parse_annotations(const ConstantPool* const cp,
   assert(loader_data != NULL, "invariant");
 
   // annotations := do(nann:u2) {annotation}
-  int index = 0;
-  if ((index += 2) >= limit)  return;  // read nann
+  int index = 2; // read nann
+  if (index >= limit)  return;
   int nann = Bytes::get_Java_u2((address)buffer + index - 2);
   enum {  // initial annotation layout
     atype_off = 0,      // utf8 such as 'Ljava/lang/annotation/Retention;'
@@ -1122,7 +1125,8 @@ static void parse_annotations(const ConstantPool* const cp,
     s_size = 9,
     min_size = 6        // smallest possible size (zero members)
   };
-  while ((--nann) >= 0 && (index - 2 + min_size <= limit)) {
+  // Cannot add min_size to index in case of overflow MAX_INT
+  while ((--nann) >= 0 && (index - 2 <= limit - min_size)) {
     int index0 = index;
     index = skip_annotation(buffer, limit, index);
     const u1* const abase = buffer + index0;
@@ -1254,13 +1258,14 @@ void ClassFileParser::parse_field_attributes(const ClassFileStream* const cfs,
         runtime_visible_annotations_length = attribute_length;
         runtime_visible_annotations = cfs->get_u1_buffer();
         assert(runtime_visible_annotations != NULL, "null visible annotations");
+        cfs->guarantee_more(runtime_visible_annotations_length, CHECK);
         parse_annotations(cp,
                           runtime_visible_annotations,
                           runtime_visible_annotations_length,
                           parsed_annotations,
                           _loader_data,
                           CHECK);
-        cfs->skip_u1(runtime_visible_annotations_length, CHECK);
+        cfs->skip_u1_fast(runtime_visible_annotations_length);
       } else if (attribute_name == vmSymbols::tag_runtime_invisible_annotations()) {
         if (runtime_invisible_annotations_exists) {
           classfile_parse_error(
@@ -2575,13 +2580,14 @@ Method* ClassFileParser::parse_method(const ClassFileStream* const cfs,
         runtime_visible_annotations_length = method_attribute_length;
         runtime_visible_annotations = cfs->get_u1_buffer();
         assert(runtime_visible_annotations != NULL, "null visible annotations");
+        cfs->guarantee_more(runtime_visible_annotations_length, CHECK_NULL);
         parse_annotations(cp,
                           runtime_visible_annotations,
                           runtime_visible_annotations_length,
                           &parsed_annotations,
                           _loader_data,
                           CHECK_NULL);
-        cfs->skip_u1(runtime_visible_annotations_length, CHECK_NULL);
+        cfs->skip_u1_fast(runtime_visible_annotations_length);
       } else if (method_attribute_name == vmSymbols::tag_runtime_invisible_annotations()) {
         if (runtime_invisible_annotations_exists) {
           classfile_parse_error(
@@ -2833,12 +2839,12 @@ void ClassFileParser::parse_methods(const ClassFileStream* const cfs,
                                     bool is_interface,
                                     AccessFlags* promoted_flags,
                                     bool* has_final_method,
-                                    bool* declares_default_methods,
+                                    bool* declares_nonstatic_concrete_methods,
                                     TRAPS) {
   assert(cfs != NULL, "invariant");
   assert(promoted_flags != NULL, "invariant");
   assert(has_final_method != NULL, "invariant");
-  assert(declares_default_methods != NULL, "invariant");
+  assert(declares_nonstatic_concrete_methods != NULL, "invariant");
 
   assert(NULL == _methods, "invariant");
 
@@ -2863,11 +2869,11 @@ void ClassFileParser::parse_methods(const ClassFileStream* const cfs,
       if (method->is_final()) {
         *has_final_method = true;
       }
-      // declares_default_methods: declares concrete instance methods, any access flags
+      // declares_nonstatic_concrete_methods: declares concrete instance methods, any access flags
       // used for interface initialization, and default method inheritance analysis
-      if (is_interface && !(*declares_default_methods)
+      if (is_interface && !(*declares_nonstatic_concrete_methods)
         && !method->is_abstract() && !method->is_static()) {
-        *declares_default_methods = true;
+        *declares_nonstatic_concrete_methods = true;
       }
       _methods->at_put(index, method);
     }
@@ -3286,13 +3292,14 @@ void ClassFileParser::parse_classfile_attributes(const ClassFileStream* const cf
         runtime_visible_annotations_length = attribute_length;
         runtime_visible_annotations = cfs->get_u1_buffer();
         assert(runtime_visible_annotations != NULL, "null visible annotations");
+        cfs->guarantee_more(runtime_visible_annotations_length, CHECK);
         parse_annotations(cp,
                           runtime_visible_annotations,
                           runtime_visible_annotations_length,
                           parsed_annotations,
                           _loader_data,
                           CHECK);
-        cfs->skip_u1(runtime_visible_annotations_length, CHECK);
+        cfs->skip_u1_fast(runtime_visible_annotations_length);
       } else if (tag == vmSymbols::tag_runtime_invisible_annotations()) {
         if (runtime_invisible_annotations_exists) {
           classfile_parse_error(
@@ -4352,13 +4359,34 @@ static void check_super_class_access(const InstanceKlass* this_klass, TRAPS) {
   assert(this_klass != NULL, "invariant");
   const Klass* const super = this_klass->super();
   if (super != NULL) {
+
+    // If the loader is not the boot loader then throw an exception if its
+    // superclass is in package jdk.internal.reflect and its loader is not a
+    // special reflection class loader
+    if (!this_klass->class_loader_data()->is_the_null_class_loader_data()) {
+      assert(super->is_instance_klass(), "super is not instance klass");
+      PackageEntry* super_package = super->package();
+      if (super_package != NULL &&
+          super_package->name()->fast_compare(vmSymbols::jdk_internal_reflect()) == 0 &&
+          !java_lang_ClassLoader::is_reflection_class_loader(this_klass->class_loader())) {
+        ResourceMark rm(THREAD);
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_IllegalAccessError(),
+          "class %s loaded by %s cannot access jdk/internal/reflect superclass %s",
+          this_klass->external_name(),
+          this_klass->class_loader_data()->loader_name(),
+          super->external_name());
+        return;
+      }
+    }
+
     Reflection::VerifyClassAccessResults vca_result =
       Reflection::verify_class_access(this_klass, super, false);
     if (vca_result != Reflection::ACCESS_OK) {
       ResourceMark rm(THREAD);
       char* msg =  Reflection::verify_class_access_msg(this_klass, super, vca_result);
       if (msg == NULL) {
-        ResourceMark rm(THREAD);
         Exceptions::fthrow(
           THREAD_AND_LOCATION,
           vmSymbols::java_lang_IllegalAccessError(),
@@ -4687,16 +4715,7 @@ bool ClassFileParser::verify_unqualified_name(const char* name,
   for (const char* p = name; p != name + length;) {
     jchar ch = *p;
     if (ch < 128) {
-      if (ch == '.') {
-        // permit '.' in module names unless it's the first char, or
-        // preceding char is also a '.', or last char is a '.'.
-        if ((type != ClassFileParser::LegalModule) ||
-          (p == name) || (*(p-1) == '.') ||
-          (p == name + length - 1)) {
-          return false;
-        }
-      }
-      if (ch == ';' || ch == '[' ) {
+      if (ch == '.' || ch == ';' || ch == '[' ) {
         return false;   // do not permit '.', ';', or '['
       }
       if (ch == '/') {
@@ -4843,19 +4862,28 @@ const char* ClassFileParser::skip_over_field_signature(const char* signature,
         }
       }
       else {
-        // 4900761: For class version > 48, any unicode is allowed in class name.
+        // Skip leading 'L' and ignore first appearance of ';'
         length--;
         signature++;
-        while (length > 0 && signature[0] != ';') {
-          if (signature[0] == '.') {
-            classfile_parse_error("Class name contains illegal character '.' in descriptor in class file %s", CHECK_0);
-          }
-          length--;
-          signature++;
-        }
-        if (signature[0] == ';') { return signature + 1; }
-      }
+        char* c = strchr((char*) signature, ';');
+        // Format check signature
+        if (c != NULL) {
+          ResourceMark rm(THREAD);
+          int newlen = c - (char*) signature;
+          char* sig = NEW_RESOURCE_ARRAY(char, newlen + 1);
+          strncpy(sig, signature, newlen);
+          sig[newlen] = '\0';
 
+          bool legal = verify_unqualified_name(sig, newlen, LegalClass);
+          if (!legal) {
+            classfile_parse_error("Class name contains illegal character "
+                                  "in descriptor in class file %s",
+                                  CHECK_0);
+            return NULL;
+          }
+          return signature + newlen + 1;
+        }
+      }
       return NULL;
     }
     case JVM_SIGNATURE_ARRAY:
@@ -4869,7 +4897,6 @@ const char* ClassFileParser::skip_over_field_signature(const char* signature,
       length--;
       void_ok = false;
       break;
-
     default:
       return NULL;
     }
@@ -5185,6 +5212,19 @@ InstanceKlass* ClassFileParser::create_instance_klass(bool changed_by_loadhook, 
 
   assert(_klass == ik, "invariant");
 
+  ik->set_has_passed_fingerprint_check(false);
+  if (UseAOT && ik->supers_have_passed_fingerprint_checks()) {
+    uint64_t aot_fp = AOTLoader::get_saved_fingerprint(ik);
+    if (aot_fp != 0 && aot_fp == _stream->compute_fingerprint()) {
+      // This class matches with a class saved in an AOT library
+      ik->set_has_passed_fingerprint_check(true);
+    } else {
+      ResourceMark rm;
+      log_info(class, fingerprint)("%s :  expected = " PTR64_FORMAT " actual = " PTR64_FORMAT,
+                                 ik->external_name(), aot_fp, _stream->compute_fingerprint());
+    }
+  }
+
   return ik;
 }
 
@@ -5245,8 +5285,8 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
 
   ik->set_minor_version(_minor_version);
   ik->set_major_version(_major_version);
-  ik->set_has_default_methods(_has_default_methods);
-  ik->set_declares_default_methods(_declares_default_methods);
+  ik->set_has_nonstatic_concrete_methods(_has_nonstatic_concrete_methods);
+  ik->set_declares_nonstatic_concrete_methods(_declares_nonstatic_concrete_methods);
 
   if (_host_klass != NULL) {
     assert (ik->is_anonymous(), "should be the same");
@@ -5306,12 +5346,9 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
   // check if this class overrides any final method
   check_final_method_override(ik, CHECK);
 
-  // check that if this class is an interface then it doesn't have static methods
-  if (ik->is_interface()) {
-    /* An interface in a JAVA 8 classfile can be static */
-    if (_major_version < JAVA_8_VERSION) {
-      check_illegal_static_method(ik, CHECK);
-    }
+  // reject static interface methods prior to Java 8
+  if (ik->is_interface() && _major_version < JAVA_8_VERSION) {
+    check_illegal_static_method(ik, CHECK);
   }
 
   // Obtain this_klass' module entry
@@ -5331,9 +5368,9 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
 
   assert(_all_mirandas != NULL, "invariant");
 
-  // Generate any default methods - default methods are interface methods
-  // that have a default implementation.  This is new with Lambda project.
-  if (_has_default_methods ) {
+  // Generate any default methods - default methods are public interface methods
+  // that have a default implementation.  This is new with Java 8.
+  if (_has_nonstatic_concrete_methods) {
     DefaultMethods::generate_default_methods(ik,
                                              _all_mirandas,
                                              CHECK);
@@ -5389,7 +5426,7 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
     }
   }
 
-  TRACE_INIT_KLASS_ID(ik);
+  TRACE_INIT_ID(ik);
 
   // If we reach here, all is well.
   // Now remove the InstanceKlass* from the _klass_to_deallocate field
@@ -5402,11 +5439,75 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
   debug_only(ik->verify();)
 }
 
+// For an anonymous class that is in the unnamed package, move it to its host class's
+// package by prepending its host class's package name to its class name and setting
+// its _class_name field.
+void ClassFileParser::prepend_host_package_name(const InstanceKlass* host_klass, TRAPS) {
+  ResourceMark rm(THREAD);
+  assert(strrchr(_class_name->as_C_string(), '/') == NULL,
+         "Anonymous class should not be in a package");
+  const char* host_pkg_name =
+    ClassLoader::package_from_name(host_klass->name()->as_C_string(), NULL);
+
+  if (host_pkg_name != NULL) {
+    size_t host_pkg_len = strlen(host_pkg_name);
+    int class_name_len = _class_name->utf8_length();
+    char* new_anon_name =
+      NEW_RESOURCE_ARRAY(char, host_pkg_len + 1 + class_name_len);
+    // Copy host package name and trailing /.
+    strncpy(new_anon_name, host_pkg_name, host_pkg_len);
+    new_anon_name[host_pkg_len] = '/';
+    // Append anonymous class name. The anonymous class name can contain odd
+    // characters.  So, do a strncpy instead of using sprintf("%s...").
+    strncpy(new_anon_name + host_pkg_len + 1, (char *)_class_name->base(), class_name_len);
+
+    // Create a symbol and update the anonymous class name.
+    _class_name = SymbolTable::new_symbol(new_anon_name,
+                                          (int)host_pkg_len + 1 + class_name_len,
+                                          CHECK);
+  }
+}
+
+// If the host class and the anonymous class are in the same package then do
+// nothing.  If the anonymous class is in the unnamed package then move it to its
+// host's package.  If the classes are in different packages then throw an IAE
+// exception.
+void ClassFileParser::fix_anonymous_class_name(TRAPS) {
+  assert(_host_klass != NULL, "Expected an anonymous class");
+
+  const jbyte* anon_last_slash = UTF8::strrchr(_class_name->base(),
+                                               _class_name->utf8_length(), '/');
+  if (anon_last_slash == NULL) {  // Unnamed package
+    prepend_host_package_name(_host_klass, CHECK);
+  } else {
+    if (!InstanceKlass::is_same_class_package(_host_klass->class_loader(),
+                                              _host_klass->name(),
+                                              _host_klass->class_loader(),
+                                              _class_name)) {
+      ResourceMark rm(THREAD);
+      THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+        err_msg("Host class %s and anonymous class %s are in different packages",
+        _host_klass->name()->as_C_string(), _class_name->as_C_string()));
+    }
+  }
+}
+
+static bool relax_format_check_for(ClassLoaderData* loader_data) {
+  bool trusted = (loader_data->is_the_null_class_loader_data() ||
+                  SystemDictionary::is_platform_class_loader(loader_data->class_loader()));
+  bool need_verify =
+    // verifyAll
+    (BytecodeVerificationLocal && BytecodeVerificationRemote) ||
+    // verifyRemote
+    (!BytecodeVerificationLocal && BytecodeVerificationRemote && !trusted);
+  return !need_verify;
+}
+
 ClassFileParser::ClassFileParser(ClassFileStream* stream,
                                  Symbol* name,
                                  ClassLoaderData* loader_data,
                                  Handle protection_domain,
-                                 const Klass* host_klass,
+                                 const InstanceKlass* host_klass,
                                  GrowableArray<Handle>* cp_patches,
                                  Publicity pub_level,
                                  TRAPS) :
@@ -5454,8 +5555,8 @@ ClassFileParser::ClassFileParser(ClassFileStream* stream,
   _java_fields_count(0),
   _need_verify(false),
   _relax_verify(false),
-  _has_default_methods(false),
-  _declares_default_methods(false),
+  _has_nonstatic_concrete_methods(false),
+  _declares_nonstatic_concrete_methods(false),
   _has_final_method(false),
   _has_finalizer(false),
   _has_empty_finalizer(false),
@@ -5490,7 +5591,7 @@ ClassFileParser::ClassFileParser(ClassFileStream* stream,
 
   // Check if verification needs to be relaxed for this class file
   // Do not restrict it to jdk1.0 or jdk1.1 to maintain backward compatibility (4982376)
-  _relax_verify = Verifier::relax_verify_for(_loader_data->class_loader());
+  _relax_verify = relax_format_check_for(_loader_data);
 
   parse_stream(stream, CHECK);
 
@@ -5681,6 +5782,13 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
     return;
   }
 
+  // if this is an anonymous class fix up its name if it's in the unnamed
+  // package.  Otherwise, throw IAE if it is in a different package than
+  // its host class.
+  if (_host_klass != NULL) {
+    fix_anonymous_class_name(CHECK);
+  }
+
   // Verification prevents us from creating names with dots in them, this
   // asserts that that's the case.
   assert(is_internal_format(_class_name), "external class name format used internally");
@@ -5702,9 +5810,22 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
       // Anonymous classes such as generated LambdaForm classes are also not included.
       if (SystemDictionaryShared::is_sharing_possible(_loader_data) &&
           _host_klass == NULL) {
+        oop class_loader = _loader_data->class_loader();
         ResourceMark rm(THREAD);
-        classlist_file->print_cr("%s", _class_name->as_C_string());
-        classlist_file->flush();
+        // For the boot and platform class loaders, check if the class is not found in the
+        // java runtime image. Additional check for the boot class loader is if the class
+        // is not found in the boot loader's appended entries. This indicates that the class
+        // is not useable during run time, such as the ones found in the --patch-module entries,
+        // so it should not be included in the classlist file.
+        if (((class_loader == NULL && !ClassLoader::contains_append_entry(stream->source())) ||
+             SystemDictionary::is_platform_class_loader(class_loader)) &&
+            !ClassLoader::is_jrt(stream->source())) {
+          tty->print_cr("skip writing class %s from source %s to classlist file",
+            _class_name->as_C_string(), stream->source());
+        } else {
+          classlist_file->print_cr("%s", _class_name->as_C_string());
+          classlist_file->flush();
+        }
       }
     }
 #endif
@@ -5722,7 +5843,7 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
   parse_interfaces(stream,
                    _itfs_len,
                    cp,
-                   &_has_default_methods,
+                   &_has_nonstatic_concrete_methods,
                    CHECK);
 
   assert(_local_interfaces != NULL, "invariant");
@@ -5745,7 +5866,7 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
                 _access_flags.is_interface(),
                 &promoted_flags,
                 &_has_final_method,
-                &_declares_default_methods,
+                &_declares_nonstatic_concrete_methods,
                 CHECK);
 
   assert(_methods != NULL, "invariant");
@@ -5753,8 +5874,8 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
   // promote flags from parse_methods() to the klass' flags
   _access_flags.add_promoted_flags(promoted_flags.as_int());
 
-  if (_declares_default_methods) {
-    _has_default_methods = true;
+  if (_declares_nonstatic_concrete_methods) {
+    _has_nonstatic_concrete_methods = true;
   }
 
   // Additional attributes/annotations
@@ -5783,6 +5904,11 @@ void ClassFileParser::post_process_parsed_stream(const ClassFileStream* const st
   assert(cp != NULL, "invariant");
   assert(_loader_data != NULL, "invariant");
 
+  if (_class_name == vmSymbols::java_lang_Object()) {
+    check_property(_local_interfaces == Universe::the_empty_klass_array(),
+                   "java.lang.Object cannot implement an interface in class file %s",
+                   CHECK);
+  }
   // We check super class after class file is parsed and format is checked
   if (_super_class_index > 0 && NULL ==_super_klass) {
     Symbol* const super_class_name = cp->klass_name_at(_super_class_index);
@@ -5803,8 +5929,8 @@ void ClassFileParser::post_process_parsed_stream(const ClassFileStream* const st
   }
 
   if (_super_klass != NULL) {
-    if (_super_klass->has_default_methods()) {
-      _has_default_methods = true;
+    if (_super_klass->has_nonstatic_concrete_methods()) {
+      _has_nonstatic_concrete_methods = true;
     }
 
     if (_super_klass->is_interface()) {
@@ -5844,6 +5970,7 @@ void ClassFileParser::post_process_parsed_stream(const ClassFileStream* const st
                                                     _super_klass,
                                                     _methods,
                                                     _access_flags,
+                                                    _major_version,
                                                     _loader_data->class_loader(),
                                                     _class_name,
                                                     _local_interfaces,

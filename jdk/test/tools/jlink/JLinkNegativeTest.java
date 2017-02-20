@@ -191,7 +191,7 @@ public class JLinkNegativeTest {
                     .output(imageFile)
                     .addMods("not_zip")
                     .modulePath(helper.defaultModulePath())
-                    .call().assertFailure("Error: java.util.zip.ZipException: zip file is empty");
+                    .call().assertFailure("Error: java.io.IOException: Invalid jmod file");
         } finally {
             deleteDirectory(jmod);
         }
@@ -236,12 +236,9 @@ public class JLinkNegativeTest {
         JImageGenerator.addFiles(module, new InMemoryFile("unknown/A.class", new byte[0]));
         try {
             Result result = helper.generateDefaultImage(moduleName);
-            if (result.getExitCode() != 4) {
+            System.err.println(result.getMessage());
+            if (result.getExitCode() == 0) {
                 throw new AssertionError("Crash expected");
-            }
-            if (!result.getMessage().contains("java.lang.InternalError: unexpected entry: unknown")) {
-                System.err.println(result.getMessage());
-                throw new AssertionError("InternalError expected");
             }
         } finally {
             deleteDirectory(module);
@@ -250,20 +247,17 @@ public class JLinkNegativeTest {
 
     @Test(enabled = true)
     public void testSectionsAreFiles() throws IOException {
-        String moduleName = "module";
+        String moduleName = "hacked4";
         Path jmod = helper.generateDefaultJModule(moduleName).assertSuccess();
         JImageGenerator.addFiles(jmod,
-                new InMemoryFile("/native", new byte[0]),
+                new InMemoryFile("/lib", new byte[0]),
                 new InMemoryFile("/conf", new byte[0]),
                 new InMemoryFile("/bin", new byte[0]));
         try {
             Result result = helper.generateDefaultImage(moduleName);
-            if (result.getExitCode() != 4) {
+            System.err.println(result.getMessage());
+            if (result.getExitCode() == 0) {
                 throw new AssertionError("Crash expected");
-            }
-            if (!result.getMessage().contains("java.lang.InternalError: unexpected entry: ")) {
-                System.err.println(result.getMessage());
-                throw new AssertionError("InternalError expected");
             }
         } finally {
             deleteDirectory(jmod);
@@ -280,7 +274,7 @@ public class JLinkNegativeTest {
                 helper.getJmodSrcDir(), helper.getJmodClassesDir(), moduleName2, classNames);
 
         try (OutputStream out = Files.newOutputStream(module2.resolve("module-info.class"))) {
-            ModuleInfoWriter.write(new ModuleDescriptor.Builder(moduleName1)
+            ModuleInfoWriter.write(ModuleDescriptor.newModule(moduleName1)
                     .requires("java.base").build(), out);
         }
 
@@ -338,7 +332,7 @@ public class JLinkNegativeTest {
                 helper.getJarSrcDir(), helper.getJarClassesDir(), moduleName2, classNames);
 
         try (OutputStream out = Files.newOutputStream(module2.resolve("module-info.class"))) {
-            ModuleInfoWriter.write(new ModuleDescriptor.Builder(moduleName1)
+            ModuleInfoWriter.write(ModuleDescriptor.newModule(moduleName1)
                     .requires("java.base").build(), out);
         }
 

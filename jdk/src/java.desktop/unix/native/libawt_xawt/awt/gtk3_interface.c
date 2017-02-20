@@ -35,6 +35,7 @@
 #include "awt.h"
 
 static void *gtk3_libhandle = NULL;
+static void *gthread_libhandle = NULL;
 
 static jmp_buf j;
 
@@ -81,6 +82,15 @@ static void gtk3_remove_state(GtkWidget *widget, GtkStateType state) {
 static void* dl_symbol(const char* name)
 {
     void* result = dlsym(gtk3_libhandle, name);
+    if (!result)
+        longjmp(j, NO_SYMBOL_EXCEPTION);
+
+    return result;
+}
+
+static void* dl_symbol_gthread(const char* name)
+{
+    void* result = dlsym(gthread_libhandle, name);
     if (!result)
         longjmp(j, NO_SYMBOL_EXCEPTION);
 
@@ -259,6 +269,13 @@ GtkApi* gtk3_load(JNIEnv *env, const char* lib_name)
     gtk3_libhandle = dlopen(lib_name, RTLD_LAZY | RTLD_LOCAL);
     if (gtk3_libhandle == NULL) {
         return FALSE;
+    }
+
+    gthread_libhandle = dlopen(GTHREAD_LIB_VERSIONED, RTLD_LAZY | RTLD_LOCAL);
+    if (gthread_libhandle == NULL) {
+        gthread_libhandle = dlopen(GTHREAD_LIB, RTLD_LAZY | RTLD_LOCAL);
+        if (gthread_libhandle == NULL)
+            return FALSE;
     }
 
     if (setjmp(j) == 0)
@@ -530,8 +547,8 @@ GtkApi* gtk3_load(JNIEnv *env, const char* lib_name)
 
         fp_g_path_get_dirname = dl_symbol("g_path_get_dirname");
 
-        fp_gdk_threads_enter = &empty;
-        fp_gdk_threads_leave = &empty;
+        fp_gdk_threads_enter = dl_symbol("gdk_threads_enter");
+        fp_gdk_threads_leave = dl_symbol("gdk_threads_leave");
 
         /**
          * Functions for sun_awt_X11_GtkFileDialogPeer.c
@@ -555,6 +572,9 @@ GtkApi* gtk3_load(JNIEnv *env, const char* lib_name)
     {
         dlclose(gtk3_libhandle);
         gtk3_libhandle = NULL;
+
+        dlclose(gthread_libhandle);
+        gthread_libhandle = NULL;
 
         return NULL;
     }
@@ -651,6 +671,7 @@ static int gtk3_unload()
 
     dlerror();
     dlclose(gtk3_libhandle);
+    dlclose(gthread_libhandle);
     if ((gtk3_error = dlerror()) != NULL)
     {
         return FALSE;
@@ -1993,9 +2014,7 @@ static gint gtk3_get_ythickness(JNIEnv *env, WidgetType widget_type)
 static guint8 recode_color(gdouble channel)
 {
     guint16 result = (guint16)(channel * 65535);
-    if (result < 0) {
-        result = 0;
-    } else if (result > 65535) {
+    if (result > 65535) {
         result = 65535;
     }
     return (guint8)( result >> 8);
@@ -2197,6 +2216,7 @@ static void gtk3_style_shade (const GdkRGBA *a, GdkRGBA *b, gdouble k) {
 static GdkRGBA gtk3_get_color_for_flags(GtkStyleContext* context,
                                   GtkStateFlags flags, ColorType color_type) {
     GdkRGBA c, color;
+    color.alpha = 1;
 
     switch (color_type)
     {
@@ -2245,7 +2265,6 @@ static gint gtk3_get_color_for_state(JNIEnv *env, WidgetType widget_type,
 {
 
     gint result = 0;
-    GdkRGBA color;
 
     GtkStateFlags flags = gtk3_get_state_flags(state_type);
 
@@ -2264,7 +2283,7 @@ static gint gtk3_get_color_for_state(JNIEnv *env, WidgetType widget_type,
                   | GTK_STATE_FLAG_INSENSITIVE | GTK_STATE_FLAG_FOCUSED;
     }
 
-    color = gtk3_get_color_for_flags(context, flags, color_type);
+    GdkRGBA color = gtk3_get_color_for_flags(context, flags, color_type);
 
     if (recode_color(color.alpha) == 0) {
         color = gtk3_get_color_for_flags(

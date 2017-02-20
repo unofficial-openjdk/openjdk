@@ -26,6 +26,8 @@
 /**
  * Defines the Java API for XML Processing (JAXP), the Streaming API for XML (StAX),
  * the Simple API for XML (SAX), and the W3C Document Object Model (DOM) API.
+ *
+ * @since 9
  */
 module java.xml {
     exports javax.xml;
@@ -61,12 +63,6 @@ module java.xml {
         java.xml.ws;
     exports com.sun.org.apache.xml.internal.dtm to
         java.xml.crypto;
-    exports com.sun.org.apache.xml.internal.resolver to
-        java.xml.ws,
-        jdk.xml.bind;
-    exports com.sun.org.apache.xml.internal.resolver.tools to
-        java.xml.ws,
-        jdk.xml.bind;
     exports com.sun.org.apache.xml.internal.utils to
         java.xml.crypto;
     exports com.sun.org.apache.xpath.internal to
@@ -92,4 +88,3 @@ module java.xml {
     uses javax.xml.xpath.XPathFactory;
     uses org.xml.sax.XMLReader;
 }
-

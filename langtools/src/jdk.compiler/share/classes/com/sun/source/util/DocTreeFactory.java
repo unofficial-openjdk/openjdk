@@ -49,6 +49,7 @@ import com.sun.source.doctree.InheritDocTree;
 import com.sun.source.doctree.LinkTree;
 import com.sun.source.doctree.LiteralTree;
 import com.sun.source.doctree.ParamTree;
+import com.sun.source.doctree.ProvidesTree;
 import com.sun.source.doctree.ReferenceTree;
 import com.sun.source.doctree.ReturnTree;
 import com.sun.source.doctree.SeeTree;
@@ -61,6 +62,7 @@ import com.sun.source.doctree.TextTree;
 import com.sun.source.doctree.ThrowsTree;
 import com.sun.source.doctree.UnknownBlockTagTree;
 import com.sun.source.doctree.UnknownInlineTagTree;
+import com.sun.source.doctree.UsesTree;
 import com.sun.source.doctree.ValueTree;
 import com.sun.source.doctree.VersionTree;
 
@@ -112,12 +114,11 @@ public interface DocTreeFactory {
 
     /**
      * Create a new {@code DocCommentTree} object, to represent a complete doc comment.
-     * @param firstSentence the first sentence of the doc comment
-     * @param body the body of the doc comment following the first sentence
+     * @param fullBody the entire body of the doc comment
      * @param tags the block tags in the doc comment
      * @return a {@code DocCommentTree} object
      */
-    DocCommentTree newDocCommentTree(List<? extends DocTree> firstSentence, List<? extends DocTree> body, List<? extends DocTree> tags);
+    DocCommentTree newDocCommentTree(List<? extends DocTree> fullBody, List<? extends DocTree> tags);
 
     /**
      * Create a new {@code DocRootTree} object, to represent an {@code {@docroot} } tag.
@@ -218,6 +219,14 @@ public interface DocTreeFactory {
     ParamTree newParamTree(boolean isTypeParameter, IdentifierTree name, List<? extends DocTree> description);
 
     /**
+     * Create a new {@code ProvidesTree} object, to represent a {@code @provides } tag.
+     * @param name the name of the service type
+     * @param description a description of the service being provided
+     * @return a {@code ProvidesTree} object
+     */
+    ProvidesTree newProvidesTree(ReferenceTree name, List<? extends DocTree> description);
+
+    /**
      * Create a new {@code ReferenceTree} object, to represent a reference to an API element.
      *
      * @param signature the doc comment signature of the reference
@@ -308,6 +317,14 @@ public interface DocTreeFactory {
      * @return an {@code UnknownInlineTagTree} object
      */
     UnknownInlineTagTree newUnknownInlineTagTree(Name name, List<? extends DocTree> content);
+
+    /**
+     * Create a new {@code UsesTree} object, to represent a {@code @uses } tag.
+     * @param name the name of the service type
+     * @param description a description of how the service will be used
+     * @return a {@code UsesTree} object
+     */
+    UsesTree newUsesTree(ReferenceTree name, List<? extends DocTree> description);
 
     /**
      * Create a new {@code ValueTree} object, to represent a {@code {@value } } tag.

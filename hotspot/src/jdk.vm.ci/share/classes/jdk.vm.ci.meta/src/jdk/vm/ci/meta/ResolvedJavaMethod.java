@@ -23,7 +23,6 @@
 package jdk.vm.ci.meta;
 
 import java.lang.annotation.Annotation;
-import java.lang.invoke.MethodHandle;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
@@ -73,14 +72,6 @@ public interface ResolvedJavaMethod extends JavaMethod, InvokeTarget, ModifiersP
      */
     int getMaxStackSize();
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Only the {@linkplain Modifier#methodModifiers() method flags} specified in the JVM
-     * specification will be included in the returned mask.
-     */
-    int getModifiers();
-
     default boolean isFinal() {
         return ModifiersProvider.super.isFinalFlagSet();
     }
@@ -89,9 +80,7 @@ public interface ResolvedJavaMethod extends JavaMethod, InvokeTarget, ModifiersP
      * Determines if this method is a synthetic method as defined by the Java Language
      * Specification.
      */
-    default boolean isSynthetic() {
-        return (SYNTHETIC & getModifiers()) == SYNTHETIC;
-    }
+    boolean isSynthetic();
 
     /**
      * Checks that the method is a
@@ -100,9 +89,7 @@ public interface ResolvedJavaMethod extends JavaMethod, InvokeTarget, ModifiersP
      *
      * @return whether the method is a varargs method
      */
-    default boolean isVarArgs() {
-        return (VARARGS & getModifiers()) == VARARGS;
-    }
+    boolean isVarArgs();
 
     /**
      * Checks that the method is a
@@ -111,9 +98,7 @@ public interface ResolvedJavaMethod extends JavaMethod, InvokeTarget, ModifiersP
      *
      * @return whether the method is a bridge method
      */
-    default boolean isBridge() {
-        return (BRIDGE & getModifiers()) == BRIDGE;
-    }
+    boolean isBridge();
 
     /**
      * Returns {@code true} if this method is a default method; returns {@code false} otherwise.
@@ -190,6 +175,156 @@ public interface ResolvedJavaMethod extends JavaMethod, InvokeTarget, ModifiersP
     ConstantPool getConstantPool();
 
     /**
+     * A {@code Parameter} provides information about method parameters.
+     */
+    class Parameter implements AnnotatedElement {
+        private final String name;
+        private final ResolvedJavaMethod method;
+        private final int modifiers;
+        private final int index;
+
+        /**
+         * Constructor for {@code Parameter}.
+         *
+         * @param name the name of the parameter or {@code null} if there is no
+         *            {@literal MethodParameters} class file attribute providing a non-empty name
+         *            for the parameter
+         * @param modifiers the modifier flags for the parameter
+         * @param method the method which defines this parameter
+         * @param index the index of the parameter
+         */
+        public Parameter(String name,
+                        int modifiers,
+                        ResolvedJavaMethod method,
+                        int index) {
+            assert name == null || !name.isEmpty();
+            this.name = name;
+            this.modifiers = modifiers;
+            this.method = method;
+            this.index = index;
+        }
+
+        /**
+         * Gets the name of the parameter. If the parameter's name is {@linkplain #isNamePresent()
+         * present}, then this method returns the name provided by the class file. Otherwise, this
+         * method synthesizes a name of the form argN, where N is the index of the parameter in the
+         * descriptor of the method which declares the parameter.
+         *
+         * @return the name of the parameter, either provided by the class file or synthesized if
+         *         the class file does not provide a name
+         */
+        public String getName() {
+            if (name == null) {
+                return "arg" + index;
+            } else {
+                return name;
+            }
+        }
+
+        /**
+         * Gets the method declaring the parameter.
+         */
+        public ResolvedJavaMethod getDeclaringMethod() {
+            return method;
+        }
+
+        /**
+         * Get the modifier flags for the parameter.
+         */
+        public int getModifiers() {
+            return modifiers;
+        }
+
+        /**
+         * Gets the kind of the parameter.
+         */
+        public JavaKind getKind() {
+            return method.getSignature().getParameterKind(index);
+        }
+
+        /**
+         * Gets the formal type of the parameter.
+         */
+        public Type getParameterizedType() {
+            return method.getGenericParameterTypes()[index];
+        }
+
+        /**
+         * Gets the type of the parameter.
+         */
+        public JavaType getType() {
+            return method.getSignature().getParameterType(index, method.getDeclaringClass());
+        }
+
+        /**
+         * Determines if the parameter has a name according to a {@literal MethodParameters} class
+         * file attribute.
+         *
+         * @return true if and only if the parameter has a name according to the class file.
+         */
+        public boolean isNamePresent() {
+            return name != null;
+        }
+
+        /**
+         * Determines if the parameter represents a variable argument list.
+         */
+        public boolean isVarArgs() {
+            return method.isVarArgs() && index == method.getSignature().getParameterCount(false) - 1;
+        }
+
+        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+            return method.getParameterAnnotations(annotationClass)[index];
+        }
+
+        public Annotation[] getAnnotations() {
+            return method.getParameterAnnotations()[index];
+        }
+
+        public Annotation[] getDeclaredAnnotations() {
+            return getAnnotations();
+        }
+
+        @Override
+        public String toString() {
+            Type type = getParameterizedType();
+            String typename = type.getTypeName();
+            if (isVarArgs()) {
+                typename = typename.replaceFirst("\\[\\]$", "...");
+            }
+
+            final StringBuilder sb = new StringBuilder(Modifier.toString(getModifiers()));
+            if (sb.length() != 0) {
+                sb.append(' ');
+            }
+            return sb.append(typename).append(' ').append(getName()).toString();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof Parameter) {
+                Parameter other = (Parameter) obj;
+                return (other.method.equals(method) && other.index == index);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return method.hashCode() ^ index;
+        }
+    }
+
+    /**
+     * Returns an array of {@code Parameter} objects that represent all the parameters to this
+     * method. Returns an array of length 0 if this method has no parameters. Returns {@code null}
+     * if the parameter information is unavailable.
+     */
+    default Parameter[] getParameters() {
+        return null;
+    }
+
+    /**
      * Returns an array of arrays that represent the annotations on the formal parameters, in
      * declaration order, of this method.
      *
@@ -212,6 +347,13 @@ public interface ResolvedJavaMethod extends JavaMethod, InvokeTarget, ModifiersP
     boolean canBeInlined();
 
     /**
+     * Determines if this method is targeted by a VM directive (e.g.,
+     * {@code -XX:CompileCommand=dontinline,<pattern>}) or VM recognized annotation (e.g.,
+     * {@code jdk.internal.vm.annotation.DontInline}) that specifies it should not be inlined.
+     */
+    boolean hasNeverInlineDirective();
+
+    /**
      * Returns {@code true} if the inlining of this method should be forced.
      */
     boolean shouldBeInlined();
@@ -227,18 +369,6 @@ public interface ResolvedJavaMethod extends JavaMethod, InvokeTarget, ModifiersP
      * variable table.
      */
     LocalVariableTable getLocalVariableTable();
-
-    /**
-     * Invokes the underlying method represented by this object, on the specified object with the
-     * specified parameters. This method is similar to a reflective method invocation by
-     * {@link Method#invoke}.
-     *
-     * @param receiver The receiver for the invocation, or {@code null} if it is a static method.
-     * @param arguments The arguments for the invocation.
-     * @return The value returned by the method invocation, or {@code null} if the return type is
-     *         {@code void}.
-     */
-    JavaConstant invoke(JavaConstant receiver, JavaConstant[] arguments);
 
     /**
      * Gets the encoding of (that is, a constant representing the value of) this method.
@@ -330,22 +460,4 @@ public interface ResolvedJavaMethod extends JavaMethod, InvokeTarget, ModifiersP
     }
 
     SpeculationLog getSpeculationLog();
-
-    /**
-     * Determines if the method identified by its holder and name is a
-     * <a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.9">signature
-     * polymorphic</a> method.
-     */
-    static boolean isSignaturePolymorphic(JavaType holder, String name, MetaAccessProvider metaAccess) {
-        if (!holder.getName().equals("Ljava/lang/invoke/MethodHandle;")) {
-            return false;
-        }
-        ResolvedJavaType methodHandleType = metaAccess.lookupJavaType(MethodHandle.class);
-        Signature signature = metaAccess.parseMethodDescriptor("([Ljava/lang/Object;)Ljava/lang/Object;");
-        ResolvedJavaMethod method = methodHandleType.findMethod(name, signature);
-        if (method == null) {
-            return false;
-        }
-        return method.isNative() && method.isVarArgs();
-    }
 }

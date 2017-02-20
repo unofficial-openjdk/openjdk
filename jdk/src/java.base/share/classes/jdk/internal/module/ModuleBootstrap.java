@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,13 +37,16 @@ import java.lang.reflect.Module;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
@@ -81,8 +84,18 @@ public final class ModuleBootstrap {
     // the token for "all modules on the module path"
     private static final String ALL_MODULE_PATH = "ALL-MODULE-PATH";
 
+    // The ModulePatcher for the initial configuration
+    private static final ModulePatcher patcher = initModulePatcher();
+
     // ModuleFinder for the initial configuration
     private static ModuleFinder initialFinder;
+
+    /**
+     * Returns the ModulePatcher for the initial configuration.
+     */
+    public static ModulePatcher patcher() {
+        return patcher;
+    }
 
     /**
      * Returns the ModuleFinder for the initial configuration
@@ -101,8 +114,13 @@ public final class ModuleBootstrap {
 
         long t0 = System.nanoTime();
 
-        // system modules
-        ModuleFinder systemModules = ModuleFinder.ofSystem();
+        // system modules (may be patched)
+        ModuleFinder systemModules;
+        if (SystemModules.MODULE_NAMES.length > 0) {
+            systemModules = SystemModuleFinder.getInstance();
+        } else {
+            systemModules = ModuleFinder.ofSystem();
+        }
 
         PerfCounters.systemModulesTime.addElapsedTimeFrom(t0);
 
@@ -153,27 +171,24 @@ public final class ModuleBootstrap {
         boolean addAllDefaultModules = false;
         boolean addAllSystemModules = false;
         boolean addAllApplicationModules = false;
-        String propValue = getAndRemoveProperty("jdk.module.addmods");
-        if (propValue != null) {
-            for (String mod: propValue.split(",")) {
-                switch (mod) {
-                    case ALL_DEFAULT:
-                        addAllDefaultModules = true;
-                        break;
-                    case ALL_SYSTEM:
-                        addAllSystemModules = true;
-                        break;
-                    case ALL_MODULE_PATH:
-                        addAllApplicationModules = true;
-                        break;
-                    default :
-                        roots.add(mod);
-                }
+        for (String mod: getExtraAddModules()) {
+            switch (mod) {
+                case ALL_DEFAULT:
+                    addAllDefaultModules = true;
+                    break;
+                case ALL_SYSTEM:
+                    addAllSystemModules = true;
+                    break;
+                case ALL_MODULE_PATH:
+                    addAllApplicationModules = true;
+                    break;
+                default :
+                    roots.add(mod);
             }
         }
 
         // --limit-modules
-        propValue = getAndRemoveProperty("jdk.module.limitmods");
+        String propValue = getAndRemoveProperty("jdk.module.limitmods");
         if (propValue != null) {
             Set<String> mods = new HashSet<>();
             for (String mod: propValue.split(",")) {
@@ -186,7 +201,9 @@ public final class ModuleBootstrap {
         // module is the unnamed module of the application class loader. This
         // is implemented by resolving "java.se" and all (non-java.*) modules
         // that export an API. If "java.se" is not observable then all java.*
-        // modules are resolved.
+        // modules are resolved. Modules that have the DO_NOT_RESOLVE_BY_DEFAULT
+        // bit set in their ModuleResolution attribute flags are excluded from
+        // the default set of roots.
         if (mainModule == null || addAllDefaultModules) {
             boolean hasJava = false;
             if (systemModules.find(JAVA_SE).isPresent()) {
@@ -201,6 +218,9 @@ public final class ModuleBootstrap {
             for (ModuleReference mref : systemModules.findAll()) {
                 String mn = mref.descriptor().name();
                 if (hasJava && mn.startsWith("java."))
+                    continue;
+
+                if (ModuleResolution.doNotResolveByDefault(mref))
                     continue;
 
                 // add as root if observable and exports at least one package
@@ -222,6 +242,7 @@ public final class ModuleBootstrap {
             ModuleFinder f = finder;  // observable modules
             systemModules.findAll()
                 .stream()
+                .filter(mref -> !ModuleResolution.doNotResolveByDefault(mref))
                 .map(ModuleReference::descriptor)
                 .map(ModuleDescriptor::name)
                 .filter(mn -> f.find(mn).isPresent())  // observable
@@ -250,7 +271,7 @@ public final class ModuleBootstrap {
         if (baseUri.getScheme().equals("jrt")   // toLowerCase not needed here
                 && (upgradeModulePath == null)
                 && (appModulePath == null)
-                && (!ModulePatcher.isBootLayerPatched())) {
+                && (patcher.isEmpty())) {
             needPostResolutionChecks = false;
         }
 
@@ -260,14 +281,16 @@ public final class ModuleBootstrap {
 
         // run the resolver to create the configuration
         Configuration cf = SharedSecrets.getJavaLangModuleAccess()
-                .resolveRequiresAndUses(finder,
-                                        roots,
-                                        needPostResolutionChecks,
-                                        traceOutput);
+                .resolveAndBind(finder,
+                                roots,
+                                needPostResolutionChecks,
+                                traceOutput);
 
         // time to create configuration
         PerfCounters.resolveTime.addElapsedTimeFrom(t3);
 
+        // check module names and incubating status
+        checkModuleNamesAndStatus(cf);
 
         // mapping of modules to class loaders
         Function<String, ClassLoader> clf = ModuleLoaderMap.mappingFunction(cf);
@@ -289,8 +312,32 @@ public final class ModuleBootstrap {
                         fail(name + ": cannot be loaded from application module path");
                 }
             }
+
+            // check if module specified in --patch-module is present
+            for (String mn: patcher.patchedModules()) {
+                if (!cf.findModule(mn).isPresent()) {
+                    warnUnknownModule(PATCH_MODULE, mn);
+                }
+            }
         }
 
+        // if needed check that there are no split packages in the set of
+        // resolved modules for the boot layer
+        if (SystemModules.hasSplitPackages() || needPostResolutionChecks) {
+            Map<String, String> packageToModule = new HashMap<>();
+            for (ResolvedModule resolvedModule : cf.modules()) {
+                ModuleDescriptor descriptor =
+                    resolvedModule.reference().descriptor();
+                String name = descriptor.name();
+                for (String p : descriptor.packages()) {
+                    String other = packageToModule.putIfAbsent(p, name);
+                    if (other != null) {
+                        fail("Package " + p + " in both module "
+                             + name + " and module " + other);
+                    }
+                }
+            }
+        }
 
         long t4 = System.nanoTime();
 
@@ -317,9 +364,9 @@ public final class ModuleBootstrap {
         PerfCounters.loadModulesTime.addElapsedTimeFrom(t5);
 
 
-        // --add-reads and --add-exports
+        // --add-reads, -add-exports/-add-opens
         addExtraReads(bootLayer);
-        addExtraExports(bootLayer);
+        addExtraExportsAndOpens(bootLayer);
 
         // total time to initialize
         PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);
@@ -339,10 +386,9 @@ public final class ModuleBootstrap {
                                             Set<String> otherMods)
     {
         // resolve all root modules
-        Configuration cf = Configuration.empty()
-                .resolveRequires(finder,
-                                 ModuleFinder.of(),
-                                 roots);
+        Configuration cf = Configuration.empty().resolve(finder,
+                                                         ModuleFinder.of(),
+                                                         roots);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();
@@ -375,7 +421,7 @@ public final class ModuleBootstrap {
 
     /**
      * Creates a finder from the module path that is the value of the given
-     * system property.
+     * system property and optionally patched by --patch-module
      */
     private static ModuleFinder createModulePathFinder(String prop) {
         String s = System.getProperty(prop);
@@ -388,10 +434,47 @@ public final class ModuleBootstrap {
             for (String dir: dirs) {
                 paths[i++] = Paths.get(dir);
             }
-            return ModuleFinder.of(paths);
+            return ModulePath.of(patcher, paths);
         }
     }
 
+
+    /**
+     * Initialize the module patcher for the initial configuration passed on the
+     * value of the --patch-module options.
+     */
+    private static ModulePatcher initModulePatcher() {
+        Map<String, List<String>> map = decode("jdk.module.patch.",
+                                               File.pathSeparator,
+                                               false);
+        return new ModulePatcher(map);
+    }
+
+    /**
+     * Returns the set of module names specified via --add-modules options
+     * on the command line
+     */
+    private static Set<String> getExtraAddModules() {
+        String prefix = "jdk.module.addmods.";
+        int index = 0;
+
+        // the system property is removed after decoding
+        String value = getAndRemoveProperty(prefix + index);
+        if (value == null) {
+            return Collections.emptySet();
+        }
+
+        Set<String> modules = new HashSet<>();
+        while (value != null) {
+            for (String s : value.split(",")) {
+                if (s.length() > 0) modules.add(s);
+            }
+            index++;
+            value = getAndRemoveProperty(prefix + index);
+        }
+
+        return modules;
+    }
 
     /**
      * Process the --add-reads options to add any additional read edges that
@@ -400,62 +483,91 @@ public final class ModuleBootstrap {
     private static void addExtraReads(Layer bootLayer) {
 
         // decode the command line options
-        Map<String, Set<String>> map = decode("jdk.module.addreads.");
+        Map<String, List<String>> map = decode("jdk.module.addreads.");
+        if (map.isEmpty())
+            return;
 
-        for (Map.Entry<String, Set<String>> e : map.entrySet()) {
+        for (Map.Entry<String, List<String>> e : map.entrySet()) {
 
             // the key is $MODULE
             String mn = e.getKey();
             Optional<Module> om = bootLayer.findModule(mn);
-            if (!om.isPresent())
-                fail("Unknown module: " + mn);
+            if (!om.isPresent()) {
+                warnUnknownModule(ADD_READS, mn);
+                continue;
+            }
             Module m = om.get();
 
             // the value is the set of other modules (by name)
             for (String name : e.getValue()) {
-
-                Module other;
                 if (ALL_UNNAMED.equals(name)) {
                     Modules.addReadsAllUnnamed(m);
                 } else {
                     om = bootLayer.findModule(name);
-                    if (!om.isPresent())
-                        fail("Unknown module: " + name);
-                    other = om.get();
-                    Modules.addReads(m, other);
+                    if (om.isPresent()) {
+                        Modules.addReads(m, om.get());
+                    } else {
+                        warnUnknownModule(ADD_READS, name);
+                    }
                 }
-
             }
         }
     }
 
-
     /**
-     * Process the --add-exports options to add any additional read edges that
-     * are specified on the command-line.
+     * Process the --add-exports and --add-opens options to export/open
+     * additional packages specified on the command-line.
      */
-    private static void addExtraExports(Layer bootLayer) {
+    private static void addExtraExportsAndOpens(Layer bootLayer) {
 
-        // decode the command line options
-        Map<String, Set<String>> map = decode("jdk.module.addexports.");
+        // --add-exports
+        String prefix = "jdk.module.addexports.";
+        Map<String, List<String>> extraExports = decode(prefix);
+        if (!extraExports.isEmpty()) {
+            addExtraExportsOrOpens(bootLayer, extraExports, false);
+        }
 
-        for (Map.Entry<String, Set<String>> e : map.entrySet()) {
+        // --add-opens
+        prefix = "jdk.module.addopens.";
+        Map<String, List<String>> extraOpens = decode(prefix);
+        if (!extraOpens.isEmpty()) {
+            addExtraExportsOrOpens(bootLayer, extraOpens, true);
+        }
+
+    }
+
+    private static void addExtraExportsOrOpens(Layer bootLayer,
+                                               Map<String, List<String>> map,
+                                               boolean opens)
+    {
+        String option = opens ? ADD_OPENS : ADD_EXPORTS;
+        for (Map.Entry<String, List<String>> e : map.entrySet()) {
 
             // the key is $MODULE/$PACKAGE
             String key = e.getKey();
             String[] s = key.split("/");
             if (s.length != 2)
-                fail("Unable to parse: " + key);
+                fail(unableToParse(option,  "<module>/<package>", key));
 
             String mn = s[0];
             String pn = s[1];
+            if (mn.isEmpty() || pn.isEmpty())
+                fail(unableToParse(option,  "<module>/<package>", key));
 
             // The exporting module is in the boot layer
             Module m;
             Optional<Module> om = bootLayer.findModule(mn);
-            if (!om.isPresent())
-                fail("Unknown module: " + mn);
+            if (!om.isPresent()) {
+                warnUnknownModule(option, mn);
+                continue;
+            }
+
             m = om.get();
+
+            if (!m.getDescriptor().packages().contains(pn)) {
+                warn("package " + pn + " not in " + mn);
+                continue;
+            }
 
             // the value is the set of modules to export to (by name)
             for (String name : e.getValue()) {
@@ -468,65 +580,88 @@ public final class ModuleBootstrap {
                     if (om.isPresent()) {
                         other = om.get();
                     } else {
-                        fail("Unknown module: " + name);
+                        warnUnknownModule(option, name);
+                        continue;
+                    }
+                }
+                if (allUnnamed) {
+                    if (opens) {
+                        Modules.addOpensToAllUnnamed(m, pn);
+                    } else {
+                        Modules.addExportsToAllUnnamed(m, pn);
+                    }
+                } else {
+                    if (opens) {
+                        Modules.addOpens(m, pn, other);
+                    } else {
+                        Modules.addExports(m, pn, other);
                     }
                 }
 
-                if (allUnnamed) {
-                    Modules.addExportsToAllUnnamed(m, pn);
-                } else {
-                    Modules.addExports(m, pn, other);
-                }
             }
         }
     }
 
-
     /**
-     * Decodes the values of --add-reads or --add-exports options
+     * Decodes the values of --add-reads, -add-exports, --add-opens or
+     * --patch-modules options that are encoded in system properties.
      *
-     * The format of the options is: $KEY=$MODULE(,$MODULE)*
+     * @param prefix the system property prefix
+     * @praam regex the regex for splitting the RHS of the option value
      */
-    private static Map<String, Set<String>> decode(String prefix) {
+    private static Map<String, List<String>> decode(String prefix,
+                                                    String regex,
+                                                    boolean allowDuplicates) {
         int index = 0;
         // the system property is removed after decoding
         String value = getAndRemoveProperty(prefix + index);
         if (value == null)
             return Collections.emptyMap();
 
-        Map<String, Set<String>> map = new HashMap<>();
+        Map<String, List<String>> map = new HashMap<>();
 
         while (value != null) {
 
             int pos = value.indexOf('=');
             if (pos == -1)
-                fail("Unable to parse: " + value);
+                fail(unableToParse(option(prefix), "<module>=<value>", value));
             if (pos == 0)
-                fail("Missing module name in: " + value);
+                fail(unableToParse(option(prefix), "<module>=<value>", value));
 
             // key is <module> or <module>/<package>
             String key = value.substring(0, pos);
 
             String rhs = value.substring(pos+1);
             if (rhs.isEmpty())
-                fail("Unable to parse: " + value);
+                fail(unableToParse(option(prefix), "<module>=<value>", value));
 
-
-            // value is <module>(,<module>)*
-            if (map.containsKey(key))
-                fail(key + " specified more than once");
-
-            Set<String> values = new HashSet<>();
-            map.put(key, values);
-            for (String s : rhs.split(",")) {
-                if (s.length() > 0) values.add(s);
+            // value is <module>(,<module>)* or <file>(<pathsep><file>)*
+            if (!allowDuplicates && map.containsKey(key))
+                fail(key + " specified more than once in " + option(prefix));
+            List<String> values = map.computeIfAbsent(key, k -> new ArrayList<>());
+            int ntargets = 0;
+            for (String s : rhs.split(regex)) {
+                if (s.length() > 0) {
+                    values.add(s);
+                    ntargets++;
+                }
             }
+            if (ntargets == 0)
+                fail("Target must be specified: " + option(prefix) + " " + value);
 
             index++;
             value = getAndRemoveProperty(prefix + index);
         }
 
         return map;
+    }
+
+    /**
+     * Decodes the values of --add-reads, -add-exports or --add-opens
+     * which use the "," to separate the RHS of the option value.
+     */
+    private static Map<String, List<String>> decode(String prefix) {
+        return decode(prefix, ",", true);
     }
 
     /**
@@ -537,10 +672,77 @@ public final class ModuleBootstrap {
     }
 
     /**
+     * Checks the names and resolution bit of each module in the configuration,
+     * emitting warnings if needed.
+     */
+    private static void checkModuleNamesAndStatus(Configuration cf) {
+        String incubating = null;
+        for (ResolvedModule rm : cf.modules()) {
+            ModuleReference mref = rm.reference();
+            String mn = mref.descriptor().name();
+
+            // emit warning if module name ends with a non-Java letter
+            if (!Checks.hasLegalModuleNameLastCharacter(mn))
+                warn("Module name \"" + mn + "\" may soon be illegal");
+
+            // emit warning if the WARN_INCUBATING module resolution bit set
+            if (ModuleResolution.hasIncubatingWarning(mref)) {
+                if (incubating == null) {
+                    incubating = mn;
+                } else {
+                    incubating += ", " + mn;
+                }
+            }
+        }
+        if (incubating != null)
+            warn("Using incubator modules: " + incubating);
+    }
+
+    /**
      * Throws a RuntimeException with the given message
      */
     static void fail(String m) {
         throw new RuntimeException(m);
+    }
+
+    static void warn(String m) {
+        System.err.println("WARNING: " + m);
+    }
+
+    static void warnUnknownModule(String option, String mn) {
+        warn("Unknown module: " + mn + " specified in " + option);
+    }
+
+    static String unableToParse(String option, String text, String value) {
+        return "Unable to parse " +  option + " " + text + ": " + value;
+    }
+
+    private static final String ADD_MODULES  = "--add-modules";
+    private static final String ADD_EXPORTS  = "--add-exports";
+    private static final String ADD_OPENS    = "--add-opens";
+    private static final String ADD_READS    = "--add-reads";
+    private static final String PATCH_MODULE = "--patch-module";
+
+
+    /*
+     * Returns the command-line option name corresponds to the specified
+     * system property prefix.
+     */
+    static String option(String prefix) {
+        switch (prefix) {
+            case "jdk.module.addexports.":
+                return ADD_EXPORTS;
+            case "jdk.module.addopens.":
+                return ADD_OPENS;
+            case "jdk.module.addreads.":
+                return ADD_READS;
+            case "jdk.module.patch.":
+                return PATCH_MODULE;
+            case "jdk.module.addmods.":
+                return ADD_MODULES;
+            default:
+                throw new IllegalArgumentException(prefix);
+        }
     }
 
     static class PerfCounters {

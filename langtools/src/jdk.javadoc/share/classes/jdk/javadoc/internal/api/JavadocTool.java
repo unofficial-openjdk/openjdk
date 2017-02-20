@@ -62,6 +62,11 @@ import jdk.javadoc.internal.tool.ToolOption;
  * or deletion without notice.</b></p>
  */
 public class JavadocTool implements DocumentationTool {
+    // @Override // can't add @Override until bootstrap JDK provides Tool.name()
+    public String name() {
+        return "javadoc";
+    }
+
     @Override
     public DocumentationTask getTask(
             Writer out,
@@ -165,9 +170,11 @@ public class JavadocTool implements DocumentationTool {
     public int isSupportedOption(String option) {
         if (option == null)
             throw new NullPointerException();
-        for (ToolOption o: ToolOption.values()) {
-            if (o.opt.equals(option))
-                return o.hasArg ? 1 : 0;
+        for (ToolOption o : ToolOption.values()) {
+            for (String name : o.names) {
+                if (name.equals(option))
+                    return o.hasArg ? 1 : 0;
+            }
         }
         return -1;
     }

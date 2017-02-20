@@ -32,13 +32,15 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import jdk.internal.misc.JavaSecurityAccess;
 import jdk.internal.misc.JavaSecurityProtectionDomainAccess;
 import static jdk.internal.misc.JavaSecurityProtectionDomainAccess.ProtectionDomainCache;
 import jdk.internal.misc.SharedSecrets;
+import sun.security.provider.PolicyFile;
 import sun.security.util.Debug;
+import sun.security.util.FilePermCompat;
 import sun.security.util.SecurityConstants;
 
 /**
@@ -86,6 +88,11 @@ public class ProtectionDomain {
                 AccessControlContext context) {
             return doIntersectionPrivilege(action,
                 AccessController.getContext(), context);
+        }
+
+        @Override
+        public ProtectionDomain[] getProtectDomains(AccessControlContext context) {
+            return context.getContext();
         }
 
         private static AccessControlContext getCombinedACC(
@@ -303,11 +310,71 @@ public class ProtectionDomain {
         }
 
         if (!staticPermissions &&
-            Policy.getPolicyNoCheck().implies(this, perm))
+            Policy.getPolicyNoCheck().implies(this, perm)) {
             return true;
-        if (permissions != null)
+        }
+        if (permissions != null) {
             return permissions.implies(perm);
+        }
 
+        return false;
+    }
+
+    /**
+     * This method has the same logic flow as {@link #implies} except that
+     * when the {@link FilePermCompat#compat} flag is on it ensures
+     * FilePermission compatibility after JDK-8164705. {@code implies()}
+     * is called when compat flag is not on or user has extended
+     * {@code ProtectionDomain}.
+     *
+     * This method is called by {@link AccessControlContext#checkPermission}
+     * and not intended to be called by an application.
+     */
+    boolean impliesWithAltFilePerm(Permission perm) {
+
+        // If this is a subclass of ProtectionDomain. Call the old method.
+        if (!FilePermCompat.compat || getClass() != ProtectionDomain.class) {
+            return implies(perm);
+        }
+
+        if (hasAllPerm) {
+            // internal permission collection already has AllPermission -
+            // no need to go to policy
+            return true;
+        }
+
+        Permission p2 = null;
+        boolean p2Calculated = false;
+
+        if (!staticPermissions) {
+            Policy policy = Policy.getPolicyNoCheck();
+            if (policy instanceof PolicyFile) {
+                // The PolicyFile implementation supports compatibility
+                // inside and it also covers the static permissions.
+                return policy.implies(this, perm);
+            } else {
+                if (policy.implies(this, perm)) {
+                    return true;
+                }
+                p2 = FilePermCompat.newPermUsingAltPath(perm);
+                p2Calculated = true;
+                if (p2 != null && policy.implies(this, p2)) {
+                    return true;
+                }
+            }
+        }
+        if (permissions != null) {
+            if (permissions.implies(perm)) {
+                return true;
+            } else {
+                if (!p2Calculated) {
+                    p2 = FilePermCompat.newPermUsingAltPath(perm);
+                }
+                if (p2 != null) {
+                    return permissions.implies(p2);
+                }
+            }
+        }
         return false;
     }
 
@@ -458,7 +525,7 @@ public class ProtectionDomain {
                             // have some side effects so this manual
                             // comparison is sufficient.
                             if (pdpName.equals(pp.getName()) &&
-                                pdpActions.equals(pp.getActions())) {
+                                Objects.equals(pdpActions, pp.getActions())) {
                                 plVector.remove(i);
                                 break;
                             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,7 +65,7 @@ public interface RoundEnvironment {
     boolean errorRaised();
 
     /**
-     * Returns the root elements for annotation processing generated
+     * Returns the {@linkplain Processor root elements} for annotation processing generated
      * by the prior round.
      *
      * @return the root elements for annotation processing generated
@@ -76,14 +76,17 @@ public interface RoundEnvironment {
     /**
      * Returns the elements annotated with the given annotation type.
      * The annotation may appear directly or be inherited.  Only
-     * package elements and type elements <i>included</i> in this
+     * package elements, module elements, and type elements <i>included</i> in this
      * round of annotation processing, or declarations of members,
      * constructors, parameters, or type parameters declared within
      * those, are returned.  Included type elements are {@linkplain
      * #getRootElements root types} and any member types nested within
-     * them.  Elements in a package are not considered included simply
+     * them.  Elements of a package are not considered included simply
      * because a {@code package-info} file for that package was
      * created.
+     * Likewise, elements of a module are not considered included
+     * simply because a {@code module-info} file for that module was
+     * created
      *
      * @param a  annotation type being requested
      * @return the elements annotated with the given annotation type,
@@ -128,7 +131,7 @@ public interface RoundEnvironment {
     /**
      * Returns the elements annotated with the given annotation type.
      * The annotation may appear directly or be inherited.  Only
-     * package elements and type elements <i>included</i> in this
+     * package elements, module elements, and type elements <i>included</i> in this
      * round of annotation processing, or declarations of members,
      * constructors, parameters, or type parameters declared within
      * those, are returned.  Included type elements are {@linkplain
@@ -136,6 +139,9 @@ public interface RoundEnvironment {
      * them.  Elements in a package are not considered included simply
      * because a {@code package-info} file for that package was
      * created.
+     * Likewise, elements of a module are not considered included
+     * simply because a {@code module-info} file for that module was
+     * created
      *
      * @param a  annotation type being requested
      * @return the elements annotated with the given annotation type,

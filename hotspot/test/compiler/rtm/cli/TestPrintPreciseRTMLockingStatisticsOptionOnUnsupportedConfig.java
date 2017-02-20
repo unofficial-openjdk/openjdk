@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,7 +19,6 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
 /**
@@ -27,7 +26,7 @@
  * @bug 8031320
  * @summary Verify PrintPreciseRTMLockingStatistics on CPUs without
  *          rtm support and/or unsupported VM.
- * @library /testlibrary /test/lib /
+ * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
  *
@@ -42,6 +41,7 @@
 package compiler.rtm.cli;
 
 import compiler.testlibrary.rtm.predicate.SupportedCPU;
+import compiler.testlibrary.rtm.predicate.SupportedOS;
 import compiler.testlibrary.rtm.predicate.SupportedVM;
 import jdk.test.lib.cli.predicate.AndPredicate;
 import jdk.test.lib.cli.predicate.NotPredicate;
@@ -49,8 +49,8 @@ import jdk.test.lib.cli.predicate.NotPredicate;
 public class TestPrintPreciseRTMLockingStatisticsOptionOnUnsupportedConfig
         extends TestPrintPreciseRTMLockingStatisticsBase {
     private TestPrintPreciseRTMLockingStatisticsOptionOnUnsupportedConfig() {
-        super(new NotPredicate(new AndPredicate(new SupportedCPU(),
-                new SupportedVM())));
+        super(new NotPredicate(
+                new AndPredicate(new SupportedCPU(), new SupportedOS(), new SupportedVM())));
     }
 
     public static void main(String args[]) throws Throwable {

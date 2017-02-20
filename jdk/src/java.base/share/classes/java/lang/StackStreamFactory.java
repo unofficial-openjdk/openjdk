@@ -25,11 +25,13 @@
 package java.lang;
 
 import jdk.internal.reflect.MethodAccessor;
+import jdk.internal.reflect.ConstructorAccessor;
 import java.lang.StackWalker.Option;
 import java.lang.StackWalker.StackFrame;
 
 import java.lang.annotation.Native;
 import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -71,6 +73,7 @@ final class StackStreamFactory {
     // These flags must match the values maintained in the VM
     @Native private static final int DEFAULT_MODE              = 0x0;
     @Native private static final int FILL_CLASS_REFS_ONLY      = 0x2;
+    @Native private static final int GET_CALLER_CLASS          = 0x4;
     @Native private static final int SHOW_HIDDEN_FRAMES        = 0x20;  // LambdaForms are hidden by the VM
     @Native private static final int FILL_LIVE_STACK_FRAMES    = 0x100;
     /*
@@ -614,9 +617,7 @@ final class StackStreamFactory {
         private Class<?> caller;
 
         CallerClassFinder(StackWalker walker) {
-            super(walker, FILL_CLASS_REFS_ONLY);
-            assert (mode & FILL_CLASS_REFS_ONLY) == FILL_CLASS_REFS_ONLY
-                   : "mode should contain FILL_CLASS_REFS_ONLY";
+            super(walker, FILL_CLASS_REFS_ONLY|GET_CALLER_CLASS);
         }
 
         final class ClassBuffer extends FrameBuffer<Class<?>> {
@@ -685,7 +686,7 @@ final class StackStreamFactory {
                 frames[n++] = caller;
             }
             if (frames[1] == null) {
-                throw new IllegalStateException("no caller frame");
+                throw new IllegalCallerException("no caller frame");
             }
             return n;
         }
@@ -923,7 +924,8 @@ final class StackStreamFactory {
          */
         final void setBatch(int depth, int startIndex, int endIndex) {
             if (startIndex <= 0 || endIndex <= 0)
-                throw new IllegalArgumentException("startIndex=" + startIndex + " endIndex=" + endIndex);
+                throw new IllegalArgumentException("startIndex=" + startIndex
+                        + " endIndex=" + endIndex);
 
             this.origin = startIndex;
             this.fence = endIndex;
@@ -981,13 +983,18 @@ final class StackStreamFactory {
 
     private static boolean isReflectionFrame(Class<?> c) {
         if (c.getName().startsWith("jdk.internal.reflect") &&
-                !MethodAccessor.class.isAssignableFrom(c)) {
-            throw new InternalError("Not jdk.internal.reflect.MethodAccessor: " + c.toString());
+                !MethodAccessor.class.isAssignableFrom(c) &&
+                !ConstructorAccessor.class.isAssignableFrom(c)) {
+            throw new InternalError("Not jdk.internal.reflect.MethodAccessor"
+                    + " or jdk.internal.reflect.ConstructorAccessor: "
+                    + c.toString());
         }
         // ## should filter all @Hidden frames?
         return c == Method.class ||
-                MethodAccessor.class.isAssignableFrom(c) ||
-                c.getName().startsWith("java.lang.invoke.LambdaForm");
+               c == Constructor.class ||
+               MethodAccessor.class.isAssignableFrom(c) ||
+               ConstructorAccessor.class.isAssignableFrom(c) ||
+               c.getName().startsWith("java.lang.invoke.LambdaForm");
     }
 
 }

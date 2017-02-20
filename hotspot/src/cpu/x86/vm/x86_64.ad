@@ -986,7 +986,7 @@ void MachEpilogNode::emit(CodeBuffer& cbuf, PhaseRegAlloc* ra_) const
   emit_opcode(cbuf, 0x58 | RBP_enc);
 
   if (StackReservedPages > 0 && C->has_reserved_stack_access()) {
-    __ reserved_stack_check(); 
+    __ reserved_stack_check();
   }
 
   if (do_polling() && C->is_method_compilation()) {
@@ -1660,6 +1660,19 @@ bool Matcher::narrow_klass_use_complex_address() {
   return (LogKlassAlignmentInBytes <= 3);
 }
 
+bool Matcher::const_oop_prefer_decode() {
+  // Prefer ConN+DecodeN over ConP.
+  return true;
+}
+
+bool Matcher::const_klass_prefer_decode() {
+  // TODO: Either support matching DecodeNKlass (heap-based) in operand
+  //       or condisider the following:
+  // Prefer ConNKlass+DecodeNKlass over ConP in simple compressed klass mode.
+  //return Universe::narrow_klass_base() == NULL;
+  return true;
+}
+
 // Is it better to copy float constants, or load them directly from
 // memory?  Intel can load a float constant from a direct address,
 // requiring no extra registers.  Most RISCs will have to materialize
@@ -2134,6 +2147,9 @@ encode %{
         ciEnv::current()->record_failure("CodeCache is full");
         return;
       }
+#if INCLUDE_AOT
+      CompiledStaticCall::emit_to_aot_stub(cbuf, mark);
+#endif
     }
   %}
 
@@ -7355,7 +7371,7 @@ instruct compareAndSwapB(rRegI res,
             "movzbl  $res, $res" %}
   opcode(0x0F, 0xB0);
   ins_encode(lock_prefix,
-             REX_reg_mem(newval, mem_ptr),
+             REX_breg_mem(newval, mem_ptr),
              OpcP, OpcS,
              reg_mem(newval, mem_ptr),
              REX_breg(res), Opcode(0x0F), Opcode(0x94), reg(res), // sete
@@ -7380,7 +7396,7 @@ instruct compareAndSwapS(rRegI res,
   opcode(0x0F, 0xB1);
   ins_encode(lock_prefix,
              SizePrefix,
-             REX_reg_mem(newval, mem_ptr),          
+             REX_reg_mem(newval, mem_ptr),
              OpcP, OpcS,
              reg_mem(newval, mem_ptr),
              REX_breg(res), Opcode(0x0F), Opcode(0x94), reg(res), // sete
@@ -7424,7 +7440,7 @@ instruct compareAndExchangeB(
             "If rax == $mem_ptr then store $newval into $mem_ptr\n\t"  %}
   opcode(0x0F, 0xB0);
   ins_encode(lock_prefix,
-             REX_reg_mem(newval, mem_ptr),
+             REX_breg_mem(newval, mem_ptr),
              OpcP, OpcS,
              reg_mem(newval, mem_ptr) // lock cmpxchg
              );

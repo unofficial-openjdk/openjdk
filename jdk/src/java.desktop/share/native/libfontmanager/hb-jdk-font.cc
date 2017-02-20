@@ -49,15 +49,11 @@ hb_jdk_get_glyph (hb_font_t *font HB_UNUSED,
     JNIEnv* env = jdkFontInfo->env;
     jobject font2D = jdkFontInfo->font2D;
     hb_codepoint_t u = (variation_selector==0) ? unicode : variation_selector;
- 
+
     *glyph = (hb_codepoint_t)
           env->CallIntMethod(font2D, sunFontIDs.f2dCharToGlyphMID, u);
     return (*glyph != 0);
 }
-
-// This is also define in freetypescaler.c and similar macros are
-// in fontscalerdefs.h. Consider tidying this up.
-#define FloatToF26Dot6(x) ((unsigned int) ((x)*64))
 
 static hb_position_t
 hb_jdk_get_glyph_h_advance (hb_font_t *font HB_UNUSED,
@@ -65,7 +61,7 @@ hb_jdk_get_glyph_h_advance (hb_font_t *font HB_UNUSED,
 			   hb_codepoint_t glyph,
 			   void *user_data HB_UNUSED)
 {
-    
+
     float fadv = 0.0f;
     if ((glyph & 0xfffe) == 0xfffe) {
         return 0; // JDK uses this glyph code.
@@ -76,14 +72,15 @@ hb_jdk_get_glyph_h_advance (hb_font_t *font HB_UNUSED,
     jobject fontStrike = jdkFontInfo->fontStrike;
     jobject pt = env->CallObjectMethod(fontStrike,
                                        sunFontIDs.getGlyphMetricsMID, glyph);
-  
+
     if (pt == NULL) {
         return 0;
     }
     fadv = env->GetFloatField(pt, sunFontIDs.xFID);
+    fadv *= jdkFontInfo->devScale;
     env->DeleteLocalRef(pt);
 
-    return FloatToF26Dot6(fadv); // should this round ?
+    return HBFloatToFixed(fadv);
 }
 
 static hb_position_t
@@ -92,7 +89,7 @@ hb_jdk_get_glyph_v_advance (hb_font_t *font HB_UNUSED,
 			   hb_codepoint_t glyph,
 			   void *user_data HB_UNUSED)
 {
-  
+
     float fadv = 0.0f;
     if ((glyph & 0xfffe) == 0xfffe) {
         return 0; // JDK uses this glyph code.
@@ -103,15 +100,15 @@ hb_jdk_get_glyph_v_advance (hb_font_t *font HB_UNUSED,
     jobject fontStrike = jdkFontInfo->fontStrike;
     jobject pt = env->CallObjectMethod(fontStrike,
                                        sunFontIDs.getGlyphMetricsMID, glyph);
-  
+
     if (pt == NULL) {
         return 0;
     }
     fadv = env->GetFloatField(pt, sunFontIDs.yFID);
     env->DeleteLocalRef(pt);
 
-    return FloatToF26Dot6(fadv); // should this round ?
-  
+    return HBFloatToFixed(fadv);
+
 }
 
 static hb_bool_t
@@ -199,13 +196,13 @@ hb_jdk_get_glyph_contour_point (hb_font_t *font HB_UNUSED,
     jobject pt = env->CallObjectMethod(fontStrike,
                                        sunFontIDs.getGlyphPointMID,
                                        glyph, point_index);
-  
+
     if (pt == NULL) {
         *x = 0; *y = 0;
         return true;
     }
-    *x = FloatToF26Dot6(env->GetFloatField(pt, sunFontIDs.xFID));
-    *y = FloatToF26Dot6(env->GetFloatField(pt, sunFontIDs.yFID));
+    *x = HBFloatToFixed(env->GetFloatField(pt, sunFontIDs.xFID));
+    *y = HBFloatToFixed(env->GetFloatField(pt, sunFontIDs.yFID));
     env->DeleteLocalRef(pt);
 
   return true;
@@ -241,8 +238,8 @@ _hb_jdk_get_font_funcs (void)
   hb_font_funcs_t *ff;
 
   if (!jdk_ffuncs) {
-      ff = hb_font_funcs_create(); 
-      
+      ff = hb_font_funcs_create();
+
       hb_font_funcs_set_glyph_func(ff, hb_jdk_get_glyph, NULL, NULL);
       hb_font_funcs_set_glyph_h_advance_func(ff,
                     hb_jdk_get_glyph_h_advance, NULL, NULL);
@@ -281,7 +278,7 @@ reference_table(hb_face_t *face HB_UNUSED, hb_tag_t tag, void *user_data) {
   jobject font2D = jdkFontInfo->font2D;
   jsize length;
   jbyte* buffer;
-  
+
   // HB_TAG_NONE is 0 and is used to get the whole font file.
   // It is not expected not be needed for JDK.
   if (tag == 0) {
@@ -324,8 +321,8 @@ static hb_font_t* _hb_jdk_font_create(JDKFontInfo *jdkFontInfo,
                        _hb_jdk_get_font_funcs (),
                        jdkFontInfo, (hb_destroy_func_t) _do_nothing);
     hb_font_set_scale (font,
-                      FloatToF26Dot6(jdkFontInfo->xPtSize),
-                      FloatToF26Dot6(jdkFontInfo->yPtSize));
+                      HBFloatToFixed(jdkFontInfo->ptSize*jdkFontInfo->devScale),
+                      HBFloatToFixed(jdkFontInfo->ptSize*jdkFontInfo->devScale));
   return font;
 }
 
@@ -342,8 +339,8 @@ static hb_font_t* _hb_jdk_ct_font_create(JDKFontInfo *jdkFontInfo) {
     hb_face_destroy(face);
 
     hb_font_set_scale(font,
-                     FloatToF26Dot6(jdkFontInfo->ptSize),
-                     FloatToF26Dot6(jdkFontInfo->ptSize));
+                     HBFloatToFixed(jdkFontInfo->ptSize),
+                     HBFloatToFixed(jdkFontInfo->ptSize));
     return font;
 }
 #endif

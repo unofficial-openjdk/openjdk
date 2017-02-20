@@ -30,6 +30,9 @@
 #include "oops/method.hpp"
 #include "oops/oop.hpp"
 #include "runtime/orderAccess.hpp"
+#if INCLUDE_JVMCI
+#include "jvmci/jvmci_globals.hpp"
+#endif
 
 class BytecodeStream;
 class KlassSizeStats;
@@ -1187,12 +1190,11 @@ protected:
 #if INCLUDE_JVMCI
     // Description of the different counters
     // ReceiverTypeData for instanceof/checkcast/aastore:
-    //   C1/C2: count is incremented on type overflow and decremented for failed type checks
-    //   JVMCI: count decremented for failed type checks and nonprofiled_count is incremented on type overflow
-    //          TODO (chaeubl): in fact, JVMCI should also increment the count for failed type checks to mimic the C1/C2 behavior
+    //   count is decremented for failed type checks
+    //   JVMCI only: nonprofiled_count is incremented on type overflow
     // VirtualCallData for invokevirtual/invokeinterface:
-    //   C1/C2: count is incremented on type overflow
-    //   JVMCI: count is incremented on type overflow, nonprofiled_count is incremented on method overflow
+    //   count is incremented on type overflow
+    //   JVMCI only: nonprofiled_count is incremented on method overflow
 
     // JVMCI is interested in knowing the percentage of type checks involving a type not explicitly in the profile
     nonprofiled_count_off_set = counter_cell_count,
@@ -2181,7 +2183,7 @@ private:
   uint _nof_overflow_traps;         // trap count, excluding _trap_hist
   union {
     intptr_t _align;
-    u1 _array[_trap_hist_limit];
+    u1 _array[JVMCI_ONLY(2 *) _trap_hist_limit];
   } _trap_hist;
 
   // Support for interprocedural escape analysis, from Thomas Kotzmann.

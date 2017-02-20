@@ -52,6 +52,7 @@ import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
 
+
 /**
  * Generate class usage information.
  *
@@ -178,7 +179,7 @@ public class ClassUseWriter extends SubWriterHolderWriter {
      */
     public static void generate(ConfigurationImpl configuration, ClassTree classtree) throws DocFileIOException  {
         ClassUseMapper mapper = new ClassUseMapper(configuration, classtree);
-        for (TypeElement aClass : configuration.docEnv.getIncludedTypeElements()) {
+        for (TypeElement aClass : configuration.getIncludedTypeElements()) {
             // If -nodeprecated option is set and the containing package is marked
             // as deprecated, do not generate the class-use page. We will still generate
             // the class-use page if the class is marked as deprecated but the containing
@@ -330,8 +331,8 @@ public class ClassUseWriter extends SubWriterHolderWriter {
             HtmlTree tr = new HtmlTree(HtmlTag.TR);
             tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
             altColor = !altColor;
-            Content tdFirst = HtmlTree.TD(HtmlStyle.colFirst, getPackageLink(pkg));
-            tr.addContent(tdFirst);
+            Content thFirst = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst, getPackageLink(pkg));
+            tr.addContent(thFirst);
             HtmlTree tdLast = new HtmlTree(HtmlTag.TD);
             tdLast.addStyle(HtmlStyle.colLast);
             addSummaryComment(pkg, tdLast);
@@ -380,9 +381,9 @@ public class ClassUseWriter extends SubWriterHolderWriter {
      * @param contentTree the content tree to which the package use information will be added
      */
     protected void addPackageUse(PackageElement pkg, Content contentTree) {
-        Content tdFirst = HtmlTree.TD(HtmlStyle.colFirst,
+        Content thFirst = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst,
                 getHyperLink(getPackageAnchorName(pkg), new StringContent(utils.getPackageName(pkg))));
-        contentTree.addContent(tdFirst);
+        contentTree.addContent(thFirst);
         HtmlTree tdLast = new HtmlTree(HtmlTag.TD);
         tdLast.addStyle(HtmlStyle.colLast);
         addSummaryComment(pkg, tdLast);

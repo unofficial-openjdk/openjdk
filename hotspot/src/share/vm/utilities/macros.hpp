@@ -180,6 +180,14 @@
 #define INCLUDE_JVMCI 1
 #endif
 
+#ifdef INCLUDE_AOT
+# if INCLUDE_AOT && !(INCLUDE_JVMCI)
+#   error "Must have JVMCI for AOT"
+# endif
+#else
+# define INCLUDE_AOT 0
+#endif
+
 #if INCLUDE_JVMCI
 #define JVMCI_ONLY(code) code
 #define NOT_JVMCI(code)
@@ -189,6 +197,16 @@
 #define NOT_JVMCI(code) code
 #define NOT_JVMCI_RETURN {}
 #endif // INCLUDE_JVMCI
+
+#if INCLUDE_AOT
+#define AOT_ONLY(code) code
+#define NOT_AOT(code)
+#define NOT_AOT_RETURN /* next token must be ; */
+#else
+#define AOT_ONLY(code)
+#define NOT_AOT(code) code
+#define NOT_AOT_RETURN {}
+#endif // INCLUDE_AOT
 
 // COMPILER1 variant
 #ifdef COMPILER1
@@ -386,6 +404,14 @@
 #define NOT_AMD64(code) code
 #endif
 
+#ifdef S390
+#define S390_ONLY(code) code
+#define NOT_S390(code)
+#else
+#define S390_ONLY(code)
+#define NOT_S390(code) code
+#endif
+
 #ifdef SPARC
 #define SPARC_ONLY(code) code
 #define NOT_SPARC(code)
@@ -485,5 +511,25 @@
 // basename<os><cpu>.hpp / basename<os><cpu>.inline.hpp
 #define OS_CPU_HEADER(basename)        XSTR(OS_CPU_HEADER_STEM(basename).hpp)
 #define OS_CPU_HEADER_INLINE(basename) XSTR(OS_CPU_HEADER_STEM(basename).inline.hpp)
+
+// To use Atomic::inc(jshort* dest) and Atomic::dec(jshort* dest), the address must be specially
+// aligned, such that (*dest) occupies the upper 16 bits of an aligned 32-bit word. The best way to
+// achieve is to place your short value next to another short value, which doesn't need atomic ops.
+//
+// Example
+//  ATOMIC_SHORT_PAIR(
+//    volatile short _refcount,  // needs atomic operation
+//    unsigned short _length     // number of UTF8 characters in the symbol (does not need atomic op)
+//  );
+
+#ifdef VM_LITTLE_ENDIAN
+  #define ATOMIC_SHORT_PAIR(atomic_decl, non_atomic_decl)  \
+    non_atomic_decl;                                       \
+    atomic_decl
+#else
+  #define ATOMIC_SHORT_PAIR(atomic_decl, non_atomic_decl)  \
+    atomic_decl;                                           \
+    non_atomic_decl
+#endif
 
 #endif // SHARE_VM_UTILITIES_MACROS_HPP

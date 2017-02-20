@@ -59,6 +59,7 @@ import java.nio.charset.Charset;
 
 import java.util.Iterator;
 import java.util.HashSet;
+import java.util.Map;
 
 
 public class IPPPrintService implements PrintService, SunPrinterJobService {
@@ -1053,15 +1054,8 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
             // of setting it, it is a safe assumption to just always
             // include SheetCollate as supported attribute.
 
-            /*
-               In Linux, we use Postscript for rendering but Linux still
-               has issues in propagating Postscript-embedded setpagedevice
-               setting like collation.  Therefore, we temporarily exclude
-               Linux.
-            */
-            if (!PrintServiceLookupProvider.isLinux()) {
-                catList.add(SheetCollate.class);
-            }
+            catList.add(SheetCollate.class);
+
         }
 
         // With the assumption that  Chromaticity is equivalent to
@@ -1765,6 +1759,19 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
 
                     if (responseMap != null && responseMap.length > 0) {
                         getAttMap = responseMap[0];
+                        // If there is extra hashmap created due to duplicate
+                        // key/attribute present in IPPresponse, then use that
+                        // map too by appending to getAttMap after removing the
+                        // duplicate key/value
+                        if (responseMap.length > 1) {
+                            for (int i = 1; i < responseMap.length; i++) {
+                                for (Map.Entry<String, AttributeClass> entry : responseMap[i].entrySet()) {
+                                    if (!getAttMap.containsKey(entry.getValue())) {
+                                        getAttMap.put(entry.getKey(), entry.getValue());
+                                    }
+                                }
+                            }
+                        }
                     }
                 } else {
                     debug_println(debugPrefix+"opGetAttributes - null input stream");

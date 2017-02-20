@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 
 package jdk.test.failurehandler.jtreg;
 
-import com.sun.javatest.regtest.OS;
 import com.sun.javatest.regtest.TimeoutHandler;
 import jdk.test.failurehandler.*;
 
@@ -71,9 +70,9 @@ public class GatherProcessInfoTimeoutHandler extends TimeoutHandler {
         String name = getClass().getName();
         PrintWriter actionsLog;
         try {
-            // try to open a separate file for aciton log
+            // try to open a separate file for action log
             actionsLog = new PrintWriter(new FileWriter(
-                    workDir.resolve(LOG_FILENAME).toFile(), true));
+                    workDir.resolve(LOG_FILENAME).toFile(), true), true);
         } catch (IOException e) {
             // use jtreg log as a fallback
             actionsLog = log;
@@ -85,7 +84,7 @@ public class GatherProcessInfoTimeoutHandler extends TimeoutHandler {
 
             File output = workDir.resolve(OUTPUT_FILENAME).toFile();
             try {
-                PrintWriter pw = new PrintWriter(new FileWriter(output, true));
+                PrintWriter pw = new PrintWriter(new FileWriter(output, true), true);
                 runGatherer(name, workDir, actionsLog, pw, pid);
             } catch (IOException e) {
                 actionsLog.printf("IOException: cannot open output file[%s] : %s",

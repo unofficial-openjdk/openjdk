@@ -39,7 +39,6 @@ JDeprScan Tool Command Reference
 
 **OPTIONS**
 
-        -cp PATH
         --class-path PATH
 
             Sets the classpath to PATH.
@@ -93,6 +92,9 @@ Given a jar file, **jdeprscan** will scan the classes found within
 that jar file and report information about how those classes use
 deprecated APIs.
 
+Given a class file, **jdeprscan** will scan that class and report
+its use of deprecated APIs.
+
 Given a class name, **jdeprscan** will search for that class on the
 classpath, scan that class, and report information about how that
 class uses deprecated APIs. The class name must use the fully
@@ -103,7 +105,7 @@ For example, the `Thread.State` enum would be specified using the string
 
         java.lang.Thread$State
 
-The `--class-path` and `-cp` options specify the classpath used for
+The `--class-path` option specifies the classpath used for
 class searching. The classpath is used for classes named on the
 command line, as well as for dependencies of the classes in jar file
 or directory hierarchy to be scanned.

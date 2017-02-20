@@ -733,9 +733,6 @@ public class XMLDocumentScannerImpl
 
 
         public int next() throws IOException, XNIException {
-            if(DEBUG_NEXT){
-                System.out.println("NOW IN XMLDeclDriver");
-            }
 
             // next driver is prolog regardless of whether there
             // is an XMLDecl in this document
@@ -745,43 +742,19 @@ public class XMLDocumentScannerImpl
             //System.out.println("fEntityScanner = " + fEntityScanner);
             // scan XMLDecl
             try {
-                if (fEntityScanner.skipString(xmlDecl)) {
-                    fMarkupDepth++;
-                    // NOTE: special case where document starts with a PI
-                    //       whose name starts with "xml" (e.g. "xmlfoo")
-                    if (XMLChar.isName(fEntityScanner.peekChar())) {
-                        fStringBuffer.clear();
-                        fStringBuffer.append("xml");
-                        while (XMLChar.isName(fEntityScanner.peekChar())) {
-                            fStringBuffer.append((char)fEntityScanner.scanChar(null));
-                        }
-                        String target = fSymbolTable.addSymbol(fStringBuffer.ch, fStringBuffer.offset, fStringBuffer.length);
-                        //this function should fill the data.. and set the fEvent object to this event.
-                        fContentBuffer.clear() ;
-                        scanPIData(target, fContentBuffer);
-                        //REVISIT:where else we can set this value to 'true'
-                        fEntityManager.fCurrentEntity.mayReadChunks = true;
-                        //return PI event since PI was encountered
-                        return XMLEvent.PROCESSING_INSTRUCTION ;
-                    }
-                    // standard XML declaration
-                    else {
+                if (fEntityScanner.skipString(XMLDECL)) {
+                    if (fEntityScanner.peekChar() == ' ') {
+                        fMarkupDepth++;
                         scanXMLDeclOrTextDecl(false);
-                        //REVISIT:where else we can set this value to 'true'
-                        fEntityManager.fCurrentEntity.mayReadChunks = true;
-                        return XMLEvent.START_DOCUMENT;
+                    } else {
+                        // PI, reset position
+                        fEntityManager.fCurrentEntity.position = 0;
                     }
-                } else{
-                    //REVISIT:where else we can set this value to 'true'
-                    fEntityManager.fCurrentEntity.mayReadChunks = true;
-                    //In both case return the START_DOCUMENT. ony difference is that first block will
-                    //cosume the XML declaration if any.
-                    return XMLEvent.START_DOCUMENT;
                 }
 
-
                 //START_OF_THE_DOCUMENT
-
+                fEntityManager.fCurrentEntity.mayReadChunks = true;
+                return XMLEvent.START_DOCUMENT;
 
             }
 
@@ -821,11 +794,7 @@ public class XMLDocumentScannerImpl
          */
 
         public int next() throws IOException, XNIException {
-            //System.out.println("here in next");
 
-            if(DEBUG_NEXT){
-                System.out.println("NOW IN PrologDriver");
-            }
             try {
                 do {
                     switch (fScannerState) {
@@ -992,9 +961,11 @@ public class XMLDocumentScannerImpl
                     case SCANNER_STATE_CONTENT: {
                         reportFatalError("ContentIllegalInProlog", null);
                         fEntityScanner.scanChar(null);
+                        return -1;
                     }
                     case SCANNER_STATE_REFERENCE: {
                         reportFatalError("ReferenceIllegalInProlog", null);
+                        return -1;
                     }
 
                     /**
@@ -1036,16 +1007,8 @@ public class XMLDocumentScannerImpl
         //
 
         public int next() throws IOException, XNIException{
-            // throw new XNIException("DTD Parsing is currently not supported");
-            if(DEBUG_NEXT){
-                System.out.println("Now in DTD Driver");
-            }
 
             dispatch(true);
-
-            if(DEBUG_NEXT){
-                System.out.println("After calling dispatch(true) -- At this point whole DTD is read.");
-            }
 
             //xxx: remove this hack and align this with reusing DTD components
             //currently this routine will only be executed from Stax
@@ -1402,10 +1365,9 @@ public class XMLDocumentScannerImpl
                             break;
                         }
                     }
-                }while(fScannerState == SCANNER_STATE_START_OF_MARKUP || fScannerState == SCANNER_STATE_TRAILING_MISC);
-                if(DEBUG_NEXT){
-                    System.out.println("State set by deciding while loop [TrailingMiscellaneous] is = " + getScannerStateName(fScannerState));
-                }
+                } while(fScannerState == SCANNER_STATE_START_OF_MARKUP ||
+                        fScannerState == SCANNER_STATE_TRAILING_MISC);
+
                 switch (fScannerState){
                     case SCANNER_STATE_PI: {
                         fContentBuffer.clear();

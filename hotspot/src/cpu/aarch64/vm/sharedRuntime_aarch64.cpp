@@ -282,7 +282,7 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
       regs[i].set_bad();
       break;
     case T_LONG:
-      assert(sig_bt[i + 1] == T_VOID, "expecting half");
+      assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
       // fall through
     case T_OBJECT:
     case T_ARRAY:
@@ -303,7 +303,7 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
       }
       break;
     case T_DOUBLE:
-      assert(sig_bt[i + 1] == T_VOID, "expecting half");
+      assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
       if (fp_args < Argument::n_float_register_parameters_j) {
         regs[i].set2(FP_ArgReg[fp_args++]->as_VMReg());
       } else {
@@ -840,7 +840,7 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
         }
         break;
       case T_LONG:
-        assert(sig_bt[i + 1] == T_VOID, "expecting half");
+        assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
         // fall through
       case T_OBJECT:
       case T_ARRAY:
@@ -862,7 +862,7 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
         }
         break;
       case T_DOUBLE:
-        assert(sig_bt[i + 1] == T_VOID, "expecting half");
+        assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
         if (fp_args < Argument::n_float_register_parameters_c) {
           regs[i].set2(FP_ArgReg[fp_args++]->as_VMReg());
         } else {
@@ -989,7 +989,16 @@ static void object_move(MacroAssembler* masm,
 
 // A float arg may have to do float reg int reg conversion
 static void float_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
-  if (src.first() != dst.first()) {
+  assert(src.first()->is_stack() && dst.first()->is_stack() ||
+         src.first()->is_reg() && dst.first()->is_reg(), "Unexpected error");
+  if (src.first()->is_stack()) {
+    if (dst.first()->is_stack()) {
+      __ ldrw(rscratch1, Address(rfp, reg2offset_in(src.first())));
+      __ strw(rscratch1, Address(sp, reg2offset_out(dst.first())));
+    } else {
+      ShouldNotReachHere();
+    }
+  } else if (src.first() != dst.first()) {
     if (src.is_single_phys_reg() && dst.is_single_phys_reg())
       __ fmovs(dst.first()->as_FloatRegister(), src.first()->as_FloatRegister());
     else
@@ -1023,7 +1032,16 @@ static void long_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
 
 // A double move
 static void double_move(MacroAssembler* masm, VMRegPair src, VMRegPair dst) {
-  if (src.first() != dst.first()) {
+  assert(src.first()->is_stack() && dst.first()->is_stack() ||
+         src.first()->is_reg() && dst.first()->is_reg(), "Unexpected error");
+  if (src.first()->is_stack()) {
+    if (dst.first()->is_stack()) {
+      __ ldr(rscratch1, Address(rfp, reg2offset_in(src.first())));
+      __ str(rscratch1, Address(sp, reg2offset_out(dst.first())));
+    } else {
+      ShouldNotReachHere();
+    }
+  } else if (src.first() != dst.first()) {
     if (src.is_single_phys_reg() && dst.is_single_phys_reg())
       __ fmovd(dst.first()->as_FloatRegister(), src.first()->as_FloatRegister());
     else
@@ -1944,6 +1962,8 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
       // due to cache line collision.
       __ serialize_memory(rthread, r2);
     }
+  } else {
+    __ strw(rscratch1, Address(rthread, JavaThread::thread_state_offset()));
   }
 
   // check for safepoint operation in progress and/or pending suspend requests
@@ -2030,7 +2050,7 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
     __ bind(dtrace_method_exit_done);
   }
 
-  __ reset_last_Java_frame(false, true);
+  __ reset_last_Java_frame(false);
 
   // Unpack oop result
   if (ret_type == T_OBJECT || ret_type == T_ARRAY) {
@@ -2039,6 +2059,11 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
       __ ldr(r0, Address(r0, 0));
       __ bind(L);
       __ verify_oop(r0);
+  }
+
+  if (CheckJNICalls) {
+    // clear_pending_jni_exception_check
+    __ str(zr, Address(rthread, JavaThread::pending_jni_exception_check_fn_offset()));
   }
 
   if (!is_critical_native) {
@@ -2363,6 +2388,7 @@ void SharedRuntime::generate_deopt_blob() {
 
     __ movw(rcpool, (int32_t)Deoptimization::Unpack_reexecute);
     __ mov(c_rarg0, rthread);
+    __ movw(c_rarg2, rcpool); // exec mode
     __ lea(rscratch1,
            RuntimeAddress(CAST_FROM_FN_PTR(address,
                                            Deoptimization::uncommon_trap)));
@@ -2370,7 +2396,7 @@ void SharedRuntime::generate_deopt_blob() {
     __ bind(retaddr);
     oop_maps->add_gc_map( __ pc()-start, map->deep_copy());
 
-    __ reset_last_Java_frame(false, false);
+    __ reset_last_Java_frame(false);
 
     __ b(after_fetch_unroll_info_call);
   } // EnableJVMCI
@@ -2465,7 +2491,7 @@ void SharedRuntime::generate_deopt_blob() {
   // find any register it might need.
   oop_maps->add_gc_map(__ pc() - start, map);
 
-  __ reset_last_Java_frame(false, true);
+  __ reset_last_Java_frame(false);
 
 #if INCLUDE_JVMCI
   if (EnableJVMCI) {
@@ -2606,7 +2632,7 @@ void SharedRuntime::generate_deopt_blob() {
                        new OopMap( frame_size_in_words, 0 ));
 
   // Clear fp AND pc
-  __ reset_last_Java_frame(true, true);
+  __ reset_last_Java_frame(true);
 
   // Collect return values
   __ ldrd(v0, Address(sp, RegisterSaver::v0_offset_in_bytes()));
@@ -2709,7 +2735,7 @@ void SharedRuntime::generate_uncommon_trap_blob() {
 
   oop_maps->add_gc_map(__ pc() - start, map);
 
-  __ reset_last_Java_frame(false, true);
+  __ reset_last_Java_frame(false);
 
   // move UnrollBlock* into r4
   __ mov(r4, r0);
@@ -2828,7 +2854,7 @@ void SharedRuntime::generate_uncommon_trap_blob() {
   oop_maps->add_gc_map(the_pc - start, new OopMap(SimpleRuntimeFrame::framesize, 0));
 
   // Clear fp AND pc
-  __ reset_last_Java_frame(true, true);
+  __ reset_last_Java_frame(true);
 
   // Pop self-frame.
   __ leave();                 // Epilog
@@ -2906,7 +2932,7 @@ SafepointBlob* SharedRuntime::generate_handler_blob(address call_ptr, int poll_t
 
   Label noException;
 
-  __ reset_last_Java_frame(false, true);
+  __ reset_last_Java_frame(false);
 
   __ maybe_isb();
   __ membar(Assembler::LoadLoad | Assembler::LoadStore);
@@ -2985,7 +3011,7 @@ RuntimeStub* SharedRuntime::generate_resolve_blob(address destination, const cha
   // r0 contains the address we are going to jump to assuming no exception got installed
 
   // clear last_Java_sp
-  __ reset_last_Java_frame(false, true);
+  __ reset_last_Java_frame(false);
   // check for pending exceptions
   Label pending;
   __ ldr(rscratch1, Address(rthread, Thread::pending_exception_offset()));
@@ -3116,7 +3142,7 @@ void OptoRuntime::generate_exception_blob() {
 
   oop_maps->add_gc_map(the_pc - start, new OopMap(SimpleRuntimeFrame::framesize, 0));
 
-  __ reset_last_Java_frame(false, true);
+  __ reset_last_Java_frame(false);
 
   // Restore callee-saved registers
 

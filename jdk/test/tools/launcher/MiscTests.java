@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,8 +69,6 @@ public class MiscTests extends TestHelper {
     static void test6856415() throws IOException {
 
         final String mainClass = "Foo6856415";
-        final String exportOpts
-            = "--add-exports=jdk.crypto.pkcs11/sun.security.pkcs11=ALL-UNNAMED";
 
         List<String> scratch = new ArrayList<>();
         scratch.add("public class Foo6856415 {");
@@ -81,7 +79,9 @@ public class MiscTests extends TestHelper {
         scratch.add("}");
         createFile(new File(mainClass + ".java"), scratch);
 
-        compile(mainClass + ".java", exportOpts);
+        compile(mainClass + ".java",
+                "--add-modules=jdk.crypto.cryptoki",
+                "--add-exports=jdk.crypto.cryptoki/sun.security.pkcs11=ALL-UNNAMED");
 
         File testJar = new File("Foo.jar");
         testJar.delete();

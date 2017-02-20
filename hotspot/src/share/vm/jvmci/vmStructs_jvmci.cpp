@@ -30,6 +30,7 @@
 #include "jvmci/jvmciCompilerToVM.hpp"
 #include "jvmci/jvmciEnv.hpp"
 #include "jvmci/jvmciRuntime.hpp"
+#include "jvmci/vmStructs_compiler_runtime.hpp"
 #include "jvmci/vmStructs_jvmci.hpp"
 #include "oops/oop.hpp"
 #include "oops/objArrayKlass.hpp"
@@ -42,7 +43,6 @@
 #include "gc/g1/g1SATBCardTableModRefBS.hpp"
 #include "gc/g1/heapRegion.hpp"
 #endif
-
 
 #define VM_STRUCTS(nonstatic_field, static_field, unchecked_nonstatic_field, volatile_nonstatic_field) \
   static_field(CompilerToVM::Data,             Klass_vtable_start_offset,              int)                                          \
@@ -69,7 +69,7 @@
                                                                                                                                      \
   static_field(CompilerToVM::Data,             _supports_inline_contig_alloc,          bool)                                         \
   static_field(CompilerToVM::Data,             _heap_end_addr,                         HeapWord**)                                   \
-  static_field(CompilerToVM::Data,             _heap_top_addr,                         HeapWord**)                                   \
+  static_field(CompilerToVM::Data,             _heap_top_addr,                         HeapWord* volatile*)                          \
                                                                                                                                      \
   static_field(CompilerToVM::Data,             _max_oop_map_stack_offset,              int)                                          \
                                                                                                                                      \
@@ -169,6 +169,8 @@
   nonstatic_field(JVMCIEnv,                    _task,                                         CompileTask*)                          \
   nonstatic_field(JVMCIEnv,                    _jvmti_can_hotswap_or_post_breakpoint,         bool)                                  \
                                                                                                                                      \
+  nonstatic_field(InvocationCounter,           _counter,                                      unsigned int)                          \
+                                                                                                                                     \
   nonstatic_field(Klass,                       _secondary_super_cache,                        Klass*)                                \
   nonstatic_field(Klass,                       _secondary_supers,                             Array<Klass*>*)                        \
   nonstatic_field(Klass,                       _super,                                        Klass*)                                \
@@ -199,13 +201,34 @@
   volatile_nonstatic_field(Method,             _code,                                         CompiledMethod*)                       \
   volatile_nonstatic_field(Method,             _from_compiled_entry,                          address)                               \
                                                                                                                                      \
+  nonstatic_field(MethodCounters,              _nmethod_age,                                  int)                                   \
+  nonstatic_field(MethodCounters,              _interpreter_invocation_limit,                 int)                                   \
+  nonstatic_field(MethodCounters,              _interpreter_backward_branch_limit,            int)                                   \
+  nonstatic_field(MethodCounters,              _interpreter_profile_limit,                    int)                                   \
+  nonstatic_field(MethodCounters,              _invoke_mask,                                  int)                                   \
+  nonstatic_field(MethodCounters,              _backedge_mask,                                int)                                   \
+  nonstatic_field(MethodCounters,              _interpreter_invocation_count,                 int)                                   \
+  nonstatic_field(MethodCounters,              _interpreter_throwout_count,                   u2)                                    \
+  JVMTI_ONLY(nonstatic_field(MethodCounters,   _number_of_breakpoints,                        u2))                                   \
   nonstatic_field(MethodCounters,              _invocation_counter,                           InvocationCounter)                     \
   nonstatic_field(MethodCounters,              _backedge_counter,                             InvocationCounter)                     \
                                                                                                                                      \
   nonstatic_field(MethodData,                  _size,                                         int)                                   \
+  nonstatic_field(MethodData,                  _method,                                       Method*)                               \
   nonstatic_field(MethodData,                  _data_size,                                    int)                                   \
   nonstatic_field(MethodData,                  _data[0],                                      intptr_t)                              \
+  nonstatic_field(MethodData,                  _parameters_type_data_di,                      int)                                   \
+  nonstatic_field(MethodData,                  _nof_decompiles,                               uint)                                  \
+  nonstatic_field(MethodData,                  _nof_overflow_recompiles,                      uint)                                  \
+  nonstatic_field(MethodData,                  _nof_overflow_traps,                           uint)                                  \
   nonstatic_field(MethodData,                  _trap_hist._array[0],                          u1)                                    \
+  nonstatic_field(MethodData,                  _eflags,                                       intx)                                  \
+  nonstatic_field(MethodData,                  _arg_local,                                    intx)                                  \
+  nonstatic_field(MethodData,                  _arg_stack,                                    intx)                                  \
+  nonstatic_field(MethodData,                  _arg_returned,                                 intx)                                  \
+  nonstatic_field(MethodData,                  _tenure_traps,                                 uint)                                  \
+  nonstatic_field(MethodData,                  _invoke_mask,                                  int)                                   \
+  nonstatic_field(MethodData,                  _backedge_mask,                                int)                                   \
   nonstatic_field(MethodData,                  _jvmci_ir_size,                                int)                                   \
                                                                                                                                      \
   nonstatic_field(nmethod,                     _verified_entry_point,                         address)                               \
@@ -257,8 +280,25 @@
   static_field(StubRoutines,                _aescrypt_decryptBlock,                           address)                               \
   static_field(StubRoutines,                _cipherBlockChaining_encryptAESCrypt,             address)                               \
   static_field(StubRoutines,                _cipherBlockChaining_decryptAESCrypt,             address)                               \
+  static_field(StubRoutines,                _counterMode_AESCrypt,                            address)                               \
+  static_field(StubRoutines,                _ghash_processBlocks,                             address)                               \
+  static_field(StubRoutines,                _sha1_implCompress,                               address)                               \
+  static_field(StubRoutines,                _sha1_implCompressMB,                             address)                               \
+  static_field(StubRoutines,                _sha256_implCompress,                             address)                               \
+  static_field(StubRoutines,                _sha256_implCompressMB,                           address)                               \
+  static_field(StubRoutines,                _sha512_implCompress,                             address)                               \
+  static_field(StubRoutines,                _sha512_implCompressMB,                           address)                               \
   static_field(StubRoutines,                _updateBytesCRC32,                                address)                               \
   static_field(StubRoutines,                _crc_table_adr,                                   address)                               \
+  static_field(StubRoutines,                _crc32c_table_addr,                               address)                               \
+  static_field(StubRoutines,                _updateBytesCRC32C,                               address)                               \
+  static_field(StubRoutines,                _updateBytesAdler32,                              address)                               \
+  static_field(StubRoutines,                _multiplyToLen,                                   address)                               \
+  static_field(StubRoutines,                _squareToLen,                                     address)                               \
+  static_field(StubRoutines,                _mulAdd,                                          address)                               \
+  static_field(StubRoutines,                _montgomeryMultiply,                              address)                               \
+  static_field(StubRoutines,                _montgomerySquare,                                address)                               \
+  static_field(StubRoutines,                _vectorizedMismatch,                              address)                               \
                                                                                                                                      \
   nonstatic_field(Thread,                   _tlab,                                            ThreadLocalAllocBuffer)                \
   nonstatic_field(Thread,                   _allocated_bytes,                                 jlong)                                 \
@@ -290,6 +330,7 @@
   declare_toplevel_type(ExceptionTableElement)                            \
   declare_toplevel_type(Flag)                                             \
   declare_toplevel_type(Flag*)                                            \
+  declare_toplevel_type(InvocationCounter)                                \
   declare_toplevel_type(JVMCIEnv)                                         \
   declare_toplevel_type(LocalVariableTableElement)                        \
   declare_toplevel_type(narrowKlass)                                      \
@@ -327,8 +368,11 @@
   declare_constant(JVM_ACC_FIELD_INTERNAL)                                \
   declare_constant(JVM_ACC_FIELD_STABLE)                                  \
   declare_constant(JVM_ACC_FIELD_HAS_GENERIC_SIGNATURE)                   \
+  declare_preprocessor_constant("JVM_ACC_VARARGS", JVM_ACC_VARARGS)       \
+  declare_preprocessor_constant("JVM_ACC_BRIDGE", JVM_ACC_BRIDGE)         \
+  declare_preprocessor_constant("JVM_ACC_ANNOTATION", JVM_ACC_ANNOTATION) \
+  declare_preprocessor_constant("JVM_ACC_ENUM", JVM_ACC_ENUM)             \
   declare_preprocessor_constant("JVM_ACC_SYNTHETIC", JVM_ACC_SYNTHETIC)   \
-  declare_preprocessor_constant("JVM_RECOGNIZED_FIELD_MODIFIERS", JVM_RECOGNIZED_FIELD_MODIFIERS) \
                                                                           \
   declare_constant(JVM_CONSTANT_Utf8)                                     \
   declare_constant(JVM_CONSTANT_Unicode)                                  \
@@ -385,7 +429,10 @@
   declare_constant(CodeInstaller::HEAP_TOP_ADDRESS)                       \
   declare_constant(CodeInstaller::HEAP_END_ADDRESS)                       \
   declare_constant(CodeInstaller::NARROW_KLASS_BASE_ADDRESS)              \
+  declare_constant(CodeInstaller::NARROW_OOP_BASE_ADDRESS)                \
   declare_constant(CodeInstaller::CRC_TABLE_ADDRESS)                      \
+  declare_constant(CodeInstaller::LOG_OF_HEAP_REGION_GRAIN_BYTES)         \
+  declare_constant(CodeInstaller::INLINE_CONTIGUOUS_ALLOCATION_SUPPORTED) \
   declare_constant(CodeInstaller::INVOKE_INVALID)                         \
                                                                           \
   declare_constant(ConstantPool::CPCACHE_INDEX_TAG)                       \
@@ -488,11 +535,11 @@
                                                                           \
   declare_constant(markOopDesc::no_hash)                                  \
                                                                           \
-  declare_constant(Method::_jfr_towrite)                                  \
   declare_constant(Method::_caller_sensitive)                             \
   declare_constant(Method::_force_inline)                                 \
   declare_constant(Method::_dont_inline)                                  \
   declare_constant(Method::_hidden)                                       \
+  declare_constant(Method::_intrinsic_candidate)                          \
   declare_constant(Method::_reserved_stack_access)                        \
                                                                           \
   declare_constant(Method::nonvirtual_vtable_index)                       \
@@ -659,7 +706,8 @@
 #define VM_LONG_CONSTANTS_CPU(declare_constant, declare_preprocessor_constant, declare_c1_constant, declare_c2_constant, declare_c2_preprocessor_constant) \
   declare_preprocessor_constant("VM_Version::CPU_AVX512BW", CPU_AVX512BW) \
   declare_preprocessor_constant("VM_Version::CPU_AVX512VL", CPU_AVX512VL) \
-  declare_preprocessor_constant("VM_Version::CPU_SHA", CPU_SHA)
+  declare_preprocessor_constant("VM_Version::CPU_SHA", CPU_SHA)           \
+  declare_preprocessor_constant("VM_Version::CPU_FMA", CPU_FMA)
 
 #endif
 
@@ -683,7 +731,6 @@
   declare_constant(VM_Version::sun4v_m)                                   \
   declare_constant(VM_Version::blk_init_instructions_m)                   \
   declare_constant(VM_Version::fmaf_instructions_m)                       \
-  declare_constant(VM_Version::fmau_instructions_m)                       \
   declare_constant(VM_Version::sparc64_family_m)                          \
   declare_constant(VM_Version::M_family_m)                                \
   declare_constant(VM_Version::T_family_m)                                \
@@ -851,7 +898,9 @@ VMAddressEntry JVMCIVMStructs::localHotSpotVMAddresses[] = {
   VM_ADDRESSES(GENERATE_VM_ADDRESS_ENTRY,
                GENERATE_PREPROCESSOR_VM_ADDRESS_ENTRY,
                GENERATE_VM_FUNCTION_ENTRY)
-
+  VM_ADDRESSES_COMPILER_RUNTIME(GENERATE_VM_ADDRESS_ENTRY,
+               GENERATE_PREPROCESSOR_VM_ADDRESS_ENTRY,
+               GENERATE_VM_FUNCTION_ENTRY)
   VM_ADDRESSES_OS(GENERATE_VM_ADDRESS_ENTRY,
                   GENERATE_PREPROCESSOR_VM_ADDRESS_ENTRY,
                   GENERATE_VM_FUNCTION_ENTRY)

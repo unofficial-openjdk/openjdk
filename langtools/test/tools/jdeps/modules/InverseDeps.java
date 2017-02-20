@@ -26,7 +26,9 @@
  * @summary Tests split packages
  * @library ../lib
  * @build CompilerUtils JdepsUtil
- * @modules jdk.jdeps/com.sun.tools.jdeps
+ * @modules java.logging
+ *          jdk.jdeps/com.sun.tools.jdeps
+ *          jdk.unsupported
  * @run testng InverseDeps
  */
 
@@ -61,7 +63,7 @@ public class InverseDeps {
     private static final Path LIBS_DIR = Paths.get("libs");
 
     private static final Set<String> modules = new LinkedHashSet(
-        List.of("unsafe", "m4", "m5", "m6", "m7")
+        List.of("unsafe", "mIV", "mV", "mVI", "mVII")
     );
 
     /**
@@ -87,29 +89,67 @@ public class InverseDeps {
             }
         }
     }
+    @DataProvider(name = "jdkModules")
+    public Object[][] jdkModules() {
+        return new Object[][]{
+            // --require and a subset of dependences
+            { "jdk.compiler", new String[][] {
+                    new String[] {"jdk.compiler", "jdk.jshell"},
+                    new String[] {"jdk.compiler", "jdk.rmic"},
+                    new String[] {"jdk.compiler", "jdk.javadoc", "jdk.rmic"},
+                }
+            },
+            { "java.compiler", new String[][] {
+                    new String[] {"java.compiler", "jdk.jshell"},
+                    new String[] {"java.compiler", "jdk.compiler", "jdk.jshell"},
+                    new String[] {"java.compiler", "jdk.compiler", "jdk.rmic"},
+                    new String[] {"java.compiler", "jdk.compiler", "jdk.javadoc", "jdk.rmic"},
+                    new String[] {"java.compiler", "java.se", "java.se.ee"},
+                }
+            },
+        };
+    }
+
+    @Test(dataProvider = "jdkModules")
+    public void testJDKModule(String moduleName, String[][] expected) throws Exception {
+        // this invokes the jdeps launcher so that all system modules are observable
+        JdepsRunner jdeps = JdepsRunner.run(
+            "--inverse", "--require", moduleName
+        );
+        List<String> output = Arrays.stream(jdeps.output())
+            .map(s -> s.trim())
+            .collect(Collectors.toList());
+
+        // verify the dependences
+        assertTrue(Arrays.stream(expected)
+                         .map(path -> Arrays.stream(path)
+                         .collect(Collectors.joining(" <- ")))
+                         .anyMatch(output::contains));
+    }
+
 
     @DataProvider(name = "testrequires")
     public Object[][] expected1() {
         return new Object[][] {
-            // -requires and result
+            // --require and result
             { "java.sql", new String[][] {
-                    new String[] { "java.sql", "m5" },
+                    new String[] { "java.sql", "mV" },
                 }
             },
             { "java.compiler", new String[][] {
-                    new String[] { "java.compiler", "m5" },
-                    new String[] { "java.compiler", "m4", "m5" },
+                    new String[] { "java.compiler", "mV" },
+                    new String[] { "java.compiler", "mIV", "mV" },
                 }
             },
             { "java.logging", new String[][]{
-                    new String[] {"java.logging", "m5"},
-                    new String[] {"java.logging", "m4", "m5"},
-                    new String[] {"java.logging", "java.sql", "m5"},
+                    new String[] {"java.logging", "mV"},
+                    new String[] {"java.logging", "mIV", "mV"},
+                    new String[] {"java.logging", "java.sql", "mV"},
                 }
             },
             { "jdk.unsupported", new String[][] {
-                    new String[] {"jdk.unsupported", "unsafe", "m6", "m7"},
-                    new String[] {"jdk.unsupported", "unsafe", "m7"}
+                    new String[] {"jdk.unsupported", "unsafe", "mVI", "mVII"},
+                    new String[] {"jdk.unsupported", "unsafe", "mVII"}
                 }
             },
         };
@@ -117,7 +157,7 @@ public class InverseDeps {
 
     @Test(dataProvider = "testrequires")
     public void testrequires(String name, String[][] expected) throws Exception {
-        String cmd1 = String.format("jdeps -inverse --module-path %s -requires %s --add-modules %s%n",
+        String cmd1 = String.format("jdeps --inverse --module-path %s --require %s --add-modules %s%n",
                 MODS_DIR, name, modules.stream().collect(Collectors.joining(",")));
 
         try (JdepsUtil.Command jdeps = JdepsUtil.newCommand(cmd1)) {
@@ -128,7 +168,7 @@ public class InverseDeps {
             runJdeps(jdeps, expected);
         }
 
-        String cmd2 = String.format("jdeps -inverse --module-path %s -requires %s" +
+        String cmd2 = String.format("jdeps --inverse --module-path %s --require %s" +
             " --add-modules ALL-MODULE-PATH%n", LIBS_DIR, name);
 
             // automatic module
@@ -146,17 +186,17 @@ public class InverseDeps {
         return new Object[][] {
             // -package and result
             { "p4", new String[][] {
-                        new String[] { "m4", "m5"},
+                        new String[] { "mIV", "mV"},
                     }
             },
             { "javax.tools", new String[][] {
-                        new String[] {"java.compiler", "m5"},
-                        new String[] {"java.compiler", "m4", "m5"},
+                        new String[] {"java.compiler", "mV"},
+                        new String[] {"java.compiler", "mIV", "mV"},
                     }
             },
             { "sun.misc", new String[][] {
-                        new String[] {"jdk.unsupported", "unsafe", "m6", "m7"},
-                        new String[] {"jdk.unsupported", "unsafe", "m7"}
+                        new String[] {"jdk.unsupported", "unsafe", "mVI", "mVII"},
+                        new String[] {"jdk.unsupported", "unsafe", "mVII"}
                     }
             }
         };
@@ -164,7 +204,7 @@ public class InverseDeps {
 
     @Test(dataProvider = "testpackage")
     public void testpackage(String name, String[][] expected) throws Exception {
-        String cmd = String.format("jdeps -inverse --module-path %s -package %s --add-modules %s%n",
+        String cmd = String.format("jdeps --inverse --module-path %s -package %s --add-modules %s%n",
             MODS_DIR, name, modules.stream().collect(Collectors.joining(",")));
         try (JdepsUtil.Command jdeps = JdepsUtil.newCommand(cmd)) {
             jdeps.appModulePath(MODS_DIR.toString())
@@ -180,14 +220,14 @@ public class InverseDeps {
         return new Object[][] {
             // -regex and result
             { "org.safe.Lib", new String[][] {
-                    new String[] { "unsafe", "m7"},
-                    new String[] { "unsafe", "m6", "m7"},
+                    new String[] { "unsafe", "mVII"},
+                    new String[] { "unsafe", "mVI", "mVII"},
                 }
             },
             { "java.util.logging.*|org.safe.Lib", new String[][] {
-                    new String[] { "unsafe", "m7"},
-                    new String[] { "unsafe", "m6", "m7"},
-                    new String[] { "java.logging", "m5"},
+                    new String[] { "unsafe", "mVII"},
+                    new String[] { "unsafe", "mVI", "mVII"},
+                    new String[] { "java.logging", "mV"},
                 }
             }
         };
@@ -195,7 +235,7 @@ public class InverseDeps {
 
     @Test(dataProvider = "testregex")
     public void testregex(String name, String[][] expected) throws Exception {
-        String cmd = String.format("jdeps -inverse --module-path %s -regex %s --add-modules %s%n",
+        String cmd = String.format("jdeps --inverse --module-path %s -regex %s --add-modules %s%n",
                 MODS_DIR, name, modules.stream().collect(Collectors.joining(",")));
 
         try (JdepsUtil.Command jdeps = JdepsUtil.newCommand(cmd)) {
@@ -212,19 +252,19 @@ public class InverseDeps {
         return new Object[][] {
             // -regex and result
             { "sun.misc.Unsafe", new String[][] {
-                    new String[] {"jdk.unsupported", "unsafe.jar", "m6.jar", "m7.jar"},
-                    new String[] {"jdk.unsupported", "unsafe.jar", "m7.jar"}
+                    new String[] {"jdk.unsupported", "unsafe.jar", "mVI.jar", "mVII.jar"},
+                    new String[] {"jdk.unsupported", "unsafe.jar", "mVII.jar"}
                 }
             },
             { "org.safe.Lib", new String[][] {
-                    new String[] { "unsafe.jar", "m7.jar"},
-                    new String[] { "unsafe.jar", "m6.jar", "m7.jar"},
+                    new String[] { "unsafe.jar", "mVII.jar"},
+                    new String[] { "unsafe.jar", "mVI.jar", "mVII.jar"},
                 }
             },
             { "java.util.logging.*|org.safe.Lib", new String[][] {
-                    new String[] { "unsafe.jar", "m7.jar"},
-                    new String[] { "unsafe.jar", "m6.jar", "m7.jar"},
-                    new String[] { "java.logging", "m5.jar"},
+                    new String[] { "unsafe.jar", "mVII.jar"},
+                    new String[] { "unsafe.jar", "mVI.jar", "mVII.jar"},
+                    new String[] { "java.logging", "mV.jar"},
                 }
             }
         };
@@ -234,13 +274,13 @@ public class InverseDeps {
     public void testClassPath(String name, String[][] expected) throws Exception {
         // -classpath
         String cpath = modules.stream()
-            .filter(mn -> !mn.equals("m7"))
+            .filter(mn -> !mn.equals("mVII"))
             .map(mn -> LIBS_DIR.resolve(mn + ".jar").toString())
             .collect(Collectors.joining(File.pathSeparator));
 
-        Path jarfile = LIBS_DIR.resolve("m7.jar");
+        Path jarfile = LIBS_DIR.resolve("mVII.jar");
 
-        String cmd1 = String.format("jdeps -inverse -classpath %s -regex %s %s%n",
+        String cmd1 = String.format("jdeps --inverse -classpath %s -regex %s %s%n",
             cpath, name, jarfile);
         try (JdepsUtil.Command jdeps = JdepsUtil.newCommand(cmd1)) {
             jdeps.verbose("-verbose:class")
@@ -253,7 +293,7 @@ public class InverseDeps {
         Set<Path> paths = modules.stream()
                                  .map(mn -> LIBS_DIR.resolve(mn + ".jar"))
                                  .collect(Collectors.toSet());
-        String cmd2 = String.format("jdeps -inverse -regex %s %s%n", name, paths);
+        String cmd2 = String.format("jdeps --inverse -regex %s %s%n", name, paths);
         try (JdepsUtil.Command jdeps = JdepsUtil.newCommand(cmd2)) {
             jdeps.verbose("-verbose:class").regex(name);
             paths.forEach(jdeps::addRoot);

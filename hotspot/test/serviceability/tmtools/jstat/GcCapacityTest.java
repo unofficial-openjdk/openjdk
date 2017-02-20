@@ -28,11 +28,9 @@ import utils.*;
  * @summary Test checks the consistency of the output
  * displayed with jstat -gccapacity.
  * @modules java.base/jdk.internal.misc
- * @library /test/lib/share/classes
+ * @library /test/lib
  * @library ../share
  * @requires vm.opt.ExplicitGCInvokesConcurrent != true
- * @build common.*
- * @build utils.*
  * @run main/othervm -XX:+UsePerfData -Xmx128M GcCapacityTest
  */
 public class GcCapacityTest {
@@ -47,7 +45,7 @@ public class GcCapacityTest {
         measurement1.assertConsistency();
 
         // Provoke a gc and verify the changed values
-        GcProvoker gcProvoker = GcProvoker.createGcProvoker();
+        GcProvoker gcProvoker = new GcProvoker();
         gcProvoker.provokeGc();
         JstatGcCapacityResults measurement2 = jstatGcTool.measure();
         measurement2.assertConsistency();

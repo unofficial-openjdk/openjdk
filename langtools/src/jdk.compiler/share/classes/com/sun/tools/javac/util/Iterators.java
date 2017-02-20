@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,8 @@ public class Iterators {
 
         private final Iterator<I> inputs;
         private final Function<I, Iterator<O>> convertor;
-        private Iterator<O> currentIterator;
+        @SuppressWarnings("unchecked")
+        private Iterator<O> currentIterator = EMPTY;
 
         public CompoundIterator(Iterable<I> inputs, Function<I, Iterator<O>> convertor) {
             this.inputs = inputs.iterator();
@@ -54,21 +55,41 @@ public class Iterators {
         }
 
         public boolean hasNext() {
-            while (inputs.hasNext() && (currentIterator == null || !currentIterator.hasNext())) {
-                currentIterator = convertor.apply(inputs.next());
+            if (currentIterator != null && !currentIterator.hasNext()) {
+                update();
             }
-            return currentIterator != null && currentIterator.hasNext();
+            return currentIterator != null;
         }
 
         public O next() {
-            if (!hasNext())
+            if (currentIterator == EMPTY && !hasNext()) {
                 throw new NoSuchElementException();
-
+            }
             return currentIterator.next();
         }
 
         public void remove() {
             throw new UnsupportedOperationException();
         }
+
+        private void update() {
+            while (inputs.hasNext()) {
+                currentIterator = convertor.apply(inputs.next());
+                if (currentIterator.hasNext()) return;
+            }
+            currentIterator = null;
+        }
     }
+
+    @SuppressWarnings("rawtypes")
+    private final static Iterator EMPTY = new Iterator() {
+        public boolean hasNext() {
+            return false;
+        }
+
+        @Override
+        public Object next() {
+            return null;
+        }
+    };
 }

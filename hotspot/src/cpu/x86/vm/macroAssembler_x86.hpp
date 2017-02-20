@@ -288,10 +288,10 @@ class MacroAssembler: public Assembler {
                            Register last_java_fp,
                            address last_java_pc);
 
-  void reset_last_Java_frame(Register thread, bool clear_fp, bool clear_pc);
+  void reset_last_Java_frame(Register thread, bool clear_fp);
 
   // thread in the default location (r15_thread on 64bit)
-  void reset_last_Java_frame(bool clear_fp, bool clear_pc);
+  void reset_last_Java_frame(bool clear_fp);
 
   // Stores
   void store_check(Register obj);                // store check for obj - register is destroyed afterwards
@@ -448,6 +448,10 @@ class MacroAssembler: public Assembler {
   // Floating-point remainder for Java (ST0 = ST0 fremr ST1, ST1 is empty afterwards)
   // tmp is a temporary register, if none is available use noreg
   void fremr(Register tmp);
+
+  // dst = c = a * b + c
+  void fmad(XMMRegister dst, XMMRegister a, XMMRegister b, XMMRegister c);
+  void fmaf(XMMRegister dst, XMMRegister a, XMMRegister b, XMMRegister c);
 
 
   // same as fcmp2int, but using SSE2
@@ -939,6 +943,23 @@ class MacroAssembler: public Assembler {
                    bool multi_block, XMMRegister shuf_mask);
 #endif
 
+#ifdef _LP64
+ private:
+  void sha512_AVX2_one_round_compute(Register old_h, Register a, Register b, Register c, Register d,
+                                     Register e, Register f, Register g, Register h, int iteration);
+
+  void sha512_AVX2_one_round_and_schedule(XMMRegister xmm4, XMMRegister xmm5, XMMRegister xmm6, XMMRegister xmm7,
+                                          Register a, Register b, Register c, Register d, Register e, Register f,
+                                          Register g, Register h, int iteration);
+
+  void addmq(int disp, Register r1, Register r2);
+ public:
+  void sha512_AVX2(XMMRegister msg, XMMRegister state0, XMMRegister state1, XMMRegister msgtmp0,
+                   XMMRegister msgtmp1, XMMRegister msgtmp2, XMMRegister msgtmp3, XMMRegister msgtmp4,
+                   Register buf, Register state, Register ofs, Register limit, Register rsp, bool multi_block,
+                   XMMRegister shuf_mask);
+#endif
+
   void fast_sha1(XMMRegister abcd, XMMRegister e0, XMMRegister e1, XMMRegister msg0,
                  XMMRegister msg1, XMMRegister msg2, XMMRegister msg3, XMMRegister shuf_mask,
                  Register buf, Register state, Register ofs, Register limit, Register rsp,
@@ -1064,7 +1085,7 @@ public:
   void movdqu(Address     dst, XMMRegister src);
   void movdqu(XMMRegister dst, Address src);
   void movdqu(XMMRegister dst, XMMRegister src);
-  void movdqu(XMMRegister dst, AddressLiteral src);
+  void movdqu(XMMRegister dst, AddressLiteral src, Register scratchReg = rscratch1);
   // AVX Unaligned forms
   void vmovdqu(Address     dst, XMMRegister src);
   void vmovdqu(XMMRegister dst, Address src);
@@ -1172,6 +1193,10 @@ public:
 
   void vpaddw(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vpaddw(XMMRegister dst, XMMRegister nds, Address src, int vector_len);
+
+  void vpand(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len) { Assembler::vpand(dst, nds, src, vector_len); }
+  void vpand(XMMRegister dst, XMMRegister nds, Address src, int vector_len) { Assembler::vpand(dst, nds, src, vector_len); }
+  void vpand(XMMRegister dst, XMMRegister nds, AddressLiteral src, int vector_len);
 
   void vpbroadcastw(XMMRegister dst, XMMRegister src);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,7 +69,7 @@ import static org.testng.Assert.assertTrue;
  * Bignum class tests
  *
  * @test
- * @modules jdk.scripting.nashorn/jdk.nashorn.internal.runtime.doubleconv
+ * @modules jdk.scripting.nashorn/jdk.nashorn.internal.runtime.doubleconv:open
  * @run testng jdk.nashorn.internal.runtime.doubleconv.test.BignumTest
  */
 @SuppressWarnings("javadoc")
@@ -97,8 +97,8 @@ public class BignumTest {
     @Test
     public void testAssign() throws Exception {
 
-        Object bignum = ctor.newInstance();
-        Object bignum2 = ctor.newInstance();
+        final Object bignum = ctor.newInstance();
+        final Object bignum2 = ctor.newInstance();
 
         final Method assignUInt16 = method("assignUInt16", char.class);
         final Method assignUInt64 = method("assignUInt64", long.class);

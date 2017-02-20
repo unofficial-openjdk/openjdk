@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,13 +23,15 @@
 
 /*
  * @test
- * @bug 8154283
+ * @bug 8154283 8167320 8171098 8172809 8173068 8173117
  * @summary tests for multi-module mode compilation
  * @library /tools/lib
  * @modules
  *      jdk.compiler/com.sun.tools.javac.api
  *      jdk.compiler/com.sun.tools.javac.code
  *      jdk.compiler/com.sun.tools.javac.main
+ *      jdk.compiler/com.sun.tools.javac.processing
+ *      jdk.compiler/com.sun.tools.javac.util
  * @build toolbox.ToolBox toolbox.JarTask toolbox.JavacTask ModuleTestBase
  * @run main EdgeCases
  */
@@ -44,7 +46,18 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.RoundEnvironment;
+import javax.annotation.processing.SupportedAnnotationTypes;
+import javax.annotation.processing.SupportedOptions;
+import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ModuleElement;
+import javax.lang.model.element.ModuleElement.RequiresDirective;
+import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.Elements;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
@@ -54,10 +67,16 @@ import com.sun.source.tree.CompilationUnitTree;
 //import com.sun.source.util.JavacTask; // conflicts with toolbox.JavacTask
 import com.sun.tools.javac.api.JavacTaskImpl;
 import com.sun.tools.javac.code.Symbol.ModuleSymbol;
+import com.sun.tools.javac.code.Symbol.PackageSymbol;
+import com.sun.tools.javac.code.Symtab;
+import com.sun.tools.javac.processing.JavacProcessingEnvironment;
+import com.sun.tools.javac.util.Context;
 
 import toolbox.JarTask;
 import toolbox.JavacTask;
 import toolbox.Task;
+import toolbox.Task.Expect;
+import toolbox.Task.OutputKind;
 
 public class EdgeCases extends ModuleTestBase {
 
@@ -68,21 +87,22 @@ public class EdgeCases extends ModuleTestBase {
     @Test
     public void testAddExportUndefinedModule(Path base) throws Exception {
         Path src = base.resolve("src");
-        tb.writeJavaFiles(src, "package test; import undef.Any; public class Test {}");
+        tb.writeJavaFiles(src, "package test; import undefPackage.Any; public class Test {}");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
         List<String> log = new JavacTask(tb)
-                .options("--add-exports", "undef/undef=ALL-UNNAMED", "-XDrawDiagnostics")
+                .options("--add-exports", "undefModule/undefPackage=ALL-UNNAMED",
+                         "-XDrawDiagnostics")
                 .outdir(classes)
                 .files(findJavaFiles(src))
                 .run(Task.Expect.FAIL)
                 .writeAll()
                 .getOutputLines(Task.OutputKind.DIRECT);
 
-        List<String> expected = Arrays.asList("- compiler.err.cant.find.module: undef",
-                                              "Test.java:1:27: compiler.err.doesnt.exist: undef",
-                                              "2 errors");
+        List<String> expected = Arrays.asList("- compiler.warn.module.for.option.not.found: --add-exports, undefModule",
+                                              "Test.java:1:34: compiler.err.doesnt.exist: undefPackage",
+                                              "1 error", "1 warning");
 
         if (!expected.equals(log))
             throw new Exception("expected output not found: " + log);
@@ -93,9 +113,9 @@ public class EdgeCases extends ModuleTestBase {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         try (StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null)) {
             Path moduleSrc = base.resolve("module-src");
-            Path m1 = moduleSrc.resolve("m1");
+            Path m1 = moduleSrc.resolve("m1x");
 
-            tb.writeJavaFiles(m1, "module m1 { }");
+            tb.writeJavaFiles(m1, "module m1x { }");
 
             Iterable<? extends JavaFileObject> files = fm.getJavaFileObjects(findJavaFiles(moduleSrc));
             com.sun.source.util.JavacTask task =
@@ -103,7 +123,7 @@ public class EdgeCases extends ModuleTestBase {
 
             task.analyze();
 
-            ModuleSymbol msym = (ModuleSymbol) task.getElements().getModuleElement("m1");
+            ModuleSymbol msym = (ModuleSymbol) task.getElements().getModuleElement("m1x");
 
             msym.outermostClass();
         }
@@ -114,9 +134,9 @@ public class EdgeCases extends ModuleTestBase {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         try (StandardJavaFileManager fm = compiler.getStandardFileManager(null, null, null)) {
             Path moduleSrc = base.resolve("module-src");
-            Path m1 = moduleSrc.resolve("m1");
+            Path m1 = moduleSrc.resolve("m1x");
 
-            tb.writeJavaFiles(m1, "module m1 { }",
+            tb.writeJavaFiles(m1, "module m1x { }",
                                   "package p;",
                                   "package p; class T { }");
 
@@ -150,17 +170,17 @@ public class EdgeCases extends ModuleTestBase {
     @Test
     public void testModuleImplicitModuleBoundaries(Path base) throws Exception {
         Path src = base.resolve("src");
-        Path src_m1 = src.resolve("m1");
+        Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
-                          "module m1 { exports api1; }",
+                          "module m1x { exports api1; }",
                           "package api1; public class Api1 { public void call() { } }");
-        Path src_m2 = src.resolve("m2");
+        Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
-                          "module m2 { requires m1; exports api2; }",
+                          "module m2x { requires m1x; exports api2; }",
                           "package api2; public class Api2 { public static api1.Api1 get() { return null; } }");
-        Path src_m3 = src.resolve("m3");
+        Path src_m3 = src.resolve("m3x");
         tb.writeJavaFiles(src_m3,
-                          "module m3 { requires m2; }",
+                          "module m3x { requires m2x; }",
                           "package test; public class Test { { api2.Api2.get().call(); api2.Api2.get().toString(); } }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
@@ -174,7 +194,7 @@ public class EdgeCases extends ModuleTestBase {
                 .writeAll()
                 .getOutput(Task.OutputKind.DIRECT);
 
-        if (!log.contains("Test.java:1:52: compiler.err.not.def.access.class.intf.cant.access: call(), api1.Api1") ||
+        if (!log.contains("Test.java:1:52: compiler.err.not.def.access.class.intf.cant.access.reason: call(), api1.Api1, api1, (compiler.misc.not.def.access.does.not.read: m3x, api1, m1x)") ||
             !log.contains("Test.java:1:76: compiler.err.not.def.access.class.intf.cant.access: toString(), java.lang.Object"))
             throw new Exception("expected output not found");
     }
@@ -202,7 +222,7 @@ public class EdgeCases extends ModuleTestBase {
 
         Files.createDirectories(modulePath);
 
-        Path automaticJar = modulePath.resolve("m1-1.0.jar");
+        Path automaticJar = modulePath.resolve("a-1.0.jar");
 
         new JarTask(tb, automaticJar)
           .baseDir(automaticClasses)
@@ -210,13 +230,13 @@ public class EdgeCases extends ModuleTestBase {
           .run();
 
         Path src = base.resolve("src");
-        Path src_m2 = src.resolve("m2");
+        Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
-                          "module m2 { requires m1; exports api2; }",
+                          "module m2x { requires a; exports api2; }",
                           "package api2; public class Api2 { public static api1.Api1 get() { return null; } }");
-        Path src_m3 = src.resolve("m3");
+        Path src_m3 = src.resolve("m3x");
         tb.writeJavaFiles(src_m3,
-                          "module m3 { requires m1; requires m2; }",
+                          "module m3x { requires a; requires m2x; }",
                           "package test; public class Test { { api2.Api2.get(); api1.Api1 a1; } }");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
@@ -241,7 +261,7 @@ public class EdgeCases extends ModuleTestBase {
     @Test
     public void testEmptyImplicitModuleInfo(Path base) throws Exception {
         Path src = base.resolve("src");
-        Path src_m1 = src.resolve("m1");
+        Path src_m1 = src.resolve("m1x");
         Files.createDirectories(src_m1);
         try (Writer w = Files.newBufferedWriter(src_m1.resolve("module-info.java"))) {}
         tb.writeJavaFiles(src_m1,
@@ -258,7 +278,7 @@ public class EdgeCases extends ModuleTestBase {
                 .writeAll();
 
         tb.writeJavaFiles(src_m1,
-                          "module m1 {}");
+                          "module m1x {}");
 
         new JavacTask(tb)
                 .options("--source-path", src_m1.toString())
@@ -272,16 +292,16 @@ public class EdgeCases extends ModuleTestBase {
     @Test
     public void testClassPackageClash(Path base) throws Exception {
         Path src = base.resolve("src");
-        Path src_m1 = src.resolve("m1");
+        Path src_m1 = src.resolve("m1x");
         tb.writeJavaFiles(src_m1,
-                          "module m1 { exports test.m1; }",
-                          "package test.m1;\n" +
+                          "module m1x { exports test.m1x; }",
+                          "package test.m1x;\n" +
                           "public class Test {}\n");
-        Path src_m2 = src.resolve("m2");
+        Path src_m2 = src.resolve("m2x");
         tb.writeJavaFiles(src_m2,
-                          "module m2 { requires m1; }",
+                          "module m2x { requires m1x; }",
                           "package test;\n" +
-                          "public class m1 {}\n");
+                          "public class m1x {}\n");
         Path classes = base.resolve("classes");
         tb.createDirectories(classes);
 
@@ -295,7 +315,7 @@ public class EdgeCases extends ModuleTestBase {
                 .getOutputLines(Task.OutputKind.DIRECT);
 
         List<String> expected = Arrays.asList(
-            "m1.java:2:8: compiler.err.clash.with.pkg.of.same.name: kindname.class, test.m1",
+            "m1x.java:2:8: compiler.err.clash.with.pkg.of.same.name: kindname.class, test.m1x",
             "1 error"
         );
 
@@ -304,4 +324,492 @@ public class EdgeCases extends ModuleTestBase {
         }
     }
 
+    @Test
+    public void testImplicitJavaBase(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_java_base = src.resolve("java.base");
+        Files.createDirectories(src_java_base);
+        tb.writeJavaFiles(src_java_base, "module java.base { exports java.lang; }");
+        tb.writeJavaFiles(src_java_base,
+                          "package java.lang; public class Object {}");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        //module-info from source:
+        new JavacTask(tb)
+            .options("-sourcepath", src_java_base.toString())
+            .outdir(classes)
+            .files(findJavaFiles(src_java_base.resolve("java").resolve("lang").resolve("Object.java")))
+            .run()
+            .writeAll();
+
+        //module-info from class:
+        if (!Files.exists(classes.resolve("module-info.class"))) {
+            throw new AssertionError("module-info.class not created!");
+        }
+
+        new JavacTask(tb)
+            .outdir(classes)
+            .files(findJavaFiles(src_java_base.resolve("java").resolve("lang").resolve("Object.java")))
+            .run()
+            .writeAll();
+
+        //broken module-info.class:
+        Files.newOutputStream(classes.resolve("module-info.class")).close();
+
+        List<String> log = new JavacTask(tb)
+            .options("-XDrawDiagnostics")
+            .outdir(classes)
+            .files(findJavaFiles(src_java_base.resolve("java").resolve("lang").resolve("Object.java")))
+            .run(Expect.FAIL)
+            .writeAll()
+            .getOutputLines(OutputKind.DIRECT);
+
+        List<String> expected = Arrays.asList(
+                "- compiler.err.cant.access: <error>.module-info, (compiler.misc.bad.class.file.header: module-info.class, (compiler.misc.illegal.start.of.class.file))",
+                "1 error");
+
+        if (!expected.equals(log)) {
+            throw new AssertionError("Unexpected output: " + log);
+        }
+
+        //broken module-info.java:
+        Files.delete(classes.resolve("module-info.class"));
+
+        try (Writer out = Files.newBufferedWriter(src_java_base.resolve("module-info.java"))) {
+            out.write("class Broken {}");
+        }
+
+        log = new JavacTask(tb)
+            .options("-sourcepath", src_java_base.toString(),
+                                "-XDrawDiagnostics")
+            .outdir(classes)
+            .files(findJavaFiles(src_java_base.resolve("java").resolve("lang").resolve("Object.java")))
+            .run(Expect.FAIL)
+            .writeAll()
+            .getOutputLines(OutputKind.DIRECT);
+
+        expected = Arrays.asList("X");
+
+        if (expected.equals(log)) {
+            throw new AssertionError("Unexpected output: " + log);
+        }
+    }
+
+    @Test
+    public void testModuleInfoNameMismatchSource(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path m1 = src.resolve("m1x");
+        Files.createDirectories(m1);
+        tb.writeJavaFiles(m1, "module other { }",
+                              "package test; public class Test {}");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        List<String> log = new JavacTask(tb)
+            .options("--module-source-path", src.toString(),
+                     "-XDrawDiagnostics")
+            .outdir(classes)
+            .files(findJavaFiles(m1.resolve("test").resolve("Test.java")))
+            .run(Expect.FAIL)
+            .writeAll()
+            .getOutputLines(OutputKind.DIRECT);
+
+        List<String> expected = Arrays.asList(
+                "module-info.java:1:1: compiler.err.module.name.mismatch: other, m1x",
+                "- compiler.err.cant.access: m1x.module-info, (compiler.misc.cant.resolve.modules)",
+                "2 errors");
+
+        if (!expected.equals(log)) {
+            throw new AssertionError("Unexpected output: " + log);
+        }
+    }
+
+    @Test
+    public void testModuleInfoNameMismatchClass(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Files.createDirectories(src);
+        tb.writeJavaFiles(src, "module other { }",
+                               "package test; public class Test {}");
+        Path classes = base.resolve("classes");
+        Path m1Classes = classes.resolve("m1x");
+        tb.createDirectories(m1Classes);
+
+        new JavacTask(tb)
+            .outdir(m1Classes)
+            .files(findJavaFiles(src))
+            .run()
+            .writeAll()
+            .getOutputLines(OutputKind.DIRECT);
+
+        Path src2 = base.resolve("src2");
+        Files.createDirectories(src2);
+        tb.writeJavaFiles(src2, "module use { requires m1x; }");
+
+        Path classes2 = base.resolve("classes2");
+        tb.createDirectories(classes2);
+
+        List<String> log = new JavacTask(tb)
+            .options("--module-path", classes.toString(),
+                     "-XDrawDiagnostics")
+            .outdir(classes2)
+            .files(findJavaFiles(src2))
+            .run(Expect.FAIL)
+            .writeAll()
+            .getOutputLines(OutputKind.DIRECT);
+
+        List<String> expected = Arrays.asList(
+                "- compiler.err.cant.access: m1x.module-info, (compiler.misc.bad.class.file.header: module-info.class, (compiler.misc.module.name.mismatch: other, m1x))",
+                "1 error");
+
+        if (!expected.equals(log)) {
+            throw new AssertionError("Unexpected output: " + log);
+        }
+    }
+
+    @Test
+    public void testGetDirectivesComplete(Path base) throws Exception {
+        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+        JavacTaskImpl task = (JavacTaskImpl) compiler.getTask(null, null, null, null, null, null);
+        Symtab syms = Symtab.instance(task.getContext());
+
+        syms.java_base.getDirectives();
+    }
+
+    @Test
+    public void testPackageInModuleInfo(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Files.createDirectories(src);
+        tb.writeJavaFiles(src, "package p; module foo { }");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        List<String> log = new JavacTask(tb)
+            .options("-XDrawDiagnostics", "-XDshould-stop.ifError=FLOW")
+            .outdir(classes)
+            .files(findJavaFiles(src))
+            .run(Expect.FAIL)
+            .writeAll()
+            .getOutputLines(OutputKind.DIRECT);
+
+        List<String> expected = Arrays.asList(
+                "module-info.java:1:1: compiler.err.no.pkg.in.module-info.java",
+                "1 error");
+
+        if (!expected.equals(log)) {
+            throw new AssertionError("Unexpected output: " + log);
+        }
+    }
+
+    @Test
+    public void testInvisibleClassVisiblePackageClash(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_m1 = src.resolve("m1x");
+        tb.writeJavaFiles(src_m1,
+                          "module m1x { }",
+                          "package m1x;\n" +
+                          "import m1x.a.*; public class Test { A a; }\n",
+                          "package m1x.a;\n" +
+                          "public class A { }\n");
+        Path src_m2 = src.resolve("m2x");
+        tb.writeJavaFiles(src_m2,
+                          "module m2x { }",
+                          "package m1x;\n" +
+                          "public class a { public static class A { } }\n");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        new JavacTask(tb)
+            .options("--module-source-path", src.toString(),
+                     "-XDrawDiagnostics")
+            .outdir(classes)
+            .files(findJavaFiles(src))
+            .run()
+            .writeAll();
+    }
+
+    @Test
+    public void testStripUnknownRequired(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_m1 = src.resolve("m1x");
+        tb.writeJavaFiles(src_m1,
+                          "module m1x { }");
+        Path src_m2 = src.resolve("m2x");
+        tb.writeJavaFiles(src_m2,
+                          "module m2x { }");
+        Path src_m3 = src.resolve("m3x");
+        tb.writeJavaFiles(src_m3,
+                          "module m3x { }");
+        Path src_m4 = src.resolve("m4x");
+        tb.writeJavaFiles(src_m4,
+                          "module m4x { }");
+        Path src_test = src.resolve("test");
+        tb.writeJavaFiles(src_test,
+                          "module test { requires m1x; requires m2x; requires java.base; requires m3x; requires m4x; }");
+        Path src_compile = src.resolve("compile");
+        tb.writeJavaFiles(src_compile,
+                          "module compile { exports p to test; }",
+                          "package p; public class Test { }");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        List<String> log = new JavacTask(tb)
+                .options("-processor", ListRequires.class.getName(),
+                         "--module-source-path", src.toString(),
+                         "--limit-modules", "compile",
+                         "-XDaccessInternalAPI=true")
+                .outdir(classes)
+                .files(findJavaFiles(src_compile))
+                .run(Expect.FAIL)
+                .writeAll()
+                .getOutputLines(Task.OutputKind.STDOUT);
+
+        List<String> expected = Arrays.asList(
+                "from directives:",
+                "java.base",
+                "from requires:",
+                "java.base"
+        );
+        if (!Objects.equals(log, expected))
+            throw new AssertionError("Unexpected output: " + log);
+    }
+
+    @SupportedAnnotationTypes("*")
+    @SupportedOptions("expectedEnclosedElements")
+    public static final class ListRequires extends AbstractProcessor {
+
+        private int round;
+
+        @Override
+        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+            if (round++ == 0) {
+                ModuleElement compileE = processingEnv.getElementUtils().getModuleElement("compile");
+                ModuleElement testE = ElementFilter.exportsIn(compileE.getDirectives()).get(0).getTargetModules().get(0);
+
+                System.out.println("from directives:");
+                for (RequiresDirective rd : ElementFilter.requiresIn(testE.getDirectives())) {
+                    System.out.println(rd.getDependency().getSimpleName());
+                }
+
+                System.out.println("from requires:");
+                for (RequiresDirective rd : ((ModuleSymbol) testE).requires) {
+                    System.out.println(rd.getDependency().getSimpleName());
+                }
+            }
+
+            return false;
+        }
+
+        @Override
+        public SourceVersion getSupportedSourceVersion() {
+            return SourceVersion.latest();
+        }
+
+    }
+
+    @Test
+    public void testOnDemandCompletionModuleInfoJava(Path base) throws Exception {
+        Path src = base.resolve("src");
+        Path src_m1 = src.resolve("m1x");
+        tb.writeJavaFiles(src_m1,
+                          "@Deprecated module m1x { }");
+        Path src_m2 = src.resolve("m2x");
+        tb.writeJavaFiles(src_m2,
+                          "module m2x { requires m1x; }");
+        Path src_m3 = src.resolve("m3x");
+        tb.writeJavaFiles(src_m3,
+                          "module m3x { requires m2x; requires m1x; }");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        List<String> log;
+        List<String> expected;
+
+        log = new JavacTask(tb)
+                .options("--module-source-path", src.toString())
+                .outdir(classes)
+                .files(findJavaFiles(src_m1))
+                .run()
+                .writeAll()
+                .getOutputLines(Task.OutputKind.DIRECT);
+
+        expected = Arrays.asList("");
+
+        if (!expected.equals(log)) {
+            throw new IllegalStateException(log.toString());
+        }
+
+        log = new JavacTask(tb)
+                .options("--module-source-path", src.toString(),
+                         "-XDrawDiagnostics",
+                         "-Xlint:deprecation")
+                .outdir(classes)
+                .files(findJavaFiles(src_m3))
+                .run()
+                .writeAll()
+                .getOutputLines(Task.OutputKind.DIRECT);
+
+        expected = Arrays.asList(
+                "module-info.java:1:23: compiler.warn.has.been.deprecated.module: m1x",
+                "module-info.java:1:37: compiler.warn.has.been.deprecated.module: m1x",
+                "2 warnings"
+        );
+
+        if (!expected.equals(log)) {
+            throw new IllegalStateException(log.toString());
+        }
+    }
+
+    @Test
+    public void testUnnamedPackage(Path base) throws Exception {
+        List<String> out;
+        List<String> expected;
+
+        //-source 8:
+        Path src8 = base.resolve("src8");
+        Files.createDirectories(src8);
+        tb.writeJavaFiles(src8,
+                          "package test; public class Test {}");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        out = new JavacTask(tb)
+                .options("--source-path", src8.toString(),
+                         "-processor", UnnamedPackageProcessor.class.getName(),
+                         "-source", "8")
+                .outdir(classes)
+                .files(findJavaFiles(src8))
+                .run()
+                .writeAll()
+                .getOutputLines(OutputKind.STDOUT);
+
+        expected = Arrays.asList("noModule");
+
+        if (!expected.equals(out)) {
+            throw new AssertionError("Unexpected output: " + out);
+        }
+
+        //-source 9, unnamed:
+        Path srcUnnamed = base.resolve("srcUnnamed");
+        Files.createDirectories(srcUnnamed);
+        tb.writeJavaFiles(srcUnnamed,
+                          "public class Test {}");
+        Path classesUnnamed = base.resolve("classesUnnamed");
+        tb.createDirectories(classesUnnamed);
+
+        out = new JavacTask(tb)
+                .options("--source-path", srcUnnamed.toString(),
+                         "-processor", UnnamedPackageProcessor.class.getName())
+                .outdir(classesUnnamed)
+                .files(findJavaFiles(srcUnnamed))
+                .run()
+                .writeAll()
+                .getOutputLines(OutputKind.STDOUT);
+
+        expected = Arrays.asList("unnamedModule");
+
+        if (!expected.equals(out)) {
+            throw new AssertionError("Unexpected output: " + out);
+        }
+
+        //-source 9, named:
+        Path srcNamed = base.resolve("srcNamed");
+        Files.createDirectories(srcNamed);
+        tb.writeJavaFiles(srcNamed,
+                          "module m {}",
+                          "public class Test {}");
+        Path classesNamed = base.resolve("classesNamed");
+        tb.createDirectories(classesNamed);
+
+        out = new JavacTask(tb)
+                .options("--source-path", srcNamed.toString(),
+                         "-classpath", "",
+                         "-processorpath", System.getProperty("test.class.path"),
+                         "-processor", UnnamedPackageProcessor.class.getName())
+                .outdir(classesNamed)
+                .files(findJavaFiles(srcNamed))
+                .run()
+                .writeAll()
+                .getOutputLines(OutputKind.STDOUT);
+
+        expected = Arrays.asList("m");
+
+        if (!expected.equals(out)) {
+            throw new AssertionError("Unexpected output: " + out);
+        }
+
+        //-source 9, conflict:
+        Path srcNamed2 = base.resolve("srcNamed2");
+        Path srcNamed2m1 = srcNamed2.resolve("m1x");
+        Files.createDirectories(srcNamed2m1);
+        tb.writeJavaFiles(srcNamed2m1,
+                          "module m1x {}",
+                          "public class Test {}");
+        Path srcNamed2m2 = srcNamed2.resolve("m2x");
+        Files.createDirectories(srcNamed2m2);
+        tb.writeJavaFiles(srcNamed2m2,
+                          "module m2x {}",
+                          "public class Test {}");
+        Path classesNamed2 = base.resolve("classesNamed2");
+        tb.createDirectories(classesNamed2);
+
+        out = new JavacTask(tb)
+                .options("--module-source-path", srcNamed2.toString(),
+                         "-classpath", "",
+                         "-processorpath", System.getProperty("test.class.path"),
+                         "-processor", UnnamedPackageProcessor.class.getName(),
+                         "-XDshould-stop.ifError=FLOW")
+                .outdir(classesNamed2)
+                .files(findJavaFiles(srcNamed2))
+                .run(Expect.FAIL)
+                .writeAll()
+                .getOutputLines(OutputKind.STDOUT);
+
+        expected = Arrays.asList("null",
+                                 "m1x: true",
+                                 "m2x: true");
+
+        if (!expected.equals(out)) {
+            throw new AssertionError("Unexpected output: " + out);
+        }
+    }
+
+    @SupportedAnnotationTypes("*")
+    public static final class UnnamedPackageProcessor extends AbstractProcessor {
+
+        int round = 0;
+
+        @Override
+        public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+            if (round++ != 0)
+                return false;
+
+            Elements elements = processingEnv.getElementUtils();
+            PackageElement pe = elements.getPackageElement("");
+
+            if (pe == null) {
+                System.out.println("null");
+            } else {
+                ModuleElement mod = (ModuleElement) pe.getEnclosingElement();
+                if (mod == null) {
+                    System.out.println("noModule");
+                } else if (mod.isUnnamed()) {
+                    System.out.println("unnamedModule");
+                } else {
+                    System.out.println(mod);
+                }
+            }
+
+            ModuleElement m1x = elements.getModuleElement("m1x");
+            ModuleElement m2x = elements.getModuleElement("m2x");
+
+            if (m1x != null && m2x != null) {
+                System.out.println("m1x: " + (elements.getPackageElement(m1x, "") != null));
+                System.out.println("m2x: " + (elements.getPackageElement(m2x, "") != null));
+            }
+
+            return false;
+        }
+
+    }
 }
