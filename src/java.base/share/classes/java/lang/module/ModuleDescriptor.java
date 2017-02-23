@@ -1412,7 +1412,7 @@ public class ModuleDescriptor
      * <p> Returns the string with the possibly-unparseable version of the
      * module </p>
      *
-     * @return The string containing the module of the module.
+     * @return The string containing the version of the module.
      */
     public Optional<String> rawVersion() {
         if (version != null) {
