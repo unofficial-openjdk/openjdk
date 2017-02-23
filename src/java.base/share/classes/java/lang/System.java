@@ -1845,6 +1845,39 @@ public final class System {
     }
 
     /**
+     * Logs an exception/error at initialization time to stdout or stderr.
+     *
+     * @param printToStderr to print to stderr rather than stdout
+     * @param printStackTrace to print the stack trace
+     * @param msg the message to print before the exception, can be {@code null}
+     * @param e the exception or error
+     */
+    private static void logInitException(boolean printToStderr,
+                                         boolean printStackTrace,
+                                         String msg,
+                                         Throwable e) {
+        if (VM.initLevel() < 1) {
+            throw new InternalError("system classes not initialized");
+        }
+        PrintStream log = (printToStderr) ? err : out;
+        if (msg != null) {
+            log.println(msg);
+        }
+        if (printStackTrace) {
+            e.printStackTrace(log);
+        } else {
+            log.println(e);
+            for (Throwable suppressed : e.getSuppressed()) {
+                log.println("Suppressed: " + suppressed);
+            }
+            Throwable cause = e.getCause();
+            if (cause != null) {
+                log.println("Caused by: " + cause);
+            }
+        }
+    }
+
+    /**
      * Initialize the system class.  Called after thread initialization.
      */
     private static void initPhase1() {
@@ -1923,26 +1956,17 @@ public final class System {
      * Invoked by VM.  Phase 2 module system initialization.
      * Only classes in java.base can be loaded in this phase.
      *
-     * @return 0 for success, -1 for failure
+     * @param printToStderr print exceptions to stderr rather than stdout
+     * @param printStackTrace print stack trace when exception occurs
+     *
+     * @return JNI_OK for success, JNI_ERR for failure
      */
-    private static int initPhase2() {
+    private static int initPhase2(boolean printToStderr, boolean printStackTrace) {
         try {
             bootLayer = ModuleBootstrap.boot();
         } catch (Exception | Error e) {
-            // VM prints startup errors to stdout, not stderr
-            out.println("Error occurred during initialization of boot layer");
-            if (System.getProperty("jdk.debugModuleBootstrapFail") != null) {
-                e.printStackTrace(out);
-            } else {
-                out.println(e);
-                for (Throwable suppressed : e.getSuppressed()) {
-                    out.println("Suppressed: " + suppressed);
-                }
-                Throwable cause = e.getCause();
-                if (cause != null) {
-                    out.println("Caused by: " + cause);
-                }
-            }
+            logInitException(printToStderr, printStackTrace,
+                             "Error occurred during initialization of boot layer", e);
             return -1; // JNI_ERR
         }
 
