@@ -50,11 +50,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
 
+import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleInfoWriter;
 import org.testng.annotations.DataProvider;
@@ -987,6 +989,31 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.newModule("foo").version("");
     }
 
+    /**
+     * Basic test for unparseable module vesions
+     */
+    public void testUnparseableVersions() {
+        JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
+        Builder builder = JLMA.newModuleBuilder("m1", false, Set.of())
+                .version("A1")
+                .requires("java.base");
+        JLMA.requires(builder, Set.of(), "m2", "B2");
+        ByteBuffer bb = ModuleInfoWriter.toByteBuffer(builder.build());
+
+        ModuleDescriptor descriptor = ModuleDescriptor.read(bb);
+        assertFalse(descriptor.version().isPresent());
+        assertEquals(descriptor.rawVersion().orElse(null), "A1");
+
+        // requires m2
+        Optional<Requires> orequires = descriptor.requires().stream()
+                .filter(r -> r.name().equals("m2"))
+                .findAny();
+        assertTrue(orequires.isPresent());
+        Requires requires = orequires.get();
+        assertFalse(requires.compiledVersion().isPresent());
+        assertEquals(requires.rawCompiledVersion().orElse(null), "B2");
+    }
+
 
     // toNameAndVersion
 
@@ -1170,59 +1197,6 @@ public class ModuleDescriptorTest {
     }
 
 
-    // osName
-
-    public void testOsName() {
-        String osName = ModuleDescriptor.newModule("foo").osName("Linux").build().osName().get();
-        assertEquals(osName, "Linux");
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNullOsName() {
-        ModuleDescriptor.newModule("foo").osName(null);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testEmptyOsName() {
-        ModuleDescriptor.newModule("foo").osName("");
-    }
-
-
-    // osArch
-
-    public void testOsArch() {
-        String osArch = ModuleDescriptor.newModule("foo").osName("arm").build().osName().get();
-        assertEquals(osArch, "arm");
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNullOsArch() {
-        ModuleDescriptor.newModule("foo").osArch(null);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testEmptyOsArch() {
-        ModuleDescriptor.newModule("foo").osArch("");
-    }
-
-
-    // osVersion
-
-    public void testOsVersion() {
-        String osVersion = ModuleDescriptor.newModule("foo").osName("11.2").build().osName().get();
-        assertEquals(osVersion, "11.2");
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNullOsVersion() {
-        ModuleDescriptor.newModule("foo").osVersion(null);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testEmptyOsVersion() {
-        ModuleDescriptor.newModule("foo").osVersion("");
-    }
-
     // reads
 
     private static InputStream EMPTY_INPUT_STREAM = new InputStream() {
@@ -1239,7 +1213,9 @@ public class ModuleDescriptorTest {
         }
     };
 
-    // basic test reading module-info.class
+    /**
+     * Basic test reading module-info.class
+     */
     public void testRead() throws Exception {
         Module base = Object.class.getModule();
 
@@ -1256,6 +1232,7 @@ public class ModuleDescriptorTest {
             assertEquals(descriptor.name(), "java.base");
         }
     }
+
     /**
      * Test ModuleDescriptor with a packager finder
      */

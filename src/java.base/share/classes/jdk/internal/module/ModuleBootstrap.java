@@ -26,15 +26,19 @@
 package jdk.internal.module;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolvedModule;
 import java.lang.reflect.Layer;
+import java.lang.reflect.LayerInstantiationException;
 import java.lang.reflect.Module;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -327,8 +331,9 @@ public final class ModuleBootstrap {
                 for (String p : descriptor.packages()) {
                     String other = packageToModule.putIfAbsent(p, name);
                     if (other != null) {
-                        fail("Package " + p + " in both module "
-                             + name + " and module " + other);
+                        String msg = "Package " + p + " in both module "
+                                     + name + " and module " + other;
+                        throw new LayerInstantiationException(msg);
                     }
                 }
             }
@@ -529,7 +534,46 @@ public final class ModuleBootstrap {
             addExtraExportsOrOpens(bootLayer, extraOpens, true);
         }
 
+        // DEBUG_ADD_OPENS is for debugging purposes only
+        String home = System.getProperty("java.home");
+        Path file = Paths.get(home, "conf", "DEBUG_ADD_OPENS");
+        if (Files.exists(file)) {
+            warn(file + " detected; may break encapsulation");
+            try (Stream<String> lines = Files.lines(file)) {
+                lines.map(line -> line.trim())
+                    .filter(line -> (!line.isEmpty() && !line.startsWith("#")))
+                    .forEach(line -> {
+                        String[] s = line.split("/");
+                        if (s.length != 2) {
+                            fail("Unable to parse as <module>/<package>: " + line);
+                        } else {
+                            String mn = s[0];
+                            String pkg = s[1];
+                            openPackage(bootLayer, mn, pkg);
+                        }
+                    });
+            } catch (IOException ioe) {
+                throw new UncheckedIOException(ioe);
+            }
+        }
     }
+
+    private static void openPackage(Layer bootLayer, String mn, String pkg) {
+        if (mn.equals("ALL-RESOLVED") && pkg.equals("ALL-PACKAGES")) {
+            bootLayer.modules().stream().forEach(m ->
+                m.getDescriptor().packages().forEach(pn -> openPackage(m, pn)));
+        } else {
+            bootLayer.findModule(mn)
+                     .filter(m -> m.getDescriptor().packages().contains(pkg))
+                     .ifPresent(m -> openPackage(m, pkg));
+        }
+    }
+
+    private static void openPackage(Module m, String pn) {
+        Modules.addOpensToAllUnnamed(m, pn);
+        warn("Opened for deep reflection: " + m.getName()  + "/" + pn);
+    }
+
 
     private static void addExtraExportsOrOpens(Layer bootLayer,
                                                Map<String, List<String>> map,
@@ -632,7 +676,7 @@ public final class ModuleBootstrap {
 
             // value is <module>(,<module>)* or <file>(<pathsep><file>)*
             if (!allowDuplicates && map.containsKey(key))
-                fail(key + " specified more than once in " + option(prefix));
+                fail(key + " specified more than once to " + option(prefix));
             List<String> values = map.computeIfAbsent(key, k -> new ArrayList<>());
             int ntargets = 0;
             for (String s : rhs.split(regex)) {
@@ -705,7 +749,7 @@ public final class ModuleBootstrap {
     }
 
     static void warnUnknownModule(String option, String mn) {
-        warn("Unknown module: " + mn + " specified in " + option);
+        warn("Unknown module: " + mn + " specified to " + option);
     }
 
     static String unableToParse(String option, String text, String value) {

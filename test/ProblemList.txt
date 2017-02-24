@@ -259,6 +259,11 @@ tools/jimage/JImageVerifyTest.java                              8170120 generic-
 
 tools/jlink/multireleasejar/JLinkMultiReleaseJarTest.java       8169971 windows-x64
 
+tools/jlink/IntegrationTest.java 0000000 generic-all
+tools/jlink/plugins/SystemModuleDescriptors/CompiledVersionTest.java 0000000 generic-all
+tools/jlink/plugins/SystemModuleDescriptors/SystemModulesTest.java 0000000 generic-all
+tools/jlink/plugins/SystemModuleDescriptors/UserModuleTest.java 0000000 generic-all
+
 ############################################################################
 
 # jdk_jdi
