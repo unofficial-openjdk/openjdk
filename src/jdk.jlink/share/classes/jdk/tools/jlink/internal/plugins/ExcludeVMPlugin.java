@@ -115,7 +115,7 @@ public final class ExcludeVMPlugin implements Plugin {
     @Override
     public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
         ResourcePoolModule javaBase = in.moduleView().findModule("java.base").get();
-        String[] jvmlibs = jvmlibs();
+        String[] jvmlibs = jvmlibs(javaBase.osName());
         TreeSet<Jvm> existing = new TreeSet<>(new JvmComparator());
         TreeSet<Jvm> removed = new TreeSet<>(new JvmComparator());
         if (!keepAll) {
@@ -257,11 +257,7 @@ public final class ExcludeVMPlugin implements Plugin {
         return orig.copyWithContent(content);
     }
 
-    private static String[] jvmlibs() {
-        /**
-         * FIXME: The os.name should come from the ModuleTarget attribute in java.base
-         */
-        String osName = System.getProperty("os.name");
+    private static String[] jvmlibs(String osName) {
         if (isWindows(osName)) {
             return new String[] { "jvm.dll" };
         } else if (isMac(osName)) {
