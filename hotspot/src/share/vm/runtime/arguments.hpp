@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -455,6 +455,10 @@ class Arguments : AllStatic {
   static intx _Tier3InvokeNotifyFreqLog;
   static intx _Tier4InvocationThreshold;
 
+  // Compilation mode.
+  static bool compilation_mode_selected();
+  static void select_compilation_mode_ergonomically();
+
   // Tiered
   static void set_tiered_flags();
   // CMS/ParNew garbage collectors
@@ -476,9 +480,6 @@ class Arguments : AllStatic {
   static julong limit_by_allocatable_memory(julong size);
   // Setup heap size
   static void set_heap_size();
-  // Based on automatic selection criteria, should the
-  // low pause collector be used.
-  static bool should_auto_select_low_pause_collector();
 
   // Bytecode rewriting
   static void set_bytecode_flags();
@@ -638,6 +639,7 @@ class Arguments : AllStatic {
 #if INCLUDE_JVMCI
   // Check consistency of jvmci vm argument settings.
   static bool check_jvmci_args_consistency();
+  static void set_jvmci_specific_flags();
 #endif
   // Check for consistency in the selection of the garbage collector.
   static bool check_gc_consistency();        // Check user-selected gc

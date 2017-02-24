@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1009,9 +1009,9 @@ JVM_END
 // Module support //////////////////////////////////////////////////////////////////////////////
 
 JVM_ENTRY(void, JVM_DefineModule(JNIEnv *env, jobject module, jboolean is_open, jstring version,
-                                 jstring location, jobjectArray packages))
+                                 jstring location, const char* const* packages, jsize num_packages))
   JVMWrapper("JVM_DefineModule");
-  Modules::define_module(module, version, location, packages, CHECK);
+  Modules::define_module(module, version, location, packages, num_packages, CHECK);
 JVM_END
 
 JVM_ENTRY(void, JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module))
@@ -1019,17 +1019,17 @@ JVM_ENTRY(void, JVM_SetBootLoaderUnnamedModule(JNIEnv *env, jobject module))
   Modules::set_bootloader_unnamed_module(module, CHECK);
 JVM_END
 
-JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, jstring package, jobject to_module))
+JVM_ENTRY(void, JVM_AddModuleExports(JNIEnv *env, jobject from_module, const char* package, jobject to_module))
   JVMWrapper("JVM_AddModuleExports");
   Modules::add_module_exports_qualified(from_module, package, to_module, CHECK);
 JVM_END
 
-JVM_ENTRY(void, JVM_AddModuleExportsToAllUnnamed(JNIEnv *env, jobject from_module, jstring package))
+JVM_ENTRY(void, JVM_AddModuleExportsToAllUnnamed(JNIEnv *env, jobject from_module, const char* package))
   JVMWrapper("JVM_AddModuleExportsToAllUnnamed");
   Modules::add_module_exports_to_all_unnamed(from_module, package, CHECK);
 JVM_END
 
-JVM_ENTRY(void, JVM_AddModuleExportsToAll(JNIEnv *env, jobject from_module, jstring package))
+JVM_ENTRY(void, JVM_AddModuleExportsToAll(JNIEnv *env, jobject from_module, const char* package))
   JVMWrapper("JVM_AddModuleExportsToAll");
   Modules::add_module_exports(from_module, package, NULL, CHECK);
 JVM_END
@@ -1039,14 +1039,9 @@ JVM_ENTRY (void, JVM_AddReadsModule(JNIEnv *env, jobject from_module, jobject so
   Modules::add_reads_module(from_module, source_module, CHECK);
 JVM_END
 
-JVM_ENTRY (void, JVM_AddModulePackage(JNIEnv *env, jobject module, jstring package))
+JVM_ENTRY (void, JVM_AddModulePackage(JNIEnv *env, jobject module, const char* package))
   JVMWrapper("JVM_AddModulePackage");
   Modules::add_module_package(module, package, CHECK);
-JVM_END
-
-JVM_ENTRY (jobject, JVM_GetModuleByPackageName(JNIEnv *env, jobject loader, jstring package))
-  JVMWrapper("JVM_GetModuleByPackageName");
-  return Modules::get_module_by_package_name(loader, package, THREAD);
 JVM_END
 
 // Reflection support //////////////////////////////////////////////////////////////////////////////
@@ -2972,14 +2967,7 @@ JVM_ENTRY(void, JVM_Yield(JNIEnv *env, jclass threadClass))
   JVMWrapper("JVM_Yield");
   if (os::dont_yield()) return;
   HOTSPOT_THREAD_YIELD();
-
-  // When ConvertYieldToSleep is off (default), this matches the classic VM use of yield.
-  // Critical for similar threading behaviour
-  if (ConvertYieldToSleep) {
-    os::sleep(thread, MinSleepInterval, false);
-  } else {
-    os::naked_yield();
-  }
+  os::naked_yield();
 JVM_END
 
 
@@ -3003,18 +2991,7 @@ JVM_ENTRY(void, JVM_Sleep(JNIEnv* env, jclass threadClass, jlong millis))
   EventThreadSleep event;
 
   if (millis == 0) {
-    // When ConvertSleepToYield is on, this matches the classic VM implementation of
-    // JVM_Sleep. Critical for similar threading behaviour (Win32)
-    // It appears that in certain GUI contexts, it may be beneficial to do a short sleep
-    // for SOLARIS
-    if (ConvertSleepToYield) {
-      os::naked_yield();
-    } else {
-      ThreadState old_state = thread->osthread()->get_state();
-      thread->osthread()->set_state(SLEEPING);
-      os::sleep(thread, MinSleepInterval, false);
-      thread->osthread()->set_state(old_state);
-    }
+    os::naked_yield();
   } else {
     ThreadState old_state = thread->osthread()->get_state();
     thread->osthread()->set_state(SLEEPING);
