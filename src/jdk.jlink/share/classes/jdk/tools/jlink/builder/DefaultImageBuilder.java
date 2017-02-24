@@ -133,11 +133,7 @@ public final class DefaultImageBuilder implements ImageBuilder {
     private final Map<String, String> launchers;
     private final Path mdir;
     private final Set<String> modules = new HashSet<>();
-
-    /**
-     * FIXME: This value should come from the ModuleTarget attribute in java.base
-     */
-    private String targetOsName = System.getProperty("os.name");
+    private String targetOsName;
 
     /**
      * Default image builder constructor.
@@ -155,6 +151,12 @@ public final class DefaultImageBuilder implements ImageBuilder {
     @Override
     public void storeFiles(ResourcePool files) {
         try {
+            this.targetOsName = files.moduleView().
+                findModule("java.base").get().osName();
+            if (this.targetOsName == null) {
+                throw new PluginException("ModuleTarget attribute is missing for java.base module");
+            }
+
             checkResourcePool(files);
 
             Path bin = root.resolve(BIN_DIRNAME);

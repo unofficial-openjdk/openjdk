@@ -571,6 +571,14 @@ public final class ClassFileAttributes {
             this(null, null);
         }
 
+        public String osName() {
+            return osName;
+        }
+
+        public String osArch() {
+            return osArch;
+        }
+
         @Override
         protected Attribute read(ClassReader cr,
                                  int off,
@@ -582,7 +590,6 @@ public final class ClassFileAttributes {
 
             String osName = null;
             String osArch = null;
-            String osVersion = null;
 
             int name_index = cr.readUnsignedShort(off);
             if (name_index != 0)
