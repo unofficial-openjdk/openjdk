@@ -409,6 +409,7 @@ public class AccessibleObject implements AnnotatedElement {
      * it should use {@link #canAccess(Object)}.
      *
      * @revised 9
+     * @spec JPMS
      */
     @Deprecated(since="9")
     public boolean isAccessible() {

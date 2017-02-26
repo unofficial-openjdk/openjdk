@@ -1479,6 +1479,7 @@ public abstract class ClassLoader {
      * @see  #findResources(String)
      *
      * @since  9
+     * @spec JPMS
      */
     public Stream<URL> resources(String name) {
         Objects.requireNonNull(name);
