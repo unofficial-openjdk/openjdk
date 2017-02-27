@@ -105,7 +105,7 @@ JLINK_ORDER_RESOURCES := **module-info.class
 JLINK_JLI_CLASSES :=
 ifeq ($(ENABLE_GENERATE_CLASSLIST), true)
   JLINK_ORDER_RESOURCES += @$(SUPPORT_OUTPUTDIR)/link_opt/classlist
-  JLINK_JLI_CLASSES := --generate-jli-classes=@$(SUPPORT_OUTPUTDIR)/link_opt/jli_trace.out
+  JLINK_JLI_CLASSES := --generate-jli-classes=@$(SUPPORT_OUTPUTDIR)/link_opt/default_jli_trace.txt
 endif
 JLINK_ORDER_RESOURCES += \
     /java.base/java/** \
@@ -119,6 +119,7 @@ JLINK_TOOL := $(JLINK) -J-Djlink.debug=true \
     --module-path $(IMAGES_OUTPUTDIR)/jmods \
     --endian $(OPENJDK_BUILD_CPU_ENDIAN) \
     --release-info $(BASE_RELEASE_FILE) \
+    --release-info add:OS_VERSION=\"$(REQUIRED_OS_VERSION)\" \
     --order-resources=$(call CommaList, $(JLINK_ORDER_RESOURCES)) \
     --dedup-legal-notices=error-if-not-same-content \
     $(JLINK_JLI_CLASSES) \
