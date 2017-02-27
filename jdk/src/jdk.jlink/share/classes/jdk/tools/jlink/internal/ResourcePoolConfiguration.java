@@ -66,9 +66,6 @@ final class ResourcePoolConfiguration {
 
         md.version().ifPresent(builder::version);
         md.mainClass().ifPresent(builder::mainClass);
-        md.osName().ifPresent(builder::osName);
-        md.osArch().ifPresent(builder::osArch);
-        md.osVersion().ifPresent(builder::osVersion);
 
         return builder.build();
     }
@@ -97,7 +94,9 @@ final class ResourcePoolConfiguration {
             ModuleDescriptor desc = m.descriptor();
             if (!desc.packages().equals(m.packages())) {
                 throw new RuntimeException("Module " + m.name() +
-                   "'s descriptor returns inconsistent package set");
+                   "'s descriptor indicates the set of packages is : " +
+                   desc.packages() + ", but module contains packages: " +
+                   m.packages());
             }
         });
     }

@@ -72,25 +72,7 @@ public class Modules {
     }
 
     /**
-     * Define a new module to the VM. The module has the given set of
-     * packages and is defined to the given class loader.
-     *
-     * The resulting Module is in a larval state in that it does not not read
-     * any other module and does not have any exports.
-     */
-    public static Module defineModule(ClassLoader loader,
-                                      String name,
-                                      Set<String> packages)
-    {
-        ModuleDescriptor descriptor = ModuleDescriptor.newModule(name)
-                .packages(packages)
-                .build();
-
-        return JLRMA.defineModule(loader, descriptor, null);
-    }
-
-    /**
-     * Adds a read-edge so that module {@code m1} reads module {@code m1}.
+     * Updates {@code m1} to read {@code m1}.
      * Same as m1.addReads(m2) but without a caller check.
      */
     public static void addReads(Module m1, Module m2) {

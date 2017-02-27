@@ -60,6 +60,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.Resources;
 
 
 /**
@@ -357,7 +358,7 @@ public final class Loader extends SecureClassLoader {
     @Override
     public URL findResource(String name) {
         URL url = null;
-        String pn = ResourceHelper.getPackageName(name);
+        String pn = Resources.toPackageName(name);
         LoadedModule module = localPackageToModule.get(pn);
         if (module != null) {
             if (name.endsWith(".class") || isOpen(module.mref(), pn)) {
@@ -384,7 +385,7 @@ public final class Loader extends SecureClassLoader {
     @Override
     public Enumeration<URL> findResources(String name) throws IOException {
         List<URL> urls = new ArrayList<>();
-        String pn = ResourceHelper.getPackageName(name);
+        String pn = Resources.toPackageName(name);
         LoadedModule module = localPackageToModule.get(pn);
         if (module != null) {
             if (name.endsWith(".class") || isOpen(module.mref(), pn)) {

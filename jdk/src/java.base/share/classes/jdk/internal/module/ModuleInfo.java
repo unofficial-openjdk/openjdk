@@ -89,17 +89,23 @@ public final class ModuleInfo {
      */
     public static final class Attributes {
         private final ModuleDescriptor descriptor;
+        private final ModuleTarget target;
         private final ModuleHashes recordedHashes;
         private final ModuleResolution moduleResolution;
         Attributes(ModuleDescriptor descriptor,
+                   ModuleTarget target,
                    ModuleHashes recordedHashes,
                    ModuleResolution moduleResolution) {
             this.descriptor = descriptor;
+            this.target = target;
             this.recordedHashes = recordedHashes;
             this.moduleResolution = moduleResolution;
         }
         public ModuleDescriptor descriptor() {
             return descriptor;
+        }
+        public ModuleTarget target() {
+            return target;
         }
         public ModuleHashes recordedHashes() {
             return recordedHashes;
@@ -221,8 +227,8 @@ public final class ModuleInfo {
         Builder builder = null;
         Set<String> allPackages = null;
         String mainClass = null;
-        String[] osValues = null;
-        ModuleHashes hashes = null;
+        ModuleTarget moduleTarget = null;
+        ModuleHashes moduelHashes = null;
         ModuleResolution moduleResolution = null;
 
         for (int i = 0; i < attributes_count ; i++) {
@@ -251,12 +257,12 @@ public final class ModuleInfo {
                     break;
 
                 case MODULE_TARGET :
-                    osValues = readModuleTargetAttribute(in, cpool);
+                    moduleTarget = readModuleTargetAttribute(in, cpool);
                     break;
 
                 case MODULE_HASHES :
                     if (parseHashes) {
-                        hashes = readModuleHashesAttribute(in, cpool);
+                        moduelHashes = readModuleHashesAttribute(in, cpool);
                     } else {
                         in.skipBytes(length);
                     }
@@ -282,14 +288,9 @@ public final class ModuleInfo {
             throw invalidModuleDescriptor(MODULE + " attribute not found");
         }
 
-        // ModuleMainClass and ModuleTarget attributes
+        // ModuleMainClass  attribute
         if (mainClass != null) {
             builder.mainClass(mainClass);
-        }
-        if (osValues != null) {
-            if (osValues[0] != null) builder.osName(osValues[0]);
-            if (osValues[1] != null) builder.osArch(osValues[1]);
-            if (osValues[2] != null) builder.osVersion(osValues[2]);
         }
 
         // If the ModulePackages attribute is not present then the packageFinder
@@ -323,7 +324,10 @@ public final class ModuleInfo {
         }
 
         ModuleDescriptor descriptor = builder.build();
-        return new Attributes(descriptor, hashes, moduleResolution);
+        return new Attributes(descriptor,
+                              moduleTarget,
+                              moduelHashes,
+                              moduleResolution);
     }
 
     /**
@@ -528,24 +532,21 @@ public final class ModuleInfo {
     /**
      * Reads the ModuleTarget attribute
      */
-    private String[] readModuleTargetAttribute(DataInput in, ConstantPool cpool)
+    private ModuleTarget readModuleTargetAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
-        String[] values = new String[3];
+        String osName = null;
+        String osArch = null;
 
         int name_index = in.readUnsignedShort();
         if (name_index != 0)
-            values[0] = cpool.getUtf8(name_index);
+            osName = cpool.getUtf8(name_index);
 
         int arch_index = in.readUnsignedShort();
         if (arch_index != 0)
-            values[1] = cpool.getUtf8(arch_index);
+            osArch = cpool.getUtf8(arch_index);
 
-        int version_index = in.readUnsignedShort();
-        if (version_index != 0)
-            values[2] = cpool.getUtf8(version_index);
-
-        return values;
+        return new ModuleTarget(osName, osArch);
     }
 
 

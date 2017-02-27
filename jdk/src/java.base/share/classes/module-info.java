@@ -125,8 +125,7 @@ module java.base {
         jdk.jlink;
     exports jdk.internal.loader to
         java.instrument,
-        java.logging,
-        jdk.jlink;
+        java.logging;
     exports jdk.internal.jmod to
         jdk.compiler,
         jdk.jlink;
@@ -239,8 +238,7 @@ module java.base {
         java.management.rmi,
         java.rmi,
         java.sql.rowset,
-        java.xml,
-        java.xml.ws;
+        java.xml;
     exports sun.security.action to
         java.desktop,
         java.security.jgss;
