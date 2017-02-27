@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,7 +21,33 @@
  * questions.
  */
 
-// key: compiler.err.xmodule.no.module.sourcepath
-// options: -Xmodule:java.compiler --module-source-path src
+package pkg1;
 
-class XModuleWithModulePath {}
+import java.util.List;
+
+public class C<T, F extends List<String>, G extends Additional & I> {
+    /**
+     * Linking to Object.equals() {@link T#equals(Object)}
+     */
+    public void m1() {}
+    /**
+     * Linking to List.clear() {@link F#clear()}
+     */
+    public void m2() {}
+    /**
+     * Linking to Additional.doAction() {@link G#doAction()}
+     */
+    public void m3() {}
+    /**
+     * Linking to I.abstractAction() {@link G#abstractAction()}
+     */
+    public void m4() {}
+}
+
+class Additional {
+    public void doAction() {}
+}
+
+interface I {
+    void abstractAction();
+}
