@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,30 +21,16 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 6843127
- * @run main/othervm/timeout=300 BadKdc4
- * @summary krb5 should not try to access unavailable kdc too often
- */
+package p3;
 
-import java.io.*;
-import java.security.Security;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public class BadKdc4 {
-
-    public static void main(String[] args)
-            throws Exception {
-        Security.setProperty("krb5.kdc.bad.policy", "");
-        BadKdc.go(
-            "121212222222(32){1,3}121212222222(32){1,3}",
-            "121212222222(32){1,3}121212222222(32){1,3}",
-            // refresh
-            "121212222222(32){1,3}121212222222(32){1,3}",
-            // k3 off k2 on
-            "121212(22){1,3}121212(22){1,3}",
-            // k1 on
-            "(12){2,4}"
-        );
-    }
+@Documented
+@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.SOURCE)
+public @interface Foo {
 }
