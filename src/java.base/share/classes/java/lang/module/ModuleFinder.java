@@ -201,7 +201,7 @@ public interface ModuleFinder {
      *
      * <p> If an element is a path to a directory of modules then each entry in
      * the directory is a packaged module or the top-level directory of an
-     * exploded module. It it an error if a directory contains more than one
+     * exploded module. It is an error if a directory contains more than one
      * module with the same name. If an element is a path to a directory, and
      * that directory contains a file named {@code module-info.class}, then the
      * directory is treated as an exploded module rather than a directory of
