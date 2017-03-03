@@ -51,11 +51,11 @@ import java.util.stream.Stream;
 
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
-import jdk.internal.loader.ResourceHelper;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ServicesCatalog;
+import jdk.internal.module.Resources;
 import jdk.internal.org.objectweb.asm.AnnotationVisitor;
 import jdk.internal.org.objectweb.asm.Attribute;
 import jdk.internal.org.objectweb.asm.ClassReader;
@@ -1428,12 +1428,12 @@ public final class Module implements AnnotatedElement {
             name = name.substring(1);
         }
 
-        if (isNamed() && !ResourceHelper.isSimpleResource(name)) {
+        if (isNamed() && Resources.canEncapsulate(name)) {
             Module caller = Reflection.getCallerClass().getModule();
             if (caller != this && caller != Object.class.getModule()) {
                 // ignore packages added for proxies via addPackage
                 Set<String> packages = getDescriptor().packages();
-                String pn = ResourceHelper.getPackageName(name);
+                String pn = Resources.toPackageName(name);
                 if (packages.contains(pn) && !isOpen(pn, caller)) {
                     // resource is in package not open to caller
                     return null;
