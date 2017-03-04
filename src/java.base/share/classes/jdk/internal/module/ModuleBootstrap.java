@@ -364,7 +364,7 @@ public final class ModuleBootstrap {
         PerfCounters.loadModulesTime.addElapsedTimeFrom(t5);
 
 
-        // --add-reads, -add-exports/-add-opens
+        // --add-reads, --add-exports/--add-opens
         addExtraReads(bootLayer);
         addExtraExportsAndOpens(bootLayer);
 
@@ -720,8 +720,8 @@ public final class ModuleBootstrap {
             ModuleReference mref = rm.reference();
             String mn = mref.descriptor().name();
 
-            // emit warning if module name ends with a non-Java letter
-            if (!Checks.hasLegalModuleNameLastCharacter(mn))
+            // emit warning if module name has identifier that ends with digit
+            if (Checks.hasJavaIdentifierWithTrailingDigit(mn))
                 warn("Module name \"" + mn + "\" may soon be illegal");
 
             // emit warning if the WARN_INCUBATING module resolution bit set

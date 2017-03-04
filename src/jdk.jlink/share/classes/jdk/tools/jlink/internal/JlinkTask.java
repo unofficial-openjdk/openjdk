@@ -426,7 +426,7 @@ public class JlinkTask {
         // emit warning for modules that end with a digit
         cf.modules().stream()
             .map(ResolvedModule::name)
-            .filter(mn -> !Checks.hasLegalModuleNameLastCharacter(mn))
+            .filter(mn -> Checks.hasJavaIdentifierWithTrailingDigit(mn))
             .forEach(mn -> System.err.println("WARNING: Module name \""
                                               + mn + "\" may soon be illegal"));
 
