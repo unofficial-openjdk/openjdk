@@ -274,8 +274,6 @@ public class BuiltinClassLoader
                         || url.toString().endsWith("/")
                         || isOpen(module.mref(), pn))) {
                     return url;
-                } else {
-                    return null;
                 }
             }
 
