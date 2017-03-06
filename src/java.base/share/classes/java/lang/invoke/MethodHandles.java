@@ -883,7 +883,7 @@ public class MethodHandles {
          * Specification</em>. </p>
          *
          * <p> If there is a security manager, its {@code checkPermission} method is first called
-         * to check {@code ReflectPermission("getClassLoader")}. </p>
+         * to check {@code RuntimePermission("getClassLoader")}. </p>
          *
          * @param bytes the class bytes
          * @return the {@code Class} object for the class
