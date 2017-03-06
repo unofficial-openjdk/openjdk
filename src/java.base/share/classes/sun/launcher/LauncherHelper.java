@@ -85,6 +85,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jdk.internal.misc.VM;
+import jdk.internal.module.InternalUseReporter;
 import jdk.internal.module.Modules;
 
 
@@ -461,22 +462,35 @@ public final class LauncherHelper {
      * {@code <module>/<package> ( <module>/<package>)*}.
      */
     static void addExportsOrOpens(String value, boolean open) {
+        InternalUseReporter.Builder rb;
+        InternalUseReporter reporter = InternalUseReporter.internalUseReporter();
+        if (reporter == null) {
+            rb = new InternalUseReporter.Builder();
+        } else {
+            rb = reporter.toBuilder();
+        }
+
         for (String moduleAndPackage : value.split(" ")) {
             String[] s = moduleAndPackage.trim().split("/");
             if (s.length == 2) {
                 String mn = s[0];
                 String pn = s[1];
+
                 Layer.boot().findModule(mn).ifPresent(m -> {
                     if (m.getDescriptor().packages().contains(pn)) {
                         if (open) {
+                            rb.addOpens(m, pn);
                             Modules.addOpensToAllUnnamed(m, pn);
                         } else {
+                            rb.addExports(m, pn);
                             Modules.addExportsToAllUnnamed(m, pn);
                         }
                     }
                 });
             }
         }
+
+        InternalUseReporter.setInternalUseReporter(rb.build());
     }
 
     // From src/share/bin/java.c:
