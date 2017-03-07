@@ -20,30 +20,39 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.tools.jaotc.test.collect;
 
-import jdk.tools.jaotc.collect.SearchPath;
+import jdk.test.lib.apps.LingeredApp;
 
-import java.nio.file.FileSystem;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Set;
+interface Language {
+    static final long nbrOfWords = 99999;
+    public abstract long getNbrOfWords();
+}
 
-import static jdk.tools.jaotc.test.collect.Utils.set;
-
-public class FakeSearchPath extends SearchPath {
-    private Path path = null;
-    public Set<String> entries = set();
-
-    public FakeSearchPath(String name) {
-        if (name != null) {
-            path = Paths.get(name);
-        }
+class ParselTongue implements Language {
+    public long getNbrOfWords() {
+        return nbrOfWords * 4;
     }
+}
 
-    @Override
-    public Path find(FileSystem fileSystem, Path entry, String... defaults) {
-        entries.add(entry.toString());
-        return path;
+public class LingeredAppWithInterface extends LingeredApp {
+
+    public static void main(String args[]) {
+        ParselTongue lang = new ParselTongue();
+        Language muggleSpeak = new Language() {
+            public long getNbrOfWords() {
+                return nbrOfWords * 8;
+            }
+        };
+
+        // Not tested at this point. The test needs to be enhanced
+        // later to test for the sizes of the Lambda MetaFactory
+        // generated anonymous classes too. (After JDK-8160228 gets
+        // fixed.)
+        Runnable r2 = () -> System.out.println("Hello world!");
+        r2.run();
+
+        System.out.println(lang.getNbrOfWords() + muggleSpeak.getNbrOfWords());
+
+        LingeredApp.main(args);
     }
 }

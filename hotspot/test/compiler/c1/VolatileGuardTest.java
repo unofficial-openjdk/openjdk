@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,20 +19,34 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#ifndef SHARE_VM_RUNTIME_OS_EXT_HPP
-#define SHARE_VM_RUNTIME_OS_EXT_HPP
+/**
+ * @test
+ * @bug 8175887
+ * @summary C1 doesn't respect the JMM with volatile field loads
+ *
+ * @run main/othervm -XX:+IgnoreUnrecognizedVMOptions -XX:TieredStopAtLevel=1 VolatileGuardTest
+ */
+public class VolatileGuardTest {
+    volatile static private int a;
+    static private int b;
 
-#define EMIT_RANGES_FOR_GLOBALS_EXT // NOP
-#define EMIT_CONSTRAINTS_FOR_GLOBALS_EXT // NOP
-#define EMIT_WRITEABLES_FOR_GLOBALS_EXT // NOP
+    static void test() {
+        int tt = b; // makes the JVM CSE the value of b
 
-public:
-  static void init_globals_ext() {} // Run from init_globals().
-                                    // See os.hpp/cpp and init.cpp.
+        while (a == 0) {} // burn
+        if (b == 0) {
+            System.err.println("wrong value of b");
+            System.exit(1); // fail hard to report the error
+        }
+    }
 
- private:
-
-#endif // SHARE_VM_RUNTIME_OS_EXT_HPP
+    public static void main(String [] args) throws Exception {
+        for (int i = 0; i < 10; i++) {
+            new Thread(VolatileGuardTest::test).start();
+        }
+        b = 1;
+        a = 1;
+    }
+}
