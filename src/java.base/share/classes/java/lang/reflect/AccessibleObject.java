@@ -289,24 +289,17 @@ public class AccessibleObject implements AnnotatedElement {
         if (callerModule == Object.class.getModule()) return true;
         if (!declaringModule.isNamed()) return true;
 
-        // package is open to caller
         String pn = packageName(declaringClass);
-        if (declaringModule.isOpen(pn, callerModule)) {
-            printStackIfOpenByBackdoor(declaringModule, pn, caller);
-            return true;
-        }
-
-        // package is exported to caller
-        boolean isExported = declaringModule.isExported(pn, callerModule);
-        boolean isClassPublic = Modifier.isPublic(declaringClass.getModifiers());
         int modifiers;
         if (this instanceof Executable) {
             modifiers = ((Executable) this).getModifiers();
         } else {
             modifiers = ((Field) this).getModifiers();
         }
-        if (isExported && isClassPublic) {
 
+        // class is public and package is exported to caller
+        boolean isClassPublic = Modifier.isPublic(declaringClass.getModifiers());
+        if (isClassPublic && declaringModule.isExported(pn, callerModule)) {
             // member is public
             if (Modifier.isPublic(modifiers)) {
                 printStackIfExportedByBackdoor(declaringModule, pn, caller);
@@ -320,6 +313,12 @@ public class AccessibleObject implements AnnotatedElement {
                 printStackIfExportedByBackdoor(declaringModule, pn, caller);
                 return true;
             }
+        }
+
+        // package is open to caller
+        if (declaringModule.isOpen(pn, callerModule)) {
+            printStackIfOpenByBackdoor(declaringModule, pn, caller);
+            return true;
         }
 
         if (throwExceptionIfDenied) {

@@ -534,7 +534,6 @@ public final class ModuleBootstrap {
 
         // ---force-open-all-module-packages
         if (getAndRemoveProperty("jdk.module.forceOpenAllModulePackages") != null) {
-            warn("Opened all packages for deep reflection");
             bootLayer.modules().stream().forEach(m -> {
                 m.getDescriptor()
                  .packages()
