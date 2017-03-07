@@ -2933,8 +2933,9 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
         return res;
       }
     } else if (match_option(option, "--force-open-all-module-packages")) {
-        if (!create_property("jdk.module.forceOpenAllModulePackages", "true", ExternalProperty)) {
-          return JNI_ENOMEM;
+      warning("--force-open-all-module-packages will be removed in a future release\n");
+      if (!create_property("jdk.module.forceOpenAllModulePackages", "true", ExternalProperty)) {
+        return JNI_ENOMEM;
       }
     // -agentlib and -agentpath
     } else if (match_option(option, "-agentlib:", &tail) ||
