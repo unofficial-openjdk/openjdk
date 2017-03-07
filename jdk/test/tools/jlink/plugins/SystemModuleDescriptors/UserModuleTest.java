@@ -65,7 +65,7 @@ public class UserModuleTest {
     private static final String MAIN_MID = "m1/p1.Main";
 
     // the names of the modules in this test
-    private static String[] modules = new String[] {"m1", "m2", "m3", "m4"};
+    private static String[] modules = new String[] {"m1", "m2", "m3", "m4", "m5"};
 
 
     private static boolean hasJmods() {
@@ -166,6 +166,50 @@ public class UserModuleTest {
                          "--add-exports", "java.base/jdk.internal.module=m1,m4",
                          "--add-exports", "java.base/jdk.internal.org.objectweb.asm=m1,m4",
                          "-m", MAIN_MID)
+                        .outputTo(System.out)
+                        .errorTo(System.out)
+                        .getExitValue() == 0);
+    }
+
+    @Test
+    public void testRequiresStatic() throws Throwable {
+        if (!hasJmods()) return;
+
+        Path dir = Paths.get("requiresStatic");
+        createImage(dir, "m5");
+        Path java = dir.resolve("bin").resolve("java");
+        assertTrue(executeProcess(java.toString(), "-m", "m5/p5.Main")
+                        .outputTo(System.out)
+                        .errorTo(System.out)
+                        .getExitValue() == 0);
+
+        // run with m3 present
+        assertTrue(executeProcess(java.toString(),
+                                  "--module-path", MODS_DIR.toString(),
+                                  "--add-modules", "m3",
+                                  "-m", "m5/p5.Main")
+                        .outputTo(System.out)
+                        .errorTo(System.out)
+                        .getExitValue() == 0);
+    }
+
+    @Test
+    public void testRequiresStatic2() throws Throwable {
+        if (!hasJmods()) return;
+
+        Path dir = Paths.get("requiresStatic2");
+        createImage(dir, "m3", "m5");
+
+        Path java = dir.resolve("bin").resolve("java");
+        assertTrue(executeProcess(java.toString(), "-m", "m5/p5.Main")
+                        .outputTo(System.out)
+                        .errorTo(System.out)
+                        .getExitValue() == 0);
+
+        // boot layer with m3 and m5
+        assertTrue(executeProcess(java.toString(),
+                                  "--add-modules", "m3",
+                                  "-m", "m5/p5.Main")
                         .outputTo(System.out)
                         .errorTo(System.out)
                         .getExitValue() == 0);

@@ -426,7 +426,11 @@ public final class ModuleInfo {
                     Set<String> targets = new HashSet<>(exports_to_count);
                     for (int j=0; j<exports_to_count; j++) {
                         int exports_to_index = in.readUnsignedShort();
-                        targets.add(cpool.getModuleName(exports_to_index));
+                        String target = cpool.getModuleName(exports_to_index);
+                        if (!targets.add(target)) {
+                            throw invalidModuleDescriptor(pkg + " exported to "
+                                                          + target + " more than once");
+                        }
                     }
                     builder.exports(mods, pkg, targets);
                 } else {
@@ -462,7 +466,11 @@ public final class ModuleInfo {
                     Set<String> targets = new HashSet<>(open_to_count);
                     for (int j=0; j<open_to_count; j++) {
                         int opens_to_index = in.readUnsignedShort();
-                        targets.add(cpool.getModuleName(opens_to_index));
+                        String target = cpool.getModuleName(opens_to_index);
+                        if (!targets.add(target)) {
+                            throw invalidModuleDescriptor(pkg + " opened to "
+                                                          + target + " more than once");
+                        }
                     }
                     builder.opens(mods, pkg, targets);
                 } else {
@@ -490,7 +498,10 @@ public final class ModuleInfo {
                 for (int j=0; j<with_count; j++) {
                     index = in.readUnsignedShort();
                     String pn = cpool.getClassName(index);
-                    providers.add(pn);
+                    if (!providers.add(pn)) {
+                        throw invalidModuleDescriptor(sn + " provides " + pn
+                                                      + " more than once");
+                    }
                 }
                 builder.provides(sn, providers);
             }

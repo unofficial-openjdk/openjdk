@@ -43,6 +43,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Module;
 import java.net.URL;
 import java.security.AccessControlContext;
+import java.security.ProtectionDomain;
 import java.util.Properties;
 import java.util.PropertyPermission;
 import java.util.Map;
@@ -2078,6 +2079,9 @@ public final class System {
             }
             public ConcurrentHashMap<?, ?> createOrGetClassLoaderValueMap(ClassLoader cl) {
                 return cl.createOrGetClassLoaderValueMap();
+            }
+            public Class<?> defineClass(ClassLoader loader, String name, byte[] b, ProtectionDomain pd, String source) {
+                return ClassLoader.defineClass1(loader, name, b, 0, b.length, pd, source);
             }
             public Class<?> findBootstrapClassOrNull(ClassLoader cl, String name) {
                 return cl.findBootstrapClassOrNull(name);

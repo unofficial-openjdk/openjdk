@@ -553,7 +553,7 @@ public final class Module implements AnnotatedElement {
      * Returns {@code true} if this module exports or opens a package to
      * the given module via its module declaration.
      */
-    boolean isStaticallyExportedOrOpen(String pn, Module other, boolean open) {
+    private boolean isStaticallyExportedOrOpen(String pn, Module other, boolean open) {
         // package is open to everyone or <other>
         Map<String, Set<Module>> openPackages = this.openPackages;
         if (openPackages != null) {
@@ -1573,10 +1573,6 @@ public final class Module implements AnnotatedElement {
                 @Override
                 public Stream<Layer> layers(ClassLoader loader) {
                     return Layer.layers(loader);
-                }
-                @Override
-                public boolean isStaticallyExported(Module module, String pn, Module other) {
-                    return module.isStaticallyExportedOrOpen(pn, other, false);
                 }
             });
     }

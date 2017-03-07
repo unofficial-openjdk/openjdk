@@ -28,6 +28,7 @@ package java.lang.reflect;
 import java.lang.annotation.Annotation;
 import java.security.AccessController;
 
+import jdk.internal.module.InternalUseReporter;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.ReflectionFactory;
@@ -288,27 +289,20 @@ public class AccessibleObject implements AnnotatedElement {
         if (callerModule == Object.class.getModule()) return true;
         if (!declaringModule.isNamed()) return true;
 
-        // package is open to caller
         String pn = packageName(declaringClass);
-        if (declaringModule.isOpen(pn, callerModule)) {
-            dumpStackIfOpenedReflectively(declaringModule, pn, callerModule);
-            return true;
-        }
-
-        // package is exported to caller
-        boolean isExported = declaringModule.isExported(pn, callerModule);
-        boolean isClassPublic = Modifier.isPublic(declaringClass.getModifiers());
         int modifiers;
         if (this instanceof Executable) {
             modifiers = ((Executable) this).getModifiers();
         } else {
             modifiers = ((Field) this).getModifiers();
         }
-        if (isExported && isClassPublic) {
 
+        // class is public and package is exported to caller
+        boolean isClassPublic = Modifier.isPublic(declaringClass.getModifiers());
+        if (isClassPublic && declaringModule.isExported(pn, callerModule)) {
             // member is public
             if (Modifier.isPublic(modifiers)) {
-                dumpStackIfExportedReflectively(declaringModule, pn, callerModule);
+                printStackIfExportedByBackdoor(declaringModule, pn, caller);
                 return true;
             }
 
@@ -316,9 +310,15 @@ public class AccessibleObject implements AnnotatedElement {
             if (Modifier.isProtected(modifiers)
                 && Modifier.isStatic(modifiers)
                 && isSubclassOf(caller, declaringClass)) {
-                dumpStackIfExportedReflectively(declaringModule, pn, callerModule);
+                printStackIfExportedByBackdoor(declaringModule, pn, caller);
                 return true;
             }
+        }
+
+        // package is open to caller
+        if (declaringModule.isOpen(pn, callerModule)) {
+            printStackIfOpenByBackdoor(declaringModule, pn, caller);
+            return true;
         }
 
         if (throwExceptionIfDenied) {
@@ -351,37 +351,30 @@ public class AccessibleObject implements AnnotatedElement {
         return false;
     }
 
-    private void dumpStackIfOpenedReflectively(Module module,
-                                               String pn,
-                                               Module other) {
-        dumpStackIfExposedReflectively(module, pn, other, true);
-    }
-
-    private void dumpStackIfExportedReflectively(Module module,
-                                                 String pn,
-                                                 Module other) {
-        dumpStackIfExposedReflectively(module, pn, other, false);
-    }
-
-    private void dumpStackIfExposedReflectively(Module module,
-                                                String pn,
-                                                Module other,
-                                                boolean open)
-    {
-        if (Reflection.printStackTraceWhenAccessSucceeds()
-                && !module.isStaticallyExportedOrOpen(pn, other, open))
-        {
-            String msg = other + " allowed to invoke setAccessible on ";
-            if (this instanceof Field)
-                msg += "field ";
-            msg += this;
-            new Exception(msg) {
-                private static final long serialVersionUID = 42L;
-                public String toString() {
-                    return "WARNING: " + getMessage();
-                }
-            }.printStackTrace(System.err);
+    private void printStackIfOpenByBackdoor(Module module, String pn, Class<?> caller) {
+        InternalUseReporter reporter = InternalUseReporter.internalUseReporter();
+        if (reporter != null) {
+            Module callerModule = caller.getModule();
+            if (reporter.isOpenByBackdoor(module, pn, callerModule)) {
+                reporter.printStack(caller, allowedToAccessMessage());
+            }
         }
+    }
+
+    private void printStackIfExportedByBackdoor(Module module, String pn, Class<?> caller) {
+        InternalUseReporter reporter = InternalUseReporter.internalUseReporter();
+        if (reporter != null) {
+            Module callerModule = caller.getModule();
+            if (reporter.isExportedByBackdoor(module, pn, callerModule)) {
+                reporter.printStack(caller, allowedToAccessMessage());
+            }
+        }
+    }
+
+    private String allowedToAccessMessage() {
+        String msg = "allowed to invoke setAccessible on ";
+        if (this instanceof Field) msg += "field ";
+        return msg + this;
     }
 
     /**

@@ -26,9 +26,7 @@
 package jdk.internal.module;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
-import java.io.UncheckedIOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
@@ -38,7 +36,6 @@ import java.lang.reflect.Layer;
 import java.lang.reflect.LayerInstantiationException;
 import java.lang.reflect.Module;
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -50,12 +47,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.perf.PerfCounter;
+import jdk.internal.reflect.Reflection;
 
 /**
  * Initializes/boots the module system.
@@ -364,7 +361,7 @@ public final class ModuleBootstrap {
         PerfCounters.loadModulesTime.addElapsedTimeFrom(t5);
 
 
-        // --add-reads, -add-exports/-add-opens
+        // --add-reads, --add-exports/--add-opens
         addExtraReads(bootLayer);
         addExtraExportsAndOpens(bootLayer);
 
@@ -519,65 +516,43 @@ public final class ModuleBootstrap {
      * additional packages specified on the command-line.
      */
     private static void addExtraExportsAndOpens(Layer bootLayer) {
+        InternalUseReporter.Builder rb = new InternalUseReporter.Builder();
 
         // --add-exports
         String prefix = "jdk.module.addexports.";
         Map<String, List<String>> extraExports = decode(prefix);
         if (!extraExports.isEmpty()) {
-            addExtraExportsOrOpens(bootLayer, extraExports, false);
+            addExtraExportsOrOpens(bootLayer, extraExports, false, rb);
         }
 
         // --add-opens
         prefix = "jdk.module.addopens.";
         Map<String, List<String>> extraOpens = decode(prefix);
         if (!extraOpens.isEmpty()) {
-            addExtraExportsOrOpens(bootLayer, extraOpens, true);
+            addExtraExportsOrOpens(bootLayer, extraOpens, true, rb);
         }
 
-        // DEBUG_ADD_OPENS is for debugging purposes only
-        String home = System.getProperty("java.home");
-        Path file = Paths.get(home, "conf", "DEBUG_ADD_OPENS");
-        if (Files.exists(file)) {
-            warn(file + " detected; may break encapsulation");
-            try (Stream<String> lines = Files.lines(file)) {
-                lines.map(line -> line.trim())
-                    .filter(line -> (!line.isEmpty() && !line.startsWith("#")))
-                    .forEach(line -> {
-                        String[] s = line.split("/");
-                        if (s.length != 2) {
-                            fail("Unable to parse as <module>/<package>: " + line);
-                        } else {
-                            String mn = s[0];
-                            String pkg = s[1];
-                            openPackage(bootLayer, mn, pkg);
-                        }
-                    });
-            } catch (IOException ioe) {
-                throw new UncheckedIOException(ioe);
-            }
+        // ---force-open-all-module-packages
+        if (getAndRemoveProperty("jdk.module.forceOpenAllModulePackages") != null) {
+            bootLayer.modules().stream().forEach(m -> {
+                m.getDescriptor()
+                 .packages()
+                 .stream()
+                 .filter(pn -> !m.isOpen(pn))
+                 .forEach(pn -> {
+                    rb.addOpens(m, pn);
+                    Modules.addOpensToAll(m, pn);
+                 });
+            });
         }
-    }
 
-    private static void openPackage(Layer bootLayer, String mn, String pkg) {
-        if (mn.equals("ALL-RESOLVED") && pkg.equals("ALL-PACKAGES")) {
-            bootLayer.modules().stream().forEach(m ->
-                m.getDescriptor().packages().forEach(pn -> openPackage(m, pn)));
-        } else {
-            bootLayer.findModule(mn)
-                     .filter(m -> m.getDescriptor().packages().contains(pkg))
-                     .ifPresent(m -> openPackage(m, pkg));
-        }
+        InternalUseReporter.setInternalUseReporter(rb.build());
     }
-
-    private static void openPackage(Module m, String pn) {
-        Modules.addOpensToAllUnnamed(m, pn);
-        warn("Opened for deep reflection: " + m.getName()  + "/" + pn);
-    }
-
 
     private static void addExtraExportsOrOpens(Layer bootLayer,
                                                Map<String, List<String>> map,
-                                               boolean opens)
+                                               boolean opens,
+                                               InternalUseReporter.Builder rb)
     {
         String option = opens ? ADD_OPENS : ADD_EXPORTS;
         for (Map.Entry<String, List<String>> e : map.entrySet()) {
@@ -586,12 +561,12 @@ public final class ModuleBootstrap {
             String key = e.getKey();
             String[] s = key.split("/");
             if (s.length != 2)
-                fail(unableToParse(option,  "<module>/<package>", key));
+                fail(unableToParse(option, "<module>/<package>", key));
 
             String mn = s[0];
             String pn = s[1];
             if (mn.isEmpty() || pn.isEmpty())
-                fail(unableToParse(option,  "<module>/<package>", key));
+                fail(unableToParse(option, "<module>/<package>", key));
 
             // The exporting module is in the boot layer
             Module m;
@@ -625,8 +600,10 @@ public final class ModuleBootstrap {
                 }
                 if (allUnnamed) {
                     if (opens) {
+                        rb.addOpens(m, pn);
                         Modules.addOpensToAllUnnamed(m, pn);
                     } else {
+                        rb.addExports(m, pn);
                         Modules.addExportsToAllUnnamed(m, pn);
                     }
                 } else {
@@ -720,8 +697,8 @@ public final class ModuleBootstrap {
             ModuleReference mref = rm.reference();
             String mn = mref.descriptor().name();
 
-            // emit warning if module name ends with a non-Java letter
-            if (!Checks.hasLegalModuleNameLastCharacter(mn))
+            // emit warning if module name has identifier that ends with digit
+            if (Checks.hasJavaIdentifierWithTrailingDigit(mn))
                 warn("Module name \"" + mn + "\" may soon be illegal");
 
             // emit warning if the WARN_INCUBATING module resolution bit set

@@ -164,6 +164,14 @@ public class BuiltinClassLoader
     }
 
     /**
+     * Returns {@code true} if there is a class path associated with this
+     * class loader.
+     */
+    boolean hasClassPath() {
+        return ucp != null;
+    }
+
+    /**
      * Register a module this this class loader. This has the effect of making
      * the types in the module visible.
      */
@@ -254,12 +262,18 @@ public class BuiltinClassLoader
         if (module != null) {
 
             // resource is in a package of a module defined to this loader
-            if (module.loader() == this
-                && (name.endsWith(".class") || isOpen(module.mref(), pn))) {
+            if (module.loader() == this) {
+                URL url;
                 try {
-                    return findResource(module.name(), name); // checks URL
+                    url = findResource(module.name(), name); // checks URL
                 } catch (IOException ioe) {
                     return null;
+                }
+                if (url != null
+                    && (name.endsWith(".class")
+                        || url.toString().endsWith("/")
+                        || isOpen(module.mref(), pn))) {
+                    return url;
                 }
             }
 
@@ -299,10 +313,12 @@ public class BuiltinClassLoader
         if (module != null) {
 
             // resource is in a package of a module defined to this loader
-            if (module.loader() == this
-                && (name.endsWith(".class") || isOpen(module.mref(), pn))) {
-                URL url = findResource(module.name(), name);  // checks URL
-                if (url != null) {
+            if (module.loader() == this) {
+                URL url = findResource(module.name(), name); // checks URL
+                if (url != null
+                    && (name.endsWith(".class")
+                        || url.toString().endsWith("/")
+                        || isOpen(module.mref(), pn))) {
                     checked.add(url);
                 }
             }
@@ -352,11 +368,13 @@ public class BuiltinClassLoader
                 new PrivilegedExceptionAction<>() {
                     @Override
                     public List<URL> run() throws IOException {
-                        List<URL> result = new ArrayList<>();
+                        List<URL> result = null;
                         for (ModuleReference mref : nameToModule.values()) {
                             URI u = moduleReaderFor(mref).find(name).orElse(null);
                             if (u != null) {
                                 try {
+                                    if (result == null)
+                                        result = new ArrayList<>();
                                     result.add(u.toURL());
                                 } catch (MalformedURLException |
                                          IllegalArgumentException e) {
@@ -376,7 +394,7 @@ public class BuiltinClassLoader
                 map = new ConcurrentHashMap<>();
                 this.resourceCache = new SoftReference<>(map);
             }
-            if (urls.isEmpty())
+            if (urls == null)
                 urls = Collections.emptyList();
             map.putIfAbsent(name, urls);
         }
@@ -426,7 +444,7 @@ public class BuiltinClassLoader
      * Returns a URL to a resource on the class path.
      */
     private URL findResourceOnClassPath(String name) {
-        if (ucp != null) {
+        if (hasClassPath()) {
             if (System.getSecurityManager() == null) {
                 return ucp.findResource(name, false);
             } else {
@@ -443,7 +461,7 @@ public class BuiltinClassLoader
      * Returns the URLs of all resources of the given name on the class path.
      */
     private Enumeration<URL> findResourcesOnClassPath(String name) {
-        if (ucp != null) {
+        if (hasClassPath()) {
             if (System.getSecurityManager() == null) {
                 return ucp.findResources(name, false);
             } else {
@@ -482,7 +500,7 @@ public class BuiltinClassLoader
         } else {
 
             // search class path
-            if (ucp != null) {
+            if (hasClassPath()) {
                 c = findClassOnClassPathOrNull(cn);
             }
 
@@ -515,7 +533,7 @@ public class BuiltinClassLoader
         }
 
         // search class path
-        if (ucp != null) {
+        if (hasClassPath()) {
             return findClassOnClassPathOrNull(cn);
         }
 
@@ -570,7 +588,7 @@ public class BuiltinClassLoader
                     }
 
                     // check class path
-                    if (c == null && ucp != null && VM.isModuleSystemInited()) {
+                    if (c == null && hasClassPath() && VM.isModuleSystemInited()) {
                         c = findClassOnClassPathOrNull(cn);
                     }
                 }
