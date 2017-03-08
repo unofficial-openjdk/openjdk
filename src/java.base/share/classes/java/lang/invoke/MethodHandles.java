@@ -896,6 +896,7 @@ public class MethodHandles {
          * @throws SecurityException if denied by the security manager
          * @throws NullPointerException if {@code bytes} is {@code null}
          * @since 9
+         * @spec JPMS
          * @see Lookup#privateLookupIn
          * @see Lookup#dropLookupMode
          * @see ClassLoader#defineClass(String,byte[],int,int,ProtectionDomain)
