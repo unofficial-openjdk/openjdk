@@ -355,8 +355,9 @@ public class AccessibleObject implements AnnotatedElement {
 
     private void logIfOpenByBackdoor(Class<?> caller, Class<?> declaringClass) {
         Module callerModule = caller.getModule();
+        Module targetModule = declaringClass.getModule();
         // callerModule is null during early startup
-        if (callerModule != null && !callerModule.isNamed()) {
+        if (callerModule != null && !callerModule.isNamed() && targetModule.isNamed()) {
             IllegalAccessLogger logger = IllegalAccessLogger.illegalAccessLogger();
             if (logger != null) {
                 logger.logIfOpenByBackdoor(caller, declaringClass, this::toShortString);
@@ -366,8 +367,9 @@ public class AccessibleObject implements AnnotatedElement {
 
     private void logIfExportedByBackdoor(Class<?> caller, Class<?> declaringClass) {
         Module callerModule = caller.getModule();
+        Module targetModule = declaringClass.getModule();
         // callerModule is null during early startup
-        if (callerModule != null && !callerModule.isNamed()) {
+        if (callerModule != null && !callerModule.isNamed() && targetModule.isNamed()) {
             IllegalAccessLogger logger = IllegalAccessLogger.illegalAccessLogger();
             if (logger != null) {
                 logger.logIfExportedByBackdoor(caller, declaringClass, this::toShortString);

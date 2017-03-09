@@ -25,6 +25,7 @@
 
 package jdk.internal.module;
 
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Module;
 import java.net.URL;
 import java.security.AccessController;
@@ -87,6 +88,7 @@ public final class IllegalAccessLogger {
     /**
      * Logs access to the member of a target class by a caller class if the class
      * is in a package that is exported via a backdoor mechanism.
+     *
      * The {@code whatSupplier} supplies the message that describes the member.
      */
     public void logIfExportedByBackdoor(Class<?> caller,
@@ -96,7 +98,7 @@ public final class IllegalAccessLogger {
         if (packages != null) {
             String how = packages.get(target.getPackageName());
             if (how != null) {
-                log(caller, target, whatSupplier.get(), how);
+                log(caller, whatSupplier.get(), how);
             }
         }
     }
@@ -104,7 +106,8 @@ public final class IllegalAccessLogger {
     /**
      * Logs access to the member of a target class by a caller class if the class
      * is in a package that is opened via a backdoor mechanism.
-     * The {@code what} supplies the message that describes the member.
+     *
+     * The {@code what} parameter supplies the message that describes the member.
      */
     public void logIfOpenByBackdoor(Class<?> caller,
                                     Class<?> target,
@@ -113,22 +116,57 @@ public final class IllegalAccessLogger {
         if (packages != null) {
             String how = packages.get(target.getPackageName());
             if (how != null) {
-                log(caller, target, whatSupplier.get(), how);
+                log(caller, whatSupplier.get(), how);
             }
         }
     }
 
     /**
-     * Log access to a target class by a caller class. The "what" is a String that
-     * identifies the member of the target class. The "how" is the CLI option
-     * that allowed the access.
+     * Logs access by a caller class. The {@code what} parameter describes
+     * the member is accessed, the {@code how} parameter is the means by which
+     * access is allocated (CLI option for example).
+     */
+    private void log(Class<?> caller, String what, String how) {
+        log(caller, what, () -> {
+            PrivilegedAction<ProtectionDomain> pa = caller::getProtectionDomain;
+            CodeSource cs = AccessController.doPrivileged(pa).getCodeSource();
+            URL url = (cs != null) ? cs.getLocation() : null;
+            String source = caller.getName();
+            if (url != null)
+                source += " (" + url + ")";
+            return "WARNING: Illegal access by " + source + " to " + what
+                    + " (permitted by " + how + ")";
+        });
+    }
+
+
+    /**
+     * Logs access to caller class if the class is in a package that is opened via
+     * a backdoor mechanism.
+     */
+    public void logIfOpenByBackdoor(MethodHandles.Lookup caller, Class<?> target) {
+        Map<String, String> packages = opened.get(target.getModule());
+        if (packages != null) {
+            String how = packages.get(target.getPackageName());
+            if (how != null) {
+                log(caller.lookupClass(), target.getName(), () ->
+                    "WARNING: Illegal access using Lookup on " + caller.lookupClass()
+                    + " to " + target + " (permitted by " + how + ")");
+            }
+        }
+    }
+
+    /**
+     * Log access by a caller. The {@code what} parameter describes the class or
+     * member that is being accessed. The {@code msgSupplier} supplies the log
+     * message.
      *
      * To reduce output, this method only logs the access if it hasn't been seen
      * previously. "Seen previously" is implemented as a map of caller class -> Usage,
      * where a Usage is the "what" and a hash of the stack trace. The map has weak
-     * keys so it can be expunged when the target class is GC'ed/unloaded.
+     * keys so it can be expunged when the caller is GC'ed/unloaded.
      */
-    private void log(Class<?> caller, Class<?> target, String what, String how) {
+    private void log(Class<?> caller, String what, Supplier<String> msgSupplier) {
         // stack trace without the top-most frames in java.base
         List<StackWalker.StackFrame> stack = STACK_WALKER.walk(s ->
             s.dropWhile(this::isJavaBase)
@@ -136,7 +174,7 @@ public final class IllegalAccessLogger {
              .collect(Collectors.toList())
         );
 
-        // check if the access has already been seen
+        // check if the access has already been recorded
         Usage u = new Usage(what, hash(stack));
         boolean firstUsage;
         synchronized (this) {
@@ -145,14 +183,7 @@ public final class IllegalAccessLogger {
 
         // log message if first usage
         if (firstUsage) {
-            PrivilegedAction<ProtectionDomain> pa = caller::getProtectionDomain;
-            CodeSource cs = AccessController.doPrivileged(pa).getCodeSource();
-            URL url = (cs != null) ? cs.getLocation() : null;
-            String source = caller.getName();
-            if (url != null)
-                source += " (" + url + ")";
-            String msg = "WARNING: Illegal access by " + source + " to " + what
-                          + " (permitted by " + how + ")";
+            String msg = msgSupplier.get();
             if (PRINT_STACK_TRACE) {
                 synchronized (OUTPUT_LOCK) {
                     System.err.println(msg);

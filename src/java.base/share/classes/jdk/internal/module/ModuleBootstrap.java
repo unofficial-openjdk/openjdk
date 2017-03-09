@@ -534,7 +534,7 @@ public final class ModuleBootstrap {
 
         // --permit-illegal-access
         if (getAndRemoveProperty("jdk.module.permitIllegalAccess") != null) {
-            warn("--permit-illegal-access will be removed in the next release");
+            warn("--permit-illegal-access will be removed in the next major release");
             bootLayer.modules().stream().forEach(m -> {
                 m.getDescriptor()
                  .packages()

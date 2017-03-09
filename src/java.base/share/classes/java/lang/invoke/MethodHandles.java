@@ -26,6 +26,7 @@
 package java.lang.invoke;
 
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.IllegalAccessLogger;
 import jdk.internal.org.objectweb.asm.ClassReader;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
@@ -196,6 +197,12 @@ public class MethodHandles {
         }
         if ((lookup.lookupModes() & Lookup.MODULE) == 0)
             throw new IllegalAccessException("lookup does not have MODULE lookup mode");
+        if (!callerModule.isNamed() && targetModule.isNamed()) {
+            IllegalAccessLogger logger = IllegalAccessLogger.illegalAccessLogger();
+            if (logger != null) {
+                logger.logIfOpenByBackdoor(lookup, targetClass);
+            }
+        }
         return new Lookup(targetClass);
     }
 
