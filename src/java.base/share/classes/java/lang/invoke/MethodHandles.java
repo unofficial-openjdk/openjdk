@@ -866,11 +866,11 @@ public class MethodHandles {
          * {@linkplain #lookupClass() lookup class}.
          *
          * <p> The {@linkplain #lookupModes() lookup modes} for this lookup must include
-         * {@linkplain #PACKAGE PACKAGE} access as default (package) members will be
+         * {@link #PACKAGE PACKAGE} access as default (package) members will be
          * accessible to the class. The {@code PACKAGE} lookup mode serves to authenticate
          * that the lookup object was created by a caller in the runtime package (or derived
          * from a lookup originally created by suitably privileged code to a target class in
-         * the runtime package). The lookup modes cannot include {@linkplain #PRIVATE PRIVATE}
+         * the runtime package). The lookup modes cannot include {@link #PRIVATE PRIVATE}
          * access. A lookup with {@code PRIVATE} access can be downgraded to drop this lookup
          * mode with the {@linkplain #dropLookupMode(int) dropLookupMode} method. </p>
          *
