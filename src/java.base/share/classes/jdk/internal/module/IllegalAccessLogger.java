@@ -64,8 +64,8 @@ public final class IllegalAccessLogger {
     // lock to avoid interference when printing stack traces
     private static final Object OUTPUT_LOCK = new Object();
 
-    // target class -> usage/access site
-    private final Map<Class<?>, Set<Usage>> targetToUsage = new WeakHashMap<>();
+    // caller -> usages
+    private final Map<Class<?>, Set<Usage>> callerToUsages = new WeakHashMap<>();
 
     // module -> (package name -> CLI option)
     private final Map<Module, Map<String, String>> exported;
@@ -126,7 +126,7 @@ public final class IllegalAccessLogger {
      * To reduce output, this method only logs the access if it hasn't been seen
      * previously. "Seen previously" is implemented as a map of caller class -> Usage,
      * where a Usage is the "what" and a hash of the stack trace. The map has weak
-     * keys so it can be expunged when the caller class is GC'ed/unloaded.
+     * keys so it can be expunged when the target class is GC'ed/unloaded.
      */
     private void log(Class<?> caller, Class<?> target, String what, String how) {
         // stack trace without the top-most frames in java.base
@@ -140,7 +140,7 @@ public final class IllegalAccessLogger {
         Usage u = new Usage(what, hash(stack));
         boolean firstUsage;
         synchronized (this) {
-            firstUsage = targetToUsage.computeIfAbsent(target, k -> new HashSet<>()).add(u);
+            firstUsage = callerToUsages.computeIfAbsent(caller, k -> new HashSet<>()).add(u);
         }
 
         // log message if first usage
