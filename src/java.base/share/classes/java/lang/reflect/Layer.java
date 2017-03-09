@@ -193,7 +193,7 @@ public final class Layer {
         }
 
         private void ensureInLayer(Module source) {
-            if (!layer.modules().contains(source))
+            if (source.getLayer() != layer)
                 throw new IllegalArgumentException(source + " not in layer");
         }
 
@@ -220,9 +220,8 @@ public final class Layer {
          * @see Module#addReads
          */
         public Controller addReads(Module source, Module target) {
-            Objects.requireNonNull(source);
-            Objects.requireNonNull(target);
             ensureInLayer(source);
+            Objects.requireNonNull(target);
             Modules.addReads(source, target);
             return this;
         }
@@ -248,9 +247,9 @@ public final class Layer {
          * @see Module#addOpens
          */
         public Controller addOpens(Module source, String pn, Module target) {
-            Objects.requireNonNull(source);
-            Objects.requireNonNull(target);
             ensureInLayer(source);
+            Objects.requireNonNull(pn);
+            Objects.requireNonNull(target);
             Modules.addOpens(source, pn, target);
             return this;
         }
@@ -754,9 +753,15 @@ public final class Layer {
      * @return A possibly-empty unmodifiable set of the modules in this layer
      */
     public Set<Module> modules() {
-        return Collections.unmodifiableSet(
-                nameToModule.values().stream().collect(Collectors.toSet()));
+        Set<Module> modules = this.modules;
+        if (modules == null) {
+            this.modules = modules =
+                Collections.unmodifiableSet(new HashSet<>(nameToModule.values()));
+        }
+        return modules;
     }
+
+    private volatile Set<Module> modules;
 
 
     /**
