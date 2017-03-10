@@ -77,9 +77,7 @@ public class SystemModulesTest {
         if (name.equals(OS_NAME))
             return true;
 
-        if (OS_NAME.equals("Mac OS X")) {
-            return name.equals("Darwin");
-        } else if (OS_NAME.startsWith("Windows")) {
+        if (OS_NAME.startsWith("Windows")) {
             return name.startsWith("Windows");
         } else {
             System.err.println("ERROR: " + name + " but expected: " + OS_NAME);
@@ -94,7 +92,9 @@ public class SystemModulesTest {
         switch (OS_ARCH) {
             case "i386":
             case "x86":
-                return name.equals("i586");
+                return name.equals("x86");
+            case "amd64":
+                return name.equals("x86_64");
             default:
                 System.err.println("ERROR: " + name + " but expected: " + OS_ARCH);
                 return false;
