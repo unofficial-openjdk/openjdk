@@ -801,7 +801,6 @@ public class BasicLayerTest {
      * This should only be allowed when the module is defined to the platform
      * class loader.
      */
-    @Test(enabled = false)
     public void testLayerWithJavaPackage() {
         ModuleDescriptor descriptor = newBuilder("foo")
                 .packages(Set.of("java.foo"))
