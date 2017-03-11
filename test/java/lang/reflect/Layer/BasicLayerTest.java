@@ -45,6 +45,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jdk.internal.misc.SharedSecrets;
+
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
@@ -796,28 +798,31 @@ public class BasicLayerTest {
     }
 
 
+    @DataProvider(name = "javaPackages")
+    public Object[][] javaPackages() {
+        return new Object[][] { { "m1", "java" }, { "m2", "java.x" } };
+    }
+
     /**
-     * Attempt to create a Layer with a module containing a "java." package.
+     * Attempt to create a Layer with a module containing a "java" package.
      * This should only be allowed when the module is defined to the platform
      * class loader.
      */
-    public void testLayerWithJavaPackage() {
-        ModuleDescriptor descriptor = newBuilder("foo")
-                .packages(Set.of("java.foo"))
-                .build();
-
+    @Test(dataProvider = "javaPackages")
+    public void testLayerWithJavaPackage(String mn, String pn) {
+        ModuleDescriptor descriptor = newBuilder(mn).packages(Set.of(pn)).build();
         ModuleFinder finder = ModuleUtils.finderOf(descriptor);
 
         Configuration cf = Layer.boot()
                 .configuration()
-                .resolve(finder, ModuleFinder.of(), Set.of("foo"));
+                .resolve(finder, ModuleFinder.of(), Set.of(mn));
         assertTrue(cf.modules().size() == 1);
 
         ClassLoader pcl = ClassLoader.getPlatformClassLoader();
         ClassLoader scl = ClassLoader.getSystemClassLoader();
 
         try {
-            Layer.boot().defineModules(cf, mn -> new ClassLoader() { });
+            Layer.boot().defineModules(cf, _mn -> new ClassLoader() { });
             assertTrue(false);
         } catch (LayerInstantiationException e) { }
 
@@ -832,13 +837,13 @@ public class BasicLayerTest {
         } catch (LayerInstantiationException e) { }
 
         // create layer with module defined to platform class loader
-        Layer layer = Layer.boot().defineModules(cf, mn -> pcl);
-        Optional<Module> om = layer.findModule("foo");
+        Layer layer = Layer.boot().defineModules(cf, _mn -> pcl);
+        Optional<Module> om = layer.findModule(mn);
         assertTrue(om.isPresent());
         Module foo = om.get();
         assertTrue(foo.getClassLoader() == pcl);
         assertTrue(foo.getPackages().length == 1);
-        assertTrue(foo.getPackages()[0].equals("java.foo"));
+        assertTrue(foo.getPackages()[0].equals(pn));
     }
 
 

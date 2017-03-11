@@ -407,8 +407,8 @@ public final class Layer {
      * </ul>
      *
      * <p> In addition, a layer cannot be created if the configuration contains
-     * a module named "{@code java.base}" or a module with a package name
-     * starting with "{@code java.}". </p>
+     * a module named "{@code java.base}", or a module contains a package named
+     * "{@code java}" or a package with a name starting with "{@code java.}". </p>
      *
      * <p> If there is a security manager then the class loader created by
      * this method will load classes and resources with privileges that are
@@ -417,7 +417,7 @@ public final class Layer {
      * @param  cf
      *         The configuration for the layer
      * @param  parentLayers
-     *         The list parent layers in search order
+     *         The list of parent layers in search order
      * @param  parentLoader
      *         The parent class loader for the class loader created by this
      *         method; may be {@code null} for the bootstrap class loader
@@ -484,7 +484,7 @@ public final class Layer {
      * @param  cf
      *         The configuration for the layer
      * @param  parentLayers
-     *         The list parent layers in search order
+     *         The list of parent layers in search order
      * @param  parentLoader
      *         The parent class loader for each of the class loaders created by
      *         this method; may be {@code null} for the bootstrap class loader
@@ -496,8 +496,10 @@ public final class Layer {
      *         the parent layers, including order
      * @throws LayerInstantiationException
      *         If the layer cannot be created because the configuration contains
-     *         a module named "{@code java.base}" or a module with a package
-     *         name starting with "{@code java.}"
+     *         a module named "{@code java.base}" or a module contains a package
+     *         named "{@code java}" or a package with a name starting with
+     *         "{@code java.}"
+     *
      * @throws SecurityException
      *         If {@code RuntimePermission("createClassLoader")} or
      *         {@code RuntimePermission("getClassLoader")} is denied by
@@ -557,10 +559,11 @@ public final class Layer {
      *
      * <p> In addition, a layer cannot be created if the configuration contains
      * a module named "{@code java.base}", a configuration contains a module
-     * with a package name starting with "{@code java.}" is mapped to a class
-     * loader other than the {@link ClassLoader#getPlatformClassLoader()
-     * platform class loader}, or the function to map a module name to a class
-     * loader returns {@code null}. </p>
+     * with a package named "{@code java}" or a package name starting with
+     * "{@code java.}" and the module is mapped to a class loader other than
+     * the {@link ClassLoader#getPlatformClassLoader() platform class loader},
+     * or the function to map a module name to a class loader returns
+     * {@code null}. </p>
      *
      * <p> If the function to map a module name to class loader throws an error
      * or runtime exception then it is propagated to the caller of this method.
@@ -574,7 +577,7 @@ public final class Layer {
      * @param  cf
      *         The configuration for the layer
      * @param  parentLayers
-     *         The list parent layers in search order
+     *         The list of parent layers in search order
      * @param  clf
      *         The function to map a module name to a class loader
      *
