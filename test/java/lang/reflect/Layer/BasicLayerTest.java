@@ -672,6 +672,258 @@ public class BasicLayerTest {
 
 
     /**
+     * Test layers with a qualified export. The module exporting the package
+     * does not read the target module.
+     *
+     * m1 { exports p to m2 }
+     * m2 { }
+     */
+    public void testQualifiedExports1() {
+        ModuleDescriptor descriptor1 = newBuilder("m1").
+                exports("p", Set.of("m2"))
+                .build();
+
+        ModuleDescriptor descriptor2 = newBuilder("m2")
+                .build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf = resolve(finder1, "m1", "m2");
+
+        ClassLoader cl = new ClassLoader() { };
+        Layer layer = Layer.empty().defineModules(cf, mn -> cl);
+        assertTrue(layer.modules().size() == 2);
+
+        Module m1 = layer.findModule("m1").get();
+        Module m2 = layer.findModule("m2").get();
+
+        // check m1 exports p to m2
+        assertFalse(m1.isExported("p"));
+        assertTrue(m1.isExported("p", m2));
+        assertFalse(m1.isOpen("p", m2));
+    }
+
+
+    /**
+     * Test layers with a qualified export. The module exporting the package
+     * reads the target module.
+     *
+     * m1 { exports p to m2; }
+     * m2 { requires m1; }
+     */
+    public void testQualifiedExports2() {
+        ModuleDescriptor descriptor1 = newBuilder("m1")
+                .exports("p", Set.of("m2"))
+                .build();
+
+        ModuleDescriptor descriptor2 = newBuilder("m2")
+                .requires("m1")
+                .build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+
+        Configuration cf = resolve(finder1, "m2");
+        ClassLoader cl = new ClassLoader() { };
+        Layer layer = Layer.empty().defineModules(cf, mn -> cl);
+        assertTrue(layer.modules().size() == 2);
+
+        Module m1 = layer.findModule("m1").get();
+        Module m2 = layer.findModule("m2").get();
+
+        // check m1 exports p to m2
+        assertFalse(m1.isExported("p"));
+        assertTrue(m1.isExported("p", m2));
+        assertFalse(m1.isOpen("p", m2));
+    }
+
+
+    /**
+     * Test layers with a qualified export. The module exporting the package
+     * does not read the target module in the parent layer.
+     *
+     * - Configuration/layer1: m1 { }
+     * - Configuration/layer2: m2 { exports p to m1; }
+     */
+    public void testQualifiedExports3() {
+        // create layer1 with m1
+        ModuleDescriptor descriptor1 = newBuilder("m1").build();
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
+        Configuration cf1 = resolve(finder1, "m1");
+        ClassLoader cl1 = new ClassLoader() { };
+        Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
+        assertTrue(layer1.modules().size() == 1);
+
+        // create layer2 with m2
+        ModuleDescriptor descriptor2 = newBuilder("m2")
+                .exports("p", Set.of("m1"))
+                .build();
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
+        Configuration cf2 = resolve(cf1, finder2, "m2");
+        ClassLoader cl2 = new ClassLoader() { };
+        Layer layer2 = layer1.defineModules(cf2, mn -> cl2);
+        assertTrue(layer2.modules().size() == 1);
+
+        Module m1 = layer1.findModule("m1").get();
+        Module m2 = layer2.findModule("m2").get();
+
+        // check m2 exports p to layer1/m1
+        assertFalse(m2.isExported("p"));
+        assertTrue(m2.isExported("p", m1));
+        assertFalse(m2.isOpen("p", m1));
+    }
+
+
+    /**
+     * Test layers with a qualified export. The module exporting the package
+     * reads the target module in the parent layer.
+     *
+     * - Configuration/layer1: m1 { }
+     * - Configuration/layer2: m2 { requires m1; exports p to m1; }
+     */
+    public void testQualifiedExports4() {
+        // create layer1 with m1
+        ModuleDescriptor descriptor1 = newBuilder("m1").build();
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
+        Configuration cf1 = resolve(finder1, "m1");
+        ClassLoader cl1 = new ClassLoader() { };
+        Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
+        assertTrue(layer1.modules().size() == 1);
+
+        // create layer2 with m2
+        ModuleDescriptor descriptor2 = newBuilder("m2")
+                .requires("m1")
+                .exports("p", Set.of("m1"))
+                .build();
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
+        Configuration cf2 = resolve(cf1, finder2, "m2");
+        ClassLoader cl2 = new ClassLoader() { };
+        Layer layer2 = layer1.defineModules(cf2, mn -> cl2);
+        assertTrue(layer2.modules().size() == 1);
+
+        Module m1 = layer1.findModule("m1").get();
+        Module m2 = layer2.findModule("m2").get();
+
+        // check m2 exports p to layer1/m1
+        assertFalse(m2.isExported("p"));
+        assertTrue(m2.isExported("p", m1));
+        assertFalse(m2.isOpen("p", m1));
+    }
+
+    /**
+     * Test layers with a qualified export. The module exporting the package
+     * does not read the target module.
+     *
+     * - Configuration/layer1: m1
+     * - Configuration/layer2: m1, m2 { exports p to m1; }
+     */
+    public void testQualifiedExports5() {
+        // create layer1 with m1
+        ModuleDescriptor descriptor1 = newBuilder("m1").build();
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
+        Configuration cf1 = resolve(finder1, "m1");
+        ClassLoader cl1 = new ClassLoader() { };
+        Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
+        assertTrue(layer1.modules().size() == 1);
+
+        // create layer2 with m1 and m2
+        ModuleDescriptor descriptor2 = newBuilder("m2").exports("p", Set.of("m1")).build();
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor1, descriptor2);
+        Configuration cf2 = resolve(cf1, finder2, "m1", "m2");
+        ClassLoader cl2 = new ClassLoader() { };
+        Layer layer2 = layer1.defineModules(cf2, mn -> cl2);
+        assertTrue(layer2.modules().size() == 2);
+
+        Module m1_v1 = layer1.findModule("m1").get();
+        Module m1_v2 = layer2.findModule("m1").get();
+        Module m2 = layer2.findModule("m2").get();
+
+        // check m2 exports p to layer2/m2
+        assertFalse(m2.isExported("p"));
+        assertTrue(m2.isExported("p", m1_v2));
+        assertFalse(m2.isExported("p", m1_v1));
+    }
+
+
+    /**
+     * Test layers with a qualified export. The module exporting the package
+     * reads the target module in the parent layer (due to requires transitive).
+     *
+     * - Configuration/layer1: m1, m2 { requires transitive m1; }
+     * - Configuration/layer2: m1, m3 { requires m2; exports p to m1; }
+     */
+    public void testQualifiedExports6() {
+        // create layer1 with m1 and m2
+        ModuleDescriptor descriptor1 = newBuilder("m1").build();
+        ModuleDescriptor descriptor2 = newBuilder("m2")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
+                .build();
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+        Configuration cf1 = resolve(finder1, "m2");
+        ClassLoader loader1 = new ClassLoader() { };
+        Layer layer1 = Layer.empty().defineModules(cf1, mn -> loader1);
+        assertTrue(layer1.modules().size() == 2);
+
+        // create layer2 with m1 and m3
+        ModuleDescriptor descriptor3 = newBuilder("m3")
+                .requires("m2")
+                .exports("p", Set.of("m1"))
+                .build();
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor1, descriptor3);
+        Configuration cf2 = resolve(cf1, finder2, "m1", "m3");
+        ClassLoader loader2 = new ClassLoader() { };
+        Layer layer2 = layer1.defineModules(cf2, mn -> loader2);
+        assertTrue(layer2.modules().size() == 2);
+
+        Module m1_v1 = layer1.findModule("m1").get();
+        Module m2 = layer1.findModule("m2").get();
+
+        Module m1_v2 = layer2.findModule("m1").get();
+        Module m3 = layer2.findModule("m3").get();
+
+        assertTrue(m3.canRead(m1_v1));
+        assertFalse(m3.canRead(m1_v2));
+
+        assertFalse(m3.isExported("p"));
+        assertTrue(m3.isExported("p", m1_v1));
+        assertFalse(m3.isExported("p", m1_v2));
+        assertFalse(m3.isExported("p", m2));
+    }
+
+
+    /**
+     * Test layers with a qualified export. The target module is not in any layer.
+     *
+     * - Configuration/layer1: m1 { }
+     * - Configuration/layer2: m2 { exports p to m3; }
+     */
+    public void testQualifiedExports7() {
+        // create layer1 with m1
+        ModuleDescriptor descriptor1 = newBuilder("m1").build();
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
+        Configuration cf1 = resolve(finder1, "m1");
+        ClassLoader cl1 = new ClassLoader() { };
+        Layer layer1 = Layer.empty().defineModules(cf1, mn -> cl1);
+        assertTrue(layer1.modules().size() == 1);
+
+        // create layer2 with m2
+        ModuleDescriptor descriptor2 = newBuilder("m2")
+                .exports("p", Set.of("m3"))
+                .build();
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor2);
+        Configuration cf2 = resolve(cf1, finder2, "m2");
+        ClassLoader cl2 = new ClassLoader() { };
+        Layer layer2 = layer1.defineModules(cf2, mn -> cl2);
+        assertTrue(layer2.modules().size() == 1);
+
+        Module m1 = layer1.findModule("m1").get();
+        Module m2 = layer2.findModule("m2").get();
+
+        // check m2 does not export p to anyone
+        assertFalse(m2.isExported("p"));
+        assertFalse(m2.isExported("p", m1));
+    }
+
+    /**
      * Attempt to use Layer defineModules to create a layer with a module
      * defined to a class loader that already has a module of the same name
      * defined to the class loader.

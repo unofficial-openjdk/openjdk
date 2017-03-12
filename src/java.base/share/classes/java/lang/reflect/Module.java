@@ -39,8 +39,10 @@ import java.net.URI;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -369,28 +371,19 @@ public final class Module implements AnnotatedElement {
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
     private void implAddReads(Module other, boolean syncVM) {
-        Objects.requireNonNull(other);
-
-        // nothing to do
-        if (other == this || !this.isNamed())
-            return;
-
-        // check if we already read this module
-        Set<Module> reads = this.reads;
-        if (reads != null && reads.contains(other))
-            return;
-
-        // update VM first, just in case it fails
-        if (syncVM) {
-            if (other == ALL_UNNAMED_MODULE) {
-                addReads0(this, null);
-            } else {
-                addReads0(this, other);
+        if (!canRead(other)) {
+            // update VM first, just in case it fails
+            if (syncVM) {
+                if (other == ALL_UNNAMED_MODULE) {
+                    addReads0(this, null);
+                } else {
+                    addReads0(this, other);
+                }
             }
-        }
 
-        // add reflective read
-        reflectivelyReads.putIfAbsent(this, other, Boolean.TRUE);
+            // add reflective read
+            reflectivelyReads.putIfAbsent(this, other, Boolean.TRUE);
+        }
     }
 
 
@@ -1080,20 +1073,28 @@ public final class Module implements AnnotatedElement {
 
             // reads
             Set<Module> reads = new HashSet<>();
+
+            // name -> source Module when in parent layer
+            Map<String, Module> nameToSource = Collections.emptyMap();
+
             for (ResolvedModule other : resolvedModule.reads()) {
                 Module m2 = null;
                 if (other.configuration() == cf) {
-                    String dn = other.reference().descriptor().name();
-                    m2 = nameToModule.get(dn);
+                    // this configuration
+                    m2 = nameToModule.get(other.name());
+                    assert m2 != null;
                 } else {
+                    // parent layer
                     for (Layer parent: layer.parents()) {
                         m2 = findModule(parent, other);
                         if (m2 != null)
                             break;
                     }
+                    assert m2 != null;
+                    if (nameToSource.isEmpty())
+                        nameToSource = new HashMap<>();
+                    nameToSource.put(other.name(), m2);
                 }
-                assert m2 != null;
-
                 reads.add(m2);
 
                 // update VM view
@@ -1107,7 +1108,7 @@ public final class Module implements AnnotatedElement {
             }
 
             // exports and opens
-            initExportsAndOpens(descriptor, nameToModule, m);
+            initExportsAndOpens(m, nameToSource, nameToModule, layer.parents());
         }
 
         // register the modules in the boot layer
@@ -1159,15 +1160,17 @@ public final class Module implements AnnotatedElement {
                 .orElse(null);
     }
 
+
     /**
      * Initialize the maps of exported and open packages for module m.
      */
-    private static void initExportsAndOpens(ModuleDescriptor descriptor,
+    private static void initExportsAndOpens(Module m,
+                                            Map<String, Module> nameToSource,
                                             Map<String, Module> nameToModule,
-                                            Module m)
-    {
+                                            List<Layer> parents) {
         // The VM doesn't special case open or automatic modules so need to
         // export all packages
+        ModuleDescriptor descriptor = m.getDescriptor();
         if (descriptor.isOpen() || descriptor.isAutomatic()) {
             assert descriptor.opens().isEmpty();
             for (String source : descriptor.packages()) {
@@ -1187,8 +1190,7 @@ public final class Module implements AnnotatedElement {
                 // qualified opens
                 Set<Module> targets = new HashSet<>();
                 for (String target : opens.targets()) {
-                    // only open to modules that are in this configuration
-                    Module m2 = nameToModule.get(target);
+                    Module m2 = findModule(target, nameToSource, nameToModule, parents);
                     if (m2 != null) {
                         addExports0(m, source, m2);
                         targets.add(m2);
@@ -1217,8 +1219,7 @@ public final class Module implements AnnotatedElement {
                 // qualified exports
                 Set<Module> targets = new HashSet<>();
                 for (String target : exports.targets()) {
-                    // only export to modules that are in this configuration
-                    Module m2 = nameToModule.get(target);
+                    Module m2 = findModule(target, nameToSource, nameToModule, parents);
                     if (m2 != null) {
                         // skip qualified export if already open to m2
                         if (openToTargets == null || !openToTargets.contains(m2)) {
@@ -1242,6 +1243,32 @@ public final class Module implements AnnotatedElement {
             m.openPackages = openPackages;
         if (!exportedPackages.isEmpty())
             m.exportedPackages = exportedPackages;
+    }
+
+    /**
+     * Find the runtime Module with the given name. The module name is the
+     * name of a target module in a qualified exports or opens directive.
+     *
+     * @param target The target module to find
+     * @param nameToSource The modules in parent layers that are read
+     * @param nameToModule The modules in the layer under construction
+     * @param parents The parent layers
+     */
+    private static Module findModule(String target,
+                                     Map<String, Module> nameToSource,
+                                     Map<String, Module> nameToModule,
+                                     List<Layer> parents) {
+        Module m = nameToSource.get(target);
+        if (m == null) {
+            m = nameToModule.get(target);
+            if (m == null) {
+                for (Layer parent : parents) {
+                    m = parent.findModule(target).orElse(null);
+                    if (m != null) break;
+                }
+            }
+        }
+        return m;
     }
 
 

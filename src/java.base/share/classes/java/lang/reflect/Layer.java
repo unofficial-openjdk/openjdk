@@ -66,9 +66,7 @@ import sun.security.util.SecurityConstants;
  * ResolvedModule} in the configuration. For each resolved module that is
  * {@link ResolvedModule#reads() read}, the {@code Module} {@link
  * Module#canRead reads} the corresponding run-time {@code Module}, which may
- * be in the same layer or a {@link #parents() parent} layer. The {@code Module}
- * {@link Module#isExported(String) exports} and {@link Module#isOpen(String)
- * opens} the packages described by its {@link ModuleDescriptor}. </p>
+ * be in the same layer or a {@link #parents() parent} layer. </p>
  *
  * <p> The {@link #defineModulesWithOneLoader defineModulesWithOneLoader} and
  * {@link #defineModulesWithManyLoaders defineModulesWithManyLoaders} methods
@@ -90,6 +88,28 @@ import sun.security.util.SecurityConstants;
  * other class loaders that are <a href="../ClassLoader.html#builtinLoaders">
  * built-in</a> into the Java virtual machine. The boot layer will often be
  * the {@link #parents() parent} when creating additional layers. </p>
+ *
+ * <p> Each {@code Module} in a layer is created so that it {@link
+ * Module#isExported(String) exports} and {@link Module#isOpen(String) opens}
+ * the packages described by its {@link ModuleDescriptor}. Qualified exports
+ * (where a package is exported to a set of target modules rather than all
+ * modules) are reified when creating the layer as follows: </p>
+ * <ul>
+ *     <li> If module {@code X} exports a package to {@code Y}, and if the
+ *     runtime {@code Module} {@code X} reads {@code Module} {@code Y}, then
+ *     the package is exported to {@code Module} {@code Y} (which may be in
+ *     the same layer as {@code X} or a parent layer). </li>
+ *
+ *     <li> If module {@code X} exports a package to {@code Y}, and if the
+ *     runtime {@code Module} {@code X} does not read {@code Y} then target
+ *     {@code Y} is located as if by invoking {@link #findModule(String)
+ *     findModule} to find the module in the layer or its parent layers. If
+ *     {@code Y} is found then the package is exported to the instance of
+ *     {@code Y} that was found. If {@code Y} is not found then the qualified
+ *     export is ignored. </li>
+ * </ul>
+ *
+ * <p> Qualified opens are handled in same way as qualified exports. </p>
  *
  * <p> As when creating a {@code Configuration},
  * {@link ModuleDescriptor#isAutomatic() automatic} modules receive special
@@ -784,6 +804,8 @@ public final class Layer {
      */
     public Optional<Module> findModule(String name) {
         Objects.requireNonNull(name);
+        if (this == EMPTY_LAYER)
+            return Optional.empty();
         Module m = nameToModule.get(name);
         if (m != null)
             return Optional.of(m);
