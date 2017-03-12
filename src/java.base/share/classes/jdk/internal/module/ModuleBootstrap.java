@@ -556,7 +556,7 @@ public final class ModuleBootstrap {
                                                IllegalAccessLogger.Builder builder)
     {
         String option = opens ? ADD_OPENS : ADD_EXPORTS;
-        warn(option + " will be revised or removed in a future release");
+        //warn(map.size() + " usage(s) of " + option);
         for (Map.Entry<String, List<String>> e : map.entrySet()) {
 
             // the key is $MODULE/$PACKAGE
