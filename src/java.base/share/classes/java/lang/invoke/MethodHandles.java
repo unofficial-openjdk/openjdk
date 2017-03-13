@@ -890,7 +890,7 @@ public class MethodHandles {
          * Specification</em>. </p>
          *
          * <p> If there is a security manager, its {@code checkPermission} method is first called
-         * to check {@code RuntimePermission("getClassLoader")}. </p>
+         * to check {@code RuntimePermission("defineClass")}. </p>
          *
          * @param bytes the class bytes
          * @return the {@code Class} object for the class
@@ -911,7 +911,7 @@ public class MethodHandles {
         public Class<?> defineClass(byte[] bytes) throws IllegalAccessException {
             SecurityManager sm = System.getSecurityManager();
             if (sm != null)
-                sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
+                sm.checkPermission(new RuntimePermission("defineClass"));
             if (hasPrivateAccess())
                 throw new UnsupportedOperationException("PRIVATE access not supported");
             if ((lookupModes() & PACKAGE) == 0)

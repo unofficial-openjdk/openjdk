@@ -265,6 +265,16 @@ import java.util.StringTokenizer;
  * </tr>
  *
  * <tr>
+ *   <td>defineClass</td>
+ *   <td>Define a class with
+ * {@link java.lang.invoke.MethodHandles.Lookup#defineClass(byte[])
+ * Lookup.defineClass}.</td>
+ *   <td>This grants code with a suitably privileged {@code Lookup} object
+ * permission to define classes in the same package as the {@code Lookup}'s
+ * lookup class. </td>
+ * </tr>
+ *
+ * <tr>
  *   <td>accessDeclaredMembers</td>
  *   <td>Access to the declared members of a class</td>
  *   <td>This grants code permission to query a class for its public,
