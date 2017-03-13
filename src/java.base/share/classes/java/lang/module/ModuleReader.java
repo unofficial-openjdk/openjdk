@@ -85,7 +85,7 @@ public interface ModuleReader extends Closeable {
      * Finds a resource, returning a URI to the resource in the module.
      *
      * <p> If the module reader can determine that the name locates a directory
-     * then the resulting URI will end with slash ('/'). </p>
+     * then the resulting URI will end with a slash ('/'). </p>
      *
      * @param  name
      *         The name of the resource to open for reading
@@ -147,7 +147,7 @@ public interface ModuleReader extends Closeable {
      *
      * @apiNote This method is intended for high-performance class loading. It
      * is not capable (or intended) to read arbitrary large resources that
-     * could potentially be 2GB or larger. The rational for using this method
+     * could potentially be 2GB or larger. The rationale for using this method
      * in conjunction with the {@code release} method is to allow module reader
      * implementations manage buffers in an efficient manner.
      *

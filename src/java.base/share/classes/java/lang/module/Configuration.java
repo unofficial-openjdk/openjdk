@@ -297,8 +297,8 @@ public final class Configuration {
      *     module {@code m2} and {@code m2} requires {@code m1}. </p></li>
      *
      *     <li><p> A module reads two or more modules with the same name. This
-     *     includes the case where a module reads another another with the same
-     *     name as itself. </p></li>
+     *     includes the case where a module reads another with the same name as
+     *     itself. </p></li>
      *
      *     <li><p> Two or more modules in the configuration export the same
      *     package to a module that reads both. This includes the case where a
