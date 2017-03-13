@@ -179,7 +179,7 @@ public class ModuleDescriptor
         private final Set<Modifier> mods;
         private final String name;
         private final Version compiledVersion;
-        private final String rawCompiledVersion;  // hashCode/equals/compareTo TBD
+        private final String rawCompiledVersion;
 
         private Requires(Set<Modifier> ms, String mn, Version v, String vs) {
             if (ms.isEmpty()) {
@@ -221,7 +221,10 @@ public class ModuleDescriptor
         /**
          * Returns the version of the module if recorded at compile-time.
          *
-         * @return The version of the module if recorded at compile-time
+         * @return The version of the module if recorded at compile-time,
+         *         or an empty {@code Optional} if no version was recorded or
+         *         the version string recorded is {@linkplain Version#parse(String)
+         *         unparseable}
          */
         public Optional<Version> compiledVersion() {
             return Optional.ofNullable(compiledVersion);
@@ -233,6 +236,8 @@ public class ModuleDescriptor
          *
          * @return The string containing the version of the module if recorded
          *         at compile-time
+         *
+         * @see #compiledVersion()
          */
         public Optional<String> rawCompiledVersion() {
             if (compiledVersion != null) {
@@ -254,7 +259,10 @@ public class ModuleDescriptor
          * recorded at compile-time are compared. When comparing the versions
          * recorded at compile-time then a dependence that has a recorded
          * version is considered to succeed a dependence that does not have a
-         * recorded version. </p>
+         * recorded version. If both recorded versions are {@linkplain
+         * Version#parse(String) unparseable} then the {@linkplain
+         * #rawCompiledVersion() raw version strings} are compared
+         * lexicographically. </p>
          *
          * @param  that
          *         The module dependence to compare
@@ -278,6 +286,10 @@ public class ModuleDescriptor
 
             // compiledVersion
             c = compare(this.compiledVersion, that.compiledVersion);
+            if (c != 0) return c;
+
+            // rawCompiledVersion
+            c = compare(this.rawCompiledVersion, that.rawCompiledVersion);
             if (c != 0) return c;
 
             return 0;
@@ -307,7 +319,8 @@ public class ModuleDescriptor
                 return false;
             Requires that = (Requires)ob;
             return name.equals(that.name) && mods.equals(that.mods)
-                    && Objects.equals(compiledVersion, that.compiledVersion);
+                    && Objects.equals(compiledVersion, that.compiledVersion)
+                    && Objects.equals(rawCompiledVersion, that.rawCompiledVersion);
         }
 
         /**
@@ -324,6 +337,8 @@ public class ModuleDescriptor
             int hash = name.hashCode() * 43 + mods.hashCode();
             if (compiledVersion != null)
                 hash = hash * 43 + compiledVersion.hashCode();
+            if (rawCompiledVersion != null)
+                hash = hash * 43 + rawCompiledVersion.hashCode();
             return hash;
         }
 
@@ -1402,7 +1417,9 @@ public class ModuleDescriptor
     /**
      * <p> Returns the module version. </p>
      *
-     * @return This module's version
+     * @return This module's version, or an empty {@code Optional} if the
+     *         module does not have a version or the version is
+     *         {@linkplain Version#parse(String) unparseable}
      */
     public Optional<Version> version() {
         return Optional.ofNullable(version);
@@ -1413,6 +1430,8 @@ public class ModuleDescriptor
      * module </p>
      *
      * @return The string containing the version of the module.
+     *
+     * @see #version()
      */
     public Optional<String> rawVersion() {
         if (version != null) {
@@ -2168,9 +2187,11 @@ public class ModuleDescriptor
      * module names lexicographically. Where the module names are equal then the
      * module versions are compared. When comparing the module versions then a
      * module descriptor with a version is considered to succeed a module
-     * descriptor that does not have a version. Where the module names are equal
-     * and the versions are equal (or not present in both), then the set of
-     * modifiers are compared. Sets of modifiers are compared by comparing
+     * descriptor that does not have a version. If both versions are {@linkplain
+     * Version#parse(String) unparseable} then the {@linkplain #rawVersion()
+     * raw version strings} are compared lexicographically. Where the module names
+     * are equal and the versions are equal (or not present in both), then the
+     * set of modifiers are compared. Sets of modifiers are compared by comparing
      * a <em>binary value</em> computed for each set. If a modifier is present
      * in the set then the bit at the position of its ordinal is {@code 1}
      * in the binary value, otherwise {@code 0}. If the two set of modifiers
@@ -2192,6 +2213,9 @@ public class ModuleDescriptor
         if (c != 0) return c;
 
         c = compare(this.version, that.version);
+        if (c != 0) return c;
+
+        c = compare(this.rawVersionString, that.rawVersionString);
         if (c != 0) return c;
 
         long v1 = modsValue(this.modifiers());
