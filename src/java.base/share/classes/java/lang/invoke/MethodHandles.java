@@ -947,12 +947,12 @@ public class MethodHandles {
 
             // invoke the class loader's defineClass method
             ClassLoader loader = lookupClass.getClassLoader();
-            ProtectionDomain pd = lookupClassProtectionDomain();
+            ProtectionDomain pd = (loader != null) ? lookupClassProtectionDomain() : null;
             String source = "__Lookup_defineClass__";
             Class<?> clazz = SharedSecrets.getJavaLangAccess().defineClass(loader, cn, bytes, pd, source);
             assert clazz.getClassLoader() == lookupClass.getClassLoader()
                     && clazz.getPackageName().equals(lookupClass.getPackageName())
-                    && protectionDomain(clazz) == pd;
+                    && protectionDomain(clazz) == lookupClassProtectionDomain();
             return clazz;
         }
 
