@@ -182,6 +182,7 @@ public class ModuleDescriptor
         private final String rawCompiledVersion;
 
         private Requires(Set<Modifier> ms, String mn, Version v, String vs) {
+            assert v == null || vs == null;
             if (ms.isEmpty()) {
                 ms = Collections.emptySet();
             } else {
@@ -807,7 +808,7 @@ public class ModuleDescriptor
         /**
          * Returns the fully qualified class name of the service type.
          *
-         * @return The fully qualified class name of the service type.
+         * @return The fully qualified class name of the service type
          */
         public String service() { return service; }
 
@@ -1429,7 +1430,7 @@ public class ModuleDescriptor
      * <p> Returns the string with the possibly-unparseable version of the
      * module </p>
      *
-     * @return The string containing the version of the module.
+     * @return The string containing the version of the module
      *
      * @see #version()
      */
@@ -1446,7 +1447,7 @@ public class ModuleDescriptor
      * version. </p>
      *
      * @return A string containing the module name and, if present, its
-     *         version.
+     *         version
      */
     public String toNameAndVersion() {
         if (version != null) {
