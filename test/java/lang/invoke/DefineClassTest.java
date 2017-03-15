@@ -204,7 +204,7 @@ public class DefineClassTest {
      * Test defineClass defining a class to the boot loader
      */
     @Test
-    public void testBooLoader() throws Exception {
+    public void testBootLoader() throws Exception {
         Lookup lookup = privateLookupIn(Thread.class, lookup()).dropLookupMode(PRIVATE);
         assertTrue(lookup.getClass().getClassLoader() == null);
 
