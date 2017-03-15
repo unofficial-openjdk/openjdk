@@ -1558,20 +1558,16 @@ public final class Module implements AnnotatedElement {
                     m.implAddReads(Module.ALL_UNNAMED_MODULE);
                 }
                 @Override
+                public void addExports(Module m, String pn) {
+                    m.implAddExportsOrOpens(pn, Module.EVERYONE_MODULE, false, true);
+                }
+                @Override
                 public void addExports(Module m, String pn, Module other) {
                     m.implAddExportsOrOpens(pn, other, false, true);
                 }
                 @Override
                 public void addOpens(Module m, String pn, Module other) {
                     m.implAddExportsOrOpens(pn, other, true, true);
-                }
-                @Override
-                public void addExportsToAll(Module m, String pn) {
-                    m.implAddExportsOrOpens(pn, Module.EVERYONE_MODULE, false, true);
-                }
-                @Override
-                public void addOpensToAll(Module m, String pn) {
-                    m.implAddExportsOrOpens(pn, Module.EVERYONE_MODULE, true, true);
                 }
                 @Override
                 public void addExportsToAllUnnamed(Module m, String pn) {
@@ -1584,10 +1580,6 @@ public final class Module implements AnnotatedElement {
                 @Override
                 public void addUses(Module m, Class<?> service) {
                     m.implAddUses(service);
-                }
-                @Override
-                public void addPackage(Module m, String pn) {
-                    m.implAddPackage(pn, true);
                 }
                 @Override
                 public ServicesCatalog getServicesCatalog(Layer layer) {
