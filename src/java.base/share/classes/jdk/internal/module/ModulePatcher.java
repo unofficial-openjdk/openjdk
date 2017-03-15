@@ -225,7 +225,7 @@ public final class ModulePatcher {
         private volatile ModuleReader delegate;
 
         /**
-         * Creates the ModuleReader to reads resources a patched module.
+         * Creates the ModuleReader to reads resources in a patched module.
          */
         PatchedModuleReader(List<Path> patches, ModuleReference mref) {
             List<ResourceFinder> finders = new ArrayList<>();
@@ -290,13 +290,16 @@ public final class ModulePatcher {
         }
 
         /**
-         * Finds a resources in the patch locations. Returns null if not found.
+         * Finds a resources in the patch locations. Returns null if not found
+         * or the name is "module-info.class" as that cannot be overridden.
          */
         private Resource findResourceInPatch(String name) throws IOException {
-            for (ResourceFinder finder : finders) {
-                Resource r = finder.find(name);
-                if (r != null)
-                    return r;
+            if (!name.equals("module-info.class")) {
+                for (ResourceFinder finder : finders) {
+                    Resource r = finder.find(name);
+                    if (r != null)
+                        return r;
+                }
             }
             return null;
         }
