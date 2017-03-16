@@ -63,9 +63,6 @@ public class JavaRuntimeURLConnection extends URLConnection {
     // the Resource when connected
     private volatile Resource resource;
 
-    // the permission to access resources in the runtime image, created lazily
-    private static volatile Permission permission;
-
     JavaRuntimeURLConnection(URL url) throws IOException {
         super(url);
         String path = url.getPath();
@@ -161,13 +158,8 @@ public class JavaRuntimeURLConnection extends URLConnection {
     }
 
     @Override
-    public Permission getPermission() throws IOException {
-        Permission p = permission;
-        if (p == null) {
-            p = new RuntimePermission("accessSystemModules");
-            permission = p;
-        }
-        return p;
+    public Permission getPermission() {
+        return new RuntimePermission("accessSystemModules");
     }
 
     /**

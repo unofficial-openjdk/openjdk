@@ -24,4 +24,5 @@
 grant {
     permission java.lang.RuntimePermission "getClassLoader";
     permission java.lang.RuntimePermission "accessSystemModules";
+    permission java.io.FilePermission "${java.home}/modules/-", "read";    // exploded build
 };
