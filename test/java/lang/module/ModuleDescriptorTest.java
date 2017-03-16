@@ -1021,6 +1021,8 @@ public class ModuleDescriptorTest {
             assertEquals(descriptor2.rawVersion().get(), vs2);
         }
 
+        assertFalse(descriptor1.equals(descriptor2));
+        assertFalse(descriptor2.equals(descriptor1));
         assertTrue(descriptor1.compareTo(descriptor2) == -1);
         assertTrue(descriptor2.compareTo(descriptor1) == 1);
     }
@@ -1046,6 +1048,8 @@ public class ModuleDescriptorTest {
             assertEquals(r2.rawCompiledVersion().get(), vs2);
         }
 
+        assertFalse(r1.equals(r2));
+        assertFalse(r2.equals(r1));
         assertTrue(r1.compareTo(r2) == -1);
         assertTrue(r2.compareTo(r1) == 1);
     }

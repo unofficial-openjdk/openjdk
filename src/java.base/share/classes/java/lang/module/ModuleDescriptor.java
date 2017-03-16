@@ -1233,7 +1233,7 @@ public class ModuleDescriptor
 
     private final String name;
     private final Version version;
-    private final String rawVersionString;  // hashCode/equals/compareTo TBD
+    private final String rawVersionString;
     private final Set<Modifier> modifiers;
     private final boolean open;  // true if modifiers contains OPEN
     private final boolean automatic;  // true if modifiers contains AUTOMATIC
@@ -2280,6 +2280,7 @@ public class ModuleDescriptor
                 && uses.equals(that.uses)
                 && provides.equals(that.provides)
                 && Objects.equals(version, that.version)
+                && Objects.equals(rawVersionString, that.rawVersionString)
                 && Objects.equals(mainClass, that.mainClass));
     }
 
@@ -2305,6 +2306,7 @@ public class ModuleDescriptor
             hc = hc * 43 + uses.hashCode();
             hc = hc * 43 + provides.hashCode();
             hc = hc * 43 + Objects.hashCode(version);
+            hc = hc * 43 + Objects.hashCode(rawVersionString);
             hc = hc * 43 + Objects.hashCode(mainClass);
             if (hc == 0)
                 hc = -1;
