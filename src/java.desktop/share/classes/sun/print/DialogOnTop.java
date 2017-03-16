@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,24 +23,42 @@
  * questions.
  */
 
-package com.apple.laf;
+package sun.print;
 
-import java.awt.*;
+import javax.print.attribute.Attribute;
+import javax.print.attribute.PrintRequestAttribute;
 
-import javax.swing.JComponent;
-import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicToolTipUI;
+/*
+ * An implementation class used to request the dialog be set always-on-top.
+ * It needs to be read and honoured by the dialog code which will use
+ * java.awt.Window.setAlwaysOnTop(true) in cases where it is supported.
+ */
+public class DialogOnTop implements PrintRequestAttribute {
 
-import com.apple.laf.AquaUtils.RecyclableSingletonFromDefaultConstructor;
+    private static final long serialVersionUID = -1901909867156076547L;
 
-public class AquaToolTipUI extends BasicToolTipUI {
-    private static final RecyclableSingletonFromDefaultConstructor<AquaToolTipUI> sharedAquaInstance = new RecyclableSingletonFromDefaultConstructor<AquaToolTipUI>(AquaToolTipUI.class);
+    long id;
 
-    public static ComponentUI createUI(final JComponent c) {
-        return sharedAquaInstance.get();
+    public DialogOnTop() {
     }
 
-    public AquaToolTipUI() {
-        super();
+    public DialogOnTop(long id) {
+        this.id = id;
+    }
+
+    public final Class<? extends Attribute> getCategory() {
+        return DialogOnTop.class;
+    }
+
+    public long getID() {
+        return id;
+    }
+
+    public final String getName() {
+        return "dialog-on-top";
+    }
+
+    public String toString() {
+       return "dialog-on-top";
     }
 }
