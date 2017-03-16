@@ -25,8 +25,6 @@
 
 package java.lang.module;
 
-import java.io.File;
-import java.io.FilePermission;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -146,9 +144,9 @@ public interface ModuleFinder {
      *
      * <p> If there is a security manager set then its {@link
      * SecurityManager#checkPermission(Permission) checkPermission} method is
-     * invoked to check that the caller has been granted {@link FilePermission}
-     * to recursively read the directory that is the value of the system
-     * property {@code java.home}. </p>
+     * invoked to check that the caller has been granted
+     * {@link RuntimePermission RuntimePermission("accessSystemModules")}
+     * to access the system modules. </p>
      *
      * @return A {@code ModuleFinder} that locates the system modules
      *
@@ -160,10 +158,11 @@ public interface ModuleFinder {
 
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
+            Permission p = new RuntimePermission("accessSystemModules");
+            sm.checkPermission(p);
+
             PrivilegedAction<String> pa = new GetPropertyAction("java.home");
             home = AccessController.doPrivileged(pa);
-            Permission p = new FilePermission(home + File.separator + "-", "read");
-            sm.checkPermission(p);
         } else {
             home = System.getProperty("java.home");
         }

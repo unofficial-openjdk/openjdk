@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,7 @@
 package java.lang;
 
 import java.security.*;
-import java.util.Enumeration;
-import java.util.Hashtable;
-import java.util.StringTokenizer;
+import java.lang.module.ModuleFinder;
 
 /**
  * This class is for runtime permissions. A {@code RuntimePermission}
@@ -369,6 +367,14 @@ import java.util.StringTokenizer;
  *   <td>See {@link java.lang.System.LoggerFinder java.lang.System.LoggerFinder}
  *   for more information.</td>
  * </tr>
+ *
+ * <tr>
+ *   <td>accessSystemModules</td>
+ *   <td>Access system modules in the runtime image.</td>
+ *   <td>This grants the permission to access resources in the
+ *   {@linkplain ModuleFinder#ofSystem system modules} in the runtime image.</td>
+ * </tr>
+ *
  * </table>
  *
  * @implNote
