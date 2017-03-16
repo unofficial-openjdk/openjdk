@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -159,6 +159,8 @@ private:
   HeapRegionSet _humongous_set;
 
   void eagerly_reclaim_humongous_regions();
+  // Start a new incremental collection set for the next pause.
+  void start_new_collection_set();
 
   // The number of regions we could create by expansion.
   uint _expansion_regions;
@@ -1129,9 +1131,7 @@ public:
 #endif
 
   // Return "TRUE" iff the given object address is within the collection
-  // set. Slow implementation.
-  bool obj_in_cs(oop obj);
-
+  // set. Assumes that the reference points into the heap.
   inline bool is_in_cset(const HeapRegion *hr);
   inline bool is_in_cset(oop obj);
 

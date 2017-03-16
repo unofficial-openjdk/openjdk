@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -699,9 +699,9 @@ bool G1CollectedHeap::alloc_archive_regions(MemRegion* ranges, size_t count) {
   // when mmap'ing archived heap data in, so pre-touching is wasted.
   FlagSetting fs(AlwaysPreTouch, false);
 
-  // Enable archive object checking in G1MarkSweep. We have to let it know
+  // Enable archive object checking used by G1MarkSweep. We have to let it know
   // about each archive range, so that objects in those ranges aren't marked.
-  G1MarkSweep::enable_archive_object_check();
+  G1ArchiveAllocator::enable_archive_object_check();
 
   // For each specified MemRegion range, allocate the corresponding G1
   // regions and mark them as archive regions. We expect the ranges in
@@ -773,7 +773,7 @@ bool G1CollectedHeap::alloc_archive_regions(MemRegion* ranges, size_t count) {
     }
 
     // Notify mark-sweep of the archive range.
-    G1MarkSweep::set_range_archive(curr_range, true);
+    G1ArchiveAllocator::set_range_archive(curr_range, true);
   }
   return true;
 }
@@ -924,7 +924,7 @@ void G1CollectedHeap::dealloc_archive_regions(MemRegion* ranges, size_t count) {
     }
 
     // Notify mark-sweep that this is no longer an archive range.
-    G1MarkSweep::set_range_archive(ranges[i], false);
+    G1ArchiveAllocator::set_range_archive(ranges[i], false);
   }
 
   if (uncommitted_regions != 0) {
@@ -1378,10 +1378,9 @@ bool G1CollectedHeap::do_full_collection(bool explicit_gc,
       }
       _verifier->check_bitmaps("Full GC End");
 
-      // Start a new incremental collection set for the next pause
-      collection_set()->start_incremental_building();
-
-      clear_cset_fast_test();
+      double start = os::elapsedTime();
+      start_new_collection_set();
+      g1_policy()->phase_times()->record_start_new_cset_time_ms((os::elapsedTime() - start) * 1000.0);
 
       _allocator->init_mutator_alloc_region();
 
@@ -2364,11 +2363,6 @@ bool G1CollectedHeap::is_in_exact(const void* p) const {
 }
 #endif
 
-bool G1CollectedHeap::obj_in_cs(oop obj) {
-  HeapRegion* r = _hrm.addr_to_region((HeapWord*) obj);
-  return r != NULL && r->in_collection_set();
-}
-
 // Iteration functions.
 
 // Applies an ExtendedOopClosure onto all references of objects within a HeapRegion.
@@ -2699,9 +2693,12 @@ G1CollectedHeap* G1CollectedHeap::heap() {
 void G1CollectedHeap::gc_prologue(bool full /* Ignored */) {
   // always_do_update_barrier = false;
   assert(InlineCacheBuffer::is_empty(), "should have cleaned up ICBuffer");
+
+  double start = os::elapsedTime();
   // Fill TLAB's and such
   accumulate_statistics_all_tlabs();
   ensure_parsability(true);
+  g1_policy()->phase_times()->record_prepare_tlab_time_ms((os::elapsedTime() - start) * 1000.0);
 
   g1_rem_set()->print_periodic_summary_info("Before GC RS summary", total_collections());
 }
@@ -2718,7 +2715,10 @@ void G1CollectedHeap::gc_epilogue(bool full) {
 #endif
   // always_do_update_barrier = true;
 
+  double start = os::elapsedTime();
   resize_all_tlabs();
+  g1_policy()->phase_times()->record_resize_tlab_time_ms((os::elapsedTime() - start) * 1000.0);
+
   allocation_context_stats().update(full);
 
   // We have just completed a GC. Update the soft reference
@@ -3001,6 +3001,15 @@ public:
   }
 };
 
+void G1CollectedHeap::start_new_collection_set() {
+  collection_set()->start_incremental_building();
+
+  clear_cset_fast_test();
+
+  guarantee(_eden.length() == 0, "eden should have been cleared");
+  g1_policy()->transfer_survivors_to_cset(survivor());
+}
+
 bool
 G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
   assert_at_safepoint(true /* should_be_vm_thread */);
@@ -3203,13 +3212,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         _survivor_evac_stats.adjust_desired_plab_sz();
         _old_evac_stats.adjust_desired_plab_sz();
 
-        // Start a new incremental collection set for the next pause.
-        collection_set()->start_incremental_building();
-
-        clear_cset_fast_test();
-
-        guarantee(_eden.length() == 0, "eden should have been cleared");
-        g1_policy()->transfer_survivors_to_cset(survivor());
+        start_new_collection_set();
 
         if (evacuation_failed()) {
           set_used(recalculate_used());
@@ -4527,7 +4530,9 @@ void G1CollectedHeap::post_evacuate_collection_set(EvacuationInfo& evacuation_in
 
   redirty_logged_cards();
 #if defined(COMPILER2) || INCLUDE_JVMCI
+  double start = os::elapsedTime();
   DerivedPointerTable::update_pointers();
+  g1_policy()->phase_times()->record_derived_pointer_table_update_time((os::elapsedTime() - start) * 1000.0);
 #endif
   g1_policy()->print_age_table();
 }
@@ -5274,8 +5279,6 @@ bool G1CollectedHeap::is_in_closed_subset(const void* p) const {
 HeapRegion* G1CollectedHeap::new_mutator_alloc_region(size_t word_size,
                                                       bool force) {
   assert_heap_locked_or_at_safepoint(true /* should_be_vm_thread */);
-  assert(!force || g1_policy()->can_expand_young_list(),
-         "if force is true we should be able to expand the young list");
   bool should_allocate = g1_policy()->should_allocate_mutator_region();
   if (force || should_allocate) {
     HeapRegion* new_alloc_region = new_region(word_size,
