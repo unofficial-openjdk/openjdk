@@ -974,8 +974,11 @@ public class Attr extends JCTree.Visitor {
 
             ClassSymbol owner = env.enclClass.sym;
             if ((owner.flags() & ANNOTATION) != 0 &&
-                    tree.params.nonEmpty())
-                log.error(tree.params.head.pos(),
+                    (tree.params.nonEmpty() ||
+                    tree.recvparam != null))
+                log.error(tree.params.nonEmpty() ?
+                        tree.params.head.pos() :
+                        tree.recvparam.pos(),
                         "intf.annotation.members.cant.have.params");
 
             // Attribute all value parameters.
@@ -3058,7 +3061,8 @@ public class Attr extends JCTree.Visitor {
 
         if (!returnType.hasTag(VOID) && !resType.hasTag(VOID)) {
             if (resType.isErroneous() ||
-                    new FunctionalReturnContext(checkContext).compatible(resType, returnType, types.noWarnings)) {
+                    new FunctionalReturnContext(checkContext).compatible(resType, returnType,
+                            checkContext.checkWarner(tree, resType, returnType))) {
                 incompatibleReturnType = null;
             }
         }
