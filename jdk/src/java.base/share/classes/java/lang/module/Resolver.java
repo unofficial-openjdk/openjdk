@@ -689,16 +689,30 @@ final class Resolver {
 
 
     /**
-     * Checks the readability graph to ensure that no two modules export the
-     * same package to a module. This includes the case where module M has
-     * a local package P and M reads another module that exports P to M.
-     * Also checks the uses/provides of module M to ensure that it reads a
-     * module that exports the package of the service type to M.
+     * Checks the readability graph to ensure that
+     * <ol>
+     *   <li><p> A module does not read two or more modules with the same name.
+     *   This includes the case where a module reads another another with the
+     *   same name as itself. </p></li>
+     *   <li><p> Two or more modules in the configuration don't export the same
+     *   package to a module that reads both. This includes the case where a
+     *   module {@code M} containing package {@code p} reads another module
+     *   that exports {@code p} to {@code M}. </p></li>
+     *   <li><p> A module {@code M} doesn't declare that it "{@code uses p.S}"
+     *   or "{@code provides p.S with ...}" but package {@code p} is neither
+     *   in module {@code M} nor exported to {@code M} by any module that
+     *   {@code M} reads. </p></li>
+     * </ol>
      */
     private void checkExportSuppliers(Map<ResolvedModule, Set<ResolvedModule>> graph) {
 
         for (Map.Entry<ResolvedModule, Set<ResolvedModule>> e : graph.entrySet()) {
             ModuleDescriptor descriptor1 = e.getKey().descriptor();
+            String name1 = descriptor1.name();
+
+            // the names of the modules that are read (including self)
+            Set<String> names = new HashSet<>();
+            names.add(name1);
 
             // the map of packages that are local or exported to descriptor1
             Map<String, ModuleDescriptor> packageToExporter = new HashMap<>();
@@ -714,9 +728,20 @@ final class Resolver {
             for (ResolvedModule endpoint : reads) {
                 ModuleDescriptor descriptor2 = endpoint.descriptor();
 
+                String name2 = descriptor2.name();
+                if (descriptor2 != descriptor1 && !names.add(name2)) {
+                    if (name2.equals(name1)) {
+                        resolveFail("Module %s reads another module named %s",
+                                    name1, name1);
+                    } else{
+                        resolveFail("Module %s reads more than one module named %s",
+                                     name1, name2);
+                    }
+                }
+
                 if (descriptor2.isAutomatic()) {
                     // automatic modules read self and export all packages
-                    if (descriptor2 != descriptor1){
+                    if (descriptor2 != descriptor1) {
                         for (String source : descriptor2.packages()) {
                             ModuleDescriptor supplier
                                 = packageToExporter.putIfAbsent(source, descriptor2);

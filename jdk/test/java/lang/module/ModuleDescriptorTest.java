@@ -989,29 +989,105 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.newModule("foo").version("");
     }
 
+
+    @DataProvider(name = "unparseableVersions")
+    public Object[][] unparseableVersions() {
+        return new Object[][]{
+
+                { null,  "A1" },    // no version < unparseable
+                { "A1",  "A2" },    // unparseable < unparseable
+                { "A1",  "1.0" },   // unparseable < parseable
+
+        };
+    }
+
     /**
-     * Basic test for unparseable module vesions
+     * Basic test for unparseable module versions
      */
-    public void testUnparseableVersions() {
+    @Test(dataProvider = "unparseableVersions")
+    public void testUnparseableModuleVersion(String vs1, String vs2) {
+        ModuleDescriptor descriptor1 = newModule("m", vs1);
+        ModuleDescriptor descriptor2 = newModule("m", vs2);
+
+        if (vs1 != null && !isParsableVersion(vs1)) {
+            assertFalse(descriptor1.version().isPresent());
+            assertTrue(descriptor1.rawVersion().isPresent());
+            assertEquals(descriptor1.rawVersion().get(), vs1);
+        }
+
+        if (vs2 != null && !isParsableVersion(vs2)) {
+            assertFalse(descriptor2.version().isPresent());
+            assertTrue(descriptor2.rawVersion().isPresent());
+            assertEquals(descriptor2.rawVersion().get(), vs2);
+        }
+
+        assertFalse(descriptor1.equals(descriptor2));
+        assertFalse(descriptor2.equals(descriptor1));
+        assertTrue(descriptor1.compareTo(descriptor2) == -1);
+        assertTrue(descriptor2.compareTo(descriptor1) == 1);
+    }
+
+    /**
+     * Basic test for requiring a module with an unparseable version recorded
+     * at compile version.
+     */
+    @Test(dataProvider = "unparseableVersions")
+    public void testUnparseableCompiledVersion(String vs1, String vs2) {
+        Requires r1 = newRequires("m", vs1);
+        Requires r2 = newRequires("m", vs2);
+
+        if (vs1 != null && !isParsableVersion(vs1)) {
+            assertFalse(r1.compiledVersion().isPresent());
+            assertTrue(r1.rawCompiledVersion().isPresent());
+            assertEquals(r1.rawCompiledVersion().get(), vs1);
+        }
+
+        if (vs2 != null && !isParsableVersion(vs2)) {
+            assertFalse(r2.compiledVersion().isPresent());
+            assertTrue(r2.rawCompiledVersion().isPresent());
+            assertEquals(r2.rawCompiledVersion().get(), vs2);
+        }
+
+        assertFalse(r1.equals(r2));
+        assertFalse(r2.equals(r1));
+        assertTrue(r1.compareTo(r2) == -1);
+        assertTrue(r2.compareTo(r1) == 1);
+    }
+
+    private ModuleDescriptor newModule(String name, String vs) {
         JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
-        Builder builder = JLMA.newModuleBuilder("m1", false, Set.of())
-                .version("A1")
-                .requires("java.base");
-        JLMA.requires(builder, Set.of(), "m2", "B2");
+        Builder builder = JLMA.newModuleBuilder(name, false, Set.of());
+        if (vs != null)
+            builder.version(vs);
+        builder.requires("java.base");
         ByteBuffer bb = ModuleInfoWriter.toByteBuffer(builder.build());
+        return ModuleDescriptor.read(bb);
+    }
 
-        ModuleDescriptor descriptor = ModuleDescriptor.read(bb);
-        assertFalse(descriptor.version().isPresent());
-        assertEquals(descriptor.rawVersion().orElse(null), "A1");
+    private Requires newRequires(String name, String vs) {
+        JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
+        Builder builder = JLMA.newModuleBuilder("foo", false, Set.of());
+        if (vs == null) {
+            builder.requires(name);
+        } else {
+            JLMA.requires(builder, Set.of(), name, vs);
+        }
+        Set<ModuleDescriptor.Requires> requires = builder.build().requires();
+        Iterator<ModuleDescriptor.Requires> iterator = requires.iterator();
+        ModuleDescriptor.Requires r = iterator.next();
+        if (r.name().equals("java.base")) {
+            r = iterator.next();
+        }
+        return r;
+    }
 
-        // requires m2
-        Optional<Requires> orequires = descriptor.requires().stream()
-                .filter(r -> r.name().equals("m2"))
-                .findAny();
-        assertTrue(orequires.isPresent());
-        Requires requires = orequires.get();
-        assertFalse(requires.compiledVersion().isPresent());
-        assertEquals(requires.rawCompiledVersion().orElse(null), "B2");
+    private boolean isParsableVersion(String vs) {
+        try {
+            Version.parse(vs);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
 

@@ -516,45 +516,47 @@ public final class ModuleBootstrap {
      * additional packages specified on the command-line.
      */
     private static void addExtraExportsAndOpens(Layer bootLayer) {
-        InternalUseReporter.Builder rb = new InternalUseReporter.Builder();
+        IllegalAccessLogger.Builder builder = new IllegalAccessLogger.Builder();
 
         // --add-exports
         String prefix = "jdk.module.addexports.";
         Map<String, List<String>> extraExports = decode(prefix);
         if (!extraExports.isEmpty()) {
-            addExtraExportsOrOpens(bootLayer, extraExports, false, rb);
+            addExtraExportsOrOpens(bootLayer, extraExports, false, builder);
         }
 
         // --add-opens
         prefix = "jdk.module.addopens.";
         Map<String, List<String>> extraOpens = decode(prefix);
         if (!extraOpens.isEmpty()) {
-            addExtraExportsOrOpens(bootLayer, extraOpens, true, rb);
+            addExtraExportsOrOpens(bootLayer, extraOpens, true, builder);
         }
 
-        // ---force-open-all-module-packages
-        if (getAndRemoveProperty("jdk.module.forceOpenAllModulePackages") != null) {
+        // --permit-illegal-access
+        if (getAndRemoveProperty("jdk.module.permitIllegalAccess") != null) {
+            warn("--permit-illegal-access will be removed in the next major release");
             bootLayer.modules().stream().forEach(m -> {
                 m.getDescriptor()
                  .packages()
                  .stream()
                  .filter(pn -> !m.isOpen(pn))
                  .forEach(pn -> {
-                    rb.addOpens(m, pn);
-                    Modules.addOpensToAll(m, pn);
+                     builder.logAccessToOpenPackage(m, pn, "--permit-illegal-access");
+                     Modules.addOpensToAllUnnamed(m, pn);
                  });
             });
         }
 
-        InternalUseReporter.setInternalUseReporter(rb.build());
+        IllegalAccessLogger.setIllegalAccessLogger(builder.build());
     }
 
     private static void addExtraExportsOrOpens(Layer bootLayer,
                                                Map<String, List<String>> map,
                                                boolean opens,
-                                               InternalUseReporter.Builder rb)
+                                               IllegalAccessLogger.Builder builder)
     {
         String option = opens ? ADD_OPENS : ADD_EXPORTS;
+        //warn(map.size() + " usage(s) of " + option);
         for (Map.Entry<String, List<String>> e : map.entrySet()) {
 
             // the key is $MODULE/$PACKAGE
@@ -600,10 +602,10 @@ public final class ModuleBootstrap {
                 }
                 if (allUnnamed) {
                     if (opens) {
-                        rb.addOpens(m, pn);
+                        builder.logAccessToOpenPackage(m, pn, option);
                         Modules.addOpensToAllUnnamed(m, pn);
                     } else {
-                        rb.addExports(m, pn);
+                        builder.logAccessToExportedPackage(m, pn, option);
                         Modules.addExportsToAllUnnamed(m, pn);
                     }
                 } else {

@@ -444,70 +444,6 @@ public class ConfigurationTest {
 
 
     /**
-     * Basic test of "requires transitive" with configurations.
-     *
-     * The test consists of three configurations:
-     * - Configuration cf1: m1, m2 requires transitive m1
-     * - Configuration cf2: m1, m3 requires transitive m1
-     * - Configuration cf3(cf1,cf2): m4 requires m2, m3
-     */
-    public void testRequiresTransitive6() {
-        ModuleDescriptor descriptor1 = newBuilder("m1")
-                .build();
-
-        ModuleDescriptor descriptor2 = newBuilder("m2")
-                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
-                .build();
-
-        ModuleDescriptor descriptor3 = newBuilder("m3")
-                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
-                .build();
-
-        ModuleDescriptor descriptor4 = newBuilder("m4")
-                .requires("m2")
-                .requires("m3")
-                .build();
-
-        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
-        Configuration cf1 = resolve(finder1, "m2");
-        assertTrue(cf1.modules().size() == 2);
-        assertTrue(cf1.findModule("m1").isPresent());
-        assertTrue(cf1.findModule("m2").isPresent());
-        assertTrue(cf1.parents().size() == 1);
-        assertTrue(cf1.parents().get(0) == Configuration.empty());
-
-        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor1, descriptor3);
-        Configuration cf2 = resolve(finder2, "m3");
-        assertTrue(cf2.modules().size() == 2);
-        assertTrue(cf2.findModule("m3").isPresent());
-        assertTrue(cf2.findModule("m1").isPresent());
-        assertTrue(cf2.parents().size() == 1);
-        assertTrue(cf2.parents().get(0) == Configuration.empty());
-
-        ModuleFinder finder3 = ModuleUtils.finderOf(descriptor4);
-        Configuration cf3 = Configuration.resolve(finder3,
-                List.of(cf1, cf2),
-                ModuleFinder.of(),
-                Set.of("m4"));
-        assertTrue(cf3.modules().size() == 1);
-        assertTrue(cf3.findModule("m4").isPresent());
-
-        ResolvedModule m1_l = cf1.findModule("m1").get();
-        ResolvedModule m1_r = cf2.findModule("m1").get();
-        ResolvedModule m2 = cf1.findModule("m2").get();
-        ResolvedModule m3 = cf2.findModule("m3").get();
-        ResolvedModule m4 = cf3.findModule("m4").get();
-        assertTrue(m4.configuration() == cf3);
-
-        assertTrue(m4.reads().size() == 4);
-        assertTrue(m4.reads().contains(m1_l));
-        assertTrue(m4.reads().contains(m1_r));
-        assertTrue(m4.reads().contains(m2));
-        assertTrue(m4.reads().contains(m3));
-    }
-
-
-    /**
      * Basic test of "requires static":
      *     m1 requires static m2
      *     m2 is not observable
@@ -1605,6 +1541,76 @@ public class ConfigurationTest {
 
         // should throw ResolutionException because of the m2 <--> m3 cycle
         resolveAndBind(finder, "m1");
+    }
+
+
+    /**
+     * Basic test to detect reading a module with the same name as itself
+     *
+     * The test consists of three configurations:
+     * - Configuration cf1: m1, m2 requires transitive m1
+     * - Configuration cf2: m1 requires m2
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testReadModuleWithSameNameAsSelf() {
+        ModuleDescriptor descriptor1_v1 = newBuilder("m1")
+                .build();
+
+        ModuleDescriptor descriptor2 = newBuilder("m2")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
+                .build();
+
+        ModuleDescriptor descriptor1_v2 = newBuilder("m1")
+                .requires("m2")
+                .build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1_v1, descriptor2);
+        Configuration cf1 = resolve(finder1, "m2");
+        assertTrue(cf1.modules().size() == 2);
+
+        // resolve should throw ResolutionException
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor1_v2);
+        resolve(cf1, finder2, "m1");
+    }
+
+
+    /**
+     * Basic test to detect reading two modules with the same name
+     *
+     * The test consists of three configurations:
+     * - Configuration cf1: m1, m2 requires transitive m1
+     * - Configuration cf2: m1, m3 requires transitive m1
+     * - Configuration cf3(cf1,cf2): m4 requires m2, m3
+     */
+    @Test(expectedExceptions = { ResolutionException.class })
+    public void testReadTwoModuleWithSameName() {
+        ModuleDescriptor descriptor1 = newBuilder("m1")
+                .build();
+
+        ModuleDescriptor descriptor2 = newBuilder("m2")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
+                .build();
+
+        ModuleDescriptor descriptor3 = newBuilder("m3")
+                .requires(Set.of(Requires.Modifier.TRANSITIVE), "m1")
+                .build();
+
+        ModuleDescriptor descriptor4 = newBuilder("m4")
+                .requires("m2")
+                .requires("m3")
+                .build();
+
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+        Configuration cf1 = resolve(finder1, "m2");
+        assertTrue(cf1.modules().size() == 2);
+
+        ModuleFinder finder2 = ModuleUtils.finderOf(descriptor1, descriptor3);
+        Configuration cf2 = resolve(finder2, "m3");
+        assertTrue(cf1.modules().size() == 2);
+
+        // should throw ResolutionException as m4 will read modules named "m1".
+        ModuleFinder finder3 = ModuleUtils.finderOf(descriptor4);
+        Configuration.resolve(finder3, List.of(cf1, cf2), ModuleFinder.of(), Set.of("m4"));
     }
 
 

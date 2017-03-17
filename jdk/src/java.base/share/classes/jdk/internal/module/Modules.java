@@ -86,6 +86,13 @@ public class Modules {
     }
 
     /**
+     * Update module m to export a package to all modules.
+     */
+    public static void addExports(Module m, String pn) {
+        JLRMA.addExports(m, pn);
+    }
+
+    /**
      * Updates module m1 to export a package to module m2.
      * Same as m1.addExports(pn, m2) but without a caller check.
      */
@@ -99,20 +106,6 @@ public class Modules {
      */
     public static void addOpens(Module m1, String pn, Module m2) {
         JLRMA.addOpens(m1, pn, m2);
-    }
-
-    /**
-     * Updates a module m to export a package to all modules.
-     */
-    public static void addExportsToAll(Module m, String pn) {
-        JLRMA.addExportsToAll(m, pn);
-    }
-
-    /**
-     * Updates a module m to open a package to all modules.
-     */
-    public static void addOpensToAll(Module m, String pn) {
-        JLRMA.addOpensToAll(m, pn);
     }
 
     /**
@@ -130,7 +123,8 @@ public class Modules {
     }
 
     /**
-     * Updates module m to use a service
+     * Updates module m to use a service.
+     * Same as m2.addUses(service) but without a caller check.
      */
     public static void addUses(Module m, Class<?> service) {
         JLRMA.addUses(m, service);
@@ -161,16 +155,6 @@ public class Modules {
                     .getServicesCatalog(layer)
                     .addProvider(m, service, impl);
         }
-    }
-
-    /**
-     * Adds a package to a module's content.
-     *
-     * This method is a no-op if the module already contains the package or the
-     * module is an unnamed module.
-     */
-    public static void addPackage(Module m, String pn) {
-        JLRMA.addPackage(m, pn);
     }
 
     /**
