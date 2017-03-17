@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,4 +23,22 @@
  * questions.
  */
 
-// key: compiler.err.module-info.with.patched.module.classoutput
+/*
+ * @test
+ * @bug 8176265
+ * @summary Method overload resolution on a covariant base type doesn't work in 9
+ * @compile T8176265.java
+ */
+
+class T8176265<T> {
+    static class Sup<E> { }
+    static class Sub<E> extends Sup<E> { }
+
+    void method(Sup<? super T> f) { }
+    void method(Sub<? super T> f) { }
+
+
+    static <Z> void m(T8176265<? extends Z> test, Sub<Z> sz) {
+        test.method(sz);
+    }
+}

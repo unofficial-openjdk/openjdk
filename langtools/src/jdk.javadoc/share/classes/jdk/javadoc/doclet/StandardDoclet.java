@@ -23,16 +23,13 @@
  * questions.
  */
 
-package jdk.javadoc.doclets;
+package jdk.javadoc.doclet;
 
 import java.util.Locale;
 import java.util.Set;
 
 import javax.lang.model.SourceVersion;
 
-import jdk.javadoc.doclet.Doclet;
-import jdk.javadoc.doclet.DocletEnvironment;
-import jdk.javadoc.doclet.Reporter;
 import jdk.javadoc.internal.doclets.formats.html.HtmlDoclet;
 
 /**
