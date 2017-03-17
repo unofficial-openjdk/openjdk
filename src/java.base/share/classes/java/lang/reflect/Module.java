@@ -943,15 +943,6 @@ public final class Module implements AnnotatedElement {
     }
 
     /**
-     * Add a package to this module.
-     *
-     * @apiNote This method is for Proxy use.
-     */
-    void addPackage(String pn) {
-        implAddPackage(pn, true);
-    }
-
-    /**
      * Add a package to this module without notifying the VM.
      *
      * @apiNote This method is VM white-box testing.
