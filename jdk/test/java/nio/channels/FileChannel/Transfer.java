@@ -24,11 +24,12 @@
 /* @test
  * @bug 4434723 4482726 4559072 4638365 4795550 5081340 5103988 6253145
  *   6984545
+ * @key intermittent
  * @summary Test FileChannel.transferFrom and transferTo (use -Dseed=X to set PRNG seed)
  * @library ..
  * @library /lib/testlibrary/
  * @build jdk.testlibrary.*
- * @run testng Transfer
+ * @run testng/timeout=300 Transfer
  * @key randomness
  */
 
@@ -255,7 +256,13 @@ public class Transfer {
         initTestFile(source, 10);
         RandomAccessFile raf = new RandomAccessFile(source, "rw");
         FileChannel fc = raf.getChannel();
+        out.println("  Writing large file...");
+        long t0 = System.nanoTime();
         fc.write(ByteBuffer.wrap("Use the source!".getBytes()), testSize - 40);
+        long t1 = System.nanoTime();
+        out.printf("  Wrote large file in %d ns (%d ms) %n",
+            t1 - t0, TimeUnit.NANOSECONDS.toMillis(t1 - t0));
+
         fc.close();
         raf.close();
 
@@ -309,8 +316,13 @@ public class Transfer {
 
         long testSize = ((long)Integer.MAX_VALUE) * 2;
         try {
+            out.println("  Writing large file...");
+            long t0 = System.nanoTime();
             fc.write(ByteBuffer.wrap("Use the source!".getBytes()),
                      testSize - 40);
+            long t1 = System.nanoTime();
+            out.printf("  Wrote large file in %d ns (%d ms) %n",
+            t1 - t0, TimeUnit.NANOSECONDS.toMillis(t1 - t0));
         } catch (IOException e) {
             // Can't set up the test, abort it
             err.println("xferTest05 was aborted.");
@@ -443,12 +455,12 @@ public class Transfer {
         RandomAccessFile raf = new RandomAccessFile(file, "rw");
         FileChannel fc = raf.getChannel();
 
-        out.println("  Creating large file...");
+        out.println("  Writing large file...");
         long t0 = System.nanoTime();
         try {
             fc.write(ByteBuffer.wrap("0123456789012345".getBytes("UTF-8")), 6*G);
             long t1 = System.nanoTime();
-            out.printf("  Created large file in %d ns (%d ms) %n",
+            out.printf("  Wrote large file in %d ns (%d ms) %n",
             t1 - t0, TimeUnit.NANOSECONDS.toMillis(t1 - t0));
         } catch (IOException x) {
             err.println("  Unable to create test file:" + x);
