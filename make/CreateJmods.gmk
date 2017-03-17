@@ -138,7 +138,7 @@ $(JMODS_DIR)/$(MODULE).jmod: $(DEPS)
             --os-name '$(REQUIRED_OS_NAME)' \
             --os-arch '$(REQUIRED_OS_ARCH)' \
             --module-path $(JMODS_DIR) \
-	    --exclude '**{_the.*,*.diz,*.debuginfo,*.dSYM/**,*.dSYM,*.pdb,*.map}' \
+	    --exclude '**{_the.*,_*.marker,*.diz,*.debuginfo,*.dSYM/**,*.dSYM,*.pdb,*.map}' \
 	    $(JMOD_FLAGS) $(JMODS_TEMPDIR)/$(notdir $@)
 	$(MV) $(JMODS_TEMPDIR)/$(notdir $@) $@
 
