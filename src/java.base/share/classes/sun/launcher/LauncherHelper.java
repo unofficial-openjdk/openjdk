@@ -85,6 +85,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jdk.internal.misc.VM;
+import jdk.internal.module.IllegalAccessLogger;
 import jdk.internal.module.Modules;
 
 
@@ -461,22 +462,35 @@ public final class LauncherHelper {
      * {@code <module>/<package> ( <module>/<package>)*}.
      */
     static void addExportsOrOpens(String value, boolean open) {
+        IllegalAccessLogger.Builder builder;
+        IllegalAccessLogger logger = IllegalAccessLogger.illegalAccessLogger();
+        if (logger == null) {
+            builder = new IllegalAccessLogger.Builder();
+        } else {
+            builder = logger.toBuilder();
+        }
+
         for (String moduleAndPackage : value.split(" ")) {
             String[] s = moduleAndPackage.trim().split("/");
             if (s.length == 2) {
                 String mn = s[0];
                 String pn = s[1];
+
                 Layer.boot().findModule(mn).ifPresent(m -> {
                     if (m.getDescriptor().packages().contains(pn)) {
                         if (open) {
+                            builder.logAccessToOpenPackage(m, pn, ADD_OPENS);
                             Modules.addOpensToAllUnnamed(m, pn);
                         } else {
+                            builder.logAccessToExportedPackage(m, pn, ADD_EXPORTS);
                             Modules.addExportsToAllUnnamed(m, pn);
                         }
                     }
                 });
             }
         }
+
+        IllegalAccessLogger.setIllegalAccessLogger(builder.build());
     }
 
     // From src/share/bin/java.c:

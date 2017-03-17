@@ -31,7 +31,6 @@ import java.lang.reflect.Module;
 import java.net.URI;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.Set;
 
 import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.ClassLoaders;
@@ -72,25 +71,7 @@ public class Modules {
     }
 
     /**
-     * Define a new module to the VM. The module has the given set of
-     * packages and is defined to the given class loader.
-     *
-     * The resulting Module is in a larval state in that it does not not read
-     * any other module and does not have any exports.
-     */
-    public static Module defineModule(ClassLoader loader,
-                                      String name,
-                                      Set<String> packages)
-    {
-        ModuleDescriptor descriptor = ModuleDescriptor.newModule(name)
-                .packages(packages)
-                .build();
-
-        return JLRMA.defineModule(loader, descriptor, null);
-    }
-
-    /**
-     * Adds a read-edge so that module {@code m1} reads module {@code m1}.
+     * Updates {@code m1} to read {@code m1}.
      * Same as m1.addReads(m2) but without a caller check.
      */
     public static void addReads(Module m1, Module m2) {
@@ -102,6 +83,13 @@ public class Modules {
      */
     public static void addReadsAllUnnamed(Module m) {
         JLRMA.addReadsAllUnnamed(m);
+    }
+
+    /**
+     * Update module m to export a package to all modules.
+     */
+    public static void addExports(Module m, String pn) {
+        JLRMA.addExports(m, pn);
     }
 
     /**
@@ -121,20 +109,6 @@ public class Modules {
     }
 
     /**
-     * Updates a module m to export a package to all modules.
-     */
-    public static void addExportsToAll(Module m, String pn) {
-        JLRMA.addExportsToAll(m, pn);
-    }
-
-    /**
-     * Updates a module m to open a package to all modules.
-     */
-    public static void addOpensToAll(Module m, String pn) {
-        JLRMA.addOpensToAll(m, pn);
-    }
-
-    /**
      * Updates module m to export a package to all unnamed modules.
      */
     public static void addExportsToAllUnnamed(Module m, String pn) {
@@ -149,7 +123,8 @@ public class Modules {
     }
 
     /**
-     * Updates module m to use a service
+     * Updates module m to use a service.
+     * Same as m2.addUses(service) but without a caller check.
      */
     public static void addUses(Module m, Class<?> service) {
         JLRMA.addUses(m, service);
@@ -180,16 +155,6 @@ public class Modules {
                     .getServicesCatalog(layer)
                     .addProvider(m, service, impl);
         }
-    }
-
-    /**
-     * Adds a package to a module's content.
-     *
-     * This method is a no-op if the module already contains the package or the
-     * module is an unnamed module.
-     */
-    public static void addPackage(Module m, String pn) {
-        JLRMA.addPackage(m, pn);
     }
 
     /**

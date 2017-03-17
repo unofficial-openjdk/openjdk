@@ -28,9 +28,12 @@ package java.lang.reflect;
 import java.lang.annotation.Annotation;
 import java.security.AccessController;
 
+import jdk.internal.misc.VM;
+import jdk.internal.module.IllegalAccessLogger;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.ReflectionFactory;
+import sun.security.action.GetPropertyAction;
 
 /**
  * The {@code AccessibleObject} class is the base class for {@code Field},
@@ -288,27 +291,20 @@ public class AccessibleObject implements AnnotatedElement {
         if (callerModule == Object.class.getModule()) return true;
         if (!declaringModule.isNamed()) return true;
 
-        // package is open to caller
-        String pn = packageName(declaringClass);
-        if (declaringModule.isOpen(pn, callerModule)) {
-            dumpStackIfOpenedReflectively(declaringModule, pn, callerModule);
-            return true;
-        }
-
-        // package is exported to caller
-        boolean isExported = declaringModule.isExported(pn, callerModule);
-        boolean isClassPublic = Modifier.isPublic(declaringClass.getModifiers());
+        String pn = declaringClass.getPackageName();
         int modifiers;
         if (this instanceof Executable) {
             modifiers = ((Executable) this).getModifiers();
         } else {
             modifiers = ((Field) this).getModifiers();
         }
-        if (isExported && isClassPublic) {
 
+        // class is public and package is exported to caller
+        boolean isClassPublic = Modifier.isPublic(declaringClass.getModifiers());
+        if (isClassPublic && declaringModule.isExported(pn, callerModule)) {
             // member is public
             if (Modifier.isPublic(modifiers)) {
-                dumpStackIfExportedReflectively(declaringModule, pn, callerModule);
+                logIfExportedByBackdoor(caller, declaringClass);
                 return true;
             }
 
@@ -316,9 +312,15 @@ public class AccessibleObject implements AnnotatedElement {
             if (Modifier.isProtected(modifiers)
                 && Modifier.isStatic(modifiers)
                 && isSubclassOf(caller, declaringClass)) {
-                dumpStackIfExportedReflectively(declaringModule, pn, callerModule);
+                logIfExportedByBackdoor(caller, declaringClass);
                 return true;
             }
+        }
+
+        // package is open to caller
+        if (declaringModule.isOpen(pn, callerModule)) {
+            logIfOpenByBackdoor(caller, declaringClass);
+            return true;
         }
 
         if (throwExceptionIfDenied) {
@@ -333,7 +335,7 @@ public class AccessibleObject implements AnnotatedElement {
                 msg += "opens";
             msg += " " + pn + "\" to " + callerModule;
             InaccessibleObjectException e = new InaccessibleObjectException(msg);
-            if (Reflection.printStackTraceWhenAccessFails()) {
+            if (printStackTraceWhenAccessFails()) {
                 e.printStackTrace(System.err);
             }
             throw e;
@@ -351,48 +353,35 @@ public class AccessibleObject implements AnnotatedElement {
         return false;
     }
 
-    private void dumpStackIfOpenedReflectively(Module module,
-                                               String pn,
-                                               Module other) {
-        dumpStackIfExposedReflectively(module, pn, other, true);
+    private void logIfOpenByBackdoor(Class<?> caller, Class<?> declaringClass) {
+        Module callerModule = caller.getModule();
+        Module targetModule = declaringClass.getModule();
+        // callerModule is null during early startup
+        if (callerModule != null && !callerModule.isNamed() && targetModule.isNamed()) {
+            IllegalAccessLogger logger = IllegalAccessLogger.illegalAccessLogger();
+            if (logger != null) {
+                logger.logIfOpenByBackdoor(caller, declaringClass, this::toShortString);
+            }
+        }
     }
 
-    private void dumpStackIfExportedReflectively(Module module,
-                                                 String pn,
-                                                 Module other) {
-        dumpStackIfExposedReflectively(module, pn, other, false);
-    }
-
-    private void dumpStackIfExposedReflectively(Module module,
-                                                String pn,
-                                                Module other,
-                                                boolean open)
-    {
-        if (Reflection.printStackTraceWhenAccessSucceeds()
-                && !module.isStaticallyExportedOrOpen(pn, other, open))
-        {
-            String msg = other + " allowed to invoke setAccessible on ";
-            if (this instanceof Field)
-                msg += "field ";
-            msg += this;
-            new Exception(msg) {
-                private static final long serialVersionUID = 42L;
-                public String toString() {
-                    return "WARNING: " + getMessage();
-                }
-            }.printStackTrace(System.err);
+    private void logIfExportedByBackdoor(Class<?> caller, Class<?> declaringClass) {
+        Module callerModule = caller.getModule();
+        Module targetModule = declaringClass.getModule();
+        // callerModule is null during early startup
+        if (callerModule != null && !callerModule.isNamed() && targetModule.isNamed()) {
+            IllegalAccessLogger logger = IllegalAccessLogger.illegalAccessLogger();
+            if (logger != null) {
+                logger.logIfExportedByBackdoor(caller, declaringClass, this::toShortString);
+            }
         }
     }
 
     /**
-     * Returns the package name of the given class.
+     * Returns a short descriptive string to describe this object in log messages.
      */
-    private static String packageName(Class<?> c) {
-        while (c.isArray()) {
-            c = c.getComponentType();
-        }
-        String pn = c.getPackageName();
-        return (pn != null) ? pn : "";
+    String toShortString() {
+        return toString();
     }
 
     /**
@@ -409,6 +398,7 @@ public class AccessibleObject implements AnnotatedElement {
      * it should use {@link #canAccess(Object)}.
      *
      * @revised 9
+     * @spec JPMS
      */
     @Deprecated(since="9")
     public boolean isAccessible() {
@@ -629,7 +619,20 @@ public class AccessibleObject implements AnnotatedElement {
                                Class<?> targetClass, int modifiers)
         throws IllegalAccessException
     {
-        Reflection.ensureMemberAccess(caller, memberClass, targetClass, modifiers);
+        if (Reflection.verifyMemberAccess(caller, memberClass, targetClass, modifiers)) {
+            // access okay
+            logIfExportedByBackdoor(caller, memberClass);
+        } else {
+            // access denied
+            IllegalAccessException e = Reflection.newIllegalAccessException(caller,
+                                                                            memberClass,
+                                                                            targetClass,
+                                                                            modifiers);
+            if (printStackTraceWhenAccessFails()) {
+                e.printStackTrace(System.err);
+            }
+            throw e;
+        }
 
         // Success: Update the cache.
         Object cache = (targetClass != null
@@ -643,5 +646,26 @@ public class AccessibleObject implements AnnotatedElement {
         // guarantees that the initializing stores for the cache
         // elements will occur before the volatile write.
         securityCheckCache = cache;         // write volatile
+    }
+
+    // true to print a stack trace when access fails
+    private static volatile boolean printStackWhenAccessFails;
+
+    // true if printStack* values are initialized
+    private static volatile boolean printStackPropertiesSet;
+
+    /**
+     * Returns true if a stack trace should be printed when access fails.
+     */
+    private static boolean printStackTraceWhenAccessFails() {
+        if (!printStackPropertiesSet && VM.initLevel() >= 1) {
+            String s = GetPropertyAction.privilegedGetProperty(
+                    "sun.reflect.debugModuleAccessChecks");
+            if (s != null) {
+                printStackWhenAccessFails = !s.equalsIgnoreCase("false");
+            }
+            printStackPropertiesSet = true;
+        }
+        return printStackWhenAccessFails;
     }
 }

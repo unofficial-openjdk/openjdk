@@ -31,9 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import jdk.internal.HotSpotIntrinsicCandidate;
-import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.VM;
-import sun.security.action.GetPropertyAction;
 
 /** Common utility routines used by both java.lang and
     java.lang.reflect */
@@ -104,12 +102,8 @@ public class Reflection {
                                           int modifiers)
         throws IllegalAccessException
     {
-        if (currentClass == null || memberClass == null) {
-            throw new InternalError();
-        }
-
         if (!verifyMemberAccess(currentClass, memberClass, targetClass, modifiers)) {
-            throwIllegalAccessException(currentClass, memberClass, targetClass, modifiers);
+            throw newIllegalAccessException(currentClass, memberClass, targetClass, modifiers);
         }
     }
 
@@ -199,28 +193,18 @@ public class Reflection {
      * Returns {@code true} if memberClass's's module exports memberClass's
      * package to currentClass's module.
      */
-    public static boolean verifyModuleAccess(Class<?> currentClass,
-                                             Class<?> memberClass) {
+    public static boolean verifyModuleAccess(Class<?> currentClass, Class<?> memberClass) {
         return verifyModuleAccess(currentClass.getModule(), memberClass);
     }
 
     public static boolean verifyModuleAccess(Module currentModule, Class<?> memberClass) {
         Module memberModule = memberClass.getModule();
-
-        // module may be null during startup (initLevel 0)
-        if (currentModule == memberModule)
-           return true;  // same module (named or unnamed)
-
-        String pkg = memberClass.getPackageName();
-        boolean allowed = memberModule.isExported(pkg, currentModule);
-        if (allowed && memberModule.isNamed() && printStackTraceWhenAccessSucceeds()) {
-            if (!SharedSecrets.getJavaLangReflectModuleAccess()
-                    .isStaticallyExported(memberModule, pkg, currentModule)) {
-                String msg = currentModule + " allowed access to member of " + memberClass;
-                new Exception(msg).printStackTrace(System.err);
-            }
+        if (currentModule == memberModule) {
+            return true;  // same module (named or unnamed)
+        } else {
+            String pkg = memberClass.getPackageName();
+            return memberModule.isExported(pkg, currentModule);
         }
-        return allowed;
     }
 
     /**
@@ -344,46 +328,14 @@ public class Reflection {
         return false;
     }
 
-
-    // true to print a stack trace when access fails
-    private static volatile boolean printStackWhenAccessFails;
-
-    // true to print a stack trace when access succeeds
-    private static volatile boolean printStackWhenAccessSucceeds;
-
-    // true if printStack* values are initialized
-    private static volatile boolean printStackPropertiesSet;
-
-    private static void ensurePrintStackPropertiesSet() {
-        if (!printStackPropertiesSet && VM.initLevel() >= 1) {
-            String s = GetPropertyAction.privilegedGetProperty(
-                    "sun.reflect.debugModuleAccessChecks");
-            if (s != null) {
-                printStackWhenAccessFails = !s.equalsIgnoreCase("false");
-                printStackWhenAccessSucceeds = s.equalsIgnoreCase("access");
-            }
-            printStackPropertiesSet = true;
-        }
-    }
-
-    public static boolean printStackTraceWhenAccessFails() {
-        ensurePrintStackPropertiesSet();
-        return printStackWhenAccessFails;
-    }
-
-    public static boolean printStackTraceWhenAccessSucceeds() {
-        ensurePrintStackPropertiesSet();
-        return printStackWhenAccessSucceeds;
-    }
-
     /**
-     * Throws IllegalAccessException with the an exception message based on
+     * Returns an IllegalAccessException with an exception message based on
      * the access that is denied.
      */
-    private static void throwIllegalAccessException(Class<?> currentClass,
-                                                    Class<?> memberClass,
-                                                    Object target,
-                                                    int modifiers)
+    public static IllegalAccessException newIllegalAccessException(Class<?> currentClass,
+                                                   Class<?> memberClass,
+                                                   Object target,
+                                                   int modifiers)
         throws IllegalAccessException
     {
         String currentSuffix = "";
@@ -411,20 +363,6 @@ public class Reflection {
             if (m2.isNamed()) msg += " to " + m1;
         }
 
-        throwIllegalAccessException(msg);
-    }
-
-    /**
-     * Throws IllegalAccessException with the given exception message.
-     */
-    public static void throwIllegalAccessException(String msg)
-        throws IllegalAccessException
-    {
-        IllegalAccessException e = new IllegalAccessException(msg);
-        ensurePrintStackPropertiesSet();
-        if (printStackWhenAccessFails) {
-            e.printStackTrace(System.err);
-        }
-        throw e;
+        return new IllegalAccessException(msg);
     }
 }

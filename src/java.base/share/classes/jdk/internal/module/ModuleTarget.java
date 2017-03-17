@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -21,8 +23,24 @@
  * questions.
  */
 
-grant {
-    permission java.lang.RuntimePermission "getClassLoader";
-    permission java.lang.RuntimePermission "accessSystemModules";
-    permission java.io.FilePermission "${java.home}/modules/-", "read";    // exploded build
-};
+package jdk.internal.module;
+
+public final class ModuleTarget {
+
+    private final String osName;
+    private final String osArch;
+
+    public ModuleTarget(String osName, String osArch) {
+        this.osName = osName;
+        this.osArch = osArch;
+    }
+
+    public String osName() {
+        return osName;
+    }
+
+    public String osArch() {
+        return osArch;
+    }
+
+}

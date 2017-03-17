@@ -66,6 +66,11 @@ public interface JavaLangReflectModuleAccess {
     void addReadsAllUnnamed(Module m);
 
     /**
+     * Update module m to export a package to all modules.
+     */
+    void addExports(Module m, String pn);
+
+    /**
      * Updates module m1 to export a package to module m2. The export does
      * not result in a strong reference to m2 (m2 can be GC'ed).
      */
@@ -76,16 +81,6 @@ public interface JavaLangReflectModuleAccess {
      * package does not result in a strong reference to m2 (m2 can be GC'ed).
      */
     void addOpens(Module m1, String pkg, Module m2);
-
-    /**
-     * Updates a module m to export a package to all modules.
-     */
-    void addExportsToAll(Module m, String pkg);
-
-    /**
-     * Updates a module m to open a package to all modules.
-     */
-    void addOpensToAll(Module m, String pkg);
 
     /**
      * Updates a module m to export a package to all unnamed modules.
@@ -103,11 +98,6 @@ public interface JavaLangReflectModuleAccess {
     void addUses(Module m, Class<?> service);
 
     /**
-     * Add a package to the given module.
-     */
-    void addPackage(Module m, String pkg);
-
-    /**
      * Returns the ServicesCatalog for the given Layer.
      */
     ServicesCatalog getServicesCatalog(Layer layer);
@@ -123,12 +113,4 @@ public interface JavaLangReflectModuleAccess {
      * given class loader.
      */
     Stream<Layer> layers(ClassLoader loader);
-
-    /**
-     * Tests if a module exports a package at least {@code other} via its
-     * module declaration.
-     *
-     * @apiNote This is a temporary method for debugging features.
-     */
-    boolean isStaticallyExported(Module module, String pn, Module other);
 }
