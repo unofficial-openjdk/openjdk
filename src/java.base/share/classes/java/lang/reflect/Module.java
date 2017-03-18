@@ -902,9 +902,7 @@ public final class Module implements AnnotatedElement {
      * Returns an array of the package names of the packages in this module.
      *
      * <p> For named modules, the returned array contains an element for each
-     * package in the module. It may contain elements corresponding to packages
-     * added to the module, <a href="Proxy.html#dynamicmodule">dynamic modules</a>
-     * for example, after it was loaded.
+     * package in the module. </p>
      *
      * <p> For unnamed modules, this method is the equivalent to invoking the
      * {@link ClassLoader#getDefinedPackages() getDefinedPackages} method of
