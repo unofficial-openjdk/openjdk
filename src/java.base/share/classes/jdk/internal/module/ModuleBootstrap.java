@@ -52,7 +52,6 @@ import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.perf.PerfCounter;
-import jdk.internal.reflect.Reflection;
 
 /**
  * Initializes/boots the module system.
@@ -698,10 +697,6 @@ public final class ModuleBootstrap {
         for (ResolvedModule rm : cf.modules()) {
             ModuleReference mref = rm.reference();
             String mn = mref.descriptor().name();
-
-            // emit warning if module name has identifier that ends with digit
-            if (Checks.hasJavaIdentifierWithTrailingDigit(mn))
-                warn("Module name \"" + mn + "\" may soon be illegal");
 
             // emit warning if the WARN_INCUBATING module resolution bit set
             if (ModuleResolution.hasIncubatingWarning(mref)) {
