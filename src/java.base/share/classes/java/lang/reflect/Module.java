@@ -1555,12 +1555,16 @@ public final class Module implements AnnotatedElement {
                     m.implAddExportsOrOpens(pn, other, false, true);
                 }
                 @Override
-                public void addOpens(Module m, String pn, Module other) {
-                    m.implAddExportsOrOpens(pn, other, true, true);
-                }
-                @Override
                 public void addExportsToAllUnnamed(Module m, String pn) {
                     m.implAddExportsOrOpens(pn, Module.ALL_UNNAMED_MODULE, false, true);
+                }
+                @Override
+                public void addOpens(Module m, String pn) {
+                    m.implAddExportsOrOpens(pn, Module.EVERYONE_MODULE, true, true);
+                }
+                @Override
+                public void addOpens(Module m, String pn, Module other) {
+                    m.implAddExportsOrOpens(pn, other, true, true);
                 }
                 @Override
                 public void addOpensToAllUnnamed(Module m, String pn) {

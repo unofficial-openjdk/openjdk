@@ -38,10 +38,10 @@ import jdk.internal.misc.JavaLangReflectModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 
 /**
- * A helper class to allow JDK classes create dynamic modules and to update
- * modules, exports and the readability graph. It is also invoked by the VM
- * to add read edges when agents are instrumenting code that need to link
- * to supporting classes.
+ * A helper class for creating and updating modules. This class is intended to
+ * support command-line options, tests, and the instrumentation API. It is also
+ * used by the VM to add read edges when agents are instrumenting code that
+ * need to link to supporting classes.
  *
  * The parameters that are package names in this API are the fully-qualified
  * names of the packages as defined in section 6.5.3 of <cite>The Java&trade;
@@ -71,7 +71,7 @@ public class Modules {
     }
 
     /**
-     * Updates {@code m1} to read {@code m1}.
+     * Updates m1 to read m2.
      * Same as m1.addReads(m2) but without a caller check.
      */
     public static void addReads(Module m1, Module m2) {
@@ -79,7 +79,7 @@ public class Modules {
     }
 
     /**
-     * Update module {@code m} to read all unnamed modules.
+     * Update module m to read all unnamed modules.
      */
     public static void addReadsAllUnnamed(Module m) {
         JLRMA.addReadsAllUnnamed(m);
@@ -87,6 +87,8 @@ public class Modules {
 
     /**
      * Update module m to export a package to all modules.
+     *
+     * This method is for intended for use by tests only.
      */
     public static void addExports(Module m, String pn) {
         JLRMA.addExports(m, pn);
@@ -94,10 +96,26 @@ public class Modules {
 
     /**
      * Updates module m1 to export a package to module m2.
-     * Same as m1.addExports(pn, m2) but without a caller check.
+     * Same as m1.addExports(pn, m2) but without a caller check
      */
     public static void addExports(Module m1, String pn, Module m2) {
         JLRMA.addExports(m1, pn, m2);
+    }
+
+    /**
+     * Updates module m to export a package to all unnamed modules.
+     */
+    public static void addExportsToAllUnnamed(Module m, String pn) {
+        JLRMA.addExportsToAllUnnamed(m, pn);
+    }
+
+    /**
+     * Update module m to open a package to all modules.
+     *
+     * This method is for intended for use by tests only.
+     */
+    public static void addOpens(Module m, String pn) {
+        JLRMA.addOpens(m, pn);
     }
 
     /**
@@ -106,13 +124,6 @@ public class Modules {
      */
     public static void addOpens(Module m1, String pn, Module m2) {
         JLRMA.addOpens(m1, pn, m2);
-    }
-
-    /**
-     * Updates module m to export a package to all unnamed modules.
-     */
-    public static void addExportsToAllUnnamed(Module m, String pn) {
-        JLRMA.addExportsToAllUnnamed(m, pn);
     }
 
     /**
