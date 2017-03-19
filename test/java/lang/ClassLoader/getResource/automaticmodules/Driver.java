@@ -24,7 +24,7 @@
 /**
  * @test
  * @library /lib/testlibrary
- * @build Driver Main p.Dummy JarUtils jdk.testlibrary.ProcessTools
+ * @build Driver Main JarUtils jdk.testlibrary.ProcessTools
  * @run main Driver
  * @summary Test ClassLoader.getResourceXXX to locate resources in an automatic
  *          module
@@ -41,7 +41,7 @@ import java.util.jar.Manifest;
 import jdk.testlibrary.ProcessTools;
 
 /**
- * The driver creates a JAR file containing p/Dummy.class, p/foo.properties,
+ * The driver creates a JAR file containing p/Foo.class, p/foo.properties,
  * and p/resources/bar.properties. This ensures there are is a resource in
  * a module package and a resource that is not in the module package. The
  * test is then launched to locate every resource in the JAR file.
@@ -49,28 +49,23 @@ import jdk.testlibrary.ProcessTools;
 
 public class Driver {
 
-    public static void main(String[] args) throws Exception {
-        Path classes = Paths.get(System.getProperty("test.classes"));
-        Path p = classes.resolve("p");
-        if (Files.notExists(p) || Files.notExists(p.resolve("Dummy.class")))
-            throw new RuntimeException("Dummy class missing?");
+    private static final String TEST_CLASSES = System.getProperty("test.classes");
 
-        // create resource files
-        Path foo = Files.createFile(p.resolve("foo.properties"));
+    public static void main(String[] args) throws Exception {
+        // create content for JAR file
+        Path dir = Files.createTempDirectory("classes");
+        Path p = Files.createDirectory(dir.resolve("p"));
+        Files.createFile(p.resolve("Foo.class"));
+        Files.createFile(p.resolve("foo.properties"));
         Path resources = Files.createDirectory(p.resolve("resources"));
-        Path bar = Files.createFile(resources.resolve("bar.properties"));
+        Files.createFile(resources.resolve("bar.properties"));
 
         // create the JAR file, including a manifest
         Path jarFile = Paths.get("library-1.0.jar");
         Manifest man = new Manifest();
         Attributes attrs = man.getMainAttributes();
         attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0.0");
-        JarUtils.createJarFile(jarFile, man, classes, p);
-
-        // delete the resources so they cannot be located on the class path
-        Files.delete(foo);
-        Files.delete(bar);
-        Files.delete(resources);
+        JarUtils.createJarFile(jarFile, man, dir, p);
 
         // get the module name
         ModuleFinder finder = ModuleFinder.of(jarFile);
@@ -82,7 +77,7 @@ public class Driver {
         // launch the test with the JAR file on the module path
         if (ProcessTools.executeTestJava("-p", jarFile.toString(),
                                          "--add-modules", name,
-                                         "-cp", classes.toString(),
+                                         "-cp", TEST_CLASSES,
                                          "Main", name)
                 .outputTo(System.out)
                 .errorTo(System.out)
