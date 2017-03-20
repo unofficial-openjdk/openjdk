@@ -473,10 +473,7 @@ public class AccessibleObject implements AnnotatedElement {
         } else {
             targetClass = Modifier.isStatic(modifiers) ? null : obj.getClass();
         }
-        return Reflection.verifyMemberAccess(caller,
-                                             declaringClass,
-                                             targetClass,
-                                             modifiers);
+        return verifyAccess(caller, declaringClass, targetClass, modifiers);
     }
 
     /**
@@ -517,7 +514,7 @@ public class AccessibleObject implements AnnotatedElement {
         return AnnotatedElement.super.isAnnotationPresent(annotationClass);
     }
 
-   /**
+    /**
      * @throws NullPointerException {@inheritDoc}
      * @since 1.8
      */
@@ -588,8 +585,21 @@ public class AccessibleObject implements AnnotatedElement {
                            Class<?> targetClass, int modifiers)
         throws IllegalAccessException
     {
+        if (!verifyAccess(caller, memberClass, targetClass, modifiers)) {
+            IllegalAccessException e = Reflection.newIllegalAccessException(
+                caller, memberClass, targetClass, modifiers);
+            if (printStackTraceWhenAccessFails()) {
+                e.printStackTrace(System.err);
+            }
+            throw e;
+        }
+    }
+
+    final boolean verifyAccess(Class<?> caller, Class<?> memberClass,
+                               Class<?> targetClass, int modifiers)
+    {
         if (caller == memberClass) {  // quick check
-            return;             // ACCESS IS OK
+            return true;             // ACCESS IS OK
         }
         Object cache = securityCheckCache;  // read volatile
         if (targetClass != null // instance member or constructor
@@ -600,38 +610,30 @@ public class AccessibleObject implements AnnotatedElement {
                 Class<?>[] cache2 = (Class<?>[]) cache;
                 if (cache2[1] == targetClass &&
                     cache2[0] == caller) {
-                    return;     // ACCESS IS OK
+                    return true;     // ACCESS IS OK
                 }
                 // (Test cache[1] first since range check for [1]
                 // subsumes range check for [0].)
             }
         } else if (cache == caller) {
             // Non-protected case (or targetClass == memberClass or static member).
-            return;             // ACCESS IS OK
+            return true;             // ACCESS IS OK
         }
 
         // If no return, fall through to the slow path.
-        slowCheckMemberAccess(caller, memberClass, targetClass, modifiers);
+        return slowVerifyAccess(caller, memberClass, targetClass, modifiers);
     }
 
     // Keep all this slow stuff out of line:
-    void slowCheckMemberAccess(Class<?> caller, Class<?> memberClass,
-                               Class<?> targetClass, int modifiers)
-        throws IllegalAccessException
+    private boolean slowVerifyAccess(Class<?> caller, Class<?> memberClass,
+                                     Class<?> targetClass, int modifiers)
     {
         if (Reflection.verifyMemberAccess(caller, memberClass, targetClass, modifiers)) {
             // access okay
             logIfExportedByBackdoor(caller, memberClass);
         } else {
             // access denied
-            IllegalAccessException e = Reflection.newIllegalAccessException(caller,
-                                                                            memberClass,
-                                                                            targetClass,
-                                                                            modifiers);
-            if (printStackTraceWhenAccessFails()) {
-                e.printStackTrace(System.err);
-            }
-            throw e;
+            return false;
         }
 
         // Success: Update the cache.
@@ -646,6 +648,7 @@ public class AccessibleObject implements AnnotatedElement {
         // guarantees that the initializing stores for the cache
         // elements will occur before the volatile write.
         securityCheckCache = cache;         // write volatile
+        return true;
     }
 
     // true to print a stack trace when access fails
