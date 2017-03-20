@@ -513,7 +513,7 @@ public class ModulePath implements ModuleFinder {
                         String pn = packageName(cn);
                         if (!packages.contains(pn)) {
                             String msg = "Provider class " + cn + " not in module";
-                            throw new FindException(msg);
+                            throw new InvalidModuleDescriptorException(msg);
                         }
                         providerClasses.add(cn);
                     }
@@ -533,7 +533,7 @@ public class ModulePath implements ModuleFinder {
                 String pn = packageName(mainClass);
                 if (!packages.contains(pn)) {
                     String msg = "Main-Class " + mainClass + " not in module";
-                    throw new FindException(msg);
+                    throw new InvalidModuleDescriptorException(msg);
                 }
                 builder.mainClass(mainClass);
             }
@@ -671,17 +671,18 @@ public class ModulePath implements ModuleFinder {
     /**
      * Maps the name of an entry in a JAR or ZIP file to a package name.
      *
-     * @throws FindException if the name is a class file in
-     *         the top-level directory of the JAR/ZIP file (and it's
-     *         not module-info.class)
+     * @throws InvalidModuleDescriptorException if the name is a class file in
+     *         the top-level directory of the JAR/ZIP file (and it's not
+     *         module-info.class)
      */
     private Optional<String> toPackageName(String name) {
         assert !name.endsWith("/");
         int index = name.lastIndexOf("/");
         if (index == -1) {
             if (name.endsWith(".class") && !name.equals(MODULE_INFO)) {
-                throw new FindException(name + " found in top-level directory"
-                                        + " (unnamed package not allowed in module)");
+                String msg = name + " found in top-level directory"
+                             + " (unnamed package not allowed in module)";
+                throw new InvalidModuleDescriptorException(msg);
             }
             return Optional.empty();
         }
@@ -699,7 +700,7 @@ public class ModulePath implements ModuleFinder {
      * Maps the relative path of an entry in an exploded module to a package
      * name.
      *
-     * @throws FindException if the name is a class file in
+     * @throws InvalidModuleDescriptorException if the name is a class file in
      *         the top-level directory (and it's not module-info.class)
      */
     private Optional<String> toPackageName(Path file) {
@@ -709,8 +710,9 @@ public class ModulePath implements ModuleFinder {
         if (parent == null) {
             String name = file.toString();
             if (name.endsWith(".class") && !name.equals(MODULE_INFO)) {
-                throw new FindException(name + " found in top-level directory"
-                                        + " (unnamed package not allowed in module)");
+                String msg = name + " found in top-level directory"
+                             + " (unnamed package not allowed in module)";
+                throw new InvalidModuleDescriptorException(msg);
             }
             return Optional.empty();
         }
