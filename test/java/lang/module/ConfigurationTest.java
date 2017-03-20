@@ -1606,7 +1606,7 @@ public class ConfigurationTest {
 
         ModuleFinder finder2 = ModuleUtils.finderOf(descriptor1, descriptor3);
         Configuration cf2 = resolve(finder2, "m3");
-        assertTrue(cf1.modules().size() == 2);
+        assertTrue(cf2.modules().size() == 2);
 
         // should throw ResolutionException as m4 will read modules named "m1".
         ModuleFinder finder3 = ModuleUtils.finderOf(descriptor4);
