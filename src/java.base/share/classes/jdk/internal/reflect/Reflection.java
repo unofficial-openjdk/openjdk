@@ -336,11 +336,10 @@ public class Reflection {
      * Returns an IllegalAccessException with an exception message based on
      * the access that is denied.
      */
-    public static IllegalAccessException newIllegalAccessException(
-        Class<?> currentClass,
-        Class<?> memberClass,
-        Class<?> targetClass,
-        int modifiers)
+    public static IllegalAccessException newIllegalAccessException(Class<?> currentClass,
+                                                                   Class<?> memberClass,
+                                                                   Class<?> targetClass,
+                                                                   int modifiers)
         throws IllegalAccessException
     {
         String currentSuffix = "";

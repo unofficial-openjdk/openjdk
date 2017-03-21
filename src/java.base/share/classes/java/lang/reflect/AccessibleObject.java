@@ -319,7 +319,7 @@ public class AccessibleObject implements AnnotatedElement {
 
         // package is open to caller
         if (declaringModule.isOpen(pn, callerModule)) {
-            logIfOpenByBackdoor(caller, declaringClass);
+            logIfOpenedByBackdoor(caller, declaringClass);
             return true;
         }
 
@@ -353,14 +353,14 @@ public class AccessibleObject implements AnnotatedElement {
         return false;
     }
 
-    private void logIfOpenByBackdoor(Class<?> caller, Class<?> declaringClass) {
+    private void logIfOpenedByBackdoor(Class<?> caller, Class<?> declaringClass) {
         Module callerModule = caller.getModule();
         Module targetModule = declaringClass.getModule();
         // callerModule is null during early startup
         if (callerModule != null && !callerModule.isNamed() && targetModule.isNamed()) {
             IllegalAccessLogger logger = IllegalAccessLogger.illegalAccessLogger();
             if (logger != null) {
-                logger.logIfOpenByBackdoor(caller, declaringClass, this::toShortString);
+                logger.logIfOpenedByBackdoor(caller, declaringClass, this::toShortString);
             }
         }
     }
@@ -628,13 +628,13 @@ public class AccessibleObject implements AnnotatedElement {
     private boolean slowVerifyAccess(Class<?> caller, Class<?> memberClass,
                                      Class<?> targetClass, int modifiers)
     {
-        if (Reflection.verifyMemberAccess(caller, memberClass, targetClass, modifiers)) {
-            // access okay
-            logIfExportedByBackdoor(caller, memberClass);
-        } else {
+        if (!Reflection.verifyMemberAccess(caller, memberClass, targetClass, modifiers)) {
             // access denied
             return false;
         }
+
+        // access okay
+        logIfExportedByBackdoor(caller, memberClass);
 
         // Success: Update the cache.
         Object cache = (targetClass != null
