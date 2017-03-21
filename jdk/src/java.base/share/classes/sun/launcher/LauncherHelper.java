@@ -429,14 +429,20 @@ public final class LauncherHelper {
                 abort(null, "java.launcher.jar.error3", jarname);
             }
 
-            // Add-Exports and Add-Opens to break encapsulation
+            // Add-Exports and Add-Opens to allow illegal access
             String exports = mainAttrs.getValue(ADD_EXPORTS);
             if (exports != null) {
-                addExportsOrOpens(exports, false);
+                String warn = getLocalizedMessage("java.launcher.permitaccess.warning",
+                                                  jarname, ADD_EXPORTS);
+                System.err.println(warn);
+                addExportsOrOpens(exports, false, ADD_EXPORTS);
             }
             String opens = mainAttrs.getValue(ADD_OPENS);
             if (opens != null) {
-                addExportsOrOpens(opens, true);
+                String warn = getLocalizedMessage("java.launcher.permitaccess.warning",
+                                                   jarname, ADD_OPENS);
+                System.err.println(warn);
+                addExportsOrOpens(opens, true, ADD_OPENS);
             }
 
             /*
@@ -461,7 +467,7 @@ public final class LauncherHelper {
      * Process the Add-Exports or Add-Opens value. The value is
      * {@code <module>/<package> ( <module>/<package>)*}.
      */
-    static void addExportsOrOpens(String value, boolean open) {
+    static void addExportsOrOpens(String value, boolean open, String how) {
         IllegalAccessLogger.Builder builder;
         IllegalAccessLogger logger = IllegalAccessLogger.illegalAccessLogger();
         if (logger == null) {
@@ -479,10 +485,10 @@ public final class LauncherHelper {
                 Layer.boot().findModule(mn).ifPresent(m -> {
                     if (m.getDescriptor().packages().contains(pn)) {
                         if (open) {
-                            builder.logAccessToOpenPackage(m, pn, ADD_OPENS);
+                            builder.logAccessToOpenPackage(m, pn, how);
                             Modules.addOpensToAllUnnamed(m, pn);
                         } else {
-                            builder.logAccessToExportedPackage(m, pn, ADD_EXPORTS);
+                            builder.logAccessToExportedPackage(m, pn, how);
                             Modules.addExportsToAllUnnamed(m, pn);
                         }
                     }

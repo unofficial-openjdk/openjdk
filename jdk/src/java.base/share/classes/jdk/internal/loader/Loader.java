@@ -651,7 +651,7 @@ public final class Loader extends SecureClassLoader {
      */
     private boolean isOpen(ModuleReference mref, String pn) {
         ModuleDescriptor descriptor = mref.descriptor();
-        if (descriptor.isOpen())
+        if (descriptor.isOpen() || descriptor.isAutomatic())
             return true;
         for (ModuleDescriptor.Opens opens : descriptor.opens()) {
             String source = opens.source();

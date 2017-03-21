@@ -902,9 +902,7 @@ public final class Module implements AnnotatedElement {
      * Returns an array of the package names of the packages in this module.
      *
      * <p> For named modules, the returned array contains an element for each
-     * package in the module. It may contain elements corresponding to packages
-     * added to the module, <a href="Proxy.html#dynamicmodule">dynamic modules</a>
-     * for example, after it was loaded.
+     * package in the module. </p>
      *
      * <p> For unnamed modules, this method is the equivalent to invoking the
      * {@link ClassLoader#getDefinedPackages() getDefinedPackages} method of
@@ -940,15 +938,6 @@ public final class Module implements AnnotatedElement {
             }
             return packages.map(Package::getName).toArray(String[]::new);
         }
-    }
-
-    /**
-     * Add a package to this module.
-     *
-     * @apiNote This method is for Proxy use.
-     */
-    void addPackage(String pn) {
-        implAddPackage(pn, true);
     }
 
     /**
@@ -1566,12 +1555,16 @@ public final class Module implements AnnotatedElement {
                     m.implAddExportsOrOpens(pn, other, false, true);
                 }
                 @Override
-                public void addOpens(Module m, String pn, Module other) {
-                    m.implAddExportsOrOpens(pn, other, true, true);
-                }
-                @Override
                 public void addExportsToAllUnnamed(Module m, String pn) {
                     m.implAddExportsOrOpens(pn, Module.ALL_UNNAMED_MODULE, false, true);
+                }
+                @Override
+                public void addOpens(Module m, String pn) {
+                    m.implAddExportsOrOpens(pn, Module.EVERYONE_MODULE, true, true);
+                }
+                @Override
+                public void addOpens(Module m, String pn, Module other) {
+                    m.implAddExportsOrOpens(pn, other, true, true);
                 }
                 @Override
                 public void addOpensToAllUnnamed(Module m, String pn) {

@@ -108,28 +108,33 @@ public class Reflection {
     }
 
     /**
-     * Verify access to a member, returning {@code false} if no access
+     * Verify access to a member and return {@code true} if it is granted.
+     *
+     * @param currentClass the class performing the access
+     * @param memberClass the declaring class of the member being accessed
+     * @param targetClass the class of target object if accessing instance
+     *                    field or method;
+     *                    or the declaring class if accessing constructor;
+     *                    or null if accessing static field or method
+     * @param modifiers the member's access modifiers
+     * @return {@code true} if access to member is granted
      */
     public static boolean verifyMemberAccess(Class<?> currentClass,
                                              Class<?> memberClass,
                                              Class<?> targetClass,
                                              int modifiers)
     {
-        // Verify that currentClass can access a field, method, or
-        // constructor of memberClass, where that member's access bits are
-        // "modifiers".
-
-        boolean gotIsSameClassPackage = false;
-        boolean isSameClassPackage = false;
-
         if (currentClass == memberClass) {
             // Always succeeds
             return true;
         }
 
-        if (!verifyModuleAccess(currentClass, memberClass)) {
+        if (!verifyModuleAccess(currentClass.getModule(), memberClass)) {
             return false;
         }
+
+        boolean gotIsSameClassPackage = false;
+        boolean isSameClassPackage = false;
 
         if (!Modifier.isPublic(getClassAccessFlags(memberClass))) {
             isSameClassPackage = isSameClassPackage(currentClass, memberClass);
@@ -190,17 +195,16 @@ public class Reflection {
     }
 
     /**
-     * Returns {@code true} if memberClass's's module exports memberClass's
-     * package to currentClass's module.
+     * Returns {@code true} if memberClass's module exports memberClass's
+     * package to currentModule.
      */
-    public static boolean verifyModuleAccess(Class<?> currentClass, Class<?> memberClass) {
-        return verifyModuleAccess(currentClass.getModule(), memberClass);
-    }
-
     public static boolean verifyModuleAccess(Module currentModule, Class<?> memberClass) {
         Module memberModule = memberClass.getModule();
         if (currentModule == memberModule) {
-            return true;  // same module (named or unnamed)
+            // same module (named or unnamed) or both null if called
+            // before module system is initialized, which means we are
+            // dealing with java.base only.
+            return true;
         } else {
             String pkg = memberClass.getPackageName();
             return memberModule.isExported(pkg, currentModule);
@@ -333,9 +337,9 @@ public class Reflection {
      * the access that is denied.
      */
     public static IllegalAccessException newIllegalAccessException(Class<?> currentClass,
-                                                   Class<?> memberClass,
-                                                   Object target,
-                                                   int modifiers)
+                                                                   Class<?> memberClass,
+                                                                   Class<?> targetClass,
+                                                                   int modifiers)
         throws IllegalAccessException
     {
         String currentSuffix = "";

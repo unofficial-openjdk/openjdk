@@ -77,15 +77,20 @@ public interface JavaLangReflectModuleAccess {
     void addExports(Module m1, String pkg, Module m2);
 
     /**
+     * Updates a module m to export a package to all unnamed modules.
+     */
+    void addExportsToAllUnnamed(Module m, String pkg);
+
+    /**
+     * Updates a module m to open a package to all modules.
+     */
+    void addOpens(Module m, String pkg);
+
+    /**
      * Updates module m1 to open a package to module m2. Opening the
      * package does not result in a strong reference to m2 (m2 can be GC'ed).
      */
     void addOpens(Module m1, String pkg, Module m2);
-
-    /**
-     * Updates a module m to export a package to all unnamed modules.
-     */
-    void addExportsToAllUnnamed(Module m, String pkg);
 
     /**
      * Updates a module m to open a package to all unnamed modules.

@@ -109,9 +109,9 @@ public final class IllegalAccessLogger {
      *
      * The {@code what} parameter supplies the message that describes the member.
      */
-    public void logIfOpenByBackdoor(Class<?> caller,
-                                    Class<?> target,
-                                    Supplier<String> whatSupplier) {
+    public void logIfOpenedByBackdoor(Class<?> caller,
+                                      Class<?> target,
+                                      Supplier<String> whatSupplier) {
         Map<String, String> packages = opened.get(target.getModule());
         if (packages != null) {
             String how = packages.get(target.getPackageName());
@@ -144,7 +144,7 @@ public final class IllegalAccessLogger {
      * Logs access to caller class if the class is in a package that is opened via
      * a backdoor mechanism.
      */
-    public void logIfOpenByBackdoor(MethodHandles.Lookup caller, Class<?> target) {
+    public void logIfOpenedByBackdoor(MethodHandles.Lookup caller, Class<?> target) {
         Map<String, String> packages = opened.get(target.getModule());
         if (packages != null) {
             String how = packages.get(target.getPackageName());
