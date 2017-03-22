@@ -228,14 +228,14 @@ public interface ModuleFinder {
      * directory is treated as an exploded module rather than a directory of
      * modules. </p>
      *
-     * <p> The module finder returned by this method supports modules that are
-     * packaged as JAR files. A JAR file with a {@code module-info.class} in
-     * the top-level directory of the JAR file (or overridden by a versioned
-     * entry in a {@link java.util.jar.JarFile#isMultiRelease() multi-release}
-     * JAR file) is a modular JAR and is an <em>explicit module</em>.
-     * A JAR file that does not have a {@code module-info.class} in the
-     * top-level directory is created as an automatic module. The components
-     * for the automatic module are derived as follows:
+     * <p id="automatic-modules"> The module finder returned by this method
+     * supports modules packaged as JAR files. A JAR file with a {@code
+     * module-info.class} in its top-level directory, or in a versioned entry
+     * in a {@linkplain java.util.jar.JarFile#isMultiRelease() multi-release}
+     * JAR file, is a modular JAR file and thus defines an <em>explicit</em>
+     * module. A JAR file that does not have a {@code module-info.class} in its
+     * top-level directory defines an <em>automatic module</em>, as follows:
+     * </p>
      *
      * <ul>
      *
