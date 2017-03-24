@@ -69,13 +69,8 @@ public class AutomaticModulesTest {
             { "foo.jar",                    "foo" },
             { "foo4j.jar",                  "foo4j", },
 
-            { "foo1.jar",                   "foo" },
-            { "foo1.2.jar",                 "foo" },
-            { "foo1.2.3.jar",               "foo" },
-
-            { "foo10.jar",                  "foo" },
-            { "foo10.20.jar",               "foo" },
-            { "foo10.20.30.jar",            "foo" },
+            { "foo1.jar",                   "foo1" },
+            { "foo10.jar",                  "foo10" },
 
             { "foo-1.jar",                  "foo/1" },
             { "foo-1.2.jar",                "foo/1.2" },
@@ -93,6 +88,9 @@ public class AutomaticModulesTest {
             { "foo-bar-10.jar",             "foo.bar/10" },
             { "foo-bar-10.20.jar",          "foo.bar/10.20" },
 
+            { "foo.bar1.jar",               "foo.bar1" },
+            { "foo.bar10.jar",              "foo.bar10" },
+
             { "foo-1.2-SNAPSHOT.jar",       "foo/1.2-SNAPSHOT" },
             { "foo-bar-1.2-SNAPSHOT.jar",   "foo.bar/1.2-SNAPSHOT" },
 
@@ -108,8 +106,12 @@ public class AutomaticModulesTest {
     public Object[][] createBadNames() {
         return new Object[][]{
 
-            { ".jar",     null },
-            { "_.jar",    null }
+            { ".jar",          null },
+            { "_.jar",         null },
+
+            { "foo.1.jar",     null },
+            { "1foo.jar",      null },
+            { "foo.1bar.jar",  null },
 
         };
     }
@@ -469,9 +471,9 @@ public class AutomaticModulesTest {
         createDummyJarFile(dir.resolve("c.jar"), "q/T.class");
 
         // module finder locates a and the modules in the directory
-        ModuleFinder finder
-            = ModuleFinder.compose(ModuleUtils.finderOf(descriptor1),
-                ModuleFinder.of(dir));
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
+        ModuleFinder finder2 = ModuleFinder.of(dir);
+        ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
 
         Configuration parent = Layer.boot().configuration();
         Configuration cf = resolve(parent, finder, "a");
@@ -534,9 +536,9 @@ public class AutomaticModulesTest {
         createDummyJarFile(dir.resolve("d.jar"), "q/T.class");
 
         // module finder locates a and the modules in the directory
-        ModuleFinder finder
-            = ModuleFinder.compose(ModuleUtils.finderOf(descriptor1, descriptor2),
-                                   ModuleFinder.of(dir));
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+        ModuleFinder finder2 = ModuleFinder.of(dir);
+        ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
 
         Configuration parent = Layer.boot().configuration();
         Configuration cf = resolve(parent, finder, "a", "d");
@@ -607,9 +609,9 @@ public class AutomaticModulesTest {
         createDummyJarFile(dir.resolve("d.jar"), "q/T.class");
 
         // module finder locates a and the modules in the directory
-        ModuleFinder finder
-            = ModuleFinder.compose(ModuleUtils.finderOf(descriptor1, descriptor2),
-                ModuleFinder.of(dir));
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+        ModuleFinder finder2 = ModuleFinder.of(dir);
+        ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
 
         Configuration parent = Layer.boot().configuration();
         Configuration cf = resolve(parent, finder, "a", "d");

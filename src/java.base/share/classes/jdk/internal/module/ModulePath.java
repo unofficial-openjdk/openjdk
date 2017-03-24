@@ -547,7 +547,6 @@ public class ModulePath implements ModuleFinder {
      */
     private static class Patterns {
         static final Pattern DASH_VERSION = Pattern.compile("-(\\d+(\\.|$))");
-        static final Pattern TRAILING_VERSION = Pattern.compile("(\\.|\\d)*$");
         static final Pattern NON_ALPHANUM = Pattern.compile("[^A-Za-z0-9]");
         static final Pattern REPEATING_DOTS = Pattern.compile("(\\.)(\\1)+");
         static final Pattern LEADING_DOTS = Pattern.compile("^\\.");
@@ -558,9 +557,6 @@ public class ModulePath implements ModuleFinder {
      * Clean up candidate module name derived from a JAR file name.
      */
     private static String cleanModuleName(String mn) {
-        // drop trailing version from name
-        mn = Patterns.TRAILING_VERSION.matcher(mn).replaceAll("");
-
         // replace non-alphanumeric
         mn = Patterns.NON_ALPHANUM.matcher(mn).replaceAll(".");
 
