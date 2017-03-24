@@ -952,9 +952,11 @@ public final class LauncherHelper {
         if (colon == -1) {
             finder.findAll().stream()
                 .sorted(Comparator.comparing(ModuleReference::descriptor))
-                .forEach(md -> {
-                    ostream.println(midAndLocation(md.descriptor(),
-                                                   md.location()));
+                .forEach(mref -> {
+                    ModuleDescriptor md = mref.descriptor();
+                    if (md.isAutomatic())
+                        ostream.print("automatic ");
+                    ostream.println("module " + midAndLocation(md, mref.location()));
                 });
         } else {
             String[] names = optionFlag.substring(colon+1).split(",");
@@ -987,7 +989,12 @@ public final class LauncherHelper {
                 }
 
                 for (Requires d : md.requires()) {
-                    ostream.format("  requires %s%n", d);
+                    ostream.format("  requires %s", d);
+                    finder.find(d.name())
+                            .map(ModuleReference::descriptor)
+                            .filter(ModuleDescriptor::isAutomatic)
+                            .ifPresent(any -> ostream.print(" (automatic module)"));
+                    ostream.println();
                 }
                 for (String s : md.uses()) {
                     ostream.format("  uses %s%n", s);
