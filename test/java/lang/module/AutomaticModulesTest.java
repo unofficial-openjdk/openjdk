@@ -69,13 +69,8 @@ public class AutomaticModulesTest {
             { "foo.jar",                    "foo" },
             { "foo4j.jar",                  "foo4j", },
 
-            { "foo1.jar",                   "foo" },
-            { "foo1.2.jar",                 "foo" },
-            { "foo1.2.3.jar",               "foo" },
-
-            { "foo10.jar",                  "foo" },
-            { "foo10.20.jar",               "foo" },
-            { "foo10.20.30.jar",            "foo" },
+            { "foo1.jar",                   "foo1" },
+            { "foo10.jar",                  "foo10" },
 
             { "foo-1.jar",                  "foo/1" },
             { "foo-1.2.jar",                "foo/1.2" },
@@ -93,6 +88,9 @@ public class AutomaticModulesTest {
             { "foo-bar-10.jar",             "foo.bar/10" },
             { "foo-bar-10.20.jar",          "foo.bar/10.20" },
 
+            { "foo.bar1.jar",               "foo.bar1" },
+            { "foo.bar10.jar",              "foo.bar10" },
+
             { "foo-1.2-SNAPSHOT.jar",       "foo/1.2-SNAPSHOT" },
             { "foo-bar-1.2-SNAPSHOT.jar",   "foo.bar/1.2-SNAPSHOT" },
 
@@ -108,8 +106,12 @@ public class AutomaticModulesTest {
     public Object[][] createBadNames() {
         return new Object[][]{
 
-            { ".jar",     null },
-            { "_.jar",    null }
+            { ".jar",          null },
+            { "_.jar",         null },
+
+            { "foo.1.jar",     null },
+            { "1foo.jar",      null },
+            { "foo.1bar.jar",  null },
 
         };
     }
@@ -469,9 +471,9 @@ public class AutomaticModulesTest {
         createDummyJarFile(dir.resolve("c.jar"), "q/T.class");
 
         // module finder locates a and the modules in the directory
-        ModuleFinder finder
-            = ModuleFinder.compose(ModuleUtils.finderOf(descriptor1),
-                ModuleFinder.of(dir));
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
+        ModuleFinder finder2 = ModuleFinder.of(dir);
+        ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
 
         Configuration parent = Layer.boot().configuration();
         Configuration cf = resolve(parent, finder, "a");
@@ -534,9 +536,9 @@ public class AutomaticModulesTest {
         createDummyJarFile(dir.resolve("d.jar"), "q/T.class");
 
         // module finder locates a and the modules in the directory
-        ModuleFinder finder
-            = ModuleFinder.compose(ModuleUtils.finderOf(descriptor1, descriptor2),
-                                   ModuleFinder.of(dir));
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+        ModuleFinder finder2 = ModuleFinder.of(dir);
+        ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
 
         Configuration parent = Layer.boot().configuration();
         Configuration cf = resolve(parent, finder, "a", "d");
@@ -607,9 +609,9 @@ public class AutomaticModulesTest {
         createDummyJarFile(dir.resolve("d.jar"), "q/T.class");
 
         // module finder locates a and the modules in the directory
-        ModuleFinder finder
-            = ModuleFinder.compose(ModuleUtils.finderOf(descriptor1, descriptor2),
-                ModuleFinder.of(dir));
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+        ModuleFinder finder2 = ModuleFinder.of(dir);
+        ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
 
         Configuration parent = Layer.boot().configuration();
         Configuration cf = resolve(parent, finder, "a", "d");
@@ -657,6 +659,189 @@ public class AutomaticModulesTest {
         assertTrue(d.reads().contains(b));
         assertTrue(d.reads().contains(c));
         testReadAllBootModules(cf, "d");    // d reads all modules in boot layer
+    }
+
+
+    /**
+     * Basic test to ensure that no automatic modules are resolved when
+     * an automatic module is not a root or required by other modules.
+     */
+    public void testInConfiguration4() throws IOException {
+        ModuleDescriptor descriptor1
+            = ModuleDescriptor.newModule("m1")
+                .requires("java.base")
+                .build();
+
+        // automatic modules
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        createDummyJarFile(dir.resolve("auto1.jar"), "p1/C.class");
+        createDummyJarFile(dir.resolve("auto2.jar"), "p2/C.class");
+        createDummyJarFile(dir.resolve("auto3.jar"), "p3/C.class");
+
+        // module finder locates m1 and the modules in the directory
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
+        ModuleFinder finder2 =  ModuleFinder.of(dir);
+        ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
+
+        Configuration parent = Layer.boot().configuration();
+        Configuration cf = resolve(parent, finder, "m1");
+
+        // ensure that no automatic module is resolved
+        assertTrue(cf.modules().size() == 1);
+        assertTrue(cf.findModule("m1").isPresent());
+    }
+
+
+    /**
+     * Basic test to ensure that if an automatic module is resolved then
+     * all observable automatic modules are resolved.
+     */
+    public void testInConfiguration5() throws IOException {
+        // m1 requires m2
+        ModuleDescriptor descriptor1
+            = ModuleDescriptor.newModule("m1")
+                .requires("m2").build();
+
+        // m2 requires automatic module
+        ModuleDescriptor descriptor2
+            = ModuleDescriptor.newModule("m2")
+                .requires("auto1")
+                .build();
+
+        // automatic modules
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        createDummyJarFile(dir.resolve("auto1.jar"), "p1/C.class");
+        createDummyJarFile(dir.resolve("auto2.jar"), "p2/C.class");
+        createDummyJarFile(dir.resolve("auto3.jar"), "p3/C.class");
+
+        // module finder locates m1, m2, and the modules in the directory
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1, descriptor2);
+        ModuleFinder finder2 =  ModuleFinder.of(dir);
+        ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
+
+        Configuration parent = Layer.boot().configuration();
+        Configuration cf = resolve(parent, finder, "m1");
+
+        // all automatic modules should be resolved
+        assertTrue(cf.modules().size() == 5);
+        assertTrue(cf.findModule("m1").isPresent());
+        assertTrue(cf.findModule("m2").isPresent());
+        assertTrue(cf.findModule("auto1").isPresent());
+        assertTrue(cf.findModule("auto2").isPresent());
+        assertTrue(cf.findModule("auto3").isPresent());
+
+        ResolvedModule base = parent.findModule("java.base")
+                                    .orElseThrow(() -> new RuntimeException());
+        ResolvedModule m1 = cf.findModule("m1").get();
+        ResolvedModule m2 = cf.findModule("m2").get();
+        ResolvedModule auto1 = cf.findModule("auto1").get();
+        ResolvedModule auto2 = cf.findModule("auto2").get();
+        ResolvedModule auto3 = cf.findModule("auto3").get();
+
+        // m1 does not read the automatic modules
+        assertTrue(m1.reads().size() == 2);
+        assertTrue(m1.reads().contains(m2));
+        assertTrue(m1.reads().contains(base));
+
+        // m2 should read all the automatic modules
+        assertTrue(m2.reads().size() == 4);
+        assertTrue(m2.reads().contains(auto1));
+        assertTrue(m2.reads().contains(auto2));
+        assertTrue(m2.reads().contains(auto3));
+        assertTrue(m2.reads().contains(base));
+
+        assertTrue(auto1.reads().contains(m1));
+        assertTrue(auto1.reads().contains(m2));
+        assertTrue(auto1.reads().contains(auto2));
+        assertTrue(auto1.reads().contains(auto3));
+        assertTrue(auto1.reads().contains(base));
+
+        assertTrue(auto2.reads().contains(m1));
+        assertTrue(auto2.reads().contains(m2));
+        assertTrue(auto2.reads().contains(auto1));
+        assertTrue(auto2.reads().contains(auto3));
+        assertTrue(auto2.reads().contains(base));
+
+        assertTrue(auto3.reads().contains(m1));
+        assertTrue(auto3.reads().contains(m2));
+        assertTrue(auto3.reads().contains(auto1));
+        assertTrue(auto3.reads().contains(auto2));
+        assertTrue(auto3.reads().contains(base));
+    }
+
+
+    /**
+     * Basic test of automatic modules in a child configuration. All automatic
+     * modules that are found with the before finder should be resolved. The
+     * automatic modules that are found by the after finder and not shadowed
+     * by the before finder, or parent configurations, should also be resolved.
+     */
+    public void testInConfiguration6() throws IOException {
+        // m1 requires auto1
+        ModuleDescriptor descriptor1
+            = ModuleDescriptor.newModule("m1")
+                .requires("auto1")
+                .build();
+
+        Path dir = Files.createTempDirectory(USER_DIR, "mods");
+        createDummyJarFile(dir.resolve("auto1.jar"), "p1/C.class");
+
+        // module finder locates m1 and auto1
+        ModuleFinder finder1 = ModuleUtils.finderOf(descriptor1);
+        ModuleFinder finder2 =  ModuleFinder.of(dir);
+        ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
+
+        Configuration parent = Layer.boot().configuration();
+        Configuration cf1 = resolve(parent, finder, "m1");
+
+        assertTrue(cf1.modules().size() == 2);
+        assertTrue(cf1.findModule("m1").isPresent());
+        assertTrue(cf1.findModule("auto1").isPresent());
+
+        ResolvedModule base = parent.findModule("java.base")
+                                    .orElseThrow(() -> new RuntimeException());
+        ResolvedModule m1 = cf1.findModule("m1").get();
+        ResolvedModule auto1 = cf1.findModule("auto1").get();
+
+        assertTrue(m1.reads().size() == 2);
+        assertTrue(m1.reads().contains(auto1));
+        assertTrue(m1.reads().contains(base));
+
+        assertTrue(auto1.reads().contains(m1));
+        assertTrue(auto1.reads().contains(base));
+
+
+        // create child configuration - the after finder locates auto1
+
+        dir = Files.createTempDirectory(USER_DIR, "mods");
+        createDummyJarFile(dir.resolve("auto2.jar"), "p2/C.class");
+        ModuleFinder beforeFinder =  ModuleFinder.of(dir);
+
+        dir = Files.createTempDirectory(USER_DIR, "mods");
+        createDummyJarFile(dir.resolve("auto1.jar"), "p1/C.class");
+        createDummyJarFile(dir.resolve("auto2.jar"), "p2/C.class");
+        createDummyJarFile(dir.resolve("auto3.jar"), "p3/C.class");
+        ModuleFinder afterFinder =  ModuleFinder.of(dir);
+
+        Configuration cf2 = cf1.resolve(beforeFinder, afterFinder, Set.of("auto2"));
+
+        // auto1 should be found in parent and should not be in cf2
+        assertTrue(cf2.modules().size() == 2);
+        assertTrue(cf2.findModule("auto2").isPresent());
+        assertTrue(cf2.findModule("auto3").isPresent());
+
+        ResolvedModule auto2 = cf2.findModule("auto2").get();
+        ResolvedModule auto3 = cf2.findModule("auto3").get();
+
+        assertTrue(auto2.reads().contains(m1));
+        assertTrue(auto2.reads().contains(auto1));
+        assertTrue(auto2.reads().contains(auto3));
+        assertTrue(auto2.reads().contains(base));
+
+        assertTrue(auto3.reads().contains(m1));
+        assertTrue(auto3.reads().contains(auto1));
+        assertTrue(auto3.reads().contains(auto2));
+        assertTrue(auto3.reads().contains(base));
     }
 
 

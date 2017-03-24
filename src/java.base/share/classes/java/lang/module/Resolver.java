@@ -67,6 +67,9 @@ final class Resolver {
     // maps module name to module reference
     private final Map<String, ModuleReference> nameToReference = new HashMap<>();
 
+    // true if all automatic modules have been found
+    private boolean haveAllAutomaticModules;
+
     // module constraints on target platform
     private String osName;
     private String osArch;
@@ -171,6 +174,21 @@ final class Resolver {
             ModuleDescriptor descriptor = q.poll();
             assert nameToReference.containsKey(descriptor.name());
 
+            // if the module is an automatic module then all automatic
+            // modules need to be resolved
+            if (descriptor.isAutomatic() && !haveAllAutomaticModules) {
+                addFoundAutomaticModules().forEach(mref -> {
+                    ModuleDescriptor other = mref.descriptor();
+                    q.offer(other);
+                    if (isTracing()) {
+                        trace("Automatic module %s located, required by %s",
+                              other.name(), descriptor.name());
+                        mref.location().ifPresent(uri -> trace("  (%s)", uri));
+                    }
+                });
+                haveAllAutomaticModules = true;
+            }
+
             // process dependences
             for (ModuleDescriptor.Requires requires : descriptor.requires()) {
 
@@ -199,10 +217,15 @@ final class Resolver {
                 if (!nameToReference.containsKey(dn)) {
                     addFoundModule(mref);
                     q.offer(mref.descriptor());
-                    resolved.add(mref.descriptor());
 
                     if (isTracing()) {
-                        trace("Module %s located, required by %s",
+                        String prefix;
+                        if (mref.descriptor().isAutomatic()) {
+                            prefix = "Automatic module";
+                        } else {
+                            prefix = "Module";
+                        }
+                        trace(prefix + " %s located, required by %s",
                               dn, descriptor.name());
                         mref.location().ifPresent(uri -> trace("  (%s)", uri));
                     }
@@ -301,6 +324,21 @@ final class Resolver {
         return this;
     }
 
+    /**
+     * Add all automatic modules that have not already been found to the
+     * nameToReference map.
+     */
+    private Set<ModuleReference> addFoundAutomaticModules() {
+        Set<ModuleReference> result = new HashSet<>();
+        findAll().forEach(mref -> {
+            String mn = mref.descriptor().name();
+            if (mref.descriptor().isAutomatic() && !nameToReference.containsKey(mn)) {
+                addFoundModule(mref);
+                result.add(mref);
+            }
+        });
+        return result;
+    }
 
     /**
      * Add the module to the nameToReference map. Also check any constraints on
