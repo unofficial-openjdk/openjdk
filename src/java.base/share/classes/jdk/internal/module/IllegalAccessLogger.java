@@ -42,6 +42,9 @@ import java.util.WeakHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import jdk.internal.loader.BootLoader;
+import sun.security.action.GetPropertyAction;
+
 /**
  * Supports logging of access to members of API packages that are exported or
  * opened via backdoor mechanisms to code in unnamed modules.
@@ -49,15 +52,24 @@ import java.util.stream.Collectors;
 
 public final class IllegalAccessLogger {
 
-    // true to print stack trace
-    private static final boolean PRINT_STACK_TRACE;
-    static {
-        String s = System.getProperty("sun.reflect.debugModuleAccessChecks");
-        PRINT_STACK_TRACE = "access".equals(s);
-    }
+    /**
+     * Holder class to lazily create the StackWalker object and determine
+     * if the stack trace should be printed
+     */
+    static class Holder {
+        static final StackWalker STACK_WALKER;
+        static final boolean PRINT_STACK_TRACE;
 
-    private static final StackWalker STACK_WALKER
-        = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+        static {
+            PrivilegedAction<StackWalker> pa = () ->
+                StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
+            STACK_WALKER = AccessController.doPrivileged(pa);
+
+            String name = "sun.reflect.debugModuleAccessChecks";
+            String value = GetPropertyAction.privilegedGetProperty(name, null);
+            PRINT_STACK_TRACE = "access" .equals(value);
+        }
+    }
 
     // the maximum number of frames to capture
     private static final int MAX_STACK_FRAMES = 32;
@@ -168,7 +180,7 @@ public final class IllegalAccessLogger {
      */
     private void log(Class<?> caller, String what, Supplier<String> msgSupplier) {
         // stack trace without the top-most frames in java.base
-        List<StackWalker.StackFrame> stack = STACK_WALKER.walk(s ->
+        List<StackWalker.StackFrame> stack = Holder.STACK_WALKER.walk(s ->
             s.dropWhile(this::isJavaBase)
              .limit(MAX_STACK_FRAMES)
              .collect(Collectors.toList())
@@ -184,7 +196,7 @@ public final class IllegalAccessLogger {
         // log message if first usage
         if (firstUsage) {
             String msg = msgSupplier.get();
-            if (PRINT_STACK_TRACE) {
+            if (Holder.PRINT_STACK_TRACE) {
                 synchronized (OUTPUT_LOCK) {
                     System.err.println(msg);
                     stack.forEach(f -> System.err.println("\tat " + f));
@@ -265,6 +277,7 @@ public final class IllegalAccessLogger {
      * A builder for IllegalAccessLogger objects.
      */
     public static class Builder {
+        private final Module UNNAMED = BootLoader.getUnnamedModule();
         private Map<Module, Map<String, String>> exported;
         private Map<Module, Map<String, String>> opened;
 
@@ -277,7 +290,7 @@ public final class IllegalAccessLogger {
         }
 
         public void logAccessToExportedPackage(Module m, String pn, String how) {
-            if (!m.isExported(pn)) {
+            if (!m.isExported(pn, UNNAMED)) {
                 if (exported == null)
                     exported = new HashMap<>();
                 exported.computeIfAbsent(m, k -> new HashMap<>()).putIfAbsent(pn, how);
@@ -288,7 +301,7 @@ public final class IllegalAccessLogger {
             // opens implies exported at run-time.
             logAccessToExportedPackage(m, pn, how);
 
-            if (!m.isOpen(pn)) {
+            if (!m.isOpen(pn, UNNAMED)) {
                 if (opened == null)
                     opened = new HashMap<>();
                 opened.computeIfAbsent(m, k -> new HashMap<>()).putIfAbsent(pn, how);
