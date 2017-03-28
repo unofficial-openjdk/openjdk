@@ -47,7 +47,7 @@ extern "C" {
 #define FAILED 2
 
 static const char *EXC_CNAME = "java/lang/Exception";
-static const char* MOD_CNAME = "Ljava/lang/reflect/Module;";
+static const char* MOD_CNAME = "Ljava/lang/Module;";
 
 static jvmtiEnv *jvmti = NULL;
 static jint result = PASSED;

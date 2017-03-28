@@ -53,7 +53,7 @@ extern "C" {
             return NULL;
         }
 
-        array = (*env)->NewObjectArray(env, modules_count, (*env)->FindClass(env, "java/lang/reflect/Module"), NULL);
+        array = (*env)->NewObjectArray(env, modules_count, (*env)->FindClass(env, "java/lang/Module"), NULL);
 
         for (i = 0; i < modules_count; ++i) {
             (*env)->SetObjectArrayElement(env, array, i, modules_ptr[i]);

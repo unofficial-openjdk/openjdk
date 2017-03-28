@@ -28,8 +28,6 @@
  * @run main/othervm -agentlib:JvmtiGetAllModulesTest JvmtiGetAllModulesTest
  *
  */
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReader;
@@ -79,15 +77,15 @@ public class JvmtiGetAllModulesTest {
         final String MY_MODULE_NAME = "myModule";
 
         // Verify that JVMTI reports exactly the same info as Java regarding the named modules
-        Asserts.assertEquals(Layer.boot().modules(), getModulesJVMTI());
+        Asserts.assertEquals(ModuleLayer.boot().modules(), getModulesJVMTI());
 
         // Load a new named module
         ModuleDescriptor descriptor = ModuleDescriptor.newModule(MY_MODULE_NAME).build();
         ModuleFinder finder = finderOf(descriptor);
         ClassLoader loader = new ClassLoader() {};
-        Configuration parent = Layer.boot().configuration();
+        Configuration parent = ModuleLayer.boot().configuration();
         Configuration cf = parent.resolve(finder, ModuleFinder.of(), Set.of(MY_MODULE_NAME));
-        Layer my = Layer.boot().defineModules(cf, m -> loader);
+        ModuleLayer my = ModuleLayer.boot().defineModules(cf, m -> loader);
 
         // Verify that the loaded module is indeed reported by JVMTI
         Set<Module> jvmtiModules = getModulesJVMTI();

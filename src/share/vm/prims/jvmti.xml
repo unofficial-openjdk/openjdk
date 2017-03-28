@@ -6516,7 +6516,7 @@ class C2 extends C1 implements I2 {
     <function id="GetNamedModule" num="40" since="9">
       <synopsis>Get Named Module</synopsis>
       <description>
-        Return the <code>java.lang.reflect.Module</code> object for a named
+        Return the <code>java.lang.Module</code> object for a named
         module defined to a class loader that contains a given package.
         The module is returned via <code>module_ptr</code>.
         <p/>
@@ -6554,7 +6554,7 @@ class C2 extends C1 implements I2 {
         <param id="module_ptr">
           <outptr><jobject/></outptr>
           <description>
-            On return, points to a <code>java.lang.reflect.Module</code> object
+            On return, points to a <code>java.lang.Module</code> object
             or points to <code>NULL</code>.
           </description>
         </param>
@@ -6633,7 +6633,7 @@ class C2 extends C1 implements I2 {
           <description>
             The module the package is exported to.
             If the <code>to_module</code> is not a subclass of
-            <code>java.lang.reflect.Module</code> this function returns
+            <code>java.lang.Module</code> this function returns
             <errorlink id="JVMTI_ERROR_INVALID_MODULE"></errorlink>.
           </description>
         </param>
@@ -6684,7 +6684,7 @@ class C2 extends C1 implements I2 {
           <description>
             The module with the package to open.
             If the <code>to_module</code> is not a subclass of
-            <code>java.lang.reflect.Module</code> this function returns
+            <code>java.lang.Module</code> this function returns
             <errorlink id="JVMTI_ERROR_INVALID_MODULE"></errorlink>.
           </description>
         </param>

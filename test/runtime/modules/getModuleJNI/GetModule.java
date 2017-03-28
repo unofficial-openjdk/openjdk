@@ -26,7 +26,6 @@
  * @run main/native GetModule
  */
 
-import java.lang.reflect.Module;
 import java.lang.management.LockInfo;
 public class GetModule {
 

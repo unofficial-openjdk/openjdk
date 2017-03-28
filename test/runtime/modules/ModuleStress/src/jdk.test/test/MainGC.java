@@ -25,9 +25,7 @@ package test;
 
 import java.lang.module.Configuration;
 import java.lang.module.ModuleFinder;
-import java.lang.reflect.Layer;
 import java.lang.reflect.Method;
-import java.lang.reflect.Module;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -44,7 +42,7 @@ public class MainGC {
     public static void main(String[] args) throws Exception {
 
         ModuleFinder finder = ModuleFinder.of(MODS_DIR);
-        Layer layerBoot = Layer.boot();
+        ModuleLayer layerBoot = ModuleLayer.boot();
 
         Configuration cf = layerBoot
                 .configuration()
@@ -59,7 +57,7 @@ public class MainGC {
         Callable<Void> task = new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                Layer layer = Layer.boot().defineModulesWithOneLoader(cf, scl);
+                ModuleLayer layer = ModuleLayer.boot().defineModulesWithOneLoader(cf, scl);
                 Module transletModule = layer.findModule(MODULE_NAME).get();
                 testModule.addExports("test", transletModule);
                 testModule.addReads(transletModule);

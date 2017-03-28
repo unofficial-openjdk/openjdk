@@ -21,8 +21,6 @@
  * questions.
  */
 
-import java.lang.reflect.Module;
-import java.lang.reflect.Layer;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -35,10 +33,10 @@ public class AllModulesCommandTestDebuggee {
 
     public static void main(String[] args) throws InterruptedException {
 
-        int modCount = Layer.boot().modules().size();
+        int modCount = ModuleLayer.boot().modules().size();
 
         // Send all modules names via the process output
-        for (Module mod : Layer.boot().modules()) {
+        for (Module mod : ModuleLayer.boot().modules()) {
             String info = String.format("module %s", mod.getName());
             write(info);
         }

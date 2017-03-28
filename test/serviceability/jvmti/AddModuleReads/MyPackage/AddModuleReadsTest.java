@@ -32,7 +32,6 @@ package MyPackage;
 
 import java.io.PrintStream;
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Module;
 
 public class AddModuleReadsTest {
 

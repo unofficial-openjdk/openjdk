@@ -55,7 +55,7 @@ public class GetSysPkgTest {
                 return m;
             }
         }
-        throw new RuntimeException("Failed to find method " + name + " in java.lang.reflect.Module");
+        throw new RuntimeException("Failed to find method " + name + " in java.lang.Module");
     }
 
     // Throw RuntimeException if getSystemPackageLocation() does not return

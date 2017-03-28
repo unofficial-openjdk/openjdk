@@ -34,7 +34,6 @@ package MyPackage;
 
 import java.io.PrintStream;
 import java.lang.TestProvider;
-import java.lang.reflect.Module;
 
 public class AddModuleUsesAndProvidesTest {
 

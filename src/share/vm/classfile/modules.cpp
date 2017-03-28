@@ -100,7 +100,7 @@ static ModuleEntry* get_module_entry(jobject module, TRAPS) {
   Handle module_h(THREAD, JNIHandles::resolve(module));
   if (!java_lang_reflect_Module::is_instance(module_h())) {
     THROW_MSG_NULL(vmSymbols::java_lang_IllegalArgumentException(),
-                   "module is not an instance of type java.lang.reflect.Module");
+                   "module is not an instance of type java.lang.Module");
   }
   return java_lang_reflect_Module::module_entry(module_h(), CHECK_NULL);
 }
@@ -286,7 +286,7 @@ void Modules::define_module(jobject module, jstring version,
   Handle module_handle(THREAD, JNIHandles::resolve(module));
   if (!java_lang_reflect_Module::is_instance(module_handle())) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              "module is not an instance of type java.lang.reflect.Module");
+              "module is not an instance of type java.lang.Module");
   }
 
   char* module_name = get_module_name(module_handle(), CHECK);
@@ -469,14 +469,14 @@ void Modules::set_bootloader_unnamed_module(jobject module, TRAPS) {
   Handle module_handle(THREAD, JNIHandles::resolve(module));
   if (!java_lang_reflect_Module::is_instance(module_handle())) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              "module is not an instance of type java.lang.reflect.Module");
+              "module is not an instance of type java.lang.Module");
   }
 
   // Ensure that this is an unnamed module
   oop name = java_lang_reflect_Module::name(module_handle());
   if (name != NULL) {
     THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
-              "boot loader's unnamed module's java.lang.reflect.Module has a name");
+              "boot loader's unnamed module's java.lang.Module has a name");
   }
 
   // Validate java_base's loader is the boot loader.
@@ -627,7 +627,7 @@ jobject Modules::get_module(jclass clazz, TRAPS) {
   oop module = java_lang_Class::module(mirror);
 
   assert(module != NULL, "java.lang.Class module field not set");
-  assert(java_lang_reflect_Module::is_instance(module), "module is not an instance of type java.lang.reflect.Module");
+  assert(java_lang_reflect_Module::is_instance(module), "module is not an instance of type java.lang.Module");
 
   if (log_is_enabled(Debug, modules)) {
     ResourceMark rm(THREAD);

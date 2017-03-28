@@ -31,7 +31,6 @@ package MyPackage;
  */
 
 import java.io.PrintStream;
-import java.lang.reflect.Module;
 
 public class AddModuleExportsAndOpensTest {
 

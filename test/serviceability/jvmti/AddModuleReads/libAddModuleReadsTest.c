@@ -47,7 +47,7 @@ extern "C" {
 #define FAILED 2
 
 static const char *EXC_CNAME = "java/lang/Exception";
-static const char* MOD_CNAME = "Ljava/lang/reflect/Module;";
+static const char* MOD_CNAME = "Ljava/lang/Module;";
 
 static jvmtiEnv *jvmti = NULL;
 static jint result = PASSED;
@@ -123,7 +123,7 @@ jboolean can_module_read(JNIEnv *env, jobject module, jobject to_module) {
     jboolean res = JNI_FALSE;
 
     if (mCanRead == NULL) {
-        const char* sign = "(Ljava/lang/reflect/Module;)Z";
+        const char* sign = "(Ljava/lang/Module;)Z";
         mCanRead = get_method(env, jlrM(env), "canRead", sign);
     }
     res = JNI_ENV_PTR(env)->CallBooleanMethod(JNI_ENV_ARG(env, module),

@@ -47,7 +47,7 @@ extern "C" {
 #define FAILED 2
 
 static const char *EXC_CNAME = "java/lang/Exception";
-static const char* MOD_CNAME = "Ljava/lang/reflect/Module;";
+static const char* MOD_CNAME = "Ljava/lang/Module;";
 
 static jvmtiEnv *jvmti = NULL;
 static jint result = PASSED;
@@ -143,7 +143,7 @@ jboolean is_exported_to(JNIEnv *env, jobject module, const char* pkg, jobject to
     jboolean res = JNI_FALSE;
 
     if (mIsExportedTo == NULL) {
-        const char* sign = "(Ljava/lang/String;Ljava/lang/reflect/Module;)Z";
+        const char* sign = "(Ljava/lang/String;Ljava/lang/Module;)Z";
         const char* name = open ? "isOpen" : "isExported";
         mIsExportedTo = get_method(env, jlrM(env), name, sign);
     }
