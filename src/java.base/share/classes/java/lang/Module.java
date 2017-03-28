@@ -225,7 +225,7 @@ public final class Module implements AnnotatedElement {
      * named modules that are generated at runtime. A dynamic module may or may
      * not be in a module layer. </p>
      *
-     * @return The layer that contains this module
+     * @return The module layer that contains this module
      *
      * @see java.lang.reflect.Proxy
      */
@@ -380,6 +380,7 @@ public final class Module implements AnnotatedElement {
      * If {@code syncVM} is {@code true} then the VM is notified.
      */
     private void implAddReads(Module other, boolean syncVM) {
+        Objects.requireNonNull(other);
         if (!canRead(other)) {
             // update VM first, just in case it fails
             if (syncVM) {

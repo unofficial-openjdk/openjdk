@@ -191,7 +191,7 @@ public interface JavaLangAccess {
     Module defineModule(ClassLoader loader, ModuleDescriptor descriptor, URI uri);
 
     /**
-     * ??
+     * Defines the unnamed module for the given class loader.
      */
     Module defineUnnamedModule(ClassLoader loader);
 

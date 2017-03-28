@@ -47,7 +47,6 @@ import java.util.stream.Stream;
 import jdk.internal.loader.ClassLoaderValue;
 import jdk.internal.loader.Loader;
 import jdk.internal.loader.LoaderPool;
-import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ServicesCatalog;
 import sun.security.util.SecurityConstants;
 
@@ -241,7 +240,6 @@ public final class ModuleLayer {
          */
         public Controller addReads(Module source, Module target) {
             ensureInLayer(source);
-            Objects.requireNonNull(target);
             source.implAddReads(target);
             return this;
         }
@@ -267,8 +265,7 @@ public final class ModuleLayer {
          * @see Module#addOpens
          */
         public Controller addOpens(Module source, String pn, Module target) {
-            Objects.requireNonNull(pn);
-            Objects.requireNonNull(target);
+            ensureInLayer(source);
             source.implAddOpens(pn, target);
             return this;
         }
