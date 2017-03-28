@@ -28,7 +28,6 @@ package java.lang.module;
 import java.io.PrintStream;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
-import java.lang.reflect.Layer;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -273,7 +272,7 @@ final class Resolver {
 
         // the initial set of modules that may use services
         Set<ModuleDescriptor> initialConsumers;
-        if (Layer.boot() == null) {
+        if (ModuleLayer.boot() == null) {
             initialConsumers = new HashSet<>();
         } else {
             initialConsumers = parents.stream()
@@ -572,7 +571,7 @@ final class Resolver {
         // need "requires transitive" from the modules in parent configurations
         // as there may be selected modules that have a dependency on modules in
         // the parent configuration.
-        if (Layer.boot() == null) {
+        if (ModuleLayer.boot() == null) {
             g2 = new HashMap<>(capacity);
         } else {
             g2 = parents.stream()

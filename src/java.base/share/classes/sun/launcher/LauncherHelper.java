@@ -50,10 +50,8 @@ import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
-import java.lang.reflect.Layer;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Module;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -467,7 +465,7 @@ public final class LauncherHelper {
                 String mn = s[0];
                 String pn = s[1];
 
-                Layer.boot().findModule(mn).ifPresent(m -> {
+                ModuleLayer.boot().findModule(mn).ifPresent(m -> {
                     if (m.getDescriptor().packages().contains(pn)) {
                         if (open) {
                             Modules.addOpensToAllUnnamed(m, pn);
@@ -564,7 +562,7 @@ public final class LauncherHelper {
         }
 
         // main module is in the boot layer
-        Layer layer = Layer.boot();
+        ModuleLayer layer = ModuleLayer.boot();
         Optional<Module> om = layer.findModule(mainModule);
         if (!om.isPresent()) {
             // should not happen
@@ -854,7 +852,7 @@ public final class LauncherHelper {
         private static void setFXLaunchParameters(String what, int mode) {
 
             // find the module with the FX launcher
-            Optional<Module> om = Layer.boot().findModule(JAVAFX_GRAPHICS_MODULE_NAME);
+            Optional<Module> om = ModuleLayer.boot().findModule(JAVAFX_GRAPHICS_MODULE_NAME);
             if (!om.isPresent()) {
                 abort(null, "java.launcher.cls.error5");
             }

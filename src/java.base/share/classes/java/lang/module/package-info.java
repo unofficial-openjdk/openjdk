@@ -70,7 +70,7 @@
  * } </pre>
  *
  * <p> If module {@code m1} is resolved with the configuration for the {@link
- * java.lang.reflect.Layer#boot() boot} layer as the parent then the resulting
+ * java.lang.ModuleLayer#boot() boot} layer as the parent then the resulting
  * configuration contains two modules ({@code m1}, {@code m2}). The edges in
  * its readability graph are:
  * <pre> {@code

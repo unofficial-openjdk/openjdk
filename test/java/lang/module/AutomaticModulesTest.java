@@ -38,8 +38,6 @@ import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolutionException;
 import java.lang.module.ResolvedModule;
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -391,7 +389,7 @@ public class AutomaticModulesTest {
 
         ModuleFinder finder = ModuleFinder.of(dir);
 
-        Configuration parent = Layer.boot().configuration();
+        Configuration parent = ModuleLayer.boot().configuration();
         Configuration cf = resolve(parent, finder, "m");
 
         ModuleDescriptor descriptor = findDescriptor(cf, "m");
@@ -475,7 +473,7 @@ public class AutomaticModulesTest {
         ModuleFinder finder2 = ModuleFinder.of(dir);
         ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
 
-        Configuration parent = Layer.boot().configuration();
+        Configuration parent = ModuleLayer.boot().configuration();
         Configuration cf = resolve(parent, finder, "a");
 
         assertTrue(cf.modules().size() == 3);
@@ -484,7 +482,7 @@ public class AutomaticModulesTest {
         assertTrue(cf.findModule("c").isPresent());
 
         ResolvedModule base = cf.findModule("java.base").get();
-        assertTrue(base.configuration() == Layer.boot().configuration());
+        assertTrue(base.configuration() == ModuleLayer.boot().configuration());
         ResolvedModule a = cf.findModule("a").get();
         ResolvedModule b = cf.findModule("b").get();
         ResolvedModule c = cf.findModule("c").get();
@@ -540,7 +538,7 @@ public class AutomaticModulesTest {
         ModuleFinder finder2 = ModuleFinder.of(dir);
         ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
 
-        Configuration parent = Layer.boot().configuration();
+        Configuration parent = ModuleLayer.boot().configuration();
         Configuration cf = resolve(parent, finder, "a", "d");
 
         assertTrue(cf.modules().size() == 4);
@@ -556,7 +554,7 @@ public class AutomaticModulesTest {
         // readability
 
         ResolvedModule base = cf.findModule("java.base").get();
-        assertTrue(base.configuration() == Layer.boot().configuration());
+        assertTrue(base.configuration() == ModuleLayer.boot().configuration());
         ResolvedModule a = cf.findModule("a").get();
         ResolvedModule b = cf.findModule("b").get();
         ResolvedModule c = cf.findModule("c").get();
@@ -613,7 +611,7 @@ public class AutomaticModulesTest {
         ModuleFinder finder2 = ModuleFinder.of(dir);
         ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
 
-        Configuration parent = Layer.boot().configuration();
+        Configuration parent = ModuleLayer.boot().configuration();
         Configuration cf = resolve(parent, finder, "a", "d");
 
         assertTrue(cf.modules().size() == 4);
@@ -623,7 +621,7 @@ public class AutomaticModulesTest {
         assertTrue(cf.findModule("d").isPresent());
 
         ResolvedModule base = cf.findModule("java.base").get();
-        assertTrue(base.configuration() == Layer.boot().configuration());
+        assertTrue(base.configuration() == ModuleLayer.boot().configuration());
         ResolvedModule a = cf.findModule("a").get();
         ResolvedModule b = cf.findModule("b").get();
         ResolvedModule c = cf.findModule("c").get();
@@ -683,7 +681,7 @@ public class AutomaticModulesTest {
         ModuleFinder finder2 =  ModuleFinder.of(dir);
         ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
 
-        Configuration parent = Layer.boot().configuration();
+        Configuration parent = ModuleLayer.boot().configuration();
         Configuration cf = resolve(parent, finder, "m1");
 
         // ensure that no automatic module is resolved
@@ -719,7 +717,7 @@ public class AutomaticModulesTest {
         ModuleFinder finder2 =  ModuleFinder.of(dir);
         ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
 
-        Configuration parent = Layer.boot().configuration();
+        Configuration parent = ModuleLayer.boot().configuration();
         Configuration cf = resolve(parent, finder, "m1");
 
         // all automatic modules should be resolved
@@ -791,7 +789,7 @@ public class AutomaticModulesTest {
         ModuleFinder finder2 =  ModuleFinder.of(dir);
         ModuleFinder finder = ModuleFinder.compose(finder1, finder2);
 
-        Configuration parent = Layer.boot().configuration();
+        Configuration parent = ModuleLayer.boot().configuration();
         Configuration cf1 = resolve(parent, finder, "m1");
 
         assertTrue(cf1.modules().size() == 2);
@@ -869,7 +867,7 @@ public class AutomaticModulesTest {
             = ModuleFinder.compose(ModuleUtils.finderOf(descriptor),
                                    ModuleFinder.of(dir));
 
-        Configuration parent = Layer.boot().configuration();
+        Configuration parent = ModuleLayer.boot().configuration();
         resolve(parent, finder, "a");
     }
 
@@ -896,13 +894,13 @@ public class AutomaticModulesTest {
             = ModuleFinder.compose(ModuleUtils.finderOf(descriptor),
                                    ModuleFinder.of(dir));
 
-        Configuration parent = Layer.boot().configuration();
+        Configuration parent = ModuleLayer.boot().configuration();
         resolve(parent, finder, "a");
     }
 
 
     /**
-     * Basic test of Layer containing automatic modules
+     * Basic test of layer containing automatic modules
      */
     public void testInLayer() throws IOException {
         ModuleDescriptor descriptor
@@ -921,12 +919,12 @@ public class AutomaticModulesTest {
             = ModuleFinder.compose(ModuleUtils.finderOf(descriptor),
                 ModuleFinder.of(dir));
 
-        Configuration parent = Layer.boot().configuration();
+        Configuration parent = ModuleLayer.boot().configuration();
         Configuration cf = resolve(parent, finder, "a");
         assertTrue(cf.modules().size() == 3);
 
         // each module gets its own loader
-        Layer layer = Layer.boot().defineModules(cf, mn -> new ClassLoader() { });
+        ModuleLayer layer = ModuleLayer.boot().defineModules(cf, mn -> new ClassLoader() { });
 
         // an unnamed module
         Module unnamed = (new ClassLoader() { }).getUnnamedModule();
@@ -989,7 +987,7 @@ public class AutomaticModulesTest {
      */
     static void testReadAllBootModules(Configuration cf, String mn) {
 
-        Set<String> bootModules = Layer.boot().modules().stream()
+        Set<String> bootModules = ModuleLayer.boot().modules().stream()
                 .map(Module::getName)
                 .collect(Collectors.toSet());
 
@@ -998,10 +996,10 @@ public class AutomaticModulesTest {
     }
 
     /**
-     * Test that the given Module reads all module in the given Layer
-     * and its parent Layers.
+     * Test that the given Module reads all module in the given layer
+     * and its parent layers.
      */
-    static void testsReadsAll(Module m, Layer layer) {
+    static void testsReadsAll(Module m, ModuleLayer layer) {
         // check that m reads all modules in the layer
         layer.configuration().modules().stream()
             .map(ResolvedModule::name)

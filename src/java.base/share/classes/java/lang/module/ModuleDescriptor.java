@@ -60,7 +60,7 @@ import jdk.internal.module.ModuleInfo;
  * <p> A module descriptor describes a named module and defines methods to
  * obtain each of its components. The module descriptor for a named module
  * in the Java virtual machine is obtained by invoking the {@link
- * java.lang.reflect.Module Module}'s {@link java.lang.reflect.Module#getDescriptor
+ * java.lang.Module Module}'s {@link java.lang.Module#getDescriptor
  * getDescriptor} method. Module descriptors can also be created using the
  * {@link ModuleDescriptor.Builder} class or by reading the binary form of a
  * module declaration ({@code module-info.class}) using the {@link
@@ -85,7 +85,7 @@ import jdk.internal.module.ModuleInfo;
  * <p> {@code ModuleDescriptor} objects are immutable and safe for use by
  * multiple concurrent threads.</p>
  *
- * @see java.lang.reflect.Module
+ * @see java.lang.Module
  * @since 9
  * @spec JPMS
  */
