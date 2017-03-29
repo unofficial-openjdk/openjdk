@@ -312,7 +312,9 @@ public interface ModuleFinder {
      *
      * <p> As with automatic modules, the contents of a packaged or exploded
      * module may need to be <em>scanned</em> in order to determine the packages
-     * in the module. If a {@code .class} file (other than {@code
+     * in the module. Whether {@linkplain java.nio.file.Files#isHidden(Path)
+     * hidden files} are ignored or not is implementation specific and therefore
+     * not specified. If a {@code .class} file (other than {@code
      * module-info.class}) is found in the top-level directory then it is
      * assumed to be a class in the unnamed package and so {@code FindException}
      * is thrown. </p>

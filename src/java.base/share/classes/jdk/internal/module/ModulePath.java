@@ -626,7 +626,7 @@ public class ModulePath implements ModuleFinder {
     private Set<String> explodedPackages(Path dir) {
         try {
             return Files.find(dir, Integer.MAX_VALUE,
-                              ((path, attrs) -> attrs.isRegularFile()))
+                    ((path, attrs) -> attrs.isRegularFile() && !isHidden(path)))
                     .map(path -> dir.relativize(path))
                     .map(this::toPackageName)
                     .flatMap(Optional::stream)
@@ -719,6 +719,17 @@ public class ModulePath implements ModuleFinder {
         } else {
             // not a valid package name
             return Optional.empty();
+        }
+    }
+
+    /**
+     * Returns true if the given file exists and is a hidden file
+     */
+    private boolean isHidden(Path file) {
+        try {
+            return Files.isHidden(file);
+        } catch (IOException ioe) {
+            return false;
         }
     }
 

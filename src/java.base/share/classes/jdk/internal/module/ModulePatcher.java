@@ -135,8 +135,9 @@ public final class ModulePatcher {
                     Path top = file;
                     Files.find(top, Integer.MAX_VALUE,
                                ((path, attrs) -> attrs.isRegularFile()))
-                            .filter(path -> !isAutomatic
+                            .filter(path -> (!isAutomatic
                                     || path.toString().endsWith(".class"))
+                                    && !isHidden(path))
                             .map(path -> toPackageName(top, path))
                             .filter(Checks::isPackageName)
                             .forEach(packages::add);
@@ -556,7 +557,7 @@ public final class ModulePatcher {
 
 
     /**
-     * Derives a package name from a file path to a .class file.
+     * Derives a package name from the file path of an entry in an exploded patch
      */
     private static String toPackageName(Path top, Path file) {
         Path entry = top.relativize(file);
@@ -565,6 +566,17 @@ public final class ModulePatcher {
             return warnIfModuleInfo(top, entry.toString());
         } else {
             return parent.toString().replace(File.separatorChar, '.');
+        }
+    }
+
+    /**
+     * Returns true if the given file exists and is a hidden file
+     */
+    private boolean isHidden(Path file) {
+        try {
+            return Files.isHidden(file);
+        } catch (IOException ioe) {
+            return false;
         }
     }
 
