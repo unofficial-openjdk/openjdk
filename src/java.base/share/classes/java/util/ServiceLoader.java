@@ -507,12 +507,15 @@ public final class ServiceLoader<S>
 
     /**
      * Checks that the given service type is accessible to types in the given
-     * module, and check that the module declare that it uses the service type. ??
+     * module, and check that the module declares that it uses the service type.
      */
     private static void checkCaller(Class<?> caller, Class<?> svc) {
-        Module callerModule = caller.getModule();
+        if (caller == null) {
+            fail(svc, "no caller to check if it declares `uses`");
+        }
 
         // Check access to the service type
+        Module callerModule = caller.getModule();
         int mods = svc.getModifiers();
         if (!Reflection.verifyMemberAccess(caller, svc, null, mods)) {
             fail(svc, "service type not accessible to " + callerModule);

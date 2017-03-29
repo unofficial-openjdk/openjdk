@@ -338,7 +338,7 @@ public final class Module implements AnnotatedElement {
     public Module addReads(Module other) {
         Objects.requireNonNull(other);
         if (this.isNamed()) {
-            Module caller = Reflection.getCallerClass().getModule();
+            Module caller = getCallerModule(Reflection.getCallerClass());
             if (caller != this) {
                 throw new IllegalCallerException(caller + " != " + this);
             }
@@ -669,7 +669,7 @@ public final class Module implements AnnotatedElement {
         Objects.requireNonNull(other);
 
         if (isNamed()) {
-            Module caller = Reflection.getCallerClass().getModule();
+            Module caller = getCallerModule(Reflection.getCallerClass());
             if (caller != this) {
                 throw new IllegalCallerException(caller + " != " + this);
             }
@@ -716,8 +716,8 @@ public final class Module implements AnnotatedElement {
         Objects.requireNonNull(other);
 
         if (isNamed()) {
-            Module caller = Reflection.getCallerClass().getModule();
-            if (caller != this && !isOpen(pn, caller))
+            Module caller = getCallerModule(Reflection.getCallerClass());
+            if (caller != this && (caller == null || !isOpen(pn, caller)))
                 throw new IllegalCallerException(pn + " is not open to " + caller);
             implAddExportsOrOpens(pn, other, /*open*/true, /*syncVM*/true);
         }
@@ -885,7 +885,7 @@ public final class Module implements AnnotatedElement {
         Objects.requireNonNull(service);
 
         if (isNamed() && !descriptor.isAutomatic()) {
-            Module caller = Reflection.getCallerClass().getModule();
+            Module caller = getCallerModule(Reflection.getCallerClass());
             if (caller != this) {
                 throw new IllegalCallerException(caller + " != " + this);
             }
@@ -1495,14 +1495,18 @@ public final class Module implements AnnotatedElement {
         }
 
         if (isNamed() && Resources.canEncapsulate(name)) {
-            Module caller = Reflection.getCallerClass().getModule();
+            Module caller = getCallerModule(Reflection.getCallerClass());
             if (caller != this && caller != Object.class.getModule()) {
-                // ignore packages added for proxies via addPackage
-                Set<String> packages = getDescriptor().packages();
                 String pn = Resources.toPackageName(name);
-                if (packages.contains(pn) && !isOpen(pn, caller)) {
-                    // resource is in package not open to caller
-                    return null;
+                if (getPackages().contains(pn)) {
+                    if (caller == null && !isOpen(pn)) {
+                        // no caller, package not open
+                        return null;
+                    }
+                    if (!isOpen(pn, caller)) {
+                        // package not open to caller
+                        return null;
+                    }
                 }
             }
         }
@@ -1545,6 +1549,14 @@ public final class Module implements AnnotatedElement {
             String id = Integer.toHexString(System.identityHashCode(this));
             return "unnamed module @" + id;
         }
+    }
+
+    /**
+     * Returns the module that a given caller class is a member of. Returns
+     * {@code null} if the caller is {@code null}.
+     */
+    private Module getCallerModule(Class<?> caller) {
+        return (caller != null) ? caller.getModule() : null;
     }
 
 
