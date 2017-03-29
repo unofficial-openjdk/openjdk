@@ -234,7 +234,6 @@ public final class ModuleBootstrap {
             ModuleFinder f = finder;  // observable modules
             systemModules.findAll()
                 .stream()
-                .filter(mref -> !ModuleResolution.doNotResolveByDefault(mref))
                 .map(ModuleReference::descriptor)
                 .map(ModuleDescriptor::name)
                 .filter(mn -> f.find(mn).isPresent())  // observable
@@ -318,8 +317,7 @@ public final class ModuleBootstrap {
         if (SystemModules.hasSplitPackages() || needPostResolutionChecks) {
             Map<String, String> packageToModule = new HashMap<>();
             for (ResolvedModule resolvedModule : cf.modules()) {
-                ModuleDescriptor descriptor =
-                    resolvedModule.reference().descriptor();
+                ModuleDescriptor descriptor = resolvedModule.reference().descriptor();
                 String name = descriptor.name();
                 for (String p : descriptor.packages()) {
                     String other = packageToModule.putIfAbsent(p, name);
