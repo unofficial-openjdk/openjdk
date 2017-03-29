@@ -2110,7 +2110,9 @@ public class ModuleDescriptor
 
         /**
          * Sets the module main class. The package for the main class is added
-         * to the module if not already added.
+         * to the module if not already added. In other words, this method is
+         * equivalent to first invoking this builder's {@link #packages(Set)
+         * packages} method to add the package name of the main class.
          *
          * @param  mc
          *         The module main class
@@ -2134,8 +2136,8 @@ public class ModuleDescriptor
                     throw new IllegalArgumentException(mc + ": unnamed package");
                 }
             }
-            mainClass = mc;
             packages.add(pn);
+            mainClass = mc;
             return this;
         }
 
