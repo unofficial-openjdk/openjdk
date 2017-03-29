@@ -23,6 +23,7 @@
 package org.graalvm.compiler.test;
 
 import java.lang.reflect.Method;
+import java.util.Set;
 
 /**
  * Facade for the {@code java.lang.Module} class introduced in JDK9 that allows tests to be
@@ -95,9 +96,9 @@ public class JLModule {
         }
     }
 
-    public String[] getPackages() {
+    public Set<String> getPackages() {
         try {
-            return (String[]) getPackagesMethod.invoke(realModule);
+            return (Set<String>) getPackagesMethod.invoke(realModule);
         } catch (Exception e) {
             throw new AssertionError(e);
         }
