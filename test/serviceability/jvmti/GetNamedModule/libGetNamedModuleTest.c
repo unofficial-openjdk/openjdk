@@ -183,7 +183,7 @@ jvmtiError get_module(JNIEnv *env,
     err = (*jvmti)->GetNamedModule(jvmti, loader, pkg_name, module_ptr);
     if (err != JVMTI_ERROR_NONE) {
         printf("    Error in GetNamedModule for package \"%s\": %s (%d)\n",
-               pkg_name, TranslateError(err), err);
+               name, TranslateError(err), err);
         return err;
     }
     printf("    returned module: %p\n", *module_ptr);
