@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,7 +96,7 @@ void throw_exc(JNIEnv *env, char *msg) {
 }
 
 static
-jclass jlrM(JNIEnv *env) {
+jclass jlM(JNIEnv *env) {
     jclass cls = NULL;
 
     cls = JNI_ENV_PTR(env)->FindClass(JNI_ENV_ARG(env, MOD_CNAME));
@@ -124,7 +124,7 @@ jboolean can_module_read(JNIEnv *env, jobject module, jobject to_module) {
 
     if (mCanRead == NULL) {
         const char* sign = "(Ljava/lang/Module;)Z";
-        mCanRead = get_method(env, jlrM(env), "canRead", sign);
+        mCanRead = get_method(env, jlM(env), "canRead", sign);
     }
     res = JNI_ENV_PTR(env)->CallBooleanMethod(JNI_ENV_ARG(env, module),
                                               mCanRead, to_module);

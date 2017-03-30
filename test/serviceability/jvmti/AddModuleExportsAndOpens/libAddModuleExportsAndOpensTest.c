@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -97,7 +97,7 @@ void throw_exc(JNIEnv *env, char *msg) {
 }
 
 static
-jclass jlrM(JNIEnv *env) {
+jclass jlM(JNIEnv *env) {
     jclass cls = NULL;
 
     cls = JNI_ENV_PTR(env)->FindClass(JNI_ENV_ARG(env, MOD_CNAME));
@@ -127,7 +127,7 @@ jboolean is_exported(JNIEnv *env, jobject module, const char* pkg, jboolean open
     if (mIsExported == NULL) {
         const char* sign = "(Ljava/lang/String;)Z";
         const char* name = open ? "isOpen" : "isExported";
-        mIsExported = get_method(env, jlrM(env), name, sign);
+        mIsExported = get_method(env, jlM(env), name, sign);
     }
     jstr = JNI_ENV_PTR(env)->NewStringUTF(JNI_ENV_ARG(env, pkg));
     res = JNI_ENV_PTR(env)->CallBooleanMethod(JNI_ENV_ARG(env, module),
@@ -145,7 +145,7 @@ jboolean is_exported_to(JNIEnv *env, jobject module, const char* pkg, jobject to
     if (mIsExportedTo == NULL) {
         const char* sign = "(Ljava/lang/String;Ljava/lang/Module;)Z";
         const char* name = open ? "isOpen" : "isExported";
-        mIsExportedTo = get_method(env, jlrM(env), name, sign);
+        mIsExportedTo = get_method(env, jlM(env), name, sign);
     }
     jstr = JNI_ENV_PTR(env)->NewStringUTF(JNI_ENV_ARG(env, pkg));
     res = JNI_ENV_PTR(env)->CallBooleanMethod(JNI_ENV_ARG(env, module),
