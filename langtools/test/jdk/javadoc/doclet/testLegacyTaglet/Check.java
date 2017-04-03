@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import javax.lang.model.element.Element;
 
 import com.sun.source.doctree.DocTree;
 import jdk.javadoc.doclet.Taglet;
@@ -64,10 +65,11 @@ public class Check implements Taglet {
      * representation.
      *
      * @param tags the array of tags representing this custom tag.
+     * @param element the declaration to which the enclosing comment belongs
      * @return null to test if the javadoc throws an exception or not.
      */
     @Override
-    public String toString(List<? extends DocTree> tags) {
+    public String toString(List<? extends DocTree> tags, Element element) {
         return null;
     }
 }
