@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, SAP SE and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,23 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package org.graalvm.compiler.test;
 
-/**
- * A class loader that exports all packages in the module defining the class loader to all classes
- * in the unnamed module associated with the loader.
+/*
+ * @test
+ * @bug 8176505
+ * @summary Wrong assertion 'should be an array copy/clone' in arraycopynode.cpp
+ *
+ * @run main/othervm -Xbatch -XX:-UseOnStackReplacement compiler.arraycopy.TestObjectArrayCopy
+ *
+ * @author Volker Simonis
  */
-public class ExportingClassLoader extends ClassLoader {
-    public ExportingClassLoader() {
-        if (!GraalTest.Java8OrEarlier) {
-            JLModule.fromClass(getClass()).exportAllPackagesTo(JLModule.getUnnamedModuleFor(this));
-        }
+
+package compiler.arraycopy;
+
+public class TestObjectArrayCopy {
+
+    public static boolean crash(Object src) {
+        String[] dst = new String[1];
+        System.arraycopy(src, 0, dst, 0, 1);
+        return dst[0] == null;
     }
 
-    public ExportingClassLoader(ClassLoader parent) {
-        super(parent);
-        if (!GraalTest.Java8OrEarlier) {
-            JLModule.fromClass(getClass()).exportAllPackagesTo(JLModule.getUnnamedModuleFor(this));
+    public static void main(String[] args) {
+        String[] sa = new String[1];
+        for (int i = 0; i < 20_000; i++) {
+            crash(sa);
         }
     }
 }
