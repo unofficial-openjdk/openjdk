@@ -339,6 +339,22 @@ JvmtiEnv::AddModuleProvides(jobject module, jclass service, jclass impl_class) {
   return JvmtiExport::add_module_provides(h_module, h_service, h_impl_class, THREAD);
 } /* end AddModuleProvides */
 
+// module - pre-checked for NULL
+// is_modifiable_class_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::IsModifiableModule(jobject module, jboolean* is_modifiable_module_ptr) {
+  JavaThread* THREAD = JavaThread::current();
+
+  // check module
+  Handle h_module(THREAD, JNIHandles::resolve(module));
+  if (!java_lang_Module::is_instance(h_module())) {
+    return JVMTI_ERROR_INVALID_MODULE;
+  }
+
+  *is_modifiable_module_ptr = JNI_TRUE;
+  return JVMTI_ERROR_NONE;
+} /* end IsModifiableModule */
+
 
   //
   // Class functions
