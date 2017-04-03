@@ -83,15 +83,6 @@ public class Modules {
     }
 
     /**
-     * Update module m to export a package to all modules.
-     *
-     * This method is for intended for use by tests only.
-     */
-    public static void addExports(Module m, String pn) {
-        JLA.addExports(m, pn);
-    }
-
-    /**
      * Updates module m1 to export a package to module m2.
      * Same as m1.addExports(pn, m2) but without a caller check
      */
@@ -104,15 +95,6 @@ public class Modules {
      */
     public static void addExportsToAllUnnamed(Module m, String pn) {
         JLA.addExportsToAllUnnamed(m, pn);
-    }
-
-    /**
-     * Update module m to open a package to all modules.
-     *
-     * This method is for intended for use by tests only.
-     */
-    public static void addOpens(Module m, String pn) {
-        JLA.addOpens(m, pn);
     }
 
     /**

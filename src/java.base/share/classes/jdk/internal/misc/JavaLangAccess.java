@@ -209,11 +209,6 @@ public interface JavaLangAccess {
     void addReadsAllUnnamed(Module m);
 
     /**
-     * Update module m to export a package to all modules.
-     */
-    void addExports(Module m, String pn);
-
-    /**
      * Updates module m1 to export a package to module m2. The export does
      * not result in a strong reference to m2 (m2 can be GC'ed).
      */
@@ -223,11 +218,6 @@ public interface JavaLangAccess {
      * Updates a module m to export a package to all unnamed modules.
      */
     void addExportsToAllUnnamed(Module m, String pkg);
-
-    /**
-     * Updates a module m to open a package to all modules.
-     */
-    void addOpens(Module m, String pkg);
 
     /**
      * Updates module m1 to open a package to module m2. Opening the

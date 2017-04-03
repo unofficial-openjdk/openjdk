@@ -2112,17 +2112,11 @@ public final class System {
             public void addReadsAllUnnamed(Module m) {
                 m.implAddReadsAllUnnamed();
             }
-            public void addExports(Module m, String pn) {
-                m.implAddExports(pn);
-            }
             public void addExports(Module m, String pn, Module other) {
                 m.implAddExports(pn, other);
             }
             public void addExportsToAllUnnamed(Module m, String pn) {
                 m.implAddExportsToAllUnnamed(pn);
-            }
-            public void addOpens(Module m, String pn) {
-                m.implAddOpens(pn);
             }
             public void addOpens(Module m, String pn, Module other) {
                 m.implAddOpens(pn, other);
