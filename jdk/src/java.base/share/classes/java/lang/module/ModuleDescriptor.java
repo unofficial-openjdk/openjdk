@@ -60,7 +60,7 @@ import jdk.internal.module.ModuleInfo;
  * <p> A module descriptor describes a named module and defines methods to
  * obtain each of its components. The module descriptor for a named module
  * in the Java virtual machine is obtained by invoking the {@link
- * java.lang.reflect.Module Module}'s {@link java.lang.reflect.Module#getDescriptor
+ * java.lang.Module Module}'s {@link java.lang.Module#getDescriptor
  * getDescriptor} method. Module descriptors can also be created using the
  * {@link ModuleDescriptor.Builder} class or by reading the binary form of a
  * module declaration ({@code module-info.class}) using the {@link
@@ -85,7 +85,7 @@ import jdk.internal.module.ModuleInfo;
  * <p> {@code ModuleDescriptor} objects are immutable and safe for use by
  * multiple concurrent threads.</p>
  *
- * @see java.lang.reflect.Module
+ * @see java.lang.Module
  * @since 9
  * @spec JPMS
  */
@@ -236,7 +236,8 @@ public class ModuleDescriptor
          * if recorded at compile-time.
          *
          * @return The string containing the version of the module if recorded
-         *         at compile-time
+         *         at compile-time, or an empty {@code Optional} if no version
+         *         was recorded
          *
          * @see #compiledVersion()
          */
@@ -1430,7 +1431,8 @@ public class ModuleDescriptor
      * <p> Returns the string with the possibly-unparseable version of the
      * module </p>
      *
-     * @return The string containing the version of the module
+     * @return The string containing the version of the module or an empty
+     *         {@code Optional} if the module does not have a version
      *
      * @see #version()
      */
@@ -2108,7 +2110,9 @@ public class ModuleDescriptor
 
         /**
          * Sets the module main class. The package for the main class is added
-         * to the module if not already added.
+         * to the module if not already added. In other words, this method is
+         * equivalent to first invoking this builder's {@link #packages(Set)
+         * packages} method to add the package name of the main class.
          *
          * @param  mc
          *         The module main class
@@ -2132,8 +2136,8 @@ public class ModuleDescriptor
                     throw new IllegalArgumentException(mc + ": unnamed package");
                 }
             }
-            mainClass = mc;
             packages.add(pn);
+            mainClass = mc;
             return this;
         }
 

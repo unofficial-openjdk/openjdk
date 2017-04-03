@@ -32,9 +32,6 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolvedModule;
-import java.lang.reflect.Layer;
-import java.lang.reflect.LayerInstantiationException;
-import java.lang.reflect.Module;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -61,7 +58,7 @@ import jdk.internal.perf.PerfCounter;
  * resolving a set of module names specified via the launcher (or equivalent)
  * -m and --add-modules options. The modules are located on a module path that
  * is constructed from the upgrade module path, system modules, and application
- * module path. The Configuration is instantiated as the boot Layer with each
+ * module path. The Configuration is instantiated as the boot layer with each
  * module in the the configuration defined to one of the built-in class loaders.
  */
 
@@ -106,11 +103,11 @@ public final class ModuleBootstrap {
     }
 
     /**
-     * Initialize the module system, returning the boot Layer.
+     * Initialize the module system, returning the boot layer.
      *
      * @see java.lang.System#initPhase2()
      */
-    public static Layer boot() {
+    public static ModuleLayer boot() {
 
         long t0 = System.nanoTime();
 
@@ -237,7 +234,6 @@ public final class ModuleBootstrap {
             ModuleFinder f = finder;  // observable modules
             systemModules.findAll()
                 .stream()
-                .filter(mref -> !ModuleResolution.doNotResolveByDefault(mref))
                 .map(ModuleReference::descriptor)
                 .map(ModuleDescriptor::name)
                 .filter(mn -> f.find(mn).isPresent())  // observable
@@ -321,8 +317,7 @@ public final class ModuleBootstrap {
         if (SystemModules.hasSplitPackages() || needPostResolutionChecks) {
             Map<String, String> packageToModule = new HashMap<>();
             for (ResolvedModule resolvedModule : cf.modules()) {
-                ModuleDescriptor descriptor =
-                    resolvedModule.reference().descriptor();
+                ModuleDescriptor descriptor = resolvedModule.reference().descriptor();
                 String name = descriptor.name();
                 for (String p : descriptor.packages()) {
                     String other = packageToModule.putIfAbsent(p, name);
@@ -338,7 +333,7 @@ public final class ModuleBootstrap {
         long t4 = System.nanoTime();
 
         // define modules to VM/runtime
-        Layer bootLayer = Layer.empty().defineModules(cf, clf);
+        ModuleLayer bootLayer = ModuleLayer.empty().defineModules(cf, clf);
 
         PerfCounters.layerCreateTime.addElapsedTimeFrom(t4);
 
@@ -476,7 +471,7 @@ public final class ModuleBootstrap {
      * Process the --add-reads options to add any additional read edges that
      * are specified on the command-line.
      */
-    private static void addExtraReads(Layer bootLayer) {
+    private static void addExtraReads(ModuleLayer bootLayer) {
 
         // decode the command line options
         Map<String, List<String>> map = decode("jdk.module.addreads.");
@@ -514,48 +509,45 @@ public final class ModuleBootstrap {
      * Process the --add-exports and --add-opens options to export/open
      * additional packages specified on the command-line.
      */
-    private static void addExtraExportsAndOpens(Layer bootLayer) {
-        IllegalAccessLogger.Builder builder = new IllegalAccessLogger.Builder();
-
+    private static void addExtraExportsAndOpens(ModuleLayer bootLayer) {
         // --add-exports
         String prefix = "jdk.module.addexports.";
         Map<String, List<String>> extraExports = decode(prefix);
         if (!extraExports.isEmpty()) {
-            addExtraExportsOrOpens(bootLayer, extraExports, false, builder);
+            addExtraExportsOrOpens(bootLayer, extraExports, false);
         }
 
         // --add-opens
         prefix = "jdk.module.addopens.";
         Map<String, List<String>> extraOpens = decode(prefix);
         if (!extraOpens.isEmpty()) {
-            addExtraExportsOrOpens(bootLayer, extraOpens, true, builder);
+            addExtraExportsOrOpens(bootLayer, extraOpens, true);
         }
 
         // --permit-illegal-access
         if (getAndRemoveProperty("jdk.module.permitIllegalAccess") != null) {
             warn("--permit-illegal-access will be removed in the next major release");
+            IllegalAccessLogger.Builder builder = new IllegalAccessLogger.Builder();
+            Module unnamed = BootLoader.getUnnamedModule();
             bootLayer.modules().stream().forEach(m -> {
                 m.getDescriptor()
                  .packages()
                  .stream()
-                 .filter(pn -> !m.isOpen(pn))
+                 .filter(pn -> !m.isOpen(pn, unnamed))  // skip if opened by --add-opens
                  .forEach(pn -> {
                      builder.logAccessToOpenPackage(m, pn, "--permit-illegal-access");
                      Modules.addOpensToAllUnnamed(m, pn);
                  });
             });
+            IllegalAccessLogger.setIllegalAccessLogger(builder.build());
         }
-
-        IllegalAccessLogger.setIllegalAccessLogger(builder.build());
     }
 
-    private static void addExtraExportsOrOpens(Layer bootLayer,
+    private static void addExtraExportsOrOpens(ModuleLayer bootLayer,
                                                Map<String, List<String>> map,
-                                               boolean opens,
-                                               IllegalAccessLogger.Builder builder)
+                                               boolean opens)
     {
         String option = opens ? ADD_OPENS : ADD_EXPORTS;
-        //warn(map.size() + " usage(s) of " + option);
         for (Map.Entry<String, List<String>> e : map.entrySet()) {
 
             // the key is $MODULE/$PACKAGE
@@ -601,10 +593,8 @@ public final class ModuleBootstrap {
                 }
                 if (allUnnamed) {
                     if (opens) {
-                        builder.logAccessToOpenPackage(m, pn, option);
                         Modules.addOpensToAllUnnamed(m, pn);
                     } else {
-                        builder.logAccessToExportedPackage(m, pn, option);
                         Modules.addExportsToAllUnnamed(m, pn);
                     }
                 } else {

@@ -25,7 +25,6 @@
 
 package java.lang.instrument;
 
-import java.lang.reflect.Module;
 import java.security.ProtectionDomain;
 import java.util.List;
 import java.util.Map;

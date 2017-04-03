@@ -50,10 +50,8 @@ import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
 import java.lang.module.ModuleDescriptor.Provides;
-import java.lang.reflect.Layer;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Module;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
@@ -85,7 +83,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jdk.internal.misc.VM;
-import jdk.internal.module.IllegalAccessLogger;
 import jdk.internal.module.Modules;
 
 
@@ -429,20 +426,14 @@ public final class LauncherHelper {
                 abort(null, "java.launcher.jar.error3", jarname);
             }
 
-            // Add-Exports and Add-Opens to allow illegal access
+            // Add-Exports and Add-Opens
             String exports = mainAttrs.getValue(ADD_EXPORTS);
             if (exports != null) {
-                String warn = getLocalizedMessage("java.launcher.permitaccess.warning",
-                                                  jarname, ADD_EXPORTS);
-                System.err.println(warn);
-                addExportsOrOpens(exports, false, ADD_EXPORTS);
+                addExportsOrOpens(exports, false);
             }
             String opens = mainAttrs.getValue(ADD_OPENS);
             if (opens != null) {
-                String warn = getLocalizedMessage("java.launcher.permitaccess.warning",
-                                                   jarname, ADD_OPENS);
-                System.err.println(warn);
-                addExportsOrOpens(opens, true, ADD_OPENS);
+                addExportsOrOpens(opens, true);
             }
 
             /*
@@ -467,36 +458,24 @@ public final class LauncherHelper {
      * Process the Add-Exports or Add-Opens value. The value is
      * {@code <module>/<package> ( <module>/<package>)*}.
      */
-    static void addExportsOrOpens(String value, boolean open, String how) {
-        IllegalAccessLogger.Builder builder;
-        IllegalAccessLogger logger = IllegalAccessLogger.illegalAccessLogger();
-        if (logger == null) {
-            builder = new IllegalAccessLogger.Builder();
-        } else {
-            builder = logger.toBuilder();
-        }
-
+    static void addExportsOrOpens(String value, boolean open) {
         for (String moduleAndPackage : value.split(" ")) {
             String[] s = moduleAndPackage.trim().split("/");
             if (s.length == 2) {
                 String mn = s[0];
                 String pn = s[1];
 
-                Layer.boot().findModule(mn).ifPresent(m -> {
+                ModuleLayer.boot().findModule(mn).ifPresent(m -> {
                     if (m.getDescriptor().packages().contains(pn)) {
                         if (open) {
-                            builder.logAccessToOpenPackage(m, pn, how);
                             Modules.addOpensToAllUnnamed(m, pn);
                         } else {
-                            builder.logAccessToExportedPackage(m, pn, how);
                             Modules.addExportsToAllUnnamed(m, pn);
                         }
                     }
                 });
             }
         }
-
-        IllegalAccessLogger.setIllegalAccessLogger(builder.build());
     }
 
     // From src/share/bin/java.c:
@@ -583,7 +562,7 @@ public final class LauncherHelper {
         }
 
         // main module is in the boot layer
-        Layer layer = Layer.boot();
+        ModuleLayer layer = ModuleLayer.boot();
         Optional<Module> om = layer.findModule(mainModule);
         if (!om.isPresent()) {
             // should not happen
@@ -873,7 +852,7 @@ public final class LauncherHelper {
         private static void setFXLaunchParameters(String what, int mode) {
 
             // find the module with the FX launcher
-            Optional<Module> om = Layer.boot().findModule(JAVAFX_GRAPHICS_MODULE_NAME);
+            Optional<Module> om = ModuleLayer.boot().findModule(JAVAFX_GRAPHICS_MODULE_NAME);
             if (!om.isPresent()) {
                 abort(null, "java.launcher.cls.error5");
             }
@@ -957,8 +936,7 @@ public final class LauncherHelper {
      * Called by the launcher to list the observable modules.
      * If called without any sub-options then the output is a simple list of
      * the modules. If called with sub-options then the sub-options are the
-     * names of the modules to list (-listmods:java.base,java.desktop for
-     * example).
+     * names of the modules to list (e.g. --list-modules java.base,java.desktop)
      */
     static void listModules(boolean printToStderr, String optionFlag)
         throws IOException, ClassNotFoundException
@@ -966,15 +944,11 @@ public final class LauncherHelper {
         initOutput(printToStderr);
 
         ModuleFinder finder = jdk.internal.module.ModuleBootstrap.finder();
-
         int colon = optionFlag.indexOf('=');
         if (colon == -1) {
             finder.findAll().stream()
-                .sorted(Comparator.comparing(ModuleReference::descriptor))
-                .forEach(md -> {
-                    ostream.println(midAndLocation(md.descriptor(),
-                                                   md.location()));
-                });
+                  .sorted(Comparator.comparing(ModuleReference::descriptor))
+                  .forEach(mref -> describeModule(finder, mref, false));
         } else {
             String[] names = optionFlag.substring(colon+1).split(",");
             for (String name: names) {
@@ -983,70 +957,82 @@ public final class LauncherHelper {
                     System.err.format("%s not observable!%n", name);
                     continue;
                 }
-
-                ModuleDescriptor md = mref.descriptor();
-                if (md.isOpen())
-                    ostream.print("open ");
-                if (md.isAutomatic())
-                    ostream.print("automatic ");
-                if (md.modifiers().contains(ModuleDescriptor.Modifier.SYNTHETIC))
-                    ostream.print("synthetic ");
-                if (md.modifiers().contains(ModuleDescriptor.Modifier.MANDATED))
-                    ostream.print("mandated ");
-                ostream.println("module " + midAndLocation(md, mref.location()));
-
-                // unqualified exports (sorted by package)
-                Set<Exports> exports = new TreeSet<>(Comparator.comparing(Exports::source));
-                md.exports().stream().filter(e -> !e.isQualified()).forEach(exports::add);
-                for (Exports e : exports) {
-                    String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
-                            Stream.of(e.source()))
-                            .collect(Collectors.joining(" "));
-                    ostream.format("  exports %s%n", modsAndSource);
-                }
-
-                for (Requires d : md.requires()) {
-                    ostream.format("  requires %s%n", d);
-                }
-                for (String s : md.uses()) {
-                    ostream.format("  uses %s%n", s);
-                }
-
-                for (Provides ps : md.provides()) {
-                    ostream.format("  provides %s with %s%n", ps.service(),
-                            ps.providers().stream().collect(Collectors.joining(", ")));
-                }
-
-                // qualified exports
-                for (Exports e : md.exports()) {
-                    if (e.isQualified()) {
-                        String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
-                                Stream.of(e.source()))
-                                .collect(Collectors.joining(" "));
-                        ostream.format("  exports %s", modsAndSource);
-                        formatCommaList(ostream, " to", e.targets());
-                    }
-                }
-
-                // open packages
-                for (Opens obj: md.opens()) {
-                    String modsAndSource = Stream.concat(toStringStream(obj.modifiers()),
-                            Stream.of(obj.source()))
-                            .collect(Collectors.joining(" "));
-                    ostream.format("  opens %s", modsAndSource);
-                    if (obj.isQualified())
-                        formatCommaList(ostream, " to", obj.targets());
-                    else
-                        ostream.println();
-                }
-
-                // non-exported/non-open packages
-                Set<String> concealed = new TreeSet<>(md.packages());
-                md.exports().stream().map(Exports::source).forEach(concealed::remove);
-                md.opens().stream().map(Opens::source).forEach(concealed::remove);
-                concealed.forEach(p -> ostream.format("  contains %s%n", p));
+                describeModule(finder, mref, true);
             }
         }
+    }
+
+    /**
+     * Describes the given module.
+     */
+    static void describeModule(ModuleFinder finder,
+                               ModuleReference mref,
+                               boolean verbose)
+    {
+        ModuleDescriptor md = mref.descriptor();
+        ostream.print("module " + midAndLocation(md, mref.location()));
+        if (md.isAutomatic())
+            ostream.print(" automatic");
+        ostream.println();
+
+        if (!verbose)
+            return;
+
+        // unqualified exports (sorted by package)
+        Set<Exports> exports = new TreeSet<>(Comparator.comparing(Exports::source));
+        md.exports().stream().filter(e -> !e.isQualified()).forEach(exports::add);
+        for (Exports e : exports) {
+            String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
+                    Stream.of(e.source()))
+                    .collect(Collectors.joining(" "));
+            ostream.format("  exports %s%n", modsAndSource);
+        }
+
+        for (Requires d : md.requires()) {
+            ostream.format("  requires %s", d);
+            finder.find(d.name())
+                    .map(ModuleReference::descriptor)
+                    .filter(ModuleDescriptor::isAutomatic)
+                    .ifPresent(any -> ostream.print(" automatic"));
+            ostream.println();
+        }
+        for (String s : md.uses()) {
+            ostream.format("  uses %s%n", s);
+        }
+
+        for (Provides ps : md.provides()) {
+            ostream.format("  provides %s with %s%n", ps.service(),
+                    ps.providers().stream().collect(Collectors.joining(", ")));
+        }
+
+        // qualified exports
+        for (Exports e : md.exports()) {
+            if (e.isQualified()) {
+                String modsAndSource = Stream.concat(toStringStream(e.modifiers()),
+                        Stream.of(e.source()))
+                        .collect(Collectors.joining(" "));
+                ostream.format("  exports %s", modsAndSource);
+                formatCommaList(ostream, " to", e.targets());
+            }
+        }
+
+        // open packages
+        for (Opens obj: md.opens()) {
+            String modsAndSource = Stream.concat(toStringStream(obj.modifiers()),
+                    Stream.of(obj.source()))
+                    .collect(Collectors.joining(" "));
+            ostream.format("  opens %s", modsAndSource);
+            if (obj.isQualified())
+                formatCommaList(ostream, " to", obj.targets());
+            else
+                ostream.println();
+        }
+
+        // non-exported/non-open packages
+        Set<String> concealed = new TreeSet<>(md.packages());
+        md.exports().stream().map(Exports::source).forEach(concealed::remove);
+        md.opens().stream().map(Opens::source).forEach(concealed::remove);
+        concealed.forEach(p -> ostream.format("  contains %s%n", p));
     }
 
     static <T> String toString(Set<T> s) {

@@ -23,11 +23,9 @@
  * questions.
  */
 
-
 package sun.instrument;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Module;
 import java.lang.reflect.AccessibleObject;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.ClassDefinition;
@@ -312,7 +310,7 @@ public class InstrumentationImpl implements Instrumentation {
             return Collections.emptyMap();
 
         Map<String, Set<Module>> result = new HashMap<>();
-        Set<String> packages = Set.of(module.getPackages());
+        Set<String> packages = module.getPackages();
         for (Map.Entry<String, Set<Module>> e : map.entrySet()) {
             String pkg = e.getKey();
             if (pkg == null)
