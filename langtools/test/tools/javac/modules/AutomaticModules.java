@@ -310,7 +310,7 @@ public class AutomaticModules extends ModuleTestBase {
     }
 
     @Test
-    public void testDropTrailingVersion(Path base) throws Exception {
+    public void testWithTrailingVersion(Path base) throws Exception {
         Path legacySrc = base.resolve("legacy-src");
         tb.writeJavaFiles(legacySrc,
                           "package api; public class Api {}");
@@ -348,7 +348,7 @@ public class AutomaticModules extends ModuleTestBase {
         Files.createDirectories(classes);
 
         tb.writeJavaFiles(m,
-                          "module m { requires test; }",
+                          "module m { requires test1; }",
                           "package impl; public class Impl { public void e(api.Api api) { } }");
 
         new JavacTask(tb)
