@@ -130,6 +130,13 @@ public class InstrumentationImpl implements Instrumentation {
         return isModifiableClass0(mNativeAgent, theClass);
     }
 
+    public boolean isModifiableModule(Module module) {
+        if (module == null) {
+            throw new NullPointerException("'module' is null");
+        }
+        return true;
+    }
+
     public boolean
     isRetransformClassesSupported() {
         // ask lazily since there is some overhead

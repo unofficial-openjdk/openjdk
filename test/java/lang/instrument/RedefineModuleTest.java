@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,6 +64,10 @@ public class RedefineModuleTest {
                                            extraOpens,
                                            extraUses,
                                            extraProvides);
+    }
+
+    static boolean isModifiableModule(Module module) {
+        return RedefineModuleAgent.isModifiableModule(module);
     }
 
 
@@ -274,6 +278,19 @@ public class RedefineModuleTest {
         // attempt to update java.base to provide an implementation of TestProvider
         Map<Class<?>, List<Class<?>>> extraProvides = Map.of(service, List.of(impl));
         redefineModule(baseModule, Set.of(), Map.of(), Map.of(), Set.of(), extraProvides);
+    }
+
+    /**
+     * Exercise IsModifiableModule
+     */
+    @Test
+    public void testIsModifiableModule() {
+        ClassLoader pcl = ClassLoader.getPlatformClassLoader();
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        assertTrue(isModifiableModule(pcl.getUnnamedModule()));
+        assertTrue(isModifiableModule(scl.getUnnamedModule()));
+        assertTrue(isModifiableModule(RedefineModuleTest.class.getModule()));
+        assertTrue(isModifiableModule(Object.class.getModule()));
     }
 
     /**
