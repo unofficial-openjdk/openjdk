@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,32 +23,27 @@
  * questions.
  */
 
-/** Defines the implementation of the
- *  {@link javax.tools.ToolProvider#getSystemDocumentationTool system documentation tool}
- *  and its command line equivalent, <em>javadoc</em>.
- *
- *  @moduleGraph
- *  @since 9
+/*
+ * @test
+ * @bug 8177097
+ * @summary Generic method reference returning wildcard parameterized type does not compile
+ * @compile T8177097a.java
  */
-module jdk.javadoc {
-    requires transitive java.compiler;
-    requires transitive jdk.compiler;
-    requires java.xml;
 
-    exports com.sun.javadoc;
-    exports com.sun.tools.doclets;
-    exports com.sun.tools.doclets.standard;
-    exports com.sun.tools.javadoc;
+import java.util.Map;
 
-    exports jdk.javadoc.doclet;
+class T8177097a {
+    interface X<O> {
+        Map<?, O> apply();
+    }
 
-    provides java.util.spi.ToolProvider
-        with jdk.javadoc.internal.tool.JavadocToolProvider;
+    <O> void go(X<O> x) { }
 
-    provides javax.tools.DocumentationTool
-        with jdk.javadoc.internal.api.JavadocTool;
+    static <I> Map<?, Integer> a() {
+        return null;
+    }
 
-    provides javax.tools.Tool
-        with jdk.javadoc.internal.api.JavadocTool;
+    void test() {
+        go(T8177097a::a);
+    }
 }
-

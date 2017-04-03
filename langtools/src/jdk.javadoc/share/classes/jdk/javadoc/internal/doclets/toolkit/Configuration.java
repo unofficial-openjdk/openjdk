@@ -26,6 +26,7 @@
 package jdk.javadoc.internal.doclets.toolkit;
 
 import java.io.*;
+import java.lang.ref.*;
 import java.util.*;
 
 import javax.lang.model.element.Element;
@@ -54,7 +55,9 @@ import jdk.javadoc.internal.doclets.toolkit.util.MetaKeywords;
 import jdk.javadoc.internal.doclets.toolkit.util.SimpleDocletException;
 import jdk.javadoc.internal.doclets.toolkit.util.TypeElementCatalog;
 import jdk.javadoc.internal.doclets.toolkit.util.Utils;
+import jdk.javadoc.internal.doclets.toolkit.util.VisibleMemberMap;
 import jdk.javadoc.internal.doclets.toolkit.util.VisibleMemberMap.GetterSetter;
+import jdk.javadoc.internal.doclets.toolkit.util.VisibleMemberMap.Kind;
 
 import static javax.tools.Diagnostic.Kind.*;
 
@@ -74,6 +77,10 @@ import static javax.tools.Diagnostic.Kind.*;
  * @author Jamie Ho
  */
 public abstract class Configuration {
+    /**
+     * The doclet that created this configuration.
+     */
+    public final Doclet doclet;
 
     /**
      * The factory for builders.
@@ -292,6 +299,8 @@ public abstract class Configuration {
 
     private List<GroupContainer> groups;
 
+    private final Map<TypeElement, EnumMap<Kind, Reference<VisibleMemberMap>>> typeElementMemberCache;
+
     public abstract Messages getMessages();
     public abstract Resources getResources();
 
@@ -342,13 +351,16 @@ public abstract class Configuration {
             "jdk.javadoc.internal.doclets.toolkit.resources.doclets";
     /**
      * Constructs the configurations needed by the doclet.
+     * @param doclet the doclet that created this configuration
      */
-    public Configuration() {
+    public Configuration(Doclet doclet) {
+        this.doclet = doclet;
         excludedDocFileDirs = new HashSet<>();
         excludedQualifiers = new HashSet<>();
         setTabWidth(DocletConstants.DEFAULT_TAB_STOP_LENGTH);
         metakeywords = new MetaKeywords(this);
         groups = new ArrayList<>(0);
+        typeElementMemberCache = new HashMap<>();
     }
 
     private boolean initialized = false;
@@ -1252,5 +1264,19 @@ public abstract class Configuration {
      */
     public boolean isAllowScriptInComments() {
         return allowScriptInComments;
+    }
+
+    public VisibleMemberMap getVisibleMemberMap(TypeElement te, VisibleMemberMap.Kind kind) {
+        EnumMap<Kind, Reference<VisibleMemberMap>> cacheMap = typeElementMemberCache
+                .computeIfAbsent(te, k -> new EnumMap<>(VisibleMemberMap.Kind.class));
+
+        Reference<VisibleMemberMap> vmapRef = cacheMap.get(kind);
+        // recompute, if referent has been garbage collected
+        VisibleMemberMap vMap = vmapRef == null ? null : vmapRef.get();
+        if (vMap == null) {
+            vMap = new VisibleMemberMap(te, kind, this);
+            cacheMap.put(kind, new SoftReference<>(vMap));
+        }
+        return vMap;
     }
 }
