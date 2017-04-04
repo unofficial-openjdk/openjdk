@@ -1240,7 +1240,7 @@ public class Modules extends JCTree.Visitor {
                     case ALL_SYSTEM:
                         modules = new HashSet<>(syms.getAllModules())
                                 .stream()
-                                .filter(systemModulePred.and(observablePred).and(noIncubatorPred));
+                                .filter(systemModulePred.and(observablePred));
                         break;
                     case ALL_MODULE_PATH:
                         modules = new HashSet<>(syms.getAllModules())
