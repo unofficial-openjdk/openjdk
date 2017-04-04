@@ -731,7 +731,7 @@ public interface Instrumentation {
      * {@code true}. If a module is not modifiable then this method returns
      * {@code false}.
      *
-     * @param module the class to check for being modifiable
+     * @param module the module to test if it can be modified
      * @return {@code true} if the module is modifiable, otherwise {@code false}
      * @throws NullPointerException if the module is {@code null}
      *
