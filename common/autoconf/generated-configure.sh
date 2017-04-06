@@ -995,6 +995,7 @@ OPENJDK_TARGET_CPU_ISADIR
 OPENJDK_TARGET_CPU_LEGACY_LIB
 OPENJDK_TARGET_CPU_LEGACY
 REQUIRED_OS_VERSION
+REQUIRED_OS_ARCH
 REQUIRED_OS_NAME
 COMPILE_TYPE
 OPENJDK_TARGET_CPU_ENDIAN
@@ -16041,13 +16042,15 @@ $as_echo "$COMPILE_TYPE" >&6; }
     fi
   fi
   if test "x$OPENJDK_TARGET_OS" = "xmacosx"; then
-    REQUIRED_OS_NAME=Darwin
+    REQUIRED_OS_NAME="Mac OS X"
     REQUIRED_OS_VERSION=11.2
   fi
   if test "x$OPENJDK_TARGET_OS" = "xaix"; then
     REQUIRED_OS_NAME=AIX
     REQUIRED_OS_VERSION=7.1
   fi
+  REQUIRED_OS_ARCH=${OPENJDK_TARGET_CPU}
+
 
 
 
@@ -49686,7 +49689,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
         SHARED_LIBRARY_FLAGS="-dynamiclib -compatibility_version 1.0.0 -current_version 1.0.0 $PICFLAG"
         JVM_CFLAGS="$JVM_CFLAGS $PICFLAG"
       fi
-      SET_EXECUTABLE_ORIGIN='-Wl,-rpath,@loader_path$1'
+      SET_EXECUTABLE_ORIGIN='-Wl,-rpath,@loader_path$(or $1,/.)'
       SET_SHARED_LIBRARY_ORIGIN="$SET_EXECUTABLE_ORIGIN"
       SET_SHARED_LIBRARY_NAME='-Wl,-install_name,@rpath/$1'
       SET_SHARED_LIBRARY_MAPFILE='-Wl,-exported_symbols_list,$1'
@@ -49706,7 +49709,7 @@ $as_echo "$ac_cv_c_bigendian" >&6; }
       # Linking is different on MacOSX
       PICFLAG=''
       SHARED_LIBRARY_FLAGS="-dynamiclib -compatibility_version 1.0.0 -current_version 1.0.0 $PICFLAG"
-      SET_EXECUTABLE_ORIGIN='-Wl,-rpath,@loader_path$1'
+      SET_EXECUTABLE_ORIGIN='-Wl,-rpath,@loader_path$(or $1,/.)'
       SET_SHARED_LIBRARY_ORIGIN="$SET_EXECUTABLE_ORIGIN"
       SET_SHARED_LIBRARY_NAME='-Wl,-install_name,@rpath/$1'
       SET_SHARED_LIBRARY_MAPFILE='-Wl,-exported_symbols_list,$1'
