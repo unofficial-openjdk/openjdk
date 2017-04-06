@@ -25,6 +25,7 @@
 
 package sun.instrument;
 
+import java.lang.instrument.UnmodifiableModuleException;
 import java.lang.reflect.Method;
 import java.lang.reflect.AccessibleObject;
 import java.lang.instrument.ClassFileTransformer;
@@ -247,6 +248,9 @@ public class InstrumentationImpl implements Instrumentation {
     {
         if (!module.isNamed())
             return;
+
+        if (!isModifiableModule(module))
+            throw new UnmodifiableModuleException(module.getName());
 
         // copy and check reads
         extraReads = new HashSet<>(extraReads);

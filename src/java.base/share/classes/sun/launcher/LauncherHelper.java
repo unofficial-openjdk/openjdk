@@ -954,7 +954,7 @@ public final class LauncherHelper {
             for (String name: names) {
                 ModuleReference mref = finder.find(name).orElse(null);
                 if (mref == null) {
-                    System.err.format("%s not observable!%n", name);
+                    System.err.format("%s not found%n", name);
                     continue;
                 }
                 describeModule(finder, mref, true);
@@ -990,11 +990,11 @@ public final class LauncherHelper {
 
         for (Requires d : md.requires()) {
             ostream.format("  requires %s", d);
-            finder.find(d.name())
+            String suffix = finder.find(d.name())
                     .map(ModuleReference::descriptor)
-                    .filter(ModuleDescriptor::isAutomatic)
-                    .ifPresent(any -> ostream.print(" automatic"));
-            ostream.println();
+                    .map(any -> any.isAutomatic() ? " automatic" : "")
+                    .orElse(" not found");
+            ostream.println(suffix);
         }
         for (String s : md.uses()) {
             ostream.format("  uses %s%n", s);
