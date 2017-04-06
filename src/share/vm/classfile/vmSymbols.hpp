@@ -56,6 +56,7 @@
   template(java_lang_Object,                          "java/lang/Object")                         \
   template(java_lang_Class,                           "java/lang/Class")                          \
   template(java_lang_Package,                         "java/lang/Package")                        \
+  template(java_lang_Module,                          "java/lang/Module")                         \
   template(java_lang_String,                          "java/lang/String")                         \
   template(java_lang_StringLatin1,                    "java/lang/StringLatin1")                   \
   template(java_lang_StringUTF16,                     "java/lang/StringUTF16")                    \
@@ -90,7 +91,6 @@
   template(java_lang_reflect_Method,                  "java/lang/reflect/Method")                 \
   template(java_lang_reflect_Constructor,             "java/lang/reflect/Constructor")            \
   template(java_lang_reflect_Field,                   "java/lang/reflect/Field")                  \
-  template(java_lang_Module,                          "java/lang/Module")                         \
   template(java_lang_reflect_Parameter,               "java/lang/reflect/Parameter")              \
   template(java_lang_reflect_Array,                   "java/lang/reflect/Array")                  \
   template(java_lang_StringBuffer,                    "java/lang/StringBuffer")                   \
