@@ -2587,19 +2587,26 @@ bool Arguments::create_property(const char* prop_name, const char* prop_value, P
 }
 
 bool Arguments::create_numbered_property(const char* prop_base_name, const char* prop_value, unsigned int count) {
-  // Make sure count is < 1,000. Otherwise, memory allocation will be too small.
-  if (count < 1000) {
-    size_t prop_len = strlen(prop_base_name) + strlen(prop_value) + 5;
+  const unsigned int props_count_limit = 1000;
+  const int max_digits = 3;
+  const int extra_symbols_count = 3; // includes '.', '=', '\0'
+
+  // Make sure count is < props_count_limit. Otherwise, memory allocation will be too small.
+  if (count < props_count_limit) {
+    size_t prop_len = strlen(prop_base_name) + strlen(prop_value) + max_digits + extra_symbols_count;
     char* property = AllocateHeap(prop_len, mtArguments);
     int ret = jio_snprintf(property, prop_len, "%s.%d=%s", prop_base_name, count, prop_value);
     if (ret < 0 || ret >= (int)prop_len) {
       FreeHeap(property);
+      jio_fprintf(defaultStream::error_stream(), "Failed to create property %s.%d=%s\n", prop_base_name, count, prop_value);
       return false;
     }
     bool added = add_property(property, UnwriteableProperty, InternalProperty);
     FreeHeap(property);
     return added;
   }
+
+  jio_fprintf(defaultStream::error_stream(), "Property count limit exceeded: %s, limit=%d\n", prop_base_name, props_count_limit);
   return false;
 }
 
@@ -2856,6 +2863,10 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       if (res != JNI_OK) {
         return res;
       }
+    } else if (match_option(option, "--permit-illegal-access")) {
+      if (!create_property("jdk.module.permitIllegalAccess", "true", ExternalProperty)) {
+        return JNI_ENOMEM;
+      }
     // -agentlib and -agentpath
     } else if (match_option(option, "-agentlib:", &tail) ||
           (is_absolute_path = match_option(option, "-agentpath:", &tail))) {
@@ -3098,6 +3109,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
     // -Xprof
     } else if (match_option(option, "-Xprof")) {
 #if INCLUDE_FPROF
+      log_warning(arguments)("Option -Xprof was deprecated in version 9 and will likely be removed in a future release.");
       _has_profile = true;
 #else // INCLUDE_FPROF
       jio_fprintf(defaultStream::error_stream(),
