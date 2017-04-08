@@ -520,9 +520,8 @@ final class Resolver {
                     findFail("Unable to compute the hash of module %s", dn);
                 }
 
-                // skip checking the hash if the module has been patched
                 ModuleReferenceImpl other = (ModuleReferenceImpl)mref2;
-                if (other != null && !other.isPatched()) {
+                if (other != null) {
                     byte[] recordedHash = hashes.hashFor(dn);
                     byte[] actualHash = other.computeHash(algorithm);
                     if (actualHash == null)
