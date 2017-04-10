@@ -100,6 +100,7 @@ public final class LauncherHelper {
             "javafx.application.Application";
     private static final String JAVAFX_FXHELPER_CLASS_NAME_SUFFIX =
             "sun.launcher.LauncherHelper$FXHelper";
+    private static final String LAUNCHER_AGENT_CLASS = "Launcher-Agent-Class";
     private static final String MAIN_CLASS = "Main-Class";
     private static final String ADD_EXPORTS = "Add-Exports";
     private static final String ADD_OPENS = "Add-Opens";
@@ -411,7 +412,7 @@ public final class LauncherHelper {
     }
 
     static String getMainClassFromJar(String jarname) {
-        String mainValue = null;
+        String mainValue;
         try (JarFile jarFile = new JarFile(jarname)) {
             Manifest manifest = jarFile.getManifest();
             if (manifest == null) {
@@ -426,6 +427,22 @@ public final class LauncherHelper {
             mainValue = mainAttrs.getValue(MAIN_CLASS);
             if (mainValue == null) {
                 abort(null, "java.launcher.jar.error3", jarname);
+            }
+
+            // Launcher-Agent-Class (only check for this when Main-Class present)
+            String agentClass = mainAttrs.getValue(LAUNCHER_AGENT_CLASS);
+            if (agentClass != null) {
+                ModuleLayer.boot().findModule("java.instrument").ifPresent(m -> {
+                    try {
+                        String cn = "sun.instrument.InstrumentationImpl";
+                        Class<?> clazz = Class.forName(cn, false, null);
+                        Method loadAgent = clazz.getMethod("loadAgent", String.class);
+                        loadAgent.invoke(null, jarname);
+                    } catch (Throwable e) {
+                        if (e instanceof InvocationTargetException) e = e.getCause();
+                        abort(e, "java.launcher.jar.error4", jarname);
+                    }
+                });
             }
 
             // Add-Exports and Add-Opens

@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,17 +21,21 @@
  * questions.
  */
 
-/**
- * Defines services that allow agents to
- * instrument programs running on the JVM.
- *
- * @moduleGraph
- * @since 9
- */
-module java.instrument {
-    exports java.lang.instrument;
+import java.lang.instrument.Instrumentation;
 
-    // allow java launcher to load agents in executable JAR files
-    exports sun.instrument to java.base;
+public class Main {
+    public static void main(String[] args) throws Exception {
+        Instrumentation inst = Agent.inst;
+        if (inst == null)
+            throw new RuntimeException("Agent not loaded");
+
+        // check boot class path has been extended
+        Class<?> helper = Class.forName("AgentHelper");
+        if (helper.getClassLoader() != null)
+            throw new RuntimeException("AgentHelper not loaded by boot loader");
+
+        // check Instrumentation object can be used
+        Class<?>[] classes = inst.getAllLoadedClasses();
+        System.out.println(classes.length + " classes loaded");
+    }
 }
-
