@@ -80,6 +80,8 @@ public class PatchSystemModules {
         assertTrue(CompilerUtils.compile(PATCH_SRC_DIR.resolve("m2"),
                                          PATCH_DIR.resolve("m2")));
 
+        createJars();
+
         // create an image with only m1 and m2
         if (Files.exists(JMODS)) {
             // create an image with m1,m2
@@ -204,9 +206,8 @@ public class PatchSystemModules {
         assertTrue(exitValue == 0);
     }
 
-    static void createImage() throws Throwable {
+    static void createJars() throws Throwable {
         FileUtils.deleteFileTreeUnchecked(JARS_DIR);
-        FileUtils.deleteFileTreeUnchecked(IMAGE);
 
         Files.createDirectories(JARS_DIR);
         Path m1 = JARS_DIR.resolve("m1.jar");
@@ -222,7 +223,10 @@ public class PatchSystemModules {
             "--module-path", JARS_DIR.toString(),
             "--hash-modules", "m1",
             "-C", MODS_DIR.resolve("m2").toString(), ".");
+    }
 
+    static void createImage() throws Throwable {
+        FileUtils.deleteFileTreeUnchecked(IMAGE);
 
         String mpath = JARS_DIR.toString() + File.pathSeparator + JMODS.toString();
         execTool("jlink", "--module-path", mpath,
