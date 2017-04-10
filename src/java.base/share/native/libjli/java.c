@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,7 +71,9 @@ static jboolean printTo = USE_STDERR;     /* where to print version/usage */
 static jboolean printXUsage = JNI_FALSE;  /* print and exit*/
 static jboolean dryRun = JNI_FALSE;       /* initialize VM and exit */
 static char     *showSettings = NULL;     /* print but continue */
-static char     *listModules = NULL;
+static jboolean listAllModules = JNI_FALSE;
+static jboolean listResolvedModules = JNI_FALSE;
+static char     *describeModule = NULL;
 
 static const char *_program_name;
 static const char *_launcher_name;
@@ -118,7 +120,9 @@ static void SetApplicationClassPath(const char**);
 static void PrintJavaVersion(JNIEnv *env, jboolean extraLF);
 static void PrintUsage(JNIEnv* env, jboolean doXUsage);
 static void ShowSettings(JNIEnv* env, char *optString);
-static void ListModules(JNIEnv* env, char *optString);
+static void ListAllModules(JNIEnv* env);
+static void ListResolvedModules(JNIEnv* env);
+static void DescribeModule(JNIEnv* env, char* optString);
 
 static void SetPaths(int argc, char **argv);
 
@@ -409,8 +413,22 @@ JavaMain(void * _args)
         CHECK_EXCEPTION_LEAVE(1);
     }
 
-    if (listModules != NULL) {
-        ListModules(env, listModules);
+    // list observable modules, then exit
+    if (listAllModules) {
+        ListAllModules(env);
+        CHECK_EXCEPTION_LEAVE(1);
+        LEAVE();
+    }
+
+    // list resolved modules and continue
+    if (listResolvedModules) {
+        ListResolvedModules(env);
+        CHECK_EXCEPTION_LEAVE(1);
+    }
+
+    // describe a module, then exit
+    if (describeModule != NULL) {
+        DescribeModule(env, describeModule);
         CHECK_EXCEPTION_LEAVE(1);
         LEAVE();
     }
@@ -552,7 +570,8 @@ static jboolean
 IsLauncherOption(const char* name) {
     return IsClassPathOption(name) ||
            IsLauncherMainOption(name) ||
-           JLI_StrCmp(name, "--list-modules") == 0;
+           JLI_StrCmp(name, "--describe-module") == 0 ||
+           JLI_StrCmp(name, "-d") == 0;
 }
 
 /*
@@ -1199,7 +1218,7 @@ GetOpt(int *pargc, char ***pargv, char **poption, char **pvalue) {
 
     } else if (JLI_StrCCmp(arg, "--") == 0 && (equals = JLI_StrChr(arg, '=')) != NULL) {
         value = equals+1;
-        if (JLI_StrCCmp(arg, "--list-modules=") == 0 ||
+        if (JLI_StrCCmp(arg, "--describe-module=") == 0 ||
             JLI_StrCCmp(arg, "--module=") == 0 ||
             JLI_StrCCmp(arg, "--class-path=") == 0) {
             kind = LAUNCHER_OPTION_WITH_ARGUMENT;
@@ -1263,17 +1282,16 @@ ParseArguments(int *pargc, char ***pargv,
             REPORT_ERROR (has_arg_any_len, ARG_ERROR1, arg);
             SetClassPath(value);
             mode = LM_CLASS;
-        } else if (JLI_StrCmp(arg, "--list-modules") == 0 ||
-                   JLI_StrCCmp(arg, "--list-modules=") == 0) {
-            listModules = arg;
-
-            // set listModules to --list-modules=<module-names> if argument is specified
-            if (JLI_StrCmp(arg, "--list-modules") == 0 && has_arg) {
-                static const char format[] = "%s=%s";
-                size_t buflen = JLI_StrLen(option) + 2 + JLI_StrLen(value);
-                listModules = JLI_MemAlloc(buflen);
-                JLI_Snprintf(listModules, buflen, format, option, value);
-            }
+        } else if (JLI_StrCmp(arg, "--list-modules") == 0) {
+            listAllModules = JNI_TRUE;
+            return JNI_TRUE;
+        } else if (JLI_StrCmp(arg, "--list-resolved-modules") == 0) {
+            listResolvedModules = JNI_TRUE;
+        } else if (JLI_StrCmp(arg, "--describe-module") == 0 ||
+                   JLI_StrCCmp(arg, "--describe-module=") == 0 ||
+                   JLI_StrCCmp(arg, "-d") == 0) {
+            REPORT_ERROR (has_arg_any_len, ARG_ERROR12, arg);
+            describeModule = value;
             return JNI_TRUE;
 /*
  * Parse white-space options
@@ -1828,19 +1846,47 @@ ShowSettings(JNIEnv *env, char *optString)
 }
 
 /**
- * List modules supported by the runtime
+ * List observable modules
  */
 static void
-ListModules(JNIEnv *env, char *optString)
+ListAllModules(JNIEnv *env)
 {
-    jmethodID listModulesID;
+    jmethodID listAllModulesID;
+    jclass cls = GetLauncherHelperClass(env);
+    NULL_CHECK(cls);
+    NULL_CHECK(listAllModulesID = (*env)->GetStaticMethodID(env, cls,
+            "listAllModules", "(Z)V"));
+    (*env)->CallStaticVoidMethod(env, cls, listAllModulesID, USE_STDOUT);
+}
+
+/**
+ * List resolved modules
+ */
+static void
+ListResolvedModules(JNIEnv *env)
+{
+    jmethodID listResolvedModulesID;
+    jclass cls = GetLauncherHelperClass(env);
+    NULL_CHECK(cls);
+    NULL_CHECK(listResolvedModulesID = (*env)->GetStaticMethodID(env, cls,
+            "listResolvedModules", "(Z)V"));
+    (*env)->CallStaticVoidMethod(env, cls, listResolvedModulesID, USE_STDOUT);
+}
+
+/**
+ * Describe a module
+ */
+static void
+DescribeModule(JNIEnv *env, char *optString)
+{
+    jmethodID describeModuleID;
     jstring joptString = NULL;
     jclass cls = GetLauncherHelperClass(env);
     NULL_CHECK(cls);
-    NULL_CHECK(listModulesID = (*env)->GetStaticMethodID(env, cls,
-            "listModules", "(ZLjava/lang/String;)V"));
+    NULL_CHECK(describeModuleID = (*env)->GetStaticMethodID(env, cls,
+            "describeModule", "(ZLjava/lang/String;)V"));
     NULL_CHECK(joptString = (*env)->NewStringUTF(env, optString));
-    (*env)->CallStaticVoidMethod(env, cls, listModulesID,
+    (*env)->CallStaticVoidMethod(env, cls, describeModuleID,
                                  USE_STDOUT,
                                  joptString);
 }
