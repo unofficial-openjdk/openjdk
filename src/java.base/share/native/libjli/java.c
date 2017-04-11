@@ -570,7 +570,8 @@ static jboolean
 IsLauncherOption(const char* name) {
     return IsClassPathOption(name) ||
            IsLauncherMainOption(name) ||
-           JLI_StrCmp(name, "--describe-module") == 0;
+           JLI_StrCmp(name, "--describe-module") == 0 ||
+           JLI_StrCmp(name, "-d") == 0;
 }
 
 /*
@@ -1287,7 +1288,8 @@ ParseArguments(int *pargc, char ***pargv,
         } else if (JLI_StrCmp(arg, "--list-resolved-modules") == 0) {
             listResolvedModules = JNI_TRUE;
         } else if (JLI_StrCmp(arg, "--describe-module") == 0 ||
-                   JLI_StrCCmp(arg, "--describe-module=") == 0) {
+                   JLI_StrCCmp(arg, "--describe-module=") == 0 ||
+                   JLI_StrCmp(arg, "-d") == 0) {
             REPORT_ERROR (has_arg_any_len, ARG_ERROR12, arg);
             describeModule = value;
             return JNI_TRUE;
