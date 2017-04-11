@@ -132,8 +132,6 @@ public abstract class HotSpotVirtualMachine extends VirtualMachine {
         }
         try {
             loadAgentLibrary("instrument", args);
-        } catch (AgentLoadException x) {
-            throw new InternalError("instrument library is missing in target VM", x);
         } catch (AgentInitializationException x) {
             /*
              * Translate interesting errors into the right exception and
