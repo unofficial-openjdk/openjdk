@@ -1521,8 +1521,7 @@ public final class Module implements AnnotatedElement {
         }
 
         // locate resource in module
-        JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
-        URL url = jla.findResource(loader, mn, name);
+        URL url = loader.findResource(mn, name);
         if (url != null) {
             try {
                 return url.openStream();
