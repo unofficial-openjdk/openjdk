@@ -2006,10 +2006,10 @@ public class Main {
         if (target != null) {
             String osName = target.osName();
             if (osName != null)
-                sb.append("\noperating-system-name ").append(osName).append("\n");
+                sb.append("operating-system-name ").append(osName).append("\n");
             String osArch = target.osArch();
             if (osArch != null)
-                sb.append("\noperating-system-architecture ").append(osArch).append("\n");
+                sb.append("operating-system-architecture ").append(osArch).append("\n");
        }
 
        if (hashes != null) {
