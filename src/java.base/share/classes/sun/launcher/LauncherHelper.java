@@ -977,14 +977,13 @@ public final class LauncherHelper {
         listModule(mref);
 
         // unqualified exports (sorted by package)
-        Set<Exports> exports = new TreeSet<>(Comparator.comparing(Exports::source));
-        md.exports().stream().filter(e -> !e.isQualified()).forEach(exports::add);
-        for (Exports e : exports) {
-            String sourceAndMods = Stream.concat(Stream.of(e.source()),
-                                                 toStringStream(e.modifiers()))
-                    .collect(Collectors.joining(" "));
-            ostream.format("exports %s%n", sourceAndMods);
-        }
+        md.exports().stream()
+            .filter(e -> !e.isQualified())
+            .sorted(Comparator.comparing(Exports::source))
+            .map(e -> Stream.concat(Stream.of(e.source()),
+                                    toStringStream(e.modifiers()))
+                    .collect(Collectors.joining(" ")))
+            .forEach(sourceAndMods -> ostream.format("exports %s%n", sourceAndMods));
 
         // dependences
         for (Requires r : md.requires()) {
@@ -993,9 +992,9 @@ public final class LauncherHelper {
                     .collect(Collectors.joining(" "));
             ostream.format("requires %s", nameAndMods);
             finder.find(r.name())
-                    .map(ModuleReference::descriptor)
-                    .filter(ModuleDescriptor::isAutomatic)
-                    .ifPresent(any -> ostream.print(" automatic"));
+                .map(ModuleReference::descriptor)
+                .filter(ModuleDescriptor::isAutomatic)
+                .ifPresent(any -> ostream.print(" automatic"));
             ostream.println();
         }
 
@@ -1046,8 +1045,8 @@ public final class LauncherHelper {
         ModuleDescriptor md = mref.descriptor();
         ostream.print(md.toNameAndVersion());
         mref.location()
-            .filter(uri -> !isJrt(uri))
-            .ifPresent(uri -> ostream.format(" %s", uri));
+                .filter(uri -> !isJrt(uri))
+                .ifPresent(uri -> ostream.format(" %s", uri));
         if (md.isOpen())
             ostream.print(" open");
         if (md.isAutomatic())

@@ -59,6 +59,7 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import jdk.internal.jmod.JmodFile;
@@ -617,6 +618,8 @@ public class ModulePath implements ModuleFinder {
             }
 
             return ModuleReferences.newJarModule(attrs, patcher, file);
+        } catch (ZipException e) {
+            throw new FindException("Error reading " + file, e);
         }
     }
 
