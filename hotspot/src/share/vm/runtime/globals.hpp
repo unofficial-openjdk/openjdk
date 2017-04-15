@@ -1457,9 +1457,9 @@ public:
           "Number of threads concurrent gc will use")                       \
           constraint(ConcGCThreadsConstraintFunc,AfterErgo)                 \
                                                                             \
-  product(uintx, GCTaskTimeStampEntries, 200,                               \
+  product(uint, GCTaskTimeStampEntries, 200,                                \
           "Number of time stamp entries per gc worker thread")              \
-          range(1, max_uintx)                                               \
+          range(1, max_jint)                                                \
                                                                             \
   product(bool, AlwaysTenure, false,                                        \
           "Always tenure objects in eden (ParallelGC only)")                \
@@ -3873,6 +3873,9 @@ public:
                                                                             \
   product(bool, StartAttachListener, false,                                 \
           "Always start Attach Listener at VM startup")                     \
+                                                                            \
+  product(bool, EnableDynamicAgentLoading, true,                            \
+          "Allow tools to load agents with the attach mechanism")           \
                                                                             \
   manageable(bool, PrintConcurrentLocks, false,                             \
           "Print java.util.concurrent locks in thread dump")                \

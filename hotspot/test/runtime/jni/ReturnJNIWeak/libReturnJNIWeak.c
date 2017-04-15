@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +20,33 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.vm.ci.hotspot;
 
-import jdk.vm.ci.meta.Constant;
-import jdk.vm.ci.meta.JavaConstant;
-import jdk.vm.ci.meta.MemoryAccessProvider;
-
-/**
- * HotSpot specific extension of {@link MemoryAccessProvider}.
+/*
+ * Native support for ReturnJNIWeak test.
  */
-public interface HotSpotMemoryAccessProvider extends MemoryAccessProvider {
 
-    /**
-     * @throws IllegalArgumentException if the address computed from {@code base} and
-     *             {@code displacement} does not denote a location holding a narrow oop
-     */
-    JavaConstant readNarrowOopConstant(Constant base, long displacement);
+#include "jni.h"
 
-    Constant readKlassPointerConstant(Constant base, long displacement);
+static jweak registered = NULL;
 
-    Constant readNarrowKlassPointerConstant(Constant base, long displacement);
+JNIEXPORT void JNICALL
+Java_ReturnJNIWeak_registerObject(JNIEnv* env,
+                                  jclass jclazz,
+                                  jobject value) {
+  // assert registered == NULL
+  registered = (*env)->NewWeakGlobalRef(env, value);
+}
 
-    Constant readMethodPointerConstant(Constant base, long displacement);
+JNIEXPORT void JNICALL
+Java_ReturnJNIWeak_unregisterObject(JNIEnv* env, jclass jclazz) {
+  if (registered != NULL) {
+    (*env)->DeleteWeakGlobalRef(env, registered);
+    registered = NULL;
+  }
+}
+
+JNIEXPORT jobject JNICALL
+Java_ReturnJNIWeak_getObject(JNIEnv* env, jclass jclazz) {
+  // assert registered != NULL
+  return registered;
 }
