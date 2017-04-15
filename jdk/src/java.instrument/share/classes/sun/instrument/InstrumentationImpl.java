@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@
 
 package sun.instrument;
 
+import java.lang.instrument.UnmodifiableModuleException;
 import java.lang.reflect.Method;
 import java.lang.reflect.AccessibleObject;
 import java.lang.instrument.ClassFileTransformer;
@@ -128,6 +129,13 @@ public class InstrumentationImpl implements Instrumentation {
                          "null passed as 'theClass' in isModifiableClass");
         }
         return isModifiableClass0(mNativeAgent, theClass);
+    }
+
+    public boolean isModifiableModule(Module module) {
+        if (module == null) {
+            throw new NullPointerException("'module' is null");
+        }
+        return true;
     }
 
     public boolean
@@ -240,6 +248,9 @@ public class InstrumentationImpl implements Instrumentation {
     {
         if (!module.isNamed())
             return;
+
+        if (!isModifiableModule(module))
+            throw new UnmodifiableModuleException(module.getName());
 
         // copy and check reads
         extraReads = new HashSet<>(extraReads);
@@ -544,4 +555,15 @@ public class InstrumentationImpl implements Instrumentation {
                                     classfileBuffer);
         }
     }
+
+
+    /**
+     * Invoked by the java launcher to load a java agent that is packaged with
+     * the main application in an executable JAR file.
+     */
+    public static void loadAgent(String path) {
+        loadAgent0(path);
+    }
+
+    private static native void loadAgent0(String path);
 }

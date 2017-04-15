@@ -2345,6 +2345,7 @@ public abstract class ClassLoader {
             this.isBuiltin = isBuiltin;
         }
 
+        @SuppressWarnings("deprecation")
         protected void finalize() {
             synchronized (loadedLibraryNames) {
                 if (fromClass.getClassLoader() != null && loaded) {

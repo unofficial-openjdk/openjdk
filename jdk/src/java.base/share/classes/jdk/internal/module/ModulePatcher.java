@@ -178,11 +178,13 @@ public final class ModulePatcher {
 
         ModuleTarget target = null;
         ModuleHashes recordedHashes = null;
+        ModuleHashes.HashSupplier hasher = null;
         ModuleResolution mres = null;
         if (mref instanceof ModuleReferenceImpl) {
             ModuleReferenceImpl impl = (ModuleReferenceImpl)mref;
             target = impl.moduleTarget();
             recordedHashes = impl.recordedHashes();
+            hasher = impl.hasher();
             mres = impl.moduleResolution();
         }
 
@@ -192,7 +194,7 @@ public final class ModulePatcher {
                                        this,
                                        target,
                                        recordedHashes,
-                                       null,
+                                       hasher,
                                        mres);
 
     }

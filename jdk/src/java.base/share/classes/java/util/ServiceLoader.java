@@ -213,11 +213,11 @@ import jdk.internal.reflect.Reflection;
  *     method finds the service configuration files. </li>
  * </ul>
  *
- * <p> Service loaders created to locate providers in a {@linkplain module layer}
- * will first locate providers in the layer, before locating providers in
- * parent layers. Traversal of parent layers is depth-first with each layer
- * visited at most once. For example, suppose L0 is the boot layer, L1 and
- * L2 are custom layers with L0 as their parent. Now suppose that L3 is
+ * <p> Service loaders created to locate providers in a {@linkplain ModuleLayer
+ * module layer} will first locate providers in the layer, before locating
+ * providers in parent layers. Traversal of parent layers is depth-first with
+ * each layer visited at most once. For example, suppose L0 is the boot layer,
+ * L1 and L2 are custom layers with L0 as their parent. Now suppose that L3 is
  * created with L1 and L2 as the parents (in that order). Using a service
  * loader to locate providers with L3 as the content will locate providers
  * in the following order: L3, L1, L0, L2. The ordering of modules in a layer

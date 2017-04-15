@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,7 +66,6 @@ public class ListModsTest {
                 SRC_DIR.resolve("java.transaction"),
                 UPGRADEMODS_DIR.resolve("java.transaction"));
         assertTrue(compiled);
-
     }
 
 
@@ -81,49 +80,11 @@ public class ListModsTest {
         assertTrue(output.getExitValue() == 0);
     }
 
-
-    @Test
-    public void testListOneModule() throws Exception {
-        OutputAnalyzer output
-            = executeTestJava("--list-modules=java.base")
-                .outputTo(System.out)
-                .errorTo(System.out);
-        output.shouldContain("java.base");
-        output.shouldContain("exports java.lang");
-        assertTrue(output.getExitValue() == 0);
-    }
-
-
-    @Test
-    public void testListTwoModules() throws Exception {
-        OutputAnalyzer output
-            = executeTestJava("--list-modules", "java.base,java.xml")
-                .outputTo(System.out)
-                .errorTo(System.out);
-        output.shouldContain("java.base");
-        output.shouldContain("exports java.lang");
-        output.shouldContain("java.xml");
-        output.shouldContain("exports javax.xml");
-        assertTrue(output.getExitValue() == 0);
-    }
-
-
-    @Test
-    public void testListUnknownModule() throws Exception {
-        OutputAnalyzer output
-            = executeTestJava("--list-modules", "java.rhubarb")
-                .outputTo(System.out)
-                .errorTo(System.out);
-        output.shouldNotContain("java.base");
-        output.shouldContain("java.rhubarb not observable");
-        assertTrue(output.getExitValue() == 0);
-    }
-
-
     @Test
     public void testListWithModulePath() throws Exception {
         OutputAnalyzer output
-            = executeTestJava("--module-path", MODS_DIR.toString(), "--list-modules")
+            = executeTestJava("--module-path", MODS_DIR.toString(),
+                              "--list-modules")
                 .outputTo(System.out)
                 .errorTo(System.out);
         output.shouldContain("java.base");
@@ -131,18 +92,16 @@ public class ListModsTest {
         assertTrue(output.getExitValue() == 0);
     }
 
-
     @Test
     public void testListWithUpgradeModulePath() throws Exception {
         OutputAnalyzer output
             = executeTestJava("--upgrade-module-path", UPGRADEMODS_DIR.toString(),
-                              "--list-modules", "java.transaction")
+                              "--list-modules")
                 .outputTo(System.out)
                 .errorTo(System.out);
-        output.shouldContain("exports javax.transaction.atomic");
+        output.shouldContain(UPGRADEMODS_DIR.toString());
         assertTrue(output.getExitValue() == 0);
     }
-
 
     @Test
     public void testListWithLimitMods1() throws Exception {
@@ -155,7 +114,6 @@ public class ListModsTest {
         output.shouldNotContain("java.scripting");
         assertTrue(output.getExitValue() == 0);
     }
-
 
     @Test
     public void testListWithLimitMods2() throws Exception {
@@ -170,7 +128,6 @@ public class ListModsTest {
         assertTrue(output.getExitValue() == 0);
     }
 
-
     /**
      * java -version --list-modules => should print version and exit
      */
@@ -184,7 +141,6 @@ public class ListModsTest {
         output.shouldContain("Runtime Environment");
         assertTrue(output.getExitValue() == 0);
     }
-
 
     /**
      * java --list-modules -version => should list modules and exit

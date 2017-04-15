@@ -26,6 +26,7 @@
 /**
  * Defines the foundational APIs of the Java SE Platform.
  *
+ * @moduleGraph
  * @since 9
  */
 module java.base {
@@ -160,6 +161,7 @@ module java.base {
         java.security.jgss,
         java.sql,
         java.xml,
+        jdk.attach,
         jdk.charsets,
         jdk.compiler,   // reflective dependency
         jdk.incubator.httpclient,
