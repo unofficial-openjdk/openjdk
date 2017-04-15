@@ -882,7 +882,7 @@ var getJibProfilesDependencies = function (input, common) {
         jtreg: {
             server: "javare",
             revision: "4.2",
-            build_number: "b05",
+            build_number: "b07",
             checksum_file: "MD5_VALUES",
             file: "jtreg_bin-4.2.zip",
             environment_name: "JT_HOME",
@@ -910,7 +910,7 @@ var getJibProfilesDependencies = function (input, common) {
         freetype: {
             organization: common.organization,
             ext: "tar.gz",
-            revision: "2.3.4+1.0",
+            revision: "2.7.1-v120+1.0",
             module: "freetype-" + input.target_platform
         }
     };
