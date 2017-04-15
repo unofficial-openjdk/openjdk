@@ -170,8 +170,6 @@ java/net/MulticastSocket/Test.java                              7145658 macosx-a
 
 java/net/DatagramSocket/SendDatagramToBadAddress.java           7143960 macosx-all
 
-java/net/httpclient/TimeoutOrdering.java                        8170940 solaris-all,windows-all
-
 ############################################################################
 
 # jdk_nio
@@ -257,9 +255,6 @@ tools/jimage/JImageExtractTest.java                             8170120 generic-
 tools/jimage/JImageListTest.java                                8170120 generic-all
 tools/jimage/JImageVerifyTest.java                              8170120 generic-all
 
-
-tools/jlink/multireleasejar/JLinkMultiReleaseJarTest.java       8169971 windows-x64
-
 ############################################################################
 
 # jdk_jdi
@@ -283,8 +278,6 @@ com/sun/jdi/sde/SourceDebugExtensionTest.java                   8158066 windows-
 # jdk_util
 
 java/util/BitSet/BitSetStreamTest.java                          8079538 generic-all
-
-jdk/internal/util/jar/TestVersionedStream.java                  8177640 windows-all
 
 ############################################################################
 
