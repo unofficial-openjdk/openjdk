@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.jvm.Code.*;
 import com.sun.tools.javac.jvm.Items.*;
-import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree.*;
 
@@ -67,10 +66,9 @@ public class Gen extends JCTree.Visitor {
     private final TreeMaker make;
     private final Names names;
     private final Target target;
-    private Name accessDollar;
+    private final Name accessDollar;
     private final Types types;
     private final Lower lower;
-    private final Flow flow;
     private final Annotate annotate;
     private final StringConcat concat;
 
@@ -95,7 +93,7 @@ public class Gen extends JCTree.Visitor {
 
     /** Constant pool, reset by genClass.
      */
-    private Pool pool;
+    private final Pool pool;
 
     protected Gen(Context context) {
         context.put(genKey, this);
@@ -113,7 +111,6 @@ public class Gen extends JCTree.Visitor {
         methodType = new MethodType(null, null, null, syms.methodClass);
         accessDollar = names.
             fromString("access" + target.syntheticNameChar());
-        flow = Flow.instance(context);
         lower = Lower.instance(context);
 
         Options options = Options.instance(context);
@@ -476,8 +473,8 @@ public class Gen extends JCTree.Visitor {
                 STATIC | (c.flags() & STRICTFP),
                 names.clinit,
                 new MethodType(
-                    List.<Type>nil(), syms.voidType,
-                    List.<Type>nil(), syms.methodClass),
+                    List.nil(), syms.voidType,
+                    List.nil(), syms.methodClass),
                 c);
             c.members().enter(clinit);
             List<JCStatement> clinitStats = clinitCode.toList();
@@ -1037,11 +1034,11 @@ public class Gen extends JCTree.Visitor {
     }
 
     public void visitDoLoop(JCDoWhileLoop tree) {
-        genLoop(tree, tree.body, tree.cond, List.<JCExpressionStatement>nil(), false);
+        genLoop(tree, tree.body, tree.cond, List.nil(), false);
     }
 
     public void visitWhileLoop(JCWhileLoop tree) {
-        genLoop(tree, tree.body, tree.cond, List.<JCExpressionStatement>nil(), true);
+        genLoop(tree, tree.body, tree.cond, List.nil(), true);
     }
 
     public void visitForLoop(JCForLoop tree) {
@@ -1321,7 +1318,7 @@ public class Gen extends JCTree.Visitor {
             }
         };
         syncEnv.info.gaps = new ListBuffer<>();
-        genTry(tree.body, List.<JCCatch>nil(), syncEnv);
+        genTry(tree.body, List.nil(), syncEnv);
         code.endScopes(limit);
     }
 
@@ -1903,7 +1900,7 @@ public class Gen extends JCTree.Visitor {
                     List.of(syms.objectType), true);
         } else {
             callMethod(pos, syms.objectType, names.getClass,
-                    List.<Type>nil(), false);
+                    List.nil(), false);
         }
         code.emitop0(pop);
     }

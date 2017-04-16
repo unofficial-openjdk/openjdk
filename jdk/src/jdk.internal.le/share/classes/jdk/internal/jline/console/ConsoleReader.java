@@ -306,6 +306,7 @@ public class ConsoleReader
      * Shuts down the ConsoleReader if the JVM attempts to clean it up.
      */
     @Override
+    @SuppressWarnings("deprecation")
     protected void finalize() throws Throwable {
         try {
             shutdown();
@@ -3222,7 +3223,7 @@ public class ConsoleReader
     }
     //where:
         private Pattern CURSOR_COLUMN_PATTERN =
-                Pattern.compile("(?<prefix>.*)\033\\[[0-9]+;(?<column>[0-9]+)R");
+                Pattern.compile("(?<prefix>.*)\033\\[[0-9]+;(?<column>[0-9]+)R", Pattern.DOTALL);
 
     /**
      * Read a line for unsupported terminals.

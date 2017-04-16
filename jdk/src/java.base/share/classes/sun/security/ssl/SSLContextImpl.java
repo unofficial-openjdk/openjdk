@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import javax.net.ssl.*;
 
 import sun.security.provider.certpath.AlgorithmChecker;
 import sun.security.action.GetPropertyAction;
+import sun.security.validator.Validator;
 
 public abstract class SSLContextImpl extends SSLContextSpi {
 
@@ -403,6 +404,13 @@ public abstract class SSLContextImpl extends SSLContextSpi {
                             EnumSet.of(CryptoPrimitive.KEY_AGREEMENT),
                             suite.name, null)) {
                         suites.add(suite);
+                    } else {
+                        if (debug != null && Debug.isOn("sslctx") &&
+                                Debug.isOn("verbose")) {
+                            System.out.println(
+                                    "Ignoring disabled cipher suite: " +
+                                            suite.name);
+                        }
                     }
                 } else if (debug != null &&
                         Debug.isOn("sslctx") && Debug.isOn("verbose")) {
@@ -928,12 +936,20 @@ public abstract class SSLContextImpl extends SSLContextSpi {
         }
 
         private static TrustManager[] getTrustManagers() throws Exception {
-            KeyStore ks =
-                TrustManagerFactoryImpl.getCacertsKeyStore("defaultctx");
-
             TrustManagerFactory tmf = TrustManagerFactory.getInstance(
-                TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init(ks);
+                    TrustManagerFactory.getDefaultAlgorithm());
+            if ("SunJSSE".equals(tmf.getProvider().getName())) {
+                // The implementation will load the default KeyStore
+                // automatically.  Cached trust materials may be used
+                // for performance improvement.
+                tmf.init((KeyStore)null);
+            } else {
+                // Use the explicitly specified KeyStore for third party's
+                // TrustManagerFactory implementation.
+                KeyStore ks = TrustStoreManager.getTrustedKeyStore();
+                tmf.init(ks);
+            }
+
             return tmf.getTrustManagers();
         }
 
@@ -1421,7 +1437,7 @@ final class AbstractTrustManagerWrapper extends X509ExtendedTrustManager
                 constraints = new SSLAlgorithmConstraints(sslSocket, true);
             }
 
-            checkAlgorithmConstraints(chain, constraints);
+            checkAlgorithmConstraints(chain, constraints, isClient);
         }
     }
 
@@ -1463,12 +1479,12 @@ final class AbstractTrustManagerWrapper extends X509ExtendedTrustManager
                 constraints = new SSLAlgorithmConstraints(engine, true);
             }
 
-            checkAlgorithmConstraints(chain, constraints);
+            checkAlgorithmConstraints(chain, constraints, isClient);
         }
     }
 
     private void checkAlgorithmConstraints(X509Certificate[] chain,
-            AlgorithmConstraints constraints) throws CertificateException {
+            AlgorithmConstraints constraints, boolean isClient) throws CertificateException {
 
         try {
             // Does the certificate chain end with a trusted certificate?
@@ -1486,7 +1502,9 @@ final class AbstractTrustManagerWrapper extends X509ExtendedTrustManager
 
             // A forward checker, need to check from trust to target
             if (checkedLength >= 0) {
-                AlgorithmChecker checker = new AlgorithmChecker(constraints);
+                AlgorithmChecker checker =
+                        new AlgorithmChecker(constraints, null,
+                                (isClient ? Validator.VAR_TLS_CLIENT : Validator.VAR_TLS_SERVER));
                 checker.init(false);
                 for (int i = checkedLength; i >= 0; i--) {
                     Certificate cert = chain[i];

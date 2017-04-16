@@ -24,17 +24,13 @@
 /**
  * @test
  * @summary Verify the defining class loader of each module never delegates
- *          to its child class loader. Also sanity check java.compact2
- *          requires.
- * @modules java.compact2
+ *          to its child class loader.
  * @run testng/othervm --add-modules=ALL-SYSTEM VerifyModuleDelegation
  */
 
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.util.Set;
 import static java.util.stream.Collectors.toSet;
 
@@ -46,23 +42,12 @@ import static org.testng.Assert.*;
 
 public class VerifyModuleDelegation {
     private static final String JAVA_BASE = "java.base";
-    private static final String JAVA_COMPACT1 = "java.compact1";
-    private static final String JAVA_COMPACT2 = "java.compact2";
 
     private static final ModuleDescriptor BASE
-        = new ModuleDescriptor.Builder(JAVA_BASE).build();
-
-    private static final ModuleDescriptor COMPACT2
-        = new ModuleDescriptor.Builder(JAVA_COMPACT2)
-            .requires(Set.of(MANDATED), JAVA_BASE)
-            .requires(Set.of(PUBLIC), JAVA_COMPACT1)
-            .requires(Set.of(PUBLIC), "java.rmi")
-            .requires(Set.of(PUBLIC), "java.sql")
-            .requires(Set.of(PUBLIC), "java.xml")
-            .build();
+        = ModuleDescriptor.newModule(JAVA_BASE).build();
 
     private static final Set<ModuleDescriptor> MREFS
-            = Layer.boot().modules().stream().map(Module::getDescriptor)
+            = ModuleLayer.boot().modules().stream().map(Module::getDescriptor)
                 .collect(toSet());
 
     private void check(ModuleDescriptor md, ModuleDescriptor ref) {
@@ -79,18 +64,10 @@ public class VerifyModuleDelegation {
 
         check(md, BASE);
     }
-    @Test
-    public void checkCompact2() {
-        ModuleDescriptor md =
-                MREFS.stream()
-                     .filter(d -> d.name().equals(JAVA_COMPACT2))
-                     .findFirst().orElseThrow(Error::new);
-        check(md, COMPACT2);
-    }
 
     @Test
     public void checkLoaderDelegation() {
-        Layer boot = Layer.boot();
+        ModuleLayer boot = ModuleLayer.boot();
         MREFS.stream()
              .forEach(md -> md.requires().stream().forEach(req ->
                  {

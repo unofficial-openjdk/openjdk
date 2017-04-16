@@ -375,7 +375,7 @@ public final class SplittableRandom {
      * may, and typically does, vary across program invocations.
      */
     public SplittableRandom() { // emulate defaultGen.split()
-        long s = defaultGen.getAndAdd(2 * GOLDEN_GAMMA);
+        long s = defaultGen.getAndAdd(GOLDEN_GAMMA << 1);
         this.seed = mix64(s);
         this.gamma = mixGamma(s + GOLDEN_GAMMA);
     }
@@ -779,8 +779,7 @@ public final class SplittableRandom {
      * @return a stream of pseudorandom {@code double} values,
      *         each with the given origin (inclusive) and bound (exclusive)
      * @throws IllegalArgumentException if {@code streamSize} is
-     *         less than zero
-     * @throws IllegalArgumentException if {@code randomNumberOrigin}
+     *         less than zero, or {@code randomNumberOrigin}
      *         is greater than or equal to {@code randomNumberBound}
      */
     public DoubleStream doubles(long streamSize, double randomNumberOrigin,

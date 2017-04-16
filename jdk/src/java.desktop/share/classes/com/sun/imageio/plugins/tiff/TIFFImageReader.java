@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -305,16 +305,19 @@ public class TIFFImageReader extends ImageReader {
         try {
             // Create an object to store the image metadata
             List<TIFFTagSet> tagSets;
+            boolean readUnknownTags = false;
             if (imageReadParam instanceof TIFFImageReadParam) {
-                tagSets
-                        = ((TIFFImageReadParam) imageReadParam).getAllowedTagSets();
+                TIFFImageReadParam tp = (TIFFImageReadParam)imageReadParam;
+                tagSets = tp.getAllowedTagSets();
+                readUnknownTags = tp.getReadUnknownTags();
             } else {
                 tagSets = new ArrayList<TIFFTagSet>(1);
                 tagSets.add(BaselineTIFFTagSet.getInstance());
             }
 
             this.imageMetadata = new TIFFImageMetadata(tagSets);
-            imageMetadata.initializeFromStream(stream, ignoreMetadata);
+            imageMetadata.initializeFromStream(stream, ignoreMetadata,
+                                               readUnknownTags);
         } catch (IIOException iioe) {
             throw iioe;
         } catch (IOException ioe) {
@@ -727,17 +730,46 @@ public class TIFFImageReader extends ImageReader {
             // to use it if the data layout is component type.
             if (iccProfileField != null
                     && itsRaw.getColorModel() instanceof ComponentColorModel) {
-                // Create a ColorSpace from the profile.
-                byte[] iccProfileValue = iccProfileField.getAsBytes();
-                ICC_Profile iccProfile
-                        = ICC_Profile.getInstance(iccProfileValue);
-                ICC_ColorSpace iccColorSpace
-                        = new ICC_ColorSpace(iccProfile);
-
                 // Get the raw sample and color information.
                 ColorModel cmRaw = itsRaw.getColorModel();
                 ColorSpace csRaw = cmRaw.getColorSpace();
                 SampleModel smRaw = itsRaw.getSampleModel();
+
+                ColorSpace iccColorSpace = null;
+                try {
+                    // Create a ColorSpace from the profile.
+                    byte[] iccProfileValue = iccProfileField.getAsBytes();
+                    ICC_Profile iccProfile
+                        = ICC_Profile.getInstance(iccProfileValue);
+                    iccColorSpace = new ICC_ColorSpace(iccProfile);
+
+                    // Workaround for JDK-8145241: test a conversion and fall
+                    // back to a standard ColorSpace if it fails. This
+                    // workaround could be removed if JDK-8145241 is fixed.
+                    float[] rgb =
+                        iccColorSpace.toRGB(new float[] {1.0F, 1.0F, 1.0F});
+                } catch (Exception iccProfileException) {
+                    processWarningOccurred("Superseding bad ICC profile: "
+                        + iccProfileException.getMessage());
+
+                    if (iccColorSpace != null) {
+                        switch (iccColorSpace.getType()) {
+                            case ColorSpace.TYPE_GRAY:
+                                iccColorSpace =
+                                    ColorSpace.getInstance(ColorSpace.CS_GRAY);
+                                break;
+                            case ColorSpace.TYPE_RGB:
+                                iccColorSpace =
+                                    ColorSpace.getInstance(ColorSpace.CS_sRGB);
+                                break;
+                            default:
+                                iccColorSpace = csRaw;
+                                break;
+                        }
+                    } else {
+                        iccColorSpace = csRaw;
+                    }
+                }
 
                 // Get the number of samples per pixel and the number
                 // of color components.
@@ -1081,6 +1113,7 @@ public class TIFFImageReader extends ImageReader {
         long offset = getTileOrStripOffset(tileIndex);
         long byteCount = getTileOrStripByteCount(tileIndex);
 
+        decompressor.setPlanarBand(band);
         decompressor.setStream(stream);
         decompressor.setOffset(offset);
         decompressor.setByteCount((int) byteCount);
@@ -1174,7 +1207,14 @@ public class TIFFImageReader extends ImageReader {
             int predictor = ((predictorField == null)
                     ? BaselineTIFFTagSet.PREDICTOR_NONE
                     : predictorField.getAsInt(0));
-            this.decompressor = new TIFFLZWDecompressor(predictor);
+
+            TIFFField fillOrderField
+                    = imageMetadata.getTIFFField(BaselineTIFFTagSet.TAG_FILL_ORDER);
+            int fillOrder = ((fillOrderField == null)
+                    ? BaselineTIFFTagSet.FILL_ORDER_LEFT_TO_RIGHT
+                    : fillOrderField.getAsInt(0));
+
+            this.decompressor = new TIFFLZWDecompressor(predictor, fillOrder);
         } else if (compression
                 == BaselineTIFFTagSet.COMPRESSION_JPEG) {
             this.decompressor = new TIFFJPEGDecompressor();

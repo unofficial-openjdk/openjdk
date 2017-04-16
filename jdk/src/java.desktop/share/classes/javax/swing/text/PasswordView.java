@@ -27,10 +27,7 @@ package javax.swing.text;
 import sun.swing.SwingUtilities2;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import javax.swing.JPasswordField;
-import static javax.swing.text.PlainView.isFPMethodOverriden;
 
 /**
  * Implements a View suitable for use in JPasswordField
@@ -84,6 +81,7 @@ public class PasswordView extends FieldView {
         return drawUnselectedTextImpl(g, x, y, p0, p1, true);
     }
 
+    @SuppressWarnings("deprecation")
     private float drawUnselectedTextImpl(Graphics g, float x, float y,
                                          int p0, int p1,
                                          boolean useFPAPI)
@@ -152,6 +150,7 @@ public class PasswordView extends FieldView {
         return drawSelectedTextImpl(g, x, y, p0, p1, true);
     }
 
+    @SuppressWarnings("deprecation")
     private float drawSelectedTextImpl(Graphics g, float x, float y,
                                        int p0, int p1,
                                        boolean useFPAPI)
@@ -330,22 +329,6 @@ public class PasswordView extends FieldView {
 
     static char[] ONE = new char[1];
 
-    private final boolean drawEchoCharacterOverridden;
-
-    {
-        final Class<?> CLS = getClass();
-        final Class<?> INT = Integer.TYPE;
-        final Class<?> FP = Float.TYPE;
-        final Class<?> CHAR = Character.TYPE;
-
-        drawEchoCharacterOverridden = AccessController
-                .doPrivileged(new PrivilegedAction<Boolean>() {
-            @Override
-            public Boolean run() {
-                Class<?>[] intTypes = {Graphics.class, INT, INT, CHAR};
-                Class<?>[] fpTypes = {Graphics2D.class, FP, FP, CHAR};
-                return isFPMethodOverriden("drawEchoCharacter", CLS, intTypes, fpTypes);
-            }
-        });
-    }
+    private final boolean drawEchoCharacterOverridden =
+            getFPMethodOverridden(getClass(), "drawEchoCharacter", FPMethodArgs.GNNC);
 }

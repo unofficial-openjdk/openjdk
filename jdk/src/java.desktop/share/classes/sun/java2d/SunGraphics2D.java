@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -3101,10 +3101,10 @@ public final class SunGraphics2D
             if (scaleX == 1 && scaleY == 1) {
                 return null;
             }
-            sx1 = Region.clipScale(sx1, scaleX);
-            sx2 = Region.clipScale(sx2, scaleX);
-            sy1 = Region.clipScale(sy1, scaleY);
-            sy2 = Region.clipScale(sy2, scaleY);
+            sx1 = Region.clipRound(sx1 * scaleX);
+            sx2 = Region.clipRound(sx2 * scaleX);
+            sy1 = Region.clipRound(sy1 * scaleY);
+            sy2 = Region.clipRound(sy2 * scaleY);
 
             AffineTransform tx = null;
             if (xform != null) {
@@ -3633,6 +3633,7 @@ public final class SunGraphics2D
      * enough to know that if our override is empty then it should not
      * mark us as finalizeable.
      */
+    @SuppressWarnings("deprecation")
     public void finalize() {
         // DO NOT REMOVE THIS METHOD
     }

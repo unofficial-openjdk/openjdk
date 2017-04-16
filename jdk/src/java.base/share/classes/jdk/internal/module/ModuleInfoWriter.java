@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,9 +27,8 @@ package jdk.internal.module;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.lang.module.ModuleDescriptor;
-import java.lang.module.ModuleDescriptor.Version;
 import java.nio.ByteBuffer;
-import java.util.Optional;
+import java.util.stream.Stream;
 
 import jdk.internal.org.objectweb.asm.ClassWriter;
 import jdk.internal.org.objectweb.asm.Opcodes;
@@ -49,39 +48,45 @@ public final class ModuleInfoWriter {
      * Writes the given module descriptor to a module-info.class file,
      * returning it in a byte array.
      */
-    private static byte[] toModuleInfo(ModuleDescriptor md) {
-
+    private static byte[] toModuleInfo(ModuleDescriptor md, ModuleTarget target) {
         ClassWriter cw = new ClassWriter(0);
-
-        String name = md.name().replace('.', '/') + "/module-info";
-        cw.visit(Opcodes.V1_9, ACC_MODULE, name, null, null, null);
-
+        cw.visit(Opcodes.V1_9, ACC_MODULE, "module-info", null, null, null);
         cw.visitAttribute(new ModuleAttribute(md));
 
-        // for tests: write the ConcealedPackages attribute when there are non-exported packages
-        long nExportedPackages = md.exports().stream()
-                .map(ModuleDescriptor.Exports::source)
-                .distinct()
-                .count();
-        if (md.packages().size() > nExportedPackages)
-            cw.visitAttribute(new ConcealedPackagesAttribute(md.packages()));
+        // for tests: write the ModulePackages attribute when there are packages
+        // that aren't exported or open
+        Stream<String> exported = md.exports().stream()
+                .map(ModuleDescriptor.Exports::source);
+        Stream<String> open = md.opens().stream()
+                .map(ModuleDescriptor.Opens::source);
+        long exportedOrOpen = Stream.concat(exported, open).distinct().count();
+        if (md.packages().size() > exportedOrOpen)
+            cw.visitAttribute(new ModulePackagesAttribute(md.packages()));
 
-        md.version().ifPresent(v -> cw.visitAttribute(new VersionAttribute(v)));
-        md.mainClass().ifPresent(mc -> cw.visitAttribute(new MainClassAttribute(mc)));
+        // write ModuleMainClass if the module has a main class
+        md.mainClass().ifPresent(mc -> cw.visitAttribute(new ModuleMainClassAttribute(mc)));
 
-        // write the TargetPlatform attribute if have any of OS name/arch/version
-        String osName = md.osName().orElse(null);
-        String osArch = md.osArch().orElse(null);
-        String osVersion = md.osVersion().orElse(null);
-        if (osName != null || osArch != null || osVersion != null) {
-            cw.visitAttribute(new TargetPlatformAttribute(osName,
-                                                          osArch,
-                                                          osVersion));
+        // write ModuleTarget if there is a platform OS/arch
+        if (target != null) {
+            cw.visitAttribute(new ModuleTargetAttribute(target.osName(),
+                                                        target.osArch()));
         }
 
         cw.visitEnd();
-
         return cw.toByteArray();
+    }
+
+    /**
+     * Writes a module descriptor to the given output stream as a
+     * module-info.class.
+     */
+    public static void write(ModuleDescriptor descriptor,
+                             ModuleTarget target,
+                             OutputStream out)
+        throws IOException
+    {
+        byte[] bytes = toModuleInfo(descriptor, target);
+        out.write(bytes);
     }
 
     /**
@@ -91,8 +96,7 @@ public final class ModuleInfoWriter {
     public static void write(ModuleDescriptor descriptor, OutputStream out)
         throws IOException
     {
-        byte[] bytes = toModuleInfo(descriptor);
-        out.write(bytes);
+        write(descriptor, null, out);
     }
 
     /**
@@ -100,8 +104,7 @@ public final class ModuleInfoWriter {
      * in module-info.class format.
      */
     public static ByteBuffer toByteBuffer(ModuleDescriptor descriptor) {
-        byte[] bytes = toModuleInfo(descriptor);
+        byte[] bytes = toModuleInfo(descriptor, null);
         return ByteBuffer.wrap(bytes);
     }
-
 }

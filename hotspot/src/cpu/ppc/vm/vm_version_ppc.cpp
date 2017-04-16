@@ -230,9 +230,8 @@ void VM_Version::initialize() {
     FLAG_SET_DEFAULT(UseGHASHIntrinsics, false);
   }
 
-  if (UseFMA) {
-    warning("FMA instructions are not available on this CPU");
-    FLAG_SET_DEFAULT(UseFMA, false);
+  if (FLAG_IS_DEFAULT(UseFMA)) {
+    FLAG_SET_DEFAULT(UseFMA, true);
   }
 
   if (UseSHA) {
@@ -328,7 +327,10 @@ void VM_Version::initialize() {
       warning("RTMAbortRatio must be in the range 0 to 100, resetting it to 50");
       FLAG_SET_DEFAULT(RTMAbortRatio, 50);
     }
-    guarantee(RTMSpinLoopCount > 0, "unsupported");
+    if (RTMSpinLoopCount < 0) {
+      warning("RTMSpinLoopCount must not be a negative value, resetting it to 0");
+      FLAG_SET_DEFAULT(RTMSpinLoopCount, 0);
+    }
 #else
     // Only C2 does RTM locking optimization.
     // Can't continue because UseRTMLocking affects UseBiasedLocking flag
@@ -656,7 +658,7 @@ void VM_Version::determine_features() {
   a->vpmsumb(VR0, VR1, VR2);                   // code[11] -> vpmsumb
   a->tcheck(0);                                // code[12] -> tcheck
   a->mfdscr(R0);                               // code[13] -> mfdscr
-  a->lxvd2x(VSR0, 0, R3_ARG1);                 // code[14] -> vsx
+  a->lxvd2x(VSR0, R3_ARG1);                    // code[14] -> vsx
   a->blr();
 
   // Emit function to set one cache line to zero. Emit function descriptor and get pointer to it.

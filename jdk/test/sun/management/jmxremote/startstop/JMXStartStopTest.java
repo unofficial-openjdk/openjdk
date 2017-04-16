@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,19 +46,24 @@ import javax.net.ssl.SSLHandshakeException;
 
 import jdk.testlibrary.ProcessTools;
 import jdk.testlibrary.Utils;
-import sun.management.Agent;
-import sun.management.AgentConfigurationError;
+import jdk.internal.agent.Agent;
+import jdk.internal.agent.AgentConfigurationError;
+import jdk.internal.agent.ConnectorAddressLink;
 
 /**
  * @test
  * @bug 7110104
- * @library /lib/testlibrary
- * @modules java.management/sun.management
- * @build jdk.testlibrary.* JMXStartStopTest PortAllocator TestApp ManagementAgentJcmd
- * @run main/othervm/timeout=600 -XX:+UsePerfData JMXStartStopTest
+ * @key randomness intermittent
  * @summary Makes sure that enabling/disabling the management agent through JCMD
  *          achieves the desired results
- * @key randomness intermittent
+ *
+ * @library /lib/testlibrary
+ * @modules java.management
+ *          java.rmi
+ *          jdk.management.agent/jdk.internal.agent
+ *
+ * @build jdk.testlibrary.* JMXStartStopTest PortAllocator TestApp ManagementAgentJcmd
+ * @run main/othervm/timeout=600 -XX:+UsePerfData JMXStartStopTest
  */
 public class JMXStartStopTest {
     private static final String TEST_APP_NAME = "TestApp";
@@ -103,7 +108,7 @@ public class JMXStartStopTest {
         String jmxUrlStr = null;
 
         try {
-            jmxUrlStr = sun.management.ConnectorAddressLink.importFrom((int)pid);
+            jmxUrlStr = ConnectorAddressLink.importFrom((int)pid);
             dbg_print("Local Service URL: " +jmxUrlStr);
             if ( jmxUrlStr == null ) {
                 throw new Exception("No Service URL. Local agent not started?");
@@ -341,7 +346,7 @@ public class JMXStartStopTest {
                         throw new BindException("Starting process failed due to " +
                                                 "the requested port not being available");
                     }
-                    pid = p.getPid();
+                    pid = p.pid();
                 } catch (TimeoutException e) {
                     if (p != null) {
                         p.destroy();

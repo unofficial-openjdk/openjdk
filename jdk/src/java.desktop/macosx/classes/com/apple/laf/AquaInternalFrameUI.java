@@ -147,7 +147,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         southPane = c;
     }
 
-    static final RecyclableSingleton<Icon> closeIcon = new RecyclableSingleton<Icon>() {
+    private static final RecyclableSingleton<Icon> closeIcon = new RecyclableSingleton<Icon>() {
         @Override
         protected Icon getInstance() {
             return new AquaInternalFrameButtonIcon(Widget.TITLE_BAR_CLOSE_BOX);
@@ -157,7 +157,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         return closeIcon.get();
     }
 
-    static final RecyclableSingleton<Icon> minimizeIcon = new RecyclableSingleton<Icon>() {
+    private static final RecyclableSingleton<Icon> minimizeIcon = new RecyclableSingleton<Icon>() {
         @Override
         protected Icon getInstance() {
             return new AquaInternalFrameButtonIcon(Widget.TITLE_BAR_COLLAPSE_BOX);
@@ -167,7 +167,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         return minimizeIcon.get();
     }
 
-    static final RecyclableSingleton<Icon> zoomIcon = new RecyclableSingleton<Icon>() {
+    private static final RecyclableSingleton<Icon> zoomIcon = new RecyclableSingleton<Icon>() {
         @Override
         protected Icon getInstance() {
             return new AquaInternalFrameButtonIcon(Widget.TITLE_BAR_ZOOM_BOX);
@@ -431,6 +431,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public void mouseReleased(final MouseEvent e) {
             if (didForwardEvent(e)) return;
 
@@ -554,6 +555,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         public void mouseDragged(final MouseEvent e) {
 // do not forward drags
 //            if (didForwardEvent(e)) return;
@@ -620,7 +622,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
 
             return didForwardEvent;
         }
-
+        @SuppressWarnings("deprecation")
         boolean didForwardEventInternal(final MouseEvent e) {
             if (fDraggingFrame) return false;
 
@@ -736,7 +738,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         }
     } // end class PaletteListener
 
-    static final InternalFrameShadow documentWindowShadow = new InternalFrameShadow() {
+    private static final InternalFrameShadow documentWindowShadow = new InternalFrameShadow() {
         @Override
         Border getForegroundShadowBorder() {
             return new AquaUtils.SlicedShadowBorder(new Painter() {
@@ -776,7 +778,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         }
     };
 
-    static final InternalFrameShadow paletteWindowShadow = new InternalFrameShadow() {
+    private static final InternalFrameShadow paletteWindowShadow = new InternalFrameShadow() {
         @Override
         Border getForegroundShadowBorder() {
             return new AquaUtils.SlicedShadowBorder(new Painter() {
@@ -832,7 +834,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         }
     }
 
-    static final RecyclableSingleton<Icon> RESIZE_ICON = new RecyclableSingleton<Icon>() {
+    private static final RecyclableSingleton<Icon> RESIZE_ICON = new RecyclableSingleton<Icon>() {
         @Override
         protected Icon getInstance() {
             return new AquaIcon.ScalingJRSUIIcon(11, 11) {
@@ -926,11 +928,15 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
             return (w - x) + (h - y) < 12;
         }
 
+        @SuppressWarnings("deprecation")
         void forwardEventToFrame(final MouseEvent e) {
             final Point pt = new Point();
             final Component c = getComponentToForwardTo(e, pt);
             if (c == null) return;
-            c.dispatchEvent(new MouseEvent(c, e.getID(), e.getWhen(), e.getModifiers(), pt.x, pt.y, e.getClickCount(), e.isPopupTrigger(), e.getButton()));
+            c.dispatchEvent(
+                    new MouseEvent(c, e.getID(), e.getWhen(), e.getModifiers(),
+                                   pt.x, pt.y, e.getClickCount(),
+                                   e.isPopupTrigger(), e.getButton()));
         }
 
         Component getComponentToForwardTo(final MouseEvent e, final Point dst) {
@@ -992,6 +998,7 @@ public class AquaInternalFrameUI extends BasicInternalFrameUI implements SwingCo
         public void mouseMoved(final MouseEvent e) { }
 
         @Override
+        @SuppressWarnings("deprecation")
         public void mouseWheelMoved(final MouseWheelEvent e) {
             final Point pt = new Point();
             final Component c = getComponentToForwardTo(e, pt);

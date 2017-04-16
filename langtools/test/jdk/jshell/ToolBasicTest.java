@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8143037 8142447 8144095 8140265 8144906 8146138 8147887 8147886 8148316 8148317 8143955 8157953 8080347 8154714 8166649 8167643
+ * @bug 8143037 8142447 8144095 8140265 8144906 8146138 8147887 8147886 8148316 8148317 8143955 8157953 8080347 8154714 8166649 8167643 8170162 8172102 8165405 8174796 8174797 8175304
  * @summary Tests for Basic tests for REPL tool
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
@@ -35,6 +35,7 @@
  * @run testng/timeout=600 ToolBasicTest
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -49,8 +50,6 @@ import java.util.Scanner;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.prefs.BackingStoreException;
-import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -265,7 +264,8 @@ public class ToolBasicTest extends ReplToolTesting {
         compiler.compile(outDir, "package pkg; public class A { public String toString() { return \"A\"; } }");
         Path classpath = compiler.getPath(outDir);
         test(
-                (a) -> assertCommand(a, "/classpath " + classpath, String.format("|  Path '%s' added to classpath", classpath)),
+                (a) -> assertCommand(a, "/env --class-path " + classpath,
+                        "|  Setting new options and restoring state."),
                 (a) -> evaluateExpression(a, "pkg.A", "new pkg.A();", "A")
         );
         test(new String[] { "--class-path", classpath.toString() },
@@ -273,19 +273,81 @@ public class ToolBasicTest extends ReplToolTesting {
         );
     }
 
-    public void testClasspathJar() {
+    public void testEnvInStartUp() {
+        Compiler compiler = new Compiler();
+        Path outDir = Paths.get("testClasspathDirectory");
+        compiler.compile(outDir, "package pkg; public class A { public String toString() { return \"A\"; } }");
+        Path classpath = compiler.getPath(outDir);
+        Path sup = compiler.getPath("startup.jsh");
+        compiler.writeToFile(sup,
+                "int xxx;\n" +
+                "/env -class-path " + classpath + "\n" +
+                "int aaa = 735;\n"
+        );
+        test(
+                (a) -> assertCommand(a, "/set start -retain " + sup, ""),
+                (a) -> assertCommand(a, "/reset",
+                        "|  Resetting state."),
+                (a) -> evaluateExpression(a, "pkg.A", "new pkg.A();", "A"),
+                (a) -> assertCommand(a, "aaa", "aaa ==> 735")
+        );
+        test(
+                (a) -> assertCommandOutputContains(a, "/env", "--class-path"),
+                (a) -> assertCommandOutputContains(a, "xxx", "cannot find symbol", "variable xxx"),
+                (a) -> evaluateExpression(a, "pkg.A", "new pkg.A();", "A"),
+                (a) -> assertCommand(a, "aaa", "aaa ==> 735")
+        );
+    }
+
+    private String makeSimpleJar() {
         Compiler compiler = new Compiler();
         Path outDir = Paths.get("testClasspathJar");
         compiler.compile(outDir, "package pkg; public class A { public String toString() { return \"A\"; } }");
         String jarName = "test.jar";
         compiler.jar(outDir, jarName, "pkg/A.class");
-        Path jarPath = compiler.getPath(outDir).resolve(jarName);
+        return compiler.getPath(outDir).resolve(jarName).toString();
+    }
+
+    public void testClasspathJar() {
+        String jarPath = makeSimpleJar();
         test(
-                (a) -> assertCommand(a, "/classpath " + jarPath, String.format("|  Path '%s' added to classpath", jarPath)),
+                (a) -> assertCommand(a, "/env --class-path " + jarPath,
+                        "|  Setting new options and restoring state."),
                 (a) -> evaluateExpression(a, "pkg.A", "new pkg.A();", "A")
         );
-        test(new String[] { "--class-path", jarPath.toString() },
+        test(new String[] { "--class-path", jarPath },
                 (a) -> evaluateExpression(a, "pkg.A", "new pkg.A();", "A")
+        );
+    }
+
+    public void testClasspathUserHomeExpansion() {
+        String jarPath = makeSimpleJar();
+        String tilde = "~" + File.separator;
+        test(
+                (a) -> assertCommand(a, "/env --class-path " + tilde + "forblato",
+                        "|  File '" + System.getProperty("user.home") + File.separator
+                                + "forblato' for '--class-path' is not found."),
+                (a) -> assertCommand(a, "/env --class-path " + jarPath + File.pathSeparator
+                                                            + tilde + "forblato",
+                        "|  File '" + System.getProperty("user.home") + File.separator
+                                + "forblato' for '--class-path' is not found.")
+        );
+    }
+
+    public void testBadClasspath() {
+        String jarPath = makeSimpleJar();
+        Compiler compiler = new Compiler();
+        Path t1 = compiler.getPath("whatever/thing.zip");
+        compiler.writeToFile(t1, "");
+        Path t2 = compiler.getPath("whatever/thing.jmod");
+        compiler.writeToFile(t2, "");
+        test(
+                (a) -> assertCommand(a, "/env --class-path " + t1.toString(),
+                        "|  Invalid '--class-path' argument: " + t1.toString()),
+                (a) -> assertCommand(a, "/env --class-path " + jarPath + File.pathSeparator + t1.toString(),
+                        "|  Invalid '--class-path' argument: " + t1.toString()),
+                (a) -> assertCommand(a, "/env --class-path " + t2.toString(),
+                        "|  Invalid '--class-path' argument: " + t2.toString())
         );
     }
 
@@ -304,23 +366,38 @@ public class ToolBasicTest extends ReplToolTesting {
         );
     }
 
+    public void testModulePathUserHomeExpansion() {
+        String tilde = "~" + File.separatorChar;
+        test(
+                (a) -> assertCommand(a, "/env --module-path " + tilde + "snardugol",
+                        "|  File '" + System.getProperty("user.home")
+                                + File.separatorChar + "snardugol' for '--module-path' is not found.")
+        );
+    }
+
+    public void testBadModulePath() {
+        Compiler compiler = new Compiler();
+        Path t1 = compiler.getPath("whatever/thing.zip");
+        compiler.writeToFile(t1, "");
+        test(
+                (a) -> assertCommand(a, "/env --module-path " + t1.toString(),
+                        "|  Invalid '--module-path' argument: " + t1.toString())
+        );
+    }
+
     public void testStartupFileOption() {
-        try {
-            Compiler compiler = new Compiler();
-            Path startup = compiler.getPath("StartupFileOption/startup.txt");
-            compiler.writeToFile(startup, "class A { public String toString() { return \"A\"; } }");
-            test(new String[]{"--startup", startup.toString()},
-                    (a) -> evaluateExpression(a, "A", "new A()", "A")
-            );
-            test(new String[]{"--no-startup"},
-                    (a) -> assertCommandCheckOutput(a, "printf(\"\")", assertStartsWith("|  Error:\n|  cannot find symbol"))
-            );
-            test(
-                    (a) -> assertCommand(a, "printf(\"A\")", "", "", null, "A", "")
-            );
-        } finally {
-            removeStartup();
-        }
+        Compiler compiler = new Compiler();
+        Path startup = compiler.getPath("StartupFileOption/startup.txt");
+        compiler.writeToFile(startup, "class A { public String toString() { return \"A\"; } }");
+        test(new String[]{"--startup", startup.toString()},
+                (a) -> evaluateExpression(a, "A", "new A()", "A")
+        );
+        test(new String[]{"--no-startup"},
+                (a) -> assertCommandCheckOutput(a, "Pattern.compile(\"x+\")", assertStartsWith("|  Error:\n|  cannot find symbol"))
+        );
+        test(
+                (a) -> assertCommand(a, "Pattern.compile(\"x+\")", "$1 ==> x+", "", null, "", "")
+        );
     }
 
     public void testLoadingFromArgs() {
@@ -391,6 +468,16 @@ public class ToolBasicTest extends ReplToolTesting {
         }
     }
 
+    public void testOpenResource() {
+        test(
+                (a) -> assertCommand(a, "/open PRINTING", ""),
+                (a) -> assertCommandOutputContains(a, "/list",
+                        "void println", "System.out.printf"),
+                (a) -> assertCommand(a, "printf(\"%4.2f\", Math.PI)",
+                        "", "", null, "3.14", "")
+        );
+    }
+
     public void testSave() throws IOException {
         Compiler compiler = new Compiler();
         Path path = compiler.getPath("testSave.repl");
@@ -436,45 +523,34 @@ public class ToolBasicTest extends ReplToolTesting {
         assertEquals(Files.readAllLines(path), output);
     }
 
-    public void testStartRetain() throws BackingStoreException {
-        try {
-            Compiler compiler = new Compiler();
-            Path startUpFile = compiler.getPath("startUp.txt");
-            test(
-                    (a) -> assertVariable(a, "int", "a"),
-                    (a) -> assertVariable(a, "double", "b", "10", "10.0"),
-                    (a) -> assertMethod(a, "void f() {}", "()V", "f"),
-                    (a) -> assertImport(a, "import java.util.stream.*;", "", "java.util.stream.*"),
-                    (a) -> assertCommand(a, "/save " + startUpFile.toString(), null),
-                    (a) -> assertCommand(a, "/set start -retain " + startUpFile.toString(), null)
-            );
-            Path unknown = compiler.getPath("UNKNOWN");
-            test(
-                    (a) -> assertCommandOutputStartsWith(a, "/set start -retain " + unknown.toString(),
-                            "|  File '" + unknown + "' for '/set start' is not found.")
-            );
-            test(false, new String[0],
-                    (a) -> {
-                        loadVariable(a, "int", "a");
-                        loadVariable(a, "double", "b", "10.0", "10.0");
-                        loadMethod(a, "void f() {}", "()void", "f");
-                        loadImport(a, "import java.util.stream.*;", "", "java.util.stream.*");
-                        assertCommandCheckOutput(a, "/types", assertClasses());
-                    },
-                    (a) -> assertCommandCheckOutput(a, "/vars", assertVariables()),
-                    (a) -> assertCommandCheckOutput(a, "/methods", assertMethods()),
-                    (a) -> assertCommandCheckOutput(a, "/imports", assertImports())
-            );
-        } finally {
-            removeStartup();
-        }
-    }
-
-    private void removeStartup() {
-        Preferences preferences = Preferences.userRoot().node("tool/JShell");
-        if (preferences != null) {
-            preferences.remove("STARTUP");
-        }
+    public void testStartRetain() {
+        Compiler compiler = new Compiler();
+        Path startUpFile = compiler.getPath("startUp.txt");
+        test(
+                (a) -> assertVariable(a, "int", "a"),
+                (a) -> assertVariable(a, "double", "b", "10", "10.0"),
+                (a) -> assertMethod(a, "void f() {}", "()V", "f"),
+                (a) -> assertImport(a, "import java.util.stream.*;", "", "java.util.stream.*"),
+                (a) -> assertCommand(a, "/save " + startUpFile.toString(), null),
+                (a) -> assertCommand(a, "/set start -retain " + startUpFile.toString(), null)
+        );
+        Path unknown = compiler.getPath("UNKNOWN");
+        test(
+                (a) -> assertCommandOutputStartsWith(a, "/set start -retain " + unknown.toString(),
+                        "|  File '" + unknown + "' for '/set start' is not found.")
+        );
+        test(false, new String[0],
+                (a) -> {
+                    loadVariable(a, "int", "a");
+                    loadVariable(a, "double", "b", "10.0", "10.0");
+                    loadMethod(a, "void f() {}", "()void", "f");
+                    loadImport(a, "import java.util.stream.*;", "", "java.util.stream.*");
+                    assertCommandCheckOutput(a, "/types", assertClasses());
+                },
+                (a) -> assertCommandCheckOutput(a, "/vars", assertVariables()),
+                (a) -> assertCommandCheckOutput(a, "/methods", assertMethods()),
+                (a) -> assertCommandCheckOutput(a, "/imports", assertImports())
+        );
     }
 
     public void testStartSave() throws IOException {

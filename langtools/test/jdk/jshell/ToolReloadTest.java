@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@
 /*
  * @test
  * @key intermittent
- * @bug 8081845 8147898 8143955
+ * @bug 8081845 8147898 8143955  8165405 8178023
  * @summary Tests for /reload in JShell tool
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
@@ -40,6 +40,7 @@ import java.nio.file.Paths;
 import java.util.function.Function;
 
 import org.testng.annotations.Test;
+import static org.testng.Assert.assertTrue;
 
 
 @Test
@@ -70,8 +71,8 @@ public class ToolReloadTest extends ReplToolTesting {
         compiler.compile(outDir, prog.apply("A"));
         Path classpath = compiler.getPath(outDir);
         test(
-                (a) -> assertCommand(a, "/classpath " + classpath,
-                        String.format("|  Path '%s' added to classpath", classpath)),
+                (a) -> assertCommand(a, "/env --class-path " + classpath,
+                        "|  Setting new options and restoring state."),
                 (a) -> assertMethod(a, "String foo() { return (new pkg.A()).toString(); }",
                         "()String", "foo"),
                 (a) -> assertVariable(a, "String", "v", "foo()", "\"A\""),
@@ -79,7 +80,6 @@ public class ToolReloadTest extends ReplToolTesting {
                        if (!a) compiler.compile(outDir, prog.apply("Aprime"));
                        assertCommand(a, "/reload",
                         "|  Restarting and restoring state.\n" +
-                        "-: /classpath " + classpath + "\n" +
                         "-: String foo() { return (new pkg.A()).toString(); }\n" +
                         "-: String v = foo();\n");
                        },
@@ -93,8 +93,8 @@ public class ToolReloadTest extends ReplToolTesting {
         test(false, new String[]{"--no-startup"},
                 a -> assertVariable(a, "int", "a"),
                 a -> dropVariable(a, "/dr 1", "int a = 0", "|  dropped variable a"),
-                a -> assertMethod(a, "int b() { return 0; }", "()I", "b"),
-                a -> dropMethod(a, "/drop b", "b ()I", "|  dropped method b()"),
+                a -> assertMethod(a, "int b() { return 0; }", "()int", "b"),
+                a -> dropMethod(a, "/drop b", "int b()", "|  dropped method b()"),
                 a -> assertClass(a, "class A {}", "class", "A"),
                 a -> dropClass(a, "/dr A", "class A", "|  dropped class A"),
                 a -> assertCommand(a, "/reload",
@@ -116,8 +116,8 @@ public class ToolReloadTest extends ReplToolTesting {
         test(false, new String[]{"--no-startup"},
                 a -> assertVariable(a, "int", "a"),
                 a -> dropVariable(a, "/dr 1", "int a = 0", "|  dropped variable a"),
-                a -> assertMethod(a, "int b() { return 0; }", "()I", "b"),
-                a -> dropMethod(a, "/drop b", "b ()I", "|  dropped method b()"),
+                a -> assertMethod(a, "int b() { return 0; }", "()int", "b"),
+                a -> dropMethod(a, "/drop b", "int b()", "|  dropped method b()"),
                 a -> assertClass(a, "class A {}", "class", "A"),
                 a -> dropClass(a, "/dr A", "class A", "|  dropped class A"),
                 a -> assertCommand(a, "/reload -quiet",
@@ -194,6 +194,27 @@ public class ToolReloadTest extends ReplToolTesting {
                         "-: int x = 5;\n" +
                         "-: int m(int z) { return z * z; }\n" +
                         "-: m(x)\n"),
+                (a) -> evaluateExpression(a, "int", "m(x)", "25"),
+                (a) -> assertCommandCheckOutput(a, "/vars", assertVariables()),
+                (a) -> assertCommandCheckOutput(a, "/methods", assertMethods())
+        );
+    }
+
+    public void testEnvBadModule() {
+        test(
+                (a) -> assertVariable(a, "int", "x", "5", "5"),
+                (a) -> assertMethod(a, "int m(int z) { return z * z; }",
+                        "(int)int", "m"),
+                (a) -> assertCommandCheckOutput(a, "/env --add-module unKnown",
+                        s -> {
+                            assertTrue(s.startsWith(
+                                "|  Setting new options and restoring state.\n" +
+                                "|  Restart failed:"));
+                            assertTrue(s.contains("unKnown"),
+                                    "\"unKnown\" missing from: " + s);
+                            assertTrue(s.contains("previous settings"),
+                                    "\"previous settings\" missing from: " + s);
+                                      }),
                 (a) -> evaluateExpression(a, "int", "m(x)", "25"),
                 (a) -> assertCommandCheckOutput(a, "/vars", assertVariables()),
                 (a) -> assertCommandCheckOutput(a, "/methods", assertMethods())

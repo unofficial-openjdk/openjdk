@@ -25,11 +25,11 @@
  * @test
  * @summary Negative test for ImagePluginStack.
  * @author Andrei Eremeev
- * @modules jdk.jlink/jdk.tools.jlink.internal
- *          jdk.jlink/jdk.tools.jlink
+ * @modules jdk.jlink/jdk.tools.jlink
+ *          jdk.jlink/jdk.tools.jlink.internal
+ *          jdk.jlink/jdk.tools.jlink.plugin
  * @run main/othervm PluginsNegativeTest
  */
-import java.lang.reflect.Layer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -62,7 +62,7 @@ public class PluginsNegativeTest {
 
     private void testDuplicateBuiltInProviders() {
         List<Plugin> javaPlugins = new ArrayList<>();
-        javaPlugins.addAll(PluginRepository.getPlugins(Layer.boot()));
+        javaPlugins.addAll(PluginRepository.getPlugins(ModuleLayer.boot()));
         for (Plugin javaPlugin : javaPlugins) {
             System.out.println("Registered plugin: " + javaPlugin.getName());
         }
@@ -71,7 +71,7 @@ public class PluginsNegativeTest {
             try {
                 PluginRepository.registerPlugin(new CustomPlugin(pluginName));
                 try {
-                    PluginRepository.getPlugin(pluginName, Layer.boot());
+                    PluginRepository.getPlugin(pluginName, ModuleLayer.boot());
                     throw new AssertionError("Exception is not thrown for duplicate plugin: " + pluginName);
                 } catch (Exception ignored) {
                 }
@@ -82,7 +82,7 @@ public class PluginsNegativeTest {
     }
 
     private void testUnknownProvider() {
-        if (PluginRepository.getPlugin("unknown", Layer.boot()) != null) {
+        if (PluginRepository.getPlugin("unknown", ModuleLayer.boot()) != null) {
             throw new AssertionError("Exception expected for unknown plugin name");
         }
     }

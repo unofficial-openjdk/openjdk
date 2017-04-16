@@ -27,6 +27,7 @@ package com.sun.security.auth;
 
 import java.security.Principal;
 import sun.security.x509.X500Name;
+import static sun.security.util.ResourcesMgr.getAuthResourceString;
 
 /**
  * This class represents an X.500 {@code Principal}.
@@ -55,16 +56,6 @@ public class X500Principal implements Principal, java.io.Serializable {
 
     private static final long serialVersionUID = -8222422609431628648L;
 
-    private static final java.util.ResourceBundle rb =
-        java.security.AccessController.doPrivileged
-        (new java.security.PrivilegedAction<java.util.ResourceBundle>() {
-              public java.util.ResourceBundle run() {
-                  return (java.util.ResourceBundle.getBundle
-                                ("sun.security.util.AuthResources",
-                                 sun.security.util.ResourcesMgr.class.getModule()));
-              }
-        });
-
     /**
      * @serial
      */
@@ -87,7 +78,7 @@ public class X500Principal implements Principal, java.io.Serializable {
      */
     public X500Principal(String name) {
         if (name == null)
-            throw new NullPointerException(rb.getString("provided.null.name"));
+            throw new NullPointerException(getAuthResourceString("provided.null.name"));
 
         try {
             thisX500Name = new X500Name(name);

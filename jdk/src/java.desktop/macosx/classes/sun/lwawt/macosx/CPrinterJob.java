@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -176,12 +176,6 @@ public final class CPrinterJob extends RasterPrinterJob {
 
         if (attributes == null) {
             return;
-        }
-
-        // See if this has an NSPrintInfo in it.
-        NSPrintInfo nsPrintInfo = (NSPrintInfo)attributes.get(NSPrintInfo.class);
-        if (nsPrintInfo != null) {
-            fNSPrintInfo = nsPrintInfo.getValue();
         }
 
         PageRanges pageRangesAttr =  (PageRanges)attributes.get(PageRanges.class);
@@ -562,9 +556,13 @@ public final class CPrinterJob extends RasterPrinterJob {
     // The following methods are CPrinterJob specific.
 
     @Override
+    @SuppressWarnings("deprecation")
     protected void finalize() {
-        if (fNSPrintInfo != -1) {
-            dispose(fNSPrintInfo);
+        synchronized (fNSPrintInfoLock) {
+            if (fNSPrintInfo != -1) {
+                dispose(fNSPrintInfo);
+            }
+            fNSPrintInfo = -1;
         }
     }
 

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2016 SAP SE. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2017 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1922,7 +1922,7 @@ void MacroAssembler::check_klass_subtype_fast_path(Register sub_klass,
   // Check the supertype display:
   if (must_load_sco) {
     // The super check offset is always positive...
-  lwz(check_cache_offset, sco_offset, super_klass);
+    lwz(check_cache_offset, sco_offset, super_klass);
     super_check_offset = RegisterOrConstant(check_cache_offset);
     // super_check_offset is register.
     assert_different_registers(sub_klass, super_klass, cached_super, super_check_offset.as_register());
@@ -2569,7 +2569,7 @@ void MacroAssembler::rtm_retry_lock_on_abort(Register retry_count_Reg, Register 
 }
 
 // Spin and retry if lock is busy.
-// inputs: box_Reg (monitor address)
+// inputs: owner_addr_Reg (monitor address)
 //       : retry_count_Reg
 // output: retry_count_Reg decremented by 1
 // CTR is killed
@@ -2577,15 +2577,22 @@ void MacroAssembler::rtm_retry_lock_on_busy(Register retry_count_Reg, Register o
   Label SpinLoop, doneRetry;
   addic_(retry_count_Reg, retry_count_Reg, -1);
   blt(CCR0, doneRetry);
-  li(R0, RTMSpinLoopCount);
-  mtctr(R0);
+
+  if (RTMSpinLoopCount > 1) {
+    li(R0, RTMSpinLoopCount);
+    mtctr(R0);
+  }
 
   bind(SpinLoop);
   smt_yield(); // Can't use waitrsv(). No permission (SIGILL).
-  bdz(retryLabel);
-  ld(R0, 0, owner_addr_Reg);
-  cmpdi(CCR0, R0, 0);
-  bne(CCR0, SpinLoop);
+
+  if (RTMSpinLoopCount > 1) {
+    bdz(retryLabel);
+    ld(R0, 0, owner_addr_Reg);
+    cmpdi(CCR0, R0, 0);
+    bne(CCR0, SpinLoop);
+  }
+
   b(retryLabel);
 
   bind(doneRetry);
@@ -3026,6 +3033,34 @@ void MacroAssembler::card_table_write(jbyte* byte_map_base, Register Rtmp, Regis
   stbx(R0, Rtmp, Robj);
 }
 
+// Kills R31 if value is a volatile register.
+void MacroAssembler::resolve_jobject(Register value, Register tmp1, Register tmp2, bool needs_frame) {
+  Label done;
+  cmpdi(CCR0, value, 0);
+  beq(CCR0, done);         // Use NULL as-is.
+
+  clrrdi(tmp1, value, JNIHandles::weak_tag_size);
+#if INCLUDE_ALL_GCS
+  if (UseG1GC) { andi_(tmp2, value, JNIHandles::weak_tag_mask); }
+#endif
+  ld(value, 0, tmp1);      // Resolve (untagged) jobject.
+
+#if INCLUDE_ALL_GCS
+  if (UseG1GC) {
+    Label not_weak;
+    beq(CCR0, not_weak);   // Test for jweak tag.
+    verify_oop(value);
+    g1_write_barrier_pre(noreg, // obj
+                         noreg, // offset
+                         value, // pre_val
+                         tmp1, tmp2, needs_frame);
+    bind(not_weak);
+  }
+#endif // INCLUDE_ALL_GCS
+  verify_oop(value);
+  bind(done);
+}
+
 #if INCLUDE_ALL_GCS
 // General G1 pre-barrier generator.
 // Goal: record the previous value if it is not null.
@@ -3087,7 +3122,7 @@ void MacroAssembler::g1_write_barrier_pre(Register Robj, RegisterOrConstant offs
 
   bind(runtime);
 
-  // VM call need frame to access(write) O register.
+  // May need to preserve LR. Also needed if current frame is not compatible with C calling convention.
   if (needs_frame) {
     save_LR_CR(Rtmp1);
     push_frame_reg_args(0, Rtmp2);
@@ -3325,62 +3360,97 @@ void MacroAssembler::load_klass(Register dst, Register src) {
   }
 }
 
-void MacroAssembler::load_mirror(Register mirror, Register method) {
-  const int mirror_offset = in_bytes(Klass::java_mirror_offset());
-  ld(mirror, in_bytes(Method::const_offset()), method);
-  ld(mirror, in_bytes(ConstMethod::constants_offset()), mirror);
+void MacroAssembler::load_mirror_from_const_method(Register mirror, Register const_method) {
+  ld(mirror, in_bytes(ConstMethod::constants_offset()), const_method);
   ld(mirror, ConstantPool::pool_holder_offset_in_bytes(), mirror);
-  ld(mirror, mirror_offset, mirror);
+  ld(mirror, in_bytes(Klass::java_mirror_offset()), mirror);
 }
 
 // Clear Array
+// For very short arrays. tmp == R0 is allowed.
+void MacroAssembler::clear_memory_unrolled(Register base_ptr, int cnt_dwords, Register tmp, int offset) {
+  if (cnt_dwords > 0) { li(tmp, 0); }
+  for (int i = 0; i < cnt_dwords; ++i) { std(tmp, offset + i * 8, base_ptr); }
+}
+
+// Version for constant short array length. Kills base_ptr. tmp == R0 is allowed.
+void MacroAssembler::clear_memory_constlen(Register base_ptr, int cnt_dwords, Register tmp) {
+  if (cnt_dwords < 8) {
+    clear_memory_unrolled(base_ptr, cnt_dwords, tmp);
+    return;
+  }
+
+  Label loop;
+  const long loopcnt   = cnt_dwords >> 1,
+             remainder = cnt_dwords & 1;
+
+  li(tmp, loopcnt);
+  mtctr(tmp);
+  li(tmp, 0);
+  bind(loop);
+    std(tmp, 0, base_ptr);
+    std(tmp, 8, base_ptr);
+    addi(base_ptr, base_ptr, 16);
+    bdnz(loop);
+  if (remainder) { std(tmp, 0, base_ptr); }
+}
+
 // Kills both input registers. tmp == R0 is allowed.
-void MacroAssembler::clear_memory_doubleword(Register base_ptr, Register cnt_dwords, Register tmp) {
+void MacroAssembler::clear_memory_doubleword(Register base_ptr, Register cnt_dwords, Register tmp, long const_cnt) {
   // Procedure for large arrays (uses data cache block zero instruction).
     Label startloop, fast, fastloop, small_rest, restloop, done;
     const int cl_size         = VM_Version::L1_data_cache_line_size(),
-              cl_dwords       = cl_size>>3,
+              cl_dwords       = cl_size >> 3,
               cl_dw_addr_bits = exact_log2(cl_dwords),
-              dcbz_min        = 1;                     // Min count of dcbz executions, needs to be >0.
+              dcbz_min        = 1,  // Min count of dcbz executions, needs to be >0.
+              min_cnt         = ((dcbz_min + 1) << cl_dw_addr_bits) - 1;
 
-//2:
-    cmpdi(CCR1, cnt_dwords, ((dcbz_min+1)<<cl_dw_addr_bits)-1); // Big enough? (ensure >=dcbz_min lines included).
-    blt(CCR1, small_rest);                                      // Too small.
-    rldicl_(tmp, base_ptr, 64-3, 64-cl_dw_addr_bits);           // Extract dword offset within first cache line.
-    beq(CCR0, fast);                                            // Already 128byte aligned.
+  if (const_cnt >= 0) {
+    // Constant case.
+    if (const_cnt < min_cnt) {
+      clear_memory_constlen(base_ptr, const_cnt, tmp);
+      return;
+    }
+    load_const_optimized(cnt_dwords, const_cnt, tmp);
+  } else {
+    // cnt_dwords already loaded in register. Need to check size.
+    cmpdi(CCR1, cnt_dwords, min_cnt); // Big enough? (ensure >= dcbz_min lines included).
+    blt(CCR1, small_rest);
+  }
+    rldicl_(tmp, base_ptr, 64-3, 64-cl_dw_addr_bits); // Extract dword offset within first cache line.
+    beq(CCR0, fast);                                  // Already 128byte aligned.
 
     subfic(tmp, tmp, cl_dwords);
     mtctr(tmp);                        // Set ctr to hit 128byte boundary (0<ctr<cl_dwords).
     subf(cnt_dwords, tmp, cnt_dwords); // rest.
     li(tmp, 0);
-//10:
+
   bind(startloop);                     // Clear at the beginning to reach 128byte boundary.
     std(tmp, 0, base_ptr);             // Clear 8byte aligned block.
     addi(base_ptr, base_ptr, 8);
     bdnz(startloop);
-//13:
+
   bind(fast);                                  // Clear 128byte blocks.
     srdi(tmp, cnt_dwords, cl_dw_addr_bits);    // Loop count for 128byte loop (>0).
     andi(cnt_dwords, cnt_dwords, cl_dwords-1); // Rest in dwords.
     mtctr(tmp);                                // Load counter.
-//16:
+
   bind(fastloop);
     dcbz(base_ptr);                    // Clear 128byte aligned block.
     addi(base_ptr, base_ptr, cl_size);
     bdnz(fastloop);
-    if (InsertEndGroupPPC64) { endgroup(); } else { nop(); }
-//20:
+
   bind(small_rest);
     cmpdi(CCR0, cnt_dwords, 0);        // size 0?
     beq(CCR0, done);                   // rest == 0
     li(tmp, 0);
     mtctr(cnt_dwords);                 // Load counter.
-//24:
+
   bind(restloop);                      // Clear rest.
     std(tmp, 0, base_ptr);             // Clear 8byte aligned block.
     addi(base_ptr, base_ptr, 8);
     bdnz(restloop);
-//27:
+
   bind(done);
 }
 
@@ -4345,8 +4415,8 @@ void MacroAssembler::kernel_crc32_1byte(Register crc, Register buf, Register len
  * @param t3              volatile register
  */
 void MacroAssembler::kernel_crc32_1word_vpmsumd(Register crc, Register buf, Register len, Register table,
-                        Register constants,  Register barretConstants,
-                        Register t0,  Register t1, Register t2, Register t3, Register t4) {
+                                                Register constants,  Register barretConstants,
+                                                Register t0,  Register t1, Register t2, Register t3, Register t4) {
   assert_different_registers(crc, buf, len, table);
 
   Label L_alignedHead, L_tail, L_alignTail, L_start, L_end;

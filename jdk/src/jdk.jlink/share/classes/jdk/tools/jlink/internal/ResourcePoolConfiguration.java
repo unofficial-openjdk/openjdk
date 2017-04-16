@@ -28,6 +28,7 @@ package jdk.tools.jlink.internal;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReader;
 import java.lang.module.ModuleReference;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -50,39 +51,32 @@ final class ResourcePoolConfiguration {
         ModuleDescriptor md = mod.descriptor();
 
         // drop hashes
-        ModuleDescriptor.Builder builder = new ModuleDescriptor.Builder(md.name());
+        ModuleDescriptor.Builder builder = ModuleDescriptor.newModule(md.name());
         md.requires().stream()
           .forEach(builder::requires);
         md.exports().stream()
           .forEach(builder::exports);
+        md.opens().stream()
+          .forEach(builder::opens);
         md.uses().stream()
           .forEach(builder::uses);
-        md.provides().values().stream()
+        md.provides().stream()
           .forEach(builder::provides);
-
-        // build the proper concealed packages
-        Set<String> exps = md.exports().stream()
-            .map(ModuleDescriptor.Exports::source)
-            .collect(Collectors.toSet());
-
-        mod.packages().stream()
-           .filter(pn -> !exps.contains(pn))
-           .forEach(builder::conceals);
+        builder.packages(md.packages());
 
         md.version().ifPresent(builder::version);
         md.mainClass().ifPresent(builder::mainClass);
-        md.osName().ifPresent(builder::osName);
-        md.osArch().ifPresent(builder::osArch);
-        md.osVersion().ifPresent(builder::osVersion);
 
         return builder.build();
     }
 
     private static ModuleReference moduleReference(ModuleDescriptor desc) {
-        return new ModuleReference(desc, null, () -> {
-            IOException ioe = new IOException("<module reader unsupported>");
-            throw new UncheckedIOException(ioe);
-        });
+        return new ModuleReference(desc, null) {
+            @Override
+            public ModuleReader open() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     private static Map<String, ModuleReference> allModRefs(ResourcePool pool) {
@@ -100,7 +94,9 @@ final class ResourcePoolConfiguration {
             ModuleDescriptor desc = m.descriptor();
             if (!desc.packages().equals(m.packages())) {
                 throw new RuntimeException("Module " + m.name() +
-                   "'s descriptor returns inconsistent package set");
+                   "'s descriptor indicates the set of packages is : " +
+                   desc.packages() + ", but module contains packages: " +
+                   m.packages());
             }
         });
     }
@@ -122,7 +118,7 @@ final class ResourcePoolConfiguration {
             }
         };
 
-        return Configuration.empty().resolveRequires(
+        return Configuration.empty().resolve(
             finder, ModuleFinder.of(), nameToModRef.keySet());
     }
 }

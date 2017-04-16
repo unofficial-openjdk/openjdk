@@ -23,7 +23,6 @@
  * questions.
  */
 
-
 package java.util.logging;
 
 import java.io.*;
@@ -43,7 +42,6 @@ import java.util.stream.Stream;
 import jdk.internal.misc.JavaAWTAccess;
 import jdk.internal.misc.SharedSecrets;
 import sun.util.logging.internal.LoggingProviderImpl;
-import java.lang.reflect.Module;
 import static jdk.internal.logger.DefaultLoggerFinder.isSystem;
 
 /**
@@ -1449,6 +1447,11 @@ public class LogManager {
                 h.close();
             } catch (Exception ex) {
                 // Problems closing a handler?  Keep going...
+            } catch (Error e) {
+                // ignore Errors while shutting down
+                if (globalHandlersState != STATE_SHUTDOWN) {
+                    throw e;
+                }
             }
         }
     }
@@ -1834,6 +1837,7 @@ public class LogManager {
      *          logging configuration file.
      *
      * @see #updateConfiguration(java.io.InputStream, java.util.function.Function)
+     * @since 9
      */
     public void updateConfiguration(Function<String, BiFunction<String,String,String>> mapper)
             throws IOException {
@@ -2030,6 +2034,7 @@ public class LogManager {
      * @throws  IOException if there are problems reading from the stream,
      *          or the given stream is not in the
      *          {@linkplain java.util.Properties properties file} format.
+     * @since 9
      */
     public void updateConfiguration(InputStream ins,
             Function<String, BiFunction<String,String,String>> mapper)

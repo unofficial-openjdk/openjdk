@@ -171,7 +171,6 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   assert(thread->deopt_compiled_method() == NULL, "Pending deopt!");
   CompiledMethod* cm = deoptee.cb()->as_compiled_method_or_null();
   thread->set_deopt_compiled_method(cm);
-  bool skip_internal = (cm != NULL) && !cm->is_compiled_by_jvmci();
 
   if (VerifyStack) {
     thread->validate_frame_layout();
@@ -189,19 +188,6 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   }
   assert(vf->is_compiled_frame(), "Wrong frame type");
   chunk->push(compiledVFrame::cast(vf));
-
-  ScopeDesc* trap_scope = chunk->at(0)->scope();
-  Handle exceptionObject;
-  if (trap_scope->rethrow_exception()) {
-    if (PrintDeoptimizationDetails) {
-      tty->print_cr("Exception to be rethrown in the interpreter for method %s::%s at bci %d", trap_scope->method()->method_holder()->name()->as_C_string(), trap_scope->method()->name()->as_C_string(), trap_scope->bci());
-    }
-    GrowableArray<ScopeValue*>* expressions = trap_scope->expressions();
-    guarantee(expressions != NULL && expressions->length() > 0, "must have exception to throw");
-    ScopeValue* topOfStack = expressions->top();
-    exceptionObject = StackValue::create_stack_value(&deoptee, &map, topOfStack)->get_obj();
-    assert(exceptionObject() != NULL, "exception oop can not be null");
-  }
 
   bool realloc_failures = false;
 
@@ -222,8 +208,9 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
       // It is not guaranteed that we can get such information here only
       // by analyzing bytecode in deoptimized frames. This is why this flag
       // is set during method compilation (see Compile::Process_OopMap_Node()).
-      // If the previous frame was popped, we don't have a result.
-      bool save_oop_result = chunk->at(0)->scope()->return_oop() && !thread->popframe_forcing_deopt_reexecution();
+      // If the previous frame was popped or if we are dispatching an exception,
+      // we don't have an oop result.
+      bool save_oop_result = chunk->at(0)->scope()->return_oop() && !thread->popframe_forcing_deopt_reexecution() && (exec_mode == Unpack_deopt);
       Handle return_value;
       if (save_oop_result) {
         // Reallocation may trigger GC. If deoptimization happened on return from
@@ -241,6 +228,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
         JRT_BLOCK
           realloc_failures = realloc_objects(thread, &deoptee, objects, THREAD);
         JRT_END
+        bool skip_internal = (cm != NULL) && !cm->is_compiled_by_jvmci();
         reassign_fields(&deoptee, &map, objects, realloc_failures, skip_internal);
 #ifndef PRODUCT
         if (TraceDeoptimization) {
@@ -294,6 +282,19 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   }
 #endif // INCLUDE_JVMCI
 #endif // COMPILER2 || INCLUDE_JVMCI
+
+  ScopeDesc* trap_scope = chunk->at(0)->scope();
+  Handle exceptionObject;
+  if (trap_scope->rethrow_exception()) {
+    if (PrintDeoptimizationDetails) {
+      tty->print_cr("Exception to be rethrown in the interpreter for method %s::%s at bci %d", trap_scope->method()->method_holder()->name()->as_C_string(), trap_scope->method()->name()->as_C_string(), trap_scope->bci());
+    }
+    GrowableArray<ScopeValue*>* expressions = trap_scope->expressions();
+    guarantee(expressions != NULL && expressions->length() > 0, "must have exception to throw");
+    ScopeValue* topOfStack = expressions->top();
+    exceptionObject = StackValue::create_stack_value(&deoptee, &map, topOfStack)->get_obj();
+    guarantee(exceptionObject() != NULL, "exception oop can not be null");
+  }
 
   // Ensure that no safepoint is taken after pointers have been stored
   // in fields of rematerialized objects.  If a safepoint occurs from here on
@@ -1596,9 +1597,9 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
       get_method_data(thread, profiled_method, create_if_missing);
 
     // Log a message
-    Events::log_deopt_message(thread, "Uncommon trap: reason=%s action=%s pc=" INTPTR_FORMAT " method=%s @ %d",
+    Events::log_deopt_message(thread, "Uncommon trap: reason=%s action=%s pc=" INTPTR_FORMAT " method=%s @ %d %s",
                               trap_reason_name(reason), trap_action_name(action), p2i(fr.pc()),
-                              trap_method->name_and_sig_as_C_string(), trap_bci);
+                              trap_method->name_and_sig_as_C_string(), trap_bci, nm->compiler_name());
 
     // Print a bunch of diagnostics, if requested.
     if (TraceDeoptimization || LogCompilation) {
@@ -1651,7 +1652,7 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
       if (TraceDeoptimization) {  // make noise on the tty
         tty->print("Uncommon trap occurred in");
         nm->method()->print_short_name(tty);
-        tty->print(" compiler=%s compile_id=%d", nm->compiler() == NULL ? "" : nm->compiler()->name(), nm->compile_id());
+        tty->print(" compiler=%s compile_id=%d", nm->compiler_name(), nm->compile_id());
 #if INCLUDE_JVMCI
         if (nm->is_nmethod()) {
           oop installedCode = nm->as_nmethod()->jvmci_installed_code();
@@ -1812,7 +1813,7 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
     // aggressive optimization.
     bool inc_recompile_count = false;
     ProfileData* pdata = NULL;
-    if (ProfileTraps && update_trap_state && trap_mdo != NULL) {
+    if (ProfileTraps && !is_client_compilation_mode_vm() && update_trap_state && trap_mdo != NULL) {
       assert(trap_mdo == get_method_data(thread, profiled_method, false), "sanity");
       uint this_trap_count = 0;
       bool maybe_prior_trap = false;

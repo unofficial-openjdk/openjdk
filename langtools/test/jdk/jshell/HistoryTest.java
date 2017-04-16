@@ -26,19 +26,39 @@
  * @bug 8166744
  * @summary Test Completion
  * @modules jdk.internal.le/jdk.internal.jline.extra
- *          jdk.jshell/jdk.internal.jshell.tool
+ *          jdk.jshell/jdk.internal.jshell.tool:+open
  * @build HistoryTest
  * @run testng HistoryTest
  */
 
 import java.lang.reflect.Field;
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jdk.internal.jline.extra.EditingHistory;
 import org.testng.annotations.Test;
+import jdk.internal.jshell.tool.JShellTool;
+import jdk.internal.jshell.tool.JShellToolBuilder;
 import static org.testng.Assert.*;
 
-@Test
 public class HistoryTest extends ReplToolTesting {
 
+    private JShellTool repl;
+
+    @Override
+    protected void testRawRun(Locale locale, String[] args) {
+        // turn on logging of launch failures
+        Logger.getLogger("jdk.jshell.execution").setLevel(Level.ALL);
+        repl = ((JShellToolBuilder) builder(locale))
+                .rawTool();
+        try {
+            repl.start(args);
+        } catch (Exception ex) {
+            fail("Repl tool died with exception", ex);
+        }
+    }
+
+    @Test
     public void testHistory() {
         test(
              a -> {if (!a) setCommandInput("void test() {\n");},
@@ -76,6 +96,7 @@ public class HistoryTest extends ReplToolTesting {
              });
     }
 
+    @Test
     public void test8166744() {
         test(
              a -> {if (!a) setCommandInput("class C {\n");},

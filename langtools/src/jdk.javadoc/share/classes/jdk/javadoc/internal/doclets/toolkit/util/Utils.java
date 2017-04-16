@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,9 @@
 
 package jdk.javadoc.internal.doclets.toolkit.util;
 
-import java.io.IOException;
 import java.lang.annotation.Documented;
 import java.lang.ref.SoftReference;
+import java.net.URI;
 import java.text.CollationKey;
 import java.text.Collator;
 import java.util.*;
@@ -37,11 +37,13 @@ import java.util.stream.Collectors;
 
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.ModuleElement;
+import javax.lang.model.element.ModuleElement.RequiresDirective;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.TypeParameterElement;
@@ -75,12 +77,12 @@ import com.sun.source.tree.LineMap;
 import com.sun.source.util.DocSourcePositions;
 import com.sun.source.util.DocTrees;
 import com.sun.source.util.TreePath;
+import com.sun.tools.javac.model.JavacTypes;
 import jdk.javadoc.internal.doclets.toolkit.CommentUtils.DocCommentDuo;
 import jdk.javadoc.internal.doclets.toolkit.Configuration;
-import jdk.javadoc.internal.doclets.toolkit.DocletException;
 import jdk.javadoc.internal.doclets.toolkit.Messages;
-import jdk.javadoc.internal.doclets.toolkit.Resources;
 import jdk.javadoc.internal.doclets.toolkit.WorkArounds;
+import jdk.javadoc.internal.tool.DocEnvImpl;
 
 import static javax.lang.model.element.ElementKind.*;
 import static javax.lang.model.element.Modifier.*;
@@ -107,6 +109,7 @@ public class Utils {
     public final DocTrees docTrees;
     public final Elements elementUtils;
     public final Types typeUtils;
+    public final JavaScriptScanner javaScriptScanner;
 
     public Utils(Configuration c) {
         configuration = c;
@@ -114,6 +117,7 @@ public class Utils {
         elementUtils = c.docEnv.getElementUtils();
         typeUtils = c.docEnv.getTypeUtils();
         docTrees = c.docEnv.getDocTrees();
+        javaScriptScanner = c.isAllowScriptInComments() ? null : new JavaScriptScanner();
     }
 
     // our own little symbol table
@@ -258,14 +262,6 @@ public class Utils {
         return getEnclosingTypeElement(e) == null || isStatic(e);
     }
 
-    public boolean matches(Element e1, Element e2) {
-        if (isExecutableElement(e1) && isExecutableElement(e1)) {
-            return executableMembersEqual((ExecutableElement)e1, (ExecutableElement)e2);
-        } else {
-            return e1.getSimpleName().equals(e2.getSimpleName());
-        }
-    }
-
     /**
      * Copy doc-files directory and its contents from the source
      * package directory to the generated documentation directory.
@@ -357,7 +353,12 @@ public class Utils {
     }
 
     protected Location getLocationForPackage(PackageElement pd) {
-        return getLocationForModule(configuration.docEnv.getElementUtils().getModuleOf(pd));
+        ModuleElement mdle = configuration.docEnv.getElementUtils().getModuleOf(pd);
+
+        if (mdle == null)
+            return defaultLocation();
+
+        return getLocationForModule(mdle);
     }
 
     protected Location getLocationForModule(ModuleElement mdle) {
@@ -365,6 +366,10 @@ public class Utils {
         if (loc != null)
             return loc;
 
+        return defaultLocation();
+    }
+
+    private Location defaultLocation() {
         JavaFileManager fm = configuration.docEnv.getJavaFileManager();
         return fm.hasLocation(StandardLocation.SOURCE_PATH)
                 ? StandardLocation.SOURCE_PATH
@@ -532,7 +537,7 @@ public class Utils {
             }
 
             void addModifers(Set<Modifier> modifiers) {
-                String s = set.stream().map(m -> m.toString()).collect(Collectors.joining(" "));
+                String s = set.stream().map(Modifier::toString).collect(Collectors.joining(" "));
                 sb.append(s);
                 if (!s.isEmpty())
                     sb.append(" ");
@@ -720,7 +725,7 @@ public class Utils {
         return result.toString();
     }
 
-    private String getTypeSignature(TypeMirror t, boolean qualifiedName, boolean noTypeParameters) {
+    public String getTypeSignature(TypeMirror t, boolean qualifiedName, boolean noTypeParameters) {
         return new SimpleTypeVisitor9<StringBuilder, Void>() {
             final StringBuilder sb = new StringBuilder();
 
@@ -888,7 +893,7 @@ public class Utils {
             }
             List<? extends Element> methods = te.getEnclosedElements();
             for (ExecutableElement ee : ElementFilter.methodsIn(methods)) {
-                if (elementUtils.overrides(method, ee, origin)) {
+                if (configuration.workArounds.overrides(method, ee, origin)) {
                     return ee;
                 }
             }
@@ -1488,6 +1493,30 @@ public class Utils {
     }
 
     /**
+     * Return true if the given Element is deprecated for removal.
+     *
+     * @param e the Element to check.
+     * @return true if the given Element is deprecated for removal.
+     */
+    public boolean isDeprecatedForRemoval(Element e) {
+        List<? extends AnnotationMirror> annotationList = e.getAnnotationMirrors();
+        JavacTypes jctypes = ((DocEnvImpl) configuration.docEnv).toolEnv.typeutils;
+        for (AnnotationMirror anno : annotationList) {
+            if (jctypes.isSameType(anno.getAnnotationType().asElement().asType(), getDeprecatedType())) {
+                Map<? extends ExecutableElement, ? extends AnnotationValue> pairs = anno.getElementValues();
+                if (!pairs.isEmpty()) {
+                    for (ExecutableElement element : pairs.keySet()) {
+                        if (element.getSimpleName().contentEquals("forRemoval")) {
+                            return Boolean.parseBoolean((pairs.get(element)).toString());
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * A convenience method to get property name from the name of the
      * getter or setter method.
      * @param e the input method.
@@ -1653,7 +1682,7 @@ public class Utils {
         return new Utils.ElementComparator<Element>() {
             @Override
             public int compare(Element mod1, Element mod2) {
-                return compareFullyQualifiedNames(mod1, mod2);
+                return compareNames(mod1, mod2);
             }
         };
     }
@@ -1744,14 +1773,14 @@ public class Utils {
     /**
      * Returns a Comparator for index file presentations, and are sorted as follows.
      *  If comparing modules then simply compare the simple names,
-     *  comparing packages then simply compare the qualified names, otherwise
-     *  1. if equal, then compare the ElementKind ex: Module, Package, Interface etc.
-     *  2. sort on simple names of entities
-     *  3a. if equal and if the type is of ExecutableElement(Constructor, Methods),
+     *  comparing packages then simply compare the qualified names, if comparing a package with a
+     *  module/type/member then compare the FullyQualifiedName of the package
+     *  with the SimpleName of the entity, otherwise
+     *  1. compare the ElementKind ex: Module, Package, Interface etc.
+     *  2a. if equal and if the type is of ExecutableElement(Constructor, Methods),
      *      a case insensitive comparison of parameter the type signatures
-     *  3b. if equal, case sensitive comparison of the type signatures
-     *  4. finally, if equal, compare the FQNs of the entities
-     * Iff comparing packages then simply sort on qualified names.
+     *  2b. if equal, case sensitive comparison of the type signatures
+     *  3. finally, if equal, compare the FQNs of the entities
      * @return a comparator for index file use
      */
     public Comparator<Element> makeIndexUseComparator() {
@@ -1759,8 +1788,10 @@ public class Utils {
             /**
              * Compare two given elements, if comparing two modules, return the
              * comparison of SimpleName, if comparing two packages, return the
-             * comparison of FullyQualifiedName, first sort on kinds, then on the
-             * names, then on the parameters only if the type is an ExecutableElement,
+             * comparison of FullyQualifiedName, if comparing a package with a
+             * module/type/member then compare the FullyQualifiedName of the package
+             * with the SimpleName of the entity, then sort on the kinds, then on
+             * the parameters only if the type is an ExecutableElement,
              * the parameters are compared and finally the qualified names.
              *
              * @param e1 - an element.
@@ -1777,11 +1808,17 @@ public class Utils {
                 if (isPackage(e1) && isPackage(e2)) {
                     return compareFullyQualifiedNames(e1, e2);
                 }
-                result = compareElementTypeKinds(e1, e2);
+                if (isPackage(e1) || isPackage(e2)) {
+                    result = (isPackage(e1))
+                            ? compareStrings(getFullyQualifiedName(e1), getSimpleName(e2))
+                            : compareStrings(getSimpleName(e1), getFullyQualifiedName(e2));
+                } else {
+                    result = compareNames(e1, e2);
+                }
                 if (result != 0) {
                     return result;
                 }
-                result = compareNames(e1, e2);
+                result = compareElementTypeKinds(e1, e2);
                 if (result != 0) {
                     return result;
                 }
@@ -1849,11 +1886,6 @@ public class Utils {
             }
 
             @Override
-            public String visitPrimitive(PrimitiveType t, Void p) {
-                return t.toString();
-            }
-
-            @Override
             public String visitTypeVariable(javax.lang.model.type.TypeVariable t, Void p) {
                 // The knee jerk reaction is to do this but don't!, as we would like
                 // it to be compatible with the old world, now if we decide to do so
@@ -1863,9 +1895,10 @@ public class Utils {
             }
 
             @Override
-            protected String defaultAction(TypeMirror e, Void p) {
-                throw new UnsupportedOperationException("should not happen");
+            protected String defaultAction(TypeMirror t, Void p) {
+                return t.toString();
             }
+
         }.visit(t);
     }
 
@@ -2161,6 +2194,71 @@ public class Utils {
         return convertToExecutableElement(getItems(e, false, METHOD));
     }
 
+    public int getOrdinalValue(VariableElement member) {
+        if (member == null || member.getKind() != ENUM_CONSTANT) {
+            throw new IllegalArgumentException("must be an enum constant: " + member);
+        }
+        return member.getEnclosingElement().getEnclosedElements().indexOf(member);
+    }
+
+    private Map<ModuleElement, Set<PackageElement>> modulePackageMap = null;
+    public Map<ModuleElement, Set<PackageElement>> getModulePackageMap() {
+        if (modulePackageMap == null) {
+            modulePackageMap = new HashMap<>();
+            Set<PackageElement> pkgs = configuration.getIncludedPackageElements();
+            pkgs.forEach((pkg) -> {
+                ModuleElement mod = elementUtils.getModuleOf(pkg);
+                modulePackageMap.computeIfAbsent(mod, m -> new HashSet<>()).add(pkg);
+            });
+        }
+        return modulePackageMap;
+    }
+
+    public Map<ModuleElement, String> getDependentModules(ModuleElement mdle) {
+        Map<ModuleElement, String> result = new TreeMap<>(makeModuleComparator());
+        Deque<ModuleElement> queue = new ArrayDeque<>();
+        // get all the requires for the element in question
+        for (RequiresDirective rd : ElementFilter.requiresIn(mdle.getDirectives())) {
+            ModuleElement dep = rd.getDependency();
+            // add the dependency to work queue
+            if (!result.containsKey(dep)) {
+                if (rd.isTransitive()) {
+                    queue.addLast(dep);
+                }
+            }
+            // add all exports for the primary module
+            result.put(rd.getDependency(), getModifiers(rd));
+        }
+
+        // add only requires public for subsequent module dependencies
+        for (ModuleElement m = queue.poll(); m != null; m = queue.poll()) {
+            for (RequiresDirective rd : ElementFilter.requiresIn(m.getDirectives())) {
+                ModuleElement dep = rd.getDependency();
+                if (!result.containsKey(dep)) {
+                    if (rd.isTransitive()) {
+                        result.put(dep, getModifiers(rd));
+                        queue.addLast(dep);
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    public String getModifiers(RequiresDirective rd) {
+        StringBuilder modifiers = new StringBuilder();
+        String sep="";
+        if (rd.isTransitive()) {
+            modifiers.append("transitive");
+            sep = " ";
+        }
+        if (rd.isStatic()) {
+            modifiers.append(sep);
+            modifiers.append("static");
+        }
+        return (modifiers.length() == 0) ? " " : modifiers.toString();
+    }
+
     public long getLineNumber(Element e) {
         TreePath path = getTreePath(e);
         if (path == null) { // maybe null if synthesized
@@ -2267,22 +2365,22 @@ public class Utils {
     private List<TypeElement> getInnerClasses(Element e, boolean filter) {
         List<TypeElement> olist = new ArrayList<>();
         for (TypeElement te : getClassesUnfiltered(e)) {
-            if (!filter || configuration.workArounds.isVisible(te)) {
+            if (!filter || configuration.docEnv.isSelected(te)) {
                 olist.add(te);
             }
         }
         for (TypeElement te : getInterfacesUnfiltered(e)) {
-            if (!filter || configuration.workArounds.isVisible(te)) {
+            if (!filter || configuration.docEnv.isSelected(te)) {
                 olist.add(te);
             }
         }
         for (TypeElement te : getAnnotationTypesUnfiltered(e)) {
-            if (!filter || configuration.workArounds.isVisible(te)) {
+            if (!filter || configuration.docEnv.isSelected(te)) {
                 olist.add(te);
             }
         }
         for (TypeElement te : getEnumsUnfiltered(e)) {
-            if (!filter || configuration.workArounds.isVisible(te)) {
+            if (!filter || configuration.docEnv.isSelected(te)) {
                 olist.add(te);
             }
         }
@@ -2365,12 +2463,42 @@ public class Utils {
         List<Element> elements = new ArrayList<>();
         for (Element e : te.getEnclosedElements()) {
             if (kinds.contains(e.getKind())) {
-                if (!filter || configuration.workArounds.shouldDocument(e)) {
+                if (!filter || shouldDocument(e)) {
                     elements.add(e);
                 }
             }
         }
         return elements;
+    }
+
+    private SimpleElementVisitor9<Boolean, Void> shouldDocumentVisitor = null;
+    private boolean shouldDocument(Element e) {
+        if (shouldDocumentVisitor == null) {
+            shouldDocumentVisitor = new SimpleElementVisitor9<Boolean, Void>() {
+                private boolean hasSource(TypeElement e) {
+                    return configuration.docEnv.getFileKind(e) ==
+                            javax.tools.JavaFileObject.Kind.SOURCE;
+                }
+
+                // handle types
+                @Override
+                public Boolean visitType(TypeElement e, Void p) {
+                    return configuration.docEnv.isSelected(e) && hasSource(e);
+                }
+
+                // handle everything else
+                @Override
+                protected Boolean defaultAction(Element e, Void p) {
+                    return configuration.docEnv.isSelected(e);
+                }
+
+                @Override
+                public Boolean visitUnknown(Element e, Void p) {
+                    throw new AssertionError("unkown element: " + p);
+                }
+            };
+        }
+        return shouldDocumentVisitor.visit(e);
     }
 
     /*
@@ -2582,17 +2710,17 @@ public class Utils {
             specifiedVisitor = new SimpleElementVisitor9<Boolean, Void>() {
                 @Override
                 public Boolean visitModule(ModuleElement e, Void p) {
-                    return configuration.getSpecifiedModules().contains(e);
+                    return configuration.getSpecifiedModuleElements().contains(e);
                 }
 
                 @Override
                 public Boolean visitPackage(PackageElement e, Void p) {
-                    return configuration.getSpecifiedPackages().contains(e);
+                    return configuration.getSpecifiedPackageElements().contains(e);
                 }
 
                 @Override
                 public Boolean visitType(TypeElement e, Void p) {
-                    return configuration.getSpecifiedClasses().contains(e);
+                    return configuration.getSpecifiedTypeElements().contains(e);
                 }
 
                 @Override
@@ -2904,6 +3032,16 @@ public class Utils {
         TreePath path = isValidDuo(duo) ? duo.treePath : null;
         if (!dcTreeCache.containsKey(element)) {
             if (docCommentTree != null && path != null) {
+                if (!configuration.isAllowScriptInComments()) {
+                    try {
+                        javaScriptScanner.scan(docCommentTree, path, p -> {
+                            throw new JavaScriptScanner.Fault();
+                        });
+                    } catch (JavaScriptScanner.Fault jsf) {
+                        String text = configuration.getText("doclet.JavaScript_in_comment");
+                        throw new UncheckedDocletException(new SimpleDocletException(text, jsf));
+                    }
+                }
                 configuration.workArounds.runDocLint(path);
             }
             dcTreeCache.put(element, duo);
@@ -2921,6 +3059,21 @@ public class Utils {
             }
         }
         return null;
+    }
+
+    public void checkJavaScriptInOption(String name, String value) {
+        if (!configuration.isAllowScriptInComments()) {
+            DocCommentTree dct = configuration.cmtUtils.parse(
+                    URI.create("option://" + name.replace("-", "")), "<body>" + value + "</body>");
+            try {
+                javaScriptScanner.scan(dct, null, p -> {
+                    throw new JavaScriptScanner.Fault();
+                });
+            } catch (JavaScriptScanner.Fault jsf) {
+                String text = configuration.getText("doclet.JavaScript_in_option", name);
+                throw new UncheckedDocletException(new SimpleDocletException(text, jsf));
+            }
+        }
     }
 
     boolean isValidDuo(DocCommentDuo duo) {
@@ -2955,6 +3108,10 @@ public class Utils {
 
     public List<? extends DocTree> getDeprecatedTrees(Element element) {
         return getBlockTags(element, DEPRECATED);
+    }
+
+    public List<? extends DocTree> getProvidesTrees(Element element) {
+        return getBlockTags(element, PROVIDES);
     }
 
     public List<? extends DocTree> getSeeTrees(Element element) {
@@ -2998,6 +3155,10 @@ public class Utils {
             out.add(dt);
         }
         return out;
+    }
+
+    public List<? extends DocTree> getUsesTrees(Element element) {
+        return getBlockTags(element, USES);
     }
 
     public List<? extends DocTree> getFirstSentenceTrees(Element element) {

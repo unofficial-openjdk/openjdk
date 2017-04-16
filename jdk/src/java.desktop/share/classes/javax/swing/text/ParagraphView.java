@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -178,6 +178,7 @@ public class ParagraphView extends FlowView implements TabExpander {
      * @return the location in the model that represents the
      *  next location visual position
      */
+    @SuppressWarnings("deprecation")
     protected int getNextNorthSouthVisualPositionFrom(int pos, Position.Bias b,
                                                       Shape a, int direction,
                                                       Position.Bias[] biasRet)
@@ -252,6 +253,7 @@ public class ParagraphView extends FlowView implements TabExpander {
     // NOTE: This will not properly work if ParagraphView contains
     // other ParagraphViews. It won't raise, but this does not message
     // the children views with getNextVisualPositionFrom.
+    @SuppressWarnings("deprecation")
     protected int getClosestPositionTo(int pos, Position.Bias b, Shape a,
                                        int direction, Position.Bias[] biasRet,
                                        int rowIndex, int x)
@@ -897,7 +899,6 @@ public class ParagraphView extends FlowView implements TabExpander {
         /**
          * Range represented by a row in the paragraph is only
          * a subset of the total range of the paragraph element.
-         * @see View#getRange
          */
         public int getStartOffset() {
             int offs = Integer.MAX_VALUE;

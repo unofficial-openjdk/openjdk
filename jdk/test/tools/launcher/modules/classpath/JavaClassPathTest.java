@@ -21,12 +21,14 @@
  * questions.
  */
 
+import java.io.BufferedWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.spi.ToolProvider;
 
 import jdk.testlibrary.OutputAnalyzer;
 import org.testng.annotations.BeforeTest;
@@ -42,6 +44,7 @@ import static jdk.testlibrary.ProcessTools.*;
  * @summary Test the default class path if -Djava.class.path is set
  * @library /lib/testlibrary
  * @modules jdk.compiler
+ *          jdk.jartool
  * @build CompilerUtils jdk.testlibrary.*
  * @run testng JavaClassPathTest
  */
@@ -50,6 +53,7 @@ public class JavaClassPathTest {
     private static final Path SRC_DIR = Paths.get(System.getProperty("test.src"),
                                                   "src");
     private static final Path MODS_DIR = Paths.get("mods");
+    private static final Path LIB_DIR = Paths.get("lib");
     private static final String TEST_MODULE = "m";
     private static final String TEST_MAIN = "jdk.test.Main";
 
@@ -66,27 +70,48 @@ public class JavaClassPathTest {
 
         Path res = Paths.get("jdk/test/res.properties");
         Files.createFile(res);
+
+        ToolProvider jartool = ToolProvider.findFirst("jar").orElseThrow(
+            () -> new RuntimeException("jar tool not found")
+        );
+
+        Path jarfile = LIB_DIR.resolve("m.jar");
+        Files.createDirectories(LIB_DIR);
+        assertTrue(jartool.run(System.out, System.err, "cfe",
+                               jarfile.toString(), TEST_MAIN,
+                               file.toString()) == 0);
+
+        Path manifest = LIB_DIR.resolve("manifest");
+        try (BufferedWriter writer = Files.newBufferedWriter(manifest)) {
+            writer.write("CLASS-PATH: lib/m.jar");
+        }
+        jarfile = LIB_DIR.resolve("m1.jar");
+        assertTrue(jartool.run(System.out, System.err, "cfme",
+                               jarfile.toString(), manifest.toString(), TEST_MAIN,
+                               file.toString()) == 0);
     }
 
     @DataProvider(name = "classpath")
     public Object[][] classpath() {
         return new Object[][]{
             // true indicates that class path default to current working directory
-            { "",                              true  },
-            { "-Djava.class.path",             true  },
-            { "-Djava.class.path=",            true  },
-            { "-Djava.class.path=.",           true  },
+            { List.of(),                          "." },
+            { List.of("-cp", ""),                 "" },
+            { List.of("-cp", "."),                "." },
+            { List.of("-Djava.class.path"),       "." },
+            { List.of("-Djava.class.path="),      ""  },
+            { List.of("-Djava.class.path=."),     "." },
         };
     }
 
     @Test(dataProvider = "classpath")
-    public void testUnnamedModule(String option, boolean expected) throws Throwable {
-        List<String> args = new ArrayList<>();
-        if (!option.isEmpty()) {
-            args.add(option);
-        }
+    public void testUnnamedModule(List<String> options, String expected)
+        throws Throwable
+    {
+        List<String> args = new ArrayList<>(options);
         args.add(TEST_MAIN);
-        args.add(Boolean.toString(expected));
+        args.add(Boolean.toString(true));
+        args.add(expected);
 
         assertTrue(execute(args).getExitValue() == 0);
     }
@@ -95,15 +120,14 @@ public class JavaClassPathTest {
     public Object[][] moduleAndClassPath() {
         return new Object[][]{
             // true indicates that class path default to current working directory
-            { "",                              false  },
-            { "-Djava.class.path",             false  },
-            { "-Djava.class.path=",            false  },
-            { "-Djava.class.path=.",           true   },
+            { "",                              ""  },
+            { "-Djava.class.path",             ""  },
+            { "-Djava.class.path=",            ""  },
         };
     }
 
     @Test(dataProvider = "moduleAndClassPath")
-    public void testNamedModule(String option, boolean expected) throws Throwable {
+    public void testNamedModule(String option, String expected) throws Throwable {
         List<String> args = new ArrayList<>();
         if (!option.isEmpty()) {
             args.add(option);
@@ -112,14 +136,72 @@ public class JavaClassPathTest {
         args.add(MODS_DIR.toString());
         args.add("-m");
         args.add(TEST_MODULE + "/" + TEST_MAIN);
-        args.add(Boolean.toString(expected));
+        // not default to CWD
+        args.add(Boolean.toString(false));
+        args.add(expected);
+
+
+        assertTrue(execute(args).getExitValue() == 0);
+    }
+
+    @Test
+    public void testClassPath() throws Throwable {
+        List<String> args = new ArrayList<>();
+        args.add("-Djava.class.path=.");
+        args.add("--module-path");
+        args.add(MODS_DIR.toString());
+        args.add("-m");
+        args.add(TEST_MODULE + "/" + TEST_MAIN);
+        args.add(Boolean.toString(true));
+        args.add(".");
+
+        assertTrue(execute(args).getExitValue() == 0);
+    }
+
+    @Test
+    public void testJAR() throws Throwable {
+        String jarfile = LIB_DIR.resolve("m.jar").toString();
+        List<String> args = new ArrayList<>();
+        args.add("-jar");
+        args.add(jarfile);
+        args.add(Boolean.toString(false));
+        args.add(jarfile);
+
+        assertTrue(execute(args).getExitValue() == 0);
+    }
+
+    /*
+     * Test CLASS-PATH attribute in manifest
+     */
+    @Test
+    public void testClassPathAttribute() throws Throwable {
+        String jarfile = LIB_DIR.resolve("m1.jar").toString();
+
+        List<String> args = new ArrayList<>();
+        args.add("-jar");
+        args.add(jarfile);
+        args.add(Boolean.toString(false));
+        args.add(jarfile);
+
+        assertTrue(execute(args).getExitValue() == 0);
+
+        args.clear();
+        args.add("-cp");
+        args.add(jarfile);
+        args.add(TEST_MAIN);
+        args.add(Boolean.toString(false));
+        args.add(jarfile);
 
         assertTrue(execute(args).getExitValue() == 0);
     }
 
     private OutputAnalyzer execute(List<String> options) throws Throwable {
-        ProcessBuilder pb =
-            createJavaProcessBuilder(options.toArray(new String[0]));
+        ProcessBuilder pb = createJavaProcessBuilder(
+            options.stream()
+                   .map(this::autoQuote)
+                   .toArray(String[]::new)
+        );
+
         Map<String,String> env = pb.environment();
         // remove CLASSPATH environment variable
         String value = env.remove("CLASSPATH");
@@ -128,4 +210,16 @@ public class JavaClassPathTest {
                     .errorTo(System.out);
     }
 
+    private static final boolean IS_WINDOWS
+        = System.getProperty("os.name").startsWith("Windows");
+
+    /*
+     * Autoquote empty string argument on Windows
+     */
+    private String autoQuote(String arg) {
+        if (IS_WINDOWS && arg.isEmpty()) {
+            return "\"\"";
+        }
+        return arg;
+    }
 }

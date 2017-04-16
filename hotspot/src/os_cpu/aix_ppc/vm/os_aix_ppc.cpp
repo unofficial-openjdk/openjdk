@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2016 SAP SE. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2017 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -256,13 +256,6 @@ JVM_handle_aix_signal(int sig, siginfo_t* info, void* ucVoid, int abort_if_unrec
       os::Aix::ucontext_set_pc(uc, StubRoutines::continuation_for_safefetch_fault(pc));
       return true;
     }
-  }
-
-  // Handle SIGDANGER right away. AIX would raise SIGDANGER whenever available swap
-  // space falls below 30%. This is only a chance for the process to gracefully abort.
-  // We can't hope to proceed after SIGDANGER since SIGKILL tailgates.
-  if (sig == SIGDANGER) {
-    goto report_and_die;
   }
 
   if (info == NULL || uc == NULL || thread == NULL && vmthread == NULL) {
@@ -535,13 +528,15 @@ void os::Aix::init_thread_fpu_state(void) {
 ////////////////////////////////////////////////////////////////////////////////
 // thread stack
 
-size_t os::Posix::_compiler_thread_min_stack_allowed = 128 * K;
-size_t os::Posix::_java_thread_min_stack_allowed = 128 * K;
-size_t os::Posix::_vm_internal_thread_min_stack_allowed = 128 * K;
+// Minimum usable stack sizes required to get to user code. Space for
+// HotSpot guard pages is added later.
+size_t os::Posix::_compiler_thread_min_stack_allowed = 192 * K;
+size_t os::Posix::_java_thread_min_stack_allowed = 64 * K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = 64 * K;
 
-// return default stack size for thr_type
+// Return default stack size for thr_type.
 size_t os::Posix::default_stack_size(os::ThreadType thr_type) {
-  // default stack size (compiler thread needs larger stack)
+  // Default stack size (compiler thread needs larger stack).
   size_t s = (thr_type == os::compiler_thread ? 4 * M : 1 * M);
   return s;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ package com.sun.tools.javac.util;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 /** Utilities for Iterators.
  *
@@ -62,9 +63,9 @@ public class Iterators {
         }
 
         public O next() {
-            if (!hasNext())
+            if (currentIterator == EMPTY && !hasNext()) {
                 throw new NoSuchElementException();
-
+            }
             return currentIterator.next();
         }
 
@@ -92,4 +93,32 @@ public class Iterators {
             return null;
         }
     };
+
+    public static <E> Iterator<E> createFilterIterator(Iterator<E> input, Predicate<E> test) {
+        return new Iterator<E>() {
+            private E current = update();
+            private E update () {
+                while (input.hasNext()) {
+                    E sym = input.next();
+                    if (test.test(sym)) {
+                        return sym;
+                    }
+                }
+
+                return null;
+            }
+            @Override
+            public boolean hasNext() {
+                return current != null;
+            }
+
+            @Override
+            public E next() {
+                E res = current;
+                current = update();
+                return res;
+            }
+        };
+    }
+
 }

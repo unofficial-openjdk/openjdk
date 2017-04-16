@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,9 @@
 
 /**
  * Defines the foundational APIs of the Java SE Platform.
+ *
+ * @moduleGraph
+ * @since 9
  */
 module java.base {
 
@@ -115,18 +118,17 @@ module java.base {
     // additional qualified exports may be inserted at build time
     // see make/gensrc/GenModuleInfo.gmk
 
-    // CORBA serialization needs reflective access
-    exports sun.util.calendar to
-        java.corba;
-
     exports com.sun.security.ntlm to
         java.security.sasl;
     exports jdk.internal.jimage to
         jdk.jlink;
     exports jdk.internal.jimage.decompressor to
         jdk.jlink;
+    exports jdk.internal.loader to
+        java.instrument,
+        java.logging;
     exports jdk.internal.jmod to
-        jdk.compiler,
+        jdk.compiler,   // reflective dependency
         jdk.jlink;
     exports jdk.internal.logger to
         java.logging;
@@ -134,30 +136,23 @@ module java.base {
         jdk.jartool,
         jdk.jlink,
         jdk.scripting.nashorn,
-        jdk.vm.ci;
+        jdk.internal.vm.ci;
     exports jdk.internal.org.objectweb.asm.tree to
         jdk.jlink;
     exports jdk.internal.org.objectweb.asm.util to
-        jdk.jlink,
         jdk.scripting.nashorn;
-    exports jdk.internal.org.objectweb.asm.tree.analysis to
-        jdk.jlink;
     exports jdk.internal.org.objectweb.asm.commons to
         jdk.scripting.nashorn;
     exports jdk.internal.org.objectweb.asm.signature to
         jdk.scripting.nashorn;
-    exports jdk.internal.loader to
-        java.instrument,
-        java.logging;
     exports jdk.internal.math to
         java.desktop;
     exports jdk.internal.module to
         java.instrument,
-        java.management,
+        java.management.rmi,
         jdk.jartool,
         jdk.jlink;
     exports jdk.internal.misc to
-        java.corba,
         java.desktop,
         java.logging,
         java.management,
@@ -167,8 +162,8 @@ module java.base {
         java.sql,
         java.xml,
         jdk.charsets,
-        jdk.compiler,
-        jdk.jartool,
+        jdk.compiler,   // reflective dependency
+        jdk.incubator.httpclient,
         jdk.jdeps,
         jdk.jlink,
         jdk.jshell,
@@ -176,15 +171,16 @@ module java.base {
         jdk.scripting.nashorn,
         jdk.scripting.nashorn.shell,
         jdk.unsupported,
-        jdk.vm.ci;
+        jdk.internal.vm.ci;
     exports jdk.internal.perf to
         java.desktop,
         java.management,
-        jdk.jvmstat;
+        jdk.management.agent,
+        jdk.internal.jvmstat;
     exports jdk.internal.ref to
-        java.desktop;
+        java.desktop,
+        jdk.unsupported;
     exports jdk.internal.reflect to
-        java.corba,
         java.logging,
         java.sql,
         java.sql.rowset,
@@ -193,15 +189,16 @@ module java.base {
         jdk.unsupported;
     exports jdk.internal.vm.annotation to
         jdk.unsupported,
-        jdk.vm.ci;
+        jdk.internal.vm.ci;
     exports jdk.internal.util.jar to
         jdk.jartool,
-        jdk.jdeps;
+        jdk.jdeps,
+        jdk.jlink;
     exports jdk.internal.vm to
-        java.management,
-        jdk.jvmstat;
+        jdk.management.agent,
+        jdk.internal.jvmstat;
     exports sun.net to
-        java.httpclient;
+        jdk.incubator.httpclient;
     exports sun.net.ext to
         jdk.net;
     exports sun.net.dns to
@@ -209,17 +206,18 @@ module java.base {
         jdk.naming.dns;
     exports sun.net.util to
         java.desktop,
-        jdk.jconsole,
-        jdk.naming.dns;
+        jdk.jconsole;
     exports sun.net.www to
         java.desktop,
+        jdk.incubator.httpclient,
         jdk.jartool;
     exports sun.net.www.protocol.http to
         java.security.jgss;
     exports sun.nio.ch to
         java.management,
-        jdk.crypto.pkcs11,
-        jdk.sctp;
+        jdk.crypto.cryptoki,
+        jdk.sctp,
+        jdk.unsupported;
     exports sun.nio.cs to
         java.desktop,
         jdk.charsets;
@@ -230,26 +228,24 @@ module java.base {
     exports sun.reflect.generics.reflectiveObjects to
         java.desktop;
     exports sun.reflect.misc to
-        java.corba,
         java.desktop,
         java.datatransfer,
         java.management,
+        java.management.rmi,
         java.rmi,
         java.sql.rowset,
-        java.xml,
-        java.xml.ws;
+        java.xml;
     exports sun.security.action to
         java.desktop,
         java.security.jgss;
     exports sun.security.internal.interfaces to
-        jdk.crypto.pkcs11;
+        jdk.crypto.cryptoki;
     exports sun.security.internal.spec to
-        jdk.crypto.pkcs11;
+        jdk.crypto.cryptoki;
     exports sun.security.jca to
         java.smartcardio,
-        java.xml.crypto,
         jdk.crypto.ec,
-        jdk.crypto.pkcs11,
+        jdk.crypto.cryptoki,
         jdk.naming.dns;
     exports sun.security.pkcs to
         jdk.crypto.ec,
@@ -257,13 +253,13 @@ module java.base {
     exports sun.security.provider to
         java.rmi,
         java.security.jgss,
-        jdk.crypto.pkcs11,
+        jdk.crypto.cryptoki,
         jdk.policytool,
         jdk.security.auth;
     exports sun.security.provider.certpath to
         java.naming;
     exports sun.security.rsa to
-        jdk.crypto.pkcs11;
+        jdk.crypto.cryptoki;
     exports sun.security.ssl to
         java.security.jgss;
     exports sun.security.timestamp to
@@ -277,17 +273,20 @@ module java.base {
         java.security.jgss,
         java.security.sasl,
         java.smartcardio,
+        java.xml.crypto,
         jdk.crypto.ec,
-        jdk.crypto.pkcs11,
+        jdk.crypto.cryptoki,
         jdk.jartool,
         jdk.policytool,
         jdk.security.auth,
         jdk.security.jgss;
     exports sun.security.x509 to
         jdk.crypto.ec,
-        jdk.crypto.pkcs11,
+        jdk.crypto.cryptoki,
         jdk.jartool,
         jdk.security.auth;
+    exports sun.security.validator to
+        jdk.jartool;
     exports sun.text.resources to
         jdk.localedata;
     exports sun.util.cldr to
@@ -306,6 +305,7 @@ module java.base {
     // JDK-internal service types
     uses jdk.internal.logger.DefaultLoggerFinder;
     uses sun.security.ssl.ClientKeyExchangeService;
+    uses sun.text.spi.JavaTimeDateTimePatternProvider;
     uses sun.util.spi.CalendarProvider;
     uses sun.util.locale.provider.LocaleDataMetaInfo;
     uses sun.util.resources.LocaleData.CommonResourceBundleProvider;

@@ -30,12 +30,12 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.function.Function;
 
 import javax.lang.model.type.*;
 
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.code.TypeMetadata.Entry;
+import com.sun.tools.javac.code.Types.TypeMapping;
 import com.sun.tools.javac.comp.Infer.IncorporationAction;
 import com.sun.tools.javac.util.*;
 import com.sun.tools.javac.util.DefinedBy.Api;
@@ -222,18 +222,12 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
         this.metadata = metadata;
     }
 
-    /** An abstract class for mappings from types to types
+    /**
+     * A subclass of {@link Types.TypeMapping} which applies a mapping recursively to the subterms
+     * of a given type expression. This mapping returns the original type is no changes occurred
+     * when recursively mapping the original type's subterms.
      */
-    public static abstract class TypeMapping<S> extends Types.MapVisitor<S> implements Function<Type, Type> {
-
-        @Override
-        public Type apply(Type type) {
-            return visit(type);
-        }
-
-        List<Type> visit(List<Type> ts, S s) {
-            return ts.map(t -> visit(t, s));
-        }
+    public static abstract class StructuralTypeMapping<S> extends Types.TypeMapping<S> {
 
         @Override
         public Type visitClassType(ClassType t, S s) {
@@ -296,11 +290,6 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
                     return true;
                 }
             };
-        }
-
-        @Override
-        public Type visitCapturedType(CapturedType t, S s) {
-            return visitTypeVar(t, s);
         }
 
         @Override
@@ -373,7 +362,7 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
         return accept(stripMetadata, null);
     }
     //where
-        private final static TypeMapping<Void> stripMetadata = new TypeMapping<Void>() {
+        private final static TypeMapping<Void> stripMetadata = new StructuralTypeMapping<Void>() {
             @Override
             public Type visitClassType(ClassType t, Void aVoid) {
                 return super.visitClassType((ClassType)t.typeNoMetadata(), aVoid);
@@ -1164,7 +1153,7 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
     public static class ErasedClassType extends ClassType {
         public ErasedClassType(Type outer, TypeSymbol tsym,
                                TypeMetadata metadata) {
-            super(outer, List.<Type>nil(), tsym, metadata);
+            super(outer, List.nil(), tsym, metadata);
         }
 
         @Override
@@ -1235,7 +1224,7 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
         public IntersectionClassType(List<Type> bounds, ClassSymbol csym, boolean allInterfaces) {
             // Presently no way to refer to this type directly, so we
             // cannot put annotations directly on it.
-            super(Type.noType, List.<Type>nil(), csym);
+            super(Type.noType, List.nil(), csym);
             this.allInterfaces = allInterfaces;
             Assert.check((csym.flags() & COMPOUND) != 0);
             supertype_field = bounds.head;
@@ -1869,6 +1858,12 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
      */
     public static class UndetVar extends DelegatedType {
 
+        enum Kind {
+            NORMAL,
+            CAPTURED,
+            THROWS;
+        }
+
         /** Inference variable change listener. The listener method is called
          *  whenever a change to the inference variable's bounds occurs
          */
@@ -1929,6 +1924,8 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
         /** inference variable's change listener */
         public UndetVarListener listener = null;
 
+        Kind kind;
+
         @Override
         public <R,S> R accept(Type.Visitor<R,S> v, S s) {
             return v.visitUndetVar(this, s);
@@ -1937,6 +1934,9 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
         public UndetVar(TypeVar origin, UndetVarListener listener, Types types) {
             // This is a synthesized internal type, so we cannot annotate it.
             super(UNDETVAR, origin);
+            this.kind = origin.isCaptured() ?
+                    Kind.CAPTURED :
+                    Kind.NORMAL;
             this.listener = listener;
             bounds = new EnumMap<>(InferenceBound.class);
             List<Type> declaredBounds = types.getBounds(origin);
@@ -1947,6 +1947,10 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
             for (Type t : declaredBounds.reverse()) {
                 //add bound works in reverse order
                 addBound(InferenceBound.UPPER, t, types, true);
+            }
+            if (origin.isCaptured() && !origin.lower.hasTag(BOT)) {
+                //add lower bound if needed
+                addBound(InferenceBound.LOWER, origin.lower, types, true);
             }
         }
 
@@ -1975,6 +1979,14 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
                 }
             }
             return result;
+        }
+
+        public void setThrow() {
+            if (this.kind == Kind.CAPTURED) {
+                //invalid state transition
+                throw new IllegalStateException();
+            }
+            this.kind = Kind.THROWS;
         }
 
         /**
@@ -2059,23 +2071,50 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
 
         /** add a bound of a given kind - this might trigger listener notification */
         public final void addBound(InferenceBound ib, Type bound, Types types) {
+            // Per JDK-8075793: in pre-8 sources, follow legacy javac behavior
+            // when capture variables are inferred as bounds: for lower bounds,
+            // map to the capture variable's upper bound; for upper bounds,
+            // if the capture variable has a lower bound, map to that type
+            if (types.mapCapturesToBounds) {
+                switch (ib) {
+                    case LOWER:
+                        bound = types.cvarUpperBound(bound);
+                        break;
+                    case UPPER:
+                        Type altBound = types.cvarLowerBound(bound);
+                        if (!altBound.hasTag(TypeTag.BOT)) bound = altBound;
+                        break;
+                }
+            }
             addBound(ib, bound, types, false);
         }
 
-        protected void addBound(InferenceBound ib, Type bound, Types types, boolean update) {
-            Type bound2 = bound.map(toTypeVarMap).baseType();
-            List<Type> prevBounds = bounds.get(ib);
-            if (bound == qtype) return;
-            for (Type b : prevBounds) {
-                //check for redundancy - use strict version of isSameType on tvars
-                //(as the standard version will lead to false positives w.r.t. clones ivars)
-                if (types.isSameType(b, bound2, true)) return;
+        @SuppressWarnings("fallthrough")
+        private void addBound(InferenceBound ib, Type bound, Types types, boolean update) {
+            if (kind == Kind.CAPTURED && !update) {
+                //Captured inference variables bounds must not be updated during incorporation,
+                //except when some inference variable (beta) has been instantiated in the
+                //right-hand-side of a 'C<alpha> = capture(C<? extends/super beta>) constraint.
+                if (bound.hasTag(UNDETVAR) && !((UndetVar)bound).isCaptured()) {
+                    //If the new incoming bound is itself a (regular) inference variable,
+                    //then we are allowed to propagate this inference variable bounds to it.
+                    ((UndetVar)bound).addBound(ib.complement(), this, types, false);
+                }
+            } else {
+                Type bound2 = bound.map(toTypeVarMap).baseType();
+                List<Type> prevBounds = bounds.get(ib);
+                if (bound == qtype) return;
+                for (Type b : prevBounds) {
+                    //check for redundancy - use strict version of isSameType on tvars
+                    //(as the standard version will lead to false positives w.r.t. clones ivars)
+                    if (types.isSameType(b, bound2, true)) return;
+                }
+                bounds.put(ib, prevBounds.prepend(bound2));
+                notifyBoundChange(ib, bound2, false);
             }
-            bounds.put(ib, prevBounds.prepend(bound2));
-            notifyBoundChange(ib, bound2, false);
         }
         //where
-            TypeMapping<Void> toTypeVarMap = new TypeMapping<Void>() {
+            TypeMapping<Void> toTypeVarMap = new StructuralTypeMapping<Void>() {
                 @Override
                 public Type visitUndetVar(UndetVar uv, Void _unused) {
                     return uv.inst != null ? uv.inst : uv.qtype;
@@ -2088,11 +2127,9 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
             UndetVarListener prevListener = listener;
             try {
                 //setup new listener for keeping track of changed bounds
-                listener = new UndetVarListener() {
-                    public void varBoundChanged(UndetVar uv, InferenceBound ib, Type t, boolean _ignored) {
-                        Assert.check(uv == UndetVar.this);
-                        boundsChanged.add(new Pair<>(ib, t));
-                    }
+                listener = (uv, ib, t, _ignored) -> {
+                    Assert.check(uv == UndetVar.this);
+                    boundsChanged.add(new Pair<>(ib, t));
                 };
                 for (Map.Entry<InferenceBound, List<Type>> _entry : bounds.entrySet()) {
                     InferenceBound ib = _entry.getKey();
@@ -2128,46 +2165,12 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
             }
         }
 
-        public boolean isCaptured() {
-            return false;
-        }
-    }
-
-    /**
-     * This class is used to represent synthetic captured inference variables
-     * that can be generated during nested generic method calls. The only difference
-     * between these inference variables and ordinary ones is that captured inference
-     * variables cannot get new bounds through incorporation.
-     */
-    public static class CapturedUndetVar extends UndetVar {
-
-        public CapturedUndetVar(CapturedType origin, UndetVarListener listener, Types types) {
-            super(origin, listener, types);
-            if (!origin.lower.hasTag(BOT)) {
-                addBound(InferenceBound.LOWER, origin.lower, types, true);
-            }
+        public final boolean isCaptured() {
+            return kind == Kind.CAPTURED;
         }
 
-        @Override
-        public void addBound(InferenceBound ib, Type bound, Types types, boolean update) {
-            if (update) {
-                //only change bounds if request comes from substBounds
-                super.addBound(ib, bound, types, update);
-            }
-            else if (bound.hasTag(UNDETVAR) && !((UndetVar) bound).isCaptured()) {
-                ((UndetVar) bound).addBound(ib.complement(), this, types, false);
-            }
-        }
-
-        @Override
-        public boolean isCaptured() {
-            return true;
-        }
-
-        public UndetVar dup(Types types) {
-            UndetVar uv2 = new CapturedUndetVar((CapturedType)qtype, listener, types);
-            dupTo(uv2, types);
-            return uv2;
+        public final boolean isThrows() {
+            return kind == Kind.THROWS;
         }
     }
 
@@ -2302,14 +2305,14 @@ public abstract class Type extends AnnoConstruct implements TypeMirror {
         }
 
         public ErrorType(Type originalType, TypeSymbol tsym) {
-            super(noType, List.<Type>nil(), null);
+            super(noType, List.nil(), null);
             this.tsym = tsym;
             this.originalType = (originalType == null ? noType : originalType);
         }
 
         private ErrorType(Type originalType, TypeSymbol tsym,
                           TypeMetadata metadata) {
-            super(noType, List.<Type>nil(), null, metadata);
+            super(noType, List.nil(), null, metadata);
             this.tsym = tsym;
             this.originalType = (originalType == null ? noType : originalType);
         }

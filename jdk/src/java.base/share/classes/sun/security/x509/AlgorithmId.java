@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1009,7 +1009,7 @@ public class AlgorithmId implements Serializable, DerEncoder {
      * @return the default alg, might be null if unsupported
      */
     public static String getDefaultSigAlgForKey(PrivateKey k) {
-        switch (k.getAlgorithm().toUpperCase()) {
+        switch (k.getAlgorithm().toUpperCase(Locale.ROOT)) {
             case "EC":
                 return ecStrength(KeyUtil.getKeySize(k))
                     + "withECDSA";
@@ -1024,7 +1024,7 @@ public class AlgorithmId implements Serializable, DerEncoder {
         }
     }
 
-    // Values from SP800-57 part 1 rev 3 tables 2 and three
+    // Values from SP800-57 part 1 rev 4 tables 2 and 3
     private static String ecStrength (int bitLength) {
         if (bitLength >= 512) { // 256 bits of strength
             return "SHA512";
@@ -1035,7 +1035,7 @@ public class AlgorithmId implements Serializable, DerEncoder {
         }
     }
 
-    // same values for RSA and DSA
+    // Same values for RSA and DSA
     private static String ifcFfcStrength (int bitLength) {
         if (bitLength > 7680) { // 256 bits
             return "SHA512";

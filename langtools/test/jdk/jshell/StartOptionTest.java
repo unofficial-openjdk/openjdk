@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 
 /*
- * @test 8151754 8080883 8160089
+ * @test 8151754 8080883 8160089 8170162 8166581 8172102 8171343 8178023
  * @summary Testing start-up options.
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
@@ -33,7 +33,9 @@
  * @run testng StartOptionTest
  */
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -41,13 +43,16 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-import jdk.internal.jshell.tool.JShellTool;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
+import jdk.jshell.tool.JavaShellToolBuilder;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 @Test
 public class StartOptionTest {
@@ -57,22 +62,31 @@ public class StartOptionTest {
     private ByteArrayOutputStream console;
     private ByteArrayOutputStream userout;
     private ByteArrayOutputStream usererr;
+    private InputStream cmdInStream;
 
-    private JShellTool getShellTool() {
-        return new JShellTool(
-                new TestingInputStream(),
-                new PrintStream(cmdout),
-                new PrintStream(cmderr),
-                new PrintStream(console),
-                null,
-                new PrintStream(userout),
-                new PrintStream(usererr),
-                new ReplToolTesting.MemoryPreferences(),
-                new HashMap<>(),
-                Locale.ROOT);
+    private JavaShellToolBuilder builder() {
+        // turn on logging of launch failures
+        Logger.getLogger("jdk.jshell.execution").setLevel(Level.ALL);
+        return JavaShellToolBuilder
+                    .builder()
+                    .out(new PrintStream(cmdout), new PrintStream(console), new PrintStream(userout))
+                    .err(new PrintStream(cmderr), new PrintStream(usererr))
+                    .in(cmdInStream, null)
+                    .persistence(new HashMap<>())
+                    .env(new HashMap<>())
+                    .locale(Locale.ROOT);
     }
 
-    private void check(ByteArrayOutputStream str, Consumer<String> checkOut, String label) {
+    private void runShell(String... args) {
+        try {
+            builder()
+                    .run(args);
+        } catch (Exception ex) {
+            fail("Repl tool died with exception", ex);
+        }
+    }
+
+    protected void check(ByteArrayOutputStream str, Consumer<String> checkOut, String label) {
         byte[] bytes = str.toByteArray();
         str.reset();
         String out =  new String(bytes, StandardCharsets.UTF_8);
@@ -83,18 +97,28 @@ public class StartOptionTest {
         }
     }
 
-    private void start(Consumer<String> checkOutput, Consumer<String> checkError, String... args) throws Exception {
-        JShellTool tool = getShellTool();
-        tool.start(args);
-        check(cmdout, checkOutput, "cmdout");
+    protected void start(Consumer<String> checkCmdOutput,
+            Consumer<String> checkUserOutput, Consumer<String> checkError,
+            String... args) throws Exception {
+        runShell(args);
+        check(cmdout, checkCmdOutput, "cmdout");
         check(cmderr, checkError, "cmderr");
         check(console, null, "console");
-        check(userout, null, "userout");
+        check(userout, checkUserOutput, "userout");
         check(usererr, null, "usererr");
     }
 
-    private void start(String expectedOutput, String expectedError, String... args) throws Exception {
-        start(s -> assertEquals(s.trim(), expectedOutput, "cmdout: "), s -> assertEquals(s.trim(), expectedError, "cmderr: "), args);
+    protected void start(String expectedCmdOutput, String expectedError, String... args) throws Exception {
+        startWithUserOutput(expectedCmdOutput, "",  expectedError, args);
+    }
+
+    private void startWithUserOutput(String expectedCmdOutput, String expectedUserOutput,
+            String expectedError, String... args) throws Exception {
+        start(
+                s -> assertEquals(s.trim(), expectedCmdOutput, "cmdout: "),
+                s -> assertEquals(s.trim(), expectedUserOutput, "userout: "),
+                s -> assertEquals(s.trim(), expectedError, "cmderr: "),
+                args);
     }
 
     @BeforeMethod
@@ -104,23 +128,47 @@ public class StartOptionTest {
         console = new ByteArrayOutputStream();
         userout = new ByteArrayOutputStream();
         usererr = new ByteArrayOutputStream();
+        cmdInStream = new ByteArrayInputStream("/exit\n".getBytes());
     }
 
-    @Test
+    protected String writeToFile(String stuff) throws Exception {
+        Compiler compiler = new Compiler();
+        Path p = compiler.getPath("doit.repl");
+        compiler.writeToFile(p, stuff);
+        return p.toString();
+    }
+
+    public void testCommandFile() throws Exception {
+        String fn = writeToFile("String str = \"Hello \"\n/list\nSystem.out.println(str + str)\n/exit\n");
+        startWithUserOutput("1 : String str = \"Hello \";", "Hello Hello", "", "--no-startup", fn, "-s");
+    }
+
     public void testUsage() throws Exception {
         for (String opt : new String[]{"-h", "--help"}) {
             start(s -> {
                 assertTrue(s.split("\n").length >= 7, "Not enough usage lines: " + s);
                 assertTrue(s.startsWith("Usage:   jshell <options>"), "Unexpect usage start: " + s);
-            }, null, opt);
+                assertTrue(s.contains("--show-version"), "Expected help: " + s);
+                assertFalse(s.contains("Welcome"), "Unexpected start: " + s);
+            }, null, null, opt);
         }
     }
 
-    @Test
+    public void testHelpExtra() throws Exception {
+        for (String opt : new String[]{"-X", "--help-extra"}) {
+            start(s -> {
+                assertTrue(s.split("\n").length >= 5, "Not enough help-extra lines: " + s);
+                assertTrue(s.contains("--add-exports"), "Expected --add-exports: " + s);
+                assertTrue(s.contains("--execution"), "Expected --add-exports: " + s);
+                assertFalse(s.contains("Welcome"), "Unexpected start: " + s);
+            }, null, null, opt);
+        }
+    }
+
     public void testUnknown() throws Exception {
-        start(s -> { },
+        start(null, null,
               s -> assertEquals(s.trim(), "Unknown option: u"), "-unknown");
-        start(s -> { },
+        start(null, null,
               s -> assertEquals(s.trim(), "Unknown option: unknown"), "--unknown");
     }
 
@@ -129,17 +177,24 @@ public class StartOptionTest {
         Path p = compiler.getPath("file.txt");
         compiler.writeToFile(p);
         start("", "Argument to startup missing.", "--startup");
-        start("", "Only one --startup or --no-startup option may be used.", "--startup", p.toString(), "--startup", p.toString());
-        start("", "Only one --startup or --no-startup option may be used.", "--no-startup", "--startup", p.toString());
-        start("", "Only one --startup or --no-startup option may be used.", "--startup", p.toString(), "--no-startup");
+        start("", "Conflicting options: both --startup and --no-startup were used.", "--no-startup", "--startup", p.toString());
+        start("", "Conflicting options: both --startup and --no-startup were used.", "--startup", p.toString(), "--no-startup");
         start("", "Argument to startup missing.", "--no-startup", "--startup");
+    }
+
+    public void testStartupFailedOption() throws Exception {
+        start(
+                s -> assertEquals(s.trim(), "", "cmdout: "),
+                s -> assertEquals(s.trim(), "", "userout: "),
+                s -> assertTrue(s.contains("Unrecognized option: -hoge-foo-bar"), "cmderr: " + s),
+                "-R-hoge-foo-bar");
     }
 
     public void testStartupUnknown() throws Exception {
         start("", "File 'UNKNOWN' for '--startup' is not found.", "--startup", "UNKNOWN");
+        start("", "File 'UNKNOWN' for '--startup' is not found.", "--startup", "DEFAULT", "--startup", "UNKNOWN");
     }
 
-    @Test
     public void testClasspath() throws Exception {
         for (String cp : new String[] {"--class-path"}) {
             start("", "Only one --class-path option may be used.", cp, ".", "--class-path", ".");
@@ -147,7 +202,14 @@ public class StartOptionTest {
         }
     }
 
-    @Test
+    public void testUnknownModule() throws Exception {
+        start(
+                s -> assertEquals(s.trim(), "", "cmdout: "),
+                s -> assertEquals(s.trim(), "", "userout: "),
+                s -> assertTrue(s.contains("rror") && s.contains("unKnown"), "cmderr: " + s),
+                "--add-modules", "unKnown");
+    }
+
     public void testFeedbackOptionConflict() throws Exception {
         start("", "Only one feedback option (--feedback, -q, -s, or -v) may be used.",
                 "--feedback", "concise", "--feedback", "verbose");
@@ -161,15 +223,35 @@ public class StartOptionTest {
         start("", "Only one feedback option (--feedback, -q, -s, or -v) may be used.", "-q", "-s");
     }
 
-    @Test
     public void testNegFeedbackOption() throws Exception {
         start("", "Argument to feedback missing.", "--feedback");
         start("", "Does not match any current feedback mode: blorp -- --feedback blorp", "--feedback", "blorp");
     }
 
-    @Test
     public void testVersion() throws Exception {
-        start(s -> assertTrue(s.startsWith("jshell"), "unexpected version: " + s), null, "--version");
+        start(
+                s -> {
+                    assertTrue(s.startsWith("jshell"), "unexpected version: " + s);
+                    assertFalse(s.contains("Welcome"), "Unexpected start: " + s);
+                },
+                null, null,
+                "--version");
+    }
+
+    public void testShowVersion() throws Exception {
+        runShell("--show-version");
+        check(cmdout,
+                s -> {
+                    assertTrue(s.startsWith("jshell"), "unexpected version: " + s);
+                    assertTrue(s.contains("Welcome"), "Expected start (but got no welcome): " + s);
+                },
+                "cmdout");
+        check(cmderr, null, "cmderr");
+        check(console,
+                s -> assertTrue(s.trim().startsWith("jshell>"), "Expected prompt, got: " + s),
+                "console");
+        check(userout, null, "userout");
+        check(usererr, null, "usererr");
     }
 
     @AfterMethod
@@ -179,5 +261,6 @@ public class StartOptionTest {
         console = null;
         userout = null;
         usererr = null;
+        cmdInStream = null;
     }
 }

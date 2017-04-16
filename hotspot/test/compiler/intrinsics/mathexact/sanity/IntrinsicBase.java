@@ -50,22 +50,22 @@ public abstract class IntrinsicBase extends CompilerWhiteBoxTest {
 
         int expectedIntrinsicCount = 0;
 
-        if (Platform.isServer()) {
+        if (Platform.isServer() && !Platform.isEmulatedClient()) {
             if (TIERED_COMPILATION) {
                 int max_level = TIERED_STOP_AT_LEVEL;
                 expectedIntrinsicCount = (max_level == COMP_LEVEL_MAX) ? 1 : 0;
-                for (int i = CompilerWhiteBoxTest.COMP_LEVEL_SIMPLE; i <= max_level; ++i) {
+                for (int i = COMP_LEVEL_SIMPLE; i <= max_level; ++i) {
                     deoptimize();
                     compileAtLevel(i);
                 }
             } else {
                 expectedIntrinsicCount = 1;
                 deoptimize();
-                compileAtLevel(CompilerWhiteBoxTest.COMP_LEVEL_MAX);
+                compileAtLevel(COMP_LEVEL_MAX);
             }
         } else {
             deoptimize();
-            compileAtLevel(CompilerWhiteBoxTest.COMP_LEVEL_SIMPLE);
+            compileAtLevel(COMP_LEVEL_SIMPLE);
         }
 
         if (!isIntrinsicAvailable()) {

@@ -31,13 +31,9 @@ typedef u8 traceid;
 #define EVENT_THREAD_DESTRUCT(thread)
 #define TRACE_KLASS_CREATION(k, p, t)
 
-#define TRACE_INIT_KLASS_ID(k)
-#define TRACE_REMOVE_KLASS_ID(k)
-#define TRACE_RESTORE_KLASS_ID(k)
-
-#define TRACE_INIT_MODULE_ID(m)
-#define TRACE_INIT_PACKAGE_ID(p)
-#define TRACE_INIT_THREAD_ID(td)
+#define TRACE_INIT_ID(k)
+#define TRACE_REMOVE_ID(k)
+#define TRACE_RESTORE_ID(k)
 #define TRACE_DATA TraceThreadData
 
 #define THREAD_TRACE_ID(thread) ((traceid)thread->osthread()->thread_id())
@@ -57,6 +53,10 @@ extern "C" void JNICALL trace_register_natives(JNIEnv*, jclass);
 #define TRACE_DEFINE_THREAD_TRACE_ID_OFFSET typedef int ___IGNORED_hs_trace_type5
 #define TRACE_THREAD_TRACE_ID_OFFSET in_ByteSize(0); ShouldNotReachHere()
 #define TRACE_DEFINE_THREAD_ID_SIZE typedef int ___IGNORED_hs_trace_type6
+#define TRACE_DEFINE_THREAD_DATA_WRITER_OFFSET typedef int ___IGNORED_hs_trace_type7
+#define TRACE_THREAD_DATA_WRITER_OFFSET in_ByteSize(0); ShouldNotReachHere()
+#define TRACE_DEFINE_FLAG typedef int ___IGNORED_hs_trace_type8
+#define TRACE_DEFINE_FLAG_ACCESSOR typedef int ___IGNORED_hs_trace_type9
 #define TRACE_TEMPLATES(template)
 #define TRACE_INTRINSICS(do_intrinsic, do_class, do_name, do_signature, do_alias)
 

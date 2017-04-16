@@ -2743,7 +2743,7 @@ class StubGenerator: public StubCodeGenerator {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", "cipherBlockChaining_encryptAESCrypt");
 
-    Label L_loadkeys_44, L_loadkeys_52, L_aes_loop, L_rounds_44, L_rounds_52, _L_finish;
+    Label L_loadkeys_44, L_loadkeys_52, L_aes_loop, L_rounds_44, L_rounds_52;
 
     const Register from        = c_rarg0;  // source array address
     const Register to          = c_rarg1;  // destination array address
@@ -2757,8 +2757,7 @@ class StubGenerator: public StubCodeGenerator {
 
       __ enter();
 
-      __ subsw(rscratch2, len_reg, zr);
-      __ br(Assembler::LE, _L_finish);
+      __ movw(rscratch2, len_reg);
 
       __ ldrw(keylen, Address(key, arrayOopDesc::length_offset_in_bytes() - arrayOopDesc::base_offset_in_bytes(T_INT)));
 
@@ -2823,7 +2822,6 @@ class StubGenerator: public StubCodeGenerator {
 
       __ st1(v0, __ T16B, rvec);
 
-    __ BIND(_L_finish);
       __ mov(r0, rscratch2);
 
       __ leave();
@@ -2849,7 +2847,7 @@ class StubGenerator: public StubCodeGenerator {
     __ align(CodeEntryAlignment);
     StubCodeMark mark(this, "StubRoutines", "cipherBlockChaining_decryptAESCrypt");
 
-    Label L_loadkeys_44, L_loadkeys_52, L_aes_loop, L_rounds_44, L_rounds_52, _L_finish;
+    Label L_loadkeys_44, L_loadkeys_52, L_aes_loop, L_rounds_44, L_rounds_52;
 
     const Register from        = c_rarg0;  // source array address
     const Register to          = c_rarg1;  // destination array address
@@ -2863,8 +2861,7 @@ class StubGenerator: public StubCodeGenerator {
 
       __ enter();
 
-      __ subsw(rscratch2, len_reg, zr);
-      __ br(Assembler::LE, _L_finish);
+      __ movw(rscratch2, len_reg);
 
       __ ldrw(keylen, Address(key, arrayOopDesc::length_offset_in_bytes() - arrayOopDesc::base_offset_in_bytes(T_INT)));
 
@@ -2933,7 +2930,6 @@ class StubGenerator: public StubCodeGenerator {
 
       __ st1(v2, __ T16B, rvec);
 
-    __ BIND(_L_finish);
       __ mov(r0, rscratch2);
 
       __ leave();
@@ -4680,8 +4676,11 @@ class StubGenerator: public StubCodeGenerator {
     StubRoutines::_throw_StackOverflowError_entry =
       generate_throw_exception("StackOverflowError throw_exception",
                                CAST_FROM_FN_PTR(address,
-                                                SharedRuntime::
-                                                throw_StackOverflowError));
+                                                SharedRuntime::throw_StackOverflowError));
+    StubRoutines::_throw_delayed_StackOverflowError_entry =
+      generate_throw_exception("delayed StackOverflowError throw_exception",
+                               CAST_FROM_FN_PTR(address,
+                                                SharedRuntime::throw_delayed_StackOverflowError));
     if (UseCRC32Intrinsics) {
       // set table address before stub generation which use it
       StubRoutines::_crc_table_adr = (address)StubRoutines::aarch64::_crc_table;

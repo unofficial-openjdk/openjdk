@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,13 @@
  *
  */
 #include "precompiled.hpp"
+#include "aot/aotLoader.hpp"
 #include "classfile/classFileParser.hpp"
 #include "classfile/classFileStream.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/classLoaderData.inline.hpp"
 #include "classfile/defaultMethods.hpp"
+#include "classfile/dictionary.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "classfile/moduleEntry.hpp"
 #include "classfile/symbolTable.hpp"
@@ -102,6 +104,12 @@
 #define JAVA_8_VERSION                    52
 
 #define JAVA_9_VERSION                    53
+
+void ClassFileParser::set_class_bad_constant_seen(short bad_constant) {
+  assert((bad_constant == 19 || bad_constant == 20) && _major_version >= JAVA_9_VERSION,
+         "Unexpected bad constant pool entry");
+  if (_bad_constant_seen == 0) _bad_constant_seen = bad_constant;
+}
 
 void ClassFileParser::parse_constant_pool_entries(const ClassFileStream* const stream,
                                                   ConstantPool* cp,
@@ -300,6 +308,18 @@ void ClassFileParser::parse_constant_pool_entries(const ClassFileStream* const s
         }
         break;
       }
+      case 19:
+      case 20: {
+        // Record that an error occurred in these two cases but keep parsing so
+        // that ACC_Module can be checked for in the access_flags.  Need to
+        // throw NoClassDefFoundError in that case.
+        if (_major_version >= JAVA_9_VERSION) {
+          cfs->guarantee_more(3, CHECK);
+          cfs->get_u2_fast();
+          set_class_bad_constant_seen(tag);
+          break;
+        }
+      }
       default: {
         classfile_parse_error("Unknown constant tag %u in class file %s",
                               tag,
@@ -357,14 +377,18 @@ PRAGMA_DIAG_POP
 #endif
 
 void ClassFileParser::parse_constant_pool(const ClassFileStream* const stream,
-                                          ConstantPool* const cp,
-                                          const int length,
-                                          TRAPS) {
+                                         ConstantPool* const cp,
+                                         const int length,
+                                         TRAPS) {
   assert(cp != NULL, "invariant");
   assert(stream != NULL, "invariant");
 
   // parsing constant pool entries
   parse_constant_pool_entries(stream, cp, length, CHECK);
+  if (class_bad_constant_seen() != 0) {
+    // a bad CP entry has been detected previously so stop parsing and just return.
+    return;
+  }
 
   int index = 1;  // declared outside of loops for portability
 
@@ -1023,16 +1047,20 @@ public:
 
 static int skip_annotation_value(const u1*, int, int); // fwd decl
 
+// Safely increment index by val if does not pass limit
+#define SAFE_ADD(index, limit, val) \
+if (index >= limit - val) return limit; \
+index += val;
+
 // Skip an annotation.  Return >=limit if there is any problem.
 static int skip_annotation(const u1* buffer, int limit, int index) {
   assert(buffer != NULL, "invariant");
   // annotation := atype:u2 do(nmem:u2) {member:u2 value}
   // value := switch (tag:u1) { ... }
-  index += 2;  // skip atype
-  if ((index += 2) >= limit)  return limit;  // read nmem
+  SAFE_ADD(index, limit, 4); // skip atype and read nmem
   int nmem = Bytes::get_Java_u2((address)buffer + index - 2);
   while (--nmem >= 0 && index < limit) {
-    index += 2; // skip member
+    SAFE_ADD(index, limit, 2); // skip member
     index = skip_annotation_value(buffer, limit, index);
   }
   return index;
@@ -1050,7 +1078,7 @@ static int skip_annotation_value(const u1* buffer, int limit, int index) {
   //   case @: annotation;
   //   case s: s_con:u2;
   // }
-  if ((index += 1) >= limit)  return limit;  // read tag
+  SAFE_ADD(index, limit, 1); // read tag
   const u1 tag = buffer[index - 1];
   switch (tag) {
     case 'B':
@@ -1063,14 +1091,14 @@ static int skip_annotation_value(const u1* buffer, int limit, int index) {
     case 'J':
     case 'c':
     case 's':
-      index += 2;  // skip con or s_con
+      SAFE_ADD(index, limit, 2);  // skip con or s_con
       break;
     case 'e':
-      index += 4;  // skip e_class, e_name
+      SAFE_ADD(index, limit, 4);  // skip e_class, e_name
       break;
     case '[':
     {
-      if ((index += 2) >= limit)  return limit;  // read nval
+      SAFE_ADD(index, limit, 2); // read nval
       int nval = Bytes::get_Java_u2((address)buffer + index - 2);
       while (--nval >= 0 && index < limit) {
         index = skip_annotation_value(buffer, limit, index);
@@ -1099,8 +1127,8 @@ static void parse_annotations(const ConstantPool* const cp,
   assert(loader_data != NULL, "invariant");
 
   // annotations := do(nann:u2) {annotation}
-  int index = 0;
-  if ((index += 2) >= limit)  return;  // read nann
+  int index = 2; // read nann
+  if (index >= limit)  return;
   int nann = Bytes::get_Java_u2((address)buffer + index - 2);
   enum {  // initial annotation layout
     atype_off = 0,      // utf8 such as 'Ljava/lang/annotation/Retention;'
@@ -1119,7 +1147,8 @@ static void parse_annotations(const ConstantPool* const cp,
     s_size = 9,
     min_size = 6        // smallest possible size (zero members)
   };
-  while ((--nann) >= 0 && (index - 2 + min_size <= limit)) {
+  // Cannot add min_size to index in case of overflow MAX_INT
+  while ((--nann) >= 0 && (index - 2 <= limit - min_size)) {
     int index0 = index;
     index = skip_annotation(buffer, limit, index);
     const u1* const abase = buffer + index0;
@@ -1237,6 +1266,10 @@ void ClassFileParser::parse_field_attributes(const ClassFileStream* const cfs,
       }
     } else if (_major_version >= JAVA_1_5_VERSION) {
       if (attribute_name == vmSymbols::tag_signature()) {
+        if (generic_signature_index != 0) {
+          classfile_parse_error(
+            "Multiple Signature attributes for field in class file %s", CHECK);
+        }
         if (attribute_length != 2) {
           classfile_parse_error(
             "Wrong size %u for field's Signature attribute in class file %s",
@@ -1251,13 +1284,14 @@ void ClassFileParser::parse_field_attributes(const ClassFileStream* const cfs,
         runtime_visible_annotations_length = attribute_length;
         runtime_visible_annotations = cfs->get_u1_buffer();
         assert(runtime_visible_annotations != NULL, "null visible annotations");
+        cfs->guarantee_more(runtime_visible_annotations_length, CHECK);
         parse_annotations(cp,
                           runtime_visible_annotations,
                           runtime_visible_annotations_length,
                           parsed_annotations,
                           _loader_data,
                           CHECK);
-        cfs->skip_u1(runtime_visible_annotations_length, CHECK);
+        cfs->skip_u1_fast(runtime_visible_annotations_length);
       } else if (attribute_name == vmSymbols::tag_runtime_invisible_annotations()) {
         if (runtime_invisible_annotations_exists) {
           classfile_parse_error(
@@ -2557,6 +2591,11 @@ Method* ClassFileParser::parse_method(const ClassFileStream* const cfs,
       }
     } else if (_major_version >= JAVA_1_5_VERSION) {
       if (method_attribute_name == vmSymbols::tag_signature()) {
+        if (generic_signature_index != 0) {
+          classfile_parse_error(
+            "Multiple Signature attributes for method in class file %s",
+            CHECK_NULL);
+        }
         if (method_attribute_length != 2) {
           classfile_parse_error(
             "Invalid Signature attribute length %u in class file %s",
@@ -2572,13 +2611,14 @@ Method* ClassFileParser::parse_method(const ClassFileStream* const cfs,
         runtime_visible_annotations_length = method_attribute_length;
         runtime_visible_annotations = cfs->get_u1_buffer();
         assert(runtime_visible_annotations != NULL, "null visible annotations");
+        cfs->guarantee_more(runtime_visible_annotations_length, CHECK_NULL);
         parse_annotations(cp,
                           runtime_visible_annotations,
                           runtime_visible_annotations_length,
                           &parsed_annotations,
                           _loader_data,
                           CHECK_NULL);
-        cfs->skip_u1(runtime_visible_annotations_length, CHECK_NULL);
+        cfs->skip_u1_fast(runtime_visible_annotations_length);
       } else if (method_attribute_name == vmSymbols::tag_runtime_invisible_annotations()) {
         if (runtime_invisible_annotations_exists) {
           classfile_parse_error(
@@ -3043,7 +3083,13 @@ u2 ClassFileParser::parse_classfile_inner_classes_attribute(const ClassFileStrea
                          "Class is both outer and inner class in class file %s", CHECK_0);
     }
     // Access flags
-    jint flags = cfs->get_u2_fast() & RECOGNIZED_INNER_CLASS_MODIFIERS;
+    jint flags;
+    // JVM_ACC_MODULE is defined in JDK-9 and later.
+    if (_major_version >= JAVA_9_VERSION) {
+      flags = cfs->get_u2_fast() & (RECOGNIZED_INNER_CLASS_MODIFIERS | JVM_ACC_MODULE);
+    } else {
+      flags = cfs->get_u2_fast() & RECOGNIZED_INNER_CLASS_MODIFIERS;
+    }
     if ((flags & JVM_ACC_INTERFACE) && _major_version < JAVA_6_VERSION) {
       // Set abstract bit for old class files for backward compatibility
       flags |= JVM_ACC_ABSTRACT;
@@ -3269,6 +3315,10 @@ void ClassFileParser::parse_classfile_attributes(const ClassFileStream* const cf
       }
     } else if (_major_version >= JAVA_1_5_VERSION) {
       if (tag == vmSymbols::tag_signature()) {
+        if (_generic_signature_index != 0) {
+          classfile_parse_error(
+            "Multiple Signature attributes in class file %s", CHECK);
+        }
         if (attribute_length != 2) {
           classfile_parse_error(
             "Wrong Signature attribute length %u in class file %s",
@@ -3283,13 +3333,14 @@ void ClassFileParser::parse_classfile_attributes(const ClassFileStream* const cf
         runtime_visible_annotations_length = attribute_length;
         runtime_visible_annotations = cfs->get_u1_buffer();
         assert(runtime_visible_annotations != NULL, "null visible annotations");
+        cfs->guarantee_more(runtime_visible_annotations_length, CHECK);
         parse_annotations(cp,
                           runtime_visible_annotations,
                           runtime_visible_annotations_length,
                           parsed_annotations,
                           _loader_data,
                           CHECK);
-        cfs->skip_u1(runtime_visible_annotations_length, CHECK);
+        cfs->skip_u1_fast(runtime_visible_annotations_length);
       } else if (tag == vmSymbols::tag_runtime_invisible_annotations()) {
         if (runtime_invisible_annotations_exists) {
           classfile_parse_error(
@@ -4349,13 +4400,34 @@ static void check_super_class_access(const InstanceKlass* this_klass, TRAPS) {
   assert(this_klass != NULL, "invariant");
   const Klass* const super = this_klass->super();
   if (super != NULL) {
+
+    // If the loader is not the boot loader then throw an exception if its
+    // superclass is in package jdk.internal.reflect and its loader is not a
+    // special reflection class loader
+    if (!this_klass->class_loader_data()->is_the_null_class_loader_data()) {
+      assert(super->is_instance_klass(), "super is not instance klass");
+      PackageEntry* super_package = super->package();
+      if (super_package != NULL &&
+          super_package->name()->fast_compare(vmSymbols::jdk_internal_reflect()) == 0 &&
+          !java_lang_ClassLoader::is_reflection_class_loader(this_klass->class_loader())) {
+        ResourceMark rm(THREAD);
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_IllegalAccessError(),
+          "class %s loaded by %s cannot access jdk/internal/reflect superclass %s",
+          this_klass->external_name(),
+          this_klass->class_loader_data()->loader_name(),
+          super->external_name());
+        return;
+      }
+    }
+
     Reflection::VerifyClassAccessResults vca_result =
       Reflection::verify_class_access(this_klass, super, false);
     if (vca_result != Reflection::ACCESS_OK) {
       ResourceMark rm(THREAD);
       char* msg =  Reflection::verify_class_access_msg(this_klass, super, vca_result);
       if (msg == NULL) {
-        ResourceMark rm(THREAD);
         Exceptions::fthrow(
           THREAD_AND_LOCATION,
           vmSymbols::java_lang_IllegalAccessError(),
@@ -4493,6 +4565,18 @@ static void check_illegal_static_method(const InstanceKlass* this_klass, TRAPS) 
 // utility methods for format checking
 
 void ClassFileParser::verify_legal_class_modifiers(jint flags, TRAPS) const {
+  const bool is_module = (flags & JVM_ACC_MODULE) != 0;
+  assert(_major_version >= JAVA_9_VERSION || !is_module, "JVM_ACC_MODULE should not be set");
+  if (is_module) {
+    ResourceMark rm(THREAD);
+    Exceptions::fthrow(
+      THREAD_AND_LOCATION,
+      vmSymbols::java_lang_NoClassDefFoundError(),
+      "%s is not a class because access_flag ACC_MODULE is set",
+      _class_name->as_C_string());
+    return;
+  }
+
   if (!_need_verify) { return; }
 
   const bool is_interface  = (flags & JVM_ACC_INTERFACE)  != 0;
@@ -4501,14 +4585,12 @@ void ClassFileParser::verify_legal_class_modifiers(jint flags, TRAPS) const {
   const bool is_super      = (flags & JVM_ACC_SUPER)      != 0;
   const bool is_enum       = (flags & JVM_ACC_ENUM)       != 0;
   const bool is_annotation = (flags & JVM_ACC_ANNOTATION) != 0;
-  const bool is_module_info= (flags & JVM_ACC_MODULE)     != 0;
   const bool major_gte_15  = _major_version >= JAVA_1_5_VERSION;
 
   if ((is_abstract && is_final) ||
       (is_interface && !is_abstract) ||
       (is_interface && major_gte_15 && (is_super || is_enum)) ||
-      (!is_interface && major_gte_15 && is_annotation) ||
-      is_module_info) {
+      (!is_interface && major_gte_15 && is_annotation)) {
     ResourceMark rm(THREAD);
     Exceptions::fthrow(
       THREAD_AND_LOCATION,
@@ -4684,16 +4766,7 @@ bool ClassFileParser::verify_unqualified_name(const char* name,
   for (const char* p = name; p != name + length;) {
     jchar ch = *p;
     if (ch < 128) {
-      if (ch == '.') {
-        // permit '.' in module names unless it's the first char, or
-        // preceding char is also a '.', or last char is a '.'.
-        if ((type != ClassFileParser::LegalModule) ||
-          (p == name) || (*(p-1) == '.') ||
-          (p == name + length - 1)) {
-          return false;
-        }
-      }
-      if (ch == ';' || ch == '[' ) {
+      if (ch == '.' || ch == ';' || ch == '[' ) {
         return false;   // do not permit '.', ';', or '['
       }
       if (ch == '/') {
@@ -5190,6 +5263,19 @@ InstanceKlass* ClassFileParser::create_instance_klass(bool changed_by_loadhook, 
 
   assert(_klass == ik, "invariant");
 
+  ik->set_has_passed_fingerprint_check(false);
+  if (UseAOT && ik->supers_have_passed_fingerprint_checks()) {
+    uint64_t aot_fp = AOTLoader::get_saved_fingerprint(ik);
+    if (aot_fp != 0 && aot_fp == _stream->compute_fingerprint()) {
+      // This class matches with a class saved in an AOT library
+      ik->set_has_passed_fingerprint_check(true);
+    } else {
+      ResourceMark rm;
+      log_info(class, fingerprint)("%s :  expected = " PTR64_FORMAT " actual = " PTR64_FORMAT,
+                                 ik->external_name(), aot_fp, _stream->compute_fingerprint());
+    }
+  }
+
   return ik;
 }
 
@@ -5320,7 +5406,7 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
   ModuleEntry* module_entry = ik->module();
   assert(module_entry != NULL, "module_entry should always be set");
 
-  // Obtain java.lang.reflect.Module
+  // Obtain java.lang.Module
   Handle module_handle(THREAD, JNIHandles::resolve(module_entry->module()));
 
   // Allocate mirror and initialize static fields
@@ -5391,7 +5477,7 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
     }
   }
 
-  TRACE_INIT_KLASS_ID(ik);
+  TRACE_INIT_ID(ik);
 
   // If we reach here, all is well.
   // Now remove the InstanceKlass* from the _klass_to_deallocate field
@@ -5507,6 +5593,7 @@ ClassFileParser::ClassFileParser(ClassFileStream* stream,
   _protection_domain(protection_domain),
   _access_flags(),
   _pub_level(pub_level),
+  _bad_constant_seen(0),
   _synthetic_flag(false),
   _sde_length(false),
   _sde_buffer(NULL),
@@ -5699,16 +5786,29 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
   stream->guarantee_more(8, CHECK);  // flags, this_class, super_class, infs_len
 
   // Access flags
-  jint flags = stream->get_u2_fast() & JVM_RECOGNIZED_CLASS_MODIFIERS;
+  jint flags;
+  // JVM_ACC_MODULE is defined in JDK-9 and later.
+  if (_major_version >= JAVA_9_VERSION) {
+    flags = stream->get_u2_fast() & (JVM_RECOGNIZED_CLASS_MODIFIERS | JVM_ACC_MODULE);
+  } else {
+    flags = stream->get_u2_fast() & JVM_RECOGNIZED_CLASS_MODIFIERS;
+  }
 
   if ((flags & JVM_ACC_INTERFACE) && _major_version < JAVA_6_VERSION) {
     // Set abstract bit for old class files for backward compatibility
     flags |= JVM_ACC_ABSTRACT;
   }
 
-  _access_flags.set_flags(flags);
+  verify_legal_class_modifiers(flags, CHECK);
 
-  verify_legal_class_modifiers((jint)_access_flags.as_int(), CHECK);
+  short bad_constant = class_bad_constant_seen();
+  if (bad_constant != 0) {
+    // Do not throw CFE until after the access_flags are checked because if
+    // ACC_MODULE is set in the access flags, then NCDFE must be thrown, not CFE.
+    classfile_parse_error("Unknown constant tag %u in class file %s", bad_constant, CHECK);
+  }
+
+  _access_flags.set_flags(flags);
 
   // This class and superclass
   _this_class_index = stream->get_u2_fast();

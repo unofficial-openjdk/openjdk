@@ -82,32 +82,6 @@
 
 #endif
 
-bool nmethod::is_compiled_by_c1() const {
-  if (compiler() == NULL) {
-    return false;
-  }
-  return compiler()->is_c1();
-}
-bool nmethod::is_compiled_by_jvmci() const {
-  if (compiler() == NULL || method() == NULL)  return false;  // can happen during debug printing
-  if (is_native_method()) return false;
-  return compiler()->is_jvmci();
-}
-bool nmethod::is_compiled_by_c2() const {
-  if (compiler() == NULL) {
-    return false;
-  }
-  return compiler()->is_c2();
-}
-bool nmethod::is_compiled_by_shark() const {
-  if (compiler() == NULL) {
-    return false;
-  }
-  return compiler()->is_shark();
-}
-
-
-
 //---------------------------------------------------------------------------------
 // NMethod statistics
 // They are printed under various flags, including:
@@ -426,6 +400,7 @@ void nmethod::init_defaults() {
   _lock_count                 = 0;
   _stack_traversal_mark       = 0;
   _unload_reported            = false; // jvmti state
+  _is_far_code                = false; // nmethods are located in CodeCache
 
 #ifdef ASSERT
   _oops_are_stale             = false;
@@ -440,7 +415,6 @@ void nmethod::init_defaults() {
     _scavenge_root_link    = NULL;
   }
   _scavenge_root_state     = 0;
-  _compiler                = NULL;
 #if INCLUDE_RTM_OPT
   _rtm_state               = NoRTM;
 #endif
@@ -468,7 +442,7 @@ nmethod* nmethod::new_native_nmethod(const methodHandle& method,
     CodeOffsets offsets;
     offsets.set_value(CodeOffsets::Verified_Entry, vep_offset);
     offsets.set_value(CodeOffsets::Frame_Complete, frame_complete);
-    nm = new (native_nmethod_size, CompLevel_none) nmethod(method(), native_nmethod_size,
+    nm = new (native_nmethod_size, CompLevel_none) nmethod(method(), compiler_none, native_nmethod_size,
                                             compile_id, &offsets,
                                             code_buffer, frame_size,
                                             basic_lock_owner_sp_offset,
@@ -518,7 +492,7 @@ nmethod* nmethod::new_nmethod(const methodHandle& method,
       + round_to(debug_info->data_size()       , oopSize);
 
     nm = new (nmethod_size, comp_level)
-    nmethod(method(), nmethod_size, compile_id, entry_bci, offsets,
+    nmethod(method(), compiler->type(), nmethod_size, compile_id, entry_bci, offsets,
             orig_pc_offset, debug_info, dependencies, code_buffer, frame_size,
             oop_maps,
             handler_table,
@@ -569,6 +543,7 @@ nmethod* nmethod::new_nmethod(const methodHandle& method,
 // For native wrappers
 nmethod::nmethod(
   Method* method,
+  CompilerType type,
   int nmethod_size,
   int compile_id,
   CodeOffsets* offsets,
@@ -577,7 +552,7 @@ nmethod::nmethod(
   ByteSize basic_lock_owner_sp_offset,
   ByteSize basic_lock_sp_offset,
   OopMapSet* oop_maps )
-  : CompiledMethod(method, "native nmethod", nmethod_size, sizeof(nmethod), code_buffer, offsets->value(CodeOffsets::Frame_Complete), frame_size, oop_maps, false),
+  : CompiledMethod(method, "native nmethod", type, nmethod_size, sizeof(nmethod), code_buffer, offsets->value(CodeOffsets::Frame_Complete), frame_size, oop_maps, false),
   _native_receiver_sp_offset(basic_lock_owner_sp_offset),
   _native_basic_lock_sp_offset(basic_lock_sp_offset)
 {
@@ -666,6 +641,7 @@ void* nmethod::operator new(size_t size, int nmethod_size, int comp_level) throw
 
 nmethod::nmethod(
   Method* method,
+  CompilerType type,
   int nmethod_size,
   int compile_id,
   int entry_bci,
@@ -685,7 +661,7 @@ nmethod::nmethod(
   Handle speculation_log
 #endif
   )
-  : CompiledMethod(method, "nmethod", nmethod_size, sizeof(nmethod), code_buffer, offsets->value(CodeOffsets::Frame_Complete), frame_size, oop_maps, false),
+  : CompiledMethod(method, "nmethod", type, nmethod_size, sizeof(nmethod), code_buffer, offsets->value(CodeOffsets::Frame_Complete), frame_size, oop_maps, false),
   _native_receiver_sp_offset(in_ByteSize(-1)),
   _native_basic_lock_sp_offset(in_ByteSize(-1))
 {
@@ -701,13 +677,13 @@ nmethod::nmethod(
     _entry_bci               = entry_bci;
     _compile_id              = compile_id;
     _comp_level              = comp_level;
-    _compiler                = compiler;
     _orig_pc_offset          = orig_pc_offset;
     _hotness_counter         = NMethodSweeper::hotness_counter_reset_val();
 
     // Section offsets
     _consts_offset           = content_offset()      + code_buffer->total_offset_of(code_buffer->consts());
     _stub_offset             = content_offset()      + code_buffer->total_offset_of(code_buffer->stubs());
+    set_ctable_begin(header_begin() + _consts_offset);
 
 #if INCLUDE_JVMCI
     _jvmci_installed_code = installed_code();
@@ -803,9 +779,7 @@ void nmethod::log_identity(xmlStream* log) const {
   log->print(" compile_id='%d'", compile_id());
   const char* nm_kind = compile_kind();
   if (nm_kind != NULL)  log->print(" compile_kind='%s'", nm_kind);
-  if (compiler() != NULL) {
-    log->print(" compiler='%s'", compiler()->name());
-  }
+  log->print(" compiler='%s'", compiler_name());
   if (TieredCompilation) {
     log->print(" level='%d'", comp_level());
   }
@@ -1171,6 +1145,14 @@ void nmethod::log_state_change() const {
 bool nmethod::make_not_entrant_or_zombie(unsigned int state) {
   assert(state == zombie || state == not_entrant, "must be zombie or not_entrant");
   assert(!is_zombie(), "should not already be a zombie");
+
+  if (_state == state) {
+    // Avoid taking the lock if already in required state.
+    // This is safe from races because the state is an end-state,
+    // which the nmethod cannot back out of once entered.
+    // No need for fencing either.
+    return false;
+  }
 
   // Make sure neither the nmethod nor the method is flushed in case of a safepoint in code below.
   nmethodLocker nml(this);
@@ -2081,6 +2063,7 @@ nmethodLocker::nmethodLocker(address pc) {
 // should pass zombie_ok == true.
 void nmethodLocker::lock_nmethod(CompiledMethod* cm, bool zombie_ok) {
   if (cm == NULL)  return;
+  if (cm->is_aot()) return;  // FIXME: Revisit once _lock_count is added to aot_method
   nmethod* nm = cm->as_nmethod();
   Atomic::inc(&nm->_lock_count);
   assert(zombie_ok || !nm->is_zombie(), "cannot lock a zombie method");
@@ -2088,6 +2071,7 @@ void nmethodLocker::lock_nmethod(CompiledMethod* cm, bool zombie_ok) {
 
 void nmethodLocker::unlock_nmethod(CompiledMethod* cm) {
   if (cm == NULL)  return;
+  if (cm->is_aot()) return;  // FIXME: Revisit once _lock_count is added to aot_method
   nmethod* nm = cm->as_nmethod();
   Atomic::dec(&nm->_lock_count);
   assert(nm->_lock_count >= 0, "unmatched nmethod lock/unlock");
@@ -2197,14 +2181,15 @@ void nmethod::verify_scopes() {
         verify_interrupt_point(iter.addr());
         break;
       case relocInfo::opt_virtual_call_type:
-        stub = iter.opt_virtual_call_reloc()->static_stub();
+        stub = iter.opt_virtual_call_reloc()->static_stub(false);
         verify_interrupt_point(iter.addr());
         break;
       case relocInfo::static_call_type:
-        stub = iter.static_call_reloc()->static_stub();
+        stub = iter.static_call_reloc()->static_stub(false);
         //verify_interrupt_point(iter.addr());
         break;
       case relocInfo::runtime_call_type:
+      case relocInfo::runtime_call_w_cp_type:
         address destination = iter.reloc()->value();
         // Right now there is no way to find out which entries support
         // an interrupt point.  It would be nice if we had this
@@ -2463,10 +2448,11 @@ const char* nmethod::reloc_string_for(u_char* begin, u_char* end) {
           st.print(")");
           return st.as_string();
         }
-        case relocInfo::runtime_call_type: {
+        case relocInfo::runtime_call_type:
+        case relocInfo::runtime_call_w_cp_type: {
           stringStream st;
           st.print("runtime_call");
-          runtime_call_Relocation* r = iter.runtime_call_reloc();
+          CallRelocation* r = (CallRelocation*)iter.reloc();
           address dest = r->destination();
           CodeBlob* cb = CodeCache::find_blob(dest);
           if (cb != NULL) {
@@ -2749,6 +2735,114 @@ void nmethod::print_code_comment_on(outputStream* st, int column, u_char* begin,
 
 }
 
+class DirectNativeCallWrapper: public NativeCallWrapper {
+private:
+  NativeCall* _call;
+
+public:
+  DirectNativeCallWrapper(NativeCall* call) : _call(call) {}
+
+  virtual address destination() const { return _call->destination(); }
+  virtual address instruction_address() const { return _call->instruction_address(); }
+  virtual address next_instruction_address() const { return _call->next_instruction_address(); }
+  virtual address return_address() const { return _call->return_address(); }
+
+  virtual address get_resolve_call_stub(bool is_optimized) const {
+    if (is_optimized) {
+      return SharedRuntime::get_resolve_opt_virtual_call_stub();
+    }
+    return SharedRuntime::get_resolve_virtual_call_stub();
+  }
+
+  virtual void set_destination_mt_safe(address dest) {
+#if INCLUDE_AOT
+    if (UseAOT) {
+      CodeBlob* callee = CodeCache::find_blob(dest);
+      CompiledMethod* cm = callee->as_compiled_method_or_null();
+      if (cm != NULL && cm->is_far_code()) {
+        // Temporary fix, see JDK-8143106
+        CompiledDirectStaticCall* csc = CompiledDirectStaticCall::at(instruction_address());
+        csc->set_to_far(methodHandle(cm->method()), dest);
+        return;
+      }
+    }
+#endif
+    _call->set_destination_mt_safe(dest);
+  }
+
+  virtual void set_to_interpreted(const methodHandle& method, CompiledICInfo& info) {
+    CompiledDirectStaticCall* csc = CompiledDirectStaticCall::at(instruction_address());
+#if INCLUDE_AOT
+    if (info.to_aot()) {
+      csc->set_to_far(method, info.entry());
+    } else
+#endif
+    {
+      csc->set_to_interpreted(method, info.entry());
+    }
+  }
+
+  virtual void verify() const {
+    // make sure code pattern is actually a call imm32 instruction
+    _call->verify();
+    if (os::is_MP()) {
+      _call->verify_alignment();
+    }
+  }
+
+  virtual void verify_resolve_call(address dest) const {
+    CodeBlob* db = CodeCache::find_blob_unsafe(dest);
+    assert(!db->is_adapter_blob(), "must use stub!");
+  }
+
+  virtual bool is_call_to_interpreted(address dest) const {
+    CodeBlob* cb = CodeCache::find_blob(_call->instruction_address());
+    return cb->contains(dest);
+  }
+
+  virtual bool is_safe_for_patching() const { return false; }
+
+  virtual NativeInstruction* get_load_instruction(virtual_call_Relocation* r) const {
+    return nativeMovConstReg_at(r->cached_value());
+  }
+
+  virtual void *get_data(NativeInstruction* instruction) const {
+    return (void*)((NativeMovConstReg*) instruction)->data();
+  }
+
+  virtual void set_data(NativeInstruction* instruction, intptr_t data) {
+    ((NativeMovConstReg*) instruction)->set_data(data);
+  }
+};
+
+NativeCallWrapper* nmethod::call_wrapper_at(address call) const {
+  return new DirectNativeCallWrapper((NativeCall*) call);
+}
+
+NativeCallWrapper* nmethod::call_wrapper_before(address return_pc) const {
+  return new DirectNativeCallWrapper(nativeCall_before(return_pc));
+}
+
+address nmethod::call_instruction_address(address pc) const {
+  if (NativeCall::is_call_before(pc)) {
+    NativeCall *ncall = nativeCall_before(pc);
+    return ncall->instruction_address();
+  }
+  return NULL;
+}
+
+CompiledStaticCall* nmethod::compiledStaticCall_at(Relocation* call_site) const {
+  return CompiledDirectStaticCall::at(call_site);
+}
+
+CompiledStaticCall* nmethod::compiledStaticCall_at(address call_site) const {
+  return CompiledDirectStaticCall::at(call_site);
+}
+
+CompiledStaticCall* nmethod::compiledStaticCall_before(address return_addr) const {
+  return CompiledDirectStaticCall::before(return_addr);
+}
+
 #ifndef PRODUCT
 
 void nmethod::print_value_on(outputStream* st) const {
@@ -2768,7 +2862,7 @@ void nmethod::print_calls(outputStream* st) {
     }
     case relocInfo::static_call_type:
       st->print_cr("Static call at " INTPTR_FORMAT, p2i(iter.reloc()->addr()));
-      compiledStaticCall_at(iter.reloc())->print();
+      CompiledDirectStaticCall::at(iter.reloc())->print();
       break;
     }
   }

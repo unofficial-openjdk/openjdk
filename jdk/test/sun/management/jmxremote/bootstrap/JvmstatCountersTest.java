@@ -27,7 +27,11 @@
  * @summary Tests that the jvmstat counters published by the out-of-the-box
  *          management agent for the JMX connection details are correct.
  * @author Luis-Miguel Alventosa
- * @modules java.management/sun.management
+ *
+ * @modules java.management
+ *          jdk.attach
+ *          jdk.management.agent/jdk.internal.agent
+ *
  * @run clean JvmstatCountersTest
  * @run build JvmstatCountersTest
  * @run main/othervm/timeout=600 -XX:+UsePerfData JvmstatCountersTest 1
@@ -42,7 +46,7 @@ import java.util.*;
 import javax.management.*;
 import javax.management.remote.*;
 import com.sun.tools.attach.*;
-import sun.management.ConnectorAddressLink;
+import jdk.internal.agent.ConnectorAddressLink;
 
 public class JvmstatCountersTest {
 

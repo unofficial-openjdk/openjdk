@@ -650,7 +650,7 @@ public class Executors {
         public Thread newThread(final Runnable r) {
             return super.newThread(new Runnable() {
                 public void run() {
-                    AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                    AccessController.doPrivileged(new PrivilegedAction<>() {
                         public Void run() {
                             Thread.currentThread().setContextClassLoader(ccl);
                             r.run();
@@ -713,6 +713,7 @@ public class Executors {
         FinalizableDelegatedExecutorService(ExecutorService executor) {
             super(executor);
         }
+        @SuppressWarnings("deprecation")
         protected void finalize() {
             super.shutdown();
         }

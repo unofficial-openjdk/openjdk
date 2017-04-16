@@ -23,9 +23,9 @@
 
 /**
  * @test
- * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
- * @modules jdk.vm.ci/jdk.vm.ci.meta
- *          jdk.vm.ci/jdk.vm.ci.runtime
+ * @requires vm.jvmci
+ * @modules jdk.internal.vm.ci/jdk.vm.ci.meta
+ *          jdk.internal.vm.ci/jdk.vm.ci.runtime
  * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI jdk.vm.ci.runtime.test.ResolvedJavaTypeResolveMethodTest
  */
 

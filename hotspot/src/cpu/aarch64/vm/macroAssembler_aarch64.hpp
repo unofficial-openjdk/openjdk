@@ -590,6 +590,7 @@ public:
 #endif
 
   static int patch_oop(address insn_addr, address o);
+  static int patch_narrow_klass(address insn_addr, narrowKlass n);
 
   address emit_trampoline_stub(int insts_call_instruction_offset, address target);
 
@@ -856,6 +857,7 @@ public:
     Label&   slow_case                 // continuation point if fast allocation fails
   );
   Register tlab_refill(Label& retry_tlab, Label& try_eden, Label& slow_case); // returns TLS address
+  void zero_memory(Register addr, Register len, Register t1);
   void verify_tlab();
 
   void incr_allocated_bytes(Register thread,
@@ -954,6 +956,9 @@ public:
   // Writes to stack successive pages until offset reached to check for
   // stack overflow + shadow pages.  Also, clobbers tmp
   void bang_stack_size(Register size, Register tmp);
+
+  // Check for reserved stack access in method being exited (for JIT)
+  void reserved_stack_check();
 
   virtual RegisterOrConstant delayed_value_impl(intptr_t* delayed_value_addr,
                                                 Register tmp,

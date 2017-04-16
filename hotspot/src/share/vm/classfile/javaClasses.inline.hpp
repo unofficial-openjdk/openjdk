@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,10 +30,8 @@
 #include "oops/oopsHierarchy.hpp"
 
 void java_lang_String::set_coder(oop string, jbyte coder) {
-  assert(initialized, "Must be initialized");
-  if (coder_offset > 0) {
-    string->byte_field_put(coder_offset, coder);
-  }
+  assert(initialized && (coder_offset > 0), "Must be initialized");
+  string->byte_field_put(coder_offset, coder);
 }
 
 void java_lang_String::set_value_raw(oop string, typeArrayOop buffer) {
@@ -61,15 +59,11 @@ unsigned int java_lang_String::hash(oop java_string) {
   return java_string->int_field(hash_offset);
 }
 bool java_lang_String::is_latin1(oop java_string) {
-  assert(initialized, "Must be initialized");
+  assert(initialized && (coder_offset > 0), "Must be initialized");
   assert(is_instance(java_string), "must be java_string");
-  if (coder_offset > 0) {
-    jbyte coder = java_string->byte_field(coder_offset);
-    assert(CompactStrings || coder == CODER_UTF16, "Must be UTF16 without CompactStrings");
-    return coder == CODER_LATIN1;
-  } else {
-    return false;
-  }
+  jbyte coder = java_string->byte_field(coder_offset);
+  assert(CompactStrings || coder == CODER_UTF16, "Must be UTF16 without CompactStrings");
+  return coder == CODER_LATIN1;
 }
 int java_lang_String::length(oop java_string) {
   assert(initialized, "Must be initialized");
@@ -168,8 +162,8 @@ inline bool java_lang_invoke_DirectMethodHandle::is_instance(oop obj) {
   return obj != NULL && is_subclass(obj->klass());
 }
 
-inline bool java_lang_reflect_Module::is_instance(oop obj) {
-  return obj != NULL && obj->klass() == SystemDictionary::reflect_Module_klass();
+inline bool java_lang_Module::is_instance(oop obj) {
+  return obj != NULL && obj->klass() == SystemDictionary::Module_klass();
 }
 
 inline int Backtrace::merge_bci_and_version(int bci, int version) {

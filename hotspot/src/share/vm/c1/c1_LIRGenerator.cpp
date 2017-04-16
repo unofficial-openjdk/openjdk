@@ -606,7 +606,10 @@ void LIRGenerator::arithmetic_op_fpu(Bytecodes::Code code, LIR_Opr result, LIR_O
 
 
 void LIRGenerator::shift_op(Bytecodes::Code code, LIR_Opr result_op, LIR_Opr value, LIR_Opr count, LIR_Opr tmp) {
-  if (TwoOperandLIRForm && value != result_op) {
+
+  if (TwoOperandLIRForm && value != result_op
+      // Only 32bit right shifts require two operand form on S390.
+      S390_ONLY(&& (code == Bytecodes::_ishr || code == Bytecodes::_iushr))) {
     assert(count != result_op, "malformed");
     __ move(value, result_op);
     value = result_op;
@@ -1749,8 +1752,10 @@ void LIRGenerator::do_StoreField(StoreField* x) {
   if (x->needs_null_check() &&
       (needs_patching ||
        MacroAssembler::needs_explicit_null_check(x->offset()))) {
-    // emit an explicit null check because the offset is too large
-    __ null_check(object.result(), new CodeEmitInfo(info));
+    // Emit an explicit null check because the offset is too large.
+    // If the class is not loaded and the object is NULL, we need to deoptimize to throw a
+    // NoClassDefFoundError in the interpreter instead of an implicit NPE from compiled code.
+    __ null_check(object.result(), new CodeEmitInfo(info), /* deoptimize */ needs_patching);
   }
 
   LIR_Address* address;
@@ -1835,8 +1840,10 @@ void LIRGenerator::do_LoadField(LoadField* x) {
       obj = new_register(T_OBJECT);
       __ move(LIR_OprFact::oopConst(NULL), obj);
     }
-    // emit an explicit null check because the offset is too large
-    __ null_check(obj, new CodeEmitInfo(info));
+    // Emit an explicit null check because the offset is too large.
+    // If the class is not loaded and the object is NULL, we need to deoptimize to throw a
+    // NoClassDefFoundError in the interpreter instead of an implicit NPE from compiled code.
+    __ null_check(obj, new CodeEmitInfo(info), /* deoptimize */ needs_patching);
   }
 
   LIR_Opr reg = rlock_result(x, field_type);
@@ -2973,7 +2980,6 @@ void LIRGenerator::do_Invoke(Invoke* x) {
   }
 
   // emit invoke code
-  bool optimized = x->target_is_loaded() && x->target_is_final();
   assert(receiver->is_illegal() || receiver->is_equal(LIR_Assembler::receiverOpr()), "must match");
 
   // JSR 292
@@ -2998,9 +3004,9 @@ void LIRGenerator::do_Invoke(Invoke* x) {
     case Bytecodes::_invokespecial:
     case Bytecodes::_invokevirtual:
     case Bytecodes::_invokeinterface:
-      // for final target we still produce an inline cache, in order
-      // to be able to call mixed mode
-      if (x->code() == Bytecodes::_invokespecial || optimized) {
+      // for loaded and final (method or class) target we still produce an inline cache,
+      // in order to be able to call mixed mode
+      if (x->code() == Bytecodes::_invokespecial || x->target_is_final()) {
         __ call_opt_virtual(target, receiver, result_register,
                             SharedRuntime::get_resolve_opt_virtual_call_stub(),
                             arg_list, info);
@@ -3120,6 +3126,22 @@ void LIRGenerator::do_ClassIDIntrinsic(Intrinsic* x) {
 
   __ move(id, rlock_result(x));
 }
+
+void LIRGenerator::do_getBufferWriter(Intrinsic* x) {
+  LabelObj* L_end = new LabelObj();
+
+  LIR_Address* jobj_addr = new LIR_Address(getThreadPointer(),
+                                           in_bytes(TRACE_THREAD_DATA_WRITER_OFFSET),
+                                           T_OBJECT);
+  LIR_Opr result = rlock_result(x);
+  __ move_wide(jobj_addr, result);
+  __ cmp(lir_cond_equal, result, LIR_OprFact::oopConst(NULL));
+  __ branch(lir_cond_equal, T_OBJECT, L_end->label());
+  __ move_wide(new LIR_Address(result, T_OBJECT), result);
+
+  __ branch_destination(L_end->label());
+}
+
 #endif
 
 
@@ -3150,6 +3172,9 @@ void LIRGenerator::do_Intrinsic(Intrinsic* x) {
 #ifdef TRACE_HAVE_INTRINSICS
   case vmIntrinsics::_getClassId:
     do_ClassIDIntrinsic(x);
+    break;
+  case vmIntrinsics::_getBufferWriter:
+    do_getBufferWriter(x);
     break;
   case vmIntrinsics::_counterTime:
     do_RuntimeCall(CAST_FROM_FN_PTR(address, TRACE_TIME_METHOD), x);
@@ -3237,50 +3262,52 @@ void LIRGenerator::profile_arguments(ProfileCall* x) {
     int bci = x->bci_of_invoke();
     ciMethodData* md = x->method()->method_data_or_null();
     ciProfileData* data = md->bci_to_data(bci);
-    if ((data->is_CallTypeData() && data->as_CallTypeData()->has_arguments()) ||
-        (data->is_VirtualCallTypeData() && data->as_VirtualCallTypeData()->has_arguments())) {
-      ByteSize extra = data->is_CallTypeData() ? CallTypeData::args_data_offset() : VirtualCallTypeData::args_data_offset();
-      int base_offset = md->byte_offset_of_slot(data, extra);
-      LIR_Opr mdp = LIR_OprFact::illegalOpr;
-      ciTypeStackSlotEntries* args = data->is_CallTypeData() ? ((ciCallTypeData*)data)->args() : ((ciVirtualCallTypeData*)data)->args();
+    if (data != NULL) {
+      if ((data->is_CallTypeData() && data->as_CallTypeData()->has_arguments()) ||
+          (data->is_VirtualCallTypeData() && data->as_VirtualCallTypeData()->has_arguments())) {
+        ByteSize extra = data->is_CallTypeData() ? CallTypeData::args_data_offset() : VirtualCallTypeData::args_data_offset();
+        int base_offset = md->byte_offset_of_slot(data, extra);
+        LIR_Opr mdp = LIR_OprFact::illegalOpr;
+        ciTypeStackSlotEntries* args = data->is_CallTypeData() ? ((ciCallTypeData*)data)->args() : ((ciVirtualCallTypeData*)data)->args();
 
-      Bytecodes::Code bc = x->method()->java_code_at_bci(bci);
-      int start = 0;
-      int stop = data->is_CallTypeData() ? ((ciCallTypeData*)data)->number_of_arguments() : ((ciVirtualCallTypeData*)data)->number_of_arguments();
-      if (x->callee()->is_loaded() && x->callee()->is_static() && Bytecodes::has_receiver(bc)) {
-        // first argument is not profiled at call (method handle invoke)
-        assert(x->method()->raw_code_at_bci(bci) == Bytecodes::_invokehandle, "invokehandle expected");
-        start = 1;
-      }
-      ciSignature* callee_signature = x->callee()->signature();
-      // method handle call to virtual method
-      bool has_receiver = x->callee()->is_loaded() && !x->callee()->is_static() && !Bytecodes::has_receiver(bc);
-      ciSignatureStream callee_signature_stream(callee_signature, has_receiver ? x->callee()->holder() : NULL);
-
-      bool ignored_will_link;
-      ciSignature* signature_at_call = NULL;
-      x->method()->get_method_at_bci(bci, ignored_will_link, &signature_at_call);
-      ciSignatureStream signature_at_call_stream(signature_at_call);
-
-      // if called through method handle invoke, some arguments may have been popped
-      for (int i = 0; i < stop && i+start < x->nb_profiled_args(); i++) {
-        int off = in_bytes(TypeEntriesAtCall::argument_type_offset(i)) - in_bytes(TypeEntriesAtCall::args_data_offset());
-        ciKlass* exact = profile_type(md, base_offset, off,
-                                      args->type(i), x->profiled_arg_at(i+start), mdp,
-                                      !x->arg_needs_null_check(i+start),
-                                      signature_at_call_stream.next_klass(), callee_signature_stream.next_klass());
-        if (exact != NULL) {
-          md->set_argument_type(bci, i, exact);
+        Bytecodes::Code bc = x->method()->java_code_at_bci(bci);
+        int start = 0;
+        int stop = data->is_CallTypeData() ? ((ciCallTypeData*)data)->number_of_arguments() : ((ciVirtualCallTypeData*)data)->number_of_arguments();
+        if (x->callee()->is_loaded() && x->callee()->is_static() && Bytecodes::has_receiver(bc)) {
+          // first argument is not profiled at call (method handle invoke)
+          assert(x->method()->raw_code_at_bci(bci) == Bytecodes::_invokehandle, "invokehandle expected");
+          start = 1;
         }
-      }
-    } else {
+        ciSignature* callee_signature = x->callee()->signature();
+        // method handle call to virtual method
+        bool has_receiver = x->callee()->is_loaded() && !x->callee()->is_static() && !Bytecodes::has_receiver(bc);
+        ciSignatureStream callee_signature_stream(callee_signature, has_receiver ? x->callee()->holder() : NULL);
+
+        bool ignored_will_link;
+        ciSignature* signature_at_call = NULL;
+        x->method()->get_method_at_bci(bci, ignored_will_link, &signature_at_call);
+        ciSignatureStream signature_at_call_stream(signature_at_call);
+
+        // if called through method handle invoke, some arguments may have been popped
+        for (int i = 0; i < stop && i+start < x->nb_profiled_args(); i++) {
+          int off = in_bytes(TypeEntriesAtCall::argument_type_offset(i)) - in_bytes(TypeEntriesAtCall::args_data_offset());
+          ciKlass* exact = profile_type(md, base_offset, off,
+              args->type(i), x->profiled_arg_at(i+start), mdp,
+              !x->arg_needs_null_check(i+start),
+              signature_at_call_stream.next_klass(), callee_signature_stream.next_klass());
+          if (exact != NULL) {
+            md->set_argument_type(bci, i, exact);
+          }
+        }
+      } else {
 #ifdef ASSERT
-      Bytecodes::Code code = x->method()->raw_code_at_bci(x->bci_of_invoke());
-      int n = x->nb_profiled_args();
-      assert(MethodData::profile_parameters() && (MethodData::profile_arguments_jsr292_only() ||
-                                                  (x->inlined() && ((code == Bytecodes::_invokedynamic && n <= 1) || (code == Bytecodes::_invokehandle && n <= 2)))),
-             "only at JSR292 bytecodes");
+        Bytecodes::Code code = x->method()->raw_code_at_bci(x->bci_of_invoke());
+        int n = x->nb_profiled_args();
+        assert(MethodData::profile_parameters() && (MethodData::profile_arguments_jsr292_only() ||
+            (x->inlined() && ((code == Bytecodes::_invokedynamic && n <= 1) || (code == Bytecodes::_invokehandle && n <= 2)))),
+            "only at JSR292 bytecodes");
 #endif
+      }
     }
   }
 }
@@ -3371,24 +3398,26 @@ void LIRGenerator::do_ProfileReturnType(ProfileReturnType* x) {
   int bci = x->bci_of_invoke();
   ciMethodData* md = x->method()->method_data_or_null();
   ciProfileData* data = md->bci_to_data(bci);
-  assert(data->is_CallTypeData() || data->is_VirtualCallTypeData(), "wrong profile data type");
-  ciReturnTypeEntry* ret = data->is_CallTypeData() ? ((ciCallTypeData*)data)->ret() : ((ciVirtualCallTypeData*)data)->ret();
-  LIR_Opr mdp = LIR_OprFact::illegalOpr;
+  if (data != NULL) {
+    assert(data->is_CallTypeData() || data->is_VirtualCallTypeData(), "wrong profile data type");
+    ciReturnTypeEntry* ret = data->is_CallTypeData() ? ((ciCallTypeData*)data)->ret() : ((ciVirtualCallTypeData*)data)->ret();
+    LIR_Opr mdp = LIR_OprFact::illegalOpr;
 
-  bool ignored_will_link;
-  ciSignature* signature_at_call = NULL;
-  x->method()->get_method_at_bci(bci, ignored_will_link, &signature_at_call);
+    bool ignored_will_link;
+    ciSignature* signature_at_call = NULL;
+    x->method()->get_method_at_bci(bci, ignored_will_link, &signature_at_call);
 
-  // The offset within the MDO of the entry to update may be too large
-  // to be used in load/store instructions on some platforms. So have
-  // profile_type() compute the address of the profile in a register.
-  ciKlass* exact = profile_type(md, md->byte_offset_of_slot(data, ret->type_offset()), 0,
-                                ret->type(), x->ret(), mdp,
-                                !x->needs_null_check(),
-                                signature_at_call->return_type()->as_klass(),
-                                x->callee()->signature()->return_type()->as_klass());
-  if (exact != NULL) {
-    md->set_return_type(bci, exact);
+    // The offset within the MDO of the entry to update may be too large
+    // to be used in load/store instructions on some platforms. So have
+    // profile_type() compute the address of the profile in a register.
+    ciKlass* exact = profile_type(md, md->byte_offset_of_slot(data, ret->type_offset()), 0,
+        ret->type(), x->ret(), mdp,
+        !x->needs_null_check(),
+        signature_at_call->return_type()->as_klass(),
+        x->callee()->signature()->return_type()->as_klass());
+    if (exact != NULL) {
+      md->set_return_type(bci, exact);
+    }
   }
 }
 

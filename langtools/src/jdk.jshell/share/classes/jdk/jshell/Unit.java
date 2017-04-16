@@ -46,6 +46,7 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 import static jdk.internal.jshell.debug.InternalDebugControl.DBG_EVNT;
 import static jdk.internal.jshell.debug.InternalDebugControl.DBG_GEN;
+import static jdk.internal.jshell.debug.InternalDebugControl.DBG_WRAP;
 import static jdk.jshell.Snippet.Status.OVERWRITTEN;
 import static jdk.jshell.Snippet.Status.RECOVERABLE_DEFINED;
 import static jdk.jshell.Snippet.Status.RECOVERABLE_NOT_DEFINED;
@@ -168,11 +169,11 @@ final class Unit {
             // Snippets to add to imports
             Collection<Snippet> plus = plusUnfiltered.stream()
                     .filter(u -> !units.contains(u))
-                    .map(u -> u.snippet())
+                    .map(Unit::snippet)
                     .collect(toList());
             // Snippets to wrap in an outer
             List<Snippet> snippets = units.stream()
-                    .map(u -> u.snippet())
+                    .map(Unit::snippet)
                     .collect(toList());
             // Snippet wraps to wrap in an outer
             List<Wrap> wraps = units.stream()
@@ -180,6 +181,8 @@ final class Unit {
                     .collect(toList());
             // Set the outer wrap for this snippet
             si.setOuterWrap(state.outerMap.wrapInClass(except, plus, snippets, wraps));
+            state.debug(DBG_WRAP, "++setWrap() %s\n%s\n",
+                    si, si.outerWrap().wrapped());
         }
     }
 
@@ -305,8 +308,8 @@ final class Unit {
             return true;
         }
         ClassBytecodes[] cbcs = toRedefine.stream()
-                .map(ci -> ci.toClassBytecodes())
-                .toArray(size -> new ClassBytecodes[size]);
+                .map(ClassInfo::toClassBytecodes)
+                .toArray(ClassBytecodes[]::new);
         try {
             state.executionControl().redefine(cbcs);
             state.classTracker.markLoaded(cbcs);

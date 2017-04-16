@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.file
  *          jdk.compiler/com.sun.tools.javac.main
+ *          jdk.compiler/com.sun.tools.javac.resources:open
  *          jdk.compiler/com.sun.tools.javac.util
  * @build Example CheckExamples DocCommentProcessor
  * @run main/othervm CheckExamples
@@ -38,8 +39,6 @@
  */
 
 import java.io.*;
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
@@ -110,7 +109,7 @@ public class CheckExamples {
             }
         }
 
-        Module jdk_compiler = Layer.boot().findModule("jdk.compiler").get();
+        Module jdk_compiler = ModuleLayer.boot().findModule("jdk.compiler").get();
         ResourceBundle b =
             ResourceBundle.getBundle("com.sun.tools.javac.resources.compiler", jdk_compiler);
         Set<String> resourceKeys = new TreeSet<String>(b.keySet());

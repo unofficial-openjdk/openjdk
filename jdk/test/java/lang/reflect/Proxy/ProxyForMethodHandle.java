@@ -28,7 +28,6 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Module;
 
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -46,7 +45,7 @@ public class ProxyForMethodHandle {
      * to a dynamic module
      */
     @Test
-    static void testRunnableMethodHandle() throws Exception {
+    public static void testRunnableMethodHandle() throws Exception {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         MethodType mt = MethodType.methodType(void.class);
         MethodHandle mh = lookup.findStatic(ProxyForMethodHandle.class, "runForRunnable", mt);

@@ -124,6 +124,7 @@ public class MotifTextUI {
          * @param g the graphics context
          * @see #damage
          */
+        @SuppressWarnings("deprecation")
         public void paint(Graphics g) {
             if(isVisible()) {
                 try {
@@ -154,6 +155,7 @@ public class MotifTextUI {
     /**
      * Default bindings all keymaps implementing the Motif feel.
      */
+    @SuppressWarnings("deprecation")
     static final JTextComponent.KeyBinding[] defaultBindings = {
         new JTextComponent.KeyBinding(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,
                                                                     InputEvent.CTRL_MASK),

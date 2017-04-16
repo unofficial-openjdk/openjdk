@@ -270,7 +270,7 @@ class relocInfo VALUE_OBJ_CLASS_SPEC {
     poll_return_type        = 11, // polling instruction for safepoints at return
     metadata_type           = 12, // metadata that used to be oops
     trampoline_stub_type    = 13, // stub-entry for trampoline
-    yet_unused_type_1       = 14, // Still unused
+    runtime_call_w_cp_type  = 14, // Runtime call which may load its target from the constant pool
     data_prefix_tag         = 15, // tag for a prefix (carries data arguments)
     type_mask               = 15  // A mask which selects only the above values
   };
@@ -305,6 +305,7 @@ class relocInfo VALUE_OBJ_CLASS_SPEC {
     visitor(static_call) \
     visitor(static_stub) \
     visitor(runtime_call) \
+    visitor(runtime_call_w_cp) \
     visitor(external_word) \
     visitor(internal_word) \
     visitor(poll) \
@@ -827,8 +828,6 @@ class Relocation VALUE_OBJ_CLASS_SPEC {
   // ic_call_type is not always posisition dependent (depending on the state of the cache)). However, this is
   // probably a reasonable assumption, since empty caches simplifies code reloacation.
   virtual void fix_relocation_after_move(const CodeBuffer* src, CodeBuffer* dest) { }
-
-  void print();
 };
 
 
@@ -1091,7 +1090,7 @@ class opt_virtual_call_Relocation : public CallRelocation {
   void clear_inline_cache();
 
   // find the matching static_stub
-  address static_stub();
+  address static_stub(bool is_aot);
 };
 
 
@@ -1125,24 +1124,26 @@ class static_call_Relocation : public CallRelocation {
   void clear_inline_cache();
 
   // find the matching static_stub
-  address static_stub();
+  address static_stub(bool is_aot);
 };
 
 class static_stub_Relocation : public Relocation {
   relocInfo::relocType type() { return relocInfo::static_stub_type; }
 
  public:
-  static RelocationHolder spec(address static_call) {
+  static RelocationHolder spec(address static_call, bool is_aot = false) {
     RelocationHolder rh = newHolder();
-    new(rh) static_stub_Relocation(static_call);
+    new(rh) static_stub_Relocation(static_call, is_aot);
     return rh;
   }
 
  private:
   address _static_call;  // location of corresponding static_call
+  bool _is_aot;          // trampoline to aot code
 
-  static_stub_Relocation(address static_call) {
+  static_stub_Relocation(address static_call, bool is_aot) {
     _static_call = static_call;
+    _is_aot = is_aot;
   }
 
   friend class RelocIterator;
@@ -1152,6 +1153,7 @@ class static_stub_Relocation : public Relocation {
   void clear_inline_cache();
 
   address static_call() { return _static_call; }
+  bool is_aot() { return _is_aot; }
 
   // data is packed as a scaled offset in "1_int" format:  [c] or [Cc]
   void pack_data_to(CodeSection* dest);
@@ -1173,6 +1175,36 @@ class runtime_call_Relocation : public CallRelocation {
   runtime_call_Relocation() { }
 
  public:
+};
+
+
+class runtime_call_w_cp_Relocation : public CallRelocation {
+  relocInfo::relocType type() { return relocInfo::runtime_call_w_cp_type; }
+
+ public:
+  static RelocationHolder spec() {
+    RelocationHolder rh = newHolder();
+    new(rh) runtime_call_w_cp_Relocation();
+    return rh;
+  }
+
+ private:
+  friend class RelocIterator;
+  runtime_call_w_cp_Relocation() { _offset = -4; /* <0 = invalid */ }
+  // On z/Architecture, runtime calls are either a sequence
+  // of two instructions (load destination of call from constant pool + do call)
+  // or a pc-relative call. The pc-relative call is faster, but it can only
+  // be used if the destination of the call is not too far away.
+  // In order to be able to patch a pc-relative call back into one using
+  // the constant pool, we have to remember the location of the call's destination
+  // in the constant pool.
+  int _offset;
+
+ public:
+  void set_constant_pool_offset(int offset) { _offset = offset; }
+  int get_constant_pool_offset() { return _offset; }
+  void pack_data_to(CodeSection * dest);
+  void unpack_data();
 };
 
 // Trampoline Relocations.

@@ -1742,7 +1742,7 @@ void PhaseIdealLoop::mark_reductions(IdealLoopTree *loop) {
               // The result of the reduction must not be used in the loop
               for (DUIterator_Fast imax, i = def_node->fast_outs(imax); i < imax && ok; i++) {
                 Node* u = def_node->fast_out(i);
-                if (has_ctrl(u) && !loop->is_member(get_loop(get_ctrl(u)))) {
+                if (!loop->is_member(get_loop(ctrl_or_self(u)))) {
                   continue;
                 }
                 if (u == phi) {
@@ -3174,6 +3174,11 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
     return false;
   }
 
+  Node* exit = head->loopexit()->proj_out(0);
+  if (exit == NULL) {
+    return false;
+  }
+
 #ifndef PRODUCT
   if (TraceLoopOpts) {
     tty->print("ArrayFill    ");
@@ -3281,7 +3286,6 @@ bool PhaseIdealLoop::intrinsify_fill(IdealLoopTree* lpt) {
 */
 
   // Redirect the old control and memory edges that are outside the loop.
-  Node* exit = head->loopexit()->proj_out(0);
   // Sometimes the memory phi of the head is used as the outgoing
   // state of the loop.  It's safe in this case to replace it with the
   // result_mem.

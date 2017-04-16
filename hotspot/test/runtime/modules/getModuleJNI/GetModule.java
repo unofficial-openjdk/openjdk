@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,6 @@
  * @run main/native GetModule
  */
 
-import java.lang.reflect.Module;
 import java.lang.management.LockInfo;
 public class GetModule {
 
@@ -35,10 +34,6 @@ public class GetModule {
     }
 
     static native Object callGetModule(java.lang.Class clazz);
-    static native void callAddModuleReads(java.lang.reflect.Module from_module,
-                                          java.lang.reflect.Module source_module);
-    static native boolean callCanReadModule(java.lang.reflect.Module asking_module,
-                                            java.lang.reflect.Module source_module);
 
     public static void main(String[] args) {
         Module module;
@@ -143,71 +138,6 @@ public class GetModule {
             throw new RuntimeException("Failed to get expected NullPointerException");
         } catch(NullPointerException e) {
             // Expected
-        }
-
-
-        // Tests for JNI_AddModuleReads() //
-
-        Module javaScriptingModule = javax.script.Bindings.class.getModule();
-        if (javaScriptingModule == null) {
-            throw new RuntimeException("Failed to get java.scripting module");
-        }
-        Module javaLoggingModule = java.util.logging.Level.class.getModule();
-        if (javaLoggingModule == null) {
-            throw new RuntimeException("Failed to get java.logging module");
-        }
-
-        if (callCanReadModule(javaLoggingModule, javaScriptingModule)) {
-            throw new RuntimeException(
-                "Expected FALSE because javaLoggingModule cannot read javaScriptingModule");
-        }
-
-        callAddModuleReads(javaLoggingModule, javaScriptingModule);
-        callAddModuleReads(javaScriptingModule, GetModule.class.getModule()); // unnamed module
-
-        try {
-            callAddModuleReads(null, javaLoggingModule);
-            throw new RuntimeException(
-                "Expected NullPointerException for bad from_module not thrown");
-        } catch(NullPointerException e) {
-            // expected
-        }
-
-        try {
-          callAddModuleReads(javaLoggingModule, null);
-          throw new RuntimeException(
-                "Expected NullPointerException for bad source_module not thrown");
-        } catch(NullPointerException e) {
-            // expected
-        }
-
-
-        // Tests for JNI_CanReadModule() //
-
-        if (!callCanReadModule(javaLoggingModule, javaScriptingModule)) {
-            throw new RuntimeException(
-                "Expected TRUE because javaLoggingModule can read javaScriptingModule");
-        }
-
-        if (callCanReadModule(javaBaseModule, javaScriptingModule)) {
-            throw new RuntimeException(
-                "Expected FALSE because javaBaseModule cannnot read javaScriptingModule");
-        }
-
-        try {
-            callCanReadModule(javaLoggingModule, null);
-            throw new RuntimeException(
-                "Expected NullPointerException for bad sourceModule not thrown");
-        } catch(NullPointerException e) {
-            // expected
-        }
-
-        try {
-            callCanReadModule(null, javaScriptingModule);
-            throw new RuntimeException(
-                "Expected NullPointerException for bad asking_module not thrown");
-        } catch(NullPointerException e) {
-            // expected
         }
     }
 

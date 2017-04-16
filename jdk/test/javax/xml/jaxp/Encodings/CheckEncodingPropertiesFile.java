@@ -30,7 +30,7 @@
  *      correctly maps them to their preferred mime names.
  *      Also checks that the Encodings.properties resource file
  *      is consistent.
- * @modules java.xml/com.sun.org.apache.xml.internal.serializer
+ * @modules java.xml/com.sun.org.apache.xml.internal.serializer:+open
  * @compile -XDignore.symbol.file CheckEncodingPropertiesFile.java
  * @run main CheckEncodingPropertiesFile
  * @author Daniel Fuchs
@@ -39,7 +39,6 @@
 import com.sun.org.apache.xml.internal.serializer.EncodingInfo;
 import com.sun.org.apache.xml.internal.serializer.Encodings;
 import java.io.InputStreamReader;
-import java.lang.reflect.Module;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.ArrayList;

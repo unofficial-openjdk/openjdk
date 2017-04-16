@@ -275,6 +275,7 @@ public:
     virtual void Show();
     virtual void Hide();
     virtual void Reshape(int x, int y, int w, int h);
+    void ReshapeNoScale(int x, int y, int w, int h);
 
     /*
      * Fix for 4046446.
@@ -522,7 +523,7 @@ public:
     virtual MsgRouting WmMouseMove(UINT flags, int x, int y);
     virtual MsgRouting WmMouseExit(UINT flags, int x, int y);
     virtual MsgRouting WmMouseWheel(UINT flags, int x, int y,
-                                    int wheelRotation);
+                                    int wheelRotation, BOOL isHorizontal);
     virtual MsgRouting WmNcMouseDown(WPARAM hitTest, int x, int y, int button);
     virtual MsgRouting WmNcMouseUp(WPARAM hitTest, int x, int y, int button);
     virtual MsgRouting WmWindowPosChanging(LPARAM windowPos);
@@ -582,6 +583,7 @@ public:
     virtual MsgRouting WmNcPaint(HRGN hrgn);
     virtual MsgRouting WmNcHitTest(UINT x, UINT y, LRESULT &retVal);
     virtual MsgRouting WmSysCommand(UINT uCmdType, int xPos, int yPos);
+    virtual MsgRouting WmEnterSizeMove();
     virtual MsgRouting WmExitSizeMove();
     virtual MsgRouting WmEnterMenuLoop(BOOL isTrackPopupMenu);
     virtual MsgRouting WmExitMenuLoop(BOOL isTrackPopupMenu);
@@ -824,7 +826,8 @@ private:
     int windowMoveLockPosCY;
 
     // 6524352: support finer-resolution
-    int m_wheelRotationAmount;
+    int m_wheelRotationAmountX;
+    int m_wheelRotationAmountY;
 
     BOOL deadKeyActive;
 

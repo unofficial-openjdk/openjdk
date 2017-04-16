@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,7 @@ import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 
 /**
@@ -237,12 +238,23 @@ public abstract class JavadocTester {
      * @throws Exception if any errors occurred
      */
     public void runTests() throws Exception {
+        runTests(m -> new Object[0]);
+    }
+
+    /**
+     * Run all methods annotated with @Test, followed by printSummary.
+     * Typically called on a tester object in main()
+     * @param f a function which will be used to provide arguments to each
+     *          invoked method
+     * @throws Exception if any errors occurred
+     */
+    public void runTests(Function<Method, Object[]> f) throws Exception {
         for (Method m: getClass().getDeclaredMethods()) {
             Annotation a = m.getAnnotation(Test.class);
             if (a != null) {
                 try {
                     out.println("Running test " + m.getName());
-                    m.invoke(this, new Object[] { });
+                    m.invoke(this, f.apply(m));
                 } catch (InvocationTargetException e) {
                     Throwable cause = e.getCause();
                     throw (cause instanceof Exception) ? ((Exception) cause) : e;
@@ -373,6 +385,25 @@ public abstract class JavadocTester {
      *  or the name of one of the output buffers, identifying
      *  where to look for the search strings.
      * @param expectedFound true if all of the search strings are expected
+     *  to be found, or false if the file is not expected to be found
+     * @param strings the strings to be searched for
+     */
+    public void checkFileAndOutput(String path, boolean expectedFound, String... strings) {
+        if (expectedFound) {
+            checkOutput(path, true, strings);
+        } else {
+            checkFiles(false, path);
+        }
+    }
+
+    /**
+     * Check for content in (or not in) the generated output.
+     * Within the search strings, the newline character \n
+     * will be translated to the platform newline character sequence.
+     * @param path a path within the most recent output directory
+     *  or the name of one of the output buffers, identifying
+     *  where to look for the search strings.
+     * @param expectedFound true if all of the search strings are expected
      *  to be found, or false if all of the strings are expected to be
      *  not found
      * @param strings the strings to be searched for
@@ -383,11 +414,9 @@ public abstract class JavadocTester {
         try {
             fileString = readFile(outputDir, path);
         } catch (Error e) {
-            if (!expectedFound) {
-                failed("Error reading file: " + e);
-                return;
-            }
-            throw e;
+            checking("Read file");
+            failed("Error reading file: " + e);
+            return;
         }
         checkOutput(path, fileString, expectedFound, strings);
     }
@@ -413,10 +442,10 @@ public abstract class JavadocTester {
             // Find string in file's contents
             boolean isFound = findString(fileString, stringToFind);
             if (isFound == expectedFound) {
-                passed(path + ": " + (isFound ? "found:" : "not found:") + "\n"
+                passed(path + ": following text " + (isFound ? "found:" : "not found:") + "\n"
                         + stringToFind + "\n");
             } else {
-                failed(path + ": " + (isFound ? "found:" : "not found:") + "\n"
+                failed(path + ": following text " + (isFound ? "found:" : "not found:") + "\n"
                         + stringToFind + "\n");
             }
         }
@@ -464,9 +493,9 @@ public abstract class JavadocTester {
             File file = new File(outputDir, path);
             boolean isFound = file.exists();
             if (isFound == expectedFound) {
-                passed(path + ": " + (isFound ? "found:" : "not found:") + "\n");
+                passed(path + ": file " + (isFound ? "found:" : "not found:") + "\n");
             } else {
-                failed(path + ": " + (isFound ? "found:" : "not found:") + "\n");
+                failed(path + ": file " + (isFound ? "found:" : "not found:") + "\n");
             }
         }
     }
@@ -619,11 +648,9 @@ public abstract class JavadocTester {
             fileContentCache.put(file, new SoftReference<>(content));
             return content;
         } catch (FileNotFoundException e) {
-            System.err.println(e);
-            throw new Error("File not found: " + fileName);
+            throw new Error("File not found: " + fileName + ": " + e);
         } catch (IOException e) {
-            System.err.println(e);
-            throw new Error("Error reading file: " + fileName);
+            throw new Error("Error reading file: " + fileName + ": " + e);
         }
     }
 

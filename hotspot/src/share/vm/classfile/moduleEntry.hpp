@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,13 +36,16 @@
 #include "utilities/ostream.hpp"
 
 #define UNNAMED_MODULE "Unnamed Module"
+#define JAVAPKG "java"
+#define JAVAPKG_LEN 4
+#define JAVA_BASE_NAME "java.base"
 
 class ModuleClosure;
 
 // A ModuleEntry describes a module that has been defined by a call to JVM_DefineModule.
 // It contains:
 //   - Symbol* containing the module's name.
-//   - pointer to the java.lang.reflect.Module for this module.
+//   - pointer to the java.lang.Module for this module.
 //   - pointer to the java.security.ProtectionDomain shared by classes defined to this module.
 //   - ClassLoaderData*, class loader of this module.
 //   - a growable array containg other module entries that this module can read.
@@ -52,7 +55,7 @@ class ModuleClosure;
 // data structure.
 class ModuleEntry : public HashtableEntry<Symbol*, mtModule> {
 private:
-  jobject _module;                     // java.lang.reflect.Module
+  jobject _module;                     // java.lang.Module
   jobject _pd;                         // java.security.ProtectionDomain, cached
                                        // for shared classes from this module
   ClassLoaderData* _loader_data;
@@ -62,6 +65,7 @@ private:
   bool _can_read_all_unnamed;
   bool _has_default_read_edges;        // JVMTI redefine/retransform support
   bool _must_walk_reads;               // walk module's reads list at GC safepoints to purge out dead modules
+  bool _is_patched;                    // whether the module is patched via --patch-module
   TRACE_DEFINE_TRACE_ID_FIELD;
   enum {MODULE_READS_SIZE = 101};      // Initial size of list of modules that the module can read.
 
@@ -76,6 +80,7 @@ public:
     _can_read_all_unnamed = false;
     _has_default_read_edges = false;
     _must_walk_reads = false;
+    _is_patched = false;
   }
 
   Symbol*          name() const                        { return literal(); }
@@ -100,6 +105,7 @@ public:
 
   Symbol*          location() const                    { return _location; }
   void             set_location(Symbol* location);
+  bool             is_non_jdk_module();
 
   bool             can_read(ModuleEntry* m) const;
   bool             has_reads() const;
@@ -127,6 +133,13 @@ public:
     bool prev = _has_default_read_edges;
     _has_default_read_edges = true;
     return prev;
+  }
+
+  void set_is_patched() {
+      _is_patched = true;
+  }
+  bool is_patched() {
+      return _is_patched;
   }
 
   ModuleEntry* next() const {

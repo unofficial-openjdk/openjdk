@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,17 +28,22 @@
  * <P>
  * This module requires {@code java.se} and supplements it with modules
  * that define CORBA and Java EE APIs. These modules are upgradeable.
+ *
+ * @moduleGraph
+ * @since 9
  */
+@SuppressWarnings({"deprecation",
+                   "removal"}) // java.corba and other modules
 module java.se.ee {
 
-    requires public java.se;
+    requires transitive java.se;
 
     // Upgradeable modules for Java EE technologies
-    requires public java.activation;
-    requires public java.annotations.common;
-    requires public java.corba;
-    requires public java.transaction;
-    requires public java.xml.bind;
-    requires public java.xml.ws;
+    requires transitive java.activation;
+    requires transitive java.corba;
+    requires transitive java.transaction;
+    requires transitive java.xml.bind;
+    requires transitive java.xml.ws;
+    requires transitive java.xml.ws.annotation;
 
 }

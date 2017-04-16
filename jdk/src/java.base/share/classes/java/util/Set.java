@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -448,7 +448,7 @@ public interface Set<E> extends Collection<E> {
      * @since 9
      */
     static <E> Set<E> of() {
-        return new ImmutableCollections.Set0<>();
+        return ImmutableCollections.Set0.instance();
     }
 
     /**
@@ -689,10 +689,9 @@ public interface Set<E> extends Collection<E> {
     @SafeVarargs
     @SuppressWarnings("varargs")
     static <E> Set<E> of(E... elements) {
-        Objects.requireNonNull(elements);
-        switch (elements.length) {
+        switch (elements.length) { // implicit null check of elements
             case 0:
-                return new ImmutableCollections.Set0<>();
+                return ImmutableCollections.Set0.instance();
             case 1:
                 return new ImmutableCollections.Set1<>(elements[0]);
             case 2:

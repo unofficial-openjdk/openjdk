@@ -33,6 +33,7 @@ import java.awt.font.*;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.AffineTransform;
 import static java.awt.geom.AffineTransform.TYPE_FLIP;
+import static java.awt.geom.AffineTransform.TYPE_MASK_SCALE;
 import static java.awt.geom.AffineTransform.TYPE_TRANSLATION;
 import java.awt.print.PrinterGraphics;
 import java.text.BreakIterator;
@@ -318,7 +319,21 @@ public class SwingUtilities2 {
      * @param fm FontMetrics used to measure the String width
      * @param string String to get the width of
      */
-    public static int stringWidth(JComponent c, FontMetrics fm, String string){
+    public static int stringWidth(JComponent c, FontMetrics fm, String string) {
+        return (int) stringWidth(c, fm, string, false);
+    }
+
+    /**
+     * Returns the width of the passed in String.
+     * If the passed String is {@code null}, returns zero.
+     *
+     * @param c JComponent that will display the string, may be null
+     * @param fm FontMetrics used to measure the String width
+     * @param string String to get the width of
+     * @param useFPAPI use floating point API
+     */
+    public static float stringWidth(JComponent c, FontMetrics fm, String string,
+            boolean useFPAPI){
         if (string == null || string.equals("")) {
             return 0;
         }
@@ -333,9 +348,9 @@ public class SwingUtilities2 {
         if (needsTextLayout) {
             TextLayout layout = createTextLayout(c, string,
                                     fm.getFont(), fm.getFontRenderContext());
-            return (int) layout.getAdvance();
+            return layout.getAdvance();
         } else {
-            return fm.stringWidth(string);
+            return getFontStringWidth(string, fm, useFPAPI);
         }
     }
 
@@ -426,6 +441,21 @@ public class SwingUtilities2 {
      */
     public static void drawString(JComponent c, Graphics g, String text,
                                   int x, int y) {
+        drawString(c, g, text, x, y, false);
+    }
+
+    /**
+     * Draws the string at the specified location.
+     *
+     * @param c JComponent that will display the string, may be null
+     * @param g Graphics to draw the text to
+     * @param text String to display
+     * @param x X coordinate to draw the text at
+     * @param y Y coordinate to draw the text at
+     * @param useFPAPI use floating point API
+     */
+    public static void drawString(JComponent c, Graphics g, String text,
+                                  float x, float y, boolean useFPAPI) {
         // c may be null
 
         // All non-editable widgets that draw strings call into this
@@ -509,7 +539,7 @@ public class SwingUtilities2 {
                                                     g2.getFontRenderContext());
                     layout.draw(g2, x, y);
                 } else {
-                    g.drawString(text, x, y);
+                    g2.drawString(text, x, y);
                 }
 
                 if (oldAAValue != null) {
@@ -530,7 +560,7 @@ public class SwingUtilities2 {
             }
         }
 
-        g.drawString(text, x, y);
+        g.drawString(text, (int) x, (int) y);
     }
 
     /**
@@ -544,17 +574,36 @@ public class SwingUtilities2 {
      * @param x X coordinate to draw the text at
      * @param y Y coordinate to draw the text at
      */
+
     public static void drawStringUnderlineCharAt(JComponent c,Graphics g,
-                           String text, int underlinedIndex, int x,int y) {
+                           String text, int underlinedIndex, int x, int y) {
+        drawStringUnderlineCharAt(c, g, text, underlinedIndex, x, y, false);
+    }
+    /**
+     * Draws the string at the specified location underlining the specified
+     * character.
+     *
+     * @param c JComponent that will display the string, may be null
+     * @param g Graphics to draw the text to
+     * @param text String to display
+     * @param underlinedIndex Index of a character in the string to underline
+     * @param x X coordinate to draw the text at
+     * @param y Y coordinate to draw the text at
+     * @param useFPAPI use floating point API
+     */
+    public static void drawStringUnderlineCharAt(JComponent c, Graphics g,
+                                                 String text, int underlinedIndex,
+                                                 float x, float y,
+                                                 boolean useFPAPI) {
         if (text == null || text.length() <= 0) {
             return;
         }
-        SwingUtilities2.drawString(c, g, text, x, y);
+        SwingUtilities2.drawString(c, g, text, x, y, useFPAPI);
         int textLength = text.length();
         if (underlinedIndex >= 0 && underlinedIndex < textLength ) {
-            int underlineRectY = y;
+            float underlineRectY = y;
             int underlineRectHeight = 1;
-            int underlineRectX = 0;
+            float underlineRectX = 0;
             int underlineRectWidth = 0;
             boolean isPrinting = isPrinting(g);
             boolean needsTextLayout = isPrinting;
@@ -594,7 +643,7 @@ public class SwingUtilities2 {
                     underlineRectWidth = rect.width;
                 }
             }
-            g.fillRect(underlineRectX, underlineRectY + 1,
+            g.fillRect((int) underlineRectX, (int) underlineRectY + 1,
                        underlineRectWidth, underlineRectHeight);
         }
     }
@@ -1411,7 +1460,7 @@ public class SwingUtilities2 {
      *
      * @param ie InputEvent to check
      */
-
+    @SuppressWarnings("deprecation")
     private static boolean isAccessClipboardGesture(InputEvent ie) {
         boolean allowedGesture = false;
         if (ie instanceof KeyEvent) { //we can validate only keyboard gestures
@@ -2080,6 +2129,7 @@ public class SwingUtilities2 {
         return -1;
     }
 
+    @SuppressWarnings("deprecation")
     public static int getSystemMnemonicKeyMask() {
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         if (toolkit instanceof SunToolkit) {
@@ -2115,6 +2165,54 @@ public class SwingUtilities2 {
     }
 
     /**
+     * Enables the antialiasing rendering hint for the scaled graphics and
+     * returns the previous hint value.
+     * The returned null value indicates that the passed graphics is not
+     * instance of Graphics2D.
+     *
+     * @param g the graphics
+     * @return the previous antialiasing rendering hint value if the passed
+     * graphics is instance of Graphics2D, null otherwise.
+     */
+    public static Object getAndSetAntialisingHintForScaledGraphics(Graphics g) {
+        if (isScaledGraphics(g) && isLocalDisplay()) {
+            Graphics2D g2d = (Graphics2D) g;
+            Object hint = g2d.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON);
+            return hint;
+        }
+        return null;
+    }
+
+    /**
+     * Sets the antialiasing rendering hint if its value is not null.
+     * Null hint value indicates that the passed graphics is not instance of
+     * Graphics2D.
+     *
+     * @param g the graphics
+     * @param hint the antialiasing rendering hint
+     */
+    public static void setAntialiasingHintForScaledGraphics(Graphics g, Object hint) {
+        if (hint != null) {
+            ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
+        }
+    }
+
+    public static boolean isFloatingPointScale(AffineTransform tx) {
+        int type = tx.getType() & ~(TYPE_FLIP | TYPE_TRANSLATION);
+        if (type == 0) {
+            return false;
+        } else if ((type & ~TYPE_MASK_SCALE) == 0) {
+            double scaleX = tx.getScaleX();
+            double scaleY = tx.getScaleY();
+            return (scaleX != (int) scaleX) || (scaleY != (int) scaleY);
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * Returns the client property for the given key if it is set; otherwise
      * returns the {@L&F} property.
      *
@@ -2131,6 +2229,35 @@ public class SwingUtilities2 {
         }
 
         return UIManager.getBoolean(key);
+    }
+
+    /**
+     *
+     * Returns the graphics configuration which bounds contain the given
+     * point
+     *
+     * @param current the default configuration which is checked in the first place
+     * @param x the x coordinate of the given point
+     * @param y the y coordinate of the given point
+     * @return the graphics configuration
+     */
+    public static GraphicsConfiguration getGraphicsConfigurationAtPoint(GraphicsConfiguration current, double x, double y) {
+
+        if (current.getBounds().contains(x, y)) {
+            return current;
+        }
+
+        GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] devices = env.getScreenDevices();
+
+        for (GraphicsDevice device : devices) {
+            GraphicsConfiguration config = device.getDefaultConfiguration();
+            if (config.getBounds().contains(x, y)) {
+                return config;
+            }
+        }
+
+        return current;
     }
 
     /**

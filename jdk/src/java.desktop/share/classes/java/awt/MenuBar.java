@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,23 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 package java.awt;
 
+import java.awt.event.KeyEvent;
+import java.awt.peer.MenuBarPeer;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.Vector;
+import java.io.ObjectOutputStream;
 import java.util.Enumeration;
+import java.util.EventListener;
+import java.util.Vector;
+
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+
 import sun.awt.AWTAccessor;
-import java.awt.peer.MenuBarPeer;
-import java.awt.event.KeyEvent;
-import javax.accessibility.*;
 
 /**
  * The {@code MenuBar} class encapsulates the platform's
@@ -94,7 +101,7 @@ public class MenuBar extends MenuComponent implements MenuContainer, Accessible 
      * @serial
      * @see #countMenus()
      */
-    Vector<Menu> menus = new Vector<>();
+    private final Vector<Menu> menus = new Vector<>();
 
     /**
      * This menu is a special menu dedicated to
@@ -106,7 +113,7 @@ public class MenuBar extends MenuComponent implements MenuContainer, Accessible 
      * @see #getHelpMenu()
      * @see #setHelpMenu(Menu)
      */
-    Menu helpMenu;
+    private volatile Menu helpMenu;
 
     private static final String base = "menubar";
     private static int nameCounter = 0;
@@ -252,8 +259,8 @@ public class MenuBar extends MenuComponent implements MenuContainer, Accessible 
             if (peer != null) {
                 peer.delMenu(index);
                 m.removeNotify();
-                m.parent = null;
             }
+            m.parent = null;
             if (helpMenu == m) {
                 helpMenu = null;
                 m.isHelpMenu = false;
@@ -370,6 +377,7 @@ public class MenuBar extends MenuComponent implements MenuContainer, Accessible 
      * keydown).  Returns true if there is an associated
      * keyboard event.
      */
+    @SuppressWarnings("deprecation")
     boolean handleShortcut(KeyEvent e) {
         // Is it a key event?
         int id = e.getID();

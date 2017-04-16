@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -118,6 +118,9 @@ public class Lint
             if (source.compareTo(Source.JDK1_9) >= 0) {
                 values.add(LintCategory.DEP_ANN);
             }
+            values.add(LintCategory.REQUIRES_TRANSITIVE_AUTOMATIC);
+            values.add(LintCategory.OPENS);
+            values.add(LintCategory.MODULE);
             values.add(LintCategory.REMOVAL);
         }
 
@@ -205,6 +208,16 @@ public class Lint
         FINALLY("finally"),
 
         /**
+         * Warn about module system related issues.
+         */
+        MODULE("module"),
+
+        /**
+         * Warn about issues regarding module opens.
+         */
+        OPENS("opens"),
+
+        /**
          * Warn about issues relating to use of command line options
          */
         OPTIONS("options"),
@@ -240,6 +253,16 @@ public class Lint
          * Warn about use of deprecated-for-removal items.
          */
         REMOVAL("removal"),
+
+        /**
+         * Warn about use of automatic modules in the requires clauses.
+         */
+        REQUIRES_AUTOMATIC("requires-automatic"),
+
+        /**
+         * Warn about automatic modules in requires transitive.
+         */
+        REQUIRES_TRANSITIVE_AUTOMATIC("requires-transitive-automatic"),
 
         /**
          * Warn about Serializable classes that do not provide a serial version ID.

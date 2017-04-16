@@ -403,6 +403,15 @@ struct tm* os::localtime_pd(const time_t* clock, struct tm* res) {
   return NULL;
 }
 
+struct tm* os::gmtime_pd(const time_t* clock, struct tm* res) {
+  const struct tm* time_struct_ptr = gmtime(clock);
+  if (time_struct_ptr != NULL) {
+    *res = *time_struct_ptr;
+    return res;
+  }
+  return NULL;
+}
+
 LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo);
 
 // Thread start routine for all newly created threads
@@ -768,6 +777,11 @@ void os::set_native_thread_name(const char *name) {
   // Note that unfortunately this only works if the process
   // is already attached to a debugger; debugger must observe
   // the exception below to show the correct name.
+
+  // If there is no debugger attached skip raising the exception
+  if (!IsDebuggerPresent()) {
+    return;
+  }
 
   const DWORD MS_VC_EXCEPTION = 0x406D1388;
   struct {

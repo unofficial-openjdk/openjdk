@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,8 @@ import jdk.internal.misc.JavaLangAccess;
  * values.
  * <p>The date components should be set to the "zero epoch"
  * value of January 1, 1970 and should not be accessed.
+ *
+ * @since 1.1
  */
 public class Time extends java.util.Date {
 
@@ -60,7 +62,7 @@ public class Time extends java.util.Date {
      * @deprecated Use the constructor that takes a milliseconds value
      *             in place of this constructor
      */
-    @Deprecated
+    @Deprecated(since="1.2")
     public Time(int hour, int minute, int second) {
         super(70, 0, 1, hour, minute, second);
     }
@@ -146,7 +148,7 @@ public class Time extends java.util.Date {
     *           method is invoked
     * @see #setYear
     */
-    @Deprecated
+    @Deprecated(since="1.2")
     public int getYear() {
         throw new java.lang.IllegalArgumentException();
     }
@@ -160,7 +162,7 @@ public class Time extends java.util.Date {
     *           method is invoked
     * @see #setMonth
     */
-    @Deprecated
+    @Deprecated(since="1.2")
     public int getMonth() {
         throw new java.lang.IllegalArgumentException();
     }
@@ -173,7 +175,7 @@ public class Time extends java.util.Date {
     * @exception java.lang.IllegalArgumentException if this
     *           method is invoked
     */
-    @Deprecated
+    @Deprecated(since="1.2")
     public int getDay() {
         throw new java.lang.IllegalArgumentException();
     }
@@ -187,7 +189,7 @@ public class Time extends java.util.Date {
     *           method is invoked
     * @see #setDate
     */
-    @Deprecated
+    @Deprecated(since="1.2")
     public int getDate() {
         throw new java.lang.IllegalArgumentException();
     }
@@ -201,7 +203,7 @@ public class Time extends java.util.Date {
     *           method is invoked
     * @see #getYear
     */
-    @Deprecated
+    @Deprecated(since="1.2")
     public void setYear(int i) {
         throw new java.lang.IllegalArgumentException();
     }
@@ -215,7 +217,7 @@ public class Time extends java.util.Date {
     *           method is invoked
     * @see #getMonth
     */
-    @Deprecated
+    @Deprecated(since="1.2")
     public void setMonth(int i) {
         throw new java.lang.IllegalArgumentException();
     }
@@ -229,7 +231,7 @@ public class Time extends java.util.Date {
     *           method is invoked
     * @see #getDate
     */
-    @Deprecated
+    @Deprecated(since="1.2")
     public void setDate(int i) {
         throw new java.lang.IllegalArgumentException();
     }

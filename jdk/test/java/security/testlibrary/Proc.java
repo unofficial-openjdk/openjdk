@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -176,6 +176,14 @@ public class Proc {
         prop.put(a, b);
         return this;
     }
+    // Inherit the value of a system property
+    public Proc inheritProp(String k) {
+        String v = System.getProperty(k);
+        if (v != null) {
+            prop.put(k, v);
+        }
+        return this;
+    }
     // Sets classpath. If not called, Proc will choose a classpath. If called
     // with no arg, no classpath will be used. Can be called multiple times.
     public Proc cp(String... s) {
@@ -243,16 +251,24 @@ public class Proc {
     // Starts the proc
     public Proc start() throws IOException {
         List<String> cmd = new ArrayList<>();
+        boolean hasModules;
         if (launcher != null) {
             cmd.add(launcher);
+            File base = new File(launcher).getParentFile().getParentFile();
+            hasModules = new File(base, "modules").exists() ||
+                    new File(base, "jmods").exists();
         } else {
             cmd.add(new File(new File(System.getProperty("java.home"), "bin"),
                         "java").getPath());
+            hasModules = true;
         }
 
-        Stream.of(jdk.internal.misc.VM.getRuntimeArguments())
-            .filter(arg -> arg.startsWith("--add-exports="))
-            .forEach(cmd::add);
+        if (hasModules) {
+            Stream.of(jdk.internal.misc.VM.getRuntimeArguments())
+                    .filter(arg -> arg.startsWith("--add-exports=") ||
+                                   arg.startsWith("--add-opens="))
+                    .forEach(cmd::add);
+        }
 
         Collections.addAll(cmd, splitProperty("test.vm.opts"));
         Collections.addAll(cmd, splitProperty("test.java.opts"));

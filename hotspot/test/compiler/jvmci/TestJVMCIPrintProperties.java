@@ -24,7 +24,7 @@
 /*
  * @test TestBasicLogOutput
  * @summary Ensure -XX:-JVMCIPrintProperties can be enabled and successfully prints expected output to stdout.
- * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @requires vm.jvmci
  * @library /test/lib
  */
 
@@ -37,14 +37,13 @@ public class TestJVMCIPrintProperties {
         ProcessBuilder pb = ProcessTools.createJavaProcessBuilder(
             "-XX:+UnlockExperimentalVMOptions",
             "-XX:+EnableJVMCI",
-            "-XX:+JVMCIPrintProperties",
-            "-version");
+            "-XX:+JVMCIPrintProperties");
         OutputAnalyzer output = new OutputAnalyzer(pb.start());
         output.shouldContain("[JVMCI properties]"); // expected message
-        output.shouldContain("String jvmci.Compiler"); // expected message
-        output.shouldContain("Boolean jvmci.InitTimer"); // expected message
-        output.shouldContain("Boolean jvmci.PrintConfig"); // expected message
-        output.shouldContain("String jvmci.TraceMethodDataFilter"); // expected message
+        output.shouldContain("jvmci.Compiler = null"); // expected message
+        output.shouldContain("jvmci.InitTimer = false"); // expected message
+        output.shouldContain("jvmci.PrintConfig = false"); // expected message
+        output.shouldContain("jvmci.TraceMethodDataFilter = null"); // expected message
         output.shouldHaveExitValue(0);
     }
 }

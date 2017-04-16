@@ -268,6 +268,7 @@ public class BasicPopupMenuUI extends PopupMenuUI {
         return list;
     }
 
+    @SuppressWarnings("deprecation")
     public boolean isPopupTrigger(MouseEvent e) {
         return ((e.getID()==MouseEvent.MOUSE_RELEASED)
                 && ((e.getModifiers() & MouseEvent.BUTTON3_MASK)!=0));
@@ -926,6 +927,7 @@ public class BasicPopupMenuUI extends PopupMenuUI {
             }
         }
 
+        @SuppressWarnings("deprecation")
         boolean isInPopup(Component src) {
             for (Component c=src; c!=null; c=c.getParent()) {
                 if (c instanceof Applet || c instanceof Window) {
@@ -1143,6 +1145,7 @@ public class BasicPopupMenuUI extends PopupMenuUI {
             }
         }
 
+        @SuppressWarnings("deprecation")
         public void stateChanged(ChangeEvent ev) {
             if (!(UIManager.getLookAndFeel() instanceof BasicLookAndFeel)) {
                 uninstall();

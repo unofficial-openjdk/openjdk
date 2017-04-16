@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,14 +65,12 @@ public final class JrtFileSystemProvider extends FileSystemProvider {
     }
 
     /**
-     * Need FilePermission ${java.home}/-", "read" to create or get jrt:/
+     * Need RuntimePermission "accessSystemModules" to create or get jrt:/
      */
     private void checkPermission() {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
-            String home = SystemImage.RUNTIME_HOME;
-            FilePermission perm
-                    = new FilePermission(home + File.separator + "-", "read");
+            RuntimePermission perm = new RuntimePermission("accessSystemModules");
             sm.checkPermission(perm);
         }
     }
@@ -115,7 +113,7 @@ public final class JrtFileSystemProvider extends FileSystemProvider {
     private FileSystem newFileSystem(String targetHome, URI uri, Map<String, ?> env)
             throws IOException {
         Objects.requireNonNull(targetHome);
-        Path jrtfs = FileSystems.getDefault().getPath(targetHome, JRT_FS_JAR);
+        Path jrtfs = FileSystems.getDefault().getPath(targetHome, "lib", JRT_FS_JAR);
         if (Files.notExists(jrtfs)) {
             throw new IOException(jrtfs.toString() + " not exist");
         }

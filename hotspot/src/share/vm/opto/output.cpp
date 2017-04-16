@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -292,6 +292,10 @@ void Compile::shorten_branches(uint* blk_starts, int& code_size, int& reloc_size
           if (mcall->is_MachCallJava() && mcall->as_MachCallJava()->_method) {
             stub_size  += CompiledStaticCall::to_interp_stub_size();
             reloc_size += CompiledStaticCall::reloc_to_interp_stub();
+#if INCLUDE_AOT
+            stub_size  += CompiledStaticCall::to_aot_stub_size();
+            reloc_size += CompiledStaticCall::reloc_to_aot_stub();
+#endif
           }
         } else if (mach->is_MachSafePoint()) {
           // If call/safepoint are adjacent, account for possible
@@ -1206,13 +1210,19 @@ void Compile::fill_buffer(CodeBuffer* cb, uint* blk_starts) {
           padding = nop_size;
         }
 
-        if(padding > 0) {
+        if (padding > 0) {
           assert((padding % nop_size) == 0, "padding is not a multiple of NOP size");
           int nops_cnt = padding / nop_size;
           MachNode *nop = new MachNopNode(nops_cnt);
           block->insert_node(nop, j++);
           last_inst++;
           _cfg->map_node_to_block(nop, block);
+          // Ensure enough space.
+          cb->insts()->maybe_expand_to_ensure_remaining(MAX_inst_size);
+          if ((cb->blob() == NULL) || (!CompileBroker::should_compile_new_jobs())) {
+            C->record_failure("CodeCache is full");
+            return;
+          }
           nop->emit(*cb, _regalloc);
           cb->flush_bundle(true);
           current_offset = cb->insts_size();

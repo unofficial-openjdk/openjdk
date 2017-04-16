@@ -23,13 +23,13 @@
 
 /**
  * @test
- * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
- * @modules jdk.vm.ci/jdk.vm.ci.hotspot
- *          jdk.vm.ci/jdk.vm.ci.code
- *          jdk.vm.ci/jdk.vm.ci.code.site
- *          jdk.vm.ci/jdk.vm.ci.meta
- *          jdk.vm.ci/jdk.vm.ci.runtime
- *          jdk.vm.ci/jdk.vm.ci.common
+ * @requires vm.jvmci
+ * @modules jdk.internal.vm.ci/jdk.vm.ci.hotspot
+ *          jdk.internal.vm.ci/jdk.vm.ci.code
+ *          jdk.internal.vm.ci/jdk.vm.ci.code.site
+ *          jdk.internal.vm.ci/jdk.vm.ci.meta
+ *          jdk.internal.vm.ci/jdk.vm.ci.runtime
+ *          jdk.internal.vm.ci/jdk.vm.ci.common
  * @compile CodeInstallerTest.java
  * @run junit/othervm -da:jdk.vm.ci... -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI compiler.jvmci.errors.TestInvalidDebugInfo
  */

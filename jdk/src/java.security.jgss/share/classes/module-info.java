@@ -27,6 +27,9 @@
  * Defines the Java binding of the IETF Generic Security Services API (GSS-API).
  * <P>
  * This module also contains GSS-API mechanisms including Kerberos v5 and SPNEGO.
+ *
+ * @moduleGraph
+ * @since 9
  */
 module java.security.jgss {
     requires java.naming;
@@ -42,6 +45,12 @@ module java.security.jgss {
         jdk.security.jgss;
     exports sun.security.krb5.internal.ktab to
         jdk.security.auth;
+
+    // Opens for reflective instantiation of sun.net.www.protocol.http.spnego.NegotiatorImpl
+    // to sun.net.www.protocol.http.HttpURLConnection
+    opens sun.net.www.protocol.http.spnego to
+        java.base;
+
     provides java.security.Provider with sun.security.jgss.SunProvider;
     provides sun.security.ssl.ClientKeyExchangeService
         with sun.security.krb5.internal.ssl.Krb5KeyExchangeService;

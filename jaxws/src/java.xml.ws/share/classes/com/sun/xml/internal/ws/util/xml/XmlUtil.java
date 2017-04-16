@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,19 +26,20 @@
 package com.sun.xml.internal.ws.util.xml;
 
 import com.sun.istack.internal.Nullable;
-import com.sun.org.apache.xml.internal.resolver.Catalog;
-import com.sun.org.apache.xml.internal.resolver.CatalogManager;
-import com.sun.org.apache.xml.internal.resolver.tools.CatalogResolver;
-import com.sun.xml.internal.ws.server.ServerRtException;
 import com.sun.xml.internal.ws.util.ByteArrayBuffer;
-import org.w3c.dom.Attr;
-import org.w3c.dom.Element;
-import org.w3c.dom.EntityReference;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.w3c.dom.Text;
-import org.xml.sax.*;
-
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.xml.XMLConstants;
 import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -55,23 +56,22 @@ import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
-import javax.xml.ws.WebServiceException;
 import javax.xml.xpath.XPathFactory;
 import javax.xml.xpath.XPathFactoryConfigurationException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.net.URL;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
-import java.util.StringTokenizer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.w3c.dom.Attr;
+import org.w3c.dom.Element;
+import org.w3c.dom.EntityReference;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.w3c.dom.Text;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXNotRecognizedException;
+import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.XMLReader;
 
 /**
  * @author WS Development Team
@@ -176,7 +176,7 @@ public class XmlUtil {
     }
 
     public static List<String> parseTokenList(String tokenList) {
-        List<String> result = new ArrayList<String>();
+        List<String> result = new ArrayList<>();
         StringTokenizer tokenizer = new StringTokenizer(tokenList, " ");
         while (tokenizer.hasMoreTokens()) {
             result.add(tokenizer.nextToken());
@@ -239,6 +239,7 @@ public class XmlUtil {
 
     /**
      * Creates a new identity transformer.
+     * @return
      */
     public static Transformer newTransformer() {
         try {
@@ -250,9 +251,17 @@ public class XmlUtil {
 
     /**
      * Performs identity transformation.
+     * @param <T>
+     * @param src
+     * @param result
+     * @return
+     * @throws javax.xml.transform.TransformerException
+     * @throws java.io.IOException
+     * @throws org.xml.sax.SAXException
+     * @throws javax.xml.parsers.ParserConfigurationException
      */
-    public static <T extends Result>
-    T identityTransform(Source src, T result) throws TransformerException, SAXException, ParserConfigurationException, IOException {
+    public static <T extends Result> T identityTransform(Source src, T result)
+            throws TransformerException, SAXException, ParserConfigurationException, IOException {
         if (src instanceof StreamSource) {
             // work around a bug in JAXP in JDK6u4 and earlier where the namespace processing
             // is not turned on by default
@@ -278,78 +287,23 @@ public class XmlUtil {
         return is;
     }
 
-    /*
-    * Gets an EntityResolver using XML catalog
-    */
-     public static EntityResolver createEntityResolver(@Nullable URL catalogUrl) {
-        // set up a manager
-        CatalogManager manager = new CatalogManager();
-        manager.setIgnoreMissingProperties(true);
-        // Using static catalog may  result in to sharing of the catalog by multiple apps running in a container
-        manager.setUseStaticCatalog(false);
-        Catalog catalog = manager.getCatalog();
-        try {
-            if (catalogUrl != null) {
-                catalog.parseCatalog(catalogUrl);
-            }
-        } catch (IOException e) {
-            throw new ServerRtException("server.rt.err",e);
-        }
-        return workaroundCatalogResolver(catalog);
+    /**
+     * Gets an EntityResolver using XML catalog
+     *
+     * @param catalogUrl
+     * @return
+     */
+    public static EntityResolver createEntityResolver(@Nullable URL catalogUrl) {
+        return XmlCatalogUtil.createEntityResolver(catalogUrl);
     }
 
     /**
      * Gets a default EntityResolver for catalog at META-INF/jaxws-catalog.xml
+     *
+     * @return
      */
     public static EntityResolver createDefaultCatalogResolver() {
-
-        // set up a manager
-        CatalogManager manager = new CatalogManager();
-        manager.setIgnoreMissingProperties(true);
-        // Using static catalog may  result in to sharing of the catalog by multiple apps running in a container
-        manager.setUseStaticCatalog(false);
-        // parse the catalog
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        Enumeration<URL> catalogEnum;
-        Catalog catalog = manager.getCatalog();
-        try {
-            if (cl == null) {
-                catalogEnum = ClassLoader.getSystemResources("META-INF/jax-ws-catalog.xml");
-            } else {
-                catalogEnum = cl.getResources("META-INF/jax-ws-catalog.xml");
-            }
-
-            while(catalogEnum.hasMoreElements()) {
-                URL url = catalogEnum.nextElement();
-                catalog.parseCatalog(url);
-            }
-        } catch (IOException e) {
-            throw new WebServiceException(e);
-        }
-
-        return workaroundCatalogResolver(catalog);
-    }
-
-    /**
-     *  Default CatalogResolver implementation is broken as it depends on CatalogManager.getCatalog() which will always create a new one when
-     *  useStaticCatalog is false.
-     *  This returns a CatalogResolver that uses the catalog passed as parameter.
-     * @param catalog
-     * @return  CatalogResolver
-     */
-    private static CatalogResolver workaroundCatalogResolver(final Catalog catalog) {
-        // set up a manager
-        CatalogManager manager = new CatalogManager() {
-            @Override
-            public Catalog getCatalog() {
-                return catalog;
-            }
-        };
-        manager.setIgnoreMissingProperties(true);
-        // Using static catalog may  result in to sharing of the catalog by multiple apps running in a container
-        manager.setUseStaticCatalog(false);
-
-        return new CatalogResolver(manager);
+        return XmlCatalogUtil.createDefaultCatalogResolver();
     }
 
     /**
@@ -395,7 +349,7 @@ public class XmlUtil {
         SAXParserFactory factory = SAXParserFactory.newInstance();
         try {
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, !xmlSecurityDisabled(disableSecurity));
-        } catch (Exception e) {
+        } catch (ParserConfigurationException | SAXNotRecognizedException | SAXNotSupportedException e) {
             LOGGER.log(Level.WARNING, "Factory [{0}] doesn't support secure xml processing!", new Object[]{factory.getClass().getName()});
         }
         return factory;

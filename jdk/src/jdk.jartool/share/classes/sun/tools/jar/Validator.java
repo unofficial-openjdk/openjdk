@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,32 +25,123 @@
 
 package sun.tools.jar;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.module.InvalidModuleDescriptorException;
+import java.lang.module.ModuleDescriptor;
+import java.lang.module.ModuleDescriptor.Exports;
+import java.lang.module.InvalidModuleDescriptorException;
+import java.lang.module.ModuleDescriptor.Opens;
+import java.lang.module.ModuleDescriptor.Provides;
+import java.lang.module.ModuleDescriptor.Requires;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 
-final class Validator implements Consumer<JarEntry> {
+import static java.util.jar.JarFile.MANIFEST_NAME;
+import static sun.tools.jar.Main.VERSIONS_DIR;
+import static sun.tools.jar.Main.VERSIONS_DIR_LENGTH;
+import static sun.tools.jar.Main.MODULE_INFO;
+import static sun.tools.jar.Main.getMsg;
+import static sun.tools.jar.Main.formatMsg;
+import static sun.tools.jar.Main.formatMsg2;
+import static sun.tools.jar.Main.toBinaryName;
+import static sun.tools.jar.Main.isModuleInfoEntry;
+
+final class Validator {
     private final static boolean DEBUG = Boolean.getBoolean("jar.debug");
     private final  Map<String,FingerPrint> fps = new HashMap<>();
-    private final int vdlen = Main.VERSIONS_DIR.length();
     private final Main main;
     private final JarFile jf;
     private int oldVersion = -1;
     private String currentTopLevelName;
     private boolean isValid = true;
+    private Set<String> concealedPkgs = Collections.emptySet();
+    private ModuleDescriptor md;
+    private String mdName;
 
-    Validator(Main main, JarFile jf) {
+    private Validator(Main main, JarFile jf) {
         this.main = main;
         this.jf = jf;
+        checkModuleDescriptor(MODULE_INFO);
     }
 
-    boolean isValid() {
-        return isValid;
+    static boolean validate(Main main, JarFile jf) throws IOException {
+        return new Validator(main, jf).validate();
     }
+
+    private boolean validate() {
+        try {
+            jf.stream()
+              .filter(e -> !e.isDirectory() &&
+                      !e.getName().equals(MANIFEST_NAME))
+              .sorted(ENTRY_COMPARATOR)
+              .forEachOrdered(e -> validate(e));
+            return isValid;
+        } catch (InvalidJarException e) {
+            error(formatMsg("error.validator.bad.entry.name", e.getMessage()));
+        }
+        return false;
+    }
+
+    private static class InvalidJarException extends RuntimeException {
+        private static final long serialVersionUID = -3642329147299217726L;
+        InvalidJarException(String msg) {
+            super(msg);
+        }
+    }
+
+    // sort base entries before versioned entries, and sort entry classes with
+    // nested classes so that the top level class appears before the associated
+    // nested class
+    static Comparator<String> ENTRYNAME_COMPARATOR = (s1, s2) ->  {
+
+        if (s1.equals(s2)) return 0;
+        boolean b1 = s1.startsWith(VERSIONS_DIR);
+        boolean b2 = s2.startsWith(VERSIONS_DIR);
+        if (b1 && !b2) return 1;
+        if (!b1 && b2) return -1;
+        int n = 0; // starting char for String compare
+        if (b1 && b2) {
+            // normally strings would be sorted so "10" goes before "9", but
+            // version number strings need to be sorted numerically
+            n = VERSIONS_DIR.length();   // skip the common prefix
+            int i1 = s1.indexOf('/', n);
+            int i2 = s1.indexOf('/', n);
+            if (i1 == -1) throw new InvalidJarException(s1);
+            if (i2 == -1) throw new InvalidJarException(s2);
+            // shorter version numbers go first
+            if (i1 != i2) return i1 - i2;
+            // otherwise, handle equal length numbers below
+        }
+        int l1 = s1.length();
+        int l2 = s2.length();
+        int lim = Math.min(l1, l2);
+        for (int k = n; k < lim; k++) {
+            char c1 = s1.charAt(k);
+            char c2 = s2.charAt(k);
+            if (c1 != c2) {
+                // change natural ordering so '.' comes before '$'
+                // i.e. top level classes come before nested classes
+                if (c1 == '$' && c2 == '.') return 1;
+                if (c1 == '.' && c2 == '$') return -1;
+                return c1 - c2;
+            }
+        }
+        return l1 - l2;
+    };
+
+    static Comparator<ZipEntry> ENTRY_COMPARATOR =
+        Comparator.comparing(ZipEntry::getName, ENTRYNAME_COMPARATOR);
 
     /*
      *  Validator has state and assumes entries provided to accept are ordered
@@ -59,7 +150,7 @@ final class Validator implements Consumer<JarEntry> {
      *  classes must be ordered so that the top level class is before the associated
      *  nested class(es).
     */
-    public void accept(JarEntry je) {
+    public void validate(JarEntry je) {
         String entryName = je.getName();
 
         // directories are always accepted
@@ -68,26 +159,34 @@ final class Validator implements Consumer<JarEntry> {
             return;
         }
 
+        // validate the versioned module-info
+        if (isModuleInfoEntry(entryName)) {
+            if (!entryName.equals(mdName))
+                checkModuleDescriptor(entryName);
+            return;
+        }
+
         // figure out the version and basename from the JarEntry
         int version;
         String basename;
-        if (entryName.startsWith(Main.VERSIONS_DIR)) {
-            int n = entryName.indexOf("/", vdlen);
+        String versionStr = null;;
+        if (entryName.startsWith(VERSIONS_DIR)) {
+            int n = entryName.indexOf("/", VERSIONS_DIR_LENGTH);
             if (n == -1) {
-                main.error(Main.formatMsg("error.validator.version.notnumber", entryName));
+                error(formatMsg("error.validator.version.notnumber", entryName));
                 isValid = false;
                 return;
             }
-            String v = entryName.substring(vdlen, n);
+            versionStr = entryName.substring(VERSIONS_DIR_LENGTH, n);
             try {
-                version = Integer.parseInt(v);
+                version = Integer.parseInt(versionStr);
             } catch (NumberFormatException x) {
-                main.error(Main.formatMsg("error.validator.version.notnumber", entryName));
+                error(formatMsg("error.validator.version.notnumber", entryName));
                 isValid = false;
                 return;
             }
             if (n == entryName.length()) {
-                main.error(Main.formatMsg("error.validator.entryname.tooshort", entryName));
+                error(formatMsg("error.validator.entryname.tooshort", entryName));
                 isValid = false;
                 return;
             }
@@ -101,6 +200,11 @@ final class Validator implements Consumer<JarEntry> {
         if (oldVersion != version) {
             oldVersion = version;
             currentTopLevelName = null;
+            if (md == null && versionStr != null) {
+                // don't have a base module-info.class yet, try to see if
+                // a versioned one exists
+                checkModuleDescriptor(VERSIONS_DIR + versionStr + "/" + MODULE_INFO);
+            }
         }
 
         // analyze the entry, keeping key attributes
@@ -108,7 +212,7 @@ final class Validator implements Consumer<JarEntry> {
         try (InputStream is = jf.getInputStream(je)) {
             fp = new FingerPrint(basename, is.readAllBytes());
         } catch (IOException x) {
-            main.error(x.getMessage());
+            error(x.getMessage());
             isValid = false;
             return;
         }
@@ -123,7 +227,7 @@ final class Validator implements Consumer<JarEntry> {
                     fps.put(internalName, fp);
                     return;
                 }
-                main.error(Main.formatMsg("error.validator.isolated.nested.class", entryName));
+                error(formatMsg("error.validator.isolated.nested.class", entryName));
                 isValid = false;
                 return;
             }
@@ -153,11 +257,11 @@ final class Validator implements Consumer<JarEntry> {
                 }
                 if (fp.isPublicClass()) {
                     if (!isConcealed(internalName)) {
-                        main.error(Main.formatMsg("error.validator.new.public.class", entryName));
+                        error(Main.formatMsg("error.validator.new.public.class", entryName));
                         isValid = false;
                         return;
                     }
-                    main.warn(Main.formatMsg("warn.validator.concealed.public.class", entryName));
+                    warn(formatMsg("warn.validator.concealed.public.class", entryName));
                     debug("%s is a public class entry in a concealed package", entryName);
                 }
                 debug("%s is a non-public class entry", entryName);
@@ -173,7 +277,7 @@ final class Validator implements Consumer<JarEntry> {
 
         // are the two classes/resources identical?
         if (fp.isIdentical(matchFp)) {
-            main.warn(Main.formatMsg("warn.validator.identical.entry", entryName));
+            warn(formatMsg("warn.validator.identical.entry", entryName));
             return;  // it's okay, just takes up room
         }
         debug("sha1 not equal -- different bytes");
@@ -188,12 +292,12 @@ final class Validator implements Consumer<JarEntry> {
             }
             debug("%s is a class entry", entryName);
             if (!fp.isCompatibleVersion(matchFp)) {
-                main.error(Main.formatMsg("error.validator.incompatible.class.version", entryName));
+                error(formatMsg("error.validator.incompatible.class.version", entryName));
                 isValid = false;
                 return;
             }
             if (!fp.isSameAPI(matchFp)) {
-                main.error(Main.formatMsg("error.validator.different.api", entryName));
+                error(formatMsg("error.validator.different.api", entryName));
                 isValid = false;
                 return;
             }
@@ -208,9 +312,105 @@ final class Validator implements Consumer<JarEntry> {
         }
         debug("%s is a resource", entryName);
 
-        main.warn(Main.formatMsg("warn.validator.resources.with.same.name", entryName));
+        warn(formatMsg("warn.validator.resources.with.same.name", entryName));
         fps.put(internalName, fp);
         return;
+    }
+
+    /**
+     * Checks whether or not the given versioned module descriptor's attributes
+     * are valid when compared against the root/base module descriptor.
+     *
+     * A versioned module descriptor must be identical to the root/base module
+     * descriptor, with two exceptions:
+     *  - A versioned descriptor can have different non-public `requires`
+     *    clauses of platform ( `java.*` and `jdk.*` ) modules, and
+     *  - A versioned descriptor can have different `uses` clauses, even of
+     *    service types defined outside of the platform modules.
+     */
+    private void checkModuleDescriptor(String miName) {
+        ZipEntry je = jf.getEntry(miName);
+        if (je != null) {
+            try (InputStream jis = jf.getInputStream(je)) {
+                ModuleDescriptor md = ModuleDescriptor.read(jis);
+                // Initialize the base md if it's not yet. A "base" md can be either the
+                // root module-info.class or the first versioned module-info.class
+                ModuleDescriptor base = this.md;
+
+                if (base == null) {
+                    concealedPkgs = new HashSet<>(md.packages());
+                    md.exports().stream().map(Exports::source).forEach(concealedPkgs::remove);
+                    md.opens().stream().map(Opens::source).forEach(concealedPkgs::remove);
+                    // must have the implementation class of the services it 'provides'.
+                    if (md.provides().stream().map(Provides::providers)
+                          .flatMap(List::stream)
+                          .filter(p -> jf.getEntry(toBinaryName(p)) == null)
+                          .peek(p -> error(formatMsg("error.missing.provider", p)))
+                          .count() != 0) {
+                        isValid = false;
+                        return;
+                    }
+                    this.md = md;
+                    this.mdName = miName;
+                    return;
+                }
+
+                if (!base.name().equals(md.name())) {
+                    error(getMsg("error.validator.info.name.notequal"));
+                    isValid = false;
+                }
+                if (!base.requires().equals(md.requires())) {
+                    Set<Requires> baseRequires = base.requires();
+                    for (Requires r : md.requires()) {
+                        if (baseRequires.contains(r))
+                            continue;
+                        if (r.modifiers().contains(Requires.Modifier.TRANSITIVE)) {
+                            error(getMsg("error.validator.info.requires.transitive"));
+                            isValid = false;
+                        } else if (!isPlatformModule(r.name())) {
+                            error(getMsg("error.validator.info.requires.added"));
+                            isValid = false;
+                        }
+                    }
+                    for (Requires r : baseRequires) {
+                        Set<Requires> mdRequires = md.requires();
+                        if (mdRequires.contains(r))
+                            continue;
+                        if (!isPlatformModule(r.name())) {
+                            error(getMsg("error.validator.info.requires.dropped"));
+                            isValid = false;
+                        }
+                    }
+                }
+                if (!base.exports().equals(md.exports())) {
+                    error(getMsg("error.validator.info.exports.notequal"));
+                    isValid = false;
+                }
+                if (!base.opens().equals(md.opens())) {
+                    error(getMsg("error.validator.info.opens.notequal"));
+                    isValid = false;
+                }
+                if (!base.provides().equals(md.provides())) {
+                    error(getMsg("error.validator.info.provides.notequal"));
+                    isValid = false;
+                }
+                if (!base.mainClass().equals(md.mainClass())) {
+                    error(formatMsg("error.validator.info.manclass.notequal", je.getName()));
+                    isValid = false;
+                }
+                if (!base.version().equals(md.version())) {
+                    error(formatMsg("error.validator.info.version.notequal", je.getName()));
+                    isValid = false;
+                }
+            } catch (Exception x) {
+                error(x.getMessage() + " : " + miName);
+                this.isValid = false;
+            }
+        }
+    }
+
+    private static boolean isPlatformModule(String name) {
+        return name.startsWith("java.") || name.startsWith("jdk.");
     }
 
     private boolean checkInternalName(String entryName, String basename, String internalName) {
@@ -218,7 +418,7 @@ final class Validator implements Consumer<JarEntry> {
         if (internalName.equals(className)) {
             return true;
         }
-        main.error(Main.formatMsg2("error.validator.names.mismatch",
+        error(formatMsg2("error.validator.names.mismatch",
                 entryName, internalName.replace("/", ".")));
         return false;
     }
@@ -231,7 +431,7 @@ final class Validator implements Consumer<JarEntry> {
             return true;
         }
         debug("top level class was not accepted");
-        main.error(Main.formatMsg("error.validator.isolated.nested.class", entryName));
+        error(formatMsg("error.validator.isolated.nested.class", entryName));
         return false;
     }
 
@@ -240,16 +440,24 @@ final class Validator implements Consumer<JarEntry> {
     }
 
     private boolean isConcealed(String internalName) {
-        if (main.concealedPackages.isEmpty()) {
+        if (concealedPkgs.isEmpty()) {
             return false;
         }
         int idx = internalName.lastIndexOf('/');
         String pkgName = idx != -1 ? internalName.substring(0, idx).replace('/', '.') : "";
-        return main.concealedPackages.contains(pkgName);
+        return concealedPkgs.contains(pkgName);
     }
 
     private void debug(String fmt, Object... args) {
         if (DEBUG) System.err.format(fmt, args);
     }
-}
 
+    private void error(String msg) {
+        main.error(msg);
+    }
+
+    private void warn(String msg) {
+        main.warn(msg);
+    }
+
+}

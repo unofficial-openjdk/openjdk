@@ -34,12 +34,13 @@ import javax.lang.model.element.TypeElement;
 
 import jdk.javadoc.doclet.Doclet;
 import jdk.javadoc.doclet.DocletEnvironment;
-import jdk.javadoc.doclets.StandardDoclet;
+import jdk.javadoc.doclet.StandardDoclet;
 import jdk.javadoc.internal.doclets.formats.html.HtmlDoclet;
 import jdk.javadoc.internal.doclets.toolkit.builders.AbstractBuilder;
 import jdk.javadoc.internal.doclets.toolkit.builders.BuilderFactory;
 import jdk.javadoc.internal.doclets.toolkit.util.ClassTree;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
+import jdk.javadoc.internal.doclets.toolkit.util.UncheckedDocletException;
 import jdk.javadoc.internal.doclets.toolkit.util.InternalException;
 import jdk.javadoc.internal.doclets.toolkit.util.PackageListWriter;
 import jdk.javadoc.internal.doclets.toolkit.util.ResourceIOException;
@@ -99,8 +100,8 @@ public abstract class AbstractDoclet implements Doclet {
      */
     @Override
     public boolean run(DocletEnvironment docEnv) {
-        configuration = configuration();
-        configuration.docEnv = docEnv;
+        configuration = getConfiguration();
+        configuration.initConfiguration(docEnv);
         configuration.cmtUtils = new CommentUtils(configuration);
         configuration.utils = new Utils(configuration);
         utils = configuration.utils;
@@ -112,8 +113,12 @@ public abstract class AbstractDoclet implements Doclet {
         }
 
         try {
-            startGeneration(docEnv);
-            return true;
+            try {
+                startGeneration(docEnv);
+                return true;
+            } catch (UncheckedDocletException e) {
+                throw (DocletException) e.getCause();
+            }
 
         } catch (DocFileIOException e) {
             switch (e.mode) {
@@ -171,13 +176,12 @@ public abstract class AbstractDoclet implements Doclet {
         return SourceVersion.RELEASE_9;
     }
 
-
     /**
      * Create the configuration instance and returns it.
      *
      * @return the configuration of the doclet.
      */
-    public abstract Configuration configuration();
+    public abstract Configuration getConfiguration();
 
     /**
      * Start the generation of files. Call generate methods in the individual
@@ -189,7 +193,7 @@ public abstract class AbstractDoclet implements Doclet {
      * @throws DocletException if there is a problem while generating the documentation
      */
     private void startGeneration(DocletEnvironment docEnv) throws DocletException {
-        if (docEnv.getIncludedTypeElements().isEmpty()) {
+        if (configuration.getIncludedTypeElements().isEmpty()) {
             messages.error("doclet.No_Public_Classes_To_Document");
             return;
         }
@@ -263,10 +267,8 @@ public abstract class AbstractDoclet implements Doclet {
             throws DocletException {
         generateClassFiles(classtree);
         SortedSet<PackageElement> packages = new TreeSet<>(utils.makePackageComparator());
-        packages.addAll(configuration.getSpecifiedPackages());
-        configuration.modulePackages.values().stream().forEach(pset -> {
-            packages.addAll(pset);
-        });
+        packages.addAll(configuration.getSpecifiedPackageElements());
+        configuration.modulePackages.values().stream().forEach(packages::addAll);
         for (PackageElement pkg : packages) {
             generateClassFiles(utils.getAllClasses(pkg), classtree);
         }

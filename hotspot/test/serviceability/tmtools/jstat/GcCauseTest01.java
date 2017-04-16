@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,13 +41,13 @@ public class GcCauseTest01 {
     public static void main(String[] args) throws Exception {
 
         // We will be running "jstat -gc" tool
-        JstatGcCauseTool jstatGcTool = new JstatGcCauseTool(ProcessHandle.current().getPid());
+        JstatGcCauseTool jstatGcTool = new JstatGcCauseTool(ProcessHandle.current().pid());
 
         // Run once and get the  results asserting that they are reasonable
         JstatGcCauseResults measurement1 = jstatGcTool.measure();
         measurement1.assertConsistency();
 
-        GcProvoker gcProvoker = GcProvoker.createGcProvoker();
+        GcProvoker gcProvoker = new GcProvoker();
 
         // Provoke GC then run the tool again and get the results  asserting that they are reasonable
         gcProvoker.provokeGc();

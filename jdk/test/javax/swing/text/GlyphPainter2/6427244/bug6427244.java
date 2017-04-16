@@ -23,11 +23,11 @@
  */
 
 /* @test
-   @bug 6427244 8144240
+   @bug 6427244 8144240 8166003 8169879
    @summary Test that pressing HOME correctly moves caret in I18N document.
    @author Sergey Groznyh
    @library ../../../regtesthelpers
-   @build JRobot Util TestCase
+   @build JRobot
    @run main bug6427244
 */
 
@@ -36,12 +36,13 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Shape;
 import java.awt.event.KeyEvent;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.text.Position;
 
-public class bug6427244 extends TestCase {
+public class bug6427244 {
     private static final JRobot ROBOT = JRobot.getRobot();
 
     final static int TP_SIZE = 200;
@@ -68,10 +69,12 @@ public class bug6427244 extends TestCase {
         bug6427244 t = new bug6427244();
         for (String space: SPACES) {
             t.init(space);
-            t.runAllTests();
+            t.testCaretPosition();
         }
 
         System.out.println("OK");
+        // Dispose the test interface upon completion
+        t.destroyTestInterface();
     }
 
     void init(final String space) {
@@ -105,24 +108,74 @@ public class bug6427244 extends TestCase {
                     dim = c.getSize();
                 }
             });
-            Util.blockTillDisplayed(tp);
+            blockTillDisplayed(tp);
             ROBOT.waitForIdle();
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
 
+    void destroyTestInterface() {
+        try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                    // Dispose the frame
+                    jf.dispose();
+                 }
+            });
+        } catch (Exception ex) {
+            // No-op
+        }
+    }
+
+    void blockTillDisplayed(JComponent comp) throws Exception {
+        while (comp != null && isCompVisible == false) {
+            try {
+                SwingUtilities.invokeAndWait(new Runnable() {
+                    @Override
+                    public void run() {
+                        isCompVisible = comp.isVisible();
+                     }
+                });
+
+                if (isCompVisible == false) {
+                    // A short wait for component to be visible
+                    Thread.sleep(1000);
+                }
+            } catch (InterruptedException ex) {
+                // No-op. Thread resumed from sleep
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
     public void testCaretPosition() {
-        Point p = tp.getLocationOnScreen();
-        // the right-top corner position
-        p.x += (dim.width - 5);
-        p.y += 5;
-        ROBOT.mouseMove(p.x, p.y);
+        final Point p[] = new Point[1];
+        try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                public void run() {
+                    p[0] = tp.getLocationOnScreen();
+
+                    // the right-top corner position
+                    p[0].x += (dim.width - 5);
+                    p[0].y += 5;
+                }
+            });
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+        ROBOT.mouseMove(p[0].x, p[0].y);
         ROBOT.clickMouse();
         ROBOT.hitKey(KeyEvent.VK_HOME);
         ROBOT.waitForIdle();
         // this will fail if caret moves out of the 1st line.
-        assertEquals(0, getCaretOrdinate());
+        if (getCaretOrdinate() != 0) {
+            // Dispose the test interface upon completion
+            destroyTestInterface();
+            throw new RuntimeException("Test Failed.");
+        }
     }
 
     int getCaretOrdinate() {
@@ -147,7 +200,8 @@ public class bug6427244 extends TestCase {
         return y[0];
     }
 
-    JFrame jf;
-    JTextPane tp;
-    Dimension dim;
+    private JFrame jf;
+    private JTextPane tp;
+    private Dimension dim;
+    private volatile boolean isCompVisible = false;
 }

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -85,7 +85,7 @@ endif
 
 ################################################################################
 
-java.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference '-Xdoclint/package:java.*,javax.*'
+java.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:java.*,javax.*'
 
 ################################################################################
 
@@ -95,7 +95,7 @@ java.datatransfer_COPY := flavormap.properties
 ################################################################################
 
 java.desktop_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference \
-    '-Xdoclint/package:java.*,javax.*' -Xlint:-deprecation,-exports
+    '-Xdoclint/package:java.*,javax.*' -Xlint:exports
 java.desktop_COPY := .gif .png .wav .txt .xml .css .pf
 java.desktop_CLEAN := iio-plugin.properties cursors.properties
 
@@ -247,6 +247,10 @@ java.management_ADD_JAVAC_FLAGS := -Xdoclint:all/protected,-reference '-Xdoclint
 
 ################################################################################
 
+java.management.rmi_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:javax.*'
+
+################################################################################
+
 java.prefs_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:java.*,javax.*'
 
 ################################################################################
@@ -344,11 +348,9 @@ jdk.charsets_COPY := .dat
 
 ################################################################################
 
-jdk.accessibility_ADD_JAVAC_FLAGS := -Xlint:-exports
-
 ################################################################################
 
-jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:-com.sun.tools.*' \
+jdk.compiler_ADD_JAVAC_FLAGS := -Xdoclint:all/protected '-Xdoclint/package:-com.sun.tools.*,-jdk.internal.*' \
     -XDstringConcat=inline
 jdk.compiler_CLEAN_FILES := $(wildcard \
     $(patsubst %, $(JDK_TOPDIR)/src/jdk.compiler/share/classes/%/*.properties, \
@@ -356,12 +358,16 @@ jdk.compiler_CLEAN_FILES := $(wildcard \
 
 ################################################################################
 
-jdk.jshell_ADD_JAVAC_FLAGS := -Xlint:-exports
+jdk.hotspot.agent_ADD_JAVAC_FLAGS := $(DISABLE_WARNINGS),-overrides
+jdk.hotspot.agent_COPY := .gif .png sa.js .properties
 
 ################################################################################
 
-jdk.hotspot.agent_ADD_JAVAC_FLAGS := $(DISABLE_WARNINGS),-overrides
-jdk.hotspot.agent_COPY := .gif .png sa.js .properties
+jdk.editpad_COPY := .properties
+
+################################################################################
+
+jdk.jshell_COPY := .jsh .properties
 
 ################################################################################
 
@@ -378,6 +384,10 @@ jdk.dynalink_CLEAN := .properties
 ################################################################################
 
 jdk.javadoc_COPY := .xml .css .js .png
+
+################################################################################
+
+jdk.jartool_ADD_JAVAC_FLAGS := -XDstringConcat=inline
 
 ################################################################################
 
@@ -444,11 +454,55 @@ jdk.dev_COPY := .js oqlhelp.html .txt
 
 ################################################################################
 
-jdk.jvmstat_COPY := aliasmap
+jdk.internal.jvmstat_COPY := aliasmap
 
 ################################################################################
 
-jdk.vm.ci_ADD_JAVAC_FLAGS := -Xlint:-exports
+# -parameters provides method's parameters information in class file,
+# JVMCI compilers make use of that information for various sanity checks.
+# Don't use Indy strings concatenation to have good JVMCI startup performance.
+
+jdk.internal.vm.ci_ADD_JAVAC_FLAGS := -parameters -Xlint:-exports -XDstringConcat=inline
+
+################################################################################
+
+jdk.internal.vm.compiler_ADD_JAVAC_FLAGS := -parameters -XDstringConcat=inline
+
+jdk.internal.vm.compiler_EXCLUDES += \
+    org.graalvm.compiler.core.match.processor \
+    org.graalvm.compiler.nodeinfo.processor \
+    org.graalvm.compiler.options.processor \
+    org.graalvm.compiler.serviceprovider.processor \
+    org.graalvm.compiler.replacements.verifier \
+    org.graalvm.compiler.api.directives.test \
+    org.graalvm.compiler.api.test \
+    org.graalvm.compiler.asm.aarch64.test \
+    org.graalvm.compiler.asm.amd64.test \
+    org.graalvm.compiler.asm.sparc.test \
+    org.graalvm.compiler.asm.test \
+    org.graalvm.compiler.core.amd64.test \
+    org.graalvm.compiler.core.sparc.test \
+    org.graalvm.compiler.core.test \
+    org.graalvm.compiler.debug.test \
+    org.graalvm.compiler.graph.test \
+    org.graalvm.compiler.hotspot.amd64.test \
+    org.graalvm.compiler.hotspot.lir.test \
+    org.graalvm.compiler.hotspot.test \
+    org.graalvm.compiler.jtt \
+    org.graalvm.compiler.lir.jtt \
+    org.graalvm.compiler.lir.test \
+    org.graalvm.compiler.microbenchmarks \
+    org.graalvm.compiler.nodes.test \
+    org.graalvm.compiler.options.test \
+    org.graalvm.compiler.phases.common.test \
+    org.graalvm.compiler.replacements.test \
+    org.graalvm.compiler.test \
+    org.graalvm.compiler.virtual.bench \
+    #
+
+################################################################################
+
+jdk.aot_ADD_JAVAC_FLAGS := -parameters -XDstringConcat=inline
 
 ################################################################################
 
@@ -503,12 +557,28 @@ MODULESOURCEPATH := $(call GetModuleSrcPath)
 # Add imported modules to the modulepath
 MODULEPATH := $(call PathList, $(IMPORT_MODULES_CLASSES))
 
-ifeq ($(MODULE), jdk.vm.ci)
-  ## WORKAROUND jdk.vm.ci source structure issue
+ifeq ($(MODULE), jdk.internal.vm.ci)
+  ## WORKAROUND jdk.internal.vm.ci source structure issue
   JVMCI_MODULESOURCEPATH := $(MODULESOURCEPATH) \
       $(subst /$(MODULE)/,/*/, $(filter-out %processor/src, \
-          $(wildcard $(HOTSPOT_TOPDIR)/src/jdk.vm.ci/share/classes/*/src)))
+          $(wildcard $(HOTSPOT_TOPDIR)/src/$(MODULE)/share/classes/*/src)))
   MODULESOURCEPATH := $(call PathList, $(JVMCI_MODULESOURCEPATH))
+endif
+
+ifeq ($(MODULE), jdk.internal.vm.compiler)
+  ## WORKAROUND jdk.internal.vm.compiler source structure issue
+  VM_COMPILER_MODULESOURCEPATH := $(MODULESOURCEPATH) \
+      $(subst /$(MODULE)/,/*/, $(filter-out %processor/src %test/src %jtt/src %bench/src %microbenchmarks/src, \
+          $(wildcard $(HOTSPOT_TOPDIR)/src/$(MODULE)/share/classes/*/src)))
+  MODULESOURCEPATH := $(call PathList, $(VM_COMPILER_MODULESOURCEPATH))
+endif
+
+ifeq ($(MODULE), jdk.aot)
+  ## WORKAROUND jdk.aot source structure issue
+  AOT_MODULESOURCEPATH := $(MODULESOURCEPATH) \
+      $(subst /$(MODULE)/,/*/, $(filter-out %processor/src, \
+          $(wildcard $(HOTSPOT_TOPDIR)/src/$(MODULE)/share/classes/*/src)))
+  MODULESOURCEPATH := $(call PathList, $(AOT_MODULESOURCEPATH))
 endif
 
 $(eval $(call SetupJavaCompilation, $(MODULE), \

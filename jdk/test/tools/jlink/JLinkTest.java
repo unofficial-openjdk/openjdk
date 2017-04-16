@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.module.ModuleDescriptor;
-import java.lang.reflect.Layer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,6 +47,7 @@ import tests.JImageGenerator;
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jlink.internal
+ *          jdk.jlink/jdk.tools.jlink.plugin
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.compiler
  * @build tests.*
@@ -62,9 +62,11 @@ public class JLinkTest {
     // number of built-in plugins from jdk.jlink module
     private static int getNumJlinkPlugins() {
         ModuleDescriptor desc = Plugin.class.getModule().getDescriptor();
-        return desc.provides().
-                    get(Plugin.class.getName()).
-                    providers().size();
+        return desc.provides().stream()
+                .filter(p -> p.service().equals(Plugin.class.getName()))
+                .map(p -> p.providers().size())
+                .findAny()
+                .orElse(0);
     }
 
     private static boolean isOfJLinkModule(Plugin p) {
@@ -85,7 +87,7 @@ public class JLinkTest {
         {
             // number of built-in plugins
             List<Plugin> builtInPlugins = new ArrayList<>();
-            builtInPlugins.addAll(PluginRepository.getPlugins(Layer.boot()));
+            builtInPlugins.addAll(PluginRepository.getPlugins(ModuleLayer.boot()));
             totalPlugins = builtInPlugins.size();
             // actual num. of plugins loaded from jdk.jlink module
             int actualJLinkPlugins = 0;
@@ -189,17 +191,6 @@ public class JLinkTest {
         }
 
         {
-            // License files
-            String copied = "LICENSE";
-            String[] arr = copied.split(",");
-            String[] copyFiles = new String[2];
-            copyFiles[0] = "--copy-files";
-            copyFiles[1] = copied;
-            Path imageDir = helper.generateDefaultImage(copyFiles, "composite2").assertSuccess();
-            helper.checkImage(imageDir, "composite2", null, null, arr);
-        }
-
-        {
             // List plugins
             StringWriter writer = new StringWriter();
             PrintWriter pw = new PrintWriter(writer);
@@ -282,7 +273,7 @@ public class JLinkTest {
             String[] userOptions = {"--compress", "2", "foo" };
             String moduleName = "orphanarg1";
             helper.generateDefaultJModule(moduleName, "composite2");
-            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: orphan argument: foo");
+            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: invalid argument: foo");
         }
 
         // orphan argument - JDK-8166810
@@ -290,7 +281,14 @@ public class JLinkTest {
             String[] userOptions = {"--output", "foo", "bar" };
             String moduleName = "orphanarg2";
             helper.generateDefaultJModule(moduleName, "composite2");
-            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: orphan argument: bar");
+            helper.generateDefaultImage(userOptions, moduleName).assertFailure("Error: invalid argument: bar");
+        }
+
+        // basic check for --help - JDK-8173717
+        {
+            JImageGenerator.getJLinkTask()
+                    .option("--help")
+                    .call().assertSuccess();
         }
     }
 

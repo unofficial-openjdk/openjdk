@@ -382,6 +382,7 @@ public class BasicGraphicsUtils
         return c.getComponentOrientation().isLeftToRight();
     }
 
+    @SuppressWarnings("deprecation")
     static boolean isMenuShortcutKeyDown(InputEvent event) {
         return (event.getModifiers() &
                 Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0;
@@ -403,7 +404,7 @@ public class BasicGraphicsUtils
      */
     public static void drawString(JComponent c, Graphics2D g, String string,
                                   float x, float y) {
-        SwingUtilities2.drawString(c, g, string, (int) x, (int) y);
+        SwingUtilities2.drawString(c, g, string, x, y, true);
     }
 
     /**
@@ -439,7 +440,7 @@ public class BasicGraphicsUtils
     public static void drawStringUnderlineCharAt(JComponent c, Graphics2D g,
             String string, int underlinedIndex, float x, float y) {
         SwingUtilities2.drawStringUnderlineCharAt(c, g, string, underlinedIndex,
-                                                  (int) x, (int) y);
+                                                  x, y, true);
     }
 
     /**
@@ -482,6 +483,6 @@ public class BasicGraphicsUtils
      * @since 9
      */
     public static float getStringWidth(JComponent c, FontMetrics fm, String string) {
-        return SwingUtilities2.stringWidth(c, fm, string);
+        return SwingUtilities2.stringWidth(c, fm, string, true);
     }
 }

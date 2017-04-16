@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.stream.Collector;
 
 import javax.tools.JavaFileObject;
@@ -88,6 +89,7 @@ public class Types {
     final Names names;
     final boolean allowObjectToPrimitiveCast;
     final boolean allowDefaultMethods;
+    final boolean mapCapturesToBounds;
     final Check chk;
     final Enter enter;
     JCDiagnostic.Factory diags;
@@ -112,6 +114,7 @@ public class Types {
         Source source = Source.instance(context);
         allowObjectToPrimitiveCast = source.allowObjectToPrimitiveCast();
         allowDefaultMethods = source.allowDefaultMethods();
+        mapCapturesToBounds = source.mapCapturesToBounds();
         chk = Check.instance(context);
         enter = Enter.instance(context);
         capturedName = names.fromString("<captured wildcard>");
@@ -586,7 +589,7 @@ public class Types {
         csym.members_field = WriteableScope.create(csym);
         MethodSymbol instDescSym = new MethodSymbol(descSym.flags(), descSym.name, descType, csym);
         csym.members_field.enter(instDescSym);
-        Type.ClassType ctype = new Type.ClassType(Type.noType, List.<Type>nil(), csym);
+        Type.ClassType ctype = new Type.ClassType(Type.noType, List.nil(), csym);
         ctype.supertype_field = syms.objectType;
         ctype.interfaces_field = targets;
         csym.type = ctype;
@@ -2048,19 +2051,12 @@ public class Types {
             int value = ((Number)t.constValue()).intValue();
             switch (s.getTag()) {
             case BYTE:
-                if (Byte.MIN_VALUE <= value && value <= Byte.MAX_VALUE)
-                    return true;
-                break;
             case CHAR:
-                if (Character.MIN_VALUE <= value && value <= Character.MAX_VALUE)
-                    return true;
-                break;
             case SHORT:
-                if (Short.MIN_VALUE <= value && value <= Short.MAX_VALUE)
+            case INT:
+                if (s.getTag().checkRange(value))
                     return true;
                 break;
-            case INT:
-                return true;
             case CLASS:
                 switch (unboxedType(s).getTag()) {
                 case BYTE:
@@ -2100,7 +2096,7 @@ public class Types {
         }
         }
     // where
-        private TypeMapping<Boolean> erasure = new TypeMapping<Boolean>() {
+        private TypeMapping<Boolean> erasure = new StructuralTypeMapping<Boolean>() {
             private Type combineMetadata(final Type s,
                                          final Type t) {
                 if (t.getMetadata() != TypeMetadata.EMPTY) {
@@ -2850,20 +2846,64 @@ public class Types {
             return undef;
         }
 
+    public class CandidatesCache {
+        public Map<Entry, List<MethodSymbol>> cache = new WeakHashMap<>();
+
+        class Entry {
+            Type site;
+            MethodSymbol msym;
+
+            Entry(Type site, MethodSymbol msym) {
+                this.site = site;
+                this.msym = msym;
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                if (obj instanceof Entry) {
+                    Entry e = (Entry)obj;
+                    return e.msym == msym && isSameType(site, e.site);
+                } else {
+                    return false;
+                }
+            }
+
+            @Override
+            public int hashCode() {
+                return Types.this.hashCode(site) & ~msym.hashCode();
+            }
+        }
+
+        public List<MethodSymbol> get(Entry e) {
+            return cache.get(e);
+        }
+
+        public void put(Entry e, List<MethodSymbol> msymbols) {
+            cache.put(e, msymbols);
+        }
+    }
+
+    public CandidatesCache candidatesCache = new CandidatesCache();
 
     //where
     public List<MethodSymbol> interfaceCandidates(Type site, MethodSymbol ms) {
-        Filter<Symbol> filter = new MethodFilter(ms, site);
-        List<MethodSymbol> candidates = List.nil();
+        CandidatesCache.Entry e = candidatesCache.new Entry(site, ms);
+        List<MethodSymbol> candidates = candidatesCache.get(e);
+        if (candidates == null) {
+            Filter<Symbol> filter = new MethodFilter(ms, site);
+            List<MethodSymbol> candidates2 = List.nil();
             for (Symbol s : membersClosure(site, false).getSymbols(filter)) {
                 if (!site.tsym.isInterface() && !s.owner.isInterface()) {
                     return List.of((MethodSymbol)s);
-                } else if (!candidates.contains(s)) {
-                    candidates = candidates.prepend((MethodSymbol)s);
+                } else if (!candidates2.contains(s)) {
+                    candidates2 = candidates2.prepend((MethodSymbol)s);
                 }
             }
-            return prune(candidates);
+            candidates = prune(candidates2);
+            candidatesCache.put(e, candidates);
         }
+        return candidates;
+    }
 
     public List<MethodSymbol> prune(List<MethodSymbol> methods) {
         ListBuffer<MethodSymbol> methodsMin = new ListBuffer<>();
@@ -2980,7 +3020,7 @@ public class Types {
         return t.map(new Subst(from, to));
     }
 
-    private class Subst extends TypeMapping<Void> {
+    private class Subst extends StructuralTypeMapping<Void> {
         List<Type> from;
         List<Type> to;
 
@@ -3116,7 +3156,7 @@ public class Types {
                                      t.getMetadata());
             // the new bound should use the new type variable in place
             // of the old
-            tv.bound = subst(bound1, List.<Type>of(t), List.<Type>of(tv));
+            tv.bound = subst(bound1, List.of(t), List.of(tv));
             return tv;
         }
     }
@@ -3716,7 +3756,7 @@ public class Types {
                 List<Type> lci = List.of(asSuper(ts[startIdx], erasedSupertype.tsym));
                 for (int i = startIdx + 1 ; i < ts.length ; i++) {
                     Type superType = asSuper(ts[i], erasedSupertype.tsym);
-                    lci = intersect(lci, superType != null ? List.of(superType) : List.<Type>nil());
+                    lci = intersect(lci, superType != null ? List.of(superType) : List.nil());
                 }
                 candidates = candidates.appendList(lci);
             }
@@ -3806,20 +3846,26 @@ public class Types {
             return bounds.head;
         } else {                            // length > 1
             int classCount = 0;
+            List<Type> cvars = List.nil();
             List<Type> lowers = List.nil();
             for (Type bound : bounds) {
                 if (!bound.isInterface()) {
                     classCount++;
                     Type lower = cvarLowerBound(bound);
-                    if (bound != lower && !lower.hasTag(BOT))
-                        lowers = insert(lowers, lower);
+                    if (bound != lower && !lower.hasTag(BOT)) {
+                        cvars = cvars.append(bound);
+                        lowers = lowers.append(lower);
+                    }
                 }
             }
             if (classCount > 1) {
-                if (lowers.isEmpty())
+                if (lowers.isEmpty()) {
                     return createErrorType(errT);
-                else
-                    return glbFlattened(union(bounds, lowers), errT);
+                } else {
+                    // try again with lower bounds included instead of capture variables
+                    List<Type> newBounds = bounds.diff(cvars).appendList(lowers);
+                    return glb(newBounds);
+                }
             }
         }
         return makeIntersectionType(bounds);
@@ -4661,6 +4707,25 @@ public class Types {
     public static class MapVisitor<S> extends DefaultTypeVisitor<Type,S> {
         final public Type visit(Type t) { return t.accept(this, null); }
         public Type visitType(Type t, S s) { return t; }
+    }
+
+    /**
+     * An abstract class for mappings from types to types (see {@link Type#map(TypeMapping)}.
+     * This class implements the functional interface {@code Function}, that allows it to be used
+     * fluently in stream-like processing.
+     */
+    public static class TypeMapping<S> extends MapVisitor<S> implements Function<Type, Type> {
+        @Override
+        public Type apply(Type type) { return visit(type); }
+
+        List<Type> visit(List<Type> ts, S s) {
+            return ts.map(t -> visit(t, s));
+        }
+
+        @Override
+        public Type visitCapturedType(CapturedType t, S s) {
+            return visitTypeVar(t, s);
+        }
     }
     // </editor-fold>
 

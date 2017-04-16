@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -478,12 +478,12 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
       }
       break;
     case T_LONG:
-      assert(sig_bt[i+1] == T_VOID, "missing Half" );
+      assert((i + 1) < total_args_passed && sig_bt[i+1] == T_VOID, "missing Half" );
       regs[i].set2(VMRegImpl::stack2reg(dstack));
       dstack += 2;
       break;
     case T_DOUBLE:
-      assert(sig_bt[i+1] == T_VOID, "missing Half" );
+      assert((i + 1) < total_args_passed && sig_bt[i+1] == T_VOID, "missing Half" );
       if( freg_arg0 == (uint)i ) {
         regs[i].set2(xmm0->as_VMReg());
       } else if( freg_arg1 == (uint)i ) {
@@ -1001,7 +1001,7 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
     case T_DOUBLE: // The stack numbering is reversed from Java
       // Since C arguments do not get reversed, the ordering for
       // doubles on the stack must be opposite the Java convention
-      assert(sig_bt[i+1] == T_VOID, "missing Half" );
+      assert((i + 1) < total_args_passed && sig_bt[i+1] == T_VOID, "missing Half" );
       regs[i].set2(VMRegImpl::stack2reg(stack));
       stack += 2;
       break;
@@ -2226,14 +2226,11 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
 
   __ reset_last_Java_frame(thread, false);
 
-  // Unpack oop result
+  // Unbox oop result, e.g. JNIHandles::resolve value.
   if (ret_type == T_OBJECT || ret_type == T_ARRAY) {
-      Label L;
-      __ cmpptr(rax, (int32_t)NULL_WORD);
-      __ jcc(Assembler::equal, L);
-      __ movptr(rax, Address(rax, 0));
-      __ bind(L);
-      __ verify_oop(rax);
+    __ resolve_jobject(rax /* value */,
+                       thread /* thread */,
+                       rcx /* tmp */);
   }
 
   if (CheckJNICalls) {

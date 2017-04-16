@@ -49,6 +49,7 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import jdk.jshell.ExpressionToTypeInfo.ExpressionInfo;
 import jdk.jshell.Key.ErroneousKey;
 import jdk.jshell.Key.MethodKey;
 import jdk.jshell.Key.TypeDeclKey;
@@ -58,7 +59,6 @@ import jdk.jshell.TaskFactory.AnalyzeTask;
 import jdk.jshell.TaskFactory.BaseTask;
 import jdk.jshell.TaskFactory.CompileTask;
 import jdk.jshell.TaskFactory.ParseTask;
-import jdk.jshell.TreeDissector.ExpressionInfo;
 import jdk.jshell.Wrap.Range;
 import jdk.jshell.Snippet.Status;
 import jdk.jshell.spi.ExecutionControl.ClassBytecodes;
@@ -155,7 +155,7 @@ class Eval {
         if (compileSource.length() == 0) {
             return Collections.emptyList();
         }
-        ParseTask pt = state.taskFactory.new ParseTask(compileSource);
+        ParseTask pt = state.taskFactory.parse(compileSource);
         List<? extends Tree> units = pt.units();
         if (units.isEmpty()) {
             return compileFailResult(pt, userSource, Kind.ERRONEOUS);
@@ -296,7 +296,7 @@ class Eval {
 
     private List<Snippet> processExpression(String userSource, String compileSource) {
         String name = null;
-        ExpressionInfo ei = typeOfExpression(compileSource);
+        ExpressionInfo ei = ExpressionToTypeInfo.expressionInfo(compileSource, state);
         ExpressionTree assignVar;
         Wrap guts;
         Snippet snip;
@@ -499,16 +499,6 @@ class Eval {
         return singletonList(snip);
     }
 
-    private ExpressionInfo typeOfExpression(String expression) {
-        Wrap guts = Wrap.methodReturnWrap(expression);
-        TaskFactory.AnalyzeTask at = trialCompile(guts);
-        if (!at.hasErrors() && at.firstCuTree() != null) {
-            return TreeDissector.createByFirstClass(at)
-                    .typeOfReturnStatement(at, state);
-        }
-        return null;
-    }
-
     /**
      * Should a temp var wrap the expression. TODO make this user configurable.
      *
@@ -635,7 +625,7 @@ class Eval {
         while (true) {
             state.debug(DBG_GEN, "compileAndLoad  %s\n", ins);
 
-            ins.stream().forEach(u -> u.initialize());
+            ins.stream().forEach(Unit::initialize);
             ins.stream().forEach(u -> u.setWrap(ins, ins));
             AnalyzeTask at = state.taskFactory.new AnalyzeTask(outerWrapSet(ins));
             ins.stream().forEach(u -> u.setDiagnostics(at));
@@ -654,7 +644,7 @@ class Eval {
             boolean success;
             while (true) {
                 List<Unit> legit = ins.stream()
-                        .filter(u -> u.isDefined())
+                        .filter(Unit::isDefined)
                         .collect(toList());
                 state.debug(DBG_GEN, "compileAndLoad ins = %s -- legit = %s\n",
                         ins, legit);
@@ -693,7 +683,7 @@ class Eval {
                     // loop by replacing all that have been replaced
                     if (!toReplace.isEmpty()) {
                         replaced.addAll(toReplace);
-                        replaced.stream().forEach(u -> u.markForReplacement());
+                        replaced.stream().forEach(Unit::markForReplacement);
                     }
 
                     success = toReplace.isEmpty();
@@ -703,7 +693,7 @@ class Eval {
 
             // add any new dependencies to the working set
             List<Unit> newDependencies = ins.stream()
-                    .flatMap(u -> u.effectedDependents())
+                    .flatMap(Unit::effectedDependents)
                     .collect(toList());
             state.debug(DBG_GEN, "compileAndLoad %s -- deps: %s  success: %s\n",
                     ins, newDependencies, success);
@@ -711,7 +701,7 @@ class Eval {
                 // all classes that could not be directly loaded (because they
                 // are new) have been redefined, and no new dependnencies were
                 // identified
-                ins.stream().forEach(u -> u.finish());
+                ins.stream().forEach(Unit::finish);
                 return ins;
             }
         }
@@ -719,11 +709,11 @@ class Eval {
 
     /**
      * If there are classes to load, loads by calling the execution engine.
-     * @param classbytecoes names of the classes to load.
+     * @param classbytecodes names of the classes to load.
      */
-    private void load(Collection<ClassBytecodes> classbytecoes) {
-        if (!classbytecoes.isEmpty()) {
-            ClassBytecodes[] cbcs = classbytecoes.toArray(new ClassBytecodes[classbytecoes.size()]);
+    private void load(Collection<ClassBytecodes> classbytecodes) {
+        if (!classbytecodes.isEmpty()) {
+            ClassBytecodes[] cbcs = classbytecodes.toArray(new ClassBytecodes[classbytecodes.size()]);
             try {
                 state.executionControl().load(cbcs);
                 state.classTracker.markLoaded(cbcs);
@@ -731,6 +721,7 @@ class Eval {
                 state.classTracker.markLoaded(cbcs, ex.installed());
             } catch (NotImplementedException ex) {
                 state.debug(ex, "Seriously?!? load not implemented");
+                state.closeDown();
             } catch (EngineTerminationException ex) {
                 state.closeDown();
             }

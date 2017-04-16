@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,11 +29,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.lang.module.Configuration;
+import java.lang.module.FindException;
+import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ResolutionException;
 import java.lang.module.ResolvedModule;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
@@ -41,6 +42,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jdk.tools.jlink.internal.TaskHelper.BadArgs;
 import static jdk.tools.jlink.internal.TaskHelper.JLINK_BUNDLE;
@@ -52,7 +54,8 @@ import jdk.tools.jlink.internal.ImagePluginStack.ImageProvider;
 import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.builder.DefaultImageBuilder;
 import jdk.tools.jlink.plugin.Plugin;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.ModulePath;
+import jdk.internal.module.ModuleResolution;
 
 /**
  * Implementation for the jlink tool.
@@ -62,20 +65,8 @@ import jdk.internal.misc.SharedSecrets;
 public class JlinkTask {
     static final boolean DEBUG = Boolean.getBoolean("jlink.debug");
 
-    private static <T extends Throwable> void fail(Class<T> type,
-            String format,
-            Object... args) throws T {
-        String msg = new Formatter().format(format, args).toString();
-        try {
-            T t = type.getConstructor(String.class).newInstance(msg);
-            throw t;
-        } catch (InstantiationException |
-                InvocationTargetException |
-                NoSuchMethodException |
-                IllegalAccessException e) {
-            throw new InternalError("Unable to create an instance of " + type, e);
-        }
-    }
+    // jlink API ignores by default. Remove when signing is implemented.
+    static final boolean IGNORE_SIGNING_DEFAULT = true;
 
     private static final TaskHelper taskHelper
             = new TaskHelper(JLINK_BUNDLE);
@@ -119,6 +110,33 @@ public class JlinkTask {
             Path path = Paths.get(arg);
             task.options.output = path;
         }, "--output"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
+            task.options.bindServices = true;
+        }, "--bind-services"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
+            task.options.suggestProviders = true;
+        }, "--suggest-providers", "", true),
+        new Option<JlinkTask>(true, (task, opt, arg) -> {
+            String[] values = arg.split("=");
+            // check values
+            if (values.length != 2 || values[0].isEmpty() || values[1].isEmpty()) {
+                throw taskHelper.newBadArgs("err.launcher.value.format", arg);
+            } else {
+                String commandName = values[0];
+                String moduleAndMain = values[1];
+                int idx = moduleAndMain.indexOf("/");
+                if (idx != -1) {
+                    if (moduleAndMain.substring(0, idx).isEmpty()) {
+                        throw taskHelper.newBadArgs("err.launcher.module.name.empty", arg);
+                    }
+
+                    if (moduleAndMain.substring(idx + 1).isEmpty()) {
+                        throw taskHelper.newBadArgs("err.launcher.main.class.empty", arg);
+                    }
+                }
+                task.options.launchers.put(commandName, moduleAndMain);
+            }
+        }, "--launcher"),
         new Option<JlinkTask>(true, (task, opt, arg) -> {
             if ("little".equals(arg)) {
                 task.options.endian = ByteOrder.LITTLE_ENDIAN;
@@ -128,6 +146,9 @@ public class JlinkTask {
                 throw taskHelper.newBadArgs("err.unknown.byte.order", arg);
             }
         }, "--endian"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
+            task.options.verbose = true;
+        }, "--verbose", "-v"),
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.version = true;
         }, "--version"),
@@ -143,7 +164,10 @@ public class JlinkTask {
         }, "--save-opts"),
         new Option<JlinkTask>(false, (task, opt, arg) -> {
             task.options.fullVersion = true;
-        }, true, "--full-version"),};
+        }, true, "--full-version"),
+        new Option<JlinkTask>(false, (task, opt, arg) -> {
+            task.options.ignoreSigning = true;
+        }, "--ignore-signing-information"),};
 
     private static final String PROGNAME = "jlink";
     private final OptionsValues options = new OptionsValues();
@@ -160,7 +184,8 @@ public class JlinkTask {
     /**
      * Result codes.
      */
-    static final int EXIT_OK = 0, // Completed with no errors.
+    static final int
+            EXIT_OK = 0, // Completed with no errors.
             EXIT_ERROR = 1, // Completed but reported errors.
             EXIT_CMDERR = 2, // Bad command-line arguments
             EXIT_SYSERR = 3, // System error or resource exhaustion.
@@ -169,14 +194,19 @@ public class JlinkTask {
     static class OptionsValues {
         boolean help;
         String  saveoptsfile;
+        boolean verbose;
         boolean version;
         boolean fullVersion;
-        List<Path> modulePath = new ArrayList<>();
-        Set<String> limitMods = new HashSet<>();
-        Set<String> addMods = new HashSet<>();
+        final List<Path> modulePath = new ArrayList<>();
+        final Set<String> limitMods = new HashSet<>();
+        final Set<String> addMods = new HashSet<>();
         Path output;
+        final Map<String, String> launchers = new HashMap<>();
         Path packagedModulesPath;
         ByteOrder endian = ByteOrder.nativeOrder();
+        boolean ignoreSigning = false;
+        boolean bindServices = false;
+        boolean suggestProviders = false;
     }
 
     int run(String[] args) {
@@ -185,7 +215,11 @@ public class JlinkTask {
                    new PrintWriter(System.err, true));
         }
         try {
-            optionsHelper.handleOptionsNoUnhandled(this, args);
+            List<String> remaining = optionsHelper.handleOptions(this, args);
+            if (remaining.size() > 0 && !options.suggestProviders) {
+                throw taskHelper.newBadArgs("err.orphan.arguments", toString(remaining))
+                                .showUsage(true);
+            }
             if (options.help) {
                 optionsHelper.showHelp(PROGNAME);
                 return EXIT_OK;
@@ -198,22 +232,30 @@ public class JlinkTask {
                 taskHelper.showVersion(options.fullVersion);
                 return EXIT_OK;
             }
-            if (taskHelper.getExistingImage() == null) {
-                if (options.modulePath == null || options.modulePath.isEmpty()) {
-                    throw taskHelper.newBadArgs("err.modulepath.must.be.specified").showUsage(true);
-                }
-                createImage();
-            } else {
+
+            if (taskHelper.getExistingImage() != null) {
                 postProcessOnly(taskHelper.getExistingImage());
+                return EXIT_OK;
             }
 
-            if (options.saveoptsfile != null) {
-                Files.write(Paths.get(options.saveoptsfile), getSaveOpts().getBytes());
+            if (options.modulePath.isEmpty()) {
+                throw taskHelper.newBadArgs("err.modulepath.must.be.specified")
+                                .showUsage(true);
+            }
+
+            JlinkConfiguration config = initJlinkConfig();
+            if (options.suggestProviders) {
+                suggestProviders(config, remaining);
+            } else {
+                createImage(config);
+                if (options.saveoptsfile != null) {
+                    Files.write(Paths.get(options.saveoptsfile), getSaveOpts().getBytes());
+                }
             }
 
             return EXIT_OK;
         } catch (PluginException | IllegalArgumentException |
-                 UncheckedIOException |IOException | ResolutionException e) {
+                 UncheckedIOException |IOException | FindException | ResolutionException e) {
             log.println(taskHelper.getMessage("error.prefix") + " " + e.getMessage());
             if (DEBUG) {
                 e.printStackTrace(log);
@@ -247,21 +289,14 @@ public class JlinkTask {
         Objects.requireNonNull(config.getOutput());
         plugins = plugins == null ? new PluginsConfiguration() : plugins;
 
-        if (config.getModulepaths().isEmpty()) {
-            throw new Exception("Empty module paths");
-        }
-
-        ModuleFinder finder = newModuleFinder(config.getModulepaths(),
-                                              config.getLimitmods(),
-                                              config.getModules());
-
         // First create the image provider
-        ImageProvider imageProvider
-                = createImageProvider(finder,
-                                      checkAddMods(config.getModules()),
-                                      config.getLimitmods(),
-                                      config.getByteOrder(),
-                                      null);
+        ImageProvider imageProvider =
+                createImageProvider(config,
+                                    null,
+                                    IGNORE_SIGNING_DEFAULT,
+                                    false,
+                                    false,
+                                    null);
 
         // Then create the Plugin Stack
         ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(plugins);
@@ -285,7 +320,7 @@ public class JlinkTask {
     }
 
     private void postProcessOnly(Path existingImage) throws Exception {
-        PluginsConfiguration config = taskHelper.getPluginsConfig(null);
+        PluginsConfiguration config = taskHelper.getPluginsConfig(null, null);
         ExecutableImage img = DefaultImageBuilder.getExecutableImage(existingImage);
         if (img == null) {
             throw taskHelper.newBadArgs("err.existing.image.invalid");
@@ -293,57 +328,65 @@ public class JlinkTask {
         postProcessImage(img, config.getPlugins());
     }
 
-    private void createImage() throws Exception {
+    // the token for "all modules on the module path"
+    private static final String ALL_MODULE_PATH = "ALL-MODULE-PATH";
+    private JlinkConfiguration initJlinkConfig() throws BadArgs {
+        if (options.addMods.isEmpty()) {
+            throw taskHelper.newBadArgs("err.mods.must.be.specified", "--add-modules")
+                .showUsage(true);
+        }
+
+        Set<String> roots = new HashSet<>();
+        for (String mod : options.addMods) {
+            if (mod.equals(ALL_MODULE_PATH)) {
+                Path[] entries = options.modulePath.toArray(new Path[0]);
+                ModuleFinder finder = ModulePath.of(Runtime.version(), true, entries);
+                if (!options.limitMods.isEmpty()) {
+                    // finder for the observable modules specified in
+                    // the --module-path and --limit-modules options
+                    finder = limitFinder(finder, options.limitMods, Collections.emptySet());
+                }
+
+                // all observable modules are roots
+                finder.findAll()
+                      .stream()
+                      .map(ModuleReference::descriptor)
+                      .map(ModuleDescriptor::name)
+                      .forEach(mn -> roots.add(mn));
+            } else {
+                roots.add(mod);
+            }
+        }
+
+        return new JlinkConfiguration(options.output,
+                                      options.modulePath,
+                                      roots,
+                                      options.limitMods,
+                                      options.endian);
+    }
+
+    private void createImage(JlinkConfiguration config) throws Exception {
         if (options.output == null) {
             throw taskHelper.newBadArgs("err.output.must.be.specified").showUsage(true);
         }
-        ModuleFinder finder
-                = newModuleFinder(options.modulePath, options.limitMods, options.addMods);
-        try {
-            options.addMods = checkAddMods(options.addMods);
-        } catch (IllegalArgumentException ex) {
-            throw taskHelper.newBadArgs("err.mods.must.be.specified", "--add-modules")
-                    .showUsage(true);
-        }
+
         // First create the image provider
-        ImageProvider imageProvider
-                = createImageProvider(finder,
-                        options.addMods,
-                        options.limitMods,
-                        options.endian,
-                        options.packagedModulesPath);
+        ImageProvider imageProvider = createImageProvider(config,
+                                                          options.packagedModulesPath,
+                                                          options.ignoreSigning,
+                                                          options.bindServices,
+                                                          options.verbose,
+                                                          log);
 
         // Then create the Plugin Stack
-        ImagePluginStack stack = ImagePluginConfiguration.
-                parseConfiguration(taskHelper.getPluginsConfig(options.output));
+        ImagePluginStack stack = ImagePluginConfiguration.parseConfiguration(
+            taskHelper.getPluginsConfig(options.output, options.launchers));
 
         //Ask the stack to proceed
         stack.operate(imageProvider);
     }
 
-    private static Set<String> checkAddMods(Set<String> addMods) {
-        if (addMods.isEmpty()) {
-            throw new IllegalArgumentException("no modules to add");
-        }
-        return addMods;
-    }
-
-    /**
-     * Returns a module finder to find the observable modules specified in
-     * the --module-path and --limit-modules options
-     */
-    private ModuleFinder modulePathFinder() {
-        Path[] entries = options.modulePath.toArray(new Path[0]);
-        ModuleFinder finder = SharedSecrets.getJavaLangModuleAccess()
-            .newModulePath(Runtime.version(), true, entries);
-
-        if (!options.limitMods.isEmpty()) {
-            finder = limitFinder(finder, options.limitMods, Collections.emptySet());
-        }
-        return finder;
-    }
-
-    /**
+    /*
      * Returns a module finder of the given module path that limits
      * the observable modules to those in the transitive closure of
      * the modules specified in {@code limitMods} plus other modules
@@ -354,8 +397,7 @@ public class JlinkTask {
                                                Set<String> roots)
     {
         Path[] entries = paths.toArray(new Path[0]);
-        ModuleFinder finder = SharedSecrets.getJavaLangModuleAccess()
-            .newModulePath(Runtime.version(), true, entries);
+        ModuleFinder finder = ModulePath.of(Runtime.version(), true, entries);
 
         // if limitmods is specified then limit the universe
         if (!limitMods.isEmpty()) {
@@ -372,40 +414,65 @@ public class JlinkTask {
         return Paths.get(uri);
     }
 
-    private static ImageProvider createImageProvider(ModuleFinder finder,
-                                                     Set<String> addMods,
-                                                     Set<String> limitMods,
-                                                     ByteOrder order,
-                                                     Path retainModulesPath)
+
+    private static ImageProvider createImageProvider(JlinkConfiguration config,
+                                                     Path retainModulesPath,
+                                                     boolean ignoreSigning,
+                                                     boolean bindService,
+                                                     boolean verbose,
+                                                     PrintWriter log)
             throws IOException
     {
-        if (addMods.isEmpty()) {
-            throw new IllegalArgumentException("empty modules and limitmods");
+        Configuration cf = bindService ? config.resolveAndBind()
+                                       : config.resolve();
+
+        if (verbose && log != null) {
+            // print modules to be linked in
+            cf.modules().stream()
+              .sorted(Comparator.comparing(ResolvedModule::name))
+              .forEach(rm -> log.format("module %s (%s)%n",
+                                        rm.name(), rm.reference().location().get()));
+
+            // print provider info
+            Set<ModuleReference> references = cf.modules().stream()
+                .map(ResolvedModule::reference).collect(Collectors.toSet());
+
+            String msg = String.format("%n%s:", taskHelper.getMessage("providers.header"));
+            printProviders(log, msg, references);
         }
 
-        Configuration cf = Configuration.empty()
-                .resolveRequires(finder,
-                                 ModuleFinder.of(),
-                                 addMods);
+        // emit a warning for any incubating modules in the configuration
+        if (log != null) {
+            String im = cf.modules()
+                          .stream()
+                          .map(ResolvedModule::reference)
+                          .filter(ModuleResolution::hasIncubatingWarning)
+                          .map(ModuleReference::descriptor)
+                          .map(ModuleDescriptor::name)
+                          .collect(Collectors.joining(", "));
+
+            if (!"".equals(im))
+                log.println("WARNING: Using incubator modules: " + im);
+        }
 
         Map<String, Path> mods = cf.modules().stream()
             .collect(Collectors.toMap(ResolvedModule::name, JlinkTask::toPathLocation));
-        return new ImageHelper(cf, mods, order, retainModulesPath);
+        return new ImageHelper(cf, mods, config.getByteOrder(), retainModulesPath, ignoreSigning);
     }
 
-    /**
+    /*
      * Returns a ModuleFinder that limits observability to the given root
      * modules, their transitive dependences, plus a set of other modules.
      */
-    private static ModuleFinder limitFinder(ModuleFinder finder,
-            Set<String> roots,
-            Set<String> otherMods) {
+    public static ModuleFinder limitFinder(ModuleFinder finder,
+                                           Set<String> roots,
+                                           Set<String> otherMods) {
 
         // resolve all root modules
         Configuration cf = Configuration.empty()
-                .resolveRequires(finder,
-                                 ModuleFinder.of(),
-                                 roots);
+                .resolve(finder,
+                         ModuleFinder.of(),
+                         roots);
 
         // module name -> reference
         Map<String, ModuleReference> map = new HashMap<>();
@@ -434,6 +501,147 @@ public class JlinkTask {
                 return mrefs;
             }
         };
+    }
+
+    /*
+     * Returns a map of each service type to the modules that use it
+     */
+    private static Map<String, Set<String>> uses(Set<ModuleReference> modules) {
+        // collects the services used by the modules and print uses
+        Map<String, Set<String>> uses = new HashMap<>();
+        modules.stream()
+               .map(ModuleReference::descriptor)
+               .forEach(md -> md.uses().forEach(s ->
+                   uses.computeIfAbsent(s, _k -> new HashSet<>()).add(md.name()))
+               );
+        return uses;
+    }
+
+    private static void printProviders(PrintWriter log,
+                                       String header,
+                                       Set<ModuleReference> modules) {
+        printProviders(log, header, modules, uses(modules));
+    }
+
+    /*
+     * Prints the providers that are used by the services specified in
+     * the given modules.
+     *
+     * The specified uses maps a service type name to the modules
+     * using the service type and that may or may not be present
+     * the given modules.
+     */
+    private static void printProviders(PrintWriter log,
+                                       String header,
+                                       Set<ModuleReference> modules,
+                                       Map<String, Set<String>> uses) {
+        if (modules.isEmpty())
+            return;
+
+        // Build a map of a service type to the provider modules
+        Map<String, Set<ModuleDescriptor>> providers = new HashMap<>();
+        modules.stream()
+            .map(ModuleReference::descriptor)
+            .forEach(md -> {
+                md.provides().stream()
+                  .filter(p -> uses.containsKey(p.service()))
+                  .forEach(p -> providers.computeIfAbsent(p.service(), _k -> new HashSet<>())
+                                         .add(md));
+            });
+
+        if (!providers.isEmpty()) {
+            log.println(header);
+        }
+
+        // print the providers of the service types used by the specified modules
+        // sorted by the service type name and then provider's module name
+        providers.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .forEach(e -> {
+                String service = e.getKey();
+                e.getValue().stream()
+                 .sorted(Comparator.comparing(ModuleDescriptor::name))
+                 .forEach(md ->
+                     md.provides().stream()
+                       .filter(p -> p.service().equals(service))
+                       .forEach(p -> log.format("  module %s provides %s, used by %s%n",
+                                                md.name(), p.service(),
+                                                uses.get(p.service()).stream()
+                                                    .sorted()
+                                                    .collect(Collectors.joining(","))))
+                 );
+            });
+    }
+
+    private void suggestProviders(JlinkConfiguration config, List<String> args)
+        throws BadArgs
+    {
+        if (args.size() > 1) {
+            throw taskHelper.newBadArgs("err.orphan.argument",
+                                        toString(args.subList(1, args.size())))
+                            .showUsage(true);
+        }
+
+        if (options.bindServices) {
+            log.println(taskHelper.getMessage("no.suggested.providers"));
+            return;
+        }
+
+        ModuleFinder finder = config.finder();
+        if (args.isEmpty()) {
+            // print providers used by the modules resolved without service binding
+            Configuration cf = config.resolve();
+            Set<ModuleReference> mrefs = cf.modules().stream()
+                .map(ResolvedModule::reference)
+                .collect(Collectors.toSet());
+
+            // print uses of the modules that would be linked into the image
+            mrefs.stream()
+                 .sorted(Comparator.comparing(mref -> mref.descriptor().name()))
+                 .forEach(mref -> {
+                     ModuleDescriptor md = mref.descriptor();
+                     log.format("module %s located (%s)%n", md.name(),
+                                mref.location().get());
+                     md.uses().stream().sorted()
+                       .forEach(s -> log.format("    uses %s%n", s));
+                 });
+
+            String msg = String.format("%n%s:", taskHelper.getMessage("suggested.providers.header"));
+            printProviders(log, msg, finder.findAll(), uses(mrefs));
+
+        } else {
+            // comma-separated service types, if specified
+            Set<String> names = Stream.of(args.get(0).split(","))
+                .collect(Collectors.toSet());
+            // find the modules that provide the specified service
+            Set<ModuleReference> mrefs = finder.findAll().stream()
+                .filter(mref -> mref.descriptor().provides().stream()
+                                    .map(ModuleDescriptor.Provides::service)
+                                    .anyMatch(names::contains))
+                .collect(Collectors.toSet());
+
+            // the specified services may or may not be in the modules that
+            // would be linked in.  So find uses declared in all observable modules
+            Map<String, Set<String>> uses = uses(finder.findAll());
+
+            // check if any name given on the command line are unused service
+            mrefs.stream()
+                 .flatMap(mref -> mref.descriptor().provides().stream()
+                                      .map(ModuleDescriptor.Provides::service))
+                 .forEach(names::remove);
+            if (!names.isEmpty()) {
+                log.println(taskHelper.getMessage("warn.unused.services",
+                                                  toString(names)));
+            }
+
+            String msg = String.format("%n%s:", taskHelper.getMessage("suggested.providers.header"));
+            printProviders(log, msg, mrefs, uses);
+        }
+    }
+
+    private static String toString(Collection<String> collection) {
+        return collection.stream().sorted()
+                         .collect(Collectors.joining(","));
     }
 
     private String getSaveOpts() {
@@ -477,36 +685,57 @@ public class JlinkTask {
     }
 
     private static class ImageHelper implements ImageProvider {
-
-        final Set<Archive> archives;
         final ByteOrder order;
         final Path packagedModulesPath;
+        final boolean ignoreSigning;
+        final Set<Archive> archives;
 
         ImageHelper(Configuration cf,
                     Map<String, Path> modsPaths,
                     ByteOrder order,
-                    Path packagedModulesPath) throws IOException {
-            archives = modsPaths.entrySet().stream()
-                                .map(e -> newArchive(e.getKey(), e.getValue()))
-                                .collect(Collectors.toSet());
+                    Path packagedModulesPath,
+                    boolean ignoreSigning) throws IOException {
             this.order = order;
             this.packagedModulesPath = packagedModulesPath;
+            this.ignoreSigning = ignoreSigning;
+            this.archives = modsPaths.entrySet().stream()
+                                .map(e -> newArchive(e.getKey(), e.getValue()))
+                                .collect(Collectors.toSet());
         }
 
         private Archive newArchive(String module, Path path) {
             if (path.toString().endsWith(".jmod")) {
                 return new JmodArchive(module, path);
             } else if (path.toString().endsWith(".jar")) {
-                return new ModularJarArchive(module, path);
+                ModularJarArchive modularJarArchive = new ModularJarArchive(module, path);
+
+                Stream<Archive.Entry> signatures = modularJarArchive.entries().filter((entry) -> {
+                    String name = entry.name().toUpperCase(Locale.ENGLISH);
+
+                    return name.startsWith("META-INF/") && name.indexOf('/', 9) == -1 && (
+                                name.endsWith(".SF") ||
+                                name.endsWith(".DSA") ||
+                                name.endsWith(".RSA") ||
+                                name.endsWith(".EC") ||
+                                name.startsWith("META-INF/SIG-")
+                            );
+                });
+
+                if (signatures.count() != 0) {
+                    if (ignoreSigning) {
+                        System.err.println(taskHelper.getMessage("warn.signing", path));
+                    } else {
+                        throw new IllegalArgumentException(taskHelper.getMessage("err.signing", path));
+                    }
+                }
+
+                return modularJarArchive;
             } else if (Files.isDirectory(path)) {
                 return new DirArchive(path);
             } else {
-                fail(RuntimeException.class,
-                        "Selected module %s (%s) not in jmod or modular jar format",
-                        module,
-                        path);
+                throw new IllegalArgumentException(
+                    taskHelper.getMessage("err.not.modular.format", module, path));
             }
-            return null;
         }
 
         @Override
@@ -522,56 +751,6 @@ public class JlinkTask {
                 }
             }
             return image;
-        }
-    }
-
-    private static enum Section {
-        NATIVE_LIBS("native", nativeDir()),
-        NATIVE_CMDS("bin", "bin"),
-        CLASSES("classes", "classes"),
-        CONFIG("conf", "conf"),
-        UNKNOWN("unknown", "unknown");
-
-        private static String nativeDir() {
-            if (System.getProperty("os.name").startsWith("Windows")) {
-                return "bin";
-            } else {
-                return "lib";
-            }
-        }
-
-        private final String jmodDir;
-        private final String imageDir;
-
-        Section(String jmodDir, String imageDir) {
-            this.jmodDir = jmodDir;
-            this.imageDir = imageDir;
-        }
-
-        String imageDir() {
-            return imageDir;
-        }
-
-        String jmodDir() {
-            return jmodDir;
-        }
-
-        boolean matches(String path) {
-            return path.startsWith(jmodDir);
-        }
-
-        static Section getSectionFromName(String dir) {
-            if (Section.NATIVE_LIBS.matches(dir)) {
-                return Section.NATIVE_LIBS;
-            } else if (Section.NATIVE_CMDS.matches(dir)) {
-                return Section.NATIVE_CMDS;
-            } else if (Section.CLASSES.matches(dir)) {
-                return Section.CLASSES;
-            } else if (Section.CONFIG.matches(dir)) {
-                return Section.CONFIG;
-            } else {
-                return Section.UNKNOWN;
-            }
         }
     }
 }

@@ -43,6 +43,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jdk.internal.jimage.decompressor.Decompressor;
+import jdk.internal.module.ModuleInfo.Attributes;
+import jdk.internal.module.ModuleTarget;
 import jdk.tools.jlink.plugin.Plugin;
 import jdk.tools.jlink.builder.ImageBuilder;
 import jdk.tools.jlink.plugin.PluginException;
@@ -268,7 +270,15 @@ public final class ImagePluginStack {
                             resources.getStringTable());
                 }
             }
-            resPool = p.transform(resPool, resMgr.resourcePoolBuilder());
+            try {
+                resPool = p.transform(resPool, resMgr.resourcePoolBuilder());
+            } catch (PluginException pe) {
+                if (JlinkTask.DEBUG) {
+                    System.err.println("Plugin " + p.getName() + " threw exception during transform");
+                    pe.printStackTrace();
+                }
+                throw pe;
+            }
             if (resPool.isEmpty()) {
                 throw new Exception("Invalid resource pool for plugin " + p);
             }
@@ -290,6 +300,7 @@ public final class ImagePluginStack {
             final ResourcePoolModule module;
             // lazily initialized
             ModuleDescriptor descriptor;
+            ModuleTarget target;
 
             LastModule(ResourcePoolModule module) {
                 this.module = module;
@@ -308,10 +319,28 @@ public final class ImagePluginStack {
 
             @Override
             public ModuleDescriptor descriptor() {
-                if (descriptor == null) {
-                    descriptor = ResourcePoolManager.readModuleDescriptor(this);
-                }
+                initModuleAttributes();
                 return descriptor;
+            }
+
+            @Override
+            public String osName() {
+                initModuleAttributes();
+                return target != null? target.osName() : null;
+            }
+
+            @Override
+            public String osArch() {
+                initModuleAttributes();
+                return target != null? target.osArch() : null;
+            }
+
+            private void initModuleAttributes() {
+                if (this.descriptor == null) {
+                    Attributes attr = ResourcePoolManager.readModuleAttributes(this);
+                    this.descriptor = attr.descriptor();
+                    this.target = attr.target();
+                }
             }
 
             @Override
@@ -444,6 +473,7 @@ public final class ImagePluginStack {
                         res = res.copyWithContent(bytes);
                     } catch (IOException ex) {
                         if (JlinkTask.DEBUG) {
+                            System.err.println("IOException while reading resource: " + res.path());
                             ex.printStackTrace();
                         }
                         throw new PluginException(ex);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,13 +47,10 @@ import com.sun.tools.internal.ws.wsdl.parser.WSDLInternalizationLogic;
 import com.sun.tools.internal.xjc.util.NullStream;
 import com.sun.xml.internal.ws.api.server.Container;
 import com.sun.xml.internal.ws.util.ServiceFinder;
-import com.sun.istack.internal.tools.ParallelWorldClassLoader;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.SAXParseException;
 
-import javax.xml.bind.JAXBPermission;
 import javax.xml.stream.*;
-import javax.xml.ws.EndpointContext;
 import java.io.*;
 import java.util.*;
 import java.text.MessageFormat;
@@ -66,6 +63,9 @@ import org.xml.sax.SAXException;
  * @author Vivek Pandey
  */
 public class WsimportTool {
+    /** JAXWS module name. JAXWS dependency is mandatory in generated Java module. */
+    private static final String JAXWS_MODULE = "java.xml.ws";
+
     private static final String WSIMPORT = "wsimport";
     private final PrintStream out;
     private final Container container;
@@ -246,7 +246,7 @@ public class WsimportTool {
     }
 
     private void deleteGeneratedFiles() {
-        Set<File> trackedRootPackages = new HashSet<File>();
+        Set<File> trackedRootPackages = new HashSet<>();
 
         if (options.clientjar != null) {
             //remove all non-java artifacts as they will packaged in jar.
@@ -282,7 +282,7 @@ public class WsimportTool {
 
     private void addClassesToGeneratedFiles() throws IOException {
         Iterable<File> generatedFiles = options.getGeneratedFiles();
-        final List<File> trackedClassFiles = new ArrayList<File>();
+        final List<File> trackedClassFiles = new ArrayList<>();
         for(File f: generatedFiles) {
             if(f.getName().endsWith(".java")) {
                 String relativeDir = DirectoryUtil.getRelativePathfromCommonBase(f.getParentFile(),options.sourceDir);
@@ -476,9 +476,13 @@ public class WsimportTool {
             }
         }
 
+        if (options.getModuleName() != null) {
+            options.getCodeModel()._prepareModuleInfo(options.getModuleName(), JAXWS_MODULE);
+        }
+
         CodeWriter cw;
         if (options.filer != null) {
-            cw = new FilerCodeWriter(options.sourceDir, options);
+            cw = new FilerCodeWriter(options);
         } else {
             cw = new WSCodeWriter(options.sourceDir, options);
         }
@@ -499,20 +503,8 @@ public class WsimportTool {
         this.options.entityResolver = resolver;
     }
 
-    /*
-     * To take care of JDK6-JDK6u3, where 2.1 API classes are not there
-     */
-    private static boolean useBootClasspath(Class clazz) {
-        try {
-            ParallelWorldClassLoader.toJarUrl(clazz.getResource('/'+clazz.getName().replace('.','/')+".class"));
-            return true;
-        } catch(Exception e) {
-            return false;
-        }
-    }
-
     protected boolean compileGeneratedClasses(ErrorReceiver receiver, WsimportListener listener){
-        List<String> sourceFiles = new ArrayList<String>();
+        List<String> sourceFiles = new ArrayList<>();
 
         for (File f : options.getGeneratedFiles()) {
             if (f.exists() && f.getName().endsWith(".java")) {
@@ -523,21 +515,12 @@ public class WsimportTool {
         if (sourceFiles.size() > 0) {
             String classDir = options.destDir.getAbsolutePath();
             String classpathString = createClasspathString();
-            boolean bootCP = useBootClasspath(EndpointContext.class) || useBootClasspath(JAXBPermission.class);
-            List<String> args = new ArrayList<String>();
-            args.add("--add-modules");
-            args.add("java.xml.ws");
+            List<String> args = new ArrayList<>();
+
             args.add("-d");
             args.add(classDir);
             args.add("-classpath");
             args.add(classpathString);
-            //javac is not working in osgi as the url starts with a bundle
-            if (bootCP) {
-                args.add("-Xbootclasspath/p:"
-                        + JavaCompilerHelper.getJarFile(EndpointContext.class)
-                        + File.pathSeparator
-                        + JavaCompilerHelper.getJarFile(JAXBPermission.class));
-            }
 
             if (options.debug) {
                 args.add("-g");
@@ -548,8 +531,26 @@ public class WsimportTool {
                 args.add(options.encoding);
             }
 
+            boolean addModules = true;
             if (options.javacOptions != null) {
-                args.addAll(options.getJavacOptions(args, listener));
+                List<String> javacOptions = options.getJavacOptions(args, listener);
+                for (int i = 0; i < javacOptions.size(); i++) {
+                    String opt = javacOptions.get(i);
+                    if ("-source".equals(opt) && 9 >= getVersion(javacOptions.get(i + 1))) {
+                        addModules = false;
+                    }
+                    if ("-target".equals(opt) && 9 >= getVersion(javacOptions.get(i + 1))) {
+                        addModules = false;
+                    }
+                    if ("--release".equals(opt) && 9 >= getVersion(javacOptions.get(i + 1))) {
+                        addModules = false;
+                    }
+                    args.add(opt);
+                }
+            }
+            if (addModules) {
+                args.add("--add-modules");
+                args.add("java.xml.ws");
             }
 
             for (int i = 0; i < sourceFiles.size(); ++i) {
@@ -585,5 +586,9 @@ public class WsimportTool {
         System.out.println(WscompileMessages.WSIMPORT_HELP(WSIMPORT));
         System.out.println(WscompileMessages.WSIMPORT_USAGE_EXTENSIONS());
         System.out.println(WscompileMessages.WSIMPORT_USAGE_EXAMPLES());
+    }
+
+    private float getVersion(String s) {
+        return Float.parseFloat(s);
     }
 }

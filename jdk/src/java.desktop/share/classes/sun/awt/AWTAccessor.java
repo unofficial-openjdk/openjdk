@@ -93,12 +93,6 @@ public final class AWTAccessor {
          * its parent.
          */
         Rectangle getBounds(Component comp);
-        /*
-         * Sets the shape of a lw component to cut out from hw components.
-         *
-         * See 6797587, 6776743, 6768307, and 6768332 for details
-         */
-        void setMixingCutoutShape(Component comp, Shape shape);
 
         /**
          * Sets GraphicsConfiguration value for the component.
@@ -360,6 +354,12 @@ public final class AWTAccessor {
          * Marks the specified window as an utility window for TrayIcon.
          */
         void setTrayIconWindow(Window w, boolean isTrayIconWindow);
+
+        /**
+         * Return an array containing all the windows this
+         * window currently owns.
+         */
+        Window[] getOwnedWindows(Window w);
     }
 
     /**

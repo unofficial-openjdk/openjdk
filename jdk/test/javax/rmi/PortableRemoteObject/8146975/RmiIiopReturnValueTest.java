@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,11 @@
 /*
  * @test
  * @bug 8146975
+ * @key intermittent
  * @summary test RMI-IIOP with value object return
  * @modules java.corba
+ *          java.naming
+ *          java.rmi
  * @library /lib/testlibrary
  * @build jdk.testlibrary.*
  * @compile Test.java Test3.java Test4.java
@@ -63,8 +66,11 @@ public class RmiIiopReturnValueTest {
     private static Process rmiServerProcess;
 
     public static void main(String[] args) throws Exception {
-        startTestComponents();
-        stopTestComponents();
+        try {
+            startTestComponents();
+        } finally {
+            stopTestComponents();
+        }
         System.err.println("Test completed OK ");
     }
 
@@ -139,11 +145,13 @@ public class RmiIiopReturnValueTest {
     }
 
     static void stopOrbd() throws Exception {
-        System.out.println("RmiIiopReturnValueTest.stopOrbd: destroy orbdProcess ");
-        orbdProcess.destroyForcibly();
-        orbdProcess.waitFor();
-        System.out.println("orbd exitCode:"
-            + orbdProcess.exitValue());
+        if (orbdProcess != null) {
+            System.out.println("RmiIiopReturnValueTest.stopOrbd: destroy orbdProcess ");
+            orbdProcess.destroyForcibly();
+            orbdProcess.waitFor();
+            System.out.println("orbd exitCode:"
+                + orbdProcess.exitValue());
+        }
     }
 
     static void executeRmiIiopClient() throws Exception {

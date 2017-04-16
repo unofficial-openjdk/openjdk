@@ -38,21 +38,26 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
+import javax.tools.JavaFileManager.Location;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.StandardLocation;
 
 import com.sun.source.util.JavacTask;
 import com.sun.tools.javac.api.JavacTool;
-import com.sun.tools.javac.file.BaseFileManager;
 import com.sun.tools.javac.file.JavacFileManager;
-import com.sun.tools.javac.file.Locations;
 
 import static java.util.Arrays.asList;
 
@@ -91,29 +96,53 @@ public class PatchModulesTest extends ModuleTestBase {
     }
 
     @Test
-    public void testLastOneWins(Path base) throws Exception {
+    public void testDuplicates(Path base) throws Exception {
         test(asList("java.base=a", "java.compiler=b", "java.base=c"),
-            "{java.base=[c], java.compiler=[b]}");
+            false, "--patch-module specified more than once for java.base");
+    }
+
+    @Test
+    public void testEmpty(Path base) throws Exception {
+        test(asList(""),
+            false, "no value for --patch-module option");
+    }
+
+    @Test
+    public void testInvalid(Path base) throws Exception {
+        test(asList("java.base/java.lang=."),
+            false, "bad value for --patch-module option: 'java.base/java.lang=.'");
     }
 
     void test(List<String> patches, String expect) throws Exception {
+        test(patches, true, expect);
+    }
+
+    void test(List<String> patches, boolean expectOK, String expect) throws Exception {
         JavacTool tool = (JavacTool) ToolProvider.getSystemJavaCompiler();
         StringWriter sw = new StringWriter();
-        try (PrintWriter pw = new PrintWriter(sw)) {
-            JavacFileManager fm = tool.getStandardFileManager(null, null, null);
+        try (PrintWriter pw = new PrintWriter(sw);
+            JavacFileManager fm = tool.getStandardFileManager(null, null, null)) {
             List<String> opts = patches.stream()
                 .map(p -> "--patch-module=" + p.replace(":", PS))
                 .collect(Collectors.toList());
             Iterable<? extends JavaFileObject> files = fm.getJavaFileObjects("C.java");
             JavacTask task = tool.getTask(pw, fm, null, opts, null, files);
 
-            Field locationsField = BaseFileManager.class.getDeclaredField("locations");
-            locationsField.setAccessible(true);
-            Object locations = locationsField.get(fm);
+            Map<String, List<Location>> mod2Location =
+                    StreamSupport.stream(fm.listLocationsForModules(StandardLocation.PATCH_MODULE_PATH)
+                                           .spliterator(),
+                                        false)
+                                 .flatMap(sl -> sl.stream())
+                                 .collect(Collectors.groupingBy(l -> fm.inferModuleName(l)));
 
-            Field patchMapField = Locations.class.getDeclaredField("patchMap");
-            patchMapField.setAccessible(true);
-            Map<?,?> patchMap = (Map<?,?>) patchMapField.get(locations);
+            Map<String, List<String>> patchMap = mod2Location.entrySet()
+                    .stream()
+                    .map(e -> new SimpleEntry<>(e.getKey(), e.getValue().get(0)))
+                    .map(e -> new SimpleEntry<>(e.getKey(), locationPaths(fm, e.getValue())))
+                    .collect(Collectors.toMap(Entry :: getKey,
+                                              Entry :: getValue,
+                                              (v1, v2) -> {throw new IllegalStateException();},
+                                              TreeMap::new));
             String found = patchMap.toString();
 
             if (!found.equals(expect)) {
@@ -121,6 +150,46 @@ public class PatchModulesTest extends ModuleTestBase {
                 tb.out.println("Found:  " + found);
                 error("output not as expected");
             }
+        } catch (IllegalArgumentException e) {
+            if (expectOK) {
+                error("unexpected exception: " + e);
+                throw e;
+            }
+            String found = e.getMessage();
+            if (!found.equals(expect)) {
+                tb.out.println("Expect: " + expect);
+                tb.out.println("Found:  " + found);
+                error("output not as expected");
+            }
+        }
+    }
+
+    static List<String> locationPaths(StandardJavaFileManager fm, Location loc) {
+        return StreamSupport.stream(fm.getLocationAsPaths(loc).spliterator(), false)
+                            .map(p -> p.toString())
+                            .collect(Collectors.toList());
+    }
+
+    @Test
+    public void testPatchWithSource(Path base) throws Exception {
+        Path patch = base.resolve("patch");
+        tb.writeJavaFiles(patch, "package javax.lang.model.element; public interface Extra { }");
+        Path src = base.resolve("src");
+        tb.writeJavaFiles(src,
+                          "module m { requires java.compiler; }",
+                          "package test; public interface Test extends javax.lang.model.element.Extra { }");
+        Path classes = base.resolve("classes");
+        tb.createDirectories(classes);
+
+        new toolbox.JavacTask(tb)
+            .options("--patch-module", "java.compiler=" + patch.toString())
+            .outdir(classes)
+            .files(findJavaFiles(src))
+            .run()
+            .writeAll();
+
+        if (Files.exists(classes.resolve("javax"))) {
+            throw new AssertionError();
         }
     }
 }

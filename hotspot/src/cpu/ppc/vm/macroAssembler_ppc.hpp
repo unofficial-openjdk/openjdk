@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2012, 2016 SAP SE. All rights reserved.
+ * Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2017 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -649,6 +649,8 @@ class MacroAssembler: public Assembler {
   void card_write_barrier_post(Register Rstore_addr, Register Rnew_val, Register Rtmp);
   void card_table_write(jbyte* byte_map_base, Register Rtmp, Register Robj);
 
+  void resolve_jobject(Register value, Register tmp1, Register tmp2, bool needs_frame);
+
 #if INCLUDE_ALL_GCS
   // General G1 pre-barrier generator.
   void g1_write_barrier_pre(Register Robj, RegisterOrConstant offset, Register Rpre_val,
@@ -723,7 +725,7 @@ class MacroAssembler: public Assembler {
   void store_klass(Register dst_oop, Register klass, Register tmp = R0);
   void store_klass_gap(Register dst_oop, Register val = noreg); // Will store 0 if val not specified.
 
-  void load_mirror(Register mirror, Register method);
+  void load_mirror_from_const_method(Register mirror, Register const_method);
 
   static int instr_size_for_decode_klass_not_null();
   void decode_klass_not_null(Register dst, Register src = noreg);
@@ -755,7 +757,9 @@ class MacroAssembler: public Assembler {
            is_trap_range_check_g(x) || is_trap_range_check_ge(x);
   }
 
-  void clear_memory_doubleword(Register base_ptr, Register cnt_dwords, Register tmp = R0);
+  void clear_memory_unrolled(Register base_ptr, int cnt_dwords, Register tmp = R0, int offset = 0);
+  void clear_memory_constlen(Register base_ptr, int cnt_dwords, Register tmp = R0);
+  void clear_memory_doubleword(Register base_ptr, Register cnt_dwords, Register tmp = R0, long const_cnt = -1);
 
 #ifdef COMPILER2
   // Intrinsics for CompactStrings

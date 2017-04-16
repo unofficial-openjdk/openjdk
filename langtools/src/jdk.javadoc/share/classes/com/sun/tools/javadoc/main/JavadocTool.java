@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -219,7 +219,6 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
             // Enter symbols for all files
             docenv.notice("main.Building_tree");
             javadocEnter.main(classTrees.toList().appendList(packageTrees.toList()));
-            enterDone = true;
         } catch (Abort ex) {}
 
         if (messager.nerrors() != 0)
@@ -393,7 +392,7 @@ public class JavadocTool extends com.sun.tools.javac.main.JavaCompiler {
                 for (ModuleSymbol msym : modules.allModules()) {
                     PackageSymbol p = syms.getPackage(msym, pack);
                     if (p != null && !p.members().isEmpty()) {
-                        return fm.getModuleLocation(location, msym.name.toString());
+                        return fm.getLocationForModule(location, msym.name.toString());
                     }
                 }
 

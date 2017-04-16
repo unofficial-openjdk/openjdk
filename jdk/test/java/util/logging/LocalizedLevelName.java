@@ -21,7 +21,6 @@
  * questions.
  */
 
-import java.lang.reflect.Module;
 import java.util.*;
 import java.util.logging.*;
 
@@ -29,6 +28,7 @@ import java.util.logging.*;
  * @test
  * @bug 8016127 8024131
  * @summary test logging.properties localized
+ * @modules java.logging/sun.util.logging.resources:open
  * @run main/othervm LocalizedLevelName
  */
 

@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2009, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +23,6 @@
  * questions.
  */
 
-/*
- * Copyright (c) 2009 by Oracle Corporation. All Rights Reserved.
- */
-
 package javax.xml.stream;
 
 import javax.xml.stream.events.XMLEvent;
@@ -44,9 +41,12 @@ import java.util.Iterator;
  * @see XMLEventWriter
  * @since 1.6
  */
-public interface XMLEventReader extends Iterator {
+public interface XMLEventReader extends Iterator<Object> {
   /**
-   * Get the next XMLEvent
+   * Gets the next XMLEvent. The initial event is
+   * {@link javax.xml.stream.events.StartDocument StartDocument}.
+   *
+   * @return the next XMLEvent
    * @see XMLEvent
    * @throws XMLStreamException if there is an error with the underlying XML.
    * @throws java.util.NoSuchElementException iteration has no more elements.
@@ -58,12 +58,15 @@ public interface XMLEventReader extends Iterator {
    * Returns true if there are more events and false otherwise.
    * @return true if the event reader has more events, false otherwise
    */
+  @Override
   public boolean hasNext();
 
   /**
    * Check the next XMLEvent without reading it from the stream.
    * Returns null if the stream is at EOF or has no more XMLEvents.
    * A call to peek() will be equal to the next return of next().
+   *
+   * @return the next XMLEvent
    * @see XMLEvent
    * @throws XMLStreamException
    */
@@ -73,6 +76,8 @@ public interface XMLEventReader extends Iterator {
    * Reads the content of a text-only element. Precondition:
    * the current event is START_ELEMENT. Postcondition:
    * The current event is the corresponding END_ELEMENT.
+   *
+   * @return the text of the element
    * @throws XMLStreamException if the current event is not a START_ELEMENT
    * or if a non text element is encountered
    */
@@ -85,6 +90,8 @@ public interface XMLEventReader extends Iterator {
    * be used when processing element-only content because
    * the parser is not able to recognize ignorable whitespace if
    * the DTD is missing or not interpreted.
+   *
+   * @return a START_ELEMENT or END_ELEMENT
    * @throws XMLStreamException if anything other than space characters are encountered
    */
   public XMLEvent nextTag() throws XMLStreamException;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,7 +61,7 @@ import jdk.javadoc.internal.doclets.toolkit.util.IndexBuilder;
 public class HtmlDoclet extends AbstractDoclet {
 
     public HtmlDoclet() {
-        configuration = new ConfigurationImpl();
+        configuration = new ConfigurationImpl(this);
     }
 
     @Override // defined by Doclet
@@ -91,10 +91,11 @@ public class HtmlDoclet extends AbstractDoclet {
      * Create the configuration instance.
      * Override this method to use a different
      * configuration.
-     * @return the configuration for this doclet
+     *
+     * @return the configuration
      */
     @Override // defined by AbstractDoclet
-    public ConfigurationImpl configuration() {
+    public ConfigurationImpl getConfiguration() {
         return configuration;
     }
 
@@ -166,8 +167,7 @@ public class HtmlDoclet extends AbstractDoclet {
             IndexRedirectWriter.generate(configuration);
         }
 
-        if (configuration.helpfile.length() == 0 &&
-            !configuration.nohelp) {
+        if (configuration.helpfile.isEmpty() && !configuration.nohelp) {
             HelpWriter.generate(configuration);
         }
         // If a stylesheet file is not specified, copy the default stylesheet

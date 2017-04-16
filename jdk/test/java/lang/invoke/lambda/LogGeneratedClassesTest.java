@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,6 +63,7 @@ public class LogGeneratedClassesTest extends LUtils {
         scratch.add("        int foo();");
         scratch.add("    }");
         scratch.add("    public static void main(String[] args) {");
+        scratch.add("        System.setSecurityManager(new SecurityManager());");
         scratch.add("        I lam = () -> 10;");
         scratch.add("        Runnable r = () -> {");
         scratch.add("            System.out.println(\"Runnable\");");
@@ -114,7 +115,6 @@ public class LogGeneratedClassesTest extends LUtils {
     public void testNotLogging() {
         TestResult tr = doExec(JAVA_CMD.getAbsolutePath(),
                                "-cp", ".",
-                               "-Djava.security.manager",
                                "com.example.TestLambda");
         tr.assertZero("Should still return 0");
     }
@@ -125,10 +125,14 @@ public class LogGeneratedClassesTest extends LUtils {
         TestResult tr = doExec(JAVA_CMD.getAbsolutePath(),
                                "-cp", ".",
                                "-Djdk.internal.lambda.dumpProxyClasses=dump",
-                               "-Djava.security.manager",
                                "com.example.TestLambda");
-        // dump/com/example + 2 class files
-        assertEquals(Files.walk(Paths.get("dump")).count(), 5, "Two lambda captured");
+        // 2 our own class files. We don't care about the others
+        assertEquals(Files.find(
+                        Paths.get("dump"),
+                        99,
+                        (p, a) -> p.startsWith(Paths.get("dump/com/example"))
+                                && a.isRegularFile()).count(),
+                2, "Two lambda captured");
         tr.assertZero("Should still return 0");
     }
 
@@ -138,7 +142,6 @@ public class LogGeneratedClassesTest extends LUtils {
         TestResult tr = doExec(JAVA_CMD.getAbsolutePath(),
                                "-cp", ".",
                                "-Djdk.internal.lambda.dumpProxyClasses=notExist",
-                               "-Djava.security.manager",
                                "com.example.TestLambda");
         assertEquals(tr.testOutput.stream()
                                   .filter(s -> s.startsWith("WARNING"))
@@ -154,7 +157,6 @@ public class LogGeneratedClassesTest extends LUtils {
         TestResult tr = doExec(JAVA_CMD.getAbsolutePath(),
                                "-cp", ".",
                                "-Djdk.internal.lambda.dumpProxyClasses=file",
-                               "-Djava.security.manager",
                                "com.example.TestLambda");
         assertEquals(tr.testOutput.stream()
                                   .filter(s -> s.startsWith("WARNING"))
@@ -213,7 +215,6 @@ public class LogGeneratedClassesTest extends LUtils {
             TestResult tr = doExec(JAVA_CMD.getAbsolutePath(),
                                    "-cp", ".",
                                    "-Djdk.internal.lambda.dumpProxyClasses=readOnly",
-                                   "-Djava.security.manager",
                                    "com.example.TestLambda");
             assertEquals(tr.testOutput.stream()
                                       .filter(s -> s.startsWith("WARNING"))
@@ -232,7 +233,6 @@ public class LogGeneratedClassesTest extends LUtils {
         TestResult tr = doExec(JAVA_CMD.getAbsolutePath(),
                                "-cp", ".",
                                "-Djdk.internal.lambda.dumpProxyClasses=dumpLong",
-                               "-Djava.security.manager",
                                longFQCN);
         assertEquals(tr.testOutput.stream()
                                   .filter(s -> s.startsWith("WARNING: Exception"))

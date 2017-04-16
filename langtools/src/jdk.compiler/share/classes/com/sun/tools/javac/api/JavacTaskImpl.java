@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,17 +33,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.processing.Processor;
 import javax.lang.model.element.Element;
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.util.ElementFilter;
 import javax.tools.*;
-import javax.tools.JavaFileObject.Kind;
 
 import com.sun.source.tree.*;
 import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Symbol.ClassSymbol;
-import com.sun.tools.javac.code.Symbol.ModuleSymbol;
-import com.sun.tools.javac.code.Symbol.PackageSymbol;
 import com.sun.tools.javac.comp.*;
 import com.sun.tools.javac.file.BaseFileManager;
 import com.sun.tools.javac.main.*;
@@ -82,6 +77,7 @@ public class JavacTaskImpl extends BasicJavacTask {
     private ListBuffer<Env<AttrContext>> genList;
     private final AtomicBoolean used = new AtomicBoolean();
     private Iterable<? extends Processor> processors;
+    private ListBuffer<String> addModules = new ListBuffer<>();
 
     protected JavacTaskImpl(Context context) {
         super(context, true);
@@ -97,13 +93,12 @@ public class JavacTaskImpl extends BasicJavacTask {
     /* Internal version of call exposing Main.Result. */
     public Main.Result doCall() {
         try {
-            return handleExceptions(new Callable<Main.Result>() {
-                @Override
-                public Main.Result call() throws Exception {
-                    prepareCompiler(false);
-                    compiler.compile(args.getFileObjects(), args.getClassNames(), processors);
-                    return (compiler.errorCount() > 0) ? Main.Result.ERROR : Main.Result.OK; // FIXME?
-                }
+            return handleExceptions(() -> {
+                prepareCompiler(false);
+                if (compiler.errorCount() > 0)
+                    return Main.Result.ERROR;
+                compiler.compile(args.getFileObjects(), args.getClassNames(), processors, addModules);
+                return (compiler.errorCount() > 0) ? Main.Result.ERROR : Main.Result.OK; // FIXME?
             }, Main.Result.SYSERR, Main.Result.ABNORMAL);
         } finally {
             try {
@@ -111,6 +106,18 @@ public class JavacTaskImpl extends BasicJavacTask {
             } catch (ClientCodeException e) {
                 throw new RuntimeException(e.getCause());
             }
+        }
+    }
+
+    @Override @DefinedBy(Api.COMPILER)
+    public void addModules(Iterable<String> moduleNames) {
+        Objects.requireNonNull(moduleNames);
+        // not mt-safe
+        if (used.get())
+            throw new IllegalStateException();
+        for (String m : moduleNames) {
+            Objects.requireNonNull(m);
+            addModules.add(m);
         }
     }
 
@@ -191,7 +198,7 @@ public class JavacTaskImpl extends BasicJavacTask {
             compiler.genEndPos = true;
             notYetEntered = new HashMap<>();
             if (forParse) {
-                compiler.initProcessAnnotations(processors);
+                compiler.initProcessAnnotations(processors, args.getFileObjects(), args.getClassNames());
                 for (JavaFileObject file: args.getFileObjects())
                     notYetEntered.put(file, null);
                 genList = new ListBuffer<>();
@@ -226,12 +233,7 @@ public class JavacTaskImpl extends BasicJavacTask {
 
     @Override @DefinedBy(Api.COMPILER_TREE)
     public Iterable<? extends CompilationUnitTree> parse() {
-        return handleExceptions(new Callable<Iterable<? extends CompilationUnitTree>>() {
-            @Override
-            public Iterable<? extends CompilationUnitTree> call() {
-                return parseInternal();
-            }
-        }, List.<CompilationUnitTree>nil(), List.<CompilationUnitTree>nil());
+        return handleExceptions(this::parseInternal, List.nil(), List.nil());
     }
 
     private Iterable<? extends CompilationUnitTree> parseInternal() {
@@ -358,12 +360,7 @@ public class JavacTaskImpl extends BasicJavacTask {
 
     @Override @DefinedBy(Api.COMPILER_TREE)
     public Iterable<? extends Element> analyze() {
-        return handleExceptions(new Callable<Iterable<? extends Element>>() {
-            @Override
-            public Iterable<? extends Element> call() {
-                return analyze(null);
-            }
-        }, List.<Element>nil(), List.<Element>nil());
+        return handleExceptions(() -> analyze(null), List.nil(), List.nil());
     }
 
     /**
@@ -425,12 +422,7 @@ public class JavacTaskImpl extends BasicJavacTask {
 
     @Override @DefinedBy(Api.COMPILER_TREE)
     public Iterable<? extends JavaFileObject> generate() {
-        return handleExceptions(new Callable<Iterable<? extends JavaFileObject>>() {
-            @Override
-            public Iterable<? extends JavaFileObject> call() {
-                return generate(null);
-            }
-        }, List.<JavaFileObject>nil(), List.<JavaFileObject>nil());
+        return handleExceptions(() -> generate(null), List.nil(), List.nil());
     }
 
     /**

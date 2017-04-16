@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,7 +51,7 @@ public class SplitPackage {
     private static final Path CLASSES_DIR = Paths.get("classes");
 
     private static final String SPLIT_PKG_NAME = "javax.annotation";
-    private static final String JAVA_ANNOTATIONS_COMMON = "java.annotations.common";
+    private static final String JAVA_XML_WS_ANNOTATION = "java.xml.ws.annotation";
     /**
      * Compiles classes used by the test
      */
@@ -63,10 +63,15 @@ public class SplitPackage {
 
     @Test
     public void runTest() throws Exception {
+        // split package detected if java.annotation.common is in the root set
+        runTest(JAVA_XML_WS_ANNOTATION, SPLIT_PKG_NAME);
+        runTest("ALL-SYSTEM", SPLIT_PKG_NAME);
+        // default
+        runTest(null, SPLIT_PKG_NAME);
+
         // Test jdeps classes
-        runTest(null);
-        // Test jdeps --add-modules
-        runTest(JAVA_ANNOTATIONS_COMMON, SPLIT_PKG_NAME);
+        runTest("ALL-DEFAULT");
+
     }
 
     private void runTest(String root, String... splitPackages) throws Exception {
@@ -93,7 +98,7 @@ public class SplitPackage {
                 throw new RuntimeException(splitPackages.toString());
             }
 
-            // java.annotations.common is not observable
+            // java.xml.ws.annotation is not observable
             DepsAnalyzer analyzer = jdeps.getDepsAnalyzer();
 
             assertTrue(analyzer.run());

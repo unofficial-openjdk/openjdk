@@ -21,4 +21,4 @@
  * questions.
  */
 
-module m2 {}
+module m2x {}

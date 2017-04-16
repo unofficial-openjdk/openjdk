@@ -30,7 +30,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.lang.reflect.Module;
 import jdk.internal.logger.BootstrapLogger;
 import jdk.internal.logger.LazyLoggers;
 
@@ -39,7 +38,7 @@ import jdk.internal.logger.LazyLoggers;
  * @bug     8144460 8144214
  * @summary Cover the logXX and LogEvent.valueOf APIs of BootstrapLogger
  *          and logXX APIs of SimpleConsoleLogger.
- * @modules java.base/jdk.internal.logger
+ * @modules java.base/jdk.internal.logger:+open
  *          java.base/sun.util.logging
  * @build BootstrapLoggerUtils LogStream
  * @run main/othervm BootstrapLoggerAPIsTest

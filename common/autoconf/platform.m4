@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -162,7 +162,7 @@ AC_DEFUN([PLATFORM_EXTRACT_TARGET_AND_BUILD],
   # Convert the autoconf OS/CPU value to our own data, into the VAR_OS/CPU variables.
   PLATFORM_EXTRACT_VARS_FROM_OS($build_os)
   PLATFORM_EXTRACT_VARS_FROM_CPU($build_cpu)
-  # ..and setup our own variables. (Do this explicitely to facilitate searching)
+  # ..and setup our own variables. (Do this explicitly to facilitate searching)
   OPENJDK_BUILD_OS="$VAR_OS"
   if test "x$VAR_OS_TYPE" != x; then
     OPENJDK_BUILD_OS_TYPE="$VAR_OS_TYPE"
@@ -192,7 +192,7 @@ AC_DEFUN([PLATFORM_EXTRACT_TARGET_AND_BUILD],
   # Convert the autoconf OS/CPU value to our own data, into the VAR_OS/CPU variables.
   PLATFORM_EXTRACT_VARS_FROM_OS($host_os)
   PLATFORM_EXTRACT_VARS_FROM_CPU($host_cpu)
-  # ... and setup our own variables. (Do this explicitely to facilitate searching)
+  # ... and setup our own variables. (Do this explicitly to facilitate searching)
   OPENJDK_TARGET_OS="$VAR_OS"
   if test "x$VAR_OS_TYPE" != x; then
     OPENJDK_TARGET_OS_TYPE="$VAR_OS_TYPE"
@@ -276,12 +276,6 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS],
 [
   PLATFORM_SETUP_LEGACY_VARS_HELPER([TARGET])
   PLATFORM_SETUP_LEGACY_VARS_HELPER([BUILD])
-
-  # ZERO_ARCHDEF is used to enable architecture-specific code.
-  # This is used in legacy hotspot build.
-  ZERO_ARCHDEF="$HOTSPOT_TARGET_CPU_DEFINE"
-  AC_SUBST(ZERO_ARCHDEF)
-
 ])
 
 # $1 - Either TARGET or BUILD to setup the variables for.
@@ -307,15 +301,6 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS_HELPER],
     OPENJDK_$1_CPU_LEGACY_LIB="amd64"
   fi
   AC_SUBST(OPENJDK_$1_CPU_LEGACY_LIB)
-
-  # This is the name of the cpu (but using i386 and amd64 instead of
-  # x86 and x86_64, respectively), preceeded by a /, to be used when
-  # locating libraries. On macosx, it's empty, though.
-  OPENJDK_$1_CPU_LIBDIR="/$OPENJDK_$1_CPU_LEGACY_LIB"
-  if test "x$OPENJDK_$1_OS" = xmacosx; then
-    OPENJDK_$1_CPU_LIBDIR=""
-  fi
-  AC_SUBST(OPENJDK_$1_CPU_LIBDIR)
 
   # OPENJDK_$1_CPU_ISADIR is normally empty. On 64-bit Solaris systems, it is set to
   # /amd64 or /sparcv9. This string is appended to some library paths, like this:
@@ -348,16 +333,6 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS_HELPER],
     # On all platforms except macosx, we replace x86_64 with amd64.
     OPENJDK_$1_CPU_JLI="amd64"
   fi
-  # Now setup the -D flags for building libjli.
-  OPENJDK_$1_CPU_JLI_CFLAGS="-DLIBARCHNAME='\"$OPENJDK_$1_CPU_JLI\"'"
-  if test "x$OPENJDK_$1_OS" = xsolaris; then
-    if test "x$OPENJDK_$1_CPU_ARCH" = xsparc; then
-      OPENJDK_$1_CPU_JLI_CFLAGS="$OPENJDK_$1_CPU_JLI_CFLAGS -DLIBARCH32NAME='\"sparc\"' -DLIBARCH64NAME='\"sparcv9\"'"
-    elif test "x$OPENJDK_$1_CPU_ARCH" = xx86; then
-      OPENJDK_$1_CPU_JLI_CFLAGS="$OPENJDK_$1_CPU_JLI_CFLAGS -DLIBARCH32NAME='\"i386\"' -DLIBARCH64NAME='\"amd64\"'"
-    fi
-  fi
-  AC_SUBST(OPENJDK_$1_CPU_JLI_CFLAGS)
 
   if test "x$OPENJDK_$1_OS" = xmacosx; then
       OPENJDK_$1_OS_EXPORT_DIR=macosx
@@ -379,19 +354,16 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS_HELPER],
     OPENJDK_$1_CPU_BUNDLE="$OPENJDK_$1_CPU"
   fi
   OPENJDK_$1_BUNDLE_PLATFORM="${OPENJDK_$1_OS_BUNDLE}-${OPENJDK_$1_CPU_BUNDLE}"
-  AC_SUBST(OPENJDK_$1_OS_BUNDLE)
-  AC_SUBST(OPENJDK_$1_CPU_BUNDLE)
   AC_SUBST(OPENJDK_$1_BUNDLE_PLATFORM)
 
   if test "x$OPENJDK_$1_CPU_BITS" = x64; then
-    A_LP64="LP64:="
     # -D_LP64=1 is only set on linux and mac. Setting on windows causes diff in
-    # unpack200.exe
+    # unpack200.exe. This variable is used in
+    # FLAGS_SETUP_COMPILER_FLAGS_FOR_JDK_HELPER.
     if test "x$OPENJDK_$1_OS" = xlinux || test "x$OPENJDK_$1_OS" = xmacosx; then
       OPENJDK_$1_ADD_LP64="-D_LP64=1"
     fi
   fi
-  AC_SUBST(LP64,$A_LP64)
 
   if test "x$COMPILE_TYPE" = "xcross"; then
     # FIXME: ... or should this include reduced builds..?
@@ -480,15 +452,17 @@ AC_DEFUN([PLATFORM_SET_RELEASE_FILE_OS_VALUES],
     fi
   fi
   if test "x$OPENJDK_TARGET_OS" = "xmacosx"; then
-    REQUIRED_OS_NAME=Darwin
+    REQUIRED_OS_NAME="Mac OS X"
     REQUIRED_OS_VERSION=11.2
   fi
   if test "x$OPENJDK_TARGET_OS" = "xaix"; then
     REQUIRED_OS_NAME=AIX
     REQUIRED_OS_VERSION=7.1
   fi
+  REQUIRED_OS_ARCH=${OPENJDK_TARGET_CPU}
 
   AC_SUBST(REQUIRED_OS_NAME)
+  AC_SUBST(REQUIRED_OS_ARCH)
   AC_SUBST(REQUIRED_OS_VERSION)
 ])
 

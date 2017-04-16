@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -786,7 +786,7 @@ public interface List<E> extends Collection<E> {
      * @since 9
      */
     static <E> List<E> of() {
-        return new ImmutableCollections.List0<>();
+        return ImmutableCollections.List0.instance();
     }
 
     /**
@@ -1027,10 +1027,9 @@ public interface List<E> extends Collection<E> {
     @SafeVarargs
     @SuppressWarnings("varargs")
     static <E> List<E> of(E... elements) {
-        Objects.requireNonNull(elements);
-        switch (elements.length) {
+        switch (elements.length) { // implicit null check of elements
             case 0:
-                return new ImmutableCollections.List0<>();
+                return ImmutableCollections.List0.instance();
             case 1:
                 return new ImmutableCollections.List1<>(elements[0]);
             case 2:

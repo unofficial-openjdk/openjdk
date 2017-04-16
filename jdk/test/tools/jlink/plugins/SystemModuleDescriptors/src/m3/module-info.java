@@ -22,4 +22,6 @@
  */
 
 module m3 {
+    requires m4;
+    exports p3;
 }

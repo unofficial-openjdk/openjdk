@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,6 +60,7 @@ import java.io.InputStream;
  *
  * @see Connection#prepareCall
  * @see ResultSet
+ * @since 1.1
  */
 
 public interface CallableStatement extends PreparedStatement {
@@ -295,7 +296,7 @@ public interface CallableStatement extends PreparedStatement {
      *             or <code>getBigDecimal(String parameterName)</code>
      * @see #setBigDecimal
      */
-    @Deprecated
+    @Deprecated(since="1.2")
     BigDecimal getBigDecimal(int parameterIndex, int scale)
         throws SQLException;
 

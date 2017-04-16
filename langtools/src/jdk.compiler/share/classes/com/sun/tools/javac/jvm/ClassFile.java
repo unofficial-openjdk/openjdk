@@ -85,6 +85,8 @@ public class ClassFile {
     public final static int CONSTANT_MethodHandle = 15;
     public final static int CONSTANT_MethodType = 16;
     public final static int CONSTANT_InvokeDynamic = 18;
+    public final static int CONSTANT_Module = 19;
+    public final static int CONSTANT_Package = 20;
 
     public final static int REF_getField = 1;
     public final static int REF_getStatic = 2;
@@ -129,8 +131,11 @@ public class ClassFile {
  * String Translation Routines
  ***********************************************************************/
 
-    /** Return internal representation of buf[offset..offset+len-1],
-     *  converting '/' to '.'.
+    /**
+     * Return internal representation of buf[offset..offset+len-1], converting '/' to '.'.
+     *
+     * Note: the naming is the inverse of that used by JVMS 4.2 The Internal Form Of Names,
+     * which defines "internal name" to be the form using "/" instead of "."
      */
     public static byte[] internalize(byte[] buf, int offset, int len) {
         byte[] translated = new byte[len];
@@ -142,15 +147,21 @@ public class ClassFile {
         return translated;
     }
 
-    /** Return internal representation of given name,
-     *  converting '/' to '.'.
+    /**
+     * Return internal representation of given name, converting '/' to '.'.
+     *
+     * Note: the naming is the inverse of that used by JVMS 4.2 The Internal Form Of Names,
+     * which defines "internal name" to be the form using "/" instead of "."
      */
     public static byte[] internalize(Name name) {
         return internalize(name.getByteArray(), name.getByteOffset(), name.getByteLength());
     }
 
-    /** Return external representation of buf[offset..offset+len-1],
-     *  converting '.' to '/'.
+    /**
+     * Return external representation of buf[offset..offset+len-1], converting '.' to '/'.
+     *
+     * Note: the naming is the inverse of that used by JVMS 4.2 The Internal Form Of Names,
+     * which defines "internal name" to be the form using "/" instead of "."
      */
     public static byte[] externalize(byte[] buf, int offset, int len) {
         byte[] translated = new byte[len];
@@ -162,8 +173,11 @@ public class ClassFile {
         return translated;
     }
 
-    /** Return external representation of given name,
-     *  converting '/' to '.'.
+    /**
+     * Return external representation of given name, converting '/' to '.'.
+     *
+     * Note: the naming is the inverse of that used by JVMS 4.2 The Internal Form Of Names,
+     * which defines "internal name" to be the form using "/" instead of "."
      */
     public static byte[] externalize(Name name) {
         return externalize(name.getByteArray(), name.getByteOffset(), name.getByteLength());

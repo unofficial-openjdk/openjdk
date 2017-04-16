@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,9 +23,12 @@
  */
 
 #include "precompiled.hpp"
+#include "aot/aotLoader.hpp"
 #include "classfile/classFileParser.hpp"
 #include "classfile/classFileStream.hpp"
+#include "classfile/classLoader.hpp"
 #include "classfile/javaClasses.hpp"
+#include "classfile/moduleEntry.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/systemDictionaryShared.hpp"
 #include "classfile/verifier.hpp"
@@ -144,7 +147,8 @@ InstanceKlass* InstanceKlass::allocate_instance_klass(const ClassFileParser& par
                                        parser.itable_size(),
                                        nonstatic_oop_map_size(parser.total_oop_map_count()),
                                        parser.is_interface(),
-                                       parser.is_anonymous());
+                                       parser.is_anonymous(),
+                                       should_store_fingerprint());
 
   const Symbol* const class_name = parser.class_name();
   assert(class_name != NULL, "invariant");
@@ -517,12 +521,14 @@ bool InstanceKlass::link_class_or_fail(TRAPS) {
 
 bool InstanceKlass::link_class_impl(
     instanceKlassHandle this_k, bool throw_verifyerror, TRAPS) {
-  // check for error state.
-  // This is checking for the wrong state.  If the state is initialization_error,
-  // then this class *was* linked.  The CDS code does a try_link_class and uses
-  // initialization_error to mark classes to not include in the archive during
-  // DumpSharedSpaces.  This should be removed when the CDS bug is fixed.
-  if (this_k->is_in_error_state()) {
+  if (DumpSharedSpaces && this_k->is_in_error_state()) {
+    // This is for CDS dumping phase only -- we use the in_error_state to indicate that
+    // the class has failed verification. Throwing the NoClassDefFoundError here is just
+    // a convenient way to stop repeat attempts to verify the same (bad) class.
+    //
+    // Note that the NoClassDefFoundError is not part of the JLS, and should not be thrown
+    // if we are executing Java code. This is not a problem for CDS dumping phase since
+    // it doesn't execute any Java code.
     ResourceMark rm(THREAD);
     THROW_MSG_(vmSymbols::java_lang_NoClassDefFoundError(),
                this_k->external_name(), false);
@@ -784,6 +790,9 @@ void InstanceKlass::initialize_impl(instanceKlassHandle this_k, TRAPS) {
     }
   }
 
+
+  // Look for aot compiled methods for this klass, including class initializer.
+  AOTLoader::load_for_klass(this_k, THREAD);
 
   // Step 8
   {
@@ -1948,6 +1957,72 @@ void InstanceKlass::clean_method_data(BoolObjectClosure* is_alive) {
   }
 }
 
+bool InstanceKlass::supers_have_passed_fingerprint_checks() {
+  if (java_super() != NULL && !java_super()->has_passed_fingerprint_check()) {
+    ResourceMark rm;
+    log_trace(class, fingerprint)("%s : super %s not fingerprinted", external_name(), java_super()->external_name());
+    return false;
+  }
+
+  Array<Klass*>* local_interfaces = this->local_interfaces();
+  if (local_interfaces != NULL) {
+    int length = local_interfaces->length();
+    for (int i = 0; i < length; i++) {
+      InstanceKlass* intf = InstanceKlass::cast(local_interfaces->at(i));
+      if (!intf->has_passed_fingerprint_check()) {
+        ResourceMark rm;
+        log_trace(class, fingerprint)("%s : interface %s not fingerprinted", external_name(), intf->external_name());
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+bool InstanceKlass::should_store_fingerprint() {
+#if INCLUDE_AOT
+  // We store the fingerprint into the InstanceKlass only in the following 2 cases:
+  if (EnableJVMCI && !UseJVMCICompiler) {
+    // (1) We are running AOT to generate a shared library.
+    return true;
+  }
+  if (DumpSharedSpaces) {
+    // (2) We are running -Xshare:dump to create a shared archive
+    return true;
+  }
+#endif
+
+  // In all other cases we might set the _misc_has_passed_fingerprint_check bit,
+  // but do not store the 64-bit fingerprint to save space.
+  return false;
+}
+
+bool InstanceKlass::has_stored_fingerprint() const {
+#if INCLUDE_AOT
+  return should_store_fingerprint() || is_shared();
+#else
+  return false;
+#endif
+}
+
+uint64_t InstanceKlass::get_stored_fingerprint() const {
+  address adr = adr_fingerprint();
+  if (adr != NULL) {
+    return (uint64_t)Bytes::get_native_u8(adr); // adr may not be 64-bit aligned
+  }
+  return 0;
+}
+
+void InstanceKlass::store_fingerprint(uint64_t fingerprint) {
+  address adr = adr_fingerprint();
+  if (adr != NULL) {
+    Bytes::put_native_u8(adr, (u8)fingerprint); // adr may not be 64-bit aligned
+
+    ResourceMark rm;
+    log_trace(class, fingerprint)("stored as " PTR64_FORMAT " for class %s", fingerprint, external_name());
+  }
+}
 
 static void remove_unshareable_in_class(Klass* k) {
   // remove klass's unshareable info
@@ -2064,8 +2139,6 @@ void InstanceKlass::release_C_heap_structures(InstanceKlass* ik) {
 }
 
 void InstanceKlass::release_C_heap_structures() {
-  assert(!this->is_shared(), "should not be called for a shared class");
-
   // Can't release the constant pool here because the constant pool can be
   // deallocated separately from the InstanceKlass for default methods and
   // redefine classes.
@@ -2116,7 +2189,7 @@ void InstanceKlass::release_C_heap_structures() {
   }
 
   // deallocate the cached class file
-  if (_cached_class_file != NULL) {
+  if (_cached_class_file != NULL && !MetaspaceShared::is_in_shared_space(_cached_class_file)) {
     os::free(_cached_class_file);
     _cached_class_file = NULL;
   }
@@ -2245,7 +2318,7 @@ void InstanceKlass::set_package(ClassLoaderData* loader_data, TRAPS) {
         // the java.base module.  If a non-java.base package is erroneously placed
         // in the java.base module it will be caught later when java.base
         // is defined by ModuleEntryTable::verify_javabase_packages check.
-        assert(ModuleEntryTable::javabase_moduleEntry() != NULL, "java.base module is NULL");
+        assert(ModuleEntryTable::javabase_moduleEntry() != NULL, JAVA_BASE_NAME " module is NULL");
         _package_entry = loader_data->packages()->lookup(pkg_name, ModuleEntryTable::javabase_moduleEntry());
       } else {
         assert(loader_data->modules()->unnamed_module() != NULL, "unnamed module is NULL");
@@ -2381,25 +2454,26 @@ Klass* InstanceKlass::compute_enclosing_class_impl(instanceKlassHandle self,
 
 // Only boot and platform class loaders can define classes in "java/" packages.
 void InstanceKlass::check_prohibited_package(Symbol* class_name,
-                                                Handle class_loader,
-                                                TRAPS) {
-  const char* javapkg = "java/";
-  ResourceMark rm(THREAD);
+                                             Handle class_loader,
+                                             TRAPS) {
   if (!class_loader.is_null() &&
       !SystemDictionary::is_platform_class_loader(class_loader) &&
-      class_name != NULL &&
-      strncmp(class_name->as_C_string(), javapkg, strlen(javapkg)) == 0) {
-    TempNewSymbol pkg_name = InstanceKlass::package_from_name(class_name, CHECK);
-    assert(pkg_name != NULL, "Error in parsing package name starting with 'java/'");
-    char* name = pkg_name->as_C_string();
-    const char* class_loader_name = InstanceKlass::cast(class_loader()->klass())->name()->as_C_string();
-    StringUtils::replace_no_expand(name, "/", ".");
-    const char* msg_text1 = "Class loader (instance of): ";
-    const char* msg_text2 = " tried to load prohibited package name: ";
-    size_t len = strlen(msg_text1) + strlen(class_loader_name) + strlen(msg_text2) + strlen(name) + 1;
-    char* message = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, len);
-    jio_snprintf(message, len, "%s%s%s%s", msg_text1, class_loader_name, msg_text2, name);
-    THROW_MSG(vmSymbols::java_lang_SecurityException(), message);
+      class_name != NULL) {
+    ResourceMark rm(THREAD);
+    char* name = class_name->as_C_string();
+    if (strncmp(name, JAVAPKG, JAVAPKG_LEN) == 0 && name[JAVAPKG_LEN] == '/') {
+      TempNewSymbol pkg_name = InstanceKlass::package_from_name(class_name, CHECK);
+      assert(pkg_name != NULL, "Error in parsing package name starting with 'java/'");
+      name = pkg_name->as_C_string();
+      const char* class_loader_name = SystemDictionary::loader_name(class_loader());
+      StringUtils::replace_no_expand(name, "/", ".");
+      const char* msg_text1 = "Class loader (instance of): ";
+      const char* msg_text2 = " tried to load prohibited package name: ";
+      size_t len = strlen(msg_text1) + strlen(class_loader_name) + strlen(msg_text2) + strlen(name) + 1;
+      char* message = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, len);
+      jio_snprintf(message, len, "%s%s%s%s", msg_text1, class_loader_name, msg_text2, name);
+      THROW_MSG(vmSymbols::java_lang_SecurityException(), message);
+    }
   }
   return;
 }
@@ -2734,7 +2808,7 @@ nmethod* InstanceKlass::lookup_osr_nmethod(const Method* m, int bci, int comp_le
   return NULL;
 }
 
-bool InstanceKlass::add_member_name(Handle mem_name) {
+oop InstanceKlass::add_member_name(Handle mem_name, bool intern) {
   jweak mem_name_wref = JNIHandles::make_weak_global(mem_name);
   MutexLocker ml(MemberNameTable_lock);
   DEBUG_ONLY(NoSafepointVerifier nsv);
@@ -2744,7 +2818,7 @@ bool InstanceKlass::add_member_name(Handle mem_name) {
   // is called!
   Method* method = (Method*)java_lang_invoke_MemberName::vmtarget(mem_name());
   if (method->is_obsolete()) {
-    return false;
+    return NULL;
   } else if (method->is_old()) {
     // Replace method with redefined version
     java_lang_invoke_MemberName::set_vmtarget(mem_name(), method_with_idnum(method->method_idnum()));
@@ -2753,8 +2827,11 @@ bool InstanceKlass::add_member_name(Handle mem_name) {
   if (_member_names == NULL) {
     _member_names = new (ResourceObj::C_HEAP, mtClass) MemberNameTable(idnum_allocated_count());
   }
-  _member_names->add_member_name(mem_name_wref);
-  return true;
+  if (intern) {
+    return _member_names->find_or_add_member_name(mem_name_wref);
+  } else {
+    return _member_names->add_member_name(mem_name_wref);
+  }
 }
 
 // -----------------------------------------------------------------------------------------------------

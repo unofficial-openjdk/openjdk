@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, 2015, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -282,7 +282,7 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
       regs[i].set_bad();
       break;
     case T_LONG:
-      assert(sig_bt[i + 1] == T_VOID, "expecting half");
+      assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
       // fall through
     case T_OBJECT:
     case T_ARRAY:
@@ -303,7 +303,7 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
       }
       break;
     case T_DOUBLE:
-      assert(sig_bt[i + 1] == T_VOID, "expecting half");
+      assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
       if (fp_args < Argument::n_float_register_parameters_j) {
         regs[i].set2(FP_ArgReg[fp_args++]->as_VMReg());
       } else {
@@ -840,7 +840,7 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
         }
         break;
       case T_LONG:
-        assert(sig_bt[i + 1] == T_VOID, "expecting half");
+        assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
         // fall through
       case T_OBJECT:
       case T_ARRAY:
@@ -862,7 +862,7 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
         }
         break;
       case T_DOUBLE:
-        assert(sig_bt[i + 1] == T_VOID, "expecting half");
+        assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
         if (fp_args < Argument::n_float_register_parameters_c) {
           regs[i].set2(FP_ArgReg[fp_args++]->as_VMReg());
         } else {
@@ -1962,6 +1962,8 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
       // due to cache line collision.
       __ serialize_memory(rthread, r2);
     }
+  } else {
+    __ strw(rscratch1, Address(rthread, JavaThread::thread_state_offset()));
   }
 
   // check for safepoint operation in progress and/or pending suspend requests
@@ -2050,13 +2052,31 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
 
   __ reset_last_Java_frame(false);
 
-  // Unpack oop result
+  // Unbox oop result, e.g. JNIHandles::resolve result.
   if (ret_type == T_OBJECT || ret_type == T_ARRAY) {
-      Label L;
-      __ cbz(r0, L);
-      __ ldr(r0, Address(r0, 0));
-      __ bind(L);
-      __ verify_oop(r0);
+    Label done, not_weak;
+    __ cbz(r0, done);           // Use NULL as-is.
+    STATIC_ASSERT(JNIHandles::weak_tag_mask == 1u);
+    __ tbz(r0, 0, not_weak);    // Test for jweak tag.
+    // Resolve jweak.
+    __ ldr(r0, Address(r0, -JNIHandles::weak_tag_value));
+    __ verify_oop(r0);
+#if INCLUDE_ALL_GCS
+    if (UseG1GC) {
+      __ g1_write_barrier_pre(noreg /* obj */,
+                              r0 /* pre_val */,
+                              rthread /* thread */,
+                              rscratch1 /* tmp */,
+                              true /* tosca_live */,
+                              true /* expand_call */);
+    }
+#endif // INCLUDE_ALL_GCS
+    __ b(done);
+    __ bind(not_weak);
+    // Resolve (untagged) jobject.
+    __ ldr(r0, Address(r0, 0));
+    __ verify_oop(r0);
+    __ bind(done);
   }
 
   if (CheckJNICalls) {
@@ -2386,6 +2406,7 @@ void SharedRuntime::generate_deopt_blob() {
 
     __ movw(rcpool, (int32_t)Deoptimization::Unpack_reexecute);
     __ mov(c_rarg0, rthread);
+    __ movw(c_rarg2, rcpool); // exec mode
     __ lea(rscratch1,
            RuntimeAddress(CAST_FROM_FN_PTR(address,
                                            Deoptimization::uncommon_trap)));

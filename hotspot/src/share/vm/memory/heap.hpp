@@ -81,8 +81,7 @@ class FreeBlock: public HeapBlock {
 
 class CodeHeap : public CHeapObj<mtCode> {
   friend class VMStructs;
-  friend class PregeneratedCodeHeap;
- private:
+ protected:
   VirtualSpace _memory;                          // the memory holding the blocks
   VirtualSpace _segmap;                          // the memory holding the segment map
 
@@ -154,8 +153,11 @@ class CodeHeap : public CHeapObj<mtCode> {
   char* high() const                             { return _memory.high(); }
   char* high_boundary() const                    { return _memory.high_boundary(); }
 
-  virtual bool  contains(const void* p) const    { return low_boundary() <= p && p < high(); }
+  virtual bool contains(const void* p) const     { return low_boundary() <= p && p < high(); }
+  virtual bool contains_blob(const CodeBlob* blob) const { return low_boundary() <= (char*) blob && (char*) blob < high(); }
+
   virtual void* find_start(void* p)     const;   // returns the block containing p or NULL
+  virtual CodeBlob* find_blob_unsafe(void* start) const;
   size_t alignment_unit()       const;           // alignment of any block
   size_t alignment_offset()     const;           // offset of first byte of any block, within the enclosing alignment unit
   static size_t header_size();                   // returns the header size for each heap block

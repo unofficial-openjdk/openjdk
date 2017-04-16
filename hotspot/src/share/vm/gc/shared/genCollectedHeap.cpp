@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "aot/aotLoader.hpp"
 #include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -73,6 +74,7 @@ enum GCH_strong_roots_tasks {
   GCH_PS_ClassLoaderDataGraph_oops_do,
   GCH_PS_jvmti_oops_do,
   GCH_PS_CodeCache_oops_do,
+  GCH_PS_aot_oops_do,
   GCH_PS_younger_gens,
   // Leave this one last.
   GCH_PS_NumElements
@@ -607,6 +609,9 @@ void GenCollectedHeap::process_roots(StrongRootsScope* scope,
   }
   if (!_process_strong_tasks->is_task_claimed(GCH_PS_jvmti_oops_do)) {
     JvmtiExport::oops_do(strong_roots);
+  }
+  if (UseAOT && !_process_strong_tasks->is_task_claimed(GCH_PS_aot_oops_do)) {
+    AOTLoader::oops_do(strong_roots);
   }
 
   if (!_process_strong_tasks->is_task_claimed(GCH_PS_SystemDictionary_oops_do)) {
@@ -1204,7 +1209,7 @@ void GenCollectedHeap::gc_epilogue(bool full) {
 #if defined(COMPILER2) || INCLUDE_JVMCI
   assert(DerivedPointerTable::is_empty(), "derived pointer present");
   size_t actual_gap = pointer_delta((HeapWord*) (max_uintx-3), *(end_addr()));
-  guarantee(actual_gap > (size_t)FastAllocateSizeLimit, "inline allocation wraps");
+  guarantee(is_client_compilation_mode_vm() || actual_gap > (size_t)FastAllocateSizeLimit, "inline allocation wraps");
 #endif /* COMPILER2 || INCLUDE_JVMCI */
 
   resize_all_tlabs();

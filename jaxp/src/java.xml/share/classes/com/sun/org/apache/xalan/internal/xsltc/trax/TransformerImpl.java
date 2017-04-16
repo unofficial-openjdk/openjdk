@@ -17,9 +17,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * $Id: TransformerImpl.java,v 1.10 2007/06/13 01:57:09 joehw Exp $
- */
 
 package com.sun.org.apache.xalan.internal.xsltc.trax;
 
@@ -160,7 +157,7 @@ public final class TransformerImpl extends Transformer
     /**
      * Number of indent spaces to add when indentation is on.
      */
-    private int _indentNumber;
+    private int _indentNumber = -1;
 
     /**
      * A reference to the transformer factory that this templates
@@ -230,6 +227,7 @@ public final class TransformerImpl extends Transformer
     // Catalog is enabled by default
     boolean _useCatalog = true;
 
+    int _cdataChunkSize = JdkXmlUtils.CDATA_CHUNK_SIZE_DEFAULT;
 
     /**
      * This class wraps an ErrorListener into a MessageHandler in order to
@@ -284,6 +282,9 @@ public final class TransformerImpl extends Transformer
         _readerManager.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, _accessExternalDTD);
         _readerManager.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, _isSecureProcessing);
         _readerManager.setProperty(XalanConstants.SECURITY_MANAGER, _securityManager);
+        _cdataChunkSize = JdkXmlUtils.getValue(_tfactory.getAttribute(JdkXmlUtils.CDATA_CHUNK_SIZE),
+                JdkXmlUtils.CDATA_CHUNK_SIZE_DEFAULT);
+        _readerManager.setProperty(JdkXmlUtils.CDATA_CHUNK_SIZE, _cdataChunkSize);
 
         _useCatalog = _tfactory.getFeature(XMLConstants.USE_CATALOG);
         if (_useCatalog) {
@@ -1458,7 +1459,7 @@ public final class TransformerImpl extends Transformer
         _uriResolver = null;
         _dom = null;
         _parameters = null;
-        _indentNumber = 0;
+        _indentNumber = -1;
         setOutputProperties (null);
         _tohFactory = null;
         _ostream = null;

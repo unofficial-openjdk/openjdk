@@ -30,32 +30,6 @@
 #include <sys/poll.h>
 #include <sys/socket.h>
 
-int NET_Timeout(int s, long timeout);
-int NET_Timeout0(int s, long timeout, long currentTime);
-int NET_Read(int s, void* buf, size_t len);
-int NET_NonBlockingRead(int s, void* buf, size_t len);
-int NET_TimeoutWithCurrentTime(int s, long timeout, long currentTime);
-long NET_GetCurrentTime();
-int NET_RecvFrom(int s, void *buf, int len, unsigned int flags,
-                 struct sockaddr *from, socklen_t *fromlen);
-int NET_ReadV(int s, const struct iovec * vector, int count);
-int NET_Send(int s, void *msg, int len, unsigned int flags);
-int NET_SendTo(int s, const void *msg, int len,  unsigned  int
-               flags, const struct sockaddr *to, int tolen);
-int NET_Writev(int s, const struct iovec * vector, int count);
-int NET_Connect(int s, struct sockaddr *addr, int addrlen);
-int NET_Accept(int s, struct sockaddr *addr, socklen_t *addrlen);
-int NET_SocketClose(int s);
-int NET_Dup2(int oldfd, int newfd);
-int NET_Poll(struct pollfd *ufds, unsigned int nfds, int timeout);
-int NET_SocketAvailable(int s, jint *pbytes);
-
-void NET_ThrowUnknownHostExceptionWithGaiError(JNIEnv *env,
-                                               const char* hostname,
-                                               int gai_error);
-void NET_ThrowByNameWithLastError(JNIEnv *env, const char *name,
-                                  const char *defaultDetail);
-
 /************************************************************************
  * Macros and constants
  */
@@ -84,28 +58,46 @@ void NET_ThrowByNameWithLastError(JNIEnv *env, const char *name,
 #define MAX_HEAP_BUFFER_LEN 65536
 #endif
 
-#ifdef AF_INET6
 typedef union {
     struct sockaddr     sa;
     struct sockaddr_in  sa4;
     struct sockaddr_in6 sa6;
 } SOCKETADDRESS;
-#else
-typedef union {
-    struct sockaddr     sa;
-    struct sockaddr_in  sa4;
-} SOCKETADDRESS;
-#endif
 
 /************************************************************************
- *  Utilities
+ * Functions
  */
+
+int NET_Timeout(int s, long timeout);
+int NET_Timeout0(int s, long timeout, long currentTime);
+int NET_Read(int s, void* buf, size_t len);
+int NET_NonBlockingRead(int s, void* buf, size_t len);
+int NET_TimeoutWithCurrentTime(int s, long timeout, long currentTime);
+long NET_GetCurrentTime();
+int NET_RecvFrom(int s, void *buf, int len, unsigned int flags,
+                 struct sockaddr *from, socklen_t *fromlen);
+int NET_ReadV(int s, const struct iovec * vector, int count);
+int NET_Send(int s, void *msg, int len, unsigned int flags);
+int NET_SendTo(int s, const void *msg, int len,  unsigned  int
+               flags, const struct sockaddr *to, int tolen);
+int NET_Writev(int s, const struct iovec * vector, int count);
+int NET_Connect(int s, struct sockaddr *addr, int addrlen);
+int NET_Accept(int s, struct sockaddr *addr, socklen_t *addrlen);
+int NET_SocketClose(int s);
+int NET_Dup2(int oldfd, int newfd);
+int NET_Poll(struct pollfd *ufds, unsigned int nfds, int timeout);
+int NET_SocketAvailable(int s, jint *pbytes);
+
+void NET_ThrowUnknownHostExceptionWithGaiError(JNIEnv *env,
+                                               const char* hostname,
+                                               int gai_error);
+void NET_ThrowByNameWithLastError(JNIEnv *env, const char *name,
+                                  const char *defaultDetail);
+void NET_SetTrafficClass(SOCKETADDRESS *sa, int trafficClass);
 
 #ifdef __linux__
 int kernelIsV24();
-#ifdef AF_INET6
 int getDefaultIPv6Interface(struct in6_addr *target_addr);
-#endif
 #endif
 
 #ifdef __solaris__

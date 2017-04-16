@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,13 +40,16 @@ import jdk.testlibrary.ProcessTools;
 /**
  * @test
  * @bug 6434402 8004926
+ * @author Jaroslav Bachorik
+ *
  * @library /lib/testlibrary
- * @modules java.management/sun.management
- *          java.management
+ * @modules java.management
+ *          jdk.attach
+ *          jdk.management.agent/jdk.internal.agent
+ *
  * @build jdk.testlibrary.*
  * @build TestManager TestApplication CustomLauncherTest
  * @run main/othervm CustomLauncherTest
- * @author Jaroslav Bachorik
  */
 public class CustomLauncherTest {
     private static final  String TEST_CLASSPATH = System.getProperty("test.class.path");
@@ -56,8 +59,6 @@ public class CustomLauncherTest {
     private static final  String TEST_SRC = System.getProperty("test.src");
     private static final  String OSNAME = System.getProperty("os.name");
     private static final  String ARCH;
-    private static final  String LIBARCH;
-
     static {
         // magic with os.arch
         String osarch = System.getProperty("os.arch");
@@ -84,7 +85,6 @@ public class CustomLauncherTest {
                 ARCH = osarch;
             }
         }
-        LIBARCH = ARCH.equals("i586") ? "i386" : ARCH;
     }
 
     public static void main(String[] args) throws Exception {
@@ -144,15 +144,15 @@ public class CustomLauncherTest {
 
             System.out.println("Attaching test manager:");
             System.out.println("=========================");
-            System.out.println("  PID           : " + serverPrc.getPid());
+            System.out.println("  PID           : " + serverPrc.pid());
             System.out.println("  shutdown port : " + port.get());
 
             ProcessBuilder client = ProcessTools.createJavaProcessBuilder(
                 "-cp",
                 TEST_CLASSPATH,
-                "--add-exports", "java.management/sun.management=ALL-UNNAMED",
+                "--add-exports", "jdk.management.agent/jdk.internal.agent=ALL-UNNAMED",
                 "TestManager",
-                String.valueOf(serverPrc.getPid()),
+                String.valueOf(serverPrc.pid()),
                 port.get(),
                 "true"
             );
@@ -184,15 +184,12 @@ public class CustomLauncherTest {
     }
 
     private static Path findLibjvm(FileSystem FS) {
-        Path libjvmPath = findLibjvm(FS.getPath(TEST_JDK, "jre", "lib", LIBARCH));
-        if (libjvmPath == null) {
-            libjvmPath = findLibjvm(FS.getPath(TEST_JDK, "lib", LIBARCH));
-        }
+        Path libjvmPath = findLibjvm(FS.getPath(TEST_JDK, "lib"));
         return libjvmPath;
     }
 
     private static Path findLibjvm(Path libPath) {
-        // ARCH/libjvm.so -> ARCH/server/libjvm.so -> ARCH/client/libjvm.so
+        // libjvm.so -> server/libjvm.so -> client/libjvm.so
         Path libjvmPath = libPath.resolve("libjvm.so");
         if (isFileOk(libjvmPath)) {
             return libjvmPath;

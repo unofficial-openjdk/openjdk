@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -451,7 +451,7 @@ public abstract class Toolkit {
      *
      * @param s the error message
      * @param e the original exception
-     * @throws the new AWTError including the cause (the original exception)
+     * @throws AWTError the new AWTError including the cause (the original exception)
      */
     private static void newAWTError(Throwable e, String s) {
         AWTError newAWTError = new AWTError(s);
@@ -468,7 +468,7 @@ public abstract class Toolkit {
     private static void fallbackToLoadClassForAT(String atName) {
         try {
             Class<?> c = Class.forName(atName, false, ClassLoader.getSystemClassLoader());
-            c.newInstance();
+            c.getConstructor().newInstance();
         } catch (ClassNotFoundException e) {
             newAWTError(e, "Assistive Technology not found: " + atName);
         } catch (InstantiationException e) {
@@ -583,15 +583,13 @@ public abstract class Toolkit {
                     }
                     try {
                         if (cls != null) {
-                            toolkit = (Toolkit)cls.newInstance();
+                            toolkit = (Toolkit)cls.getConstructor().newInstance();
                             if (GraphicsEnvironment.isHeadless()) {
                                 toolkit = new HeadlessToolkit(toolkit);
                             }
                         }
-                    } catch (final InstantiationException ignored) {
-                        throw new AWTError("Could not instantiate Toolkit: " + nm);
-                    } catch (final IllegalAccessException ignored) {
-                        throw new AWTError("Could not access Toolkit: " + nm);
+                    } catch (final ReflectiveOperationException ignored) {
+                        throw new AWTError("Could not create Toolkit: " + nm);
                     }
                     return null;
                 }
@@ -1069,6 +1067,7 @@ public abstract class Toolkit {
      * @see       java.awt.MenuShortcut
      * @since     1.1
      */
+    @SuppressWarnings("deprecation")
     public int getMenuShortcutKeyMask() throws HeadlessException {
         GraphicsEnvironment.checkHeadless();
 

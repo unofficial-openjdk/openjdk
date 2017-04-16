@@ -205,7 +205,7 @@ private:
   // Adapter blob (i2c/c2i) for this Method*. Set once when method is linked.
   union {
     AdapterHandlerEntry* _adapter;
-    AdapterHandlerEntry** _adapter_trampoline;
+    AdapterHandlerEntry** _adapter_trampoline; // see comments around Method::link_method()
   };
 
   int               _constMethod_size;
@@ -359,7 +359,9 @@ public:
   }
 
   // Sizing
-  static int header_size() { return sizeof(ConstMethod)/wordSize; }
+  static int header_size() {
+    return align_size_up(sizeof(ConstMethod), wordSize) / wordSize;
+  }
 
   // Size needed
   static int size(int code_size, InlineTableSizes* sizes);

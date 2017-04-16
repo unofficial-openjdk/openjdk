@@ -86,19 +86,26 @@
 
 #define MAX_PATH (2 * K)
 
-// Minimum stack sizes for the VM.  It's easier to document a constant value
-// but it's different for x86 and sparc because the page sizes are different.
-#ifdef AMD64
-size_t os::Posix::_compiler_thread_min_stack_allowed = 394 * K;
-size_t os::Posix::_java_thread_min_stack_allowed = 224 * K;
+// Minimum usable stack sizes required to get to user code. Space for
+// HotSpot guard pages is added later.
+#ifdef _LP64
+// The adlc generated method 'State::MachNodeGenerator(int)' used by the C2 compiler
+// threads requires a large stack with the Solaris Studio C++ compiler version 5.13
+// and product VM builds (debug builds require significantly less stack space).
+size_t os::Posix::_compiler_thread_min_stack_allowed = 325 * K;
+size_t os::Posix::_java_thread_min_stack_allowed = 48 * K;
 size_t os::Posix::_vm_internal_thread_min_stack_allowed = 224 * K;
+#else
+size_t os::Posix::_compiler_thread_min_stack_allowed = 32 * K;
+size_t os::Posix::_java_thread_min_stack_allowed = 32 * K;
+size_t os::Posix::_vm_internal_thread_min_stack_allowed = 64 * K;
+#endif // _LP64
+
+#ifdef AMD64
 #define REG_SP REG_RSP
 #define REG_PC REG_RIP
 #define REG_FP REG_RBP
 #else
-size_t os::Posix::_compiler_thread_min_stack_allowed = 64 * K;
-size_t os::Posix::_java_thread_min_stack_allowed = 64 * K;
-size_t os::Posix::_vm_internal_thread_min_stack_allowed = 64 * K;
 #define REG_SP UESP
 #define REG_PC EIP
 #define REG_FP EBP

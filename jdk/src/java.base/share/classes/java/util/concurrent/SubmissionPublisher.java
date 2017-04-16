@@ -195,6 +195,7 @@ public class SubmissionPublisher<T> implements Flow.Publisher<T>,
 
     /** Fallback if ForkJoinPool.commonPool() cannot support parallelism */
     private static final class ThreadPerTaskExecutor implements Executor {
+        ThreadPerTaskExecutor() {}      // prevent access constructor creation
         public void execute(Runnable r) { new Thread(r).start(); }
     }
 
@@ -587,6 +588,7 @@ public class SubmissionPublisher<T> implements Flow.Publisher<T>,
         if (!closed) {
             BufferedSubscription<T> b;
             synchronized (this) {
+                // no need to re-check closed here
                 b = clients;
                 clients = null;
                 closed = true;
@@ -618,9 +620,11 @@ public class SubmissionPublisher<T> implements Flow.Publisher<T>,
             BufferedSubscription<T> b;
             synchronized (this) {
                 b = clients;
-                clients = null;
-                closed = true;
-                closedException = error;
+                if (!closed) {  // don't clobber racing close
+                    clients = null;
+                    closedException = error;
+                    closed = true;
+                }
             }
             while (b != null) {
                 BufferedSubscription<T> next = b.next;
@@ -1361,9 +1365,9 @@ public class SubmissionPublisher<T> implements Flow.Publisher<T>,
                     }
                 }
             }
-            else if (n < 0L)
+            else
                 onError(new IllegalArgumentException(
-                            "negative subscription request"));
+                            "non-positive subscription request"));
         }
 
         public final boolean isReleasable() { // for ManagedBlocker
@@ -1454,7 +1458,17 @@ public class SubmissionPublisher<T> implements Flow.Publisher<T>,
          */
         private boolean checkControl(Flow.Subscriber<? super T> s, int c) {
             boolean stat = true;
-            if ((c & ERROR) != 0) {
+            if ((c & SUBSCRIBE) != 0) {
+                if (CTL.compareAndSet(this, c, c & ~SUBSCRIBE)) {
+                    try {
+                        if (s != null)
+                            s.onSubscribe(this);
+                    } catch (Throwable ex) {
+                        onError(ex);
+                    }
+                }
+            }
+            else if ((c & ERROR) != 0) {
                 Throwable ex = pendingError;
                 ctl = DISABLED;           // no need for CAS
                 if (ex != null) {         // null if errorless cancel
@@ -1462,16 +1476,6 @@ public class SubmissionPublisher<T> implements Flow.Publisher<T>,
                         if (s != null)
                             s.onError(ex);
                     } catch (Throwable ignore) {
-                    }
-                }
-            }
-            else if ((c & SUBSCRIBE) != 0) {
-                if (CTL.compareAndSet(this, c, c & ~SUBSCRIBE)) {
-                    try {
-                        if (s != null)
-                            s.onSubscribe(this);
-                    } catch (Throwable ex) {
-                        onError(ex);
                     }
                 }
             }

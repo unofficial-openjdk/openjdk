@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <?xml-stylesheet type="text/xsl" href="jvmti.xsl"?>
 <!--
- Copyright (c) 2002, 2016, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -404,7 +404,7 @@
     interfaces are more appropriate than <jvmti/> for many tools. 
     For more information on the Java Platform Debugger Architecture, 
     see the 
-    <externallink id="http://docs.oracle.com/javase/7/docs/technotes/guides/jpda/architecture.html">Java 
+    <externallink id="docs/technotes/guides/jpda/architecture.html">Java 
       Platform Debugger Architecture website</externallink>. 
   </intro>
 
@@ -764,7 +764,8 @@ Agent_OnUnload_L(JavaVM *vm)</example>
     An agent creates a <jvmti/> environment 
     by passing a <jvmti/> version 
     as the interface ID to the JNI Invocation API function 
-    <externallink id="http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html#GetEnv"><code>GetEnv</code></externallink>.
+    <externallink id="docs/technotes/guides/jni/spec/invocation.html#GetEnv">
+      <code>GetEnv</code></externallink>.
     See <internallink id="jvmtiEnvAccess">Accessing <jvmti/> Functions</internallink>
     for more details on the creation and use of 
     <jvmti/> environments.
@@ -863,14 +864,12 @@ Agent_OnUnload_L(JavaVM *vm)</example>
   </intro>
 
 <intro id="bcimodules" label="Bytecode Instrumentation of code in modules">
-  Agents that instrument code in named modules may need to arrange for those
-  modules to read other modules. If code is instrumented to invoke a method
-  in a support class in another module, then the module of the instrumented
-  code should read the module of the supporting class. Furthermore, the
-  supporting class will only be accessible to the instrumented code if
-  it is <code>public</code> and in a package that is exported by its module.
-  Agents can use the JNI functions <code>CanReadModule</code> and
-  <code>AddModuleReads</code> to test and update a module to read another.
+  Agents can use the functions <functionlink id="AddModuleReads"/>,
+  <functionlink id="AddModuleExports"/>, <functionlink id="AddModuleOpens"/>,
+  <functionlink id="AddModuleUses"/> and <functionlink id="AddModuleProvides"/>
+  to update a module to expand the set of modules that it reads, the set of
+  packages that it exports or opens to other modules, or the services that it
+  uses and provides.
   <p/>
   As an aid to agents that deploy supporting classes on the search path of
   the bootstrap class loader, or the search path of the class loader that
@@ -885,7 +884,7 @@ Agent_OnUnload_L(JavaVM *vm)</example>
     Modified UTF-8 differs 
     from standard UTF-8 in the representation of supplementary characters 
     and of the null character. See the
-    <externallink id="http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/types.html#wp16542">
+    <externallink id="docs/technotes/guides/jni/spec/types.html#modified_utf_8_strings">
       Modified UTF-8 Strings</externallink>
     section of the JNI specification for details.
   </intro>
@@ -915,7 +914,7 @@ Agent_OnUnload_L(JavaVM *vm)</example>
     by calling <jvmti/> functions. 
     Access to <jvmti/> functions is by use of an interface pointer
     in the same manner as 
-    <externallink id="http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/design.html">Java 
+    <externallink id="docs/technotes/guides/jni/spec/design.html">Java 
       Native Interface (JNI) functions</externallink> are accessed.
     The <jvmti/> interface pointer is called the 
     <i>environment pointer</i>.
@@ -1007,7 +1006,8 @@ jvmtiEnv *jvmti;
     local references--these local references are created 
     during the <jvmti/> call.
     Local references are a resource that must be managed (see the 
-    <externallink id="http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/functions.html#wp18654">JNI Documentation</externallink>).  
+    <externallink id="docs/technotes/guides/jni/spec/functions.html#local_references">
+      JNI Documentation</externallink>).  
     When threads return from native code all local references
     are freed.  Note that some threads, including typical
     agent threads, will never return from native code.
@@ -1042,7 +1042,7 @@ jvmtiEnv *jvmti;
       <jvmti/> function.
       See the
       <externallink 
-        id="http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/design.html#wp770"
+        id="docs/technotes/guides/jni/spec/design.html#java_exceptions"
              >Java Exceptions</externallink>
       section of the JNI specification for information on handling exceptions.
     </intro>
@@ -1486,6 +1486,10 @@ jvmtiEnv *jvmti;
       <description>
         Get the current thread.  
         The current thread is the Java programming language thread which has called the function.
+        The function may return <code>NULL</code> in the start phase if the
+        <internallink id="jvmtiCapabilities.can_generate_early_vmstart">
+        <code>can_generate_early_vmstart</code></internallink> capability is enabled
+        and the <code>java.lang.Thread</code> class has not been initialized yet.
         <p/>
         Note that most <jvmti/> functions that take a thread 
         as an argument will accept <code>NULL</code> to mean 
@@ -1498,7 +1502,7 @@ jvmtiEnv *jvmti;
         <param id="thread_ptr">
 	  <outptr><jthread/></outptr>
 	  <description>
-	     On return, points to the current thread.
+	     On return, points to the current thread, or <code>NULL</code>.
 	  </description>
 	</param>
       </parameters>
@@ -2107,8 +2111,8 @@ jvmtiEnv *jvmti;
         <functionlink id="GetAllStackTraces"/>).
 	<p/>
 	Upon execution of <code>proc</code>, the new thread will be attached to the
-	VM--see the JNI documentation on 
-	<externallink id="http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html#wp1060"
+	VM -- see the JNI documentation on 
+	<externallink id="docs/technotes/guides/jni/spec/invocation.html#attaching_to_the_vm"
 		      >Attaching to the VM</externallink>.
       </description>
       <origin>jvmdiClone</origin>
@@ -3372,7 +3376,7 @@ err = (*jvmti)-&gt;Deallocate(jvmti, stack_info);
 	  </constant>
 	  <constant id="JVMTI_HEAP_REFERENCE_SUPERCLASS" num="10">
             Reference from a class to its superclass. 
-            A callback is bot sent if the superclass is <code>java.lang.Object</code>.
+            A callback is not sent if the superclass is <code>java.lang.Object</code>.
             Note: loaded classes define superclasses via a constant pool
             reference, so the referenced superclass may also be reported with 
             a <code>JVMTI_HEAP_REFERENCE_CONSTANT_POOL</code> reference kind.
@@ -6512,7 +6516,7 @@ class C2 extends C1 implements I2 {
     <function id="GetNamedModule" num="40" since="9">
       <synopsis>Get Named Module</synopsis>
       <description>
-        Return the <code>java.lang.reflect.Module</code> object for a named
+        Return the <code>java.lang.Module</code> object for a named
         module defined to a class loader that contains a given package.
         The module is returned via <code>module_ptr</code>.
         <p/>
@@ -6550,7 +6554,7 @@ class C2 extends C1 implements I2 {
         <param id="module_ptr">
           <outptr><jobject/></outptr>
           <description>
-            On return, points to a <code>java.lang.reflect.Module</code> object
+            On return, points to a <code>java.lang.Module</code> object
             or points to <code>NULL</code>.
           </description>
         </param>
@@ -6561,6 +6565,281 @@ class C2 extends C1 implements I2 {
         </error>
       </errors>
     </function>
+
+    <function id="AddModuleReads" num="94" since="9">
+      <synopsis>Add Module Reads</synopsis>
+      <description>
+         Update a module to read another module. This function is a no-op
+         when <paramlink id="module"></paramlink> is an unnamed module.
+         This function facilitates the instrumentation of code
+         in named modules where that instrumentation requires
+         expanding the set of modules that a module reads.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+      </capabilities>
+      <parameters>
+        <param id="module">
+          <ptrtype><jobject/></ptrtype>
+          <description>
+            The module to update.
+          </description>
+        </param>
+        <param id="to_module">
+          <ptrtype><jobject/></ptrtype>
+          <description>
+            The additional module to read.
+          </description>
+        </param>
+      </parameters>
+      <errors>
+        <error id="JVMTI_ERROR_INVALID_MODULE">
+          If <paramlink id="module"></paramlink> is not a module object.
+        </error>
+        <error id="JVMTI_ERROR_INVALID_MODULE">
+          If <paramlink id="to_module"></paramlink> is not a module object.
+        </error>
+        <error id="JVMTI_ERROR_UNMODIFIABLE_MODULE">
+          if the module cannot be modified.
+          See <functionlink id="IsModifiableModule"/>.
+        </error>
+      </errors>
+    </function>
+
+    <function id="AddModuleExports" num="95" since="9">
+      <synopsis>Add Module Exports</synopsis>
+      <description>
+         Update a module to export a package to another module.
+         This function is a no-op when <paramlink id="module"></paramlink>
+         is an unnamed module or an open module.
+         This function facilitates the instrumentation of code
+         in named modules where that instrumentation requires
+         expanding the set of packages that a module exports.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+      </capabilities>
+      <parameters>
+        <param id="module">
+          <ptrtype><jobject/></ptrtype>
+          <description>
+            The module to update.
+          </description>
+        </param>
+        <param id="pkg_name">
+          <inbuf><char/></inbuf>
+          <description>
+            The exported package name.
+          </description>
+        </param>
+        <param id="to_module">
+          <ptrtype><jobject/></ptrtype>
+          <description>
+            The module the package is exported to.
+            If the <code>to_module</code> is not a subclass of
+            <code>java.lang.Module</code> this function returns
+            <errorlink id="JVMTI_ERROR_INVALID_MODULE"></errorlink>.
+          </description>
+        </param>
+      </parameters>
+      <errors>
+        <error id="JVMTI_ERROR_INVALID_MODULE">
+          If <paramlink id="module"></paramlink> is not a module object.
+        </error>
+        <error id="JVMTI_ERROR_INVALID_MODULE">
+          If <paramlink id="to_modules"></paramlink> is not a module object.
+        </error>
+        <error id="JVMTI_ERROR_ILLEGAL_ARGUMENT">
+          If the package <paramlink id="pkg_name"></paramlink>
+          does not belong to the module.
+        </error>
+        <error id="JVMTI_ERROR_UNMODIFIABLE_MODULE">
+          if the module cannot be modified.
+          See <functionlink id="IsModifiableModule"/>.
+        </error>
+      </errors>
+    </function>
+
+    <function id="AddModuleOpens" num="96" since="9">
+      <synopsis>Add Module Opens</synopsis>
+      <description>
+         Update a module to open a package to another module.
+         This function is a no-op when <paramlink id="module"></paramlink>
+         is an unnamed module or an open module.
+         This function facilitates the instrumentation of code
+         in modules where that instrumentation requires
+         expanding the set of packages that a module opens to
+         other modules.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+      </capabilities>
+      <parameters>
+        <param id="module">
+          <ptrtype><jobject/></ptrtype>
+          <description>
+            The module to update.
+          </description>
+        </param>
+        <param id="pkg_name">
+          <inbuf><char/></inbuf>
+          <description>
+            The package name of the package to open.
+          </description>
+        </param>
+        <param id="to_module">
+          <ptrtype><jobject/></ptrtype>
+          <description>
+            The module with the package to open.
+            If the <code>to_module</code> is not a subclass of
+            <code>java.lang.Module</code> this function returns
+            <errorlink id="JVMTI_ERROR_INVALID_MODULE"></errorlink>.
+          </description>
+        </param>
+      </parameters>
+      <errors>
+        <error id="JVMTI_ERROR_INVALID_MODULE">
+          If <paramlink id="module"></paramlink> is not a module object.
+        </error>
+        <error id="JVMTI_ERROR_INVALID_MODULE">
+          If <paramlink id="to_modules"></paramlink> is not a module object.
+        </error>
+        <error id="JVMTI_ERROR_ILLEGAL_ARGUMENT">
+          If the package <paramlink id="pkg_name"></paramlink>
+          does not belong to the module.
+        </error>
+        <error id="JVMTI_ERROR_UNMODIFIABLE_MODULE">
+          if the module cannot be modified.
+          See <functionlink id="IsModifiableModule"/>.
+        </error>
+      </errors>
+    </function>
+
+    <function id="AddModuleUses" num="97" since="9">
+      <synopsis>Add Module Uses</synopsis>
+      <description>
+         Updates a module to add a service to the set of services that
+         a module uses. This function is a no-op when the module
+         is an unnamed module.
+         This function facilitates the instrumentation of code
+         in named modules where that instrumentation requires
+         expanding the set of services that a module is using.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+      </capabilities>
+      <parameters>
+        <param id="module">
+          <ptrtype><jobject/></ptrtype>
+          <description>
+            The module to update.
+          </description>
+        </param>
+        <param id="service">
+          <ptrtype><jclass/></ptrtype>
+          <description>
+            The service to use.
+          </description>
+        </param>
+      </parameters>
+      <errors>
+        <error id="JVMTI_ERROR_INVALID_MODULE">
+          If <paramlink id="module"></paramlink> is not a module object.
+        </error>
+        <error id="JVMTI_ERROR_INVALID_CLASS">
+          If <paramlink id="service"></paramlink> is not a class object.
+        </error>
+        <error id="JVMTI_ERROR_UNMODIFIABLE_MODULE">
+          if the module cannot be modified.
+          See <functionlink id="IsModifiableModule"/>.
+        </error>
+      </errors>
+    </function>
+
+    <function id="AddModuleProvides" num="98" since="9">
+      <synopsis>Add Module Provides</synopsis>
+      <description>
+         Updates a module to add a service to the set of services that
+         a module provides. This function is a no-op when the module
+         is an unnamed module.
+         This function facilitates the instrumentation of code
+         in named modules where that instrumentation requires
+         changes to the services that are provided.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+      </capabilities>
+      <parameters>
+        <param id="module">
+          <ptrtype><jobject/></ptrtype>
+          <description>
+            The module to update.
+          </description>
+        </param>
+        <param id="service">
+          <ptrtype><jclass/></ptrtype>
+          <description>
+            The service to provide.
+          </description>
+        </param>
+        <param id="impl_class">
+          <ptrtype><jclass/></ptrtype>
+          <description>
+            The implementation class for the provided service.
+          </description>
+        </param>
+      </parameters>
+      <errors>
+        <error id="JVMTI_ERROR_INVALID_MODULE">
+          If <paramlink id="module"></paramlink> is not a module object.
+        </error>
+        <error id="JVMTI_ERROR_INVALID_CLASS">
+          If <paramlink id="service"></paramlink> is not a class object.
+        </error>
+        <error id="JVMTI_ERROR_INVALID_CLASS">
+          If <paramlink id="impl_class"></paramlink> is not a class object.
+        </error>
+        <error id="JVMTI_ERROR_UNMODIFIABLE_MODULE">
+          if the module cannot be modified.
+          See <functionlink id="IsModifiableModule"/>.
+        </error>
+      </errors>
+    </function>
+
+    <function id="IsModifiableModule" num="99" since="9">
+      <synopsis>Is Modifiable Module</synopsis>
+      <description>
+        Determines whether a module is modifiable.
+        If a module is modifiable then this module can be updated with
+        <functionlink id="AddModuleReads"/>, <functionlink id="AddModuleExports"/>,
+        <functionlink id="AddModuleOpens"/>, <functionlink id="AddModuleUses"/>,
+        and <functionlink id="AddModuleProvides"/>. If a module is not modifiable
+        then the module can not be updated with these functions.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+      </capabilities>
+      <parameters>
+        <param id="module">
+          <ptrtype><jobject/></ptrtype>
+          <description>
+            The module to query.
+          </description>
+        </param>
+        <param id="is_modifiable_module_ptr">
+          <outptr><jboolean/></outptr>
+          <description>
+            On return, points to the boolean result of this function.
+          </description>
+        </param>
+      </parameters>
+      <errors>
+        <error id="JVMTI_ERROR_INVALID_MODULE">
+          If <paramlink id="module"></paramlink> is not a module object.
+        </error>
+      </errors>
+    </function>
+
   </category>
 
   <category id="class" label="Class">
@@ -6650,7 +6929,7 @@ class C2 extends C1 implements I2 {
       <synopsis>Get Class Signature</synopsis>
       <description>
         For the class indicated by <code>klass</code>, return the 
-        <externallink id="http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/types.html#wp16432">JNI 
+        <externallink id="docs/technotes/guides/jni/spec/types.html#type_signatures">JNI 
             type signature</externallink> 
         and the generic signature of the class.
         For example, <code>java.util.List</code> is <code>"Ljava/util/List;"</code>
@@ -7578,6 +7857,10 @@ class C2 extends C1 implements I2 {
 	  A method in the new class version has different modifiers
 	  than its counterpart in the old class version.
 	</error>
+        <error id="JVMTI_ERROR_UNMODIFIABLE_MODULE">
+          A module cannot be modified.
+          See <functionlink id="IsModifiableModule"/>.
+        </error>
       </errors>
     </function>
 
@@ -7770,8 +8053,9 @@ class C2 extends C1 implements I2 {
 	return the field name via <paramlink id="name_ptr"/> and field signature via
 	<paramlink id="signature_ptr"/>.
 	<p/>
-        Field signatures are defined in the JNI Specification and 
-        are referred to as <code>field descriptors</code> in
+        Field signatures are defined in the
+        <externallink id="docs/technotes/guides/jni/spec/jniTOC.html">JNI Specification</externallink>
+        and are referred to as <code>field descriptors</code> in
         <vmspec chapter="4.3.2"/>.
       </description>
       <origin>jvmdiClone</origin>
@@ -7966,8 +8250,9 @@ class C2 extends C1 implements I2 {
 	return the method name via <code>name_ptr</code> and method signature via
 	<code>signature_ptr</code>.
         <p/>
-        Method signatures are defined in the JNI Specification and are 
-        referred to as <code>method descriptors</code> in 
+        Method signatures are defined in the
+        <externallink id="docs/technotes/guides/jni/spec/jniTOC.html">JNI Specification</externallink>
+        and are referred to as <code>method descriptors</code> in 
         <vmspec chapter="4.3.3"/>.
 	Note this is different
 	than method signatures as defined in the <i>Java Language Specification</i>.
@@ -8939,7 +9224,7 @@ method(wrapped_foo) -> nativeImplementation(foo)</example>
       Provides the ability to intercept and resend 
       Java Native Interface (JNI) function calls
       by manipulating the JNI function table.
-      See <externallink id="http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/functions.html">JNI
+      See <externallink id="docs/technotes/guides/jni/spec/functions.html">JNI
 	Functions</externallink> in the <i>Java Native Interface Specification</i>.
       <p/>
       The following example illustrates intercepting the 
@@ -10640,7 +10925,7 @@ myInit() {
 	  for a class. The segment is typically a directory or JAR file.
 	  <p/>	  
 	  In the live phase the <paramlink id="segment"/> may be used to specify any platform-dependent
-	  path to a <externallink id="http://docs.oracle.com/javase/7/docs/technotes/guides/jar/jar.html">
+	  path to a <externallink id="docs/technotes/guides/jar/jar.html">
 	  JAR file</externallink>. The agent should take care that the JAR file does not
           contain any classes or resources other than those to be defined by the bootstrap
           class loader for the purposes of instrumentation.
@@ -10687,8 +10972,8 @@ myInit() {
 	  search path segment to be searched after the system class loader unsuccessfully searches
 	  for a class. The segment is typically a directory or JAR file.
 	  <p/>	  
-	  In the live phase the <paramlink id="segment"/> is a platform-dependent path to a <externallink 
-	  id="http://docs.oracle.com/javase/7/docs/technotes/guides/jar/jar.html">JAR file</externallink> to be
+	  In the live phase the <paramlink id="segment"/> is a platform-dependent path to a
+	  <externallink id="docs/technotes/guides/jar/jar.html">JAR file</externallink> to be
 	  searched after the system class loader unsuccessfully searches for a class. The agent should
           take care that the JAR file does not contain any classes or resources other than those to be
           defined by the system class loader for the purposes of instrumentation.
@@ -11340,6 +11625,9 @@ myInit() {
     <errorid id="JVMTI_ERROR_UNMODIFIABLE_CLASS" num="79">
       The class cannot be modified.
     </errorid>
+    <errorid id="JVMTI_ERROR_UNMODIFIABLE_MODULE" num="80">
+      The module cannot be modified.
+    </errorid>
     <errorid id="JVMTI_ERROR_NOT_AVAILABLE" num="98">
       The functionality is not available in this virtual machine.
     </errorid>
@@ -11370,6 +11658,9 @@ myInit() {
     </errorid>
     <errorid id="JVMTI_ERROR_INVALID_FIELDID" num="25">
       Invalid field.
+    </errorid>
+    <errorid id="JVMTI_ERROR_INVALID_MODULE" num="26">
+      Invalid module.
     </errorid>
     <errorid id="JVMTI_ERROR_INVALID_METHODID" num="23">
       Invalid method.
@@ -12638,11 +12929,13 @@ myInit() {
       If the capability has been added then the VM posts the event as early
       as possible. The VM is capable of executing bytecode but it may not have
       initialized to the point where it can load classes in modules other than
-      <code>java.base</code>. Agents that do load-time instrumentation in this
+      <code>java.base</code>, or even arbitrary classes in <code>java.base</code>.
+      Agents that do load-time instrumentation in this
       phase must take great care when instrumenting code that potentially
-      executes in this phase. Care should also be taken with JNI
-      <code>FindClass</code> as it may not be possible to load classes that are
-      not in the <code>java.base</code> module.
+      executes in this phase. Extreme care should also be taken with JNI
+      <code>FindClass</code> as it may not be possible to load classes and attempts
+      to do so may result in unpredictable behavior, maybe even stability issues
+      on some VM implementations.
       If the capability has not been added then the VM delays posting this
       event until it is capable of loading classes in modules other than
       <code>java.base</code> or the VM has completed its initialization.
@@ -13519,7 +13812,8 @@ typedef void (JNICALL *jvmtiEventVMInit)
       <description>
 	Typedef for the JNI function table <code>JNINativeInterface</code>
 	defined in the 
-	<externallink id="http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/functions.html#wp23720">JNI Specification</externallink>.
+	<externallink id="docs/technotes/guides/jni/spec/functions.html#interface_function_table">
+          JNI Specification</externallink>.
 	The JNI reference implementation defines this with an underscore.
       </description>
     </basetype>
@@ -14492,19 +14786,25 @@ typedef void (JNICALL *jvmtiEventVMInit)
   <change date="19 June 2013" version="1.2.3">
       Added support for statically linked agents.
   </change>
-  <change date="5 July 2016" version="9.0.0">
+  <change date="13 October 2016" version="9.0.0">
       Support for modules:
        - The majorversion is 9 now
        - The ClassFileLoadHook events are not sent during the primordial phase anymore.
-       - Add new function GetAllModules
-       - Add new capability can_generate_early_vmstart
        - Allow CompiledMethodLoad events at start phase
-       - Add new capability can_generate_early_class_hook_events
-       - Add new function GetNamedModule
-  </change>
-  <change date="16 August 2016" version="9.0.0">
+       - Add new capabilities:
+          - can_generate_early_vmstart
+          - can_generate_early_class_hook_events
+       - Add new functions:
+          - GetAllModules
+          - AddModuleReads, AddModuleExports, AddModuleOpens, AddModuleUses, AddModuleProvides
+          - IsModifiableModule
       Clarified can_redefine_any_classes, can_retransform_any_classes and IsModifiableClass API to
       disallow some implementation defined classes.
+  </change>
+  <change date="12 February 2017" version="9.0.0">
+      Minor update for GetCurrentThread function:
+       - The function may return NULL in the start phase if the
+         can_generate_early_vmstart capability is enabled.
   </change>
 </changehistory>
 

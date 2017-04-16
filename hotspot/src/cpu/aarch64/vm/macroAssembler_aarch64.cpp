@@ -185,6 +185,19 @@ int MacroAssembler::patch_oop(address insn_addr, address o) {
   return instructions * NativeInstruction::instruction_size;
 }
 
+int MacroAssembler::patch_narrow_klass(address insn_addr, narrowKlass n) {
+  // Metatdata pointers are either narrow (32 bits) or wide (48 bits).
+  // We encode narrow ones by setting the upper 16 bits in the first
+  // instruction.
+  NativeInstruction *insn = nativeInstruction_at(insn_addr);
+  assert(Instruction_aarch64::extract(insn->encoding(), 31, 21) == 0b11010010101 &&
+         nativeInstruction_at(insn_addr+4)->is_movk(), "wrong insns in patch");
+
+  Instruction_aarch64::patch(insn_addr, 20, 5, n >> 16);
+  Instruction_aarch64::patch(insn_addr+4, 20, 5, n & 0xffff);
+  return 2 * NativeInstruction::instruction_size;
+}
+
 address MacroAssembler::target_addr_for_insn(address insn_addr, unsigned insn) {
   long offset = 0;
   if ((Instruction_aarch64::extract(insn, 29, 24) & 0b011011) == 0b00011000) {
@@ -387,6 +400,30 @@ void MacroAssembler::far_jump(Address entry, CodeBuffer *cbuf, Register tmp) {
     if (cbuf) cbuf->set_insts_mark();
     b(entry);
   }
+}
+
+void MacroAssembler::reserved_stack_check() {
+    // testing if reserved zone needs to be enabled
+    Label no_reserved_zone_enabling;
+
+    ldr(rscratch1, Address(rthread, JavaThread::reserved_stack_activation_offset()));
+    cmp(sp, rscratch1);
+    br(Assembler::LO, no_reserved_zone_enabling);
+
+    enter();   // LR and FP are live.
+    lea(rscratch1, CAST_FROM_FN_PTR(address, SharedRuntime::enable_stack_reserved_zone));
+    mov(c_rarg0, rthread);
+    blr(rscratch1);
+    leave();
+
+    // We have already removed our own frame.
+    // throw_delayed_StackOverflowError will think that it's been
+    // called by our caller.
+    lea(rscratch1, RuntimeAddress(StubRoutines::throw_delayed_StackOverflowError_entry()));
+    br(rscratch1);
+    should_not_reach_here();
+
+    bind(no_reserved_zone_enabling);
 }
 
 int MacroAssembler::biased_locking_enter(Register lock_reg,
@@ -3931,10 +3968,80 @@ Register MacroAssembler::tlab_refill(Label& retry,
   add(top, top, t1);
   sub(top, top, (int32_t)ThreadLocalAllocBuffer::alignment_reserve_in_bytes());
   str(top, Address(rthread, in_bytes(JavaThread::tlab_end_offset())));
+
+  if (ZeroTLAB) {
+    // This is a fast TLAB refill, therefore the GC is not notified of it.
+    // So compiled code must fill the new TLAB with zeroes.
+    ldr(top, Address(rthread, in_bytes(JavaThread::tlab_start_offset())));
+    zero_memory(top,t1,t2);
+  }
+
   verify_tlab();
   b(retry);
 
   return rthread; // for use by caller
+}
+
+// Zero words; len is in bytes
+// Destroys all registers except addr
+// len must be a nonzero multiple of wordSize
+void MacroAssembler::zero_memory(Register addr, Register len, Register t1) {
+  assert_different_registers(addr, len, t1, rscratch1, rscratch2);
+
+#ifdef ASSERT
+  { Label L;
+    tst(len, BytesPerWord - 1);
+    br(Assembler::EQ, L);
+    stop("len is not a multiple of BytesPerWord");
+    bind(L);
+  }
+#endif
+
+#ifndef PRODUCT
+  block_comment("zero memory");
+#endif
+
+  Label loop;
+  Label entry;
+
+//  Algorithm:
+//
+//    scratch1 = cnt & 7;
+//    cnt -= scratch1;
+//    p += scratch1;
+//    switch (scratch1) {
+//      do {
+//        cnt -= 8;
+//          p[-8] = 0;
+//        case 7:
+//          p[-7] = 0;
+//        case 6:
+//          p[-6] = 0;
+//          // ...
+//        case 1:
+//          p[-1] = 0;
+//        case 0:
+//          p += 8;
+//      } while (cnt);
+//    }
+
+  const int unroll = 8; // Number of str(zr) instructions we'll unroll
+
+  lsr(len, len, LogBytesPerWord);
+  andr(rscratch1, len, unroll - 1);  // tmp1 = cnt % unroll
+  sub(len, len, rscratch1);      // cnt -= unroll
+  // t1 always points to the end of the region we're about to zero
+  add(t1, addr, rscratch1, Assembler::LSL, LogBytesPerWord);
+  adr(rscratch2, entry);
+  sub(rscratch2, rscratch2, rscratch1, Assembler::LSL, 2);
+  br(rscratch2);
+  bind(loop);
+  sub(len, len, unroll);
+  for (int i = -unroll; i < 0; i++)
+    str(zr, Address(t1, i * wordSize));
+  bind(entry);
+  add(t1, t1, unroll * wordSize);
+  cbnz(len, loop);
 }
 
 // Defines obj, preserves var_size_in_bytes

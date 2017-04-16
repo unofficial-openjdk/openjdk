@@ -26,9 +26,12 @@
 /** Defines the implementation of the
  *  {@link javax.tools.ToolProvider#getSystemJavaCompiler system Java compiler}
  *  and its command line equivalent, <em>javac</em>, as well as <em>javah</em>.
+ *
+ *  @moduleGraph
+ *  @since 9
  */
 module jdk.compiler {
-    requires public java.compiler;
+    requires transitive java.compiler;
 
     exports com.sun.source.doctree;
     exports com.sun.source.tree;
@@ -65,6 +68,9 @@ module jdk.compiler {
         jdk.jdeps,
         jdk.javadoc,
         jdk.jshell;
+    exports jdk.internal.shellsupport.doc to
+        jdk.jshell,
+        jdk.scripting.nashorn.shell;
 
     uses javax.annotation.processing.Processor;
     uses com.sun.source.util.Plugin;
@@ -77,6 +83,9 @@ module jdk.compiler {
         with com.sun.tools.javac.platform.JDKPlatformProvider;
 
     provides javax.tools.JavaCompiler
+        with com.sun.tools.javac.api.JavacTool;
+
+    provides javax.tools.Tool
         with com.sun.tools.javac.api.JavacTool;
 }
 

@@ -292,7 +292,7 @@ void JVMTIAgentLoadDCmd::execute(DCmdSource source, TRAPS) {
       char *opt = (char *)os::malloc(opt_len, mtInternal);
       if (opt == NULL) {
         output()->print_cr("JVMTI agent attach failed: "
-                           "Could not allocate %zu bytes for argument.",
+                           "Could not allocate " SIZE_FORMAT " bytes for argument.",
                            opt_len);
         return;
       }
@@ -551,11 +551,6 @@ ClassStatsDCmd::ClassStatsDCmd(outputStream* output, bool heap) :
 }
 
 void ClassStatsDCmd::execute(DCmdSource source, TRAPS) {
-  if (!UnlockDiagnosticVMOptions) {
-    output()->print_cr("GC.class_stats command requires -XX:+UnlockDiagnosticVMOptions");
-    return;
-  }
-
   VM_GC_HeapInspection heapop(output(),
                               true /* request_full_gc */);
   heapop.set_csv_format(_csv.value());
@@ -753,13 +748,13 @@ void JMXStartRemoteDCmd::execute(DCmdSource source, TRAPS) {
     ResourceMark rm(THREAD);
     HandleMark hm(THREAD);
 
-    // Load and initialize the sun.management.Agent class
+    // Load and initialize the jdk.internal.agent.Agent class
     // invoke startRemoteManagementAgent(string) method to start
     // the remote management server.
     // throw java.lang.NoSuchMethodError if the method doesn't exist
 
     Handle loader = Handle(THREAD, SystemDictionary::java_system_loader());
-    Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::sun_management_Agent(), loader, Handle(), true, CHECK);
+    Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::jdk_internal_agent_Agent(), loader, Handle(), true, CHECK);
     instanceKlassHandle ik (THREAD, k);
 
     JavaValue result(T_VOID);
@@ -826,13 +821,13 @@ void JMXStartLocalDCmd::execute(DCmdSource source, TRAPS) {
     ResourceMark rm(THREAD);
     HandleMark hm(THREAD);
 
-    // Load and initialize the sun.management.Agent class
+    // Load and initialize the jdk.internal.agent.Agent class
     // invoke startLocalManagementAgent(void) method to start
     // the local management server
     // throw java.lang.NoSuchMethodError if method doesn't exist
 
     Handle loader = Handle(THREAD, SystemDictionary::java_system_loader());
-    Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::sun_management_Agent(), loader, Handle(), true, CHECK);
+    Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::jdk_internal_agent_Agent(), loader, Handle(), true, CHECK);
     instanceKlassHandle ik (THREAD, k);
 
     JavaValue result(T_VOID);
@@ -843,13 +838,13 @@ void JMXStopRemoteDCmd::execute(DCmdSource source, TRAPS) {
     ResourceMark rm(THREAD);
     HandleMark hm(THREAD);
 
-    // Load and initialize the sun.management.Agent class
+    // Load and initialize the jdk.internal.agent.Agent class
     // invoke stopRemoteManagementAgent method to stop the
     // management server
     // throw java.lang.NoSuchMethodError if method doesn't exist
 
     Handle loader = Handle(THREAD, SystemDictionary::java_system_loader());
-    Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::sun_management_Agent(), loader, Handle(), true, CHECK);
+    Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::jdk_internal_agent_Agent(), loader, Handle(), true, CHECK);
     instanceKlassHandle ik (THREAD, k);
 
     JavaValue result(T_VOID);
@@ -865,12 +860,12 @@ void JMXStatusDCmd::execute(DCmdSource source, TRAPS) {
   ResourceMark rm(THREAD);
   HandleMark hm(THREAD);
 
-  // Load and initialize the sun.management.Agent class
+  // Load and initialize the jdk.internal.agent.Agent class
   // invoke getManagementAgentStatus() method to generate the status info
   // throw java.lang.NoSuchMethodError if method doesn't exist
 
   Handle loader = Handle(THREAD, SystemDictionary::java_system_loader());
-  Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::sun_management_Agent(), loader, Handle(), true, CHECK);
+  Klass* k = SystemDictionary::resolve_or_fail(vmSymbols::jdk_internal_agent_Agent(), loader, Handle(), true, CHECK);
   instanceKlassHandle ik (THREAD, k);
 
   JavaValue result(T_OBJECT);
@@ -996,8 +991,8 @@ TouchedMethodsDCmd::TouchedMethodsDCmd(outputStream* output, bool heap) :
 {}
 
 void TouchedMethodsDCmd::execute(DCmdSource source, TRAPS) {
-  if (!UnlockDiagnosticVMOptions) {
-    output()->print_cr("VM.touched_methods command requires -XX:+UnlockDiagnosticVMOptions");
+  if (!LogTouchedMethods) {
+    output()->print_cr("VM.print_touched_methods command requires -XX:+LogTouchedMethods");
     return;
   }
   VM_DumpTouchedMethods dumper(output());

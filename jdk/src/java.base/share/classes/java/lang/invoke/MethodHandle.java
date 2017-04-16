@@ -423,6 +423,7 @@ mh.invokeExact(System.out, "Hello, world.");
  * @see MethodType
  * @see MethodHandles
  * @author John Rose, JSR 292 EG
+ * @since 1.7
  */
 public abstract class MethodHandle {
 
@@ -957,7 +958,7 @@ assertEquals("[A, B, C]", (String) caToString2.invokeExact('A', "BC".toCharArray
         if (!fail)  return needType;
         // elicit an error:
         this.asType(needType);
-        throw newInternalError("should not return", null);
+        throw newInternalError("should not return");
     }
 
     private void spreadArrayChecks(Class<?> arrayType, int arrayLength) {

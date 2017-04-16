@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.List;
 
 import static com.sun.tools.javac.code.Kinds.Kind.*;
+import com.sun.tools.javac.main.JavaCompiler;
 
 /**
  *  Javadoc's own enter phase does a few things above and beyond that
@@ -57,29 +58,30 @@ public class JavadocEnter extends Enter {
     }
 
     public static void preRegister(Context context) {
-        context.put(enterKey, new Context.Factory<Enter>() {
-               public Enter make(Context c) {
-                   return new JavadocEnter(c);
-               }
-        });
+        context.put(enterKey, (Context.Factory<Enter>)JavadocEnter::new);
     }
 
     protected JavadocEnter(Context context) {
         super(context);
         messager = Messager.instance0(context);
         toolEnv = ToolEnvironment.instance(context);
+        compiler = JavaCompiler.instance(context);
     }
 
     final Messager messager;
     final ToolEnvironment toolEnv;
+    final JavaCompiler compiler;
 
     @Override
     public void main(List<JCCompilationUnit> trees) {
-        // count all Enter errors as warnings.
+        // cache the error count if we need to convert Enter errors as warnings.
         int nerrors = messager.nerrors;
         super.main(trees);
-        messager.nwarnings += (messager.nerrors - nerrors);
-        messager.nerrors = nerrors;
+        compiler.enterDone();
+        if (toolEnv.ignoreSourceErrors) {
+            messager.nwarnings += (messager.nerrors - nerrors);
+            messager.nerrors = nerrors;
+        }
     }
 
     @Override
@@ -99,6 +101,7 @@ public class JavadocEnter extends Enter {
         if (tree.sym.kind == TYP || tree.sym.kind == ERR) {
             ClassSymbol c = tree.sym;
             toolEnv.setElementToTreePath(c, toolEnv.getTreePath(env.toplevel, tree));
+            c.classfile = env.toplevel.sourcefile;
         }
     }
 

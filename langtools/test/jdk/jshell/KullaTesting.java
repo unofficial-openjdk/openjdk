@@ -28,6 +28,9 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
+import java.lang.module.Configuration;
+import java.lang.module.ModuleFinder;
+import java.nio.file.Paths;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -72,11 +75,14 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import jdk.jshell.Diag;
+
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
+
 import static jdk.jshell.Snippet.Status.*;
 import static org.testng.Assert.*;
 import static jdk.jshell.Snippet.SubKind.METHOD_SUBKIND;
+import jdk.jshell.SourceCodeAnalysis.Documentation;
 
 public class KullaTesting {
 
@@ -92,7 +98,6 @@ public class KullaTesting {
 
     private Map<String, Snippet> idToSnippet = new LinkedHashMap<>();
     private Set<Snippet> allSnippets = new LinkedHashSet<>();
-    private List<String> classpath;
 
     static {
         JShell js = JShell.create();
@@ -152,7 +157,6 @@ public class KullaTesting {
     }
 
     public void addToClasspath(String path) {
-        classpath.add(path);
         getState().addToClasspath(path);
     }
 
@@ -193,7 +197,6 @@ public class KullaTesting {
         state = builder.build();
         allSnippets = new LinkedHashSet<>();
         idToSnippet = new LinkedHashMap<>();
-        classpath = new ArrayList<>();
     }
 
     @AfterMethod
@@ -203,7 +206,19 @@ public class KullaTesting {
         analysis = null;
         allSnippets = null;
         idToSnippet = null;
-        classpath = null;
+    }
+
+    public ClassLoader createAndRunFromModule(String moduleName, Path modPath) {
+        ModuleFinder finder = ModuleFinder.of(modPath);
+        ModuleLayer parent = ModuleLayer.boot();
+        Configuration cf = parent.configuration()
+                .resolve(finder, ModuleFinder.of(), Set.of(moduleName));
+        ClassLoader scl = ClassLoader.getSystemClassLoader();
+        ModuleLayer layer = parent.defineModulesWithOneLoader(cf, scl);
+        ClassLoader loader = layer.findLoader(moduleName);
+        ClassLoader ccl = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(loader);
+        return ccl;
     }
 
     public List<String> assertUnresolvedDependencies(DeclarationSnippet key, int unresolvedSize) {
@@ -946,12 +961,24 @@ public class KullaTesting {
         }
     }
 
-    public void assertDocumentation(String code, String... expected) {
+    public void assertSignature(String code, String... expected) {
         int cursor =  code.indexOf('|');
         code = code.replace("|", "");
         assertTrue(cursor > -1, "'|' expected, but not found in: " + code);
-        String documentation = getAnalysis().documentation(code, cursor);
-        Set<String> docSet = Stream.of(documentation.split("\r?\n")).collect(Collectors.toSet());
+        List<Documentation> documentation = getAnalysis().documentation(code, cursor, false);
+        Set<String> docSet = documentation.stream().map(doc -> doc.signature()).collect(Collectors.toSet());
+        Set<String> expectedSet = Stream.of(expected).collect(Collectors.toSet());
+        assertEquals(docSet, expectedSet, "Input: " + code);
+    }
+
+    public void assertJavadoc(String code, String... expected) {
+        int cursor =  code.indexOf('|');
+        code = code.replace("|", "");
+        assertTrue(cursor > -1, "'|' expected, but not found in: " + code);
+        List<Documentation> documentation = getAnalysis().documentation(code, cursor, true);
+        Set<String> docSet = documentation.stream()
+                                          .map(doc -> doc.signature() + "\n" + doc.javadoc())
+                                          .collect(Collectors.toSet());
         Set<String> expectedSet = Stream.of(expected).collect(Collectors.toSet());
         assertEquals(docSet, expectedSet, "Input: " + code);
     }

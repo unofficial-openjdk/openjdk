@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,11 +29,11 @@ package jdk.javadoc.internal.tool;
 import java.util.*;
 
 import javax.lang.model.element.Element;
-import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
+import javax.tools.JavaFileObject.Kind;
 
 import com.sun.source.util.DocTrees;
 import com.sun.source.util.TreePath;
@@ -103,10 +103,11 @@ public class ToolEnvironment {
 
     final Symbol externalizableSym;
 
-    /**
-     * True if we do not want to print any notifications at all.
-     */
+    /** If true, prevent printing of any notifications. */
     boolean quiet = false;
+
+    /** If true, ignore all errors encountered during Enter. */
+    boolean ignoreSourceErrors = false;
 
     Check chk;
     com.sun.tools.javac.code.Types types;
@@ -114,8 +115,6 @@ public class ToolEnvironment {
     public final Context context;
 
     WeakHashMap<JCTree, TreePath> treePaths = new WeakHashMap<>();
-
-    public final HashMap<PackageElement, JavaFileObject> pkgToJavaFOMap = new HashMap<>();
 
     /** Allow documenting from class files? */
     boolean docClasses = false;
@@ -165,6 +164,7 @@ public class ToolEnvironment {
 
     public void initialize(Map<ToolOption, Object> toolOpts) {
         this.quiet = (boolean)toolOpts.getOrDefault(ToolOption.QUIET, false);
+        this.ignoreSourceErrors = (boolean)toolOpts.getOrDefault(ToolOption.IGNORE_SOURCE_ERRORS, false);
     }
 
     /**
@@ -192,16 +192,9 @@ public class ToolEnvironment {
         elementToTreePath.put(e, tree);
     }
 
-    /**
-     * Returns true if the symbol has a tree path associated with it.
-     * Primarily used to disambiguate a symbol associated with a source
-     * file versus a class file.
-     * @param sym the symbol to be checked
-     * @return true if the symbol has a tree path
-     */
-    boolean hasPath(ClassSymbol sym) {
-        TreePath path = elementToTreePath.get(sym);
-        return path != null;
+    public Kind getFileKind(TypeElement te) {
+        JavaFileObject jfo = ((ClassSymbol)te).outermostClass().classfile;
+        return jfo == null ? Kind.SOURCE : jfo.getKind();
     }
 
     /**

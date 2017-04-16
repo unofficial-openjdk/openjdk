@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +23,8 @@
  * questions.
  */
 
-/*
- * Copyright (c) 2009, 2015, by Oracle Corporation. All Rights Reserved.
- */
-
 package javax.xml.stream;
+import com.sun.xml.internal.stream.events.XMLEventFactoryImpl;
 import java.util.Iterator;
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.namespace.QName;
@@ -52,6 +50,18 @@ public abstract class XMLEventFactory {
     static final String JAXPFACTORYID = "javax.xml.stream.XMLEventFactory";
     static final String DEFAULIMPL = "com.sun.xml.internal.stream.events.XMLEventFactoryImpl";
 
+   /**
+   * Creates a new instance of the {@code XMLEventFactory} builtin
+   * system-default implementation.
+   *
+   * @return A new instance of the {@code XMLEventFactory} builtin
+   *         system-default implementation.
+   *
+   * @since 9
+   */
+  public static XMLEventFactory newDefaultFactory() {
+      return new XMLEventFactoryImpl();
+  }
 
   /**
    * Creates a new instance of the factory in exactly the same manner as the
@@ -108,7 +118,8 @@ public abstract class XMLEventFactory {
    * </li>
    * <li>
    *   <p>
-   *   Otherwise, the system-default implementation is returned.
+   *   Otherwise, the {@linkplain #newDefaultFactory() system-default}
+   *   implementation is returned.
    * </li>
    * </ul>
    * <p>
@@ -144,6 +155,7 @@ public abstract class XMLEventFactory {
    *              #newFactory(java.lang.String, java.lang.ClassLoader)}
    *              method defines no changes in behavior.
    */
+  @Deprecated(since="1.7")
   public static XMLEventFactory newInstance(String factoryId,
           ClassLoader classLoader)
           throws FactoryConfigurationError {
@@ -292,8 +304,8 @@ public abstract class XMLEventFactory {
    * @return an instance of the requested StartElement
    */
   public abstract StartElement createStartElement(QName name,
-                                                  Iterator attributes,
-                                                  Iterator namespaces);
+                                                  Iterator<? extends Attribute> attributes,
+                                                  Iterator<? extends Namespace> namespaces);
 
   /**
    * Create a new StartElement.  This defaults the NamespaceContext to
@@ -326,8 +338,8 @@ public abstract class XMLEventFactory {
   public abstract StartElement createStartElement(String prefix,
                                                   String namespaceUri,
                                                   String localName,
-                                                  Iterator attributes,
-                                                  Iterator namespaces
+                                                  Iterator<? extends Attribute> attributes,
+                                                  Iterator<? extends Namespace> namespaces
                                                   );
   /**
    * Create a new StartElement.  Namespaces can be added to this StartElement
@@ -348,8 +360,8 @@ public abstract class XMLEventFactory {
   public abstract StartElement createStartElement(String prefix,
                                                   String namespaceUri,
                                                   String localName,
-                                                  Iterator attributes,
-                                                  Iterator namespaces,
+                                                  Iterator<? extends Attribute> attributes,
+                                                  Iterator<? extends Namespace> namespaces,
                                                   NamespaceContext context
                                                   );
 
@@ -361,7 +373,7 @@ public abstract class XMLEventFactory {
    * @return an instance of the requested EndElement
    */
   public abstract EndElement createEndElement(QName name,
-                                              Iterator namespaces);
+                                              Iterator<? extends Namespace> namespaces);
 
   /**
    * Create a new EndElement
@@ -385,7 +397,7 @@ public abstract class XMLEventFactory {
   public abstract EndElement createEndElement(String prefix,
                                               String namespaceUri,
                                               String localName,
-                                              Iterator namespaces);
+                                              Iterator<? extends Namespace> namespaces);
 
   /**
    * Create a Characters event, this method does not check if the content

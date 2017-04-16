@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ package jdk.nio.zipfs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.Runtime.Version;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -86,12 +87,12 @@ class JarFileSystem extends ZipFileSystem {
         }
     }
 
-    private boolean isMultiReleaseJar() {
+    private boolean isMultiReleaseJar() throws IOException {
         try (InputStream is = newInputStream(getBytes("/META-INF/MANIFEST.MF"))) {
-            return (new Manifest(is)).getMainAttributes()
-                    .containsKey(new Attributes.Name("Multi-Release"));
-            // fixme change line above after JarFile integration to contain Attributes.Name.MULTI_RELEASE
-        } catch (IOException x) {
+            String multiRelease = new Manifest(is).getMainAttributes()
+                    .getValue(Attributes.Name.MULTI_RELEASE);
+            return "true".equalsIgnoreCase(multiRelease);
+        } catch (NoSuchFileException x) {
             return false;
         }
     }
@@ -135,7 +136,7 @@ class JarFileSystem extends ZipFileSystem {
         TreeMap<Integer,IndexNode> map = new TreeMap<>();
         IndexNode child = metaInfVersions.child;
         while (child != null) {
-            Integer key = getVersion(child.name, metaInfVersions.name.length);
+            Integer key = getVersion(child.name, metaInfVersions.name.length + 1);
             if (key != null && key <= version) {
                 map.put(key, child);
             }
@@ -149,7 +150,7 @@ class JarFileSystem extends ZipFileSystem {
      */
     private Integer getVersion(byte[] name, int offset) {
         try {
-            return Integer.parseInt(getString(Arrays.copyOfRange(name, offset, name.length-1)));
+            return Integer.parseInt(getString(Arrays.copyOfRange(name, offset, name.length)));
         } catch (NumberFormatException x) {
             // ignore this even though it might indicate issues with the JAR structure
             return null;
@@ -176,7 +177,7 @@ class JarFileSystem extends ZipFileSystem {
      *   returns foo/bar.class
      */
     private byte[] getRootName(IndexNode prefix, IndexNode inode) {
-        int offset = prefix.name.length - 1;
+        int offset = prefix.name.length;
         byte[] fullName = inode.name;
         return Arrays.copyOfRange(fullName, offset, fullName.length);
     }

@@ -23,16 +23,17 @@
 
 /**
  * @test
- * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @requires vm.jvmci
  * @library ../../../../../
- * @modules jdk.vm.ci/jdk.vm.ci.meta
- *          jdk.vm.ci/jdk.vm.ci.runtime
+ * @modules jdk.internal.vm.ci/jdk.vm.ci.meta
+ *          jdk.internal.vm.ci/jdk.vm.ci.runtime
  *          java.base/jdk.internal.misc
  * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI jdk.vm.ci.runtime.test.TestResolvedJavaMethod
  */
 
 package jdk.vm.ci.runtime.test;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -60,6 +61,7 @@ import org.junit.Test;
 import jdk.vm.ci.meta.ConstantPool;
 import jdk.vm.ci.meta.ExceptionHandler;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
+import jdk.vm.ci.meta.ResolvedJavaMethod.Parameter;
 import jdk.vm.ci.meta.ResolvedJavaType;
 
 /**
@@ -266,6 +268,26 @@ public class TestResolvedJavaMethod extends MethodUniverse {
         }
     }
 
+    @Test
+    public void getParametersTest() {
+        for (Map.Entry<Method, ResolvedJavaMethod> e : methods.entrySet()) {
+            java.lang.reflect.Parameter[] expected = e.getKey().getParameters();
+            Parameter[] actual = e.getValue().getParameters();
+            assertEquals(actual.length, expected.length);
+            for (int i = 0; i < actual.length; i++) {
+                java.lang.reflect.Parameter exp = expected[i];
+                Parameter act = actual[i];
+                assertEquals(exp.getName(), act.getName());
+                assertEquals(exp.isNamePresent(), act.isNamePresent());
+                assertEquals(exp.getModifiers(), act.getModifiers());
+                assertArrayEquals(exp.getAnnotations(), act.getAnnotations());
+                assertEquals(exp.getType().getName(), act.getType().toClassName());
+                assertEquals(exp.getParameterizedType(), act.getParameterizedType());
+                assertEquals(metaAccess.lookupJavaMethod(exp.getDeclaringExecutable()), act.getDeclaringMethod());
+            }
+        }
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     @interface TestAnnotation {
@@ -444,6 +466,7 @@ public class TestResolvedJavaMethod extends MethodUniverse {
         "getProfilingInfo",
         "reprofile",
         "getCompilerStorage",
+        "hasNeverInlineDirective",
         "canBeInlined",
         "shouldBeInlined",
         "getLineNumberTable",

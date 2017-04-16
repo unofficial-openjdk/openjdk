@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,11 @@ ifndef _INITSUPPORT_GMK
 _INITSUPPORT_GMK := 1
 
 ifeq ($(HAS_SPEC),)
+
+  # Include the corresponding closed file, if present.
+  # Normal hook mechanism cannot be used since we have no SPEC.
+  -include $(topdir)/closed/make/InitSupport.gmk
+
   ##############################################################################
   # Helper functions for the initial part of Init.gmk, before the spec file is
   # loaded. Most of these functions provide parsing and setting up make options
@@ -40,8 +45,8 @@ ifeq ($(HAS_SPEC),)
   ##############################################################################
 
   # Make control variables, handled by Init.gmk
-  INIT_CONTROL_VARIABLES := LOG CONF CONF_NAME SPEC JOBS TEST_JOBS CONF_CHECK \
-      COMPARE_BUILD
+  INIT_CONTROL_VARIABLES += LOG CONF CONF_NAME SPEC JOBS TEST_JOBS CONF_CHECK \
+      COMPARE_BUILD JTREG GTEST
 
   # All known make control variables
   MAKE_CONTROL_VARIABLES := $(INIT_CONTROL_VARIABLES) TEST JDK_FILTER
@@ -460,27 +465,28 @@ else # $(HAS_SPEC)=true
   endef
 
   define PrintFailureReports
-	$(if $(wildcard $(MAKESUPPORT_OUTPUTDIR)/failure-logs/*), \
-	  $(PRINTF) "=== Output from failing command(s) repeated here ===\n" $(NEWLINE) \
-	  $(foreach logfile, $(sort $(wildcard $(MAKESUPPORT_OUTPUTDIR)/failure-logs/*)), \
+	$(if $(wildcard $(MAKESUPPORT_OUTPUTDIR)/failure-logs/*.log), \
+	  $(PRINTF) "\n=== Output from failing command(s) repeated here ===\n" $(NEWLINE) \
+	  $(foreach logfile, $(sort $(wildcard $(MAKESUPPORT_OUTPUTDIR)/failure-logs/*.log)), \
 	      $(PRINTF) "* For target $(notdir $(basename $(logfile))):\n" $(NEWLINE) \
 	      ($(GREP) -v -e "^Note: including file:" <  $(logfile) || true) | $(HEAD) -n 12 $(NEWLINE) \
 	      if test `$(WC) -l < $(logfile)` -gt 12; then \
 	        $(ECHO) "   ... (rest of output omitted)" ; \
 	      fi $(NEWLINE) \
 	  ) \
+	  $(PRINTF) "\n* All command lines available in $(MAKESUPPORT_OUTPUTDIR)/failure-logs.\n" $(NEWLINE) \
 	  $(PRINTF) "=== End of repeated output ===\n" \
 	)
   endef
 
   define PrintBuildLogFailures
 	if $(GREP) -q "recipe for target .* failed" $(BUILD_LOG) 2> /dev/null; then  \
-	  $(PRINTF) "=== Make failure sequence repeated here ===\n" ; \
+	  $(PRINTF) "\n=== Make failed targets repeated here ===\n" ; \
 	  $(GREP) "recipe for target .* failed" $(BUILD_LOG) ; \
 	  $(PRINTF) "=== End of repeated output ===\n" ; \
-	  $(PRINTF) "Hint: Try searching the build log for the name of the first failed target.\n" ; \
+	  $(PRINTF) "\nHint: Try searching the build log for the name of the first failed target.\n" ; \
 	else \
-	  $(PRINTF) "No indication of failed target found.\n" ; \
+	  $(PRINTF) "\nNo indication of failed target found.\n" ; \
 	  $(PRINTF) "Hint: Try searching the build log for '] Error'.\n" ; \
 	fi
   endef
@@ -497,6 +503,7 @@ else # $(HAS_SPEC)=true
   define PrepareFailureLogs
 	$(RM) -r $(MAKESUPPORT_OUTPUTDIR)/failure-logs 2> /dev/null && \
 	$(MKDIR) -p $(MAKESUPPORT_OUTPUTDIR)/failure-logs
+	$(RM) $(MAKESUPPORT_OUTPUTDIR)/exit-with-error 2> /dev/null
   endef
 
   # Remove any javac server logs and port files. This

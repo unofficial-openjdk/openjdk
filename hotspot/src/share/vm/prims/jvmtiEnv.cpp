@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -225,6 +225,135 @@ JvmtiEnv::GetNamedModule(jobject class_loader, const char* package_name, jobject
   *module_ptr = module;
   return JVMTI_ERROR_NONE;
 } /* end GetNamedModule */
+
+
+// module - pre-checked for NULL
+// to_module - pre-checked for NULL
+jvmtiError
+JvmtiEnv::AddModuleReads(jobject module, jobject to_module) {
+  JavaThread* THREAD = JavaThread::current();
+
+  // check module
+  Handle h_module(THREAD, JNIHandles::resolve(module));
+  if (!java_lang_Module::is_instance(h_module())) {
+    return JVMTI_ERROR_INVALID_MODULE;
+  }
+  // check to_module
+  Handle h_to_module(THREAD, JNIHandles::resolve(to_module));
+  if (!java_lang_Module::is_instance(h_to_module())) {
+    return JVMTI_ERROR_INVALID_MODULE;
+  }
+  return JvmtiExport::add_module_reads(h_module, h_to_module, THREAD);
+} /* end AddModuleReads */
+
+
+// module - pre-checked for NULL
+// pkg_name - pre-checked for NULL
+// to_module - pre-checked for NULL
+jvmtiError
+JvmtiEnv::AddModuleExports(jobject module, const char* pkg_name, jobject to_module) {
+  JavaThread* THREAD = JavaThread::current();
+  Handle h_pkg = java_lang_String::create_from_str(pkg_name, THREAD);
+
+  // check module
+  Handle h_module(THREAD, JNIHandles::resolve(module));
+  if (!java_lang_Module::is_instance(h_module())) {
+    return JVMTI_ERROR_INVALID_MODULE;
+  }
+  // check to_module
+  Handle h_to_module(THREAD, JNIHandles::resolve(to_module));
+  if (!java_lang_Module::is_instance(h_to_module())) {
+    return JVMTI_ERROR_INVALID_MODULE;
+  }
+  return JvmtiExport::add_module_exports(h_module, h_pkg, h_to_module, THREAD);
+} /* end AddModuleExports */
+
+
+// module - pre-checked for NULL
+// pkg_name - pre-checked for NULL
+// to_module - pre-checked for NULL
+jvmtiError
+JvmtiEnv::AddModuleOpens(jobject module, const char* pkg_name, jobject to_module) {
+  JavaThread* THREAD = JavaThread::current();
+  Handle h_pkg = java_lang_String::create_from_str(pkg_name, THREAD);
+
+  // check module
+  Handle h_module(THREAD, JNIHandles::resolve(module));
+  if (!java_lang_Module::is_instance(h_module())) {
+    return JVMTI_ERROR_INVALID_MODULE;
+  }
+  // check to_module
+  Handle h_to_module(THREAD, JNIHandles::resolve(to_module));
+  if (!java_lang_Module::is_instance(h_to_module())) {
+    return JVMTI_ERROR_INVALID_MODULE;
+  }
+  return JvmtiExport::add_module_opens(h_module, h_pkg, h_to_module, THREAD);
+} /* end AddModuleOpens */
+
+
+// module - pre-checked for NULL
+// service - pre-checked for NULL
+jvmtiError
+JvmtiEnv::AddModuleUses(jobject module, jclass service) {
+  JavaThread* THREAD = JavaThread::current();
+
+  // check module
+  Handle h_module(THREAD, JNIHandles::resolve(module));
+  if (!java_lang_Module::is_instance(h_module())) {
+    return JVMTI_ERROR_INVALID_MODULE;
+  }
+  // check service
+  Handle h_service(THREAD, JNIHandles::resolve_external_guard(service));
+  if (!java_lang_Class::is_instance(h_service()) ||
+      java_lang_Class::is_primitive(h_service())) {
+    return JVMTI_ERROR_INVALID_CLASS;
+  }
+  return JvmtiExport::add_module_uses(h_module, h_service, THREAD);
+} /* end AddModuleUses */
+
+
+// module - pre-checked for NULL
+// service - pre-checked for NULL
+// impl_class - pre-checked for NULL
+jvmtiError
+JvmtiEnv::AddModuleProvides(jobject module, jclass service, jclass impl_class) {
+  JavaThread* THREAD = JavaThread::current();
+
+  // check module
+  Handle h_module(THREAD, JNIHandles::resolve(module));
+  if (!java_lang_Module::is_instance(h_module())) {
+    return JVMTI_ERROR_INVALID_MODULE;
+  }
+  // check service
+  Handle h_service(THREAD, JNIHandles::resolve_external_guard(service));
+  if (!java_lang_Class::is_instance(h_service()) ||
+      java_lang_Class::is_primitive(h_service())) {
+    return JVMTI_ERROR_INVALID_CLASS;
+  }
+  // check impl_class
+  Handle h_impl_class(THREAD, JNIHandles::resolve_external_guard(impl_class));
+  if (!java_lang_Class::is_instance(h_impl_class()) ||
+      java_lang_Class::is_primitive(h_impl_class())) {
+    return JVMTI_ERROR_INVALID_CLASS;
+  }
+  return JvmtiExport::add_module_provides(h_module, h_service, h_impl_class, THREAD);
+} /* end AddModuleProvides */
+
+// module - pre-checked for NULL
+// is_modifiable_class_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::IsModifiableModule(jobject module, jboolean* is_modifiable_module_ptr) {
+  JavaThread* THREAD = JavaThread::current();
+
+  // check module
+  Handle h_module(THREAD, JNIHandles::resolve(module));
+  if (!java_lang_Module::is_instance(h_module())) {
+    return JVMTI_ERROR_INVALID_MODULE;
+  }
+
+  *is_modifiable_module_ptr = JNI_TRUE;
+  return JVMTI_ERROR_NONE;
+} /* end IsModifiableModule */
 
 
   //
@@ -1001,7 +1130,8 @@ JvmtiEnv::GetThreadInfo(jthread thread, jvmtiThreadInfo* info_ptr) {
     if (name() != NULL) {
       n = java_lang_String::as_utf8_string(name());
     } else {
-      n = UNICODE::as_utf8((jchar*) NULL, 0);
+      int utf8_length = 0;
+      n = UNICODE::as_utf8((jchar*) NULL, utf8_length);
     }
 
     info_ptr->name = (char *) jvmtiMalloc(strlen(n)+1);
@@ -1679,6 +1809,13 @@ JvmtiEnv::FollowReferences(jint heap_filter, jclass klass, jobject initial_objec
     k_oop = java_lang_Class::as_Klass(k_mirror);
     if (k_oop == NULL) {
       return JVMTI_ERROR_INVALID_CLASS;
+    }
+  }
+
+  if (initial_object != NULL) {
+    oop init_obj = JNIHandles::resolve_external_guard(initial_object);
+    if (init_obj == NULL) {
+      return JVMTI_ERROR_INVALID_OBJECT;
     }
   }
 

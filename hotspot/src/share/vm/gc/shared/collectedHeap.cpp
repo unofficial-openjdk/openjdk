@@ -233,7 +233,7 @@ void CollectedHeap::pre_initialize() {
   // Used for ReduceInitialCardMarks (when COMPILER2 is used);
   // otherwise remains unused.
 #if defined(COMPILER2) || INCLUDE_JVMCI
-  _defer_initial_card_mark =    ReduceInitialCardMarks && can_elide_tlab_store_barriers()
+  _defer_initial_card_mark = is_server_compilation_mode_vm() &&  ReduceInitialCardMarks && can_elide_tlab_store_barriers()
                              && (DeferInitialCardMark || card_mark_must_follow_store());
 #else
   assert(_defer_initial_card_mark == false, "Who would set it?");
@@ -601,34 +601,3 @@ void CollectedHeap::initialize_reserved_region(HeapWord *start, HeapWord *end) {
   _reserved.set_start(start);
   _reserved.set_end(end);
 }
-
-/////////////// Unit tests ///////////////
-
-#ifndef PRODUCT
-void CollectedHeap::test_is_in() {
-  CollectedHeap* heap = Universe::heap();
-
-  uintptr_t epsilon    = (uintptr_t) MinObjAlignment;
-  uintptr_t heap_start = (uintptr_t) heap->_reserved.start();
-  uintptr_t heap_end   = (uintptr_t) heap->_reserved.end();
-
-  // Test that NULL is not in the heap.
-  assert(!heap->is_in(NULL), "NULL is unexpectedly in the heap");
-
-  // Test that a pointer to before the heap start is reported as outside the heap.
-  assert(heap_start >= ((uintptr_t)NULL + epsilon), "sanity");
-  void* before_heap = (void*)(heap_start - epsilon);
-  assert(!heap->is_in(before_heap),
-         "before_heap: " PTR_FORMAT " is unexpectedly in the heap", p2i(before_heap));
-
-  // Test that a pointer to after the heap end is reported as outside the heap.
-  assert(heap_end <= ((uintptr_t)-1 - epsilon), "sanity");
-  void* after_heap = (void*)(heap_end + epsilon);
-  assert(!heap->is_in(after_heap),
-         "after_heap: " PTR_FORMAT " is unexpectedly in the heap", p2i(after_heap));
-}
-
-void CollectedHeap_test() {
-  CollectedHeap::test_is_in();
-}
-#endif

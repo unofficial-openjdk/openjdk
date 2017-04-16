@@ -429,6 +429,7 @@ public abstract class JComponent extends Container implements Serializable,
      * Returns the Set of <code>KeyStroke</code>s to use if the component
      * is managing focus for forward focus traversal.
      */
+    @SuppressWarnings("deprecation")
     static Set<KeyStroke> getManagingFocusForwardTraversalKeys() {
         synchronized(JComponent.class) {
             if (managingFocusForwardTraversalKeys == null) {
@@ -445,6 +446,7 @@ public abstract class JComponent extends Container implements Serializable,
      * Returns the Set of <code>KeyStroke</code>s to use if the component
      * is managing focus for backward focus traversal.
      */
+    @SuppressWarnings("deprecation")
     static Set<KeyStroke> getManagingFocusBackwardTraversalKeys() {
         synchronized(JComponent.class) {
             if (managingFocusBackwardTraversalKeys == null) {
@@ -555,6 +557,7 @@ public abstract class JComponent extends Container implements Serializable,
      * @see #setComponentPopupMenu
      * @since 1.5
      */
+    @SuppressWarnings("deprecation")
     public JPopupMenu getComponentPopupMenu() {
 
         if(!getInheritsPopupMenu()) {
@@ -2885,6 +2888,7 @@ public abstract class JComponent extends Container implements Serializable,
      *
      * @since 1.3
      */
+    @SuppressWarnings("deprecation")
     protected boolean processKeyBinding(KeyStroke ks, KeyEvent e,
                                         int condition, boolean pressed) {
         InputMap map = getInputMap(condition, false);
@@ -2913,6 +2917,7 @@ public abstract class JComponent extends Container implements Serializable,
      * @param pressed true if the key is pressed
      * @return true if there is a key binding for <code>e</code>
      */
+    @SuppressWarnings("deprecation")
     boolean processKeyBindings(KeyEvent e, boolean pressed) {
       if (!SwingUtilities.isValidKeyEventForKeyBindings(e)) {
           return false;
@@ -3728,7 +3733,11 @@ public abstract class JComponent extends Container implements Serializable,
          * Fire PropertyChange listener, if one is registered,
          * when focus events happen
          * @since 1.3
+         * @deprecated This class is no longer used or needed.
+         * {@code java.awt.Component.AccessibleAWTComponent} provides
+         * the same functionality and it is handled in {@Component}.
          */
+        @Deprecated
         protected class AccessibleFocusHandler implements FocusListener {
            public void focusGained(FocusEvent event) {
                if (accessibleContext != null) {
@@ -4457,6 +4466,7 @@ public abstract class JComponent extends Container implements Serializable,
      *          return value for this method
      * @see #getVisibleRect
      */
+    @SuppressWarnings("deprecation")
     static final void computeVisibleRect(Component c, Rectangle visibleRect) {
         Container p = c.getParent();
         Rectangle bounds = c.getBounds();
@@ -4625,6 +4635,7 @@ public abstract class JComponent extends Container implements Serializable,
      *          or <code>null</code> if not in any container
      */
     @BeanProperty(bound = false)
+    @SuppressWarnings("deprecation")
     public Container getTopLevelAncestor() {
         for(Container p = this; p != null; p = p.getParent()) {
             if(p instanceof Window || p instanceof Applet) {
@@ -5032,6 +5043,7 @@ public abstract class JComponent extends Container implements Serializable,
         this.paintingChild = paintingChild;
     }
 
+    @SuppressWarnings("deprecation")
     void _paintImmediately(int x, int y, int w, int h) {
         Graphics g;
         Container c;

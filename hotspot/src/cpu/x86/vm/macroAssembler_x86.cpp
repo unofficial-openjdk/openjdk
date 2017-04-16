@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -3499,12 +3499,12 @@ void MacroAssembler::movdqu(XMMRegister dst, XMMRegister src) {
   }
 }
 
-void MacroAssembler::movdqu(XMMRegister dst, AddressLiteral src) {
+void MacroAssembler::movdqu(XMMRegister dst, AddressLiteral src, Register scratchReg) {
   if (reachable(src)) {
     movdqu(dst, as_Address(src));
   } else {
-    lea(rscratch1, src);
-    movdqu(dst, Address(rscratch1, 0));
+    lea(scratchReg, src);
+    movdqu(dst, Address(scratchReg, 0));
   }
 }
 
@@ -4306,6 +4306,15 @@ void MacroAssembler::vpaddw(XMMRegister dst, XMMRegister nds, Address src, int v
     evmovdqul(xmm0, dst, Assembler::AVX_512bit);
     Assembler::vpaddw(xmm0, xmm0, src, vector_len);
     evmovdqul(xmm0, nds, Assembler::AVX_512bit);
+  }
+}
+
+void MacroAssembler::vpand(XMMRegister dst, XMMRegister nds, AddressLiteral src, int vector_len) {
+  if (reachable(src)) {
+    Assembler::vpand(dst, nds, as_Address(src), vector_len);
+  } else {
+    lea(rscratch1, src);
+    Assembler::vpand(dst, nds, Address(rscratch1, 0), vector_len);
   }
 }
 
@@ -5119,6 +5128,43 @@ void MacroAssembler::vxorps(XMMRegister dst, XMMRegister nds, AddressLiteral src
   }
 }
 
+
+void MacroAssembler::resolve_jobject(Register value,
+                                     Register thread,
+                                     Register tmp) {
+  assert_different_registers(value, thread, tmp);
+  Label done, not_weak;
+  testptr(value, value);
+  jcc(Assembler::zero, done);                // Use NULL as-is.
+  testptr(value, JNIHandles::weak_tag_mask); // Test for jweak tag.
+  jcc(Assembler::zero, not_weak);
+  // Resolve jweak.
+  movptr(value, Address(value, -JNIHandles::weak_tag_value));
+  verify_oop(value);
+#if INCLUDE_ALL_GCS
+  if (UseG1GC) {
+    g1_write_barrier_pre(noreg /* obj */,
+                         value /* pre_val */,
+                         thread /* thread */,
+                         tmp /* tmp */,
+                         true /* tosca_live */,
+                         true /* expand_call */);
+  }
+#endif // INCLUDE_ALL_GCS
+  jmp(done);
+  bind(not_weak);
+  // Resolve (untagged) jobject.
+  movptr(value, Address(value, 0));
+  verify_oop(value);
+  bind(done);
+}
+
+void MacroAssembler::clear_jweak_tag(Register possibly_jweak) {
+  const int32_t inverted_jweak_mask = ~static_cast<int32_t>(JNIHandles::weak_tag_mask);
+  STATIC_ASSERT(inverted_jweak_mask == -2); // otherwise check this code
+  // The inverted mask is sign-extended
+  andptr(possibly_jweak, inverted_jweak_mask);
+}
 
 //////////////////////////////////////////////////////////////////////////////////
 #if INCLUDE_ALL_GCS
@@ -10764,16 +10810,13 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
   // save length for return
   push(len);
 
-  // 8165287: EVEX version disabled for now, needs to be refactored as
-  // it is returning incorrect results.
   if ((UseAVX > 2) && // AVX512
-    0 &&
     VM_Version::supports_avx512vlbw() &&
     VM_Version::supports_bmi2()) {
 
     set_vector_masking();  // opening of the stub context for programming mask registers
 
-    Label copy_32_loop, copy_loop_tail, copy_just_portion_of_candidates;
+    Label copy_32_loop, copy_loop_tail, restore_k1_return_zero;
 
     // alignement
     Label post_alignement;
@@ -10788,16 +10831,16 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     movl(result, 0x00FF);
     evpbroadcastw(tmp2Reg, result, Assembler::AVX_512bit);
 
-    testl(len, -64);
-    jcc(Assembler::zero, post_alignement);
-
     // Save k1
     kmovql(k3, k1);
 
+    testl(len, -64);
+    jcc(Assembler::zero, post_alignement);
+
     movl(tmp5, dst);
-    andl(tmp5, (64 - 1));
+    andl(tmp5, (32 - 1));
     negl(tmp5);
-    andl(tmp5, (64 - 1));
+    andl(tmp5, (32 - 1));
 
     // bail out when there is nothing to be done
     testl(tmp5, 0xFFFFFFFF);
@@ -10807,13 +10850,12 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     movl(result, 0xFFFFFFFF);
     shlxl(result, result, tmp5);
     notl(result);
-
     kmovdl(k1, result);
 
     evmovdquw(tmp1Reg, k1, Address(src, 0), Assembler::AVX_512bit);
     evpcmpuw(k2, k1, tmp1Reg, tmp2Reg, Assembler::le, Assembler::AVX_512bit);
     ktestd(k2, k1);
-    jcc(Assembler::carryClear, copy_just_portion_of_candidates);
+    jcc(Assembler::carryClear, restore_k1_return_zero);
 
     evpmovwb(Address(dst, 0), k1, tmp1Reg, Assembler::AVX_512bit);
 
@@ -10826,7 +10868,7 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     // end of alignement
 
     movl(tmp5, len);
-    andl(tmp5, (32 - 1));   // tail count (in chars)
+    andl(tmp5, (32 - 1));    // tail count (in chars)
     andl(len, ~(32 - 1));    // vector count (in chars)
     jcc(Assembler::zero, copy_loop_tail);
 
@@ -10838,7 +10880,7 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     evmovdquw(tmp1Reg, Address(src, len, Address::times_2), Assembler::AVX_512bit);
     evpcmpuw(k2, tmp1Reg, tmp2Reg, Assembler::le, Assembler::AVX_512bit);
     kortestdl(k2, k2);
-    jcc(Assembler::carryClear, copy_just_portion_of_candidates);
+    jcc(Assembler::carryClear, restore_k1_return_zero);
 
     // All elements in current processed chunk are valid candidates for
     // compression. Write a truncated byte elements to the memory.
@@ -10849,10 +10891,9 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     bind(copy_loop_tail);
     // bail out when there is nothing to be done
     testl(tmp5, 0xFFFFFFFF);
+    // Restore k1
+    kmovql(k1, k3);
     jcc(Assembler::zero, return_length);
-
-    // Save k1
-    kmovql(k3, k1);
 
     movl(len, tmp5);
 
@@ -10866,30 +10907,16 @@ void MacroAssembler::char_array_compress(Register src, Register dst, Register le
     evmovdquw(tmp1Reg, k1, Address(src, 0), Assembler::AVX_512bit);
     evpcmpuw(k2, k1, tmp1Reg, tmp2Reg, Assembler::le, Assembler::AVX_512bit);
     ktestd(k2, k1);
-    jcc(Assembler::carryClear, copy_just_portion_of_candidates);
+    jcc(Assembler::carryClear, restore_k1_return_zero);
 
     evpmovwb(Address(dst, 0), k1, tmp1Reg, Assembler::AVX_512bit);
     // Restore k1
     kmovql(k1, k3);
-
     jmp(return_length);
 
-    bind(copy_just_portion_of_candidates);
-    kmovdl(tmp5, k2);
-    tzcntl(tmp5, tmp5);
-
-    // ~(~0 << tmp5), where tmp5 is a number of elements in an array from the
-    // result to the first element larger than 0xFF
-    movl(result, 0xFFFFFFFF);
-    shlxl(result, result, tmp5);
-    notl(result);
-
-    kmovdl(k1, result);
-
-    evpmovwb(Address(dst, 0), k1, tmp1Reg, Assembler::AVX_512bit);
+    bind(restore_k1_return_zero);
     // Restore k1
     kmovql(k1, k3);
-
     jmp(return_zero);
 
     clear_vector_masking();   // closing of the stub context for programming mask registers

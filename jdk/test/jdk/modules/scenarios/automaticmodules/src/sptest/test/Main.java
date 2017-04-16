@@ -26,8 +26,6 @@ package test;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Provides;
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -36,7 +34,7 @@ import java.util.stream.Collectors;
 import javax.script.ScriptEngineFactory;
 
 /**
- * Test that the automatic module "bananascript" is in the boot Layer and
+ * Test that the automatic module "bananascript" is in the boot layer and
  * it behaves as a service provider.
  */
 
@@ -44,7 +42,7 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
 
-        Optional<Module> om = Layer.boot().findModule("bananascript");
+        Optional<Module> om = ModuleLayer.boot().findModule("bananascript");
         assertTrue(om.isPresent());
 
         ModuleDescriptor descriptor = om.get().getDescriptor();
@@ -58,10 +56,10 @@ public class Main {
         assertTrue(requires.contains("java.base"));
 
         // uses ScriptEngineFactory
-        Map<String, Provides> provides = descriptor.provides();
+        Set<Provides> provides = descriptor.provides();
         assertTrue(provides.size() == 1);
         String sn = ScriptEngineFactory.class.getName();
-        assertTrue(provides.containsKey(sn));
+        assertTrue(provides.iterator().next().service().equals(sn));
 
         // Check that it is iterated over with ServiceLoader
         ServiceLoader<ScriptEngineFactory> sl

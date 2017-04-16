@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -273,9 +273,9 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
      * @return true if the given package has constant fields to document.
      */
     private boolean hasConstantField (TypeElement typeElement) {
-        VisibleMemberMap visibleMemberMapFields = new VisibleMemberMap(typeElement,
-            VisibleMemberMap.Kind.FIELDS, configuration);
-        SortedSet<Element> fields = visibleMemberMapFields.getLeafClassMembers();
+        VisibleMemberMap visibleMemberMapFields = configuration.getVisibleMemberMap(typeElement,
+            VisibleMemberMap.Kind.FIELDS);
+        List<Element> fields = visibleMemberMapFields.getLeafMembers();
         for (Element f : fields) {
             VariableElement field = (VariableElement)f;
             if (field.getConstantValue() != null) {
@@ -329,10 +329,10 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
          */
         public ConstantFieldBuilder(TypeElement typeElement) {
             this.typeElement = typeElement;
-            visibleMemberMapFields = new VisibleMemberMap(typeElement,
-                VisibleMemberMap.Kind.FIELDS, configuration);
-            visibleMemberMapEnumConst = new VisibleMemberMap(typeElement,
-                VisibleMemberMap.Kind.ENUM_CONSTANTS, configuration);
+            visibleMemberMapFields = configuration.getVisibleMemberMap(typeElement,
+                VisibleMemberMap.Kind.FIELDS);
+            visibleMemberMapEnumConst = configuration.getVisibleMemberMap(typeElement,
+                VisibleMemberMap.Kind.ENUM_CONSTANTS);
         }
 
         /**
@@ -350,21 +350,21 @@ public class ConstantsSummaryBuilder extends AbstractBuilder {
         }
 
         /**
-         * Return the list of visible constant fields for the given TypeElement.
-         * @return the list of visible constant fields for the given TypeElement.
+         * Returns a set of visible constant fields for the given type.
+         * @return the set of visible constant fields for the given type.
          */
         protected SortedSet<VariableElement> members() {
-            SortedSet<Element> list = visibleMemberMapFields.getLeafClassMembers();
-            list.addAll(visibleMemberMapEnumConst.getLeafClassMembers());
-            SortedSet<VariableElement> inclList =
+            List<Element> members = visibleMemberMapFields.getLeafMembers();
+            members.addAll(visibleMemberMapEnumConst.getLeafMembers());
+            SortedSet<VariableElement> includes =
                     new TreeSet<>(utils.makeGeneralPurposeComparator());
-            for (Element element : list) {
+            for (Element element : members) {
                 VariableElement member = (VariableElement)element;
                 if (member.getConstantValue() != null) {
-                    inclList.add(member);
+                    includes.add(member);
                 }
             }
-            return inclList;
+            return includes;
         }
     }
 }

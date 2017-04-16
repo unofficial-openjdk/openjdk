@@ -51,4 +51,16 @@ public interface JavaUtilResourceBundleAccess {
      * Sets the bundle's base name to the given name.
      */
     void setName(ResourceBundle bundle, String name);
+
+    /**
+     * Returns a {@code ResourceBundle} of the given baseName and locale
+     * loaded on behalf of the given module with no caller module
+     * access check.
+     */
+    ResourceBundle getBundle(String baseName, Locale locale, Module module);
+
+    /**
+     * Instantiates a {@code ResourceBundle} of the given bundle class.
+     */
+    ResourceBundle newResourceBundle(Class<? extends ResourceBundle> bundleClass);
 }

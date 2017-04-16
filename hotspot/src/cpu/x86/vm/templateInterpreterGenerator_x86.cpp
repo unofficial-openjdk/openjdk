@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -256,7 +256,7 @@ address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state, i
 #if INCLUDE_JVMCI
   // Check if we need to take lock at entry of synchronized method.  This can
   // only occur on method entry so emit it only for vtos with step 0.
-  if (UseJVMCICompiler && state == vtos && step == 0) {
+  if ((UseJVMCICompiler || UseAOT) && state == vtos && step == 0) {
     Label L;
     __ cmpb(Address(thread, JavaThread::pending_monitorenter_offset()), 0);
     __ jcc(Assembler::zero, L);
@@ -1193,16 +1193,16 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
   // and result handler will pick it up
 
   {
-    Label no_oop, store_result;
+    Label no_oop, not_weak, store_result;
     __ lea(t, ExternalAddress(AbstractInterpreter::result_handler(T_OBJECT)));
     __ cmpptr(t, Address(rbp, frame::interpreter_frame_result_handler_offset*wordSize));
     __ jcc(Assembler::notEqual, no_oop);
     // retrieve result
     __ pop(ltos);
-    __ testptr(rax, rax);
-    __ jcc(Assembler::zero, store_result);
-    __ movptr(rax, Address(rax, 0));
-    __ bind(store_result);
+    // Unbox oop result, e.g. JNIHandles::resolve value.
+    __ resolve_jobject(rax /* value */,
+                       thread /* thread */,
+                       t /* tmp */);
     __ movptr(Address(rbp, frame::interpreter_frame_oop_temp_offset*wordSize), rax);
     // keep stack depth as expected by pushing oop which will eventually be discarded
     __ push(ltos);

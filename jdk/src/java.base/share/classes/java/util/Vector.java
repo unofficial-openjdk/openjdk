@@ -306,8 +306,9 @@ public class Vector<E>
         modCount++;
         if (newSize > elementData.length)
             grow(newSize);
-        for (int i = newSize; i < elementCount; i++)
-            elementData[i] = null;
+        final Object[] es = elementData;
+        for (int to = elementCount, i = newSize; i < to; i++)
+            es[i] = null;
         elementCount = newSize;
     }
 
@@ -513,7 +514,7 @@ public class Vector<E>
      * Returns the last component of the vector.
      *
      * @return  the last component of the vector, i.e., the component at index
-     *          <code>size()&nbsp;-&nbsp;1</code>.
+     *          {@code size() - 1}
      * @throws NoSuchElementException if this vector is empty
      */
     public synchronized E lastElement() {
@@ -675,12 +676,10 @@ public class Vector<E>
      * method (which is part of the {@link List} interface).
      */
     public synchronized void removeAllElements() {
-        // Let gc do its work
-        for (int i = 0; i < elementCount; i++)
-            elementData[i] = null;
-
+        final Object[] es = elementData;
+        for (int to = elementCount, i = elementCount = 0; i < to; i++)
+            es[i] = null;
         modCount++;
-        elementCount = 0;
     }
 
     /**
@@ -693,7 +692,7 @@ public class Vector<E>
     public synchronized Object clone() {
         try {
             @SuppressWarnings("unchecked")
-                Vector<E> v = (Vector<E>) super.clone();
+            Vector<E> v = (Vector<E>) super.clone();
             v.elementData = Arrays.copyOf(elementData, elementCount);
             v.modCount = 0;
             return v;
@@ -757,6 +756,11 @@ public class Vector<E>
     @SuppressWarnings("unchecked")
     E elementData(int index) {
         return (E) elementData[index];
+    }
+
+    @SuppressWarnings("unchecked")
+    static <E> E elementAt(Object[] es, int index) {
+        return (E) es[index];
     }
 
     /**
@@ -855,10 +859,10 @@ public class Vector<E>
      * Shifts any subsequent elements to the left (subtracts one from their
      * indices).  Returns the element that was removed from the Vector.
      *
-     * @throws ArrayIndexOutOfBoundsException if the index is out of range
-     *         ({@code index < 0 || index >= size()})
      * @param index the index of the element to be removed
      * @return element that was removed
+     * @throws ArrayIndexOutOfBoundsException if the index is out of range
+     *         ({@code index < 0 || index >= size()})
      * @since 1.2
      */
     public synchronized E remove(int index) {
@@ -949,8 +953,9 @@ public class Vector<E>
      *         or if the specified collection is null
      * @since 1.2
      */
-    public synchronized boolean removeAll(Collection<?> c) {
-        return super.removeAll(c);
+    public boolean removeAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        return bulkRemove(e -> c.contains(e));
     }
 
     /**
@@ -972,8 +977,66 @@ public class Vector<E>
      *         or if the specified collection is null
      * @since 1.2
      */
-    public synchronized boolean retainAll(Collection<?> c) {
-        return super.retainAll(c);
+    public boolean retainAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        return bulkRemove(e -> !c.contains(e));
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     */
+    @Override
+    public boolean removeIf(Predicate<? super E> filter) {
+        Objects.requireNonNull(filter);
+        return bulkRemove(filter);
+    }
+
+    // A tiny bit set implementation
+
+    private static long[] nBits(int n) {
+        return new long[((n - 1) >> 6) + 1];
+    }
+    private static void setBit(long[] bits, int i) {
+        bits[i >> 6] |= 1L << i;
+    }
+    private static boolean isClear(long[] bits, int i) {
+        return (bits[i >> 6] & (1L << i)) == 0;
+    }
+
+    private synchronized boolean bulkRemove(Predicate<? super E> filter) {
+        int expectedModCount = modCount;
+        final Object[] es = elementData;
+        final int end = elementCount;
+        int i;
+        // Optimize for initial run of survivors
+        for (i = 0; i < end && !filter.test(elementAt(es, i)); i++)
+            ;
+        // Tolerate predicates that reentrantly access the collection for
+        // read (but writers still get CME), so traverse once to find
+        // elements to delete, a second pass to physically expunge.
+        if (i < end) {
+            final int beg = i;
+            final long[] deathRow = nBits(end - beg);
+            deathRow[0] = 1L;   // set bit 0
+            for (i = beg + 1; i < end; i++)
+                if (filter.test(elementAt(es, i)))
+                    setBit(deathRow, i - beg);
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
+            expectedModCount++;
+            modCount++;
+            int w = beg;
+            for (i = beg; i < end; i++)
+                if (isClear(deathRow, i - beg))
+                    es[w++] = es[i];
+            for (i = elementCount = w; i < end; i++)
+                es[i] = null;
+            return true;
+        } else {
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
+            return false;
+        }
     }
 
     /**
@@ -1095,22 +1158,25 @@ public class Vector<E>
      * (If {@code toIndex==fromIndex}, this operation has no effect.)
      */
     protected synchronized void removeRange(int fromIndex, int toIndex) {
-        int numMoved = elementCount - toIndex;
-        System.arraycopy(elementData, toIndex, elementData, fromIndex,
-                         numMoved);
-
-        // Let gc do its work
         modCount++;
-        int newElementCount = elementCount - (toIndex-fromIndex);
-        while (elementCount != newElementCount)
-            elementData[--elementCount] = null;
+        shiftTailOverGap(elementData, fromIndex, toIndex);
+    }
+
+    /** Erases the gap from lo to hi, by sliding down following elements. */
+    private void shiftTailOverGap(Object[] es, int lo, int hi) {
+        System.arraycopy(es, hi, es, lo, elementCount - hi);
+        for (int to = elementCount, i = (elementCount -= hi - lo); i < to; i++)
+            es[i] = null;
     }
 
     /**
-     * Save the state of the {@code Vector} instance to a stream (that
-     * is, serialize it).
+     * Saves the state of the {@code Vector} instance to a stream
+     * (that is, serializes it).
      * This method performs synchronization to ensure the consistency
      * of the serialized data.
+     *
+     * @param s the stream
+     * @throws java.io.IOException if an I/O error occurs
      */
     private void writeObject(java.io.ObjectOutputStream s)
             throws java.io.IOException {
@@ -1212,14 +1278,11 @@ public class Vector<E>
                 if (i >= size) {
                     return;
                 }
-        @SuppressWarnings("unchecked")
-                final E[] elementData = (E[]) Vector.this.elementData;
-                if (i >= elementData.length) {
+                final Object[] es = elementData;
+                if (i >= es.length)
                     throw new ConcurrentModificationException();
-                }
-                while (i != size && modCount == expectedModCount) {
-                    action.accept(elementData[i++]);
-                }
+                while (i < size && modCount == expectedModCount)
+                    action.accept(elementAt(es, i++));
                 // update once at end of iteration to reduce heap write traffic
                 cursor = i;
                 lastRet = i - 1;
@@ -1286,77 +1349,34 @@ public class Vector<E>
         }
     }
 
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     */
     @Override
     public synchronized void forEach(Consumer<? super E> action) {
         Objects.requireNonNull(action);
         final int expectedModCount = modCount;
-        @SuppressWarnings("unchecked")
-        final E[] elementData = (E[]) this.elementData;
-        final int elementCount = this.elementCount;
-        for (int i=0; modCount == expectedModCount && i < elementCount; i++) {
-            action.accept(elementData[i]);
-        }
-        if (modCount != expectedModCount) {
-            throw new ConcurrentModificationException();
-        }
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public synchronized boolean removeIf(Predicate<? super E> filter) {
-        Objects.requireNonNull(filter);
-        // figure out which elements are to be removed
-        // any exception thrown from the filter predicate at this stage
-        // will leave the collection unmodified
-        int removeCount = 0;
+        final Object[] es = elementData;
         final int size = elementCount;
-        final BitSet removeSet = new BitSet(size);
-        final int expectedModCount = modCount;
-        for (int i=0; modCount == expectedModCount && i < size; i++) {
-            @SuppressWarnings("unchecked")
-            final E element = (E) elementData[i];
-            if (filter.test(element)) {
-                removeSet.set(i);
-                removeCount++;
-            }
-        }
-        if (modCount != expectedModCount) {
+        for (int i = 0; modCount == expectedModCount && i < size; i++)
+            action.accept(elementAt(es, i));
+        if (modCount != expectedModCount)
             throw new ConcurrentModificationException();
-        }
-
-        // shift surviving elements left over the spaces left by removed elements
-        final boolean anyToRemove = removeCount > 0;
-        if (anyToRemove) {
-            final int newSize = size - removeCount;
-            for (int i=0, j=0; (i < size) && (j < newSize); i++, j++) {
-                i = removeSet.nextClearBit(i);
-                elementData[j] = elementData[i];
-            }
-            for (int k=newSize; k < size; k++) {
-                elementData[k] = null;  // Let gc do its work
-            }
-            elementCount = newSize;
-            if (modCount != expectedModCount) {
-                throw new ConcurrentModificationException();
-            }
-            modCount++;
-        }
-
-        return anyToRemove;
     }
 
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     */
     @Override
-    @SuppressWarnings("unchecked")
     public synchronized void replaceAll(UnaryOperator<E> operator) {
         Objects.requireNonNull(operator);
         final int expectedModCount = modCount;
+        final Object[] es = elementData;
         final int size = elementCount;
-        for (int i=0; modCount == expectedModCount && i < size; i++) {
-            elementData[i] = operator.apply((E) elementData[i]);
-        }
-        if (modCount != expectedModCount) {
+        for (int i = 0; modCount == expectedModCount && i < size; i++)
+            es[i] = operator.apply(elementAt(es, i));
+        if (modCount != expectedModCount)
             throw new ConcurrentModificationException();
-        }
         modCount++;
     }
 
@@ -1365,9 +1385,8 @@ public class Vector<E>
     public synchronized void sort(Comparator<? super E> c) {
         final int expectedModCount = modCount;
         Arrays.sort((E[]) elementData, 0, elementCount, c);
-        if (modCount != expectedModCount) {
+        if (modCount != expectedModCount)
             throw new ConcurrentModificationException();
-        }
         modCount++;
     }
 
@@ -1386,21 +1405,19 @@ public class Vector<E>
      */
     @Override
     public Spliterator<E> spliterator() {
-        return new VectorSpliterator<>(this, null, 0, -1, 0);
+        return new VectorSpliterator(null, 0, -1, 0);
     }
 
     /** Similar to ArrayList Spliterator */
-    static final class VectorSpliterator<E> implements Spliterator<E> {
-        private final Vector<E> list;
+    final class VectorSpliterator implements Spliterator<E> {
         private Object[] array;
         private int index; // current index, modified on advance/split
         private int fence; // -1 until used; then one past last index
         private int expectedModCount; // initialized when fence set
 
-        /** Create new spliterator covering the given  range */
-        VectorSpliterator(Vector<E> list, Object[] array, int origin, int fence,
+        /** Creates new spliterator covering the given range. */
+        VectorSpliterator(Object[] array, int origin, int fence,
                           int expectedModCount) {
-            this.list = list;
             this.array = array;
             this.index = origin;
             this.fence = fence;
@@ -1410,10 +1427,10 @@ public class Vector<E>
         private int getFence() { // initialize on first use
             int hi;
             if ((hi = fence) < 0) {
-                synchronized(list) {
-                    array = list.elementData;
-                    expectedModCount = list.modCount;
-                    hi = fence = list.elementCount;
+                synchronized (Vector.this) {
+                    array = elementData;
+                    expectedModCount = modCount;
+                    hi = fence = elementCount;
                 }
             }
             return hi;
@@ -1422,19 +1439,17 @@ public class Vector<E>
         public Spliterator<E> trySplit() {
             int hi = getFence(), lo = index, mid = (lo + hi) >>> 1;
             return (lo >= mid) ? null :
-                new VectorSpliterator<>(list, array, lo, index = mid,
-                                        expectedModCount);
+                new VectorSpliterator(array, lo, index = mid, expectedModCount);
         }
 
         @SuppressWarnings("unchecked")
         public boolean tryAdvance(Consumer<? super E> action) {
+            Objects.requireNonNull(action);
             int i;
-            if (action == null)
-                throw new NullPointerException();
             if (getFence() > (i = index)) {
                 index = i + 1;
                 action.accept((E)array[i]);
-                if (list.modCount != expectedModCount)
+                if (modCount != expectedModCount)
                     throw new ConcurrentModificationException();
                 return true;
             }
@@ -1443,28 +1458,14 @@ public class Vector<E>
 
         @SuppressWarnings("unchecked")
         public void forEachRemaining(Consumer<? super E> action) {
-            int i, hi; // hoist accesses and checks from loop
-            Vector<E> lst; Object[] a;
-            if (action == null)
-                throw new NullPointerException();
-            if ((lst = list) != null) {
-                if ((hi = fence) < 0) {
-                    synchronized(lst) {
-                        expectedModCount = lst.modCount;
-                        a = array = lst.elementData;
-                        hi = fence = lst.elementCount;
-                    }
-                }
-                else
-                    a = array;
-                if (a != null && (i = index) >= 0 && (index = hi) <= a.length) {
-                    while (i < hi)
-                        action.accept((E) a[i++]);
-                    if (lst.modCount == expectedModCount)
-                        return;
-                }
-            }
-            throw new ConcurrentModificationException();
+            Objects.requireNonNull(action);
+            final int hi = getFence();
+            final Object[] a = array;
+            int i;
+            for (i = index, index = hi; i < hi; i++)
+                action.accept((E) a[i]);
+            if (modCount != expectedModCount)
+                throw new ConcurrentModificationException();
         }
 
         public long estimateSize() {
@@ -1474,5 +1475,10 @@ public class Vector<E>
         public int characteristics() {
             return Spliterator.ORDERED | Spliterator.SIZED | Spliterator.SUBSIZED;
         }
+    }
+
+    void checkInvariants() {
+        // assert elementCount >= 0;
+        // assert elementCount == elementData.length || elementData[elementCount] == null;
     }
 }

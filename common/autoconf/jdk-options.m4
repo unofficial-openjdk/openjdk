@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -163,9 +163,9 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JDK_OPTIONS],
   AC_SUBST(CACERTS_FILE)
 
   # Enable or disable unlimited crypto
-  AC_ARG_ENABLE(unlimited-crypto, [AS_HELP_STRING([--enable-unlimited-crypto],
-      [Enable unlimited crypto policy @<:@disabled@:>@])],,
-      [enable_unlimited_crypto=no])
+  AC_ARG_ENABLE(unlimited-crypto, [AS_HELP_STRING([--disable-unlimited-crypto],
+      [Disable unlimited crypto policy @<:@enabled@:>@])],,
+      [enable_unlimited_crypto=yes])
   if test "x$enable_unlimited_crypto" = "xyes"; then
     UNLIMITED_CRYPTO=true
   else
@@ -210,10 +210,10 @@ AC_DEFUN_ONCE([JDKOPT_DETECT_INTREE_EC],
   AC_MSG_CHECKING([if elliptic curve crypto implementation is present])
 
   if test -d "${SRC_ROOT}/jdk/src/jdk.crypto.ec/share/native/libsunec/impl"; then
-    ENABLE_INTREE_EC=yes
+    ENABLE_INTREE_EC=true
     AC_MSG_RESULT([yes])
   else
-    ENABLE_INTREE_EC=no
+    ENABLE_INTREE_EC=false
     AC_MSG_RESULT([no])
   fi
 
@@ -265,28 +265,14 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_SYMBOLS],
     COMPILE_WITH_DEBUG_SYMBOLS=true
     COPY_DEBUG_SYMBOLS=true
     ZIP_EXTERNAL_DEBUG_SYMBOLS=true
-
-    # Hotspot legacy support, not relevant with COPY_DEBUG_SYMBOLS=true
-    DEBUG_BINARIES=false
-    STRIP_POLICY=min_strip
-
   elif test "x$NATIVE_DEBUG_SYMBOLS" = xnone; then
     COMPILE_WITH_DEBUG_SYMBOLS=false
     COPY_DEBUG_SYMBOLS=false
     ZIP_EXTERNAL_DEBUG_SYMBOLS=false
-
-    DEBUG_BINARIES=false
-    STRIP_POLICY=no_strip
   elif test "x$NATIVE_DEBUG_SYMBOLS" = xinternal; then
     COMPILE_WITH_DEBUG_SYMBOLS=true
     COPY_DEBUG_SYMBOLS=false
     ZIP_EXTERNAL_DEBUG_SYMBOLS=false
-
-    # Hotspot legacy support, will turn on -g when COPY_DEBUG_SYMBOLS=false
-    DEBUG_BINARIES=true
-    STRIP_POLICY=no_strip
-    STRIP=""
-
   elif test "x$NATIVE_DEBUG_SYMBOLS" = xexternal; then
 
     if test "x$OPENJDK_TARGET_OS" = xsolaris || test "x$OPENJDK_TARGET_OS" = xlinux; then
@@ -300,10 +286,6 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_SYMBOLS],
     COMPILE_WITH_DEBUG_SYMBOLS=true
     COPY_DEBUG_SYMBOLS=true
     ZIP_EXTERNAL_DEBUG_SYMBOLS=false
-
-    # Hotspot legacy support, not relevant with COPY_DEBUG_SYMBOLS=true
-    DEBUG_BINARIES=false
-    STRIP_POLICY=min_strip
   else
     AC_MSG_ERROR([Allowed native debug symbols are: none, internal, external, zipped])
   fi
@@ -321,10 +303,6 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_DEBUG_SYMBOLS],
   AC_SUBST(COMPILE_WITH_DEBUG_SYMBOLS)
   AC_SUBST(COPY_DEBUG_SYMBOLS)
   AC_SUBST(ZIP_EXTERNAL_DEBUG_SYMBOLS)
-
-  # Legacy values
-  AC_SUBST(DEBUG_BINARIES)
-  AC_SUBST(STRIP_POLICY)
 ])
 
 ################################################################################
@@ -342,9 +320,8 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_CODE_COVERAGE],
       AC_MSG_RESULT([yes])
       GCOV_CFLAGS="-fprofile-arcs -ftest-coverage -fno-inline"
       GCOV_LDFLAGS="-fprofile-arcs"
-      LEGACY_EXTRA_CFLAGS="$LEGACY_EXTRA_CFLAGS $GCOV_CFLAGS"
-      LEGACY_EXTRA_CXXFLAGS="$LEGACY_EXTRA_CXXFLAGS $GCOV_CFLAGS"
-      LEGACY_EXTRA_LDFLAGS="$LEGACY_EXTRA_LDFLAGS $GCOV_LDFLAGS"
+      JVM_CFLAGS="$JVM_CFLAGS $GCOV_CFLAGS"
+      JVM_LDFLAGS="$JVM_LDFLAGS $GCOV_LDFLAGS"
       CFLAGS_JDKLIB="$CFLAGS_JDKLIB $GCOV_CFLAGS"
       CFLAGS_JDKEXE="$CFLAGS_JDKEXE $GCOV_CFLAGS"
       CXXFLAGS_JDKLIB="$CXXFLAGS_JDKLIB $GCOV_CFLAGS"
@@ -382,8 +359,6 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_STATIC_BUILD],
       AC_MSG_ERROR([--enable-static-build is only supported for macosx builds])
     fi
     STATIC_BUILD_CFLAGS="-DSTATIC_BUILD=1"
-    LEGACY_EXTRA_CFLAGS="$LEGACY_EXTRA_CFLAGS $STATIC_BUILD_CFLAGS"
-    LEGACY_EXTRA_CXXFLAGS="$LEGACY_EXTRA_CXXFLAGS $STATIC_BUILD_CFLAGS"
     CFLAGS_JDKLIB_EXTRA="$CFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
     CXXFLAGS_JDKLIB_EXTRA="$CXXFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
     STATIC_BUILD=true
@@ -407,18 +382,18 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_JLINK_OPTIONS],
   AC_ARG_ENABLE([keep-packaged-modules], [AS_HELP_STRING([--disable-keep-packaged-modules],
     [Do not keep packaged modules in jdk image @<:@enable@:>@])])
 
+  AC_MSG_CHECKING([if packaged modules are kept])
   if test "x$enable_keep_packaged_modules" = "xyes"; then
-    AC_MSG_CHECKING([if packaged modules are kept])
     AC_MSG_RESULT([yes])
     JLINK_KEEP_PACKAGED_MODULES=true
   elif test "x$enable_keep_packaged_modules" = "xno"; then
-    AC_MSG_CHECKING([if packaged modules are kept])
     AC_MSG_RESULT([no])
     JLINK_KEEP_PACKAGED_MODULES=false
   elif test "x$enable_keep_packaged_modules" = "x"; then
     AC_MSG_RESULT([yes (default)])
     JLINK_KEEP_PACKAGED_MODULES=true
   else
+    AC_MSG_RESULT([error])
     AC_MSG_ERROR([--enable-keep-packaged-modules accepts no argument])
   fi
 
@@ -504,5 +479,5 @@ AC_DEFUN_ONCE([JDKOPT_ENABLE_DISABLE_GENERATE_CLASSLIST],
     AC_MSG_ERROR([Invalid value for --enable-generate-classlist: $enable_generate_classlist])
   fi
 
-  AC_SUBST([ENABLE_GENERATE_CLASSLIST])
+  AC_SUBST(ENABLE_GENERATE_CLASSLIST)
 ])

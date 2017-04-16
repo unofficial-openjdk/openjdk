@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,11 +27,12 @@ import java.io.StringWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
@@ -157,6 +158,12 @@ public class ModuleTestBase extends TestRunner {
         }
     }
 
+    void checkTypesSelected(String... args) throws Exception {
+        for (String arg : args) {
+            checkDocletOutputPresent("Selected", ElementKind.CLASS, arg);
+        }
+    }
+
     void checkMembersSelected(String... args) throws Exception {
         for (String arg : args) {
             checkDocletOutputPresent("Selected", ElementKind.METHOD, arg);
@@ -179,8 +186,12 @@ public class ModuleTestBase extends TestRunner {
         assertPresent(regex, STDOUT);
     }
 
-    void assertErrorPresent(String regex) throws Exception {
+    void assertMessagePresent(String regex) throws Exception {
         assertPresent(regex, Task.OutputKind.DIRECT);
+    }
+
+    void assertMessageNotPresent(String regex) throws Exception {
+        assertNotPresent(regex, Task.OutputKind.DIRECT);
     }
 
     void assertPresent(String regex, Task.OutputKind kind) throws Exception {
@@ -188,6 +199,14 @@ public class ModuleTestBase extends TestRunner {
         if (foundList.isEmpty()) {
             dumpDocletDiagnostics();
             throw new Exception(regex + " not found in: " + kind);
+        }
+    }
+
+    void assertNotPresent(String regex, Task.OutputKind kind) throws Exception {
+        List<String> foundList = tb.grep(regex, currentTask.getOutputLines(kind));
+        if (!foundList.isEmpty()) {
+            dumpDocletDiagnostics();
+            throw new Exception(regex + " found in: " + kind);
         }
     }
 
@@ -267,6 +286,17 @@ public class ModuleTestBase extends TestRunner {
         StringWriter sw = new StringWriter();
         PrintWriter ps = new PrintWriter(sw);
 
+        DocletEnvironment docEnv = null;
+
+        boolean hasDocComments = false;
+
+        String hasDocComments(Element e) {
+            String comment = docEnv.getElementUtils().getDocComment(e);
+            return comment != null && !comment.isEmpty()
+                    ? "hasDocComments"
+                    : "noDocComments";
+        }
+
         // csv style output, for simple regex verification
         void printDataSet(String header, Set<? extends Element> set) {
             for (Element e : set) {
@@ -277,7 +307,12 @@ public class ModuleTestBase extends TestRunner {
                         ps.print(FS);
                         ps.print(e.getKind());
                         ps.print(FS);
-                        ps.println(e.getQualifiedName());
+                        ps.print(e.getQualifiedName());
+                        if (hasDocComments) {
+                            ps.print(FS);
+                            ps.print(hasDocComments(e));
+                        }
+                        ps.println();
                         return null;
                     }
 
@@ -286,7 +321,12 @@ public class ModuleTestBase extends TestRunner {
                         ps.print(FS);
                         ps.print(e.getKind());
                         ps.print(FS);
-                        ps.println(e.getQualifiedName());
+                        ps.print(e.getQualifiedName());
+                        if (hasDocComments) {
+                            ps.print(FS);
+                            ps.print(hasDocComments(e));
+                        }
+                        ps.println();
                         return null;
                     }
 
@@ -295,7 +335,12 @@ public class ModuleTestBase extends TestRunner {
                         ps.print(FS);
                         ps.print(ElementKind.CLASS);
                         ps.print(FS);
-                        ps.println(e.getQualifiedName());
+                        ps.print(e.getQualifiedName());
+                        if (hasDocComments) {
+                            ps.print(FS);
+                            ps.print(hasDocComments(e));
+                        }
+                        ps.println();
                         return null;
                     }
 
@@ -325,7 +370,12 @@ public class ModuleTestBase extends TestRunner {
                         ps.print(FS);
                         ps.print(fqn);
                         ps.print(".");
-                        ps.println(e.getSimpleName());
+                        ps.print(e.getSimpleName());
+                        if (hasDocComments) {
+                            ps.print(FS);
+                            ps.print(hasDocComments(e));
+                        }
+                        ps.println();
                         return null;
                     }
                 }.visit(e);
@@ -334,11 +384,10 @@ public class ModuleTestBase extends TestRunner {
 
         @Override
         public boolean run(DocletEnvironment docenv) {
+            this.docEnv = docenv;
             ps.println("ModuleMode" + FS + docenv.getModuleMode());
             printDataSet("Specified", docenv.getSpecifiedElements());
-            printDataSet("Included", docenv.getIncludedModuleElements());
-            printDataSet("Included", docenv.getIncludedPackageElements());
-            printDataSet("Included", docenv.getIncludedTypeElements());
+            printDataSet("Included", docenv.getIncludedElements());
             printDataSet("Selected", getAllSelectedElements(docenv));
             System.out.println(sw);
             return true;
@@ -353,21 +402,26 @@ public class ModuleTestBase extends TestRunner {
                 if (rc != 0) return rc;
                 return Integer.compare(e1.hashCode(), e2.hashCode());
             });
-            for (ModuleElement me : docenv.getIncludedModuleElements()) {
+            Set<? extends Element> elements = docenv.getIncludedElements();
+            for (ModuleElement me : ElementFilter.modulesIn(elements)) {
                 addEnclosedElements(docenv, result, me);
             }
-            for (PackageElement pe : docenv.getIncludedPackageElements()) {
-                addEnclosedElements(docenv, result, docenv.getElementUtils().getModuleOf(pe));
+            for (PackageElement pe : ElementFilter.packagesIn(elements)) {
+                ModuleElement mdle = docenv.getElementUtils().getModuleOf(pe);
+                if (mdle != null)
+                    addEnclosedElements(docenv, result, mdle);
                 addEnclosedElements(docenv, result, pe);
             }
-            for (TypeElement te : docenv.getIncludedTypeElements()) {
+            for (TypeElement te : ElementFilter.typesIn(elements)) {
                 addEnclosedElements(docenv, result, te);
             }
             return result;
         }
 
         void addEnclosedElements(DocletEnvironment docenv, Set<Element> result, Element e) {
-            List<? extends Element> elems = docenv.getSelectedElements(e.getEnclosedElements());
+            List<Element> elems = e.getEnclosedElements().stream()
+                    .filter(el -> docenv.isIncluded(el))
+                    .collect(Collectors.toList());
             result.addAll(elems);
             for (TypeElement t : ElementFilter.typesIn(elems)) {
                 addEnclosedElements(docenv, result, t);
@@ -376,7 +430,45 @@ public class ModuleTestBase extends TestRunner {
 
         @Override
         public Set<Doclet.Option> getSupportedOptions() {
-            return Collections.emptySet();
+            Option[] options = {
+                new Option() {
+                    private final List<String> someOption = Arrays.asList(
+                            "-hasDocComments"
+                    );
+
+                    @Override
+                    public int getArgumentCount() {
+                        return 0;
+                    }
+
+                    @Override
+                    public String getDescription() {
+                        return "print disposition of doc comments on an element";
+                    }
+
+                    @Override
+                    public Option.Kind getKind() {
+                        return Option.Kind.STANDARD;
+                    }
+
+                    @Override
+                    public List<String> getNames() {
+                        return someOption;
+                    }
+
+                    @Override
+                    public String getParameters() {
+                        return "flag";
+                    }
+
+                    @Override
+                    public boolean process(String opt, List<String> arguments) {
+                        hasDocComments = true;
+                        return true;
+                    }
+                }
+            };
+            return new HashSet<>(Arrays.asList(options));
         }
 
         @Override

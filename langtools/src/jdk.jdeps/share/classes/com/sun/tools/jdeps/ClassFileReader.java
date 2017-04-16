@@ -25,6 +25,7 @@
 
 package com.sun.tools.jdeps;
 
+import com.sun.tools.classfile.AccessFlags;
 import com.sun.tools.classfile.ClassFile;
 import com.sun.tools.classfile.ConstantPoolException;
 import com.sun.tools.classfile.Dependencies.ClassFileError;
@@ -146,11 +147,7 @@ public class ClassFileReader implements Closeable {
     }
 
     public Iterable<ClassFile> getClassFiles() throws IOException {
-        return new Iterable<ClassFile>() {
-            public Iterator<ClassFile> iterator() {
-                return new FileIterator();
-            }
-        };
+        return FileIterator::new;
     }
 
     protected ClassFile readClassFile(Path p) throws IOException {
@@ -170,7 +167,9 @@ public class ClassFileReader implements Closeable {
     protected Set<String> scan() {
         try {
             ClassFile cf = ClassFile.read(path);
-            return Collections.singleton(cf.getName());
+            String name = cf.access_flags.is(AccessFlags.ACC_MODULE)
+                ? "module-info" : cf.getName();
+            return Collections.singleton(name);
         } catch (ConstantPoolException|IOException e) {
             throw new ClassFileError(e);
         }
@@ -229,7 +228,7 @@ public class ClassFileReader implements Closeable {
         protected Set<String> scan() {
             try (Stream<Path> stream = Files.walk(path, Integer.MAX_VALUE)) {
                 return stream.filter(ClassFileReader::isClass)
-                             .map(f -> path.relativize(f))
+                             .map(path::relativize)
                              .map(Path::toString)
                              .map(p -> p.replace(File.separatorChar, '/'))
                              .collect(Collectors.toSet());
@@ -261,11 +260,7 @@ public class ClassFileReader implements Closeable {
 
         public Iterable<ClassFile> getClassFiles() throws IOException {
             final Iterator<ClassFile> iter = new DirectoryIterator();
-            return new Iterable<ClassFile>() {
-                public Iterator<ClassFile> iterator() {
-                    return iter;
-                }
-            };
+            return () -> iter;
         }
 
         class DirectoryIterator implements Iterator<ClassFile> {
@@ -384,11 +379,7 @@ public class ClassFileReader implements Closeable {
 
         public Iterable<ClassFile> getClassFiles() throws IOException {
             final Iterator<ClassFile> iter = new JarFileIterator(this, jarfile);
-            return new Iterable<ClassFile>() {
-                public Iterator<ClassFile> iterator() {
-                    return iter;
-                }
-            };
+            return () -> iter;
         }
     }
 

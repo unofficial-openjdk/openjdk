@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,8 @@ import java.rmi.*;
 import java.rmi.server.*;
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 import javax.naming.*;
 import javax.naming.spi.NamingManager;
@@ -52,6 +54,18 @@ public class RegistryContext implements Context, Referenceable {
     private int port;
     private static final NameParser nameParser = new AtomicNameParser();
     private static final String SOCKET_FACTORY = "com.sun.jndi.rmi.factory.socket";
+    /**
+     * Determines whether classes may be loaded from an arbitrary URL code base.
+     */
+    static final boolean trustURLCodebase;
+    static {
+        // System property to control whether classes may be loaded from an
+        // arbitrary URL codebase
+        PrivilegedAction<String> act = () -> System.getProperty(
+            "com.sun.jndi.rmi.object.trustURLCodebase", "false");
+        String trust = AccessController.doPrivileged(act);
+        trustURLCodebase = "true".equalsIgnoreCase(trust);
+    }
 
     Reference reference = null; // ref used to create this context, if any
 
@@ -105,6 +119,7 @@ public class RegistryContext implements Context, Referenceable {
         reference = ctx.reference;
     }
 
+    @SuppressWarnings("deprecation")
     protected void finalize() {
         close();
     }
@@ -460,6 +475,27 @@ public class RegistryContext implements Context, Referenceable {
             Object obj = (r instanceof RemoteReference)
                         ? ((RemoteReference)r).getReference()
                         : (Object)r;
+
+            /*
+             * Classes may only be loaded from an arbitrary URL codebase when
+             * the system property com.sun.jndi.rmi.object.trustURLCodebase
+             * has been set to "true".
+             */
+
+            // Use reference if possible
+            Reference ref = null;
+            if (obj instanceof Reference) {
+                ref = (Reference) obj;
+            } else if (obj instanceof Referenceable) {
+                ref = ((Referenceable)(obj)).getReference();
+            }
+
+            if (ref != null && ref.getFactoryClassLocation() != null &&
+                !trustURLCodebase) {
+                throw new ConfigurationException(
+                    "The object factory is untrusted. Set the system property" +
+                    " 'com.sun.jndi.rmi.object.trustURLCodebase' to 'true'.");
+            }
             return NamingManager.getObjectInstance(obj, name, this,
                                                    environment);
         } catch (NamingException e) {
@@ -558,6 +594,7 @@ class BindingEnumeration implements NamingEnumeration<Binding> {
         nextName = 0;
     }
 
+    @SuppressWarnings("deprecation")
     protected void finalize() {
         ctx.close();
     }
@@ -598,6 +635,7 @@ class BindingEnumeration implements NamingEnumeration<Binding> {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public void close () {
         finalize();
     }

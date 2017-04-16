@@ -24,16 +24,16 @@
 /**
  * @test
  * @bug 8136421
- * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @requires vm.jvmci
  * @library /test/lib /
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
  * @modules java.base/jdk.internal.org.objectweb.asm
  *          java.base/jdk.internal.org.objectweb.asm.tree
- *          jdk.vm.ci/jdk.vm.ci.hotspot
- *          jdk.vm.ci/jdk.vm.ci.code
+ *          jdk.internal.vm.ci/jdk.vm.ci.hotspot
+ *          jdk.internal.vm.ci/jdk.vm.ci.code
  *
- * @build jdk.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper sun.hotspot.WhiteBox
+ * @build jdk.internal.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
  * @run main/othervm -Xbootclasspath/a:.
@@ -67,13 +67,13 @@ public class DoNotInlineOrCompileTest {
     private static void runSanityTest(Executable aMethod) {
         HotSpotResolvedJavaMethod method = CTVMUtilities
                 .getResolvedMethod(aMethod);
-        boolean canInline = CompilerToVMHelper.canInlineMethod(method);
-        Asserts.assertTrue(canInline, "Unexpected initial " +
-                "value of property 'can inline'");
+        boolean hasNeverInlineDirective = CompilerToVMHelper.hasNeverInlineDirective(method);
+        Asserts.assertFalse(hasNeverInlineDirective, "Unexpected initial " +
+                "value of property 'hasNeverInlineDirective'");
         CompilerToVMHelper.doNotInlineOrCompile(method);
-        canInline = CompilerToVMHelper.canInlineMethod(method);
-        Asserts.assertFalse(canInline, aMethod
-                + " : can be inlined even after doNotInlineOrCompile'");
+        hasNeverInlineDirective = CompilerToVMHelper.hasNeverInlineDirective(method);
+        Asserts.assertTrue(hasNeverInlineDirective, aMethod
+                + " : hasNeverInlineDirective is false even after doNotInlineOrCompile'");
     }
 
     private static List<Executable> createTestCases() {

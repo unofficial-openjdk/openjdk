@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,12 +30,15 @@ import javax.lang.model.*;
 import javax.lang.model.element.*;
 import static javax.lang.model.element.ElementKind.*;
 import static javax.lang.model.element.NestingKind.*;
+import static javax.lang.model.element.ModuleElement.DirectiveKind.*;
+import static javax.lang.model.element.ModuleElement.*;
 import javax.lang.model.type.*;
 import javax.lang.model.util.*;
 
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.sun.tools.javac.util.DefinedBy;
 import com.sun.tools.javac.util.DefinedBy.Api;
@@ -296,6 +299,101 @@ public class PrintingProcessor extends AbstractProcessor {
             else
                 writer.println("// Unnamed package");
             return this;
+        }
+
+        @Override @DefinedBy(Api.LANGUAGE_MODEL)
+        public PrintingElementVisitor visitModule(ModuleElement e, Boolean p) {
+            defaultAction(e, false);
+
+            if (!e.isUnnamed()) {
+                if (e.isOpen()) {
+                    writer.print("open ");
+                }
+                writer.println("module " + e.getQualifiedName() + " {");
+                indentation++;
+                for (ModuleElement.Directive directive : e.getDirectives()) {
+                    printDirective(directive);
+                }
+                indentation--;
+                writer.println("}");
+            } else
+                writer.println("// Unnamed module"); // Should we do more here?
+            return this;
+        }
+
+        private void printDirective(ModuleElement.Directive directive) {
+            indent();
+            (new PrintDirective(writer)).visit(directive);
+            writer.println(";");
+        }
+
+        private static class PrintDirective implements ModuleElement.DirectiveVisitor<Void, Void> {
+            private final PrintWriter writer;
+
+            PrintDirective(PrintWriter writer) {
+                this.writer = writer;
+            }
+
+            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            public Void visitExports(ExportsDirective d, Void p) {
+                // "exports package-name [to module-name-list]"
+                writer.print("exports ");
+                writer.print(d.getPackage().getQualifiedName());
+                printModuleList(d.getTargetModules());
+                return null;
+            }
+
+            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            public Void visitOpens(OpensDirective d, Void p) {
+                // opens package-name [to module-name-list]
+                writer.print("opens ");
+                writer.print(d.getPackage().getQualifiedName());
+                printModuleList(d.getTargetModules());
+                return null;
+            }
+
+            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            public Void visitProvides(ProvidesDirective d, Void p) {
+                // provides service-name with implementation-name
+                writer.print("provides ");
+                writer.print(d.getService().getQualifiedName());
+                writer.print(" with ");
+                printNameableList(d.getImplementations());
+                return null;
+            }
+
+            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            public Void visitRequires(RequiresDirective d, Void p) {
+                // requires (static|transitive)* module-name
+                writer.print("requires ");
+                if (d.isStatic())
+                    writer.print("static ");
+                if (d.isTransitive())
+                    writer.print("transitive ");
+                writer.print(d.getDependency().getQualifiedName());
+                return null;
+            }
+
+            @Override @DefinedBy(Api.LANGUAGE_MODEL)
+            public Void visitUses(UsesDirective d, Void p) {
+                // uses service-name
+                writer.print("uses ");
+                writer.print(d.getService().getQualifiedName());
+                return null;
+            }
+
+            private void printModuleList(List<? extends ModuleElement> modules) {
+                if (modules != null) {
+                    writer.print(" to ");
+                    printNameableList(modules);
+                }
+            }
+
+            private void printNameableList(List<? extends QualifiedNameable> nameables) {
+                writer.print(nameables.stream().
+                             map(QualifiedNameable::getQualifiedName).
+                             collect(Collectors.joining(", ")));
+            }
         }
 
         public void flush() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,28 +25,35 @@ package transform;
 
 import static jaxp.library.JAXPTestUtilities.getSystemProperty;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
 import java.io.StringWriter;
 
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMResult;
+import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.stax.StAXSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
 
 import org.testng.Assert;
 import org.testng.AssertJUnit;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.ContentHandler;
@@ -60,8 +67,7 @@ import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
 
-import com.sun.org.apache.xml.internal.serialize.OutputFormat;
-import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
+import transform.util.TransformerTestTemplate;
 
 /*
  * @test
@@ -69,328 +75,403 @@ import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
  * @run testng/othervm -DrunSecMngr=true transform.TransformerTest
  * @run testng/othervm transform.TransformerTest
  * @summary Transformer Tests
- * @bug 6272879 6305029 6505031 8150704 8162598
+ * @bug 6272879 6305029 6505031 8150704 8162598 8169112 8169631 8169772
  */
 @Listeners({jaxp.library.FilePolicy.class})
 public class TransformerTest {
-    private Transformer createTransformer() throws TransformerException {
-        return TransformerFactory.newInstance().newTransformer();
-    }
 
-    private Transformer createTransformerFromInputstream(InputStream xslStream) throws TransformerException {
-        return TransformerFactory.newInstance().newTransformer(new StreamSource(xslStream));
-    }
+    // some global constants
+    private static final String LINE_SEPARATOR =
+        getSystemProperty("line.separator");
 
-    private Transformer createTransformerFromResource(String xslResource) throws TransformerException {
-        return TransformerFactory.newInstance().newTransformer(new StreamSource(getClass().getResource(xslResource).toString()));
-    }
+    private static final String NAMESPACES =
+        "http://xml.org/sax/features/namespaces";
 
-    private Document transformInputStreamToDocument(Transformer transformer, InputStream sourceStream) throws TransformerException {
-        DOMResult response = new DOMResult();
-        transformer.transform(new StreamSource(sourceStream), response);
-        return (Document)response.getNode();
-    }
+    private static final String NAMESPACE_PREFIXES =
+        "http://xml.org/sax/features/namespace-prefixes";
 
-    private StringWriter transformResourceToStringWriter(Transformer transformer, String xmlResource) throws TransformerException {
-        StringWriter sw = new StringWriter();
-        transformer.transform(new StreamSource(getClass().getResource(xmlResource).toString()), new StreamResult(sw));
-        return sw;
-    }
+    public static class Test6272879 extends TransformerTestTemplate {
 
-    /**
-     * Reads the contents of the given file into a string.
-     * WARNING: this method adds a final line feed even if the last line of the file doesn't contain one.
-     *
-     * @param f
-     * The file to read
-     * @return The content of the file as a string, with line terminators as \"n"
-     * for all platforms
-     * @throws IOException
-     * If there was an error reading
-     */
-    private String getFileContentAsString(File f) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new FileReader(f))) {
-            String line;
-            StringBuilder sb = new StringBuilder();
-            while ((line = reader.readLine()) != null) {
-                sb.append(line).append("\n");
-            }
-            return sb.toString();
+        private static String XSL_INPUT =
+            "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" + LINE_SEPARATOR +
+            "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">" + LINE_SEPARATOR +
+            "<xsl:output method=\"xml\" indent=\"no\" encoding=\"ISO-8859-1\"/>" + LINE_SEPARATOR +
+            "<xsl:template match=\"/\">" + LINE_SEPARATOR +
+            "<xsl:element name=\"TransformateurXML\">" + LINE_SEPARATOR +
+            "  <xsl:for-each select=\"XMLUtils/test\">" + LINE_SEPARATOR +
+            "  <xsl:element name=\"test2\">" + LINE_SEPARATOR +
+            "    <xsl:element name=\"valeur2\">" + LINE_SEPARATOR +
+            "      <xsl:attribute name=\"attribut2\">" + LINE_SEPARATOR +
+            "        <xsl:value-of select=\"valeur/@attribut\"/>" + LINE_SEPARATOR +
+            "      </xsl:attribute>" + LINE_SEPARATOR +
+            "      <xsl:value-of select=\"valeur\"/>" + LINE_SEPARATOR +
+            "    </xsl:element>" + LINE_SEPARATOR +
+            "  </xsl:element>" + LINE_SEPARATOR +
+            "  </xsl:for-each>" + LINE_SEPARATOR +
+            "</xsl:element>" + LINE_SEPARATOR +
+            "</xsl:template>" + LINE_SEPARATOR +
+            "</xsl:stylesheet>";
+
+        private static String XML_INPUT =
+            "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" + LINE_SEPARATOR +
+            // "<!DOCTYPE XMLUtils [" + LINE_SEPARATOR +
+            // "<!ELEMENT XMLUtils (test*)>" + LINE_SEPARATOR +
+            // "<!ELEMENT test (valeur*)>" + LINE_SEPARATOR +
+            // "<!ELEMENT valeur (#PCDATA)>" + LINE_SEPARATOR +
+            // "<!ATTLIST valeur attribut CDATA #REQUIRED>]>" +
+            // LINE_SEPARATOR +
+            "<XMLUtils>" + LINE_SEPARATOR +
+            "  <test>" + LINE_SEPARATOR +
+            "    <valeur attribut=\"Attribut 1\">Valeur 1</valeur>" + LINE_SEPARATOR +
+            "  </test>" + LINE_SEPARATOR +
+            "  <test>" + LINE_SEPARATOR +
+            "    <valeur attribut=\"Attribut 2\">Valeur 2</valeur>" + LINE_SEPARATOR +
+            "  </test>" + LINE_SEPARATOR +
+            "</XMLUtils>";
+
+        public Test6272879() {
+            super(XSL_INPUT, XML_INPUT);
         }
-    }
 
-    /**
-     * Utility method for testBug8162598().
-     * Provides a convenient way to check/assert the expected namespaces
-     * of a Node and its siblings.
-     *
-     * @param test
-     * The node to check
-     * @param nstest
-     * Expected namespace of the node
-     * @param nsb
-     * Expected namespace of the first sibling
-     * @param nsc
-     * Expected namespace of the first sibling of the first sibling
-     */
-    private void checkNodeNS8162598(Node test, String nstest, String nsb, String nsc) {
-        String testNodeName = test.getNodeName();
-        if (nstest == null) {
-            Assert.assertNull(test.getNamespaceURI(), "unexpected namespace for " + testNodeName);
-        } else {
-            Assert.assertEquals(test.getNamespaceURI(), nstest, "unexpected namespace for " + testNodeName);
-        }
-        Node b = test.getChildNodes().item(0);
-        if (nsb == null) {
-            Assert.assertNull(b.getNamespaceURI(), "unexpected namespace for " + testNodeName + "->b");
-        } else {
-            Assert.assertEquals(b.getNamespaceURI(), nsb, "unexpected namespace for " + testNodeName + "->b");
-        }
-        Node c = b.getChildNodes().item(0);
-        if (nsc == null) {
-            Assert.assertNull(c.getNamespaceURI(), "unexpected namespace for " + testNodeName + "->b->c");
-        } else {
-            Assert.assertEquals(c.getNamespaceURI(), nsc, "unexpected namespace for " + testNodeName + "->b->c");
-        }
-    }
+        /*
+         * @bug 6272879
+         * @summary Test for JDK-6272879
+         *          DomResult had truncated Strings in some places
+         */
+        @Test
+        public void run() throws TransformerException, ClassNotFoundException, InstantiationException,
+            IllegalAccessException, ClassCastException
+        {
+            // print input
+            printSnippet("Stylesheet:", getXsl());
+            printSnippet("Source before transformation:", getSourceXml());
 
-    private class XMLReaderFor6305029 implements XMLReader {
-        private static final String NAMESPACES = "http://xml.org/sax/features/namespaces";
-        private static final String NAMESPACE_PREFIXES = "http://xml.org/sax/features/namespace-prefixes";
-        private boolean namespaces = true;
-        private boolean namespacePrefixes = false;
-        private EntityResolver resolver;
-        private DTDHandler dtdHandler;
-        private ContentHandler contentHandler;
-        private ErrorHandler errorHandler;
+            // transform to DOM result
+            Transformer t = getTransformer();
+            DOMResult result = new DOMResult();
+            t.transform(getStreamSource(), result);
 
-        public boolean getFeature(final String name) throws SAXNotRecognizedException, SAXNotSupportedException {
-            if (name.equals(NAMESPACES)) {
-                return namespaces;
-            } else if (name.equals(NAMESPACE_PREFIXES)) {
-                return namespacePrefixes;
-            } else {
-                throw new SAXNotRecognizedException();
+            // print output
+            printSnippet("Result after transformation:", prettyPrintDOMResult(result));
+
+            // do some assertions
+            Document document = (Document)result.getNode();
+            NodeList nodes = document.getElementsByTagName("valeur2");
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Node node = nodes.item(i);
+                AssertJUnit.assertEquals("Node value mismatch",
+                                         "Valeur " + (i + 1),
+                                         node.getFirstChild().getNodeValue());
+                AssertJUnit.assertEquals("Node attribute mismatch",
+                                         "Attribut " + (i + 1),
+                                         node.getAttributes().item(0).getNodeValue());
             }
         }
+    }
 
-        public void setFeature(final String name, final boolean value) throws SAXNotRecognizedException, SAXNotSupportedException {
-            if (name.equals(NAMESPACES)) {
-                namespaces = value;
-            } else if (name.equals(NAMESPACE_PREFIXES)) {
-                namespacePrefixes = value;
-            } else {
-                throw new SAXNotRecognizedException();
+    public static class Test6305029 extends TransformerTestTemplate {
+
+        private static String XML_INPUT =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<prefix:localName xmlns:prefix=\"namespaceUri\"/>";
+
+        // custom XMLReader representing XML_INPUT
+        private class MyXMLReader implements XMLReader {
+            private boolean namespaces = true;
+            private boolean namespacePrefixes = false;
+            private EntityResolver resolver;
+            private DTDHandler dtdHandler;
+            private ContentHandler contentHandler;
+            private ErrorHandler errorHandler;
+
+            public boolean getFeature(final String name) throws SAXNotRecognizedException, SAXNotSupportedException {
+                if (name.equals(NAMESPACES)) {
+                    return namespaces;
+                } else if (name.equals(NAMESPACE_PREFIXES)) {
+                    return namespacePrefixes;
+                } else {
+                    throw new SAXNotRecognizedException();
+                }
+            }
+
+            public void setFeature(final String name, final boolean value) throws SAXNotRecognizedException, SAXNotSupportedException {
+                if (name.equals(NAMESPACES)) {
+                    namespaces = value;
+                } else if (name.equals(NAMESPACE_PREFIXES)) {
+                    namespacePrefixes = value;
+                } else {
+                    throw new SAXNotRecognizedException();
+                }
+            }
+
+            public Object getProperty(final String name) throws SAXNotRecognizedException, SAXNotSupportedException {
+                return null;
+            }
+
+            public void setProperty(final String name, final Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
+            }
+
+            public void setEntityResolver(final EntityResolver theResolver) {
+                this.resolver = theResolver;
+            }
+
+            public EntityResolver getEntityResolver() {
+                return resolver;
+            }
+
+            public void setDTDHandler(final DTDHandler theHandler) {
+                dtdHandler = theHandler;
+            }
+
+            public DTDHandler getDTDHandler() {
+                return dtdHandler;
+            }
+
+            public void setContentHandler(final ContentHandler handler) {
+                contentHandler = handler;
+            }
+
+            public ContentHandler getContentHandler() {
+                return contentHandler;
+            }
+
+            public void setErrorHandler(final ErrorHandler handler) {
+                errorHandler = handler;
+            }
+
+            public ErrorHandler getErrorHandler() {
+                return errorHandler;
+            }
+
+            public void parse(final InputSource input) throws IOException, SAXException {
+                parse();
+            }
+
+            public void parse(final String systemId) throws IOException, SAXException {
+                parse();
+            }
+
+            private void parse() throws SAXException {
+                contentHandler.startDocument();
+                contentHandler.startPrefixMapping("prefix", "namespaceUri");
+
+                AttributesImpl atts = new AttributesImpl();
+                if (namespacePrefixes) {
+                    atts.addAttribute("", "xmlns:prefix", "xmlns:prefix", "CDATA", "namespaceUri");
+                }
+
+                contentHandler.startElement("namespaceUri", "localName", namespacePrefixes ? "prefix:localName" : "", atts);
+                contentHandler.endElement("namespaceUri", "localName", namespacePrefixes ? "prefix:localName" : "");
+                contentHandler.endPrefixMapping("prefix");
+                contentHandler.endDocument();
             }
         }
 
-        public Object getProperty(final String name) throws SAXNotRecognizedException, SAXNotSupportedException {
-            return null;
+        public Test6305029() {
+            super(null, XML_INPUT);
         }
 
-        public void setProperty(final String name, final Object value) throws SAXNotRecognizedException, SAXNotSupportedException {
-        }
+        /*
+         * @bug 6305029
+         * @summary Test for JDK-6305029
+         *          Test identity transformation
+         */
+        @Test
+        public void run() throws TransformerFactoryConfigurationError, TransformerException {
+            // get Identity transformer
+            Transformer t = getTransformer();
 
-        public void setEntityResolver(final EntityResolver theResolver) {
-            this.resolver = theResolver;
-        }
+            // test SAXSource from custom XMLReader
+            SAXSource saxSource = new SAXSource(new MyXMLReader(), new InputSource());
+            StringWriter resultWriter = new StringWriter();
+            t.transform(saxSource, new StreamResult(resultWriter));
+            String resultString = resultWriter.toString();
+            printSnippet("Result after transformation from custom SAXSource:", resultString);
+            AssertJUnit.assertEquals("Identity transform of SAXSource", getSourceXml(), resultString);
 
-        public EntityResolver getEntityResolver() {
-            return resolver;
-        }
-
-        public void setDTDHandler(final DTDHandler theHandler) {
-            dtdHandler = theHandler;
-        }
-
-        public DTDHandler getDTDHandler() {
-            return dtdHandler;
-        }
-
-        public void setContentHandler(final ContentHandler handler) {
-            contentHandler = handler;
-        }
-
-        public ContentHandler getContentHandler() {
-            return contentHandler;
-        }
-
-        public void setErrorHandler(final ErrorHandler handler) {
-            errorHandler = handler;
-        }
-
-        public ErrorHandler getErrorHandler() {
-            return errorHandler;
-        }
-
-        public void parse(final InputSource input) throws IOException, SAXException {
-            parse();
-        }
-
-        public void parse(final String systemId) throws IOException, SAXException {
-            parse();
-        }
-
-        private void parse() throws SAXException {
-            contentHandler.startDocument();
-            contentHandler.startPrefixMapping("prefix", "namespaceUri");
-
-            AttributesImpl atts = new AttributesImpl();
-            if (namespacePrefixes) {
-                atts.addAttribute("", "xmlns:prefix", "xmlns:prefix", "CDATA", "namespaceUri");
-            }
-
-            contentHandler.startElement("namespaceUri", "localName", namespacePrefixes ? "prefix:localName" : "", atts);
-            contentHandler.endElement("namespaceUri", "localName", namespacePrefixes ? "prefix:localName" : "");
-            contentHandler.endPrefixMapping("prefix");
-            contentHandler.endDocument();
+            // test StreamSource
+            printSnippet("Source before transformation of StreamSource:", getSourceXml());
+            resultWriter = new StringWriter();
+            t.transform(getStreamSource(), new StreamResult(resultWriter));
+            resultString = resultWriter.toString();
+            printSnippet("Result after transformation of StreamSource:", resultString);
+            AssertJUnit.assertEquals("Identity transform of StreamSource", getSourceXml(), resultString);
         }
     }
 
-    /*
-     * @bug 6272879
-     * @summary Test for JDK-6272879
-     */
-    @Test
-    public final void testBug6272879() throws IOException, TransformerException {
-        final String LINE_SEPARATOR = getSystemProperty("line.separator");
+    public static class Test6505031 extends TransformerTestTemplate {
 
-        final String xsl =
-                "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" + LINE_SEPARATOR +
-                "<xsl:stylesheet version=\"1.0\" xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\">" + LINE_SEPARATOR +
-                "<xsl:output method=\"xml\" indent=\"no\" encoding=\"ISO-8859-1\"/>" + LINE_SEPARATOR +
-                "<xsl:template match=\"/\">" + LINE_SEPARATOR +
-                "<xsl:element name=\"TransformateurXML\">" + LINE_SEPARATOR +
-                "  <xsl:for-each select=\"XMLUtils/test\">" + LINE_SEPARATOR +
-                "  <xsl:element name=\"test2\">" + LINE_SEPARATOR +
-                "    <xsl:element name=\"valeur2\">" + LINE_SEPARATOR +
-                "      <xsl:attribute name=\"attribut2\">" + LINE_SEPARATOR +
-                "        <xsl:value-of select=\"valeur/@attribut\"/>" + LINE_SEPARATOR +
-                "      </xsl:attribute>" + LINE_SEPARATOR +
-                "      <xsl:value-of select=\"valeur\"/>" + LINE_SEPARATOR +
-                "    </xsl:element>" + LINE_SEPARATOR +
-                "  </xsl:element>" + LINE_SEPARATOR +
-                "  </xsl:for-each>" + LINE_SEPARATOR +
-                "</xsl:element>" + LINE_SEPARATOR +
-                "</xsl:template>" + LINE_SEPARATOR +
-                "</xsl:stylesheet>";
+        public Test6505031() throws IOException {
+            super();
+            setXsl(fromInputStream(getClass().getResourceAsStream("transform.xsl")));
+            setSourceXml(fromInputStream(getClass().getResourceAsStream("template.xml")));
+        }
 
-        final String sourceXml =
-                "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>" + LINE_SEPARATOR +
-                // "<!DOCTYPE XMLUtils [" + LINE_SEPARATOR +
-                // "<!ELEMENT XMLUtils (test*)>" + LINE_SEPARATOR +
-                // "<!ELEMENT test (valeur*)>" + LINE_SEPARATOR +
-                // "<!ELEMENT valeur (#PCDATA)>" + LINE_SEPARATOR +
-                // "<!ATTLIST valeur attribut CDATA #REQUIRED>]>" +
-                // LINE_SEPARATOR +
-                "<XMLUtils>" + LINE_SEPARATOR +
-                "  <test>" + LINE_SEPARATOR +
-                "    <valeur attribut=\"Attribut 1\">Valeur 1</valeur>" + LINE_SEPARATOR +
-                "  </test>" + LINE_SEPARATOR +
-                "  <test>" + LINE_SEPARATOR +
-                "    <valeur attribut=\"Attribut 2\">Valeur 2</valeur>" + LINE_SEPARATOR +
-                "  </test>" + LINE_SEPARATOR +
-                "</XMLUtils>";
-
-        System.out.println("Stylesheet:");
-        System.out.println("=============================");
-        System.out.println(xsl);
-        System.out.println();
-
-        System.out.println("Source before transformation:");
-        System.out.println("=============================");
-        System.out.println(sourceXml);
-        System.out.println();
-
-        System.out.println("Result after transformation:");
-        System.out.println("============================");
-        Document document = transformInputStreamToDocument(createTransformerFromInputstream(new ByteArrayInputStream(xsl.getBytes())),
-            new ByteArrayInputStream(sourceXml.getBytes()));
-        OutputFormat format = new OutputFormat();
-        format.setIndenting(true);
-        new XMLSerializer(System.out, format).serialize(document);
-        System.out.println();
-
-        System.out.println("Node content for element valeur2:");
-        System.out.println("=================================");
-        NodeList nodes = document.getElementsByTagName("valeur2");
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Node node = nodes.item(i);
-            System.out.println("  Node value: " + node.getFirstChild().getNodeValue());
-            System.out.println("  Node attribute: " + node.getAttributes().item(0).getNodeValue());
-
-            AssertJUnit.assertEquals("Node value mismatch", "Valeur " + (i + 1), node.getFirstChild().getNodeValue());
-            AssertJUnit.assertEquals("Node attribute mismatch", "Attribut " + (i + 1), node.getAttributes().item(0).getNodeValue());
+        /*
+         * @bug 6505031
+         * @summary Test transformer parses keys and their values coming from different xml documents.
+         */
+        @Test
+        public void run() throws TransformerFactoryConfigurationError, TransformerException {
+            Transformer t = getTransformer();
+            t.setParameter("config", getClass().getResource("config.xml").toString());
+            t.setParameter("mapsFile", getClass().getResource("maps.xml").toString());
+            StringWriter resultWriter = new StringWriter();
+            t.transform(getStreamSource(), new StreamResult(resultWriter));
+            String resultString = resultWriter.toString();
+            Assert.assertTrue(resultString.contains("map1key1value") && resultString.contains("map2key1value"));
         }
     }
 
-    /*
-     * @bug 6305029
-     * @summary Test for JDK-6305029
-     */
-    @Test
-    public final void testBug6305029() throws TransformerException {
-        final String XML_DOCUMENT = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + "<prefix:localName xmlns:prefix=\"namespaceUri\"/>";
+    public static class Test8169631 extends TransformerTestTemplate {
 
-        // test SAXSource
-        SAXSource saxSource = new SAXSource(new XMLReaderFor6305029(), new InputSource());
-        StringWriter resultWriter = new StringWriter();
-        createTransformer().transform(saxSource, new StreamResult(resultWriter));
-        AssertJUnit.assertEquals("Identity transform of SAXSource", XML_DOCUMENT, resultWriter.toString());
+        private static String XSL_INPUT =
+            "<?xml version=\"1.0\"?>" + LINE_SEPARATOR +
+            "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"1.0\">" + LINE_SEPARATOR +
+            "  <xsl:template match=\"/\">" + LINE_SEPARATOR +
+            "    <xsl:variable name=\"Counter\" select=\"count(//row)\"/>" + LINE_SEPARATOR +
+            "    <xsl:variable name=\"AttribCounter\" select=\"count(//@attrib)\"/>" + LINE_SEPARATOR +
+            "    <Counter><xsl:value-of select=\"$Counter\"/></Counter>" + LINE_SEPARATOR +
+            "    <AttribCounter><xsl:value-of select=\"$AttribCounter\"/></AttribCounter>" + LINE_SEPARATOR +
+            "  </xsl:template>" + LINE_SEPARATOR +
+            "</xsl:stylesheet>" + LINE_SEPARATOR;
 
-        // test StreamSource
-        StreamSource streamSource = new StreamSource(new StringReader(XML_DOCUMENT));
-        resultWriter = new StringWriter();
-        createTransformer().transform(streamSource, new StreamResult(resultWriter));
-        AssertJUnit.assertEquals("Identity transform of StreamSource", XML_DOCUMENT, resultWriter.toString());
+        private static String XML_INPUT =
+            "<?xml version=\"1.0\"?>" + LINE_SEPARATOR +
+            "<envelope xmlns=\"http://www.sap.com/myns\" xmlns:sap=\"http://www.sap.com/myns\">" + LINE_SEPARATOR +
+            "  <sap:row sap:attrib=\"a\">1</sap:row>" + LINE_SEPARATOR +
+            "  <row attrib=\"b\">2</row>" + LINE_SEPARATOR +
+            "  <row sap:attrib=\"c\">3</row>" + LINE_SEPARATOR +
+            "</envelope>" + LINE_SEPARATOR;
+
+        public Test8169631() {
+            super(XSL_INPUT, XML_INPUT);
+        }
+
+        /**
+         * Utility method to print out transformation result and check values.
+         *
+         * @param type
+         * Text describing type of transformation
+         * @param result
+         * Resulting output of transformation
+         * @param elementCount
+         * Counter of elements to check
+         * @param attribCount
+         * Counter of attributes to check
+         */
+        private void verifyResult(String type, String result, int elementCount,
+                                  int attribCount)
+        {
+            printSnippet("Result of transformation from " + type + ":",
+                         result);
+            Assert.assertEquals(
+                result.contains("<Counter>" + elementCount + "</Counter>"),
+                true, "Result of transformation from " + type +
+                " should have count of " + elementCount + " elements.");
+            Assert.assertEquals(
+                result.contains("<AttribCounter>" + attribCount +
+                "</AttribCounter>"), true, "Result of transformation from " +
+                type + " should have count of "+ attribCount + " attributes.");
+        }
+
+        @DataProvider(name = "testdata8169631")
+        public Object[][] testData()
+            throws TransformerConfigurationException, SAXException, IOException,
+            ParserConfigurationException, XMLStreamException
+        {
+            // get Transformers
+            TransformerFactory tf = TransformerFactory.newInstance();
+            Transformer t = getTransformer(tf);
+            Transformer tFromTemplates = getTemplates(tf).newTransformer();
+
+            // get DOMSource objects
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DOMSource domSourceWithoutNS = getDOMSource(dbf);
+            dbf.setNamespaceAware(true);
+            DOMSource domSourceWithNS = getDOMSource(dbf);
+
+            // get SAXSource objects
+            SAXParserFactory spf = SAXParserFactory.newInstance();
+            SAXSource saxSourceWithoutNS = getSAXSource(spf);
+            spf.setNamespaceAware(true);
+            SAXSource saxSourceWithNS = getSAXSource(spf);
+
+            // get StAXSource objects
+            XMLInputFactory xif = XMLInputFactory.newInstance();
+            StAXSource staxSourceWithNS = getStAXSource(xif);
+
+            // print XML/XSL snippets to ease understanding of result
+            printSnippet("Source:", getSourceXml());
+            printSnippet("Stylesheet:", getXsl());
+
+            return new Object[][] {
+                // test StreamSource input with all transformers
+                // namespace awareness is set by transformer
+                {t, getStreamSource(), "StreamSource with namespace support", 0, 1},
+                {tFromTemplates, getStreamSource(), "StreamSource with namespace support using templates", 0, 1},
+                // now test DOMSource, SAXSource and StAXSource
+                // with rotating use of created transformers
+                // namespace awareness is set by source objects
+                {t, domSourceWithNS, "DOMSource with namespace support", 0, 1},
+                {t, domSourceWithoutNS, "DOMSource without namespace support", 3, 3},
+                {tFromTemplates, saxSourceWithNS, "SAXSource with namespace support", 0, 1},
+                {tFromTemplates, saxSourceWithoutNS, "SAXSource without namespace support", 3, 3},
+                {t, staxSourceWithNS, "StAXSource with namespace support", 0, 1}
+            };
+        }
+
+        /*
+         * @bug 8169631
+         * @summary Test combinations of namespace awareness settings on
+         *          XSL transformations
+         */
+        @Test(dataProvider = "testdata8169631")
+        public void run(Transformer t, Source s, String label, int elementcount, int attributecount)
+            throws TransformerException
+        {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            t.transform(s, new StreamResult(baos));
+            verifyResult(label, baos.toString(), elementcount, attributecount);
+        }
     }
 
-    /*
-     * @bug 6505031
-     * @summary Test transformer parses keys and their values coming from different xml documents.
-     */
-    @Test
-    public final void testBug6505031() throws TransformerException {
-        Transformer transformer = createTransformerFromResource("transform.xsl");
-        transformer.setParameter("config", getClass().getResource("config.xml").toString());
-        transformer.setParameter("mapsFile", getClass().getResource("maps.xml").toString());
-        String s = transformResourceToStringWriter(transformer, "template.xml").toString();
-        Assert.assertTrue(s.contains("map1key1value") && s.contains("map2key1value"));
+    public static class Test8150704 extends TransformerTestTemplate {
+
+        public Test8150704() {
+            super();
+        }
+
+        @DataProvider(name = "testdata8150704")
+        public Object[][] testData() {
+            return new Object[][] {
+                {"Bug8150704-1.xsl", "Bug8150704-1.xml", "Bug8150704-1.ref"},
+                {"Bug8150704-2.xsl", "Bug8150704-2.xml", "Bug8150704-2.ref"}
+            };
+        }
+
+        /*
+         * @bug 8150704
+         * @summary Test that XSL transformation with lots of temporary result
+         *          trees will not run out of DTM IDs.
+         */
+        @Test(dataProvider = "testdata8150704")
+        public void run(String xsl, String xml, String ref) throws IOException, TransformerException {
+            System.out.println("Testing transformation of " + xml + "...");
+            setXsl(fromInputStream(getClass().getResourceAsStream(xsl)));
+            setSourceXml(fromInputStream(getClass().getResourceAsStream(xml)));
+            Transformer t = getTransformer();
+            StringWriter resultWriter = new StringWriter();
+            t.transform(getStreamSource(), new StreamResult(resultWriter));
+            String resultString = resultWriter.toString().replaceAll("\\r\\n", "\n").replaceAll("\\r", "\n").trim();
+            String reference = fromInputStream(getClass().getResourceAsStream(ref)).trim();
+            Assert.assertEquals(resultString, reference, "Output of transformation of " + xml + " does not match reference");
+            System.out.println("Passed.");
+        }
     }
 
-    /*
-     * @bug 8150704
-     * @summary Test that XSL transformation with lots of temporary result trees will not run out of DTM IDs.
-     */
-    @Test
-    public final void testBug8150704() throws TransformerException, IOException {
-        System.out.println("Testing transformation of Bug8150704-1.xml...");
-        Transformer transformer = createTransformerFromResource("Bug8150704-1.xsl");
-        StringWriter result = transformResourceToStringWriter(transformer, "Bug8150704-1.xml");
-        String resultstring = result.toString().replaceAll("\\r\\n", "\n").replaceAll("\\r", "\n");
-        String reference = getFileContentAsString(new File(getClass().getResource("Bug8150704-1.ref").getPath()));
-        Assert.assertEquals(resultstring, reference, "Output of transformation of Bug8150704-1.xml does not match reference");
-        System.out.println("Passed.");
+    public static class Test8162598 extends TransformerTestTemplate {
 
-        System.out.println("Testing transformation of Bug8150704-2.xml...");
-        transformer = createTransformerFromResource("Bug8150704-2.xsl");
-        result = transformResourceToStringWriter(transformer, "Bug8150704-2.xml");
-        resultstring = result.toString().replaceAll("\\r\\n", "\n").replaceAll("\\r", "\n");
-        reference = getFileContentAsString(new File(getClass().getResource("Bug8150704-2.ref").getPath()));
-        Assert.assertEquals(resultstring, reference, "Output of transformation of Bug8150704-2.xml does not match reference");
-        System.out.println("Passed.");
-    }
-
-    /*
-     * @bug 8162598
-     * @summary Test XSLTC handling of namespaces, especially empty namespace definitions to reset the
-     *          default namespace
-     */
-    @Test
-    public final void testBug8162598() throws IOException, TransformerException {
-        final String LINE_SEPARATOR = getSystemProperty("line.separator");
-
-        final String xsl =
+        private static String XSL_INPUT =
             "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + LINE_SEPARATOR +
             "<xsl:stylesheet xmlns:xsl=\"http://www.w3.org/1999/XSL/Transform\" version=\"1.0\">" + LINE_SEPARATOR +
             "    <xsl:template match=\"/\">" + LINE_SEPARATOR +
@@ -408,34 +489,147 @@ public class TransformerTest {
             "    </xsl:template>" + LINE_SEPARATOR +
             "</xsl:stylesheet>";
 
+        private static String XML_INPUT =
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?><aaa></aaa>" + LINE_SEPARATOR;
 
-        final String sourceXml =
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?><aaa></aaa>" + LINE_SEPARATOR;
+        public Test8162598() {
+            super(XSL_INPUT, XML_INPUT);
+        }
 
-        System.out.println("Stylesheet:");
-        System.out.println("=============================");
-        System.out.println(xsl);
-        System.out.println();
+        /**
+         * Utility method for testBug8162598().
+         * Provides a convenient way to check/assert the expected namespaces
+         * of a Node and its siblings.
+         *
+         * @param test
+         * The node to check
+         * @param nstest
+         * Expected namespace of the node
+         * @param nsb
+         * Expected namespace of the first sibling
+         * @param nsc
+         * Expected namespace of the first sibling of the first sibling
+         */
+        private void checkNodeNS(Node test, String nstest, String nsb, String nsc) {
+            String testNodeName = test.getNodeName();
+            if (nstest == null) {
+                Assert.assertNull(test.getNamespaceURI(), "unexpected namespace for " + testNodeName);
+            } else {
+                Assert.assertEquals(test.getNamespaceURI(), nstest, "unexpected namespace for " + testNodeName);
+            }
+            Node b = test.getChildNodes().item(0);
+            if (nsb == null) {
+                Assert.assertNull(b.getNamespaceURI(), "unexpected namespace for " + testNodeName + "->b");
+            } else {
+                Assert.assertEquals(b.getNamespaceURI(), nsb, "unexpected namespace for " + testNodeName + "->b");
+            }
+            Node c = b.getChildNodes().item(0);
+            if (nsc == null) {
+                Assert.assertNull(c.getNamespaceURI(), "unexpected namespace for " + testNodeName + "->b->c");
+            } else {
+                Assert.assertEquals(c.getNamespaceURI(), nsc, "unexpected namespace for " + testNodeName + "->b->c");
+            }
+        }
 
-        System.out.println("Source before transformation:");
-        System.out.println("=============================");
-        System.out.println(sourceXml);
-        System.out.println();
+        /*
+         * @bug 8162598
+         * @summary Test XSLTC handling of namespaces, especially empty namespace
+         *          definitions to reset the default namespace
+         */
+        @Test
+        public void run()  throws Exception {
+            // print input
+            printSnippet("Source:", getSourceXml());
+            printSnippet("Stylesheet:", getXsl());
 
-        System.out.println("Result after transformation:");
-        System.out.println("============================");
-        Document document = transformInputStreamToDocument(
-            createTransformerFromInputstream(new ByteArrayInputStream(xsl.getBytes())),
-                                             new ByteArrayInputStream(sourceXml.getBytes()));
-        OutputFormat format = new OutputFormat();
-        format.setIndenting(true);
-        new XMLSerializer(System.out, format).serialize(document);
-        System.out.println();
-        checkNodeNS8162598(document.getElementsByTagName("test1").item(0), "ns2", "ns2", null);
-        checkNodeNS8162598(document.getElementsByTagName("test2").item(0), "ns1", "ns2", null);
-        checkNodeNS8162598(document.getElementsByTagName("test3").item(0), null, null, null);
-        checkNodeNS8162598(document.getElementsByTagName("test4").item(0), null, null, null);
-        checkNodeNS8162598(document.getElementsByTagName("test5").item(0), "ns1", "ns1", null);
-        Assert.assertNull(document.getElementsByTagName("test6").item(0).getNamespaceURI(), "unexpected namespace for test6");
+            // transform to DOM result
+            Transformer t = getTransformer();
+            DOMResult result = new DOMResult();
+            t.transform(getStreamSource(), result);
+
+            // print output
+            printSnippet("Result after transformation:", prettyPrintDOMResult(result));
+
+            // do some verifications
+            Document document = (Document)result.getNode();
+            checkNodeNS(document.getElementsByTagName("test1").item(0), "ns2", "ns2", null);
+            checkNodeNS(document.getElementsByTagName("test2").item(0), "ns1", "ns2", null);
+            checkNodeNS(document.getElementsByTagName("test3").item(0), null, null, null);
+            checkNodeNS(document.getElementsByTagName("test4").item(0), null, null, null);
+            checkNodeNS(document.getElementsByTagName("test5").item(0), "ns1", "ns1", null);
+            Assert.assertNull(document.getElementsByTagName("test6").item(0).getNamespaceURI(),
+                "unexpected namespace for test6");
+        }
+    }
+
+    public static class Test8169112 extends TransformerTestTemplate{
+
+        public static String XML_INPUT =
+            "<?xml version=\"1.0\"?><DOCROOT/>";
+
+        public Test8169112() throws IOException {
+            super();
+            setXsl(fromInputStream(getClass().getResourceAsStream("Bug8169112.xsl")));
+            setSourceXml(XML_INPUT);
+        }
+
+        /**
+         * @throws TransformerException
+         * @bug 8169112
+         * @summary Test compilation of large xsl file with outlining.
+         *
+         * This test merely compiles a large xsl file and tests if its bytecode
+         * passes verification by invoking the transform() method for
+         * dummy content. The test succeeds if no Exception is thrown
+         */
+        @Test
+        public void run() throws TransformerException {
+            Transformer t = getTransformer();
+            t.transform(getStreamSource(), new StreamResult(new ByteArrayOutputStream()));
+        }
+    }
+
+    public static class Test8169772 extends TransformerTestTemplate {
+
+        public Test8169772() {
+            super();
+        }
+
+        private Document getDOMWithBadElement() throws SAXException, IOException, ParserConfigurationException {
+            // create a small DOM
+            Document doc = DocumentBuilderFactory.newInstance().
+                newDocumentBuilder().parse(
+                    new ByteArrayInputStream(
+                        "<?xml version=\"1.0\"?><DOCROOT/>".getBytes()
+                    )
+                );
+
+            // insert a bad element
+            Element e = doc.createElement("ERROR");
+            e.appendChild(doc.createTextNode(null));
+            doc.getDocumentElement().appendChild(e);
+
+            return doc;
+        }
+
+        /**
+         * @throws ParserConfigurationException
+         * @throws IOException
+         * @throws SAXException
+         * @throws TransformerException
+         * @bug 8169772
+         * @summary Test transformation of DOM with null valued text node
+         *
+         * This test would throw a NullPointerException during transform when the
+         * fix was not present.
+         */
+        @Test
+        public void run() throws SAXException, IOException, ParserConfigurationException, TransformerException {
+            Transformer t = getTransformer();
+            StringWriter resultWriter = new StringWriter();
+            DOMSource d = new DOMSource(getDOMWithBadElement().getDocumentElement());
+            t.transform(d, new StreamResult(resultWriter));
+            printSnippet("Transformation result (DOM with null text node):", resultWriter.toString());
+        }
     }
 }

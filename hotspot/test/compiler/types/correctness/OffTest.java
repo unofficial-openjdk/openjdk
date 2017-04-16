@@ -24,11 +24,11 @@
 /*
  * @test CorrectnessTest
  * @bug 8038418
+ * @requires vm.flavor == "server" & !vm.emulatedClient
  * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  *          java.management
  *
- * @ignore 8066173
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission

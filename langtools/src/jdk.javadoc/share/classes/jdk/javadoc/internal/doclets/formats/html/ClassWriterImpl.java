@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -203,9 +203,9 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         bodyTree.addContent(HtmlConstants.START_OF_CLASS_DATA);
         HtmlTree div = new HtmlTree(HtmlTag.DIV);
         div.addStyle(HtmlStyle.header);
-        ModuleElement mdle = configuration.docEnv.getElementUtils().getModuleOf(typeElement);
         if (configuration.showModules) {
-            Content classModuleLabel = HtmlTree.SPAN(HtmlStyle.moduleLabelInClass, contents.moduleLabel);
+            ModuleElement mdle = configuration.docEnv.getElementUtils().getModuleOf(typeElement);
+            Content classModuleLabel = HtmlTree.SPAN(HtmlStyle.moduleLabelInType, contents.moduleLabel);
             Content moduleNameDiv = HtmlTree.DIV(HtmlStyle.subTitle, classModuleLabel);
             moduleNameDiv.addContent(Contents.SPACE);
             moduleNameDiv.addContent(getModuleLink(mdle,
@@ -214,7 +214,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         }
         PackageElement pkg = utils.containingPackage(typeElement);
         if (!pkg.isUnnamed()) {
-            Content classPackageLabel = HtmlTree.SPAN(HtmlStyle.packageLabelInClass, contents.packageLabel);
+            Content classPackageLabel = HtmlTree.SPAN(HtmlStyle.packageLabelInType, contents.packageLabel);
             Content pkgNameDiv = HtmlTree.DIV(HtmlStyle.subTitle, classPackageLabel);
             pkgNameDiv.addContent(Contents.SPACE);
             Content pkgNameContent = getPackageLink(pkg,
@@ -610,7 +610,7 @@ public class ClassWriterImpl extends SubWriterHolderWriter implements ClassWrite
         classInfoTree.addContent(hr);
         List<? extends DocTree> deprs = utils.getBlockTags(typeElement, DocTree.Kind.DEPRECATED);
         if (utils.isDeprecated(typeElement)) {
-            Content deprLabel = HtmlTree.SPAN(HtmlStyle.deprecatedLabel, contents.deprecatedPhrase);
+            Content deprLabel = HtmlTree.SPAN(HtmlStyle.deprecatedLabel, getDeprecatedPhrase(typeElement));
             Content div = HtmlTree.DIV(HtmlStyle.block, deprLabel);
             if (!deprs.isEmpty()) {
                 CommentHelper ch = utils.getCommentHelper(typeElement);

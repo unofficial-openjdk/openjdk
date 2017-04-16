@@ -24,13 +24,13 @@
 /**
  * @test
  * @bug 8151664
- * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @requires vm.jvmci
  * @library /test/lib /
  * @modules java.base/jdk.internal.misc
  * @modules java.base/jdk.internal.vm.annotation
- *          jdk.vm.ci/jdk.vm.ci.hotspot
- *          jdk.vm.ci/jdk.vm.ci.meta
- *          jdk.vm.ci/jdk.vm.ci.runtime
+ *          jdk.internal.vm.ci/jdk.vm.ci.hotspot
+ *          jdk.internal.vm.ci/jdk.vm.ci.meta
+ *          jdk.internal.vm.ci/jdk.vm.ci.runtime
  *
  * @compile StableFieldTest.java
  * @run driver ClassFileInstaller compiler.jvmci.meta.StableFieldTest

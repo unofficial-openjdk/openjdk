@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +38,26 @@ import java.util.concurrent.TimeoutException;
  */
 public class JavaVM {
 
+    static class CachedOutputStream extends OutputStream {
+        ByteArrayOutputStream ba;
+        OutputStream os;
+
+        public CachedOutputStream(OutputStream os) {
+            this.os = os;
+            this.ba = new ByteArrayOutputStream();
+        }
+
+        public void write(int b) throws IOException {
+            ba.write(b);
+            os.write(b);
+        }
+
+        public void reset() throws IOException {
+            os.flush();
+            ba.reset();
+        }
+    }
+
     public static final long POLLTIME_MS = 100L;
 
     protected Process vm = null;
@@ -44,8 +65,8 @@ public class JavaVM {
     private String classname = "";
     protected String args = "";
     protected String options = "";
-    private OutputStream outputStream = System.out;
-    private OutputStream errorStream = System.err;
+    protected CachedOutputStream outputStream = new CachedOutputStream(System.out);
+    protected CachedOutputStream errorStream = new CachedOutputStream(System.err);
     private String policyFileName = null;
     private StreamPipe outPipe;
     private StreamPipe errPipe;
@@ -76,8 +97,8 @@ public class JavaVM {
                   String options, String args,
                   OutputStream out, OutputStream err) {
         this(classname, options, args);
-        this.outputStream = out;
-        this.errorStream = err;
+        this.outputStream = new CachedOutputStream(out);
+        this.errorStream = new CachedOutputStream(err);
     }
 
     // Prepends passed opts array to current options
@@ -117,6 +138,8 @@ public class JavaVM {
      * Exec the VM as specified in this object's constructor.
      */
     private void start0() throws IOException {
+        outputStream.reset();
+        errorStream.reset();
 
         if (vm != null)
             throw new IllegalStateException("JavaVM already started");
@@ -201,9 +224,25 @@ public class JavaVM {
 
     public void destroy() {
         if (vm != null) {
-            vm.destroy();
+            vm.destroyForcibly();
         }
         vm = null;
+    }
+
+    /**
+     * Return exit value for vm process.
+     * @return exit value for vm process
+     * @throws IllegalThreadStateException if the vm process has not yet terminated
+     */
+    public int exitValue() {
+        return vm.exitValue();
+    }
+
+    /**
+     * Destroy the vm process, and do necessary cleanup.
+     */
+    public void cleanup() {
+        destroy();
     }
 
     /**

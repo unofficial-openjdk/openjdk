@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -128,7 +129,7 @@ public abstract class BaseFileManager implements JavaFileManager {
 
     protected String classLoaderClass;
 
-    protected Locations locations;
+    protected final Locations locations;
 
     /**
      * A flag for clients to use to indicate that this file manager should
@@ -185,34 +186,12 @@ public abstract class BaseFileManager implements JavaFileManager {
                         Class.forName(classLoaderClass).asSubclass(ClassLoader.class);
                 Class<?>[] constrArgTypes = { URL[].class, ClassLoader.class };
                 Constructor<? extends ClassLoader> constr = loader.getConstructor(constrArgTypes);
-                return ensureReadable(constr.newInstance(urls, thisClassLoader));
+                return constr.newInstance(urls, thisClassLoader);
             } catch (ReflectiveOperationException t) {
                 // ignore errors loading user-provided class loader, fall through
             }
         }
-        return ensureReadable(new URLClassLoader(urls, thisClassLoader));
-    }
-
-    /**
-     * Ensures that the unnamed module of the given classloader is readable to this
-     * module.
-     */
-    private ClassLoader ensureReadable(ClassLoader targetLoader) {
-        try {
-            Method getModuleMethod = Class.class.getMethod("getModule");
-            Object thisModule = getModuleMethod.invoke(this.getClass());
-            Method getUnnamedModuleMethod = ClassLoader.class.getMethod("getUnnamedModule");
-            Object targetModule = getUnnamedModuleMethod.invoke(targetLoader);
-
-            Class<?> moduleClass = getModuleMethod.getReturnType();
-            Method addReadsMethod = moduleClass.getMethod("addReads", moduleClass);
-            addReadsMethod.invoke(thisModule, targetModule);
-        } catch (NoSuchMethodException e) {
-            // ignore
-        } catch (Exception e) {
-            throw new Abort(e);
-        }
-        return targetLoader;
+        return new URLClassLoader(urls, thisClassLoader);
     }
 
     public boolean isDefaultBootClassPath() {
@@ -249,8 +228,11 @@ public abstract class BaseFileManager implements JavaFileManager {
             return false;
         }
 
-        if (!o.handleOption(helper, current, remaining))
-            throw new IllegalArgumentException(current);
+        try {
+            o.handleOption(helper, current, remaining);
+        } catch (Option.InvalidValueException e) {
+            throw new IllegalArgumentException(e.getMessage(), e);
+        }
 
         return true;
     }
@@ -324,12 +306,12 @@ public abstract class BaseFileManager implements JavaFileManager {
 
     @SuppressWarnings("cast")
     public CharBuffer decode(ByteBuffer inbuf, boolean ignoreEncodingErrors) {
-        String encodingName = getEncodingName();
+        String encName = getEncodingName();
         CharsetDecoder decoder;
         try {
-            decoder = getDecoder(encodingName, ignoreEncodingErrors);
+            decoder = getDecoder(encName, ignoreEncodingErrors);
         } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
-            log.error("unsupported.encoding", encodingName);
+            log.error("unsupported.encoding", encName);
             return (CharBuffer)CharBuffer.allocate(1).flip();
         }
 
@@ -365,7 +347,7 @@ public abstract class BaseFileManager implements JavaFileManager {
                     unmappable.append(String.format("%02X", inbuf.get()));
                 }
 
-                String charsetName = charset == null ? encodingName : charset.name();
+                String charsetName = charset == null ? encName : charset.name();
 
                 log.error(dest.limit(),
                           Errors.IllegalCharForEncoding(unmappable.toString(), charsetName));

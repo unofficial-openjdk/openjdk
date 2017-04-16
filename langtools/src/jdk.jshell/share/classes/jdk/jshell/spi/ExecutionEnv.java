@@ -28,7 +28,6 @@ package jdk.jshell.spi;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.List;
-import jdk.jshell.JShell;
 
 /**
  * Functionality made available to a pluggable JShell execution engine.  It is
@@ -37,6 +36,7 @@ import jdk.jshell.JShell;
  * This interface is designed to provide the access to core JShell functionality
  * needed to implement ExecutionControl.
  *
+ * @since 9
  * @see ExecutionControl
  */
 public interface ExecutionEnv {

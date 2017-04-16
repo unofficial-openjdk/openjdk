@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -287,7 +287,7 @@ int LIR_Assembler::emit_exception_handler() {
   // generate code for exception handler
   ciMethod* method = compilation()->method();
 
-  address handler_base = __ start_a_stub(exception_handler_size);
+  address handler_base = __ start_a_stub(exception_handler_size());
 
   if (handler_base == NULL) {
     // not enough space left for the handler
@@ -300,7 +300,7 @@ int LIR_Assembler::emit_exception_handler() {
   __ call(Runtime1::entry_for(Runtime1::handle_exception_from_callee_id), relocInfo::runtime_call_type);
   __ delayed()->nop();
   __ should_not_reach_here();
-  guarantee(code_offset() - offset <= exception_handler_size, "overflow");
+  guarantee(code_offset() - offset <= exception_handler_size(), "overflow");
   __ end_a_stub();
 
   return offset;
@@ -375,7 +375,7 @@ int LIR_Assembler::emit_deopt_handler() {
 
   // generate code for deopt handler
   ciMethod* method = compilation()->method();
-  address handler_base = __ start_a_stub(deopt_handler_size);
+  address handler_base = __ start_a_stub(deopt_handler_size());
   if (handler_base == NULL) {
     // not enough space left for the handler
     bailout("deopt handler overflow");
@@ -386,7 +386,7 @@ int LIR_Assembler::emit_deopt_handler() {
   AddressLiteral deopt_blob(SharedRuntime::deopt_blob()->unpack());
   __ JUMP(deopt_blob, G3_scratch, 0); // sethi;jmp
   __ delayed()->nop();
-  guarantee(code_offset() - offset <= deopt_handler_size, "overflow");
+  guarantee(code_offset() - offset <= deopt_handler_size(), "overflow");
   __ end_a_stub();
 
   return offset;
@@ -694,6 +694,7 @@ void LIR_Assembler::vtable_call(LIR_OpJavaCall* op) {
 int LIR_Assembler::store(LIR_Opr from_reg, Register base, int offset, BasicType type, bool wide, bool unaligned) {
   int store_offset;
   if (!Assembler::is_simm13(offset + (type == T_LONG) ? wordSize : 0)) {
+    assert(base != O7, "destroying register");
     assert(!unaligned, "can't handle this");
     // for offsets larger than a simm13 we setup the offset in O7
     __ set(offset, O7);
@@ -712,9 +713,12 @@ int LIR_Assembler::store(LIR_Opr from_reg, Register base, int offset, BasicType 
       case T_LONG  :
 #ifdef _LP64
         if (unaligned || PatchALot) {
-          __ srax(from_reg->as_register_lo(), 32, O7);
+          // Don't use O7 here because it may be equal to 'base' (see LIR_Assembler::reg2mem)
+          assert(G3_scratch != base, "can't handle this");
+          assert(G3_scratch != from_reg->as_register_lo(), "can't handle this");
+          __ srax(from_reg->as_register_lo(), 32, G3_scratch);
           __ stw(from_reg->as_register_lo(), base, offset + lo_word_offset_in_bytes);
-          __ stw(O7,                         base, offset + hi_word_offset_in_bytes);
+          __ stw(G3_scratch,                 base, offset + hi_word_offset_in_bytes);
         } else {
           __ stx(from_reg->as_register_lo(), base, offset);
         }
@@ -821,7 +825,7 @@ int LIR_Assembler::load(Register base, int offset, LIR_Opr to_reg, BasicType typ
       case T_SHORT : __ ldsh(base, offset, to_reg->as_register()); break;
       case T_INT   : __ ld(base, offset, to_reg->as_register()); break;
       case T_LONG  :
-        if (!unaligned) {
+        if (!unaligned && !PatchALot) {
 #ifdef _LP64
           __ ldx(base, offset, to_reg->as_register_lo());
 #else
@@ -1297,7 +1301,7 @@ void LIR_Assembler::mem2reg(LIR_Opr src_opr, LIR_Opr dest, BasicType type,
       disp_reg = O7;
     }
   } else if (unaligned || PatchALot) {
-    __ add(src, addr->index()->as_register(), O7);
+    __ add(src, addr->index()->as_pointer_register(), O7);
     src = O7;
   } else {
     disp_reg = addr->index()->as_pointer_register();
@@ -1424,7 +1428,7 @@ void LIR_Assembler::reg2mem(LIR_Opr from_reg, LIR_Opr dest, BasicType type,
       disp_reg = O7;
     }
   } else if (unaligned || PatchALot) {
-    __ add(src, addr->index()->as_register(), O7);
+    __ add(src, addr->index()->as_pointer_register(), O7);
     src = O7;
   } else {
     disp_reg = addr->index()->as_pointer_register();
@@ -1493,7 +1497,7 @@ int LIR_Assembler::safepoint_poll(LIR_Opr tmp, CodeEmitInfo* info) {
 
 void LIR_Assembler::emit_static_call_stub() {
   address call_pc = __ pc();
-  address stub = __ start_a_stub(call_stub_size);
+  address stub = __ start_a_stub(call_stub_size());
   if (stub == NULL) {
     bailout("static call stub overflow");
     return;
@@ -1508,7 +1512,7 @@ void LIR_Assembler::emit_static_call_stub() {
   __ jump_to(addrlit, G3);
   __ delayed()->nop();
 
-  assert(__ offset() - start <= call_stub_size, "stub too big");
+  assert(__ offset() - start <= call_stub_size(), "stub too big");
   __ end_a_stub();
 }
 

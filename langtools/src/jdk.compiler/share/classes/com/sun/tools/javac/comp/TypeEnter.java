@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -160,8 +160,6 @@ public class TypeEnter implements Completer {
         // if there remain any unimported toplevels (these must have
         // no classes at all), process their import statements as well.
         for (JCCompilationUnit tree : trees) {
-            if (tree.defs.nonEmpty() && tree.defs.head.hasTag(MODULEDEF))
-                continue;
             if (!tree.starImportScope.isFilled()) {
                 Env<AttrContext> topEnv = enter.topLevelEnv(tree);
                 finishImports(tree, () -> { completeClass.resolveImports(tree, topEnv); });
@@ -344,12 +342,21 @@ public class TypeEnter implements Completer {
                     throw new FatalError(diags.fragment("fatal.err.no.java.lang"));
                 importAll(make.at(tree.pos()).Import(make.QualIdent(javaLang), false), javaLang, env);
 
+                JCModuleDecl decl = tree.getModuleDecl();
+
                 // Process the package def and all import clauses.
-                if (tree.getPackage() != null)
+                if (tree.getPackage() != null && decl == null)
                     checkClassPackageClash(tree.getPackage());
 
                 for (JCImport imp : tree.getImports()) {
                     doImport(imp);
+                }
+
+                if (decl != null) {
+                    //check @Deprecated:
+                    markDeprecated(decl.sym, decl.mods.annotations, env);
+                    // process module annotations
+                    annotate.annotateLater(decl.mods.annotations, env, env.toplevel.modle, null);
                 }
             } finally {
                 this.env = prevEnv;
@@ -403,7 +410,9 @@ public class TypeEnter implements Completer {
                     importNamedStatic(tree, p, name, localEnv);
                     chk.checkCanonical(imp.selected);
                 } else {
-                    TypeSymbol c = attribImportType(imp, localEnv).tsym;
+                    Type importedType = attribImportType(imp, localEnv);
+                    Type originalType = importedType.getOriginalType();
+                    TypeSymbol c = originalType.hasTag(CLASS) ? originalType.tsym : importedType.tsym;
                     chk.checkCanonical(imp);
                     importNamed(tree.pos(), c, env, tree);
                 }
@@ -522,7 +531,7 @@ public class TypeEnter implements Completer {
         protected  JCExpression enumBase(int pos, ClassSymbol c) {
             JCExpression result = make.at(pos).
                 TypeApply(make.QualIdent(syms.enumSym),
-                          List.<JCExpression>of(make.Type(c.type)));
+                          List.of(make.Type(c.type)));
             return result;
         }
 
@@ -745,12 +754,7 @@ public class TypeEnter implements Completer {
                 }
             }
 
-            // Annotations.
-            // In general, we cannot fully process annotations yet,  but we
-            // can attribute the annotation types and then check to see if the
-            // @Deprecated annotation is present.
-            attr.attribAnnotationTypes(tree.mods.annotations, baseEnv);
-            handleDeprecatedAnnotation(tree.mods.annotations, sym);
+            markDeprecated(sym, tree.mods.annotations, baseEnv);
 
             chk.checkNonCyclicDecl(tree);
         }
@@ -763,32 +767,6 @@ public class TypeEnter implements Completer {
                 }
 
                 return superType;
-            }
-
-            /**
-             * If a list of annotations contains a reference to java.lang.Deprecated,
-             * set the DEPRECATED flag.
-             * If the annotation is marked forRemoval=true, also set DEPRECATED_REMOVAL.
-             **/
-            private void handleDeprecatedAnnotation(List<JCAnnotation> annotations, Symbol sym) {
-                for (List<JCAnnotation> al = annotations; !al.isEmpty(); al = al.tail) {
-                    JCAnnotation a = al.head;
-                    if (a.annotationType.type == syms.deprecatedType) {
-                        sym.flags_field |= Flags.DEPRECATED;
-                        a.args.stream()
-                                .filter(e -> e.hasTag(ASSIGN))
-                                .map(e -> (JCAssign) e)
-                                .filter(assign -> TreeInfo.name(assign.lhs) == names.forRemoval)
-                                .findFirst()
-                                .ifPresent(assign -> {
-                                    JCExpression rhs = TreeInfo.skipParens(assign.rhs);
-                                    if (rhs.hasTag(LITERAL)
-                                            && Boolean.TRUE.equals(((JCLiteral) rhs).getValue())) {
-                                        sym.flags_field |= DEPRECATED_REMOVAL;
-                                    }
-                                });
-                    }
-                }
             }
 
         @Override
@@ -962,6 +940,7 @@ public class TypeEnter implements Completer {
          */
         void finishClass(JCClassDecl tree, Env<AttrContext> env) {
             if ((tree.mods.flags & Flags.ENUM) != 0 &&
+                !tree.sym.type.hasTag(ERROR) &&
                 (types.supertype(tree.sym.type).tsym.flags() & Flags.ENUM) == 0) {
                 addEnumMembers(tree, env);
             }
@@ -984,9 +963,9 @@ public class TypeEnter implements Completer {
                 MethodDef(make.Modifiers(Flags.PUBLIC|Flags.STATIC),
                           names.values,
                           valuesType,
-                          List.<JCTypeParameter>nil(),
-                          List.<JCVariableDecl>nil(),
-                          List.<JCExpression>nil(), // thrown
+                          List.nil(),
+                          List.nil(),
+                          List.nil(), // thrown
                           null, //make.Block(0, Tree.emptyList.prepend(make.Return(make.Ident(names._null)))),
                           null);
             memberEnter.memberEnter(values, env);
@@ -996,12 +975,12 @@ public class TypeEnter implements Completer {
                 MethodDef(make.Modifiers(Flags.PUBLIC|Flags.STATIC),
                           names.valueOf,
                           make.Type(tree.sym.type),
-                          List.<JCTypeParameter>nil(),
+                          List.nil(),
                           List.of(make.VarDef(make.Modifiers(Flags.PARAMETER |
                                                              Flags.MANDATED),
                                                 names.fromString("name"),
                                                 make.Type(syms.stringType), null)),
-                          List.<JCExpression>nil(), // thrown
+                          List.nil(), // thrown
                           null, //make.Block(0, Tree.emptyList.prepend(make.Return(make.Ident(names._null)))),
                           null);
             memberEnter.memberEnter(valueOf, env);
@@ -1093,7 +1072,7 @@ public class TypeEnter implements Completer {
         }
         if (baseInit != null && baseInit.params != null &&
             baseInit.params.nonEmpty() && argTypesList.nonEmpty()) {
-            initParams = (initParams == null) ? List.<VarSymbol>nil() : initParams;
+            initParams = (initParams == null) ? List.nil() : initParams;
             List<VarSymbol> baseInitParams = baseInit.params;
             while (baseInitParams.nonEmpty() && argTypesList.nonEmpty()) {
                 VarSymbol param = new VarSymbol(baseInitParams.head.flags() | PARAMETER,
@@ -1134,5 +1113,42 @@ public class TypeEnter implements Completer {
         }
         List<JCExpression> typeargs = typarams.nonEmpty() ? make.Types(typarams) : null;
         return make.Exec(make.Apply(typeargs, meth, make.Idents(params)));
+    }
+
+    /**
+     * Mark sym deprecated if annotations contain @Deprecated annotation.
+     */
+    public void markDeprecated(Symbol sym, List<JCAnnotation> annotations, Env<AttrContext> env) {
+        // In general, we cannot fully process annotations yet,  but we
+        // can attribute the annotation types and then check to see if the
+        // @Deprecated annotation is present.
+        attr.attribAnnotationTypes(annotations, env);
+        handleDeprecatedAnnotations(annotations, sym);
+    }
+
+    /**
+     * If a list of annotations contains a reference to java.lang.Deprecated,
+     * set the DEPRECATED flag.
+     * If the annotation is marked forRemoval=true, also set DEPRECATED_REMOVAL.
+     **/
+    private void handleDeprecatedAnnotations(List<JCAnnotation> annotations, Symbol sym) {
+        for (List<JCAnnotation> al = annotations; !al.isEmpty(); al = al.tail) {
+            JCAnnotation a = al.head;
+            if (a.annotationType.type == syms.deprecatedType) {
+                sym.flags_field |= (Flags.DEPRECATED | Flags.DEPRECATED_ANNOTATION);
+                a.args.stream()
+                        .filter(e -> e.hasTag(ASSIGN))
+                        .map(e -> (JCAssign) e)
+                        .filter(assign -> TreeInfo.name(assign.lhs) == names.forRemoval)
+                        .findFirst()
+                        .ifPresent(assign -> {
+                            JCExpression rhs = TreeInfo.skipParens(assign.rhs);
+                            if (rhs.hasTag(LITERAL)
+                                    && Boolean.TRUE.equals(((JCLiteral) rhs).getValue())) {
+                                sym.flags_field |= DEPRECATED_REMOVAL;
+                            }
+                        });
+            }
+        }
     }
 }

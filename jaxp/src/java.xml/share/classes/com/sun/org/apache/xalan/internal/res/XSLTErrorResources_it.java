@@ -17,9 +17,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * $Id: XSLTErrorResources_it.java /st_wptg_1.8.0.0.0jdk/2 2013/09/16 07:02:00 gmolloy Exp $
- */
 package com.sun.org.apache.xalan.internal.res;
 
 import java.util.ListResourceBundle;
@@ -1016,7 +1013,7 @@ public class XSLTErrorResources_it extends ListResourceBundle
      "Propriet\u00E0 di sistema org.xml.sax.parser non specificata"},
 
     { ER_PARSER_ARG_CANNOT_BE_NULL,
-     "L''argomento del parser non deve essere nullo"},
+     "L'argomento del parser non deve essere nullo"},
 
     { ER_FEATURE,
      "Funzione: {0}"},

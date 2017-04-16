@@ -88,6 +88,7 @@ import sun.invoke.util.VerifyType;
  * (But the classes need not be initialized, as is the case with a {@code CONSTANT_Class}.)
  * This loading may occur at any time before the {@code MethodType} object is first derived.
  * @author John Rose, JSR 292 EG
+ * @since 1.7
  */
 public final
 class MethodType implements java.io.Serializable {
@@ -1128,7 +1129,7 @@ class MethodType implements java.io.Serializable {
     public String toMethodDescriptorString() {
         String desc = methodDescriptor;
         if (desc == null) {
-            desc = BytecodeDescriptor.unparse(this);
+            desc = BytecodeDescriptor.unparseMethod(this.rtype, this.ptypes);
             methodDescriptor = desc;
         }
         return desc;
@@ -1256,7 +1257,7 @@ s.writeObject(this.parameterArray());
         private final ReferenceQueue<T> stale;
 
         public ConcurrentWeakInternSet() {
-            this.map = new ConcurrentHashMap<>();
+            this.map = new ConcurrentHashMap<>(512);
             this.stale = new ReferenceQueue<>();
         }
 

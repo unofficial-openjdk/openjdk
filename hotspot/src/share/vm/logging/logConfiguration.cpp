@@ -98,14 +98,14 @@ void LogConfiguration::initialize(jlong vm_start_time) {
   LogDecorations::initialize(vm_start_time);
   assert(_outputs == NULL, "Should not initialize _outputs before this function, initialize called twice?");
   _outputs = NEW_C_HEAP_ARRAY(LogOutput*, 2, mtLogging);
-  _outputs[0] = LogOutput::Stdout;
-  _outputs[1] = LogOutput::Stderr;
+  _outputs[0] = &StdoutLog;
+  _outputs[1] = &StderrLog;
   _n_outputs = 2;
 }
 
 void LogConfiguration::finalize() {
-  for (size_t i = 2; i < _n_outputs; i++) {
-    delete _outputs[i];
+  for (size_t i = _n_outputs; i > 0; i--) {
+    disable_output(i - 1);
   }
   FREE_C_HEAP_ARRAY(LogOutput*, _outputs);
 }
@@ -279,8 +279,8 @@ void LogConfiguration::disable_output(size_t idx) {
     ts->update_decorators();
   }
 
-  // Delete the output unless stdout/stderr
-  if (out != LogOutput::Stderr && out != LogOutput::Stdout) {
+  // Delete the output unless stdout or stderr (idx 0 or 1)
+  if (idx > 1) {
     delete_output(idx);
   } else {
     out->set_config_string("all=off");
@@ -322,7 +322,7 @@ void LogConfiguration::configure_stdout(LogLevelType level, bool exact_match, ..
 
   // Apply configuration to stdout (output #0), with the same decorators as before.
   ConfigurationLock cl;
-  configure_output(0, expr, LogOutput::Stdout->decorators());
+  configure_output(0, expr, _outputs[0]->decorators());
   notify_update_listeners();
 }
 
@@ -478,7 +478,7 @@ void LogConfiguration::describe(outputStream* out) {
 
 void LogConfiguration::print_command_line_help(FILE* out) {
   jio_fprintf(out, "-Xlog Usage: -Xlog[:[what][:[output][:[decorators][:output-options]]]]\n"
-              "\t where 'what' is a combination of tags and levels on the form tag1[+tag2...][*][=level][,...]\n"
+              "\t where 'what' is a combination of tags and levels of the form tag1[+tag2...][*][=level][,...]\n"
               "\t Unless wildcard (*) is specified, only log messages tagged with exactly the tags specified will be matched.\n\n");
 
   jio_fprintf(out, "Available log levels:\n");
@@ -513,6 +513,14 @@ void LogConfiguration::print_command_line_help(FILE* out) {
 
               " -Xlog:gc\n"
               "\t Log messages tagged with 'gc' tag using 'info' level to stdout, with default decorations.\n\n"
+
+              " -Xlog:gc,safepoint\n"
+              "\t Log messages tagged either with 'gc' or 'safepoint' tags, both using 'info' level, to stdout, with default decorations.\n"
+              "\t (Messages tagged with both 'gc' and 'safepoint' will not be logged.)\n\n"
+
+              " -Xlog:gc+ref=debug\n"
+              "\t Log messages tagged with both 'gc' and 'ref' tags, using 'debug' level, to stdout, with default decorations.\n"
+              "\t (Messages tagged only with one of the two tags will not be logged.)\n\n"
 
               " -Xlog:gc=debug:file=gc.txt:none\n"
               "\t Log messages tagged with 'gc' tag using 'debug' level to file 'gc.txt' with no decorations.\n\n"

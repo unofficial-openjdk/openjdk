@@ -99,7 +99,6 @@ BOOL AwtComponent::sm_restoreFocusAndActivation = FALSE;
 HWND AwtComponent::sm_focusOwner = NULL;
 HWND AwtComponent::sm_focusedWindow = NULL;
 BOOL AwtComponent::sm_bMenuLoop = FALSE;
-AwtComponent* AwtComponent::sm_getComponentCache = NULL;
 BOOL AwtComponent::sm_inSynthesizeFocus = FALSE;
 
 /************************************************************************/
@@ -251,7 +250,8 @@ AwtComponent::AwtComponent()
     m_bPauseDestroy = FALSE;
 
     m_MessagesProcessing = 0;
-    m_wheelRotationAmount = 0;
+    m_wheelRotationAmountX = 0;
+    m_wheelRotationAmountY = 0;
     if (!sm_PrimaryDynamicTableBuilt) {
         // do it once.
         AwtComponent::BuildPrimaryDynamicTable();
@@ -275,10 +275,6 @@ AwtComponent::~AwtComponent()
      * handle.
      */
     DestroyHWnd();
-
-    if (sm_getComponentCache == this) {
-        sm_getComponentCache = NULL;
-    }
 }
 
 void AwtComponent::Dispose()
@@ -351,9 +347,6 @@ AwtComponent* AwtComponent::GetComponent(HWND hWnd) {
     if (hWnd == AwtToolkit::GetInstance().GetHWnd()) {
         return NULL;
     }
-    if (sm_getComponentCache && sm_getComponentCache->GetHWnd() == hWnd) {
-        return sm_getComponentCache;
-    }
 
     // check that it's an AWT component from the same toolkit as the caller
     if (::IsWindow(hWnd) &&
@@ -361,7 +354,7 @@ AwtComponent* AwtComponent::GetComponent(HWND hWnd) {
     {
         DASSERT(WmAwtIsComponent != 0);
         if (::SendMessage(hWnd, WmAwtIsComponent, 0, 0L)) {
-            return sm_getComponentCache = GetComponentImpl(hWnd);
+            return GetComponentImpl(hWnd);
         }
     }
     return NULL;
@@ -957,8 +950,11 @@ AwtComponent::SetWindowPos(HWND wnd, HWND after,
     return 1;
 }
 
+void AwtComponent::Reshape(int x, int y, int w, int h) {
+    ReshapeNoScale(ScaleUpX(x), ScaleUpY(y), ScaleUpX(w), ScaleUpY(h));
+}
 
-void AwtComponent::Reshape(int x, int y, int w, int h)
+void AwtComponent::ReshapeNoScale(int x, int y, int w, int h)
 {
 #if defined(DEBUG)
     RECT        rc;
@@ -966,11 +962,6 @@ void AwtComponent::Reshape(int x, int y, int w, int h)
     ::MapWindowPoints(HWND_DESKTOP, ::GetParent(GetHWnd()), (LPPOINT)&rc, 2);
     DTRACE_PRINTLN4("AwtComponent::Reshape from %d, %d, %d, %d", rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top);
 #endif
-
-    x = ScaleUpX(x);
-    y = ScaleUpY(y);
-    w = ScaleUpX(w);
-    h = ScaleUpY(h);
 
     AwtWindow* container = GetContainer();
     AwtComponent* parent = GetParent();
@@ -1208,6 +1199,7 @@ void SpyWinMessage(HWND hwnd, UINT message, LPCTSTR szComment) {
         WIN_MSG(WM_XBUTTONDOWN)
         WIN_MSG(WM_XBUTTONUP)
         WIN_MSG(WM_MOUSEWHEEL)
+        WIN_MSG(WM_MOUSEHWHEEL)
         WIN_MSG(WM_PARENTNOTIFY)
         WIN_MSG(WM_ENTERMENULOOP)
         WIN_MSG(WM_EXITMENULOOP)
@@ -1513,6 +1505,9 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
           mr = WmSysCommand(static_cast<UINT>(wParam & 0xFFF0),
                             GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
           break;
+      case WM_ENTERSIZEMOVE:
+          mr = WmEnterSizeMove();
+          break;
       case WM_EXITSIZEMOVE:
           mr = WmExitSizeMove();
           break;
@@ -1639,6 +1634,7 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
       case WM_XBUTTONUP:
       case WM_MOUSEMOVE:
       case WM_MOUSEWHEEL:
+      case WM_MOUSEHWHEEL:
       case WM_AWT_MOUSEENTER:
       case WM_AWT_MOUSEEXIT:
           curPos = ::GetMessagePos();
@@ -1708,10 +1704,12 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
           case WM_AWT_MOUSEEXIT:
               mr = WmMouseExit(static_cast<UINT>(wParam), myPos.x, myPos.y);
               break;
-          case  WM_MOUSEWHEEL:
+          case WM_MOUSEWHEEL:
+          case WM_MOUSEHWHEEL:
               mr = WmMouseWheel(GET_KEYSTATE_WPARAM(wParam),
                                 GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam),
-                                GET_WHEEL_DELTA_WPARAM(wParam));
+                                GET_WHEEL_DELTA_WPARAM(wParam),
+                                switchMessage == WM_MOUSEHWHEEL);
               break;
           }
           break;
@@ -2056,6 +2054,11 @@ MsgRouting AwtComponent::WmSysCommand(UINT uCmdType, int xPos, int yPos)
     return mrDoDefault;
 }
 
+MsgRouting AwtComponent::WmEnterSizeMove()
+{
+    return mrDoDefault;
+}
+
 MsgRouting AwtComponent::WmExitSizeMove()
 {
     return mrDoDefault;
@@ -2078,13 +2081,15 @@ MsgRouting AwtComponent::WmShowWindow(BOOL show, UINT status)
 
 MsgRouting AwtComponent::WmSetFocus(HWND hWndLostFocus)
 {
-    m_wheelRotationAmount = 0;
+    m_wheelRotationAmountX = 0;
+    m_wheelRotationAmountY = 0;
     return mrDoDefault;
 }
 
 MsgRouting AwtComponent::WmKillFocus(HWND hWndGotFocus)
 {
-    m_wheelRotationAmount = 0;
+    m_wheelRotationAmountX = 0;
+    m_wheelRotationAmountY = 0;
     return mrDoDefault;
 }
 
@@ -2461,7 +2466,7 @@ MsgRouting AwtComponent::WmMouseExit(UINT flags, int x, int y)
 }
 
 MsgRouting AwtComponent::WmMouseWheel(UINT flags, int x, int y,
-                                      int wheelRotation)
+                                      int wheelRotation, BOOL isHorizontal)
 {
     // convert coordinates to be Component-relative, not screen relative
     // for wheeling when outside the window, this works similar to
@@ -2475,42 +2480,54 @@ MsgRouting AwtComponent::WmMouseWheel(UINT flags, int x, int y,
 
     // set some defaults
     jint scrollType = java_awt_event_MouseWheelEvent_WHEEL_UNIT_SCROLL;
-    jint scrollLines = 3;
+    jint scrollUnits = 3;
 
     BOOL result;
-    UINT platformLines;
-
-    m_wheelRotationAmount += wheelRotation;
+    UINT platformUnits;
+    jint roundedWheelRotation;
+    jdouble preciseWheelRotation;
 
     // AWT interprets wheel rotation differently than win32, so we need to
     // decode wheel amount.
-    jint roundedWheelRotation = m_wheelRotationAmount / (-1 * WHEEL_DELTA);
-    jdouble preciseWheelRotation = (jdouble) wheelRotation / (-1 * WHEEL_DELTA);
+    jint modifiers = GetJavaModifiers();
+    if (isHorizontal) {
+        modifiers |= java_awt_event_InputEvent_SHIFT_DOWN_MASK;
+        m_wheelRotationAmountX += wheelRotation;
+        roundedWheelRotation = m_wheelRotationAmountX / (WHEEL_DELTA);
+        preciseWheelRotation = (jdouble) wheelRotation / (WHEEL_DELTA);
+        result = ::SystemParametersInfo(SPI_GETWHEELSCROLLCHARS, 0,
+                                        &platformUnits, 0);
+    } else {
+        m_wheelRotationAmountY += wheelRotation;
+        roundedWheelRotation = m_wheelRotationAmountY / (-1 * WHEEL_DELTA);
+        preciseWheelRotation = (jdouble) wheelRotation / (-1 * WHEEL_DELTA);
+        result = ::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0,
+                                        &platformUnits, 0);
+    }
 
     MSG msg;
-    result = ::SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0,
-                                    &platformLines, 0);
     InitMessage(&msg, lastMessage, MAKEWPARAM(flags, wheelRotation),
                 MAKELPARAM(x, y));
 
     if (result) {
-        if (platformLines == WHEEL_PAGESCROLL) {
+        if (platformUnits == WHEEL_PAGESCROLL) {
             scrollType = java_awt_event_MouseWheelEvent_WHEEL_BLOCK_SCROLL;
-            scrollLines = 1;
+            scrollUnits = 1;
         }
         else {
             scrollType = java_awt_event_MouseWheelEvent_WHEEL_UNIT_SCROLL;
-            scrollLines = platformLines;
+            scrollUnits = platformUnits;
         }
     }
 
     DTRACE_PRINTLN("calling SendMouseWheelEvent");
 
     SendMouseWheelEvent(java_awt_event_MouseEvent_MOUSE_WHEEL, ::JVM_CurrentTimeMillis(NULL, 0),
-                        eventPt.x, eventPt.y, GetJavaModifiers(), 0, 0, scrollType,
-                        scrollLines, roundedWheelRotation, preciseWheelRotation, &msg);
+                        eventPt.x, eventPt.y, modifiers, 0, 0, scrollType,
+                        scrollUnits, roundedWheelRotation, preciseWheelRotation, &msg);
 
-    m_wheelRotationAmount %= WHEEL_DELTA;
+    m_wheelRotationAmountX %= WHEEL_DELTA;
+    m_wheelRotationAmountY %= WHEEL_DELTA;
     // this message could be propagated up to the parent chain
     // by the mouse message post processors
     return mrConsume;
@@ -3523,7 +3540,7 @@ UINT AwtComponent::WindowsKeyToJavaChar(UINT wkey, UINT modifiers, TransOps ops,
 
     WORD wChar[2];
     int converted = 1;
-    UINT ch = ::MapVirtualKey(wkey, 2);
+    UINT ch = ::MapVirtualKeyEx(wkey, 2, GetKeyboardLayout());
     if (ch & 0x80000000) {
         // Dead key which is handled as a normal key
         isDeadKey = deadKeyActive = TRUE;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import javax.tools.JavaFileObject;
 import javax.tools.JavaFileManager;
 
 import com.sun.tools.javac.code.*;
+import com.sun.tools.javac.code.Kinds.KindName;
 import com.sun.tools.javac.code.Kinds.KindSelector;
 import com.sun.tools.javac.code.Scope.*;
 import com.sun.tools.javac.code.Symbol.*;
@@ -130,10 +131,10 @@ public class Enter extends JCTree.Visitor {
         predefClassDef = make.ClassDef(
             make.Modifiers(PUBLIC),
             syms.predefClass.name,
-            List.<JCTypeParameter>nil(),
+            List.nil(),
             null,
-            List.<JCExpression>nil(),
-            List.<JCTree>nil());
+            List.nil(),
+            List.nil());
         predefClassDef.sym = syms.predefClass;
         todo = Todo.instance(context);
         fileManager = context.get(JavaFileManager.class);
@@ -155,6 +156,7 @@ public class Enter extends JCTree.Visitor {
 
     public Env<AttrContext> getClassEnv(TypeSymbol sym) {
         Env<AttrContext> localEnv = getEnv(sym);
+        if (localEnv == null) return null;
         Env<AttrContext> lintEnv = localEnv;
         while (lintEnv.info.lint == null)
             lintEnv = lintEnv.next;
@@ -166,6 +168,9 @@ public class Enter extends JCTree.Visitor {
      *  saved and initialized by main().
      */
     ListBuffer<ClassSymbol> uncompleted;
+
+    /** The queue of modules whose imports still need to be checked. */
+    ListBuffer<JCCompilationUnit> unfinishedModules = new ListBuffer<>();
 
     /** A dummy class to serve as enclClass for toplevel environments.
      */
@@ -308,6 +313,10 @@ public class Enter extends JCTree.Visitor {
         boolean isPkgInfo = tree.sourcefile.isNameCompatible("package-info",
                                                              JavaFileObject.Kind.SOURCE);
         if (TreeInfo.isModuleInfo(tree)) {
+            JCPackageDecl pd = tree.getPackage();
+            if (pd != null) {
+                log.error(pd.pos(), Errors.NoPkgInModuleInfoJava);
+            }
             tree.packge = syms.rootPackage;
             Env<AttrContext> topEnv = topLevelEnv(tree);
             classEnter(tree.defs, topEnv);
@@ -393,8 +402,14 @@ public class Enter extends JCTree.Visitor {
             c = syms.enterClass(env.toplevel.modle, tree.name, packge);
             packge.members().enterIfAbsent(c);
             if ((tree.mods.flags & PUBLIC) != 0 && !classNameMatchesFileName(c, env)) {
+                KindName topElement = KindName.CLASS;
+                if ((tree.mods.flags & ENUM) != 0) {
+                    topElement = KindName.ENUM;
+                } else if ((tree.mods.flags & INTERFACE) != 0) {
+                    topElement = KindName.INTERFACE;
+                }
                 log.error(tree.pos(),
-                          "class.public.should.be.in.file", tree.name);
+                          "class.public.should.be.in.file", topElement, tree.name);
             }
         } else {
             if (!tree.name.isEmpty() &&
@@ -405,6 +420,17 @@ public class Enter extends JCTree.Visitor {
             if (owner.kind == TYP) {
                 // We are seeing a member class.
                 c = syms.enterClass(env.toplevel.modle, tree.name, (TypeSymbol)owner);
+                if (c.owner != owner) {
+                    //anonymous class loaded from a classfile may be recreated from source (see below)
+                    //if this class is a member of such an anonymous class, fix the owner:
+                    Assert.check(owner.owner.kind != TYP, owner::toString);
+                    Assert.check(c.owner.kind == TYP, () -> c.owner.toString());
+                    ClassSymbol cowner = (ClassSymbol) c.owner;
+                    if (cowner.members_field != null) {
+                        cowner.members_field.remove(c);
+                    }
+                    c.owner = owner;
+                }
                 if ((owner.flags_field & INTERFACE) != 0) {
                     tree.mods.flags |= PUBLIC | STATIC;
                 }
@@ -509,7 +535,9 @@ public class Enter extends JCTree.Visitor {
     public void visitModuleDef(JCModuleDecl tree) {
         Env<AttrContext> moduleEnv = moduleEnv(tree, env);
         typeEnvs.put(tree.sym, moduleEnv);
-        todo.append(moduleEnv);
+        if (modules.isInModuleGraph(tree.sym)) {
+            todo.append(moduleEnv);
+        }
     }
 
     /** Default class enter visitor method: do nothing.
@@ -552,7 +580,19 @@ public class Enter extends JCTree.Visitor {
                         prevUncompleted.append(clazz);
                 }
 
-                typeEnter.ensureImportsChecked(trees);
+                if (!modules.modulesInitialized()) {
+                    for (JCCompilationUnit cut : trees) {
+                        if (cut.getModuleDecl() != null) {
+                            unfinishedModules.append(cut);
+                        } else {
+                            typeEnter.ensureImportsChecked(List.of(cut));
+                        }
+                    }
+                } else {
+                    typeEnter.ensureImportsChecked(unfinishedModules.toList());
+                    unfinishedModules.clear();
+                    typeEnter.ensureImportsChecked(trees);
+                }
             }
         } finally {
             uncompleted = prevUncompleted;

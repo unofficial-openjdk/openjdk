@@ -26,96 +26,43 @@
 package java.lang.module;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
-
-import jdk.internal.module.ModuleHashes.HashSupplier;
 
 
 /**
  * A reference to a module's content.
  *
- * <p> A module reference contains the module's descriptor and its location, if
- * known.  It also has the ability to create a {@link ModuleReader} in order to
- * access the module's content, which may be inside the Java run-time system
- * itself or in an artifact such as a modular JAR file.
+ * <p> A module reference is a concrete implementation of this class that
+ * implements the abstract methods defined by this class. It contains the
+ * module's descriptor and its location, if known.  It also has the ability to
+ * create a {@link ModuleReader} in order to access the module's content, which
+ * may be inside the Java run-time system itself or in an artifact such as a
+ * modular JAR file.
  *
  * @see ModuleFinder
  * @see ModuleReader
  * @since 9
+ * @spec JPMS
  */
 
-public final class ModuleReference {
+public abstract class ModuleReference {
 
     private final ModuleDescriptor descriptor;
     private final URI location;
-    private final Supplier<ModuleReader> readerSupplier;
-
-    // true if this is a reference to a patched module
-    private boolean patched;
-
-    // the function that computes the hash of this module reference
-    private final HashSupplier hasher;
-
-    // cached hash string to avoid needing to compute it many times
-    private String cachedHash;
-
 
     /**
      * Constructs a new instance of this class.
-     */
-    ModuleReference(ModuleDescriptor descriptor,
-                    URI location,
-                    Supplier<ModuleReader> readerSupplier,
-                    boolean patched,
-                    HashSupplier hasher)
-
-    {
-        this.descriptor = Objects.requireNonNull(descriptor);
-        this.location = location;
-        this.readerSupplier = Objects.requireNonNull(readerSupplier);
-        this.patched = patched;
-        this.hasher = hasher;
-    }
-
-    /**
-     * Constructs a new instance of this class.
-     */
-    ModuleReference(ModuleDescriptor descriptor,
-                    URI location,
-                    Supplier<ModuleReader> readerSupplier,
-                    HashSupplier hasher)
-
-    {
-        this(descriptor, location, readerSupplier, false, hasher);
-    }
-
-
-    /**
-     * Constructs a new instance of this class.
-     *
-     * <p> The {@code readSupplier} parameter is the supplier of the {@link
-     * ModuleReader} that may be used to read the module content. Its {@link
-     * Supplier#get() get()} method throws {@link UncheckedIOException} if an
-     * I/O error occurs opening the module content. The {@code get()} method
-     * throws {@link SecurityException} if opening the module is denied by the
-     * security manager.
      *
      * @param descriptor
      *        The module descriptor
      * @param location
      *        The module location or {@code null} if not known
-     * @param readerSupplier
-     *        The {@code Supplier} of the {@code ModuleReader}
      */
-    public ModuleReference(ModuleDescriptor descriptor,
-                           URI location,
-                           Supplier<ModuleReader> readerSupplier)
-    {
-        this(descriptor, location, readerSupplier, false, null);
+    protected ModuleReference(ModuleDescriptor descriptor, URI location) {
+        this.descriptor = Objects.requireNonNull(descriptor);
+        this.location = location;
     }
 
     /**
@@ -123,15 +70,14 @@ public final class ModuleReference {
      *
      * @return The module descriptor
      */
-    public ModuleDescriptor descriptor() {
+    public final ModuleDescriptor descriptor() {
         return descriptor;
     }
-
 
     /**
      * Returns the location of this module's content, if known.
      *
-     * <p> This URI, when present, is used as the {@linkplain
+     * <p> This URI, when present, can be used as the {@linkplain
      * java.security.CodeSource#getLocation location} value of a {@link
      * java.security.CodeSource CodeSource} so that a module's classes can be
      * granted specific permissions when loaded by a {@link
@@ -139,17 +85,12 @@ public final class ModuleReference {
      *
      * @return The location or an empty {@code Optional} if not known
      */
-    public Optional<URI> location() {
+    public final Optional<URI> location() {
         return Optional.ofNullable(location);
     }
 
-
     /**
      * Opens the module content for reading.
-     *
-     * <p> This method opens the module content by invoking the {@link
-     * Supplier#get() get()} method of the {@code readSupplier} specified at
-     * construction time. </p>
      *
      * @return A {@code ModuleReader} to read the module
      *
@@ -158,110 +99,5 @@ public final class ModuleReference {
      * @throws SecurityException
      *         If denied by the security manager
      */
-    public ModuleReader open() throws IOException {
-        try {
-            return readerSupplier.get();
-        } catch (UncheckedIOException e) {
-            throw e.getCause();
-        }
-
-    }
-
-
-    /**
-     * Returns {@code true} if this module has been patched via --patch-module.
-     */
-    boolean isPatched() {
-        return patched;
-    }
-
-    /**
-     * Returns the hash supplier for this module.
-     */
-    HashSupplier hasher() {
-        return hasher;
-    }
-
-    /**
-     * Computes the hash of this module, returning it as a hex string.
-     * Returns {@code null} if the hash cannot be computed.
-     *
-     * @throws java.io.UncheckedIOException if an I/O error occurs
-     */
-    String computeHash(String algorithm) {
-        String result = cachedHash;
-        if (result != null)
-            return result;
-        if (hasher == null)
-            return null;
-        cachedHash = result = hasher.generate(algorithm);
-        return result;
-    }
-
-    /**
-     * Computes a hash code for this module reference.
-     *
-     * <p> The hash code is based upon the components of the reference, and
-     * satisfies the general contract of the {@link Object#hashCode
-     * Object.hashCode} method. </p>
-     *
-     * @return The hash-code value for this module reference
-     */
-    @Override
-    public int hashCode() {
-        int hc = hash;
-        if (hc == 0) {
-            hc = Objects.hash(descriptor, location, readerSupplier, hasher,
-                    Boolean.valueOf(patched));
-            if (hc == 0)
-                hc = -1;
-            hash = hc;
-        }
-        return hc;
-    }
-
-    private int hash;
-
-    /**
-     * Tests this module reference for equality with the given object.
-     *
-     * <p> If the given object is not a {@code ModuleReference} then this
-     * method returns {@code false}. Two module references are equal if their
-     * module descriptors are equal, their locations are equal or both unknown,
-     * and were created with equal supplier objects to access the module
-     * content. </p>
-     *
-     * <p> This method satisfies the general contract of the {@link
-     * java.lang.Object#equals(Object) Object.equals} method. </p>
-     *
-     * @param   ob
-     *          the object to which this object is to be compared
-     *
-     * @return  {@code true} if, and only if, the given object is a module
-     *          reference that is equal to this module reference
-     */
-    @Override
-    public boolean equals(Object ob) {
-        if (!(ob instanceof ModuleReference))
-            return false;
-        ModuleReference that = (ModuleReference)ob;
-
-        return Objects.equals(this.descriptor, that.descriptor)
-                && Objects.equals(this.location, that.location)
-                && Objects.equals(this.readerSupplier, that.readerSupplier)
-                && Objects.equals(this.hasher, that.hasher)
-                && this.patched == that.patched;
-    }
-
-    /**
-     * Returns a string describing this module reference.
-     *
-     * @return A string describing this module reference
-     */
-    @Override
-    public String toString() {
-        return ("[module " + descriptor().name()
-                + ", location=" + location + "]");
-    }
-
+    public abstract ModuleReader open() throws IOException;
 }

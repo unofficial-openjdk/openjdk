@@ -25,13 +25,12 @@
  * @test
  * @bug 6964768 6964461 6964469 6964487 6964460 6964481 6980021
  * @summary need test program to validate javac resource bundles
- * @modules jdk.jdeps/com.sun.tools.classfile
- *          jdk.compiler/com.sun.tools.javac.code
+ * @modules jdk.compiler/com.sun.tools.javac.code
+ *          jdk.compiler/com.sun.tools.javac.resources:open
+ *          jdk.jdeps/com.sun.tools.classfile
  */
 
 import java.io.*;
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.util.*;
 import javax.tools.*;
 import com.sun.tools.classfile.*;
@@ -394,7 +393,7 @@ public class CheckResourceKeys {
      * Get the set of keys from the javac resource bundles.
      */
     Set<String> getResourceKeys() {
-        Module jdk_compiler = Layer.boot().findModule("jdk.compiler").get();
+        Module jdk_compiler = ModuleLayer.boot().findModule("jdk.compiler").get();
         Set<String> results = new TreeSet<String>();
         for (String name : new String[]{"javac", "compiler"}) {
             ResourceBundle b =

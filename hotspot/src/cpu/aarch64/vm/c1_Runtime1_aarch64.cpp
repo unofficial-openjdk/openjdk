@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -728,7 +728,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
 
           __ tlab_allocate(obj, obj_size, 0, t1, t2, slow_path);
 
-          __ initialize_object(obj, klass, obj_size, 0, t1, t2);
+          __ initialize_object(obj, klass, obj_size, 0, t1, t2, /* is_tlab_allocated */ true);
           __ verify_oop(obj);
           __ ldp(r5, r19, Address(__ post(sp, 2 * wordSize)));
           __ ret(lr);
@@ -740,7 +740,7 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           __ eden_allocate(obj, obj_size, 0, t1, slow_path);
           __ incr_allocated_bytes(rthread, obj_size, 0, rscratch1);
 
-          __ initialize_object(obj, klass, obj_size, 0, t1, t2);
+          __ initialize_object(obj, klass, obj_size, 0, t1, t2, /* is_tlab_allocated */ false);
           __ verify_oop(obj);
           __ ldp(r5, r19, Address(__ post(sp, 2 * wordSize)));
           __ ret(lr);
@@ -853,7 +853,9 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
           __ andr(t1, t1, Klass::_lh_header_size_mask);
           __ sub(arr_size, arr_size, t1);  // body length
           __ add(t1, t1, obj);       // body start
-          __ initialize_body(t1, arr_size, 0, t2);
+          if (!ZeroTLAB) {
+           __ initialize_body(t1, arr_size, 0, t2);
+          }
           __ verify_oop(obj);
 
           __ ret(lr);
@@ -1176,6 +1178,15 @@ OopMapSet* Runtime1::generate_code_for(StubID id, StubAssembler* sasm) {
 
         Label done;
         Label runtime;
+
+        // Is marking still active?
+        if (in_bytes(SATBMarkQueue::byte_width_of_active()) == 4) {
+          __ ldrw(tmp, in_progress);
+        } else {
+          assert(in_bytes(SATBMarkQueue::byte_width_of_active()) == 1, "Assumption");
+          __ ldrb(tmp, in_progress);
+        }
+        __ cbzw(tmp, done);
 
         // Can we store original value in the thread's buffer?
         __ ldr(tmp, queue_index);

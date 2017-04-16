@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -274,7 +274,7 @@ class ZipFile implements ZipConstants, Closeable {
      *
      * @throws IllegalStateException if the zip file has been closed
      *
-     * Since 1.7
+     * @since 1.7
      */
     public String getComment() {
         synchronized (this) {
@@ -331,7 +331,9 @@ class ZipFile implements ZipConstants, Closeable {
         ZipFileInputStream in = null;
         synchronized (this) {
             ensureOpen();
-            if (!zc.isUTF8() && (entry.flag & EFS) != 0) {
+            if (Objects.equals(lastEntryName, entry.name)) {
+                pos = lastEntryPos;
+            } else if (!zc.isUTF8() && (entry.flag & EFS) != 0) {
                 pos = zsrc.getEntryPos(zc.getBytesUTF8(entry.name), false);
             } else {
                 pos = zsrc.getEntryPos(zc.getBytes(entry.name), false);
@@ -418,6 +420,7 @@ class ZipFile implements ZipConstants, Closeable {
                     Integer.MAX_VALUE : (int) avail);
         }
 
+        @SuppressWarnings("deprecation")
         protected void finalize() throws Throwable {
             close();
         }
@@ -526,6 +529,9 @@ class ZipFile implements ZipConstants, Closeable {
                         Spliterator.IMMUTABLE | Spliterator.NONNULL), false);
     }
 
+    private String lastEntryName;
+    private int lastEntryPos;
+
     /* Checks ensureOpen() before invoke this method */
     private ZipEntry getZipEntry(String name, byte[] bname, int pos) {
         byte[] cen = zsrc.cen;
@@ -563,6 +569,8 @@ class ZipFile implements ZipConstants, Closeable {
                 e.comment = zc.toString(cen, start, clen);
             }
         }
+        lastEntryName = e.name;
+        lastEntryPos = pos;
         return e;
     }
 
@@ -634,9 +642,18 @@ class ZipFile implements ZipConstants, Closeable {
      * This will prevent holding up system resources for an undetermined
      * length of time.
      *
+     * @deprecated The {@code finalize} method has been deprecated.
+     *     Subclasses that override {@code finalize} in order to perform cleanup
+     *     should be modified to use alternative cleanup mechanisms and
+     *     to remove the overriding {@code finalize} method.
+     *     When overriding the {@code finalize} method, its implementation must explicitly
+     *     ensure that {@code super.finalize()} is invoked as described in {@link Object#finalize}.
+     *     See the specification for {@link Object#finalize()} for further
+     *     information about migration options.
      * @throws IOException if an I/O error has occurred
      * @see    java.util.zip.ZipFile#close()
      */
+    @Deprecated(since="9")
     protected void finalize() throws IOException {
         close();
     }
@@ -806,6 +823,7 @@ class ZipFile implements ZipConstants, Closeable {
             }
         }
 
+        @SuppressWarnings("deprecation")
         protected void finalize() {
             close();
         }

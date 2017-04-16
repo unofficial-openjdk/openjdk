@@ -48,6 +48,7 @@ import java.util.Queue;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * An unbounded concurrent {@linkplain Deque deque} based on linked nodes.
@@ -66,12 +67,12 @@ import java.util.function.Consumer;
  * asynchronous nature of these deques, determining the current number
  * of elements requires a traversal of the elements, and so may report
  * inaccurate results if this collection is modified during traversal.
- * Additionally, the bulk operations {@code addAll},
- * {@code removeAll}, {@code retainAll}, {@code containsAll},
- * and {@code toArray} are <em>not</em> guaranteed
- * to be performed atomically. For example, an iterator operating
- * concurrently with an {@code addAll} operation might view only some
- * of the added elements.
+ *
+ * <p>Bulk operations that add, remove, or examine multiple elements,
+ * such as {@link #addAll}, {@link #removeIf} or {@link #forEach},
+ * are <em>not</em> guaranteed to be performed atomically.
+ * For example, a {@code forEach} traversal concurrent with an {@code
+ * addAll} operation might observe only some of the added elements.
  *
  * <p>This class and its iterator implement all of the <em>optional</em>
  * methods of the {@link Deque} and {@link Iterator} interfaces.
@@ -682,8 +683,9 @@ public class ConcurrentLinkedDeque<E>
      */
     final Node<E> succ(Node<E> p) {
         // TODO: should we skip deleted nodes here?
-        Node<E> q = p.next;
-        return (p == q) ? first() : q;
+        if (p == (p = p.next))
+            p = first();
+        return p;
     }
 
     /**
@@ -864,8 +866,8 @@ public class ConcurrentLinkedDeque<E>
 
     public E peekFirst() {
         for (Node<E> p = first(); p != null; p = succ(p)) {
-            E item = p.item;
-            if (item != null)
+            final E item;
+            if ((item = p.item) != null)
                 return item;
         }
         return null;
@@ -873,8 +875,8 @@ public class ConcurrentLinkedDeque<E>
 
     public E peekLast() {
         for (Node<E> p = last(); p != null; p = pred(p)) {
-            E item = p.item;
-            if (item != null)
+            final E item;
+            if ((item = p.item) != null)
                 return item;
         }
         return null;
@@ -896,8 +898,9 @@ public class ConcurrentLinkedDeque<E>
 
     public E pollFirst() {
         for (Node<E> p = first(); p != null; p = succ(p)) {
-            E item = p.item;
-            if (item != null && ITEM.compareAndSet(p, item, null)) {
+            final E item;
+            if ((item = p.item) != null
+                && ITEM.compareAndSet(p, item, null)) {
                 unlink(p);
                 return item;
             }
@@ -907,8 +910,9 @@ public class ConcurrentLinkedDeque<E>
 
     public E pollLast() {
         for (Node<E> p = last(); p != null; p = pred(p)) {
-            E item = p.item;
-            if (item != null && ITEM.compareAndSet(p, item, null)) {
+            final E item;
+            if ((item = p.item) != null
+                && ITEM.compareAndSet(p, item, null)) {
                 unlink(p);
                 return item;
             }
@@ -993,9 +997,10 @@ public class ConcurrentLinkedDeque<E>
     public boolean removeFirstOccurrence(Object o) {
         Objects.requireNonNull(o);
         for (Node<E> p = first(); p != null; p = succ(p)) {
-            E item = p.item;
-            if (item != null && o.equals(item) &&
-                ITEM.compareAndSet(p, item, null)) {
+            final E item;
+            if ((item = p.item) != null
+                && o.equals(item)
+                && ITEM.compareAndSet(p, item, null)) {
                 unlink(p);
                 return true;
             }
@@ -1018,9 +1023,10 @@ public class ConcurrentLinkedDeque<E>
     public boolean removeLastOccurrence(Object o) {
         Objects.requireNonNull(o);
         for (Node<E> p = last(); p != null; p = pred(p)) {
-            E item = p.item;
-            if (item != null && o.equals(item) &&
-                ITEM.compareAndSet(p, item, null)) {
+            final E item;
+            if ((item = p.item) != null
+                && o.equals(item)
+                && ITEM.compareAndSet(p, item, null)) {
                 unlink(p);
                 return true;
             }
@@ -1039,8 +1045,8 @@ public class ConcurrentLinkedDeque<E>
     public boolean contains(Object o) {
         if (o != null) {
             for (Node<E> p = first(); p != null; p = succ(p)) {
-                E item = p.item;
-                if (item != null && o.equals(item))
+                final E item;
+                if ((item = p.item) != null && o.equals(item))
                     return true;
             }
         }
@@ -1181,8 +1187,8 @@ public class ConcurrentLinkedDeque<E>
             int charLength = 0;
             int size = 0;
             for (Node<E> p = first(); p != null;) {
-                E item = p.item;
-                if (item != null) {
+                final E item;
+                if ((item = p.item) != null) {
                     if (a == null)
                         a = new String[4];
                     else if (size == a.length)
@@ -1207,8 +1213,8 @@ public class ConcurrentLinkedDeque<E>
         restartFromHead: for (;;) {
             int size = 0;
             for (Node<E> p = first(); p != null;) {
-                E item = p.item;
-                if (item != null) {
+                final E item;
+                if ((item = p.item) != null) {
                     if (x == null)
                         x = new Object[4];
                     else if (size == x.length)
@@ -1360,8 +1366,8 @@ public class ConcurrentLinkedDeque<E>
                     nextItem = null;
                     break;
                 }
-                E item = p.item;
-                if (item != null) {
+                final E item;
+                if ((item = p.item) != null) {
                     nextNode = p;
                     nextItem = item;
                     break;
@@ -1391,90 +1397,75 @@ public class ConcurrentLinkedDeque<E>
 
     /** Forward iterator */
     private class Itr extends AbstractItr {
+        Itr() {}                        // prevent access constructor creation
         Node<E> startNode() { return first(); }
         Node<E> nextNode(Node<E> p) { return succ(p); }
     }
 
     /** Descending iterator */
     private class DescendingItr extends AbstractItr {
+        DescendingItr() {}              // prevent access constructor creation
         Node<E> startNode() { return last(); }
         Node<E> nextNode(Node<E> p) { return pred(p); }
     }
 
     /** A customized variant of Spliterators.IteratorSpliterator */
-    static final class CLDSpliterator<E> implements Spliterator<E> {
+    final class CLDSpliterator implements Spliterator<E> {
         static final int MAX_BATCH = 1 << 25;  // max batch array size;
-        final ConcurrentLinkedDeque<E> queue;
         Node<E> current;    // current node; null until initialized
         int batch;          // batch size for splits
         boolean exhausted;  // true when no more nodes
-        CLDSpliterator(ConcurrentLinkedDeque<E> queue) {
-            this.queue = queue;
-        }
 
         public Spliterator<E> trySplit() {
-            Node<E> p;
-            final ConcurrentLinkedDeque<E> q = this.queue;
-            int b = batch;
-            int n = (b <= 0) ? 1 : (b >= MAX_BATCH) ? MAX_BATCH : b + 1;
-            if (!exhausted &&
-                ((p = current) != null || (p = q.first()) != null)) {
-                if (p.item == null && p == (p = p.next))
-                    current = p = q.first();
-                if (p != null && p.next != null) {
-                    Object[] a = new Object[n];
-                    int i = 0;
-                    do {
-                        if ((a[i] = p.item) != null)
-                            ++i;
-                        if (p == (p = p.next))
-                            p = q.first();
-                    } while (p != null && i < n);
-                    if ((current = p) == null)
-                        exhausted = true;
-                    if (i > 0) {
-                        batch = i;
-                        return Spliterators.spliterator
-                            (a, 0, i, (Spliterator.ORDERED |
-                                       Spliterator.NONNULL |
-                                       Spliterator.CONCURRENT));
-                    }
+            Node<E> p, q;
+            if ((p = current()) == null || (q = p.next) == null)
+                return null;
+            int i = 0, n = batch = Math.min(batch + 1, MAX_BATCH);
+            Object[] a = null;
+            do {
+                final E e;
+                if ((e = p.item) != null) {
+                    if (a == null)
+                        a = new Object[n];
+                    a[i++] = e;
                 }
-            }
-            return null;
+                if (p == (p = q))
+                    p = first();
+            } while (p != null && (q = p.next) != null && i < n);
+            setCurrent(p);
+            return (i == 0) ? null :
+                Spliterators.spliterator(a, 0, i, (Spliterator.ORDERED |
+                                                   Spliterator.NONNULL |
+                                                   Spliterator.CONCURRENT));
         }
 
         public void forEachRemaining(Consumer<? super E> action) {
+            Objects.requireNonNull(action);
             Node<E> p;
-            if (action == null) throw new NullPointerException();
-            final ConcurrentLinkedDeque<E> q = this.queue;
-            if (!exhausted &&
-                ((p = current) != null || (p = q.first()) != null)) {
+            if ((p = current()) != null) {
+                current = null;
                 exhausted = true;
                 do {
-                    E e = p.item;
-                    if (p == (p = p.next))
-                        p = q.first();
-                    if (e != null)
+                    final E e;
+                    if ((e = p.item) != null)
                         action.accept(e);
+                    if (p == (p = p.next))
+                        p = first();
                 } while (p != null);
             }
         }
 
         public boolean tryAdvance(Consumer<? super E> action) {
+            Objects.requireNonNull(action);
             Node<E> p;
-            if (action == null) throw new NullPointerException();
-            final ConcurrentLinkedDeque<E> q = this.queue;
-            if (!exhausted &&
-                ((p = current) != null || (p = q.first()) != null)) {
+            if ((p = current()) != null) {
                 E e;
                 do {
                     e = p.item;
                     if (p == (p = p.next))
-                        p = q.first();
+                        p = first();
                 } while (e == null && p != null);
-                if ((current = p) == null)
-                    exhausted = true;
+                setCurrent(p);
                 if (e != null) {
                     action.accept(e);
                     return true;
@@ -1483,11 +1474,24 @@ public class ConcurrentLinkedDeque<E>
             return false;
         }
 
+        private void setCurrent(Node<E> p) {
+            if ((current = p) == null)
+                exhausted = true;
+        }
+
+        private Node<E> current() {
+            Node<E> p;
+            if ((p = current) == null && !exhausted)
+                setCurrent(p = first());
+            return p;
+        }
+
         public long estimateSize() { return Long.MAX_VALUE; }
 
         public int characteristics() {
-            return Spliterator.ORDERED | Spliterator.NONNULL |
-                Spliterator.CONCURRENT;
+            return (Spliterator.ORDERED |
+                    Spliterator.NONNULL |
+                    Spliterator.CONCURRENT);
         }
     }
 
@@ -1508,7 +1512,7 @@ public class ConcurrentLinkedDeque<E>
      * @since 1.8
      */
     public Spliterator<E> spliterator() {
-        return new CLDSpliterator<E>(this);
+        return new CLDSpliterator();
     }
 
     /**
@@ -1527,8 +1531,8 @@ public class ConcurrentLinkedDeque<E>
 
         // Write out all elements in the proper order.
         for (Node<E> p = first(); p != null; p = succ(p)) {
-            E item = p.item;
-            if (item != null)
+            final E item;
+            if ((item = p.item) != null)
                 s.writeObject(item);
         }
 
@@ -1561,6 +1565,57 @@ public class ConcurrentLinkedDeque<E>
             }
         }
         initHeadTail(h, t);
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public boolean removeIf(Predicate<? super E> filter) {
+        Objects.requireNonNull(filter);
+        return bulkRemove(filter);
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public boolean removeAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        return bulkRemove(e -> c.contains(e));
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public boolean retainAll(Collection<?> c) {
+        Objects.requireNonNull(c);
+        return bulkRemove(e -> !c.contains(e));
+    }
+
+    /** Implementation of bulk remove methods. */
+    private boolean bulkRemove(Predicate<? super E> filter) {
+        boolean removed = false;
+        for (Node<E> p = first(), succ; p != null; p = succ) {
+            succ = succ(p);
+            final E item;
+            if ((item = p.item) != null
+                && filter.test(item)
+                && ITEM.compareAndSet(p, item, null)) {
+                unlink(p);
+                removed = true;
+            }
+        }
+        return removed;
+    }
+
+    /**
+     * @throws NullPointerException {@inheritDoc}
+     */
+    public void forEach(Consumer<? super E> action) {
+        Objects.requireNonNull(action);
+        E item;
+        for (Node<E> p = first(); p != null; p = succ(p))
+            if ((item = p.item) != null)
+                action.accept(item);
     }
 
     // VarHandle mechanics

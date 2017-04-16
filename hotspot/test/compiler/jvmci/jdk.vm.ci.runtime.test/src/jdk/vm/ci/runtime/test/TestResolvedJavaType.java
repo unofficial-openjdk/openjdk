@@ -23,12 +23,12 @@
 
 /**
  * @test
- * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @requires vm.jvmci
  * @library ../../../../../
  * @modules java.base/jdk.internal.reflect
- *          jdk.vm.ci/jdk.vm.ci.meta
- *          jdk.vm.ci/jdk.vm.ci.runtime
- *          jdk.vm.ci/jdk.vm.ci.common
+ *          jdk.internal.vm.ci/jdk.vm.ci.meta
+ *          jdk.internal.vm.ci/jdk.vm.ci.runtime
+ *          jdk.internal.vm.ci/jdk.vm.ci.common
  *          java.base/jdk.internal.misc
  * @run junit/othervm -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI jdk.vm.ci.runtime.test.TestResolvedJavaType
  */

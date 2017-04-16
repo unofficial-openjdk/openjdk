@@ -35,6 +35,7 @@
   LOG_TAG(add) \
   LOG_TAG(age) \
   LOG_TAG(alloc) \
+  LOG_TAG(aot) \
   LOG_TAG(annotation) \
   LOG_TAG(arguments) \
   LOG_TAG(attach) \
@@ -59,8 +60,10 @@
   LOG_TAG(ergo) \
   LOG_TAG(exceptions) \
   LOG_TAG(exit) \
+  LOG_TAG(fingerprint) \
   LOG_TAG(freelist) \
   LOG_TAG(gc) \
+  LOG_TAG(hashtables) \
   LOG_TAG(heap) \
   LOG_TAG(humongous) \
   LOG_TAG(ihop) \
@@ -89,6 +92,7 @@
   LOG_TAG(oopmap) \
   LOG_TAG(os) \
   LOG_TAG(pagesize) \
+  LOG_TAG(patch) \
   LOG_TAG(path) \
   LOG_TAG(phases) \
   LOG_TAG(plab) \

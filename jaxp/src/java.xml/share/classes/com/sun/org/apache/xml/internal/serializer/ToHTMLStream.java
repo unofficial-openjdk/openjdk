@@ -1,17 +1,15 @@
 /*
- * reserved comment block
- * DO NOT REMOVE OR ALTER!
+ * Copyright (c) 2014, 2016 Oracle and/or its affiliates. All rights reserved.
  */
 /*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements. See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership. The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the  "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,22 +17,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*
- * $Id: ToHTMLStream.java,v 1.2.4.1 2005/09/15 08:15:26 suresh_emailid Exp $
- */
+
 package com.sun.org.apache.xml.internal.serializer;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
 import javax.xml.transform.Result;
 
-import com.sun.org.apache.xml.internal.serializer.utils.MsgKey;
-import com.sun.org.apache.xml.internal.serializer.utils.Utils;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
+
+import com.sun.org.apache.xml.internal.serializer.utils.MsgKey;
+import com.sun.org.apache.xml.internal.serializer.utils.Utils;
 
 /**
  * This serializer takes a series of SAX or
@@ -52,9 +47,8 @@ public final class ToHTMLStream extends ToStream
     /** This flag is set while receiving events from the DTD */
     protected boolean m_inDTD = false;
 
-    /** True if the current element is a block element.  (seems like
-     *  this needs to be a stack. -sb). */
-    private boolean m_inBlockElem = false;
+    /** True if the previous element is a block element. */
+    private boolean m_isprevblock = false;
 
     /**
      * Map that tells which XML characters should have special treatment, and it
@@ -723,7 +717,9 @@ public final class ToHTMLStream extends ToStream
      */
     public final void endDocument() throws org.xml.sax.SAXException
     {
-
+        if (m_doIndent) {
+            flushCharactersBuffer();
+        }
         flushPending();
         if (m_doIndent && !m_isprevtext)
         {
@@ -743,26 +739,50 @@ public final class ToHTMLStream extends ToStream
     }
 
     /**
-     *  Receive notification of the beginning of an element.
+     * If the previous is an inline element, won't insert a new line before the
+     * text.
+     *
+     */
+    protected boolean shouldIndentForText() {
+        return super.shouldIndentForText() && m_isprevblock;
+    }
+
+    /**
+     * Only check m_doIndent, disregard m_ispreserveSpace.
+     *
+     * @return True if the content should be formatted.
+     */
+    protected boolean shouldFormatOutput() {
+        return m_doIndent;
+    }
+
+    /**
+     * Receive notification of the beginning of an element.
      *
      *
-     *  @param namespaceURI
-     *  @param localName
-     *  @param name The element type name.
-     *  @param atts The attributes attached to the element, if any.
-     *  @throws org.xml.sax.SAXException Any SAX exception, possibly
-     *             wrapping another exception.
-     *  @see #endElement
-     *  @see org.xml.sax.AttributeList
+     * @param namespaceURI
+     * @param localName
+     * @param name
+     *            The element type name.
+     * @param atts
+     *            The attributes attached to the element, if any.
+     * @throws org.xml.sax.SAXException
+     *             Any SAX exception, possibly wrapping another exception.
+     * @see #endElement
+     * @see org.xml.sax.AttributeList
      */
     public void startElement(
         String namespaceURI,
         String localName,
         String name,
         Attributes atts)
-        throws org.xml.sax.SAXException
+        throws SAXException
     {
-
+        if (m_doIndent) {
+            // will add extra one if having namespace but no matter
+            m_childNodeNum++;
+            flushCharactersBuffer();
+        }
         ElemContext elemContext = m_elemContext;
 
         // clean up any pending things first
@@ -800,22 +820,18 @@ public final class ToHTMLStream extends ToStream
             // deal with indentation issues first
             if (m_doIndent)
             {
-
                 boolean isBlockElement = (elemFlags & ElemDesc.BLOCK) != 0;
-                if (m_ispreserve)
-                    m_ispreserve = false;
-                else if (
-                    (null != elemContext.m_elementName)
-                    && (!m_inBlockElem
-                        || isBlockElement) /* && !isWhiteSpaceSensitive */
-                    )
+                if ((elemContext.m_elementName != null)
+                        // If this element is a block element,
+                        // or if this is not a block element, then if the
+                        // previous is neither a text nor an inline
+                        && (isBlockElement || (!(m_isprevtext || !m_isprevblock))))
                 {
                     m_startNewLine = true;
 
                     indent();
-
                 }
-                m_inBlockElem = !isBlockElement;
+                m_isprevblock = isBlockElement;
             }
 
             // save any attributes for later processing
@@ -827,7 +843,10 @@ public final class ToHTMLStream extends ToStream
             writer.write('<');
             writer.write(name);
 
-
+            if (m_doIndent) {
+                m_childNodeNumStack.add(m_childNodeNum);
+                m_childNodeNum = 0;
+            }
 
             if (m_tracer != null)
                 firePseudoAttributes();
@@ -850,6 +869,15 @@ public final class ToHTMLStream extends ToStream
                 m_elemContext = elemContext;
                 elemContext.m_elementDesc = elemDesc;
                 elemContext.m_isRaw = (elemFlags & ElemDesc.RAW) != 0;
+
+                // set m_startNewLine for the next element
+                if (m_doIndent) {
+                    // elemFlags is equivalent to m_elemContext.m_elementDesc.getFlags(),
+                    // in this branch m_elemContext.m_elementName is not null
+                    boolean isBlockElement = (elemFlags & ElemDesc.BLOCK) != 0;
+                    if (isBlockElement)
+                        m_startNewLine = true;
+                }
             }
 
 
@@ -893,6 +921,9 @@ public final class ToHTMLStream extends ToStream
         final String name)
         throws org.xml.sax.SAXException
     {
+        if (m_doIndent) {
+            flushCharactersBuffer();
+        }
         // deal with any pending issues
         if (m_cdataTagOpen)
             closeCDATA();
@@ -919,18 +950,18 @@ public final class ToHTMLStream extends ToStream
                 final boolean isBlockElement = (elemFlags&ElemDesc.BLOCK) != 0;
                 boolean shouldIndent = false;
 
-                if (m_ispreserve)
-                {
-                    m_ispreserve = false;
-                }
-                else if (m_doIndent && (!m_inBlockElem || isBlockElement))
+                // If this element is a block element,
+                // or if this is not a block element, then if the previous is
+                // neither a text nor an inline
+                if (isBlockElement || (!(m_isprevtext || !m_isprevblock)))
                 {
                     m_startNewLine = true;
                     shouldIndent = true;
                 }
-                if (!elemContext.m_startTagOpen && shouldIndent)
+                if (!elemContext.m_startTagOpen && shouldIndent && (m_childNodeNum > 1 || !m_isprevtext))
                     indent(elemContext.m_currentElemDepth - 1);
-                m_inBlockElem = !isBlockElement;
+
+                m_isprevblock = isBlockElement;
             }
 
             final java.io.Writer writer = m_writer;
@@ -974,11 +1005,11 @@ public final class ToHTMLStream extends ToStream
                 }
             }
 
-            // clean up because the element has ended
-            if ((elemFlags & ElemDesc.WHITESPACESENSITIVE) != 0)
-                m_ispreserve = true;
-            m_isprevtext = false;
-
+            if (m_doIndent) {
+                m_childNodeNum = m_childNodeNumStack.remove(m_childNodeNumStack.size() - 1);
+                // clean up because the element has ended
+                m_isprevtext = false;
+            }
             // fire off the end element event
             if (m_tracer != null)
                 super.fireEndElem(name);
@@ -994,11 +1025,6 @@ public final class ToHTMLStream extends ToStream
             }
 
             // some more clean because the element has ended.
-            if (!elemContext.m_startTagOpen)
-            {
-                if (m_doIndent && !m_preserves.isEmpty())
-                    m_preserves.pop();
-            }
             m_elemContext = elemContext.m_prev;
 //            m_isRawStack.pop();
         }
@@ -1501,7 +1527,6 @@ public final class ToHTMLStream extends ToStream
                     closeStartTag();
                     m_elemContext.m_startTagOpen = false;
                 }
-                m_ispreserve = true;
 
 //              With m_ispreserve just set true it looks like shouldIndent()
 //              will always return false, so drop any possible indentation.
@@ -1511,7 +1536,7 @@ public final class ToHTMLStream extends ToStream
                 // writer.write("<![CDATA[");
                 // writer.write(chars, start, length);
                 writeNormalizedChars(chars, start, length, false, m_lineSepUse);
-
+                m_isprevtext = true;
                 // writer.write("]]>");
 
                 // time to generate characters event
@@ -1566,7 +1591,6 @@ public final class ToHTMLStream extends ToStream
     public final void cdata(char ch[], int start, int length)
         throws org.xml.sax.SAXException
     {
-
         if ((null != m_elemContext.m_elementName)
             && (m_elemContext.m_elementName.equalsIgnoreCase("SCRIPT")
                 || m_elemContext.m_elementName.equalsIgnoreCase("STYLE")))
@@ -1578,8 +1602,6 @@ public final class ToHTMLStream extends ToStream
                     closeStartTag();
                     m_elemContext.m_startTagOpen = false;
                 }
-
-                m_ispreserve = true;
 
                 if (shouldIndent())
                     indent();
@@ -1617,7 +1639,10 @@ public final class ToHTMLStream extends ToStream
     public void processingInstruction(String target, String data)
         throws org.xml.sax.SAXException
     {
-
+        if (m_doIndent) {
+            m_childNodeNum++;
+            flushCharactersBuffer();
+        }
         // Process any pending starDocument and startElement first.
         flushPending();
 
@@ -1766,11 +1791,6 @@ public final class ToHTMLStream extends ToStream
              */
             if (m_StringOfCDATASections != null)
                 m_elemContext.m_isCdataSection = isCdataSection();
-            if (m_doIndent)
-            {
-                m_isprevtext = false;
-                m_preserves.push(m_ispreserve);
-            }
 
             }
             catch(IOException e)
@@ -1945,10 +1965,8 @@ public final class ToHTMLStream extends ToStream
 
     private void initToHTMLStream()
     {
-//        m_elementDesc = null;
-        m_inBlockElem = false;
+        m_isprevblock = false;
         m_inDTD = false;
-//        m_isRawStack.clear();
         m_omitMetaTag = false;
         m_specialEscapeURLs = true;
     }

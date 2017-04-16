@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017 Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.PrintStream;
+import java.net.InetAddress;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,15 +44,16 @@ import java.util.ResourceBundle;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import javax.tools.StandardJavaFileManager;
 import jdk.internal.jshell.debug.InternalDebugControl;
 import jdk.jshell.Snippet.Status;
-import jdk.jshell.execution.JDIDefaultExecutionControl;
 import jdk.jshell.spi.ExecutionControl.EngineTerminationException;
 import jdk.jshell.spi.ExecutionControl.ExecutionControlException;
+import jdk.jshell.spi.ExecutionControlProvider;
 import jdk.jshell.spi.ExecutionEnv;
-import static jdk.jshell.execution.Util.failOverExecutionControlGenerator;
 import static jdk.jshell.Util.expunge;
 
 /**
@@ -77,7 +79,9 @@ import static jdk.jshell.Util.expunge;
  * <p>
  * This class is not thread safe, except as noted, all access should be through
  * a single thread.
+ *
  * @author Robert Field
+ * @since 9
  */
 public class JShell implements AutoCloseable {
 
@@ -92,7 +96,7 @@ public class JShell implements AutoCloseable {
     final BiFunction<Snippet, Integer, String> idGenerator;
     final List<String> extraRemoteVMOptions;
     final List<String> extraCompilerOptions;
-    final ExecutionControl.Generator executionControlGenerator;
+    final Function<StandardJavaFileManager, StandardJavaFileManager> fileManagerMapping;
 
     private int nextKeyIndex = 1;
 
@@ -102,13 +106,13 @@ public class JShell implements AutoCloseable {
     private final Map<Subscription, Consumer<SnippetEvent>> keyStatusListeners = new HashMap<>();
     private boolean closed = false;
 
-    private ExecutionControl executionControl = null;
+    private final ExecutionControl executionControl;
     private SourceCodeAnalysisImpl sourceCodeAnalysis = null;
 
     private static final String L10N_RB_NAME    = "jdk.jshell.resources.l10n";
     private static ResourceBundle outputRB  = null;
 
-    JShell(Builder b) {
+    JShell(Builder b) throws IllegalStateException {
         this.in = b.in;
         this.out = b.out;
         this.err = b.err;
@@ -116,12 +120,24 @@ public class JShell implements AutoCloseable {
         this.idGenerator = b.idGenerator;
         this.extraRemoteVMOptions = b.extraRemoteVMOptions;
         this.extraCompilerOptions = b.extraCompilerOptions;
-        this.executionControlGenerator = b.executionControlGenerator==null
-                ? failOverExecutionControlGenerator(
-                        JDIDefaultExecutionControl.launch(),
-                        JDIDefaultExecutionControl.listen("localhost"),
-                        JDIDefaultExecutionControl.listen(null))
-                : b.executionControlGenerator;
+        this.fileManagerMapping = b.fileManagerMapping;
+        try {
+            if (b.executionControlProvider != null) {
+                executionControl = b.executionControlProvider.generate(new ExecutionEnvImpl(),
+                        b.executionControlParameters == null
+                                ? b.executionControlProvider.defaultParameters()
+                                : b.executionControlParameters);
+            } else {
+                String loopback = InetAddress.getLoopbackAddress().getHostAddress();
+                String spec = b.executionControlSpec == null
+                        ? "failover:0(jdi:hostname(" + loopback + ")),"
+                          + "1(jdi:launch(true)), 2(jdi)"
+                        : b.executionControlSpec;
+                executionControl = ExecutionControl.generate(new ExecutionEnvImpl(), spec);
+            }
+        } catch (Throwable ex) {
+            throw new IllegalStateException("Launching JShell execution engine threw: " + ex.getMessage(), ex);
+        }
 
         this.maps = new SnippetMaps(this);
         this.keyMap = new KeyMap(this);
@@ -158,7 +174,10 @@ public class JShell implements AutoCloseable {
         BiFunction<Snippet, Integer, String> idGenerator = null;
         List<String> extraRemoteVMOptions = new ArrayList<>();
         List<String> extraCompilerOptions = new ArrayList<>();
-        ExecutionControl.Generator executionControlGenerator;
+        ExecutionControlProvider executionControlProvider;
+        Map<String,String> executionControlParameters;
+        String executionControlSpec;
+        Function<StandardJavaFileManager, StandardJavaFileManager> fileManagerMapping;
 
         Builder() { }
 
@@ -316,14 +335,61 @@ public class JShell implements AutoCloseable {
 
         /**
          * Sets the custom engine for execution. Snippet execution will be
-         * provided by the specified {@link ExecutionControl} instance.
+         * provided by the {@link ExecutionControl} instance selected by the
+         * specified execution control spec.
+         * Use, at most, one of these overloaded {@code executionEngine} builder
+         * methods.
          *
-         * @param executionControlGenerator the execution engine generator
+         * @param executionControlSpec the execution control spec,
+         * which is documented in the {@link jdk.jshell.spi}
+         * package documentation.
          * @return the {@code Builder} instance (for use in chained
          * initialization)
          */
-        public Builder executionEngine(ExecutionControl.Generator executionControlGenerator) {
-            this.executionControlGenerator = executionControlGenerator;
+        public Builder executionEngine(String executionControlSpec) {
+            this.executionControlSpec = executionControlSpec;
+            return this;
+        }
+
+        /**
+         * Sets the custom engine for execution. Snippet execution will be
+         * provided by the specified {@link ExecutionControl} instance.
+         * Use, at most, one of these overloaded {@code executionEngine} builder
+         * methods.
+         *
+         * @param executionControlProvider the provider to supply the execution
+         * engine
+         * @param executionControlParameters the parameters to the provider, or
+         * {@code null} for default parameters
+         * @return the {@code Builder} instance (for use in chained
+         * initialization)
+         */
+        public Builder executionEngine(ExecutionControlProvider executionControlProvider,
+                Map<String,String> executionControlParameters) {
+            this.executionControlProvider = executionControlProvider;
+            this.executionControlParameters = executionControlParameters;
+            return this;
+        }
+
+        /**
+         * Configure the {@code FileManager} to be used by compilation and
+         * source analysis.
+         * If not set or passed null, the compiler's standard file manager will
+         * be used (identity mapping).
+         * For use in special applications where the compiler's normal file
+         * handling needs to be overridden.  See the file manager APIs for more
+         * information.
+         * The file manager input enables forwarding file managers, if this
+         * is not needed, the incoming file manager can be ignored (constant
+         * function).
+         *
+         * @param mapping a function that given the compiler's standard file
+         * manager, returns a file manager to use
+         * @return the {@code Builder} instance (for use in chained
+         * initialization)
+         */
+        public Builder fileManager(Function<StandardJavaFileManager, StandardJavaFileManager> mapping) {
+            this.fileManagerMapping = mapping;
             return this;
         }
 
@@ -332,9 +398,10 @@ public class JShell implements AutoCloseable {
          * functionality. This creates a remote process for execution. It is
          * thus important to close the returned instance.
          *
+         * @throws IllegalStateException if the {@code JShell} instance could not be created.
          * @return the state engine
          */
-        public JShell build() {
+        public JShell build() throws IllegalStateException {
             return new JShell(this);
         }
     }
@@ -346,9 +413,10 @@ public class JShell implements AutoCloseable {
      * That is, create an instance of {@code JShell}.
      * <p>
      * Equivalent to {@link JShell#builder() JShell.builder()}{@link JShell.Builder#build() .build()}.
+     * @throws IllegalStateException if the {@code JShell} instance could not be created.
      * @return an instance of {@code JShell}.
      */
-    public static JShell create() {
+    public static JShell create() throws IllegalStateException {
         return builder().build();
     }
 
@@ -459,8 +527,10 @@ public class JShell implements AutoCloseable {
      * Note that the unnamed package is not accessible from the package in which
      * {@link JShell#eval(String)} code is placed.
      * @param path the path to add to the classpath.
+     * @throws IllegalStateException if this {@code JShell} instance is closed.
      */
     public void addToClasspath(String path) {
+        checkIfAlive();
         // Compiler
         taskFactory.addToClasspath(path);
         // Runtime
@@ -503,10 +573,7 @@ public class JShell implements AutoCloseable {
      */
     @Override
     public void close() {
-        if (!closed) {
-            closeDown();
-            executionControl().close();
-        }
+        closeDown();
     }
 
     /**
@@ -731,14 +798,8 @@ public class JShell implements AutoCloseable {
     }
 
     // --- private / package-private implementation support ---
+
     ExecutionControl executionControl() {
-        if (executionControl == null) {
-            try {
-                executionControl =  executionControlGenerator.generate(new ExecutionEnvImpl());
-            } catch (Throwable ex) {
-                throw new InternalError("Launching execution engine threw: " + ex.getMessage(), ex);
-            }
-        }
         return executionControl;
     }
 
@@ -785,6 +846,15 @@ public class JShell implements AutoCloseable {
             } catch (Throwable thr) {
                 // Don't care about dying exceptions
             }
+            try {
+                executionControl().close();
+            } catch (Throwable ex) {
+                // don't care about exceptions on close
+            }
+            if (sourceCodeAnalysis != null) {
+                sourceCodeAnalysis.close();
+            }
+            InternalDebugControl.release(this);
         }
     }
 

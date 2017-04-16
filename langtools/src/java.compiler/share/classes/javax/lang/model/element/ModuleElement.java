@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,21 +33,23 @@ import java.util.List;
  *
  * @see javax.lang.model.util.Elements#getModuleOf
  * @since 9
+ * @spec JPMS
  */  // TODO: add @jls to module section
 public interface ModuleElement extends Element, QualifiedNameable {
 
     /**
-     * Returns the fully qualified name of this module.
+     * Returns the fully qualified name of this module.  For an
+     * {@linkplain #isUnnamed() unnamed module}, an empty name is returned.
      *
-     * @return the qualified name of this module, or an
+     * @return the fully qualified name of this module, or an
      * empty name if this is an unnamed module
      */
     @Override
     Name getQualifiedName();
 
     /**
-     * Returns the simple name of this module.  For an unnamed
-     * module, an empty name is returned.
+     * Returns the simple name of this module.  For an {@linkplain
+     * #isUnnamed() unnamed module}, an empty name is returned.
      *
      * @return the simple name of this module or an empty name if
      * this is an unnamed module
@@ -61,6 +63,15 @@ public interface ModuleElement extends Element, QualifiedNameable {
      */
     @Override
     List<? extends Element> getEnclosedElements();
+
+    /**
+     * Returns {@code true} if this is an open module and {@code
+     * false} otherwise.
+     *
+     * @return {@code true} if this is an open module and {@code
+     * false} otherwise
+     */ // TODO: add @jls to unnamed module section
+    boolean isOpen();
 
     /**
      * Returns {@code true} if this is an unnamed module and {@code
@@ -94,12 +105,15 @@ public interface ModuleElement extends Element, QualifiedNameable {
      * future versions of the Java&trade; programming language.
      *
      * @since 9
+     * @spec JPMS
      */
     enum DirectiveKind {
-        /** A "requires [public] module-name" directive. */
+        /** A "requires (static|transitive)* module-name" directive. */
         REQUIRES,
         /** An "exports package-name [to module-name-list]" directive. */
         EXPORTS,
+        /** An "opens package-name [to module-name-list]" directive. */
+        OPENS,
         /** A "uses service-name" directive. */
         USES,
         /** A "provides service-name with implementation-name" directive. */
@@ -110,6 +124,7 @@ public interface ModuleElement extends Element, QualifiedNameable {
      * Represents a "module statement" within the declaration of this module.
      *
      * @since 9
+     * @spec JPMS
      *
      */ // TODO: add jls to Module Statement
     interface Directive {
@@ -119,18 +134,147 @@ public interface ModuleElement extends Element, QualifiedNameable {
          * @return the kind of this directive
          */
         DirectiveKind getKind();
+
+        /**
+         * Applies a visitor to this directive.
+         *
+         * @param <R> the return type of the visitor's methods
+         * @param <P> the type of the additional parameter to the visitor's methods
+         * @param v   the visitor operating on this directive
+         * @param p   additional parameter to the visitor
+         * @return a visitor-specified result
+         */
+        <R, P> R accept(DirectiveVisitor<R, P> v, P p);
+    }
+
+    /**
+     * A visitor of module directives, in the style of the visitor design
+     * pattern.  Classes implementing this interface are used to operate
+     * on a directive when the kind of directive is unknown at compile time.
+     * When a visitor is passed to a directive's {@link Directive#accept
+     * accept} method, the <tt>visit<i>Xyz</i></tt> method applicable
+     * to that directive is invoked.
+     *
+     * <p> Classes implementing this interface may or may not throw a
+     * {@code NullPointerException} if the additional parameter {@code p}
+     * is {@code null}; see documentation of the implementing class for
+     * details.
+     *
+     * <p> <b>WARNING:</b> It is possible that methods will be added to
+     * this interface to accommodate new, currently unknown, language
+     * structures added to future versions of the Java&trade; programming
+     * language. Methods to accommodate new language constructs will
+     * be added in a source <em>compatible</em> way using
+     * <em>default methods</em>.
+     *
+     * @param <R> the return type of this visitor's methods.  Use {@link
+     *            Void} for visitors that do not need to return results.
+     * @param <P> the type of the additional parameter to this visitor's
+     *            methods.  Use {@code Void} for visitors that do not need an
+     *            additional parameter.
+     *
+     * @since 9
+     * @spec JPMS
+     */
+    interface DirectiveVisitor<R, P> {
+        /**
+         * Visits any directive as if by passing itself to that
+         * directive's {@link Directive#accept accept} method and passing
+         * {@code null} for the additional parameter.
+         * The invocation {@code v.visit(d)} is equivalent to
+         * {@code d.accept(v, null)}.
+         * @param d  the directive to visit
+         * @return a visitor-specified result
+         * @implSpec This implementation is {@code visit(d, null)}
+         */
+        default R visit(Directive d) {
+            return d.accept(this, null);
+        }
+
+        /**
+         * Visits any directive as if by passing itself to that
+         * directive's {@link Directive#accept accept} method.
+         * The invocation {@code v.visit(d, p)} is equivalent to
+         * {@code d.accept(v, p)}.
+         * @param d  the directive to visit
+         * @param p  a visitor-specified parameter
+         * @return a visitor-specified result
+         */
+        default R visit(Directive d, P p) {
+            return d.accept(this, p);
+        }
+
+        /**
+         * Visits a {@code requires} directive.
+         * @param d  the directive to visit
+         * @param p  a visitor-specified parameter
+         * @return a visitor-specified result
+         */
+        R visitRequires(RequiresDirective d, P p);
+
+        /**
+         * Visits an {@code exports} directive.
+         * @param d  the directive to visit
+         * @param p  a visitor-specified parameter
+         * @return a visitor-specified result
+         */
+        R visitExports(ExportsDirective d, P p);
+
+        /**
+         * Visits an {@code opens} directive.
+         * @param d  the directive to visit
+         * @param p  a visitor-specified parameter
+         * @return a visitor-specified result
+         */
+        R visitOpens(OpensDirective d, P p);
+
+        /**
+         * Visits a {@code uses} directive.
+         * @param d  the directive to visit
+         * @param p  a visitor-specified parameter
+         * @return a visitor-specified result
+         */
+        R visitUses(UsesDirective d, P p);
+
+        /**
+         * Visits a {@code provides} directive.
+         * @param d  the directive to visit
+         * @param p  a visitor-specified parameter
+         * @return a visitor-specified result
+         */
+        R visitProvides(ProvidesDirective d, P p);
+
+        /**
+         * Visits an unknown directive.
+         * This can occur if the language evolves and new kinds of directive are added.
+         * @param d  the directive to visit
+         * @param p  a visitor-specified parameter
+         * @return a visitor-specified result
+         * @throws UnknownDirectiveException a visitor implementation may optionally throw this exception
+         * @implSpec This implementation throws {@code new UnknownDirectiveException(d, p)}.
+         */
+        default R visitUnknown(Directive d, P p) {
+            throw new UnknownDirectiveException(d, p);
+        }
     }
 
     /**
      * A dependency of a module.
      * @since 9
+     * @spec JPMS
      */
     interface RequiresDirective extends Directive {
         /**
-         * Returns whether or not this is a public dependency.
-         * @return whether or not this is a public dependency
+         * Returns whether or not this is a static dependency.
+         * @return whether or not this is a static dependency
          */
-        boolean isPublic();
+        boolean isStatic();
+
+        /**
+         * Returns whether or not this is a transitive dependency.
+         * @return whether or not this is a transitive dependency
+         */
+        boolean isTransitive();
 
         /**
          * Returns the module that is required
@@ -142,8 +286,10 @@ public interface ModuleElement extends Element, QualifiedNameable {
     /**
      * An exported package of a module.
      * @since 9
+     * @spec JPMS
      */
     interface ExportsDirective extends Directive {
+
         /**
          * Returns the package being exported.
          * @return the package being exported
@@ -160,8 +306,31 @@ public interface ModuleElement extends Element, QualifiedNameable {
     }
 
     /**
+     * An opened package of a module.
+     * @since 9
+     * @spec JPMS
+     */
+    interface OpensDirective extends Directive {
+
+        /**
+         * Returns the package being opened.
+         * @return the package being opened
+         */
+        PackageElement getPackage();
+
+        /**
+         * Returns the specific modules to which the package is being open
+         * or null, if the package is open all modules which
+         * have readability to this module.
+         * @return the specific modules to which the package is being opened
+         */
+        List<? extends ModuleElement> getTargetModules();
+    }
+
+    /**
      * An implementation of a service provided by a module.
      * @since 9
+     * @spec JPMS
      */
     interface ProvidesDirective extends Directive {
         /**
@@ -171,15 +340,16 @@ public interface ModuleElement extends Element, QualifiedNameable {
         TypeElement getService();
 
         /**
-         * Returns the implementation of the service being provided.
-         * @return the implementation of the service being provided
+         * Returns the implementations of the service being provided.
+         * @return the implementations of the service being provided
          */
-        TypeElement getImplementation();
+        List<? extends TypeElement> getImplementations();
     }
 
     /**
      * A reference to a service used by a module.
      * @since 9
+     * @spec JPMS
      */
     interface UsesDirective extends Directive {
         /**

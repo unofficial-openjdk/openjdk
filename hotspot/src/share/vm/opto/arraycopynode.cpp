@@ -26,9 +26,10 @@
 #include "opto/arraycopynode.hpp"
 #include "opto/graphKit.hpp"
 
-ArrayCopyNode::ArrayCopyNode(Compile* C, bool alloc_tightly_coupled)
+ArrayCopyNode::ArrayCopyNode(Compile* C, bool alloc_tightly_coupled, bool has_negative_length_guard)
   : CallNode(arraycopy_type(), NULL, TypeRawPtr::BOTTOM),
     _alloc_tightly_coupled(alloc_tightly_coupled),
+    _has_negative_length_guard(has_negative_length_guard),
     _kind(None),
     _arguments_validated(false),
     _src_type(TypeOopPtr::BOTTOM),
@@ -45,10 +46,11 @@ ArrayCopyNode* ArrayCopyNode::make(GraphKit* kit, bool may_throw,
                                    Node* dest, Node* dest_offset,
                                    Node* length,
                                    bool alloc_tightly_coupled,
+                                   bool has_negative_length_guard,
                                    Node* src_klass, Node* dest_klass,
                                    Node* src_length, Node* dest_length) {
 
-  ArrayCopyNode* ac = new ArrayCopyNode(kit->C, alloc_tightly_coupled);
+  ArrayCopyNode* ac = new ArrayCopyNode(kit->C, alloc_tightly_coupled, has_negative_length_guard);
   Node* prev_mem = kit->set_predefined_input_for_runtime_call(ac);
 
   ac->init_req(ArrayCopyNode::Src, src);
@@ -223,7 +225,6 @@ bool ArrayCopyNode::prepare_array_copy(PhaseGVN *phase, bool can_reshape,
   Node* dest = in(ArrayCopyNode::Dest);
   const Type* src_type = phase->type(src);
   const TypeAryPtr* ary_src = src_type->isa_aryptr();
-  assert(ary_src != NULL, "should be an array copy/clone");
 
   if (is_arraycopy() || is_copyofrange() || is_copyof()) {
     const Type* dest_type = phase->type(dest);
@@ -284,7 +285,8 @@ bool ArrayCopyNode::prepare_array_copy(PhaseGVN *phase, bool can_reshape,
 
     copy_type = dest_elem;
   } else {
-    assert (is_clonebasic(), "should be");
+    assert(ary_src != NULL, "should be a clone");
+    assert(is_clonebasic(), "should be");
 
     disjoint_bases = true;
     assert(src->is_AddP(), "should be base + off");

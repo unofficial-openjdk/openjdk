@@ -26,11 +26,11 @@ package javax.swing.text;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
+import java.awt.geom.Rectangle2D;
 import java.lang.ref.SoftReference;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
 import javax.swing.event.*;
-import static javax.swing.text.PlainView.isFPMethodOverriden;
+import static javax.swing.text.PlainView.FPMethodArgs.*;
+import static javax.swing.text.PlainView.getFPMethodOverridden;
 
 /**
  * View of plain text (text with only one font and color)
@@ -352,6 +352,7 @@ public class WrappedPlainView extends BoxView implements TabExpander {
      * @param p1 the ending document location to use
      * @return the break position
      */
+    @SuppressWarnings("deprecation")
     protected int calculateBreakPosition(int p0, int p1) {
         int p;
         Segment segment = SegmentCache.getSharedSegment();
@@ -775,9 +776,11 @@ public class WrappedPlainView extends BoxView implements TabExpander {
             if (pos > p0) {
                 Segment segment = SegmentCache.getSharedSegment();
                 loadText(segment, p0, pos);
-                alloc.x += Utilities.getTabbedTextWidth(segment, metrics,
-                        alloc.x, WrappedPlainView.this, p0);
+                float x = alloc.x;
+                x += Utilities.getTabbedTextWidth(segment, metrics, x,
+                                                  WrappedPlainView.this, p0);
                 SegmentCache.releaseSharedSegment(segment);
+                return new Rectangle2D.Float(x, alloc.y, alloc.width, alloc.height);
             }
             return alloc;
         }
@@ -793,6 +796,7 @@ public class WrappedPlainView extends BoxView implements TabExpander {
          *  given point in the view
          * @see View#viewToModel
          */
+        @SuppressWarnings("deprecation")
         public int viewToModel(float fx, float fy, Shape a, Position.Bias[] bias) {
             // PENDING(prinz) implement bias properly
             bias[0] = Position.Bias.Forward;
@@ -984,46 +988,12 @@ public class WrappedPlainView extends BoxView implements TabExpander {
         SoftReference<int[]> lineCache = null;
     }
 
-    private final boolean drawLineOverridden;
-    private final boolean drawSelectedTextOverridden;
-    private final boolean drawUnselectedTextOverridden;
-    private final boolean useFloatingPointAPI;
-
-    {
-        final Class<?> CLS = getClass();
-        final Class<?> INT = Integer.TYPE;
-        final Class<?> FP = Float.TYPE;
-
-        drawLineOverridden = AccessController
-                .doPrivileged(new PrivilegedAction<Boolean>() {
-            @Override
-            public Boolean run() {
-                Class<?>[] intTypes = {INT, INT, Graphics.class, INT, INT};
-                Class<?>[] fpTypes = {INT, INT, Graphics2D.class, FP, FP};
-                return isFPMethodOverriden("drawLine", CLS, intTypes, fpTypes);
-            }
-        });
-
-        drawUnselectedTextOverridden = AccessController
-                .doPrivileged(new PrivilegedAction<Boolean>() {
-            @Override
-            public Boolean run() {
-                Class<?>[] intTypes = {Graphics.class, INT, INT, INT, INT};
-                Class<?>[] fpTypes = {Graphics2D.class, FP, FP, INT, INT};
-                return isFPMethodOverriden("drawUnselectedText", CLS, intTypes, fpTypes);
-            }
-        });
-
-        drawSelectedTextOverridden = AccessController
-                .doPrivileged(new PrivilegedAction<Boolean>() {
-            @Override
-            public Boolean run() {
-                Class<?>[] intTypes = {Graphics.class, INT, INT, INT, INT};
-                Class<?>[] fpTypes = {Graphics2D.class, FP, FP, INT, INT};
-                return isFPMethodOverriden("drawSelectedText", CLS, intTypes, fpTypes);
-            }
-        });
-
-        useFloatingPointAPI = drawUnselectedTextOverridden || drawSelectedTextOverridden;
-    }
+    private final boolean drawLineOverridden =
+            getFPMethodOverridden(getClass(), "drawLine", IIGNN);
+    private final boolean drawSelectedTextOverridden =
+            getFPMethodOverridden(getClass(), "drawSelectedText", GNNII);
+    private final boolean drawUnselectedTextOverridden =
+            getFPMethodOverridden(getClass(), "drawUnselectedText", GNNII);
+    private final boolean useFloatingPointAPI =
+            drawUnselectedTextOverridden || drawSelectedTextOverridden;
 }

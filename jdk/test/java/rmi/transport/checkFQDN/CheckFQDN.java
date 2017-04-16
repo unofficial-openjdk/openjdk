@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +81,7 @@ public class CheckFQDN extends UnicastRemoteObject
             System.err.println
                 ("\nRegression test for bug/rfe 4115683\n");
 
-            Registry registry = TestLibrary.createRegistryOnUnusedPort();
+            Registry registry = TestLibrary.createRegistryOnEphemeralPort();
             REGISTRY_PORT = TestLibrary.getRegistryPort(registry);
             registry.bind("CheckFQDN", checkFQDN);
 
@@ -110,6 +110,7 @@ public class CheckFQDN extends UnicastRemoteObject
                                     String propertyValue,
                                     String extraProp)
     {
+        JavaVM jvm = null;
         try {
             String propOption = "";
             String equal = "";
@@ -119,7 +120,7 @@ public class CheckFQDN extends UnicastRemoteObject
             }
 
             // create a client to tell checkFQDN what its rmi name is.
-            JavaVM jvm = new JavaVM("CheckFQDNClient",
+            jvm = new JavaVM("CheckFQDNClient",
                                     propOption + property +
                                     equal +
                                     propertyValue + extraProp +
@@ -140,6 +141,10 @@ public class CheckFQDN extends UnicastRemoteObject
 
         } catch (Exception e) {
             TestLibrary.bomb(e);
+        } finally {
+            if (jvm != null) {
+                jvm.destroy();
+            }
         }
     }
 

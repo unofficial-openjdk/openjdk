@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,8 +53,8 @@ import jdk.javadoc.internal.doclets.toolkit.util.DocletConstants;
 public class HtmlTree extends Content {
 
     private HtmlTag htmlTag;
-    private Map<HtmlAttr,String> attrs = Collections.<HtmlAttr,String>emptyMap();
-    private List<Content> content = Collections.<Content>emptyList();
+    private Map<HtmlAttr,String> attrs = Collections.emptyMap();
+    private List<Content> content = Collections.emptyList();
     public static final Content EMPTY = new StringContent("");
 
     /**
@@ -261,6 +261,21 @@ public class HtmlTree extends Content {
         HtmlTree htmltree = new HtmlTree(HtmlTag.A);
         htmltree.addAttr(HtmlAttr.ID, nullCheck(id));
         htmltree.addContent(nullCheck(body));
+        return htmltree;
+    }
+
+    /**
+     * Generates an HTML anchor tag with a style class, id attribute and a body.
+     *
+     * @param styleClass stylesheet class for the tag
+     * @param id id for the anchor tag
+     * @param body body for the anchor tag
+     * @return an HtmlTree object
+     */
+    public static HtmlTree A_ID(HtmlStyle styleClass, String id, Content body) {
+        HtmlTree htmltree = A_ID(id, body);
+        if (styleClass != null)
+            htmltree.addStyle(styleClass);
         return htmltree;
     }
 

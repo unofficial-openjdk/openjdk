@@ -23,7 +23,7 @@
 
 /*
  * @test
- * @bug 8153716 8143955 8151754 8150382 8153920 8156910 8131024 8160089 8153897 8167128
+ * @bug 8153716 8143955 8151754 8150382 8153920 8156910 8131024 8160089 8153897 8167128 8154513 8170015 8170368 8172102 8172103  8165405 8173073 8173848 8174041 8173916 8174028 8174262 8174797 8177079
  * @summary Simple jshell tool tests
  * @modules jdk.compiler/com.sun.tools.javac.api
  *          jdk.compiler/com.sun.tools.javac.main
@@ -35,6 +35,7 @@
 import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -44,9 +45,9 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-@Test
 public class ToolSimpleTest extends ReplToolTesting {
 
+    @Test
     public void testRemaining() {
         test(
                 (a) -> assertCommand(a, "int z; z =", "z ==> 0"),
@@ -61,6 +62,7 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void testOpenComment() {
         test(
                 (a) -> assertCommand(a, "int z = /* blah", ""),
@@ -71,6 +73,19 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
+    public void testLessThan() {
+        test(
+                (a) -> assertCommand(a, "45", "$1 ==> 45"),
+                (a) -> assertCommand(a, "72", "$2 ==> 72"),
+                (a) -> assertCommand(a, "$1 < $2", "$3 ==> true"),
+                (a) -> assertCommand(a, "int a, b", "a ==> 0\n" +
+                        "b ==> 0"),
+                (a) -> assertCommand(a, "a < b", "$6 ==> false")
+        );
+    }
+
+    @Test
     public void oneLineOfError() {
         test(
                 (a) -> assertCommand(a, "12+", null),
@@ -79,6 +94,7 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void defineVariables() {
         test(
                 (a) -> assertCommandCheckOutput(a, "/list", assertList()),
@@ -95,6 +111,7 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void defineMethods() {
         test(
                 (a) -> assertCommandCheckOutput(a, "/list", assertList()),
@@ -111,6 +128,7 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void defineTypes() {
         test(
                 (a) -> assertCommandCheckOutput(a, "/list", assertList()),
@@ -130,6 +148,7 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void defineImports() {
         test(
                 (a) -> assertCommandCheckOutput(a, "/list", assertList()),
@@ -149,6 +168,7 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void defineVar() {
         test(
                 (a) -> assertCommand(a, "int x = 72", "x ==> 72"),
@@ -157,6 +177,7 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void defineUnresolvedVar() {
         test(
                 (a) -> assertCommand(a, "undefined x",
@@ -165,6 +186,7 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void testUnresolved() {
         test(
                 (a) -> assertCommand(a, "int f() { return g() + x + new A().a; }",
@@ -177,16 +199,27 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void testUnknownCommand() {
         test((a) -> assertCommand(a, "/unknown",
                 "|  No such command or snippet id: /unknown\n" +
                 "|  Type /help for help."));
     }
 
+    @Test
     public void testEmptyClassPath() {
-        test(after -> assertCommand(after, "/classpath", "|  The /classpath command requires a path argument."));
+        test(after -> assertCommand(after, "/env --class-path", "|  Argument to class-path missing."));
     }
 
+    @Test
+    public void testInvalidClassPath() {
+        test(
+                a -> assertCommand(a, "/env --class-path snurgefusal",
+                        "|  File 'snurgefusal' for '--class-path' is not found.")
+        );
+    }
+
+    @Test
     public void testNoArgument() {
         test(
                 (a) -> assertCommand(a, "/save",
@@ -198,6 +231,7 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void testDebug() {
         test(
                 (a) -> assertCommand(a, "/deb", "|  Debugging on"),
@@ -207,12 +241,13 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void testDrop() {
         test(false, new String[]{"--no-startup"},
                 a -> assertVariable(a, "int", "a"),
                 a -> dropVariable(a, "/drop 1", "int a = 0", "|  dropped variable a"),
-                a -> assertMethod(a, "int b() { return 0; }", "()I", "b"),
-                a -> dropMethod(a, "/drop 2", "b ()I", "|  dropped method b()"),
+                a -> assertMethod(a, "int b() { return 0; }", "()int", "b"),
+                a -> dropMethod(a, "/drop 2", "int b()", "|  dropped method b()"),
                 a -> assertClass(a, "class A {}", "class", "A"),
                 a -> dropClass(a, "/drop 3", "class A", "|  dropped class A"),
                 a -> assertImport(a, "import java.util.stream.*;", "", "java.util.stream.*"),
@@ -228,8 +263,8 @@ public class ToolSimpleTest extends ReplToolTesting {
         test(false, new String[]{"--no-startup"},
                 a -> assertVariable(a, "int", "a"),
                 a -> dropVariable(a, "/drop a", "int a = 0", "|  dropped variable a"),
-                a -> assertMethod(a, "int b() { return 0; }", "()I", "b"),
-                a -> dropMethod(a, "/drop b", "b ()I", "|  dropped method b()"),
+                a -> assertMethod(a, "int b() { return 0; }", "()int", "b"),
+                a -> dropMethod(a, "/drop b", "int b()", "|  dropped method b()"),
                 a -> assertClass(a, "class A {}", "class", "A"),
                 a -> dropClass(a, "/drop A", "class A", "|  dropped class A"),
                 a -> assertCommandCheckOutput(a, "/vars", assertVariables()),
@@ -239,6 +274,7 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void testDropNegative() {
         test(false, new String[]{"--no-startup"},
                 a -> assertCommandOutputStartsWith(a, "/drop 0", "|  No such snippet: 0"),
@@ -254,6 +290,7 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void testAmbiguousDrop() {
         Consumer<String> check = s -> {
             assertTrue(s.startsWith("|  The argument references more than one import, variable, method, or class"), s);
@@ -279,6 +316,18 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
+    public void testApplicationOfPost() {
+        test(
+                (a) -> assertCommand(a, "/set mode t normal -command", "|  Created new feedback mode: t"),
+                (a) -> assertCommand(a, "/set feedback t", "|  Feedback mode: t"),
+                (a) -> assertCommand(a, "/set format t post \"$%n\"", ""),
+                (a) -> assertCommand(a, "/set prompt t \"+\" \"-\"", ""),
+                (a) -> assertCommand(a, "/set prompt t", "|  /set prompt t \"+\" \"-\"$")
+        );
+    }
+
+    @Test
     public void testHelpLength() {
         Consumer<String> testOutput = (s) -> {
             List<String> ss = Stream.of(s.split("\n"))
@@ -293,20 +342,45 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void testHelp() {
         test(
                 (a) -> assertHelp(a, "/?", "/list", "/help", "/exit", "intro"),
                 (a) -> assertHelp(a, "/help", "/list", "/help", "/exit", "intro"),
                 (a) -> assertHelp(a, "/help short", "shortcuts", "<tab>"),
                 (a) -> assertHelp(a, "/? /li", "/list -all", "snippets"),
-                (a) -> assertHelp(a, "/help /help", "/help <command>")
+                (a) -> assertHelp(a, "/help /set prompt", "optionally contain '%s'", "quoted"),
+                (a) -> assertHelp(a, "/help /help", "/help <command>"),
+                (a) -> assertHelp(a, "/help li", "/list -start"),
+                (a) -> assertHelp(a, "/help fe", "/set feedback -retain")
+        );
+    }
+
+    @Test
+    public void testHelpFormat() {
+        test(
+                (a) -> assertCommandCheckOutput(a, "/help", s -> {
+                    String[] lines = s.split("\\R");
+                    assertTrue(lines.length > 20,
+                            "Too few lines of /help output: " + lines.length
+                          + "\n" + s);
+                    for (int i = 0; i < lines.length; ++i) {
+                        String l = lines[i];
+                        assertTrue(l.startsWith("| "),
+                                "Expected /help line to start with | :\n" + l);
+                        assertTrue(l.length() <= 80,
+                                "/help line too long: " + l.length() + "\n" + l);
+                    }
+                 })
         );
     }
 
     private void assertHelp(boolean a, String command, String... find) {
         assertCommandCheckOutput(a, command, s -> {
             for (String f : find) {
-                assertTrue(s.contains(f), "Expected output of " + command + " to contain: " + f);
+                assertTrue(s.contains(f),
+                        "Expected output of " + command + " to contain: " + f
+                      + "\n" + s);
             }
         });
     }
@@ -323,6 +397,7 @@ public class ToolSimpleTest extends ReplToolTesting {
         }
     }
 
+    @Test
     public void testListArgs() {
         String arg = "qqqq";
         List<String> startVarList = new ArrayList<>(START_UP);
@@ -338,13 +413,14 @@ public class ToolSimpleTest extends ReplToolTesting {
                         s -> checkLineToList(s, START_UP)),
                 a -> assertCommandCheckOutput(a, "/list -all",
                         s -> checkLineToList(s, startVarList)),
-                a -> assertCommandCheckOutput(a, "/list printf",
-                        s -> assertTrue(s.contains("void printf"))),
+                a -> assertCommandOutputStartsWith(a, "/list s3",
+                        "s3 : import"),
                 a -> assertCommandOutputStartsWith(a, "/list " + arg,
                         "|  No such snippet: " + arg)
         );
     }
 
+    @Test
     public void testVarsArgs() {
         String arg = "qqqq";
         List<String> startVarList = new ArrayList<>();
@@ -363,25 +439,28 @@ public class ToolSimpleTest extends ReplToolTesting {
                         s -> checkLineToList(s, startVarList)),
                 a -> assertCommandOutputStartsWith(a, "/vars -all",
                         "|    int aardvark = 0\n|    int a = "),
-                a -> assertCommandOutputStartsWith(a, "/vars printf",
-                        "|  This command does not accept the snippet 'printf'"),
+                a -> assertCommandOutputStartsWith(a, "/vars f",
+                        "|  This command does not accept the snippet 'f'"),
                 a -> assertCommand(a, "/var " + arg,
                         "|  No such snippet: " + arg)
         );
     }
 
+    @Test
     public void testMethodsArgs() {
         String arg = "qqqq";
-        List<String> startMethodList = new ArrayList<>(START_UP_CMD_METHOD);
-        test(
+        List<String> printingMethodList = new ArrayList<>(PRINTING_CMD_METHOD);
+        test(new String[]{"--startup", "PRINTING"},
                 a -> assertCommandCheckOutput(a, "/methods -all",
-                        s -> checkLineToList(s, startMethodList)),
+                        s -> checkLineToList(s, printingMethodList)),
                 a -> assertCommandCheckOutput(a, "/methods -start",
-                        s -> checkLineToList(s, startMethodList)),
-                a -> assertCommandCheckOutput(a, "/methods printf",
-                        s -> checkLineToList(s, startMethodList)),
+                        s -> checkLineToList(s, printingMethodList)),
+                a -> assertCommandCheckOutput(a, "/methods print println printf",
+                        s -> checkLineToList(s, printingMethodList)),
+                a -> assertCommandCheckOutput(a, "/methods println",
+                        s -> assertEquals(s.trim().split("\n").length, 10)),
                 a -> assertCommandCheckOutput(a, "/methods",
-                        s -> checkLineToList(s, startMethodList)),
+                        s -> checkLineToList(s, printingMethodList)),
                 a -> assertCommandOutputStartsWith(a, "/methods " + arg,
                         "|  No such snippet: " + arg),
                 a -> assertMethod(a, "int f() { return 0; }", "()int", "f"),
@@ -393,17 +472,58 @@ public class ToolSimpleTest extends ReplToolTesting {
                 a -> assertCommandOutputStartsWith(a, "/methods aardvark",
                         "|  This command does not accept the snippet 'aardvark' : int aardvark"),
                 a -> assertCommandCheckOutput(a, "/methods -start",
-                        s -> checkLineToList(s, startMethodList)),
-                a -> assertCommandCheckOutput(a, "/methods printf",
-                        s -> checkLineToList(s, startMethodList)),
+                        s -> checkLineToList(s, printingMethodList)),
+                a -> assertCommandCheckOutput(a, "/methods print println printf",
+                        s -> checkLineToList(s, printingMethodList)),
                 a -> assertCommandOutputStartsWith(a, "/methods g",
-                        "|    g ()void"),
+                        "|    void g()"),
                 a -> assertCommandOutputStartsWith(a, "/methods f",
-                        "|    f ()int\n" +
-                        "|    f (int)void")
+                        "|    int f()\n" +
+                        "|    void f(int)")
         );
     }
 
+    @Test
+    public void testMethodsWithErrors() {
+        test(new String[]{"--no-startup"},
+                a -> assertCommand(a, "double m(int x) { return x; }",
+                        "|  created method m(int)"),
+                a -> assertCommand(a, "GARBAGE junk() { return TRASH; }",
+                        "|  created method junk(), however, it cannot be referenced until class GARBAGE, and variable TRASH are declared"),
+                a -> assertCommand(a, "int w = 5;",
+                        "w ==> 5"),
+                a -> assertCommand(a, "int tyer() { return w; }",
+                        "|  created method tyer()"),
+                a -> assertCommand(a, "String w = \"hi\";",
+                        "w ==> \"hi\""),
+                a -> assertCommand(a, "/methods",
+                        "|    double m(int)\n" +
+                        "|    GARBAGE junk()\n" +
+                        "|       which cannot be referenced until class GARBAGE, and variable TRASH are declared\n" +
+                        "|    int tyer()\n" +
+                        "|       which cannot be invoked until this error is corrected: \n" +
+                        "|          incompatible types: java.lang.String cannot be converted to int\n" +
+                        "|          int tyer() { return w; }\n" +
+                        "|                              ^\n")
+        );
+    }
+
+    @Test
+    public void testTypesWithErrors() {
+        test(new String[]{"--no-startup"},
+                a -> assertCommand(a, "class C extends NONE { int x; }",
+                        "|  created class C, however, it cannot be referenced until class NONE is declared"),
+                a -> assertCommand(a, "class D { void m() { System.out.println(nada); } }",
+                        "|  created class D, however, it cannot be instantiated or its methods invoked until variable nada is declared"),
+                a -> assertCommand(a, "/types",
+                        "|    class C\n" +
+                        "|       which cannot be referenced until class NONE is declared\n" +
+                        "|    class D\n" +
+                        "|       which cannot be instantiated or its methods invoked until variable nada is declared\n")
+        );
+    }
+
+    @Test
     public void testTypesArgs() {
         String arg = "qqqq";
         List<String> startTypeList = new ArrayList<>();
@@ -436,6 +556,53 @@ public class ToolSimpleTest extends ReplToolTesting {
                         s -> checkLineToList(s, startTypeList))
         );
     }
+
+    @Test
+    public void testBlankLinesInSnippetContinuation() {
+        test(Locale.ROOT, false, new String[]{"--no-startup"}, "",
+                a -> assertCommand(a, "class C {",
+                        ""),
+                a -> assertCommand(a, "",
+                        ""),
+                a -> assertCommand(a, "",
+                        ""),
+                a -> assertCommand(a, "  int x;",
+                        ""),
+                a -> assertCommand(a, "",
+                        ""),
+                a -> assertCommand(a, "",
+                        ""),
+                a -> assertCommand(a, "}",
+                        "|  created class C"),
+                a -> assertCommand(a, "/list",
+                        "\n" +
+                        "   1 : class C {\n" +
+                        "       \n" +
+                        "       \n" +
+                        "         int x;\n" +
+                        "       \n" +
+                        "       \n" +
+                        "       }")
+        );
+    }
+
+    @Test
+    public void testCompoundStart() {
+        test(new String[]{"--startup", "DEFAULT", "--startup", "PRINTING"},
+                (a) -> assertCommand(a, "printf(\"%4.2f\", Math.PI)",
+                        "", "", null, "3.14", "")
+        );
+    }
+
+    @Test
+    public void testJavaSeStart() {
+        test(new String[]{"--startup", "JAVASE"},
+                (a) -> assertCommand(a, "ZoneOffsetTransitionRule.TimeDefinition.WALL",
+                        "$1 ==> WALL")
+        );
+    }
+
+    @Test
     public void defineClasses() {
         test(
                 (a) -> assertCommandCheckOutput(a, "/list", assertList()),
@@ -454,6 +621,8 @@ public class ToolSimpleTest extends ReplToolTesting {
                 (a) -> assertCommandCheckOutput(a, "/types", assertClasses())
         );
     }
+
+    @Test
     public void testCommandPrefix() {
         test(a -> assertCommandCheckOutput(a, "/s",
                       assertStartsWith("|  Command: '/s' is ambiguous: /save, /set")),
@@ -464,19 +633,22 @@ public class ToolSimpleTest extends ReplToolTesting {
                       assertStartsWith("|  '/save' requires a filename argument.")));
     }
 
+    @Test
     public void testOptionQ() {
-        test(new String[]{"-q", "--no-startup"},
+        test(Locale.ROOT, false, new String[]{"-q", "--no-startup"}, "",
                 (a) -> assertCommand(a, "1+1", "$1 ==> 2"),
                 (a) -> assertCommand(a, "int x = 5", "")
         );
     }
 
+    @Test
     public void testOptionS() {
-        test(new String[]{"-s", "--no-startup"},
+        test(Locale.ROOT, false, new String[]{"-s", "--no-startup"}, "",
                 (a) -> assertCommand(a, "1+1", "")
         );
     }
 
+    @Test
     public void testOptionV() {
         test(new String[]{"-v", "--no-startup"},
                 (a) -> assertCommand(a, "1+1",
@@ -485,35 +657,38 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
     public void testOptionFeedback() {
-        test(new String[]{"--feedback", "concise", "--no-startup"},
+        test(Locale.ROOT, false, new String[]{"--feedback", "concise", "--no-startup"}, "",
                 (a) -> assertCommand(a, "1+1", "$1 ==> 2"),
                 (a) -> assertCommand(a, "int x = 5", "")
         );
     }
 
+    @Test
     public void testCompoundOptions() {
         Consumer<String> confirmNoStartup = s -> {
                     assertEquals(0, Stream.of(s.split("\n"))
                             .filter(l -> !l.isEmpty())
                             .count(), "Expected no lines: " + s);
                 };
-        test(new String[]{"-nq"},
+        test(Locale.ROOT, false, new String[]{"-nq"}, "",
                 (a) -> assertCommandCheckOutput(a, "/list -all", confirmNoStartup),
                 (a) -> assertCommand(a, "1+1", "$1 ==> 2"),
                 (a) -> assertCommand(a, "int x = 5", "")
         );
-        test(new String[]{"-qn"},
+        test(Locale.ROOT, false, new String[]{"-qn"}, "",
                 (a) -> assertCommandCheckOutput(a, "/list -all", confirmNoStartup),
                 (a) -> assertCommand(a, "1+1", "$1 ==> 2"),
                 (a) -> assertCommand(a, "int x = 5", "")
         );
-        test(new String[]{"-ns"},
+        test(Locale.ROOT, false, new String[]{"-ns"}, "",
                 (a) -> assertCommandCheckOutput(a, "/list -all", confirmNoStartup),
                 (a) -> assertCommand(a, "1+1", "")
         );
     }
 
+    @Test
     public void testOptionR() {
         test(new String[]{"-R-Dthe.sound=blorp", "--no-startup"},
                 (a) -> assertCommand(a, "System.getProperty(\"the.sound\")",
@@ -521,6 +696,14 @@ public class ToolSimpleTest extends ReplToolTesting {
         );
     }
 
+    @Test
+    public void testWrapSourceHandlerDiagCrash() {
+        test(new String[]{"--add-exports", "jdk.javadoc/ALL-UNNAMED"},
+                (a) -> assertCommand(a, "1+1", "$1 ==> 2")
+         );
+    }
+
+    @Test
     public void test8156910() {
         test(
                 (a) -> assertCommandOutputContains(a, "System.out.println(\"%5d\", 10);", "%5d"),

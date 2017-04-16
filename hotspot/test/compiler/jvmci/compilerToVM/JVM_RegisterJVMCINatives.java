@@ -24,11 +24,11 @@
 /*
  * @test
  * @bug 8136421
- * @requires (vm.simpleArch == "x64" | vm.simpleArch == "sparcv9" | vm.simpleArch == "aarch64")
+ * @requires vm.jvmci
  * @library /test/lib /
- * @modules java.base/jdk.internal.misc
- * @modules jdk.vm.ci/jdk.vm.ci.hotspot
- *          jdk.vm.ci/jdk.vm.ci.runtime
+ * @modules java.base/jdk.internal.misc:open
+ * @modules jdk.internal.vm.ci/jdk.vm.ci.hotspot:open
+ *          jdk.internal.vm.ci/jdk.vm.ci.runtime
  * @run main/othervm -XX:+UnlockExperimentalVMOptions
  *      -Dcompiler.jvmci.compilerToVM.JVM_RegisterJVMCINatives.positive=true
  *      -XX:+EnableJVMCI

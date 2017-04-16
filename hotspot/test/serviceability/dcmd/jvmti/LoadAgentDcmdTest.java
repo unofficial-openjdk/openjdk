@@ -41,9 +41,8 @@ import org.testng.annotations.Test;
  *          java.compiler
  *          java.instrument
  *          java.management
- *          jdk.jvmstat/sun.jvmstat.monitor
+ *          jdk.internal.jvmstat/sun.jvmstat.monitor
  * @build SimpleJvmtiAgent
- * @ignore 8150318
  * @run main ClassFileInstaller SimpleJvmtiAgent
  * @run testng LoadAgentDcmdTest
  */
@@ -137,11 +136,7 @@ public class LoadAgentDcmdTest {
         if (Platform.isWindows()) {
             return "bin";
         }
-        if (Platform.isOSX()) {
-            return "lib";
-        }
-
-        return "lib/" + Platform.getOsArch();
+        return "lib";
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,24 +27,23 @@ package sun.awt.X11;
 import java.awt.*;
 import java.awt.peer.*;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
+import sun.security.action.GetPropertyAction;
 
 import sun.awt.AWTAccessor;
 import sun.awt.SunToolkit;
 import sun.awt.UNIXToolkit;
 import sun.awt.X11GraphicsConfig;
-import sun.awt.X11GraphicsEnvironment;
 
 class XRobotPeer implements RobotPeer {
 
     static final boolean tryGtk;
     static {
         loadNativeLibraries();
-        tryGtk = AccessController.doPrivileged((PrivilegedAction<Boolean>)()
-                -> Boolean.getBoolean("awt.robot.gtk"));
+        tryGtk = Boolean.parseBoolean(
+                            AccessController.doPrivileged(
+                                    new GetPropertyAction("awt.robot.gtk", "true")
+                            ));
     }
-
-    private static boolean isGtkSupported =  false;
     private static volatile boolean useGtk;
     private X11GraphicsConfig   xgc = null;
 
@@ -77,14 +76,7 @@ class XRobotPeer implements RobotPeer {
 
     @Override
     public void mouseMove(int x, int y) {
-        X11GraphicsEnvironment x11ge = (X11GraphicsEnvironment)
-                GraphicsEnvironment.getLocalGraphicsEnvironment();
-        if(x11ge.runningXinerama()) {
-            Rectangle sb = xgc.getBounds();
-            mouseMoveImpl(xgc, xgc.scaleUp(x + sb.x), xgc.scaleUp(y + sb.y));
-        } else {
-            mouseMoveImpl(xgc, xgc.scaleUp(x), xgc.scaleUp(y));
-        }
+        mouseMoveImpl(xgc, xgc.scaleUp(x), xgc.scaleUp(y));
     }
 
     @Override
@@ -115,8 +107,7 @@ class XRobotPeer implements RobotPeer {
     @Override
     public int getRGBPixel(int x, int y) {
         int pixelArray[] = new int[1];
-        getRGBPixelsImpl(xgc, x, y, 1, 1, xgc.getScale(), pixelArray,
-                         useGtk);
+        getRGBPixelsImpl(xgc, x, y, 1, 1, pixelArray, useGtk);
         return pixelArray[0];
     }
 
@@ -124,7 +115,7 @@ class XRobotPeer implements RobotPeer {
     public int [] getRGBPixels(Rectangle bounds) {
         int pixelArray[] = new int[bounds.width*bounds.height];
         getRGBPixelsImpl(xgc, bounds.x, bounds.y, bounds.width, bounds.height,
-                         xgc.getScale(), pixelArray, useGtk);
+                            pixelArray, useGtk);
         return pixelArray;
     }
 
@@ -140,6 +131,5 @@ class XRobotPeer implements RobotPeer {
     private static synchronized native void keyReleaseImpl(int keycode);
 
     private static synchronized native void getRGBPixelsImpl(X11GraphicsConfig xgc,
-            int x, int y, int width, int height, int scale,
-            int pixelArray[], boolean isGtkSupported);
+            int x, int y, int width, int height, int pixelArray[], boolean isGtkSupported);
 }

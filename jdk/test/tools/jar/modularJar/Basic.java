@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,24 +22,24 @@
  */
 
 import java.io.*;
+import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Method;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jdk.testlibrary.FileUtils;
 import jdk.testlibrary.JDKToolFinder;
 import org.testng.annotations.BeforeTest;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static java.lang.String.format;
@@ -47,6 +47,7 @@ import static java.lang.System.out;
 
 /*
  * @test
+ * @bug 8167328 8171830 8165640 8174248 8176772
  * @library /lib/testlibrary
  * @modules jdk.compiler
  *          jdk.jartool
@@ -76,7 +77,8 @@ public class Basic {
                                                    Set.of("jdk.test.foo"),
                                                    null, // no uses
                                                    null, // no provides
-                                                   Set.of("jdk.test.foo.internal"));
+                                                   Set.of("jdk.test.foo.internal",
+                                                          "jdk.test.foo.resources"));
     static TestModuleData BAR = new TestModuleData("bar",
                                                    "4.5.6.7",
                                                    "jdk.test.bar.Bar",
@@ -99,17 +101,18 @@ public class Basic {
         final String version;
         final String message;
         final String hashes;
-        final Set<String> conceals;
+        final Set<String> packages;
 
         TestModuleData(String mn, String v, String mc, String m, String h,
                        Set<String> requires, Set<String> exports, Set<String> uses,
-                       Set<String> provides, Set<String> conceals) {
+                       Set<String> provides, Set<String> contains) {
             moduleName = mn; mainClass = mc; version = v; message = m; hashes = h;
-            this.requires = requires;
-            this.exports = exports;
-            this.uses = uses;
-            this.provides = provides;
-            this.conceals = conceals;
+            this.requires = requires != null ? requires : Collections.emptySet();
+            this.exports = exports != null ? exports : Collections.emptySet();
+            this.uses = uses != null ? uses : Collections.emptySet();;
+            this.provides = provides != null ? provides : Collections.emptySet();
+            this.packages = Stream.concat(this.exports.stream(), contains.stream())
+                                  .collect(Collectors.toSet());
         }
         static TestModuleData from(String s) {
             try {
@@ -148,8 +151,8 @@ public class Basic {
                         provides = stringToSet(line);
                     } else if (line.startsWith("hashes:")) {
                         hashes = line.substring("hashes:".length());
-                    } else if (line.startsWith("conceals:")) {
-                        line = line.substring("conceals:".length());
+                    } else if (line.startsWith("contains:")) {
+                        line = line.substring("contains:".length());
                         conceals = stringToSet(line);
                     } else {
                         throw new AssertionError("Unknown value " + line);
@@ -192,22 +195,25 @@ public class Basic {
         assertSetsEqual(expected.exports, received.exports);
         assertSetsEqual(expected.uses, received.uses);
         assertSetsEqual(expected.provides, received.provides);
-        assertSetsEqual(expected.conceals, received.conceals);
+        assertSetsEqual(expected.packages, received.packages);
     }
 
     static void assertSetsEqual(Set<String> s1, Set<String> s2) {
-        if (s1 == null && s2 == null) // none expected, or received
-            return;
-        assertTrue(s1.size() == s2.size(),
-                   "Unexpected set size difference: ", s1.size(), ", ", s2.size());
-        s1.forEach(p -> assertTrue(s2.contains(p), "Expected ", p, ", in ", s2));
-    }
+        if (!s1.equals(s2)) {
+            org.testng.Assert.assertTrue(false, s1 + " vs " + s2);
+        }
+     }
 
     @BeforeTest
     public void compileModules() throws Exception {
         compileModule(FOO.moduleName);
         compileModule(BAR.moduleName, MODULE_CLASSES);
         compileModule("baz");  // for service provider consistency checking
+
+        // copy resources
+        copyResource(TEST_SRC.resolve("src").resolve(FOO.moduleName),
+                     MODULE_CLASSES.resolve(FOO.moduleName),
+                     "jdk/test/foo/resources/foo.properties");
 
         setupMRJARModuleInfo(FOO.moduleName);
         setupMRJARModuleInfo(BAR.moduleName);
@@ -228,6 +234,12 @@ public class Basic {
             "--no-manifest",
             "-C", modClasses.toString(), ".")
             .assertSuccess();
+
+        assertSetsEqual(readPackagesAttribute(modularJar),
+                        Set.of("jdk.test.foo",
+                               "jdk.test.foo.resources",
+                               "jdk.test.foo.internal"));
+
         java(mp, FOO.moduleName + "/" + FOO.mainClass)
             .assertSuccess()
             .resultChecker(r -> assertModuleData(r, FOO));
@@ -322,7 +334,7 @@ public class Basic {
         // A "bad" main class in first create ( and no version )
         jar("--create",
             "--file=" + modularJar.toString(),
-            "--main-class=" + "IAmNotTheEntryPoint",
+            "--main-class=" + "jdk.test.foo.IAmNotTheEntryPoint",
             "--no-manifest",
             "-C", modClasses.toString(), ".")  // includes module-info.class
            .assertSuccess();
@@ -375,7 +387,8 @@ public class Basic {
             "--file=" + modularJar.toString(),
             "--no-manifest",
             "-C", modClasses.toString(), "module-info.class",
-            "-C", modClasses.toString(), "jdk/test/foo/Foo.class")
+            "-C", modClasses.toString(), "jdk/test/foo/Foo.class",
+            "-C", modClasses.toString(), "jdk/test/foo/resources/foo.properties")
             .assertSuccess();
         jar("--update",
             "--file=" + modularJar.toString(),
@@ -405,6 +418,7 @@ public class Basic {
         jar("--update",
             "--file=" + modularJar.toString(),
             "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
             "-m", mrjarDir.resolve("META-INF/MANIFEST.MF").toRealPath().toString(),
             "-C", mrjarDir.toString(), "META-INF/versions/9/module-info.class")
             .assertSuccess();
@@ -466,16 +480,66 @@ public class Basic {
             .resultChecker(r -> {
                 // Expect similar output: "bar, requires mandated foo, ...
                 // conceals jdk.test.foo, conceals jdk.test.foo.internal"
-                Pattern p = Pattern.compile("\\s+bar\\s+requires\\s++foo");
+                Pattern p = Pattern.compile("module bar \\(module-info.class\\)\\s+requires\\s++foo");
                 assertTrue(p.matcher(r.output).find(),
                            "Expecting to find \"bar, requires foo,...\"",
                            "in output, but did not: [" + r.output + "]");
                 p = Pattern.compile(
-                        "conceals\\s+jdk.test.foo\\s+conceals\\s+jdk.test.foo.internal");
+                        "contains\\s+jdk.test.foo\\s+contains\\s+jdk.test.foo.internal");
                 assertTrue(p.matcher(r.output).find(),
-                           "Expecting to find \"conceals jdk.test.foo,...\"",
+                           "Expecting to find \"contains jdk.test.foo,...\"",
                            "in output, but did not: [" + r.output + "]");
             });
+    }
+
+
+    @Test
+    public void partialUpdateFooPackagesAttribute() throws IOException {
+        Path mp = Paths.get("partialUpdateFooPackagesAttribute");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
+        Path modularJar = mp.resolve(FOO.moduleName + ".jar");
+
+        // Not all files, and none from non-exported packages,
+        // i.e. no concealed list in first create
+        jar("--create",
+            "--file=" + modularJar.toString(),
+            "--no-manifest",
+            "-C", modClasses.toString(), "module-info.class",
+            "-C", modClasses.toString(), "jdk/test/foo/Foo.class")
+            .assertSuccess();
+
+        assertSetsEqual(readPackagesAttribute(modularJar),
+                        Set.of("jdk.test.foo"));
+
+        jar("--update",
+            "--file=" + modularJar.toString(),
+            "-C", modClasses.toString(), "jdk/test/foo/resources/foo.properties")
+            .assertSuccess();
+
+        assertSetsEqual(readPackagesAttribute(modularJar),
+                        Set.of("jdk.test.foo", "jdk.test.foo.resources"));
+
+        jar("--update",
+            "--file=" + modularJar.toString(),
+            "--main-class=" + FOO.mainClass,
+            "--module-version=" + FOO.version,
+            "--no-manifest",
+            "-C", modClasses.toString(), "jdk/test/foo/internal/Message.class")
+            .assertSuccess();
+
+        assertSetsEqual(readPackagesAttribute(modularJar),
+                        Set.of("jdk.test.foo",
+                               "jdk.test.foo.resources",
+                               "jdk.test.foo.internal"));
+
+        java(mp, FOO.moduleName + "/" + FOO.mainClass)
+            .assertSuccess()
+            .resultChecker(r -> assertModuleData(r, FOO));
+    }
+
+    private Set<String> readPackagesAttribute(Path jar) {
+        return getModuleDescriptor(jar).packages();
     }
 
     @Test
@@ -506,6 +570,7 @@ public class Basic {
             .assertSuccess();
 
         java(mp, BAR.moduleName + "/" + BAR.mainClass,
+             "--add-exports", "java.base/jdk.internal.misc=bar",
              "--add-exports", "java.base/jdk.internal.module=bar")
             .assertSuccess()
             .resultChecker(r -> {
@@ -550,6 +615,7 @@ public class Basic {
             "-C", barClasses.toString(), ".").assertSuccess();
 
         java(mp, BAR.moduleName + "/" + BAR.mainClass,
+             "--add-exports", "java.base/jdk.internal.misc=bar",
              "--add-exports", "java.base/jdk.internal.module=bar")
             .assertFailure()
             .resultChecker(r -> {
@@ -670,8 +736,74 @@ public class Basic {
     }
 
     @Test
-    public void printModuleDescriptorFoo() throws IOException {
-        Path mp = Paths.get("printModuleDescriptorFoo");
+    public void servicesCreateWithoutFailureNonRootMRMJAR() throws IOException {
+        // without a root module-info.class
+        Path mp = Paths.get("servicesCreateWithoutFailureNonRootMRMJAR");
+        createTestDir(mp);
+        Path modClasses = MODULE_CLASSES.resolve("baz");
+        Path mrjarDir = MRJAR_DIR.resolve("baz");
+        Path modularJar = mp.resolve("baz.jar");
+
+        jar("--create",
+            "--file=" + modularJar.toString(),
+            "--main-class=" + "jdk.test.baz.Baz",
+            "-m", mrjarDir.resolve("META-INF/MANIFEST.MF").toRealPath().toString(),
+            "-C", mrjarDir.toString(), "META-INF/versions/9/module-info.class",
+            "-C", modClasses.toString(), "jdk/test/baz/BazService.class",
+            "-C", modClasses.toString(), "jdk/test/baz/Baz.class",
+            "-C", modClasses.toString(), "jdk/test/baz/internal/BazServiceImpl.class")
+            .assertSuccess();
+
+
+        for (String option : new String[]  {"--describe-module", "-d" }) {
+
+            jar(option,
+                "--file=" + modularJar.toString())
+                .assertSuccess()
+                .resultChecker(r ->
+                    assertTrue(r.output.contains("main-class jdk.test.baz.Baz"),
+                              "Expected to find ", "main-class jdk.test.baz.Baz",
+                               " in [", r.output, "]"));
+
+            jarWithStdin(modularJar.toFile(),  option)
+                .assertSuccess()
+                .resultChecker(r ->
+                    assertTrue(r.output.contains("main-class jdk.test.baz.Baz"),
+                              "Expected to find ", "main-class jdk.test.baz.Baz",
+                               " in [", r.output, "]"));
+
+        }
+        // run module maain class
+        java(mp, "baz/jdk.test.baz.Baz")
+            .assertSuccess()
+            .resultChecker(r ->
+               assertTrue(r.output.contains("mainClass:jdk.test.baz.Baz"),
+                          "Expected to find ", "mainClass:jdk.test.baz.Baz",
+                          " in [", r.output, "]"));
+    }
+
+    @Test
+    public void exportCreateWithMissingPkg() throws IOException {
+
+        Path foobar = TEST_SRC.resolve("src").resolve("foobar");
+        Path dst = Files.createDirectories(MODULE_CLASSES.resolve("foobar"));
+        javac(dst, null, sourceList(foobar));
+
+        Path mp = Paths.get("exportWithMissingPkg");
+        createTestDir(mp);
+        Path modClasses = dst;
+        Path modularJar = mp.resolve("foofoo.jar");
+
+        jar("--create",
+            "--file=" + modularJar.toString(),
+            "-C", modClasses.toString(), "module-info.class",
+            "-C", modClasses.toString(), "jdk/test/foo/Foo.class")
+            .assertFailure();
+    }
+
+    @Test
+    public void describeModuleFoo() throws IOException {
+        Path mp = Paths.get("describeModuleFoo");
         createTestDir(mp);
         Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
         Path modularJar = mp.resolve(FOO.moduleName + ".jar");
@@ -684,7 +816,7 @@ public class Basic {
             "-C", modClasses.toString(), ".")
             .assertSuccess();
 
-        for (String option : new String[]  {"--print-module-descriptor", "-d" }) {
+        for (String option : new String[]  {"--describe-module", "-d" }) {
             jar(option,
                 "--file=" + modularJar.toString())
                 .assertSuccess()
@@ -693,12 +825,20 @@ public class Basic {
                                "Expected to find ", FOO.moduleName + "@" + FOO.version,
                                " in [", r.output, "]")
                 );
+
+            jar(option,
+                "--file=" + modularJar.toString(),
+                modularJar.toString())
+            .assertFailure();
+
+            jar(option, modularJar.toString())
+            .assertFailure();
         }
     }
 
     @Test
-    public void printModuleDescriptorFooFromStdin() throws IOException {
-        Path mp = Paths.get("printModuleDescriptorFooFromStdin");
+    public void describeModuleFooFromStdin() throws IOException {
+        Path mp = Paths.get("describeModuleFooFromStdin");
         createTestDir(mp);
         Path modClasses = MODULE_CLASSES.resolve(FOO.moduleName);
         Path modularJar = mp.resolve(FOO.moduleName + ".jar");
@@ -711,7 +851,7 @@ public class Basic {
             "-C", modClasses.toString(), ".")
             .assertSuccess();
 
-        for (String option : new String[]  {"--print-module-descriptor", "-d" }) {
+        for (String option : new String[]  {"--describe-module", "-d" }) {
             jarWithStdin(modularJar.toFile(),
                          option)
                          .assertSuccess()
@@ -719,6 +859,50 @@ public class Basic {
                              assertTrue(r.output.contains(FOO.moduleName + "@" + FOO.version),
                                 "Expected to find ", FOO.moduleName + "@" + FOO.version,
                                 " in [", r.output, "]")
+                );
+        }
+    }
+
+
+    @DataProvider(name = "autoNames")
+    public Object[][] autoNames() {
+        return new Object[][] {
+            // JAR file name                module-name[@version]
+            { "foo.jar",                    "foo" },
+            { "foo1.jar",                   "foo1" },
+            { "foo4j.jar",                  "foo4j", },
+            { "foo-1.2.3.4.jar",            "foo@1.2.3.4" },
+            { "foo-bar.jar",                "foo.bar" },
+            { "foo-1.2-SNAPSHOT.jar",       "foo@1.2-SNAPSHOT" },
+        };
+    }
+
+    @Test(dataProvider = "autoNames")
+    public void describeAutomaticModule(String jarName, String mid)
+        throws IOException
+    {
+        Path mp = Paths.get("describeAutomaticModule");
+        createTestDir(mp);
+        Path regularJar = mp.resolve(jarName);
+        Path t = Paths.get("t");
+        if (Files.notExists(t))
+            Files.createFile(t);
+
+        jar("--create",
+            "--file=" + regularJar.toString(),
+            t.toString())
+            .assertSuccess();
+
+        for (String option : new String[]  {"--describe-module", "-d" }) {
+            jar(option,
+                "--file=" + regularJar.toString())
+                .assertSuccess()
+                .resultChecker(r -> {
+                    assertTrue(r.output.contains("No module descriptor found"));
+                    assertTrue(r.output.contains("Derived automatic module"));
+                    assertTrue(r.output.contains("module " + mid),
+                               "Expected [", "module " + mid,"] in [", r.output, "]");
+                    }
                 );
         }
     }
@@ -750,10 +934,20 @@ public class Basic {
     static Path compileModule(String mn, Path mp)
         throws IOException
     {
-        Path fooSourcePath = TEST_SRC.resolve("src").resolve(mn);
+        Path sourcePath = TEST_SRC.resolve("src").resolve(mn);
         Path build = Files.createDirectories(MODULE_CLASSES.resolve(mn));
-        javac(build, mp, fileList(fooSourcePath));
+        javac(build, mp, sourceList(sourcePath));
         return build;
+    }
+
+    static void copyResource(Path srcDir, Path dir, String resource)
+        throws IOException
+    {
+        Path dest = dir.resolve(resource);
+        Files.deleteIfExists(dest);
+
+        Files.createDirectories(dest.getParent());
+        Files.copy(srcDir.resolve(resource), dest);
     }
 
     static void setupMRJARModuleInfo(String moduleName) throws IOException {
@@ -771,6 +965,18 @@ public class Basic {
         manifest.getMainAttributes().putValue("Multi-Release", "true");
         try (OutputStream os = Files.newOutputStream(metaInfDir.resolve("MANIFEST.MF"))) {
             manifest.write(os);
+        }
+    }
+
+    static ModuleDescriptor getModuleDescriptor(Path jar) {
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+        try (JarFile jf = new JarFile(jar.toFile())) {
+            JarEntry entry = jf.getJarEntry("module-info.class");
+            try (InputStream in = jf.getInputStream(entry)) {
+                return ModuleDescriptor.read(in);
+            }
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
         }
     }
 
@@ -817,6 +1023,8 @@ public class Basic {
         commands.add(dest.toString());
         if (dest.toString().contains("bar")) {
             commands.add("--add-exports");
+            commands.add("java.base/jdk.internal.misc=bar");
+            commands.add("--add-exports");
             commands.add("java.base/jdk.internal.module=bar");
         }
         if (modulePath != null) {
@@ -848,17 +1056,10 @@ public class Basic {
         return run(new ProcessBuilder(commands));
     }
 
-    static Path[] fileList(Path directory) throws IOException {
-        final List<Path> filePaths = new ArrayList<>();
-        Files.walkFileTree(directory, new SimpleFileVisitor<Path>() {
-            @Override
-            public FileVisitResult visitFile(Path file,
-                                             BasicFileAttributes attrs) {
-                filePaths.add(file);
-                return FileVisitResult.CONTINUE;
-            }
-        });
-        return filePaths.toArray(new Path[filePaths.size()]);
+    static Path[] sourceList(Path directory) throws IOException {
+        return Files.find(directory, Integer.MAX_VALUE,
+                          (file, attrs) -> (file.toString().endsWith(".java")))
+                    .toArray(Path[]::new);
     }
 
     static void createTestDir(Path p) throws IOException{

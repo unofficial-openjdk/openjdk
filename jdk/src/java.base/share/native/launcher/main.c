@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -127,7 +127,22 @@ main(int argc, char **argv)
         // accommodate the NULL at the end
         JLI_List args = JLI_List_new(argc + 1);
         int i = 0;
-        for (i = 0; i < argc; i++) {
+
+        // Add first arg, which is the app name
+        JLI_List_add(args, JLI_StringDup(argv[0]));
+        // Append JDK_JAVA_OPTIONS
+        if (JLI_AddArgsFromEnvVar(args, JDK_JAVA_OPTIONS)) {
+            // JLI_SetTraceLauncher is not called yet
+            // Show _JAVA_OPTIONS content along with JDK_JAVA_OPTIONS to aid diagnosis
+            if (getenv(JLDEBUG_ENV_ENTRY)) {
+                char *tmp = getenv("_JAVA_OPTIONS");
+                if (NULL != tmp) {
+                    JLI_ReportMessage(ARG_INFO_ENVVAR, "_JAVA_OPTIONS", tmp);
+                }
+            }
+        }
+        // Iterate the rest of command line
+        for (i = 1; i < argc; i++) {
             JLI_List argsInFile = JLI_PreprocessArg(argv[i]);
             if (NULL == argsInFile) {
                 JLI_List_add(args, JLI_StringDup(argv[i]));
@@ -156,5 +171,5 @@ main(int argc, char **argv)
                    (const_progname != NULL) ? const_progname : *margv,
                    (const_launcher != NULL) ? const_launcher : *margv,
                    HAS_JAVA_ARGS,
-                   const_cpwildcard, const_javaw, const_ergo_class);
+                   const_cpwildcard, const_javaw, 0);
 }

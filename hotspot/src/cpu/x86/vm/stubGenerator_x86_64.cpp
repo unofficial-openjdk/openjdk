@@ -3207,7 +3207,7 @@ class StubGenerator: public StubCodeGenerator {
     const Register len_reg     = c_rarg4;  // src len (must be multiple of blocksize 16)
 #else
     const Address  len_mem(rbp, 6 * wordSize);  // length is on stack on Win64
-    const Register len_reg     = r10;      // pick the first volatile windows register
+    const Register len_reg     = r11;      // pick the volatile windows register
 #endif
     const Register pos         = rax;
 
@@ -3404,7 +3404,7 @@ class StubGenerator: public StubCodeGenerator {
     const Register len_reg     = c_rarg4;  // src len (must be multiple of blocksize 16)
 #else
     const Address  len_mem(rbp, 6 * wordSize);  // length is on stack on Win64
-    const Register len_reg     = r10;      // pick the first volatile windows register
+    const Register len_reg     = r11;      // pick the volatile windows register
 #endif
     const Register pos         = rax;
 
@@ -3718,6 +3718,25 @@ class StubGenerator: public StubCodeGenerator {
     return start;
   }
 
+  //Mask for byte-swapping a couple of qwords in an XMM register using (v)pshufb.
+  address generate_pshuffle_byte_flip_mask_sha512() {
+    __ align(32);
+    StubCodeMark mark(this, "StubRoutines", "pshuffle_byte_flip_mask_sha512");
+    address start = __ pc();
+    if (VM_Version::supports_avx2()) {
+      __ emit_data64(0x0001020304050607, relocInfo::none); // PSHUFFLE_BYTE_FLIP_MASK
+      __ emit_data64(0x08090a0b0c0d0e0f, relocInfo::none);
+      __ emit_data64(0x1011121314151617, relocInfo::none);
+      __ emit_data64(0x18191a1b1c1d1e1f, relocInfo::none);
+      __ emit_data64(0x0000000000000000, relocInfo::none); //MASK_YMM_LO
+      __ emit_data64(0x0000000000000000, relocInfo::none);
+      __ emit_data64(0xFFFFFFFFFFFFFFFF, relocInfo::none);
+      __ emit_data64(0xFFFFFFFFFFFFFFFF, relocInfo::none);
+    }
+
+    return start;
+  }
+
 // ofs and limit are use for multi-block byte array.
 // int com.sun.security.provider.DigestBase.implCompressMultiBlock(byte[] b, int ofs, int limit)
   address generate_sha256_implCompress(bool multi_block, const char *name) {
@@ -3755,6 +3774,39 @@ class StubGenerator: public StubCodeGenerator {
         buf, state, ofs, limit, rsp, multi_block, shuf_mask);
     }
     __ addptr(rsp, 4 * wordSize);
+
+    __ leave();
+    __ ret(0);
+    return start;
+  }
+
+  address generate_sha512_implCompress(bool multi_block, const char *name) {
+    assert(VM_Version::supports_avx2(), "");
+    assert(VM_Version::supports_bmi2(), "");
+    __ align(CodeEntryAlignment);
+    StubCodeMark mark(this, "StubRoutines", name);
+    address start = __ pc();
+
+    Register buf = c_rarg0;
+    Register state = c_rarg1;
+    Register ofs = c_rarg2;
+    Register limit = c_rarg3;
+
+    const XMMRegister msg = xmm0;
+    const XMMRegister state0 = xmm1;
+    const XMMRegister state1 = xmm2;
+    const XMMRegister msgtmp0 = xmm3;
+    const XMMRegister msgtmp1 = xmm4;
+    const XMMRegister msgtmp2 = xmm5;
+    const XMMRegister msgtmp3 = xmm6;
+    const XMMRegister msgtmp4 = xmm7;
+
+    const XMMRegister shuf_mask = xmm8;
+
+    __ enter();
+
+    __ sha512_AVX2(msg, state0, state1, msgtmp0, msgtmp1, msgtmp2, msgtmp3, msgtmp4,
+    buf, state, ofs, limit, rsp, multi_block, shuf_mask);
 
     __ leave();
     __ ret(0);
@@ -3878,7 +3930,7 @@ class StubGenerator: public StubCodeGenerator {
 
     __ push(rbx); // Save RBX
     __ movdqu(xmm_curr_counter, Address(counter, 0x00)); // initialize counter with initial counter
-    __ movdqu(xmm_counter_shuf_mask, ExternalAddress(StubRoutines::x86::counter_shuffle_mask_addr()));
+    __ movdqu(xmm_counter_shuf_mask, ExternalAddress(StubRoutines::x86::counter_shuffle_mask_addr()), pos); // pos as scratch
     __ pshufb(xmm_curr_counter, xmm_counter_shuf_mask); //counter is shuffled
     __ movptr(pos, 0);
 
@@ -3901,7 +3953,7 @@ class StubGenerator: public StubCodeGenerator {
     __ movl(Address(used_addr, 0), used);
 
     // key length could be only {11, 13, 15} * 4 = {44, 52, 60}
-    __ movdqu(xmm_key_shuf_mask, ExternalAddress(StubRoutines::x86::key_shuffle_mask_addr()));
+    __ movdqu(xmm_key_shuf_mask, ExternalAddress(StubRoutines::x86::key_shuffle_mask_addr()), rbx); // rbx as scratch
     __ movl(rbx, Address(key, arrayOopDesc::length_offset_in_bytes() - arrayOopDesc::base_offset_in_bytes(T_INT)));
     __ cmpl(rbx, 52);
     __ jcc(Assembler::equal, L_multiBlock_loopTop[1]);
@@ -4965,7 +5017,7 @@ class StubGenerator: public StubCodeGenerator {
       StubRoutines::_crc32c_table_addr = (address)StubRoutines::x86::_crc32c_table;
       StubRoutines::_updateBytesCRC32C = generate_updateBytesCRC32C(supports_clmul);
     }
-    if (VM_Version::supports_sse2() && UseLibmIntrinsic) {
+    if (VM_Version::supports_sse2() && UseLibmIntrinsic && InlineIntrinsics) {
       if (vmIntrinsics::is_intrinsic_available(vmIntrinsics::_dsin) ||
           vmIntrinsics::is_intrinsic_available(vmIntrinsics::_dcos) ||
           vmIntrinsics::is_intrinsic_available(vmIntrinsics::_dtan)) {
@@ -5080,6 +5132,12 @@ class StubGenerator: public StubCodeGenerator {
       StubRoutines::x86::_pshuffle_byte_flip_mask_addr = generate_pshuffle_byte_flip_mask();
       StubRoutines::_sha256_implCompress = generate_sha256_implCompress(false, "sha256_implCompress");
       StubRoutines::_sha256_implCompressMB = generate_sha256_implCompress(true, "sha256_implCompressMB");
+    }
+    if (UseSHA512Intrinsics) {
+      StubRoutines::x86::_k512_W_addr = (address)StubRoutines::x86::_k512_W;
+      StubRoutines::x86::_pshuffle_byte_flip_mask_addr_sha512 = generate_pshuffle_byte_flip_mask_sha512();
+      StubRoutines::_sha512_implCompress = generate_sha512_implCompress(false, "sha512_implCompress");
+      StubRoutines::_sha512_implCompressMB = generate_sha512_implCompress(true, "sha512_implCompressMB");
     }
 
     // Generate GHASH intrinsics code

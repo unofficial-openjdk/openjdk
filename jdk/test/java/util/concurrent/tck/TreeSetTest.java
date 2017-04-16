@@ -67,10 +67,10 @@ public class TreeSetTest extends JSR166TestCase {
 
     /**
      * Returns a new set of given size containing consecutive
-     * Integers 0 ... n.
+     * Integers 0 ... n - 1.
      */
     private TreeSet<Integer> populatedSet(int n) {
-        TreeSet<Integer> q = new TreeSet<Integer>();
+        TreeSet<Integer> q = new TreeSet<>();
         assertTrue(q.isEmpty());
         for (int i = n - 1; i >= 0; i -= 2)
             assertTrue(q.add(new Integer(i)));

@@ -29,6 +29,7 @@
  *          4802647 7123424 8024709
  * @summary Run many tests on many Collection and Map implementations
  * @author  Martin Buchholz
+ * @modules java.base/java.util:open
  * @run main MOAT
  * @key randomness
  */
@@ -677,7 +678,7 @@ public class MOAT {
 
     private static void testQueueAddRemove(final Queue<Integer> q,
                                            final Integer e) {
-        final List<Integer> originalContents = new ArrayList<Integer>(q);
+        final List<Integer> originalContents = new ArrayList<>(q);
         final boolean isEmpty = q.isEmpty();
         final boolean isList = (q instanceof List);
         final List asList = isList ? (List) q : null;
@@ -1206,8 +1207,7 @@ public class MOAT {
 
     private static void throwsConsistently(Class<? extends Throwable> k,
                                            Iterable<Fun> fs) {
-        List<Class<? extends Throwable>> threw
-            = new ArrayList<Class<? extends Throwable>>();
+        List<Class<? extends Throwable>> threw = new ArrayList<>();
         for (Fun f : fs)
             try { f.f(); threw.add(null); }
             catch (Throwable t) {
@@ -1223,7 +1223,7 @@ public class MOAT {
         final ConcurrentMap<T,Integer> cm = (m instanceof ConcurrentMap)
             ? (ConcurrentMap<T,Integer>) m
             : null;
-        List<Fun> fs = new ArrayList<Fun>();
+        List<Fun> fs = new ArrayList<>();
         fs.add(() -> check(! m.containsKey(null)));
         fs.add(() -> equal(m.remove(null), null));
         fs.add(() -> equal(m.get(null), null));

@@ -221,7 +221,7 @@ class AbstractInterpreter: AllStatic {
   }
 
   static int expr_offset_in_bytes(int i) {
-#if !defined(ZERO) && (defined(PPC) || defined(SPARC))
+#if !defined(ZERO) && (defined(PPC) || defined(S390) || defined(SPARC))
     return stackElementSize * i + wordSize;  // both point to one word past TOS
 #else
     return stackElementSize * i;
@@ -299,10 +299,6 @@ class AbstractInterpreter: AllStatic {
   }
 
   static void initialize_method_handle_entries();
-
-  // PPC-only: Support abs and sqrt like in compiler.
-  // For others we can use a normal (native) entry.
-  static bool math_entry_available(MethodKind kind);
 };
 
 //------------------------------------------------------------------------------------------------------------------------

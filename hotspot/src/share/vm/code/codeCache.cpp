@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "aot/aotLoader.hpp"
 #include "code/codeBlob.hpp"
 #include "code/codeCache.hpp"
 #include "code/compiledIC.hpp"
@@ -128,6 +129,8 @@ class CodeBlob_sizes {
 
 // Iterate over all CodeHeaps
 #define FOR_ALL_HEAPS(heap) for (GrowableArrayIterator<CodeHeap*> heap = _heaps->begin(); heap != _heaps->end(); ++heap)
+#define FOR_ALL_NMETHOD_HEAPS(heap) for (GrowableArrayIterator<CodeHeap*> heap = _nmethod_heaps->begin(); heap != _nmethod_heaps->end(); ++heap)
+
 // Iterate over all CodeBlobs (cb) on the given CodeHeap
 #define FOR_ALL_BLOBS(cb, heap) for (CodeBlob* cb = first_blob(heap); cb != NULL; cb = next_blob(heap, cb))
 
@@ -139,21 +142,24 @@ nmethod* CodeCache::_scavenge_root_nmethods = NULL;
 
 // Initialize array of CodeHeaps
 GrowableArray<CodeHeap*>* CodeCache::_heaps = new(ResourceObj::C_HEAP, mtCode) GrowableArray<CodeHeap*> (CodeBlobType::All, true);
+GrowableArray<CodeHeap*>* CodeCache::_compiled_heaps = new(ResourceObj::C_HEAP, mtCode) GrowableArray<CodeHeap*> (CodeBlobType::All, true);
+GrowableArray<CodeHeap*>* CodeCache::_nmethod_heaps = new(ResourceObj::C_HEAP, mtCode) GrowableArray<CodeHeap*> (CodeBlobType::All, true);
 
 void CodeCache::check_heap_sizes(size_t non_nmethod_size, size_t profiled_size, size_t non_profiled_size, size_t cache_size, bool all_set) {
   size_t total_size = non_nmethod_size + profiled_size + non_profiled_size;
   // Prepare error message
   const char* error = "Invalid code heap sizes";
-  err_msg message("NonNMethodCodeHeapSize (%zuK) + ProfiledCodeHeapSize (%zuK) + NonProfiledCodeHeapSize (%zuK) = %zuK",
+  err_msg message("NonNMethodCodeHeapSize (" SIZE_FORMAT "K) + ProfiledCodeHeapSize (" SIZE_FORMAT "K)"
+                  " + NonProfiledCodeHeapSize (" SIZE_FORMAT "K) = " SIZE_FORMAT "K",
           non_nmethod_size/K, profiled_size/K, non_profiled_size/K, total_size/K);
 
   if (total_size > cache_size) {
     // Some code heap sizes were explicitly set: total_size must be <= cache_size
-    message.append(" is greater than ReservedCodeCacheSize (%zuK).", cache_size/K);
+    message.append(" is greater than ReservedCodeCacheSize (" SIZE_FORMAT "K).", cache_size/K);
     vm_exit_during_initialization(error, message);
   } else if (all_set && total_size != cache_size) {
     // All code heap sizes were explicitly set: total_size must equal cache_size
-    message.append(" is not equal to ReservedCodeCacheSize (%zuK).", cache_size/K);
+    message.append(" is not equal to ReservedCodeCacheSize (" SIZE_FORMAT "K).", cache_size/K);
     vm_exit_during_initialization(error, message);
   }
 }
@@ -262,7 +268,7 @@ void CodeCache::initialize_heaps() {
   uint min_code_cache_size = CodeCacheMinimumUseSpace DEBUG_ONLY(* 3);
   if (non_nmethod_size < (min_code_cache_size + code_buffers_size)) {
     vm_exit_during_initialization(err_msg(
-        "Not enough space in non-nmethod code heap to run VM: %zuK < %zuK",
+        "Not enough space in non-nmethod code heap to run VM: " SIZE_FORMAT "K < " SIZE_FORMAT "K",
         non_nmethod_size/K, (min_code_cache_size + code_buffers_size)/K));
   }
 
@@ -365,6 +371,28 @@ const char* CodeCache::get_code_heap_flag_name(int code_blob_type) {
   return NULL;
 }
 
+int CodeCache::code_heap_compare(CodeHeap* const &lhs, CodeHeap* const &rhs) {
+  if (lhs->code_blob_type() == rhs->code_blob_type()) {
+    return (lhs > rhs) ? 1 : ((lhs < rhs) ? -1 : 0);
+  } else {
+    return lhs->code_blob_type() - rhs->code_blob_type();
+  }
+}
+
+void CodeCache::add_heap(CodeHeap* heap) {
+  assert(!Universe::is_fully_initialized(), "late heap addition?");
+
+  _heaps->insert_sorted<code_heap_compare>(heap);
+
+  int type = heap->code_blob_type();
+  if (code_blob_type_accepts_compiled(type)) {
+    _compiled_heaps->insert_sorted<code_heap_compare>(heap);
+  }
+  if (code_blob_type_accepts_nmethod(type)) {
+    _nmethod_heaps->insert_sorted<code_heap_compare>(heap);
+  }
+}
+
 void CodeCache::add_heap(ReservedSpace rs, const char* name, int code_blob_type) {
   // Check if heap is needed
   if (!heap_available(code_blob_type)) {
@@ -373,7 +401,7 @@ void CodeCache::add_heap(ReservedSpace rs, const char* name, int code_blob_type)
 
   // Create CodeHeap
   CodeHeap* heap = new CodeHeap(name, code_blob_type);
-  _heaps->append(heap);
+  add_heap(heap);
 
   // Reserve Space
   size_t size_initial = MIN2(InitialCodeCacheSize, rs.size());
@@ -389,7 +417,7 @@ void CodeCache::add_heap(ReservedSpace rs, const char* name, int code_blob_type)
 CodeHeap* CodeCache::get_code_heap(const CodeBlob* cb) {
   assert(cb != NULL, "CodeBlob is null");
   FOR_ALL_HEAPS(heap) {
-    if ((*heap)->contains(cb)) {
+    if ((*heap)->contains_blob(cb)) {
       return *heap;
     }
   }
@@ -424,10 +452,6 @@ CodeBlob* CodeCache::next_blob(CodeHeap* heap, CodeBlob* cb) {
   assert_locked_or_safepoint(CodeCache_lock);
   assert(heap != NULL, "heap is null");
   return (CodeBlob*)heap->next(cb);
-}
-
-CodeBlob* CodeCache::next_blob(CodeBlob* cb) {
-  return next_blob(get_code_heap(cb), cb);
 }
 
 /**
@@ -494,7 +518,7 @@ CodeBlob* CodeCache::allocate(int size, int code_blob_type, int orig_code_blob_t
     }
     if (PrintCodeCacheExtension) {
       ResourceMark rm;
-      if (_heaps->length() >= 1) {
+      if (_nmethod_heaps->length() >= 1) {
         tty->print("%s", heap->name());
       } else {
         tty->print("CodeCache");
@@ -547,13 +571,20 @@ void CodeCache::commit(CodeBlob* cb) {
 }
 
 bool CodeCache::contains(void *p) {
-  // It should be ok to call contains without holding a lock
+  // S390 uses contains() in current_frame(), which is used before
+  // code cache initialization if NativeMemoryTracking=detail is set.
+  S390_ONLY(if (_heaps == NULL) return false;)
+  // It should be ok to call contains without holding a lock.
   FOR_ALL_HEAPS(heap) {
     if ((*heap)->contains(p)) {
       return true;
     }
   }
   return false;
+}
+
+bool CodeCache::contains(nmethod *nm) {
+  return contains((void *)nm);
 }
 
 // This method is safe to call without holding the CodeCache_lock, as long as a dead CodeBlob is not
@@ -572,8 +603,8 @@ CodeBlob* CodeCache::find_blob_unsafe(void* start) {
   // NMT can walk the stack before code cache is created
   if (_heaps != NULL && !_heaps->is_empty()) {
     FOR_ALL_HEAPS(heap) {
-      CodeBlob* result = (CodeBlob*) (*heap)->find_start(start);
-      if (result != NULL && result->blob_contains((address)start)) {
+      CodeBlob* result = (*heap)->find_blob_unsafe(start);
+      if (result != NULL) {
         return result;
       }
     }
@@ -589,7 +620,7 @@ nmethod* CodeCache::find_nmethod(void* start) {
 
 void CodeCache::blobs_do(void f(CodeBlob* nm)) {
   assert_locked_or_safepoint(CodeCache_lock);
-  FOR_ALL_HEAPS(heap) {
+  FOR_ALL_NMETHOD_HEAPS(heap) {
     FOR_ALL_BLOBS(cb, *heap) {
       f(cb);
     }
@@ -610,6 +641,7 @@ void CodeCache::metadata_do(void f(Metadata* m)) {
   while(iter.next_alive()) {
     iter.method()->metadata_do(f);
   }
+  AOTLoader::metadata_do(f);
 }
 
 int CodeCache::alignment_unit() {
@@ -631,11 +663,10 @@ void CodeCache::do_unloading(BoolObjectClosure* is_alive, bool unloading_occurre
 
 void CodeCache::blobs_do(CodeBlobClosure* f) {
   assert_locked_or_safepoint(CodeCache_lock);
-  FOR_ALL_HEAPS(heap) {
+  FOR_ALL_NMETHOD_HEAPS(heap) {
     FOR_ALL_BLOBS(cb, *heap) {
       if (cb->is_alive()) {
         f->do_code_blob(cb);
-
 #ifdef ASSERT
         if (cb->is_nmethod())
         ((nmethod*)cb)->verify_scavenge_root_oops();
@@ -832,13 +863,12 @@ void CodeCache::verify_icholder_relocations() {
   int count = 0;
   FOR_ALL_HEAPS(heap) {
     FOR_ALL_BLOBS(cb, *heap) {
-      if (cb->is_nmethod()) {
-        nmethod* nm = (nmethod*)cb;
+      CompiledMethod *nm = cb->as_compiled_method_or_null();
+      if (nm != NULL) {
         count += nm->verify_icholder_relocations();
       }
     }
   }
-
   assert(count + InlineCacheBuffer::pending_icholder_count() + CompiledICHolder::live_not_claimed_count() ==
          CompiledICHolder::live_count(), "must agree");
 #endif
@@ -899,7 +929,7 @@ int CodeCache::nmethod_count(int code_blob_type) {
 
 int CodeCache::nmethod_count() {
   int count = 0;
-  FOR_ALL_HEAPS(heap) {
+  FOR_ALL_NMETHOD_HEAPS(heap) {
     count += (*heap)->nmethod_count();
   }
   return count;
@@ -930,7 +960,7 @@ address CodeCache::high_bound(int code_blob_type) {
 
 size_t CodeCache::capacity() {
   size_t cap = 0;
-  FOR_ALL_HEAPS(heap) {
+  FOR_ALL_NMETHOD_HEAPS(heap) {
     cap += (*heap)->capacity();
   }
   return cap;
@@ -943,7 +973,7 @@ size_t CodeCache::unallocated_capacity(int code_blob_type) {
 
 size_t CodeCache::unallocated_capacity() {
   size_t unallocated_cap = 0;
-  FOR_ALL_HEAPS(heap) {
+  FOR_ALL_NMETHOD_HEAPS(heap) {
     unallocated_cap += (*heap)->unallocated_capacity();
   }
   return unallocated_cap;
@@ -951,7 +981,7 @@ size_t CodeCache::unallocated_capacity() {
 
 size_t CodeCache::max_capacity() {
   size_t max_cap = 0;
-  FOR_ALL_HEAPS(heap) {
+  FOR_ALL_NMETHOD_HEAPS(heap) {
     max_cap += (*heap)->max_capacity();
   }
   return max_cap;
@@ -977,7 +1007,7 @@ double CodeCache::reverse_free_ratio(int code_blob_type) {
 
 size_t CodeCache::bytes_allocated_in_freelists() {
   size_t allocated_bytes = 0;
-  FOR_ALL_HEAPS(heap) {
+  FOR_ALL_NMETHOD_HEAPS(heap) {
     allocated_bytes += (*heap)->allocated_in_freelist();
   }
   return allocated_bytes;
@@ -985,7 +1015,7 @@ size_t CodeCache::bytes_allocated_in_freelists() {
 
 int CodeCache::allocated_segments() {
   int number_of_segments = 0;
-  FOR_ALL_HEAPS(heap) {
+  FOR_ALL_NMETHOD_HEAPS(heap) {
     number_of_segments += (*heap)->allocated_segments();
   }
   return number_of_segments;
@@ -993,7 +1023,7 @@ int CodeCache::allocated_segments() {
 
 size_t CodeCache::freelists_length() {
   size_t length = 0;
-  FOR_ALL_HEAPS(heap) {
+  FOR_ALL_NMETHOD_HEAPS(heap) {
     length += (*heap)->freelist_length();
   }
   return length;
@@ -1036,6 +1066,8 @@ void CodeCache::initialize() {
 
 void codeCache_init() {
   CodeCache::initialize();
+  // Load AOT libraries and add AOT code heaps.
+  AOTLoader::initialize();
 }
 
 //------------------------------------------------------------------------------------------------
@@ -1097,6 +1129,15 @@ CompiledMethod* CodeCache::find_compiled(void* start) {
   CodeBlob *cb = find_blob(start);
   assert(cb == NULL || cb->is_compiled(), "did not find an compiled_method");
   return (CompiledMethod*)cb;
+}
+
+bool CodeCache::is_far_target(address target) {
+#if INCLUDE_AOT
+  return NativeCall::is_far_call(_low_bound,  target) ||
+         NativeCall::is_far_call(_high_bound, target);
+#else
+  return false;
+#endif
 }
 
 #ifdef HOTSWAP
@@ -1170,7 +1211,7 @@ void CodeCache::make_marked_nmethods_not_entrant() {
   CompiledMethodIterator iter;
   while(iter.next_alive()) {
     CompiledMethod* nm = iter.method();
-    if (nm->is_marked_for_deoptimization()) {
+    if (nm->is_marked_for_deoptimization() && !nm->is_not_entrant()) {
       nm->make_not_entrant();
     }
   }
@@ -1201,7 +1242,7 @@ void CodeCache::flush_dependents_on(instanceKlassHandle dependee) {
 void CodeCache::flush_evol_dependents_on(instanceKlassHandle ev_k_h) {
   // --- Compile_lock is not held. However we are at a safepoint.
   assert_locked_or_safepoint(Compile_lock);
-  if (number_of_nmethods_with_dependencies() == 0) return;
+  if (number_of_nmethods_with_dependencies() == 0 && !UseAOT) return;
 
   // CodeCache can only be updated by a thread_in_VM and they will all be
   // stopped during the safepoint so CodeCache will be safe to update without
@@ -1313,7 +1354,7 @@ void CodeCache::report_codemem_full(int code_blob_type, bool print) {
 
 void CodeCache::print_memory_overhead() {
   size_t wasted_bytes = 0;
-  FOR_ALL_HEAPS(heap) {
+  FOR_ALL_NMETHOD_HEAPS(heap) {
       CodeHeap* curr_heap = *heap;
       for (CodeBlob* cb = (CodeBlob*)curr_heap->first(); cb != NULL; cb = (CodeBlob*)curr_heap->next(cb)) {
         HeapBlock* heap_block = ((HeapBlock*)cb) - 1;
@@ -1359,8 +1400,8 @@ void CodeCache::print_internals() {
   ResourceMark rm;
 
   int i = 0;
-  FOR_ALL_HEAPS(heap) {
-    if ((_heaps->length() >= 1) && Verbose) {
+  FOR_ALL_NMETHOD_HEAPS(heap) {
+    if ((_nmethod_heaps->length() >= 1) && Verbose) {
       tty->print_cr("-- %s --", (*heap)->name());
     }
     FOR_ALL_BLOBS(cb, *heap) {
@@ -1456,7 +1497,7 @@ void CodeCache::print() {
   CodeBlob_sizes live;
   CodeBlob_sizes dead;
 
-  FOR_ALL_HEAPS(heap) {
+  FOR_ALL_NMETHOD_HEAPS(heap) {
     FOR_ALL_BLOBS(cb, *heap) {
       if (!cb->is_alive()) {
         dead.add(cb);
@@ -1482,7 +1523,7 @@ void CodeCache::print() {
     int number_of_blobs = 0;
     int number_of_oop_maps = 0;
     int map_size = 0;
-    FOR_ALL_HEAPS(heap) {
+    FOR_ALL_NMETHOD_HEAPS(heap) {
       FOR_ALL_BLOBS(cb, *heap) {
         if (cb->is_alive()) {
           number_of_blobs++;
@@ -1565,35 +1606,3 @@ void CodeCache::log_state(outputStream* st) {
             unallocated_capacity());
 }
 
-// Initialize iterator to given compiled method
-void CompiledMethodIterator::initialize(CompiledMethod* cm) {
-  _code_blob = (CodeBlob*)cm;
-  if (!SegmentedCodeCache) {
-    // Iterate over all CodeBlobs
-    _code_blob_type = CodeBlobType::All;
-  } else if (cm != NULL) {
-    _code_blob_type = CodeCache::get_code_blob_type(cm);
-  } else {
-    // Only iterate over method code heaps, starting with non-profiled
-    _code_blob_type = CodeBlobType::MethodNonProfiled;
-  }
-}
-
-// Advance iterator to the next compiled method in the current code heap
-bool CompiledMethodIterator::next_compiled_method() {
-  // Get first method CodeBlob
-  if (_code_blob == NULL) {
-    _code_blob = CodeCache::first_blob(_code_blob_type);
-    if (_code_blob == NULL) {
-      return false;
-    } else if (_code_blob->is_nmethod()) {
-      return true;
-    }
-  }
-  // Search for next method CodeBlob
-  _code_blob = CodeCache::next_blob(_code_blob);
-  while (_code_blob != NULL && !_code_blob->is_compiled()) {
-    _code_blob = CodeCache::next_blob(_code_blob);
-  }
-  return _code_blob != NULL;
-}

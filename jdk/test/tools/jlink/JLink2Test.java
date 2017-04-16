@@ -29,6 +29,7 @@
  * @modules java.base/jdk.internal.jimage
  *          jdk.jdeps/com.sun.tools.classfile
  *          jdk.jlink/jdk.tools.jlink.internal
+ *          jdk.jlink/jdk.tools.jlink.plugin
  *          jdk.jlink/jdk.tools.jmod
  *          jdk.jlink/jdk.tools.jimage
  *          jdk.compiler
@@ -38,7 +39,6 @@
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Layer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -67,56 +67,7 @@ public class JLink2Test {
         // This test case must be first one, the JlinkTask is clean
         // and reveals possible bug related to plugin options in defaults
         testSameNames(helper);
-        testModulePath(helper);
         testOptions();
-    }
-
-    private static void testModulePath(Helper helper) throws IOException {
-        Path doesNotExist = helper.createNewImageDir("doesnotexist");
-        Path jar = helper.getJarDir().resolve("bad.jar");
-        JImageGenerator.getJLinkTask()
-                .pluginModulePath(doesNotExist)
-                .option("--help")
-                .call().assertSuccess();
-        Files.createFile(jar);
-        JImageGenerator.getJLinkTask()
-                .pluginModulePath(jar)
-                .option("--help")
-                .call().assertFailure("(\n|\r|.)*Error: Invalid modules in the plugins path: (\n|\r|.)*");
-        JImageGenerator.getJLinkTask()
-                .pluginModulePath(jar.getParent())
-                .option("--help")
-                .call().assertFailure("Error: Invalid modules in the plugins path: .*zip file is empty(\n|\r|.)*");
-        try (JarOutputStream out = new JarOutputStream(new FileOutputStream(jar.toFile()))) {
-            JarEntry entry = new JarEntry("class");
-            out.putNextEntry(entry);
-            out.write("AAAA".getBytes());
-            out.closeEntry();
-        }
-        JImageGenerator.getJLinkTask()
-                .pluginModulePath(jar.getParent())
-                .output(helper.createNewImageDir("crash"))
-                .addJmods(helper.getStdJmodsDir())
-                .addJmods(jar.getParent())
-                .addMods("bad")
-                .call().assertFailure("(\n|\r|.)*Error: module-info.class not found for bad module(\n|\r|.)*");
-        try (JarOutputStream out = new JarOutputStream(new FileOutputStream(jar.toFile()))) {
-            JarEntry entry = new JarEntry("classes");
-            out.putNextEntry(entry);
-            out.closeEntry();
-
-            entry = new JarEntry("classes/class");
-            out.putNextEntry(entry);
-            out.write("AAAA".getBytes());
-            out.closeEntry();
-        }
-        JImageGenerator.getJLinkTask()
-                .pluginModulePath(jar.getParent())
-                .output(helper.createNewImageDir("bad"))
-                .addJmods(jar.getParent())
-                .addJars(helper.getStdJmodsDir())
-                .addMods("bad")
-                .call().assertFailure("(\n|\r|.)*Error: module-info.class not found for bad module(\n|\r|.)*");
     }
 
     private static void testSameNames(Helper helper) throws Exception {
@@ -136,7 +87,7 @@ public class JLink2Test {
 
     private static void testOptions() throws Exception {
         List<Plugin> builtInPlugins = new ArrayList<>();
-        builtInPlugins.addAll(PluginRepository.getPlugins(Layer.boot()));
+        builtInPlugins.addAll(PluginRepository.getPlugins(ModuleLayer.boot()));
         if(builtInPlugins.isEmpty()) {
             throw new Exception("No builtin plugins");
         }

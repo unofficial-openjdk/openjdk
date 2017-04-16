@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,20 +27,18 @@ package java.awt.print;
 
 import java.awt.AWTError;
 import java.awt.HeadlessException;
-import java.util.Enumeration;
 
 import javax.print.DocFlavor;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.StreamPrintServiceFactory;
+import javax.print.attribute.AttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.standard.Media;
 import javax.print.attribute.standard.MediaPrintableArea;
 import javax.print.attribute.standard.MediaSize;
 import javax.print.attribute.standard.MediaSizeName;
 import javax.print.attribute.standard.OrientationRequested;
-
-import sun.security.action.GetPropertyAction;
 
 /**
  * The {@code PrinterJob} class is the principal class that controls
@@ -79,13 +77,12 @@ public abstract class PrinterJob {
             public PrinterJob run() {
                 String nm = System.getProperty("java.awt.printerjob", null);
                 try {
-                    return (PrinterJob)Class.forName(nm).newInstance();
+                    return (PrinterJob)Class.forName(nm).
+                                             getConstructor().newInstance();
                 } catch (ClassNotFoundException e) {
                     throw new AWTError("PrinterJob not found: " + nm);
-                } catch (InstantiationException e) {
+                } catch (ReflectiveOperationException e) {
                  throw new AWTError("Could not instantiate PrinterJob: " + nm);
-                } catch (IllegalAccessException e) {
-                    throw new AWTError("Could not access PrinterJob: " + nm);
                 }
             }
         });

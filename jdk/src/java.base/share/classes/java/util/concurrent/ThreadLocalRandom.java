@@ -197,9 +197,17 @@ public class ThreadLocalRandom extends Random {
         return r;
     }
 
-    // We must define this, but never use it.
+    /**
+     * Generates a pseudorandom number with the indicated number of
+     * low-order bits.  Because this class has no subclasses, this
+     * method cannot be invoked or overridden.
+     *
+     * @param  bits random bits
+     * @return the next pseudorandom value from this random number
+     *         generator's sequence
+     */
     protected int next(int bits) {
-        return (int)(mix64(nextSeed()) >>> (64 - bits));
+        return nextInt() >>> (32 - bits);
     }
 
     /**
@@ -691,8 +699,7 @@ public class ThreadLocalRandom extends Random {
      * @return a stream of pseudorandom {@code double} values,
      *         each with the given origin (inclusive) and bound (exclusive)
      * @throws IllegalArgumentException if {@code streamSize} is
-     *         less than zero
-     * @throws IllegalArgumentException if {@code randomNumberOrigin}
+     *         less than zero, or {@code randomNumberOrigin}
      *         is greater than or equal to {@code randomNumberBound}
      * @since 1.8
      */
@@ -977,34 +984,6 @@ public class ThreadLocalRandom extends Random {
         U.putObjectRelease(thread, INHERITEDACCESSCONTROLCONTEXT, acc);
     }
 
-    /**
-     * Returns a new group with the system ThreadGroup (the
-     * topmost, parent-less group) as parent.  Uses Unsafe to
-     * traverse Thread.group and ThreadGroup.parent fields.
-     */
-    static final ThreadGroup createThreadGroup(String name) {
-        if (name == null)
-            throw new NullPointerException();
-        try {
-            long tg = U.objectFieldOffset
-                (Thread.class.getDeclaredField("group"));
-            long gp = U.objectFieldOffset
-                (ThreadGroup.class.getDeclaredField("parent"));
-            ThreadGroup group = (ThreadGroup)
-                U.getObject(Thread.currentThread(), tg);
-            while (group != null) {
-                ThreadGroup parent = (ThreadGroup)U.getObject(group, gp);
-                if (parent == null)
-                    return new ThreadGroup(group, name);
-                group = parent;
-            }
-        } catch (ReflectiveOperationException e) {
-            throw new Error(e);
-        }
-        // fall through if null as cannot-happen safeguard
-        throw new Error("Cannot create ThreadGroup");
-    }
-
     // Serialization support
 
     private static final long serialVersionUID = -5851777807851030925L;
@@ -1115,7 +1094,7 @@ public class ThreadLocalRandom extends Random {
     // at end of <clinit> to survive static initialization circularity
     static {
         if (java.security.AccessController.doPrivileged(
-            new java.security.PrivilegedAction<Boolean>() {
+            new java.security.PrivilegedAction<>() {
                 public Boolean run() {
                     return Boolean.getBoolean("java.util.secureRandomSeed");
                 }})) {

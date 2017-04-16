@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,9 @@
 #include "precompiled.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/javaAssertions.hpp"
+#include "classfile/moduleEntry.hpp"
 #include "classfile/stringTable.hpp"
 #include "classfile/symbolTable.hpp"
-#include "code/codeCacheExtensions.hpp"
 #include "gc/shared/cardTableRS.hpp"
 #include "gc/shared/genCollectedHeap.hpp"
 #include "gc/shared/referenceProcessor.hpp"
@@ -170,6 +170,8 @@ bool needs_module_property_warning = false;
 #define ADDEXPORTS_LEN 10
 #define ADDREADS "addreads"
 #define ADDREADS_LEN 8
+#define ADDOPENS "addopens"
+#define ADDOPENS_LEN 8
 #define PATCH "patch"
 #define PATCH_LEN 5
 #define ADDMODS "addmods"
@@ -196,6 +198,7 @@ bool Arguments::is_internal_module_property(const char* property) {
     const char* property_suffix = property + MODULE_PROPERTY_PREFIX_LEN;
     if (matches_property_suffix(property_suffix, ADDEXPORTS, ADDEXPORTS_LEN) ||
         matches_property_suffix(property_suffix, ADDREADS, ADDREADS_LEN) ||
+        matches_property_suffix(property_suffix, ADDOPENS, ADDOPENS_LEN) ||
         matches_property_suffix(property_suffix, PATCH, PATCH_LEN) ||
         matches_property_suffix(property_suffix, ADDMODS, ADDMODS_LEN) ||
         matches_property_suffix(property_suffix, LIMITMODS, LIMITMODS_LEN) ||
@@ -375,6 +378,7 @@ static SpecialFlag const special_jvm_flags[] = {
   { "AutoGCSelectPauseMillis",      JDK_Version::jdk(9), JDK_Version::undefined(), JDK_Version::jdk(10) },
   { "UseAutoGCSelectPolicy",        JDK_Version::jdk(9), JDK_Version::undefined(), JDK_Version::jdk(10) },
   { "UseParNewGC",                  JDK_Version::jdk(9), JDK_Version::undefined(), JDK_Version::jdk(10) },
+  { "ExplicitGCInvokesConcurrentAndUnloadsClasses", JDK_Version::jdk(9), JDK_Version::undefined(), JDK_Version::jdk(10) },
   { "ConvertSleepToYield",          JDK_Version::jdk(9), JDK_Version::jdk(10),     JDK_Version::jdk(11) },
   { "ConvertYieldToSleep",          JDK_Version::jdk(9), JDK_Version::jdk(10),     JDK_Version::jdk(11) },
 
@@ -1315,22 +1319,37 @@ bool Arguments::add_property(const char* prop, PropertyWriteable writeable, Prop
 #if INCLUDE_CDS
 void Arguments::check_unsupported_dumping_properties() {
   assert(DumpSharedSpaces, "this function is only used with -Xshare:dump");
-  const char* unsupported_properties[5] = { "jdk.module.main",
+  const char* unsupported_properties[] = { "jdk.module.main",
+                                           "jdk.module.limitmods",
                                            "jdk.module.path",
                                            "jdk.module.upgrade.path",
                                            "jdk.module.addmods.0",
-                                           "jdk.module.limitmods" };
-  const char* unsupported_options[5] = { "-m",
-                                        "--module-path",
-                                        "--upgrade-module-path",
-                                        "--add-modules",
-                                        "--limit-modules" };
+                                           "jdk.module.patch.0" };
+  const char* unsupported_options[] = { "-m", // cannot use at dump time
+                                        "--limit-modules", // ignored at dump time
+                                        "--module-path", // ignored at dump time
+                                        "--upgrade-module-path", // ignored at dump time
+                                        "--add-modules", // ignored at dump time
+                                        "--patch-module" // ignored at dump time
+                                      };
+  assert(ARRAY_SIZE(unsupported_properties) == ARRAY_SIZE(unsupported_options), "must be");
+  // If a vm option is found in the unsupported_options array with index less than the info_idx,
+  // vm will exit with an error message. Otherwise, it will print an informational message if
+  // PrintSharedSpaces is enabled.
+  uint info_idx = 1;
   SystemProperty* sp = system_properties();
   while (sp != NULL) {
-    for (int i = 0; i < 5; i++) {
+    for (uint i = 0; i < ARRAY_SIZE(unsupported_properties); i++) {
       if (strcmp(sp->key(), unsupported_properties[i]) == 0) {
+        if (i < info_idx) {
           vm_exit_during_initialization(
             "Cannot use the following option when dumping the shared archive", unsupported_options[i]);
+        } else {
+          if (PrintSharedSpaces) {
+            tty->print_cr(
+              "Info: the %s option is ignored when dumping the shared archive", unsupported_options[i]);
+          }
+        }
       }
     }
     sp = sp->next();
@@ -1406,10 +1425,8 @@ void Arguments::set_mode_flags(Mode mode) {
   }
 }
 
-#if defined(COMPILER2) || INCLUDE_JVMCI || defined(_LP64) || !INCLUDE_CDS
 // Conflict: required to use shared spaces (-Xshare:on), but
 // incompatible command line options were chosen.
-
 static void no_shared_spaces(const char* message) {
   if (RequireSharedSpaces) {
     jio_fprintf(defaultStream::error_stream(),
@@ -1419,7 +1436,6 @@ static void no_shared_spaces(const char* message) {
     FLAG_SET_DEFAULT(UseSharedSpaces, false);
   }
 }
-#endif
 
 // Returns threshold scaled with the value of scale.
 // If scale < 0.0, threshold is returned without scaling.
@@ -1803,6 +1819,25 @@ bool Arguments::gc_selected() {
 #endif // INCLUDE_ALL_GCS
 }
 
+#ifdef TIERED
+bool Arguments::compilation_mode_selected() {
+ return !FLAG_IS_DEFAULT(TieredCompilation) || !FLAG_IS_DEFAULT(TieredStopAtLevel) ||
+        !FLAG_IS_DEFAULT(UseAOT) JVMCI_ONLY(|| !FLAG_IS_DEFAULT(EnableJVMCI) || !FLAG_IS_DEFAULT(UseJVMCICompiler));
+
+}
+
+void Arguments::select_compilation_mode_ergonomically() {
+#if defined(_WINDOWS) && !defined(_LP64)
+  if (FLAG_IS_DEFAULT(NeverActAsServerClassMachine)) {
+    FLAG_SET_ERGO(bool, NeverActAsServerClassMachine, true);
+  }
+#endif
+  if (NeverActAsServerClassMachine) {
+    set_client_compilation_mode();
+  }
+}
+#endif //TIERED
+
 void Arguments::select_gc_ergonomically() {
 #if INCLUDE_ALL_GCS
   if (os::is_server_class_machine()) {
@@ -1838,7 +1873,45 @@ void Arguments::select_gc() {
   }
 }
 
+#if INCLUDE_JVMCI
+void Arguments::set_jvmci_specific_flags() {
+  if (UseJVMCICompiler) {
+    if (FLAG_IS_DEFAULT(TypeProfileWidth)) {
+      FLAG_SET_DEFAULT(TypeProfileWidth, 8);
+    }
+    if (FLAG_IS_DEFAULT(OnStackReplacePercentage)) {
+      FLAG_SET_DEFAULT(OnStackReplacePercentage, 933);
+    }
+    if (FLAG_IS_DEFAULT(ReservedCodeCacheSize)) {
+      FLAG_SET_DEFAULT(ReservedCodeCacheSize, 64*M);
+    }
+    if (FLAG_IS_DEFAULT(InitialCodeCacheSize)) {
+      FLAG_SET_DEFAULT(InitialCodeCacheSize, 16*M);
+    }
+    if (FLAG_IS_DEFAULT(MetaspaceSize)) {
+      FLAG_SET_DEFAULT(MetaspaceSize, 12*M);
+    }
+    if (FLAG_IS_DEFAULT(NewSizeThreadIncrease)) {
+      FLAG_SET_DEFAULT(NewSizeThreadIncrease, 4*K);
+    }
+    if (TieredStopAtLevel != CompLevel_full_optimization) {
+      // Currently JVMCI compiler can only work at the full optimization level
+      warning("forcing TieredStopAtLevel to full optimization because JVMCI is enabled");
+      TieredStopAtLevel = CompLevel_full_optimization;
+    }
+    if (FLAG_IS_DEFAULT(TypeProfileLevel)) {
+      FLAG_SET_DEFAULT(TypeProfileLevel, 0);
+    }
+  }
+}
+#endif
+
 void Arguments::set_ergonomics_flags() {
+#ifdef TIERED
+  if (!compilation_mode_selected()) {
+    select_compilation_mode_ergonomically();
+  }
+#endif
   select_gc();
 
 #if defined(COMPILER2) || INCLUDE_JVMCI
@@ -1847,7 +1920,7 @@ void Arguments::set_ergonomics_flags() {
   // server performance.  When -server is specified, keep the default off
   // unless it is asked for.  Future work: either add bytecode rewriting
   // at link time, or rewrite bytecodes in non-shared methods.
-  if (!DumpSharedSpaces && !RequireSharedSpaces &&
+  if (is_server_compilation_mode_vm() && !DumpSharedSpaces && !RequireSharedSpaces &&
       (FLAG_IS_DEFAULT(UseSharedSpaces) || !UseSharedSpaces)) {
     no_shared_spaces("COMPILER2 default: -Xshare:auto | off, have to manually setup to on.");
   }
@@ -1868,7 +1941,6 @@ void Arguments::set_ergonomics_flags() {
 #endif // _LP64
 #endif // !ZERO
 
-  CodeCacheExtensions::set_ergonomics_flags();
 }
 
 void Arguments::set_parallel_gc_flags() {
@@ -2024,9 +2096,35 @@ julong Arguments::limit_by_allocatable_memory(julong limit) {
 static const size_t DefaultHeapBaseMinAddress = HeapBaseMinAddress;
 
 void Arguments::set_heap_size() {
-  const julong phys_mem =
+  julong phys_mem =
     FLAG_IS_DEFAULT(MaxRAM) ? MIN2(os::physical_memory(), (julong)MaxRAM)
                             : (julong)MaxRAM;
+
+  // Experimental support for CGroup memory limits
+  if (UseCGroupMemoryLimitForHeap) {
+    // This is a rough indicator that a CGroup limit may be in force
+    // for this process
+    const char* lim_file = "/sys/fs/cgroup/memory/memory.limit_in_bytes";
+    FILE *fp = fopen(lim_file, "r");
+    if (fp != NULL) {
+      julong cgroup_max = 0;
+      int ret = fscanf(fp, JULONG_FORMAT, &cgroup_max);
+      if (ret == 1 && cgroup_max > 0) {
+        // If unlimited, cgroup_max will be a very large, but unspecified
+        // value, so use initial phys_mem as a limit
+        log_info(gc, heap)("Setting phys_mem to the min of cgroup limit ("
+                           JULONG_FORMAT "MB) and initial phys_mem ("
+                           JULONG_FORMAT "MB)", cgroup_max/M, phys_mem/M);
+        phys_mem = MIN2(cgroup_max, phys_mem);
+      } else {
+        warning("Unable to read/parse cgroup memory limit from %s: %s",
+                lim_file, errno != 0 ? strerror(errno) : "unknown error");
+      }
+      fclose(fp);
+    } else {
+      warning("Unable to open cgroup memory limit file %s (%s)", lim_file, strerror(errno));
+    }
+  }
 
   // If the maximum heap size has not been set with -Xmx,
   // then set it as fraction of the size of physical memory,
@@ -2413,22 +2511,14 @@ bool Arguments::check_vm_args_consistency() {
     }
 #endif
   }
-#if INCLUDE_JVMCI
 
+#if INCLUDE_JVMCI
   status = status && check_jvmci_args_consistency();
 
   if (EnableJVMCI) {
     if (!ScavengeRootsInCode) {
       warning("forcing ScavengeRootsInCode non-zero because JVMCI is enabled");
       ScavengeRootsInCode = 1;
-    }
-    if (FLAG_IS_DEFAULT(TypeProfileLevel)) {
-      TypeProfileLevel = 0;
-    }
-    if (UseJVMCICompiler) {
-      if (FLAG_IS_DEFAULT(TypeProfileWidth)) {
-        TypeProfileWidth = 8;
-      }
     }
   }
 #endif
@@ -2555,6 +2645,7 @@ bool Arguments::parse_uintx(const char* value,
 
 unsigned int addreads_count = 0;
 unsigned int addexports_count = 0;
+unsigned int addopens_count = 0;
 unsigned int addmods_count = 0;
 unsigned int patch_mod_count = 0;
 
@@ -2640,6 +2731,12 @@ jint Arguments::parse_vm_init_args(const JavaVMInitArgs *java_tool_options_args,
   if (result != JNI_OK) {
     return result;
   }
+
+#if INCLUDE_CDS
+  if (UseSharedSpaces && patch_mod_javabase) {
+    no_shared_spaces("CDS is disabled when " JAVA_BASE_NAME " module is patched.");
+  }
+#endif
 
   return JNI_OK;
 }
@@ -2809,6 +2906,10 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       if (!create_numbered_property("jdk.module.addexports", tail, addexports_count++)) {
         return JNI_ENOMEM;
       }
+    } else if (match_option(option, "--add-opens=", &tail)) {
+      if (!create_numbered_property("jdk.module.addopens", tail, addopens_count++)) {
+        return JNI_ENOMEM;
+      }
     } else if (match_option(option, "--add-modules=", &tail)) {
       if (!create_numbered_property("jdk.module.addmods", tail, addmods_count++)) {
         return JNI_ENOMEM;
@@ -2830,6 +2931,10 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       int res = process_patch_mod_option(tail, patch_mod_javabase);
       if (res != JNI_OK) {
         return res;
+      }
+    } else if (match_option(option, "--permit-illegal-access")) {
+      if (!create_property("jdk.module.permitIllegalAccess", "true", ExternalProperty)) {
+        return JNI_ENOMEM;
       }
     // -agentlib and -agentpath
     } else if (match_option(option, "-agentlib:", &tail) ||
@@ -3073,6 +3178,7 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
     // -Xprof
     } else if (match_option(option, "-Xprof")) {
 #if INCLUDE_FPROF
+      log_warning(arguments)("Option -Xprof was deprecated in version 9 and will likely be removed in a future release.");
       _has_profile = true;
 #else // INCLUDE_FPROF
       jio_fprintf(defaultStream::error_stream(),
@@ -3143,8 +3249,8 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
         if (FLAG_SET_CMDLINE(bool, ManagementServer, true) != Flag::SUCCESS) {
           return JNI_EINVAL;
         }
-        // management agent in module java.management
-        if (!create_numbered_property("jdk.module.addmods", "java.management", addmods_count++)) {
+        // management agent in module jdk.management.agent
+        if (!create_numbered_property("jdk.module.addmods", "jdk.management.agent", addmods_count++)) {
           return JNI_ENOMEM;
         }
 #else
@@ -3417,9 +3523,9 @@ void Arguments::add_patch_mod_prefix(const char* module_name, const char* path, 
   // This check is only required for java.base, all other duplicate module specifications
   // will be checked during module system initialization.  The module system initialization
   // will throw an ExceptionInInitializerError if this situation occurs.
-  if (strcmp(module_name, "java.base") == 0) {
+  if (strcmp(module_name, JAVA_BASE_NAME) == 0) {
     if (*patch_mod_javabase) {
-      vm_exit_during_initialization("Cannot specify java.base more than once to --patch-module");
+      vm_exit_during_initialization("Cannot specify " JAVA_BASE_NAME " more than once to --patch-module");
     } else {
       *patch_mod_javabase = true;
     }
@@ -3604,7 +3710,7 @@ jint Arguments::finalize_vm_init_args() {
 
 #if INCLUDE_JVMCI
   if (EnableJVMCI &&
-      !create_numbered_property("jdk.module.addmods", "jdk.vm.ci", addmods_count++)) {
+      !create_numbered_property("jdk.module.addmods", "jdk.internal.vm.ci", addmods_count++)) {
     return JNI_ENOMEM;
   }
 #endif
@@ -3638,6 +3744,12 @@ jint Arguments::finalize_vm_init_args() {
   if (!check_vm_args_consistency()) {
     return JNI_ERR;
   }
+
+#if INCLUDE_JVMCI
+  if (UseJVMCICompiler) {
+    Compilation_mode = CompMode_server;
+  }
+#endif
 
   return JNI_OK;
 }
@@ -3767,6 +3879,9 @@ jint Arguments::parse_options_environment_variable(const char* name,
   if ((buffer = os::strdup(buffer)) == NULL) {
     return JNI_ENOMEM;
   }
+
+  jio_fprintf(defaultStream::error_stream(),
+              "Picked up %s: %s\n", name, buffer);
 
   int retcode = parse_options_buffer(name, buffer, strlen(buffer), vm_args);
 
@@ -4365,9 +4480,12 @@ jint Arguments::parse(const JavaVMInitArgs* initial_cmd_args) {
 }
 
 jint Arguments::apply_ergo() {
-
   // Set flags based on ergonomics.
   set_ergonomics_flags();
+
+#if INCLUDE_JVMCI
+  set_jvmci_specific_flags();
+#endif
 
   set_shared_spaces_flags();
 
@@ -4381,7 +4499,9 @@ jint Arguments::apply_ergo() {
   } else {
     int max_compilation_policy_choice = 1;
 #ifdef COMPILER2
-    max_compilation_policy_choice = 2;
+    if (is_server_compilation_mode_vm()) {
+      max_compilation_policy_choice = 2;
+    }
 #endif
     // Check if the policy is valid.
     if (CompilationPolicyChoice >= max_compilation_policy_choice) {

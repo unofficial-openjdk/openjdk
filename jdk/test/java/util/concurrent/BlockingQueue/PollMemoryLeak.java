@@ -35,6 +35,8 @@
 /*
  * @test
  * @bug 6236036 6264015
+ * @modules java.base/java.util.concurrent:open
+ *          java.base/java.util.concurrent.locks:open
  * @summary Checks for a memory leak when a sequence of aborted timed
  * waits occur without a signal.  Uses the strategy of detecting
  * changes in the size of the object graph retained by a root object.
@@ -103,13 +105,13 @@ public class PollMemoryLeak {
     }
 
     ConcurrentHashMap<Class<?>, Collection<Field>> classFields
-        = new ConcurrentHashMap<Class<?>, Collection<Field>>();
+        = new ConcurrentHashMap<>();
 
     Collection<Field> referenceFieldsOf(Class<?> k) {
         Collection<Field> fields = classFields.get(k);
         if (fields == null) {
             fields = new ArrayDeque<Field>();
-            ArrayDeque<Field> allFields = new ArrayDeque<Field>();
+            ArrayDeque<Field> allFields = new ArrayDeque<>();
             for (Class<?> c = k; c != null; c = c.getSuperclass())
                 for (Field field : c.getDeclaredFields())
                     if (!Modifier.isStatic(field.getModifiers())
@@ -128,7 +130,7 @@ public class PollMemoryLeak {
     }
 
     Set<Object> retainedObjects(Object x) {
-        ArrayDeque<Object> todo = new ArrayDeque<Object>() {
+        ArrayDeque<Object> todo = new ArrayDeque<>() {
             public void push(Object x) { if (x != null) super.push(x); }};
         Set<Object> uniqueObjects = Collections.newSetFromMap(
             new IdentityHashMap<Object, Boolean>());

@@ -28,12 +28,11 @@ package com.sun.tools.jdeps;
 import com.sun.tools.classfile.Dependency.Location;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -50,7 +49,7 @@ import static java.util.stream.Collectors.*;
  *
  * Type of filters:
  * source filter: -include <pattern>
- * target filter: -package, -regex, -requires
+ * target filter: -package, -regex, --require
  *
  * The initial archive set for analysis includes
  * 1. archives specified in the command line arguments
@@ -93,7 +92,7 @@ public class DepsAnalyzer {
         // classpath to the root archives
         if (filter.hasIncludePattern() || filter.hasTargetFilter()) {
             configuration.getModules().values().stream()
-                .filter(source -> filter.include(source) && filter.matches(source))
+                .filter(source -> include(source) && filter.matches(source))
                 .forEach(this.rootArchives::add);
         }
 
@@ -146,7 +145,9 @@ public class DepsAnalyzer {
             // analyze the dependencies collected
             analyzer.run(archives, finder.locationToArchive());
 
-            writer.generateOutput(archives, analyzer);
+            if (writer != null) {
+                writer.generateOutput(archives, analyzer);
+            }
         } finally {
             finder.shutdown();
         }
@@ -156,19 +157,19 @@ public class DepsAnalyzer {
     /**
      * Returns the archives for reporting that has matching dependences.
      *
-     * If -requires is set, they should be excluded.
+     * If --require is set, they should be excluded.
      */
     Set<Archive> archives() {
         if (filter.requiresFilter().isEmpty()) {
             return archives.stream()
-                .filter(filter::include)
+                .filter(this::include)
                 .filter(Archive::hasDependences)
                 .collect(Collectors.toSet());
         } else {
-            // use the archives that have dependences and not specified in -requires
+            // use the archives that have dependences and not specified in --require
             return archives.stream()
-                .filter(filter::include)
-                .filter(source -> !filter.requiresFilter().contains(source))
+                .filter(this::include)
+                .filter(source -> !filter.requiresFilter().contains(source.getName()))
                 .filter(source ->
                         source.getDependencies()
                               .map(finder::locationToArchive)
@@ -197,7 +198,6 @@ public class DepsAnalyzer {
                         .distinct()
                         .map(configuration::findClass)
                         .flatMap(Optional::stream)
-                        .filter(filter::include)
                         .collect(toSet());
     }
 
@@ -238,7 +238,7 @@ public class DepsAnalyzer {
                     continue;
 
                 Archive archive = configuration.findClass(target).orElse(null);
-                if (archive != null && filter.include(archive)) {
+                if (archive != null) {
                     archives.add(archive);
 
                     String name = target.getName();
@@ -257,11 +257,26 @@ public class DepsAnalyzer {
         } while (!unresolved.isEmpty() && depth-- > 0);
     }
 
+    /*
+     * Tests if the given archive is requested for analysis.
+     * It includes the root modules specified in --module, --add-modules
+     * or modules specified on the command line
+     *
+     * This filters system module by default unless they are explicitly
+     * requested.
+     */
+    public boolean include(Archive source) {
+        Module module = source.getModule();
+        // skip system module by default
+        return  !module.isSystem()
+                    || configuration.rootModules().contains(source);
+    }
+
     // ----- for testing purpose -----
 
     public static enum Info {
         REQUIRES,
-        REQUIRES_PUBLIC,
+        REQUIRES_TRANSITIVE,
         EXPORTED_API,
         MODULE_PRIVATE,
         QUALIFIED_EXPORTED_API,
@@ -286,7 +301,7 @@ public class DepsAnalyzer {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            if (info != Info.REQUIRES && info != Info.REQUIRES_PUBLIC)
+            if (info != Info.REQUIRES && info != Info.REQUIRES_TRANSITIVE)
                 sb.append(source).append("/");
 
             sb.append(name);
@@ -323,7 +338,7 @@ public class DepsAnalyzer {
      * Returns a graph of module dependences.
      *
      * Each Node represents a module and each edge is a dependence.
-     * No analysis on "requires public".
+     * No analysis on "requires transitive".
      */
     public Graph<Node> moduleGraph() {
         Graph.Builder<Node> builder = new Graph.Builder<>();
@@ -360,16 +375,17 @@ public class DepsAnalyzer {
         Archive source = dep.originArchive();
         Archive target = dep.targetArchive();
         String pn = dep.target();
-        if ((verbose == CLASS || verbose == VERBOSE)) {
+        if (verbose == CLASS || verbose == VERBOSE) {
             int i = dep.target().lastIndexOf('.');
             pn = i > 0 ? dep.target().substring(0, i) : "";
         }
         final Info info;
+        Module targetModule = target.getModule();
         if (source == target) {
             info = Info.MODULE_PRIVATE;
-        } else if (!target.getModule().isNamed()) {
+        } else if (!targetModule.isNamed()) {
             info = Info.EXPORTED_API;
-        } else if (target.getModule().isExported(pn)) {
+        } else if (targetModule.isExported(pn) && !targetModule.isJDKUnsupported()) {
             info = Info.EXPORTED_API;
         } else {
             Module module = target.getModule();

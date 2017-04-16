@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,8 @@
 
 /*
  * @test
- * @bug      4494033 7028815 7052425 8007338 8023608 8008164 8016549 8072461 8154261 8162363
+ * @bug      4494033 7028815 7052425 8007338 8023608 8008164 8016549 8072461 8154261 8162363 8160196 8151743 8177417
+ *           8175218
  * @summary  Run tests on doclet stylesheet.
  * @author   jamieh
  * @library  ../lib
@@ -111,7 +112,7 @@ public class TestStylesheet extends JavadocTester {
                 + "    border: none;\n"
                 + "    height:16px;\n"
                 + "}",
-                ".memberSummary caption span.activeTableTab span {\n"
+                ".memberSummary caption span.activeTableTab span, .packagesSummary caption span.activeTableTab span {\n"
                 + "    white-space:nowrap;\n"
                 + "    padding-top:5px;\n"
                 + "    padding-left:12px;\n"
@@ -122,7 +123,7 @@ public class TestStylesheet extends JavadocTester {
                 + "    background-color:#F8981D;\n"
                 + "    height:16px;\n"
                 + "}",
-                ".memberSummary caption span.tableTab span {\n"
+                ".memberSummary caption span.tableTab span, .packagesSummary caption span.tableTab span {\n"
                 + "    white-space:nowrap;\n"
                 + "    padding-top:5px;\n"
                 + "    padding-left:12px;\n"
@@ -138,11 +139,10 @@ public class TestStylesheet extends JavadocTester {
                 + ".requiresSummary td.colFirst, .requiresSummary th.colFirst,\n"
                 + ".packagesSummary td.colFirst, .packagesSummary td.colSecond, .packagesSummary th.colFirst, .packagesSummary th,\n"
                 + ".usesSummary td.colFirst, .usesSummary th.colFirst,\n"
-                + ".useSummary td.colFirst, .useSummary th.colFirst,\n"
+                + ".providesSummary td.colFirst, .providesSummary th.colFirst,\n"
                 + ".memberSummary td.colFirst, .memberSummary th.colFirst,\n"
-                + ".memberSummary td.colSecond, .memberSummary th.colSecond,\n"
-                + ".typeSummary td.colFirst{\n"
-                + "    width:25%;\n"
+                + ".memberSummary td.colSecond, .memberSummary th.colSecond, .memberSummary th.colConstructorName,\n"
+                + ".typeSummary td.colFirst {\n"
                 + "    vertical-align:top;\n"
                 + "}",
                 ".overviewSummary td, .memberSummary td, .typeSummary td,\n"
@@ -151,7 +151,8 @@ public class TestStylesheet extends JavadocTester {
                 + "    text-align:left;\n"
                 + "    padding:0px 0px 12px 10px;\n"
                 + "}",
-                ".memberSummary caption span.tableTab, .memberSummary caption span.activeTableTab {\n"
+                ".memberSummary caption span.tableTab, .memberSummary caption span.activeTableTab,\n"
+                + ".packagesSummary caption span.tableTab, .packagesSummary caption span.activeTableTab {\n"
                 + "    padding-top:0px;\n"
                 + "    padding-left:0px;\n"
                 + "    padding-right:0px;\n"
@@ -159,7 +160,20 @@ public class TestStylesheet extends JavadocTester {
                 + "    float:none;\n"
                 + "    display:inline;\n"
                 + "}",
-                "@import url('resources/fonts/dejavu.css');");
+                "@import url('resources/fonts/dejavu.css');",
+                ".navPadding {\n"
+                + "    padding-top: 107px;\n"
+                + "}",
+                "a[name]:before, a[name]:target, a[id]:before, a[id]:target {\n"
+                + "    content:\"\";\n"
+                + "    display:inline-block;\n"
+                + "    position:relative;\n"
+                + "    padding-top:129px;\n"
+                + "    margin-top:-129px;\n"
+                + "}\n"
+                + ".searchTagResult:before, .searchTagResult:target {\n"
+                + "    color:red;\n"
+                + "}");
 
         // Test whether a link to the stylesheet file is inserted properly
         // in the class documentation.

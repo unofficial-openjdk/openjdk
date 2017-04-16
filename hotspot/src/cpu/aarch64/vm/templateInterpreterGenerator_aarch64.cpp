@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -202,6 +202,26 @@ address TemplateInterpreterGenerator::generate_math_entry(AbstractInterpreter::M
     __ ldrd(v1, Address(esp));
     __ mov(sp, r13);
     generate_transcendental_entry(kind, 2);
+    break;
+  case Interpreter::java_lang_math_fmaD :
+    if (UseFMA) {
+      entry_point = __ pc();
+      __ ldrd(v0, Address(esp, 4 * Interpreter::stackElementSize));
+      __ ldrd(v1, Address(esp, 2 * Interpreter::stackElementSize));
+      __ ldrd(v2, Address(esp));
+      __ fmaddd(v0, v0, v1, v2);
+      __ mov(sp, r13); // Restore caller's SP
+    }
+    break;
+  case Interpreter::java_lang_math_fmaF :
+    if (UseFMA) {
+      entry_point = __ pc();
+      __ ldrs(v0, Address(esp, 2 * Interpreter::stackElementSize));
+      __ ldrs(v1, Address(esp, Interpreter::stackElementSize));
+      __ ldrs(v2, Address(esp));
+      __ fmadds(v0, v0, v1, v2);
+      __ mov(sp, r13); // Restore caller's SP
+    }
     break;
   default:
     ;
@@ -476,6 +496,7 @@ address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state,
     }
 #endif
   }
+#endif
   // handle exceptions
   {
     Label L;
@@ -882,7 +903,7 @@ address TemplateInterpreterGenerator::generate_Reference_get_entry(void) {
   //   and so we don't need to call the G1 pre-barrier. Thus we can use the
   //   regular method entry code to generate the NPE.
   //
-  // This code is based on generate_accessor_enty.
+  // This code is based on generate_accessor_entry.
   //
   // rmethod: Method*
   // r13: senderSP must preserve for slow path, set SP to it on fast path
@@ -900,11 +921,11 @@ address TemplateInterpreterGenerator::generate_Reference_get_entry(void) {
     __ ldr(local_0, Address(esp, 0));
     __ cbz(local_0, slow_path);
 
-
     // Load the value of the referent field.
     const Address field_address(local_0, referent_offset);
     __ load_heap_oop(local_0, field_address);
 
+    __ mov(r19, r13);   // Move senderSP to a callee-saved register
     // Generate the G1 pre-barrier code to log the value of
     // the referent field in an SATB buffer.
     __ enter(); // g1_write may call runtime
@@ -916,7 +937,7 @@ address TemplateInterpreterGenerator::generate_Reference_get_entry(void) {
                             true /* expand_call */);
     __ leave();
     // areturn
-    __ andr(sp, r13, -16);  // done with stack
+    __ andr(sp, r19, -16);  // done with stack
     __ ret(lr);
 
     // generate a vanilla interpreter entry as the slow path
@@ -1378,13 +1399,32 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
   // and result handler will pick it up
 
   {
-    Label no_oop, store_result;
+    Label no_oop, not_weak, store_result;
     __ adr(t, ExternalAddress(AbstractInterpreter::result_handler(T_OBJECT)));
     __ cmp(t, result_handler);
     __ br(Assembler::NE, no_oop);
-    // retrieve result
+    // Unbox oop result, e.g. JNIHandles::resolve result.
     __ pop(ltos);
-    __ cbz(r0, store_result);
+    __ cbz(r0, store_result);   // Use NULL as-is.
+    STATIC_ASSERT(JNIHandles::weak_tag_mask == 1u);
+    __ tbz(r0, 0, not_weak);    // Test for jweak tag.
+    // Resolve jweak.
+    __ ldr(r0, Address(r0, -JNIHandles::weak_tag_value));
+#if INCLUDE_ALL_GCS
+    if (UseG1GC) {
+      __ enter();                   // Barrier may call runtime.
+      __ g1_write_barrier_pre(noreg /* obj */,
+                              r0 /* pre_val */,
+                              rthread /* thread */,
+                              t /* tmp */,
+                              true /* tosca_live */,
+                              true /* expand_call */);
+      __ leave();
+    }
+#endif // INCLUDE_ALL_GCS
+    __ b(store_result);
+    __ bind(not_weak);
+    // Resolve (untagged) jobject.
     __ ldr(r0, Address(r0, 0));
     __ bind(store_result);
     __ str(r0, Address(rfp, frame::interpreter_frame_oop_temp_offset*wordSize));

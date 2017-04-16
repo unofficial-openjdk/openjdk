@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,8 +28,13 @@ package jdk.internal.jmod;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -39,9 +44,9 @@ import java.util.zip.ZipFile;
  */
 public class JmodFile implements AutoCloseable {
     // jmod magic number and version number
-    public static final int JMOD_MAJOR_VERSION = 0x01;
-    public static final int JMOD_MINOR_VERSION = 0x00;
-    public static final byte[] JMOD_MAGIC_NUMBER = {
+    private static final int JMOD_MAJOR_VERSION = 0x01;
+    private static final int JMOD_MINOR_VERSION = 0x00;
+    private static final byte[] JMOD_MAGIC_NUMBER = {
         0x4A, 0x4D, /* JM */
         JMOD_MAJOR_VERSION, JMOD_MINOR_VERSION, /* version 1.0 */
     };
@@ -54,7 +59,7 @@ public class JmodFile implements AutoCloseable {
             bis.read(magic);
             if (magic[0] != JMOD_MAGIC_NUMBER[0] ||
                 magic[1] != JMOD_MAGIC_NUMBER[1]) {
-                throw new IOException("Invalid jmod file: " + file.toString());
+                throw new IOException("Invalid JMOD file: " + file.toString());
             }
             if (magic[2] > JMOD_MAJOR_VERSION ||
                 (magic[2] == JMOD_MAJOR_VERSION && magic[3] > JMOD_MINOR_VERSION)) {
@@ -68,12 +73,13 @@ public class JmodFile implements AutoCloseable {
      * JMOD sections
      */
     public static enum Section {
-        NATIVE_LIBS("native"),
-        NATIVE_CMDS("bin"),
         CLASSES("classes"),
         CONFIG("conf"),
         HEADER_FILES("include"),
-        MAN_PAGES("man");
+        LEGAL_NOTICES("legal"),
+        MAN_PAGES("man"),
+        NATIVE_LIBS("lib"),
+        NATIVE_CMDS("bin");
 
         private final String jmodDir;
         private Section(String jmodDir) {
@@ -85,7 +91,6 @@ public class JmodFile implements AutoCloseable {
          * this section
          */
         public String jmodDir() { return jmodDir; }
-
     }
 
     /**
@@ -107,7 +112,7 @@ public class JmodFile implements AutoCloseable {
             }
 
             this.zipEntry = e;
-            this.section = section(name);
+            this.section = section(name.substring(0, i));
             this.name = name.substring(i+1);
         }
 
@@ -126,6 +131,13 @@ public class JmodFile implements AutoCloseable {
         }
 
         /**
+         * Returns true if the entry is a directory in the JMOD file.
+         */
+        public boolean isDirectory() {
+            return zipEntry.isDirectory();
+        }
+
+        /**
          * Returns the size of this entry.
          */
         public long size() {
@@ -141,26 +153,21 @@ public class JmodFile implements AutoCloseable {
             return section.jmodDir() + "/" + name;
         }
 
+        /*
+         * A map from the jmodDir name to Section
+         */
+        static final Map<String, Section> NAME_TO_SECTION =
+            Arrays.stream(Section.values())
+                  .collect(Collectors.toMap(Section::jmodDir, Function.identity()));
+
         static Section section(String name) {
-            int i = name.indexOf('/');
-            String s = name.substring(0, i);
-            switch (s) {
-                case "native":
-                    return Section.NATIVE_LIBS;
-                case "bin":
-                    return Section.NATIVE_CMDS;
-                case "classes":
-                    return Section.CLASSES;
-                case "conf":
-                    return Section.CONFIG;
-                case "include":
-                    return Section.HEADER_FILES;
-                case "man":
-                    return Section.MAN_PAGES;
-                default:
-                    throw new IllegalArgumentException("invalid section: " + s);
+            if (!NAME_TO_SECTION.containsKey(name)) {
+                throw new IllegalArgumentException("invalid section: " + name);
+
             }
+            return NAME_TO_SECTION.get(name);
         }
+
     }
 
     private final Path file;
@@ -175,6 +182,10 @@ public class JmodFile implements AutoCloseable {
         this.zipfile = new ZipFile(file.toFile());
     }
 
+    public static void writeMagicNumber(OutputStream os) throws IOException {
+        os.write(JMOD_MAGIC_NUMBER);
+    }
+
     /**
      * Returns the {@code Entry} for a resource in a JMOD file section
      * or {@code null} if not found.
@@ -187,7 +198,7 @@ public class JmodFile implements AutoCloseable {
 
     /**
      * Opens an {@code InputStream} for reading the named entry of the given
-     * section in this jmod file.
+     * section in this JMOD file.
      *
      * @throws IOException if the named entry is not found, or I/O error
      *         occurs when reading it
@@ -213,11 +224,10 @@ public class JmodFile implements AutoCloseable {
     }
 
     /**
-     * Returns a stream of non-directory entries in this jmod file.
+     * Returns a stream of entries in this JMOD file.
      */
     public Stream<Entry> stream() {
         return zipfile.stream()
-                      .filter(e -> !e.isDirectory())
                       .map(Entry::new);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,7 +69,7 @@ public class FieldBuilder extends AbstractMemberBuilder {
     /**
      * The list of fields being documented.
      */
-    private final SortedSet<Element> fields;
+    private final List<Element> fields;
 
     /**
      * The index of the current field that is being documented at this point
@@ -90,12 +90,9 @@ public class FieldBuilder extends AbstractMemberBuilder {
         super(context);
         this.typeElement = typeElement;
         this.writer = writer;
-        visibleMemberMap =
-                new VisibleMemberMap(
-                typeElement,
-                VisibleMemberMap.Kind.FIELDS,
-                configuration);
-        fields = visibleMemberMap.getLeafClassMembers();
+        visibleMemberMap = configuration.getVisibleMemberMap(typeElement,
+                VisibleMemberMap.Kind.FIELDS);
+        fields = visibleMemberMap.getLeafMembers();
     }
 
     /**
@@ -121,27 +118,6 @@ public class FieldBuilder extends AbstractMemberBuilder {
     }
 
     /**
-     * Returns a list of fields that will be documented for the given class.
-     * This information can be used for doclet specific documentation
-     * generation.
-     *
-     * @param typeElement the {@link TypeElement} we want to check.
-     * @return a list of fields that will be documented.
-     */
-    public SortedSet<Element> members(TypeElement typeElement) {
-        return visibleMemberMap.getMembersFor(typeElement);
-    }
-
-    /**
-     * Returns the visible member map for the fields of this class.
-     *
-     * @return the visible member map for the fields of this class.
-     */
-    public VisibleMemberMap getVisibleMemberMap() {
-        return visibleMemberMap;
-    }
-
-    /**
      * Returns whether or not there are members to document.
      *
      * @return whether or not there are members to document
@@ -164,12 +140,14 @@ public class FieldBuilder extends AbstractMemberBuilder {
         }
         if (!fields.isEmpty()) {
             Content fieldDetailsTree = writer.getFieldDetailsTreeHeader(typeElement, memberDetailsTree);
+
+            Element lastElement = fields.get(fields.size() - 1);
             for (Element element : fields) {
                 currentElement = (VariableElement)element;
                 Content fieldDocTree = writer.getFieldDocTreeHeader(currentElement, fieldDetailsTree);
                 buildChildren(node, fieldDocTree);
                 fieldDetailsTree.addContent(writer.getFieldDoc(
-                        fieldDocTree, currentElement.equals(fields.last())));
+                        fieldDocTree, currentElement == lastElement));
             }
             memberDetailsTree.addContent(
                     writer.getFieldDetails(fieldDetailsTree));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,6 +48,7 @@ import jdk.javadoc.internal.doclets.toolkit.util.DocletConstants;
  */
 public class Contents {
     public static final Content SPACE = RawHtml.nbsp;
+    public static final Content ZERO_WIDTH_SPACE = RawHtml.zws;
 
     public final Content allClassesLabel;
     public final Content allImplementedInterfacesLabel;
@@ -73,6 +74,7 @@ public class Contents {
     public final Content deprecatedAPI;
     public final Content deprecatedLabel;
     public final Content deprecatedPhrase;
+    public final Content deprecatedForRemovalPhrase;
     public final Content descfrmClassLabel;
     public final Content descfrmInterfaceLabel;
     public final Content descriptionLabel;
@@ -128,6 +130,7 @@ public class Contents {
     public final Content nextPackageLabel;
     public final Content noFramesLabel;
     public final Content noScriptMessage;
+    public final Content openModuleLabel;
     public final Content overridesLabel;
     public final Content overviewLabel;
     public final Content packageHierarchies;
@@ -186,6 +189,7 @@ public class Contents {
         deprecatedAPI = getContent("doclet.Deprecated_API");
         deprecatedLabel = getContent("doclet.navDeprecated");
         deprecatedPhrase = getContent("doclet.Deprecated");
+        deprecatedForRemovalPhrase = getContent("doclet.DeprecatedForRemoval");
         descfrmClassLabel = getContent("doclet.Description_From_Class");
         descfrmInterfaceLabel = getContent("doclet.Description_From_Interface");
         descriptionLabel = getContent("doclet.Description");
@@ -241,6 +245,7 @@ public class Contents {
         nextPackageLabel = getNonBreakContent("doclet.Next_Package");
         noFramesLabel = getNonBreakContent("doclet.No_Frames");
         noScriptMessage = getContent("doclet.No_Script_Message");
+        openModuleLabel = getContent("doclet.Open_Module");
         overridesLabel = getContent("doclet.Overrides");
         overviewLabel = getContent("doclet.Overview");
         packageHierarchies = getContent("doclet.Package_Hierarchies");

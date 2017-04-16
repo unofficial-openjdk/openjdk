@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -256,6 +256,7 @@ class LibraryCallKit : public GraphKit {
   bool inline_native_time_funcs(address method, const char* funcName);
 #ifdef TRACE_HAVE_INTRINSICS
   bool inline_native_classID();
+  bool inline_native_getBufferWriter();
 #endif
   bool inline_native_isInterrupted();
   bool inline_native_Class_query(vmIntrinsics::ID id);
@@ -276,7 +277,8 @@ class LibraryCallKit : public GraphKit {
   AllocateArrayNode* tightly_coupled_allocation(Node* ptr,
                                                 RegionNode* slow_region);
   JVMState* arraycopy_restore_alloc_state(AllocateArrayNode* alloc, int& saved_reexecute_sp);
-  void arraycopy_move_allocation_here(AllocateArrayNode* alloc, Node* dest, JVMState* saved_jvms, int saved_reexecute_sp);
+  void arraycopy_move_allocation_here(AllocateArrayNode* alloc, Node* dest, JVMState* saved_jvms, int saved_reexecute_sp,
+                                      uint new_idx);
 
   typedef enum { LS_get_add, LS_get_set, LS_cmp_swap, LS_cmp_swap_weak, LS_cmp_exchange } LoadStoreKind;
   MemNode::MemOrd access_kind_to_memord_LS(AccessKind access_kind, bool is_store);
@@ -713,6 +715,7 @@ bool LibraryCallKit::try_to_inline(int predicate) {
 #ifdef TRACE_HAVE_INTRINSICS
   case vmIntrinsics::_counterTime:              return inline_native_time_funcs(CAST_FROM_FN_PTR(address, TRACE_TIME_METHOD), "counterTime");
   case vmIntrinsics::_getClassId:               return inline_native_classID();
+  case vmIntrinsics::_getBufferWriter:          return inline_native_getBufferWriter();
 #endif
   case vmIntrinsics::_currentTimeMillis:        return inline_native_time_funcs(CAST_FROM_FN_PTR(address, os::javaTimeMillis), "currentTimeMillis");
   case vmIntrinsics::_nanoTime:                 return inline_native_time_funcs(CAST_FROM_FN_PTR(address, os::javaTimeNanos), "nanoTime");
@@ -1665,6 +1668,9 @@ bool LibraryCallKit::inline_string_char_access(bool is_store) {
   }
 
   Node* adr = array_element_address(value, index, T_CHAR);
+  if (adr->is_top()) {
+    return false;
+  }
   if (is_store) {
     (void) store_to_memory(control(), adr, ch, T_CHAR, TypeAryPtr::BYTES, MemNode::unordered,
                            false, false, true /* mismatched */);
@@ -2369,10 +2375,10 @@ bool LibraryCallKit::inline_unsafe_access(bool is_store, const BasicType type, c
   // the barriers get omitted and the unsafe reference begins to "pollute"
   // the alias analysis of the rest of the graph, either Compile::can_alias
   // or Compile::must_alias will throw a diagnostic assert.)
-  bool need_mem_bar;
+  bool need_mem_bar = false;
   switch (kind) {
       case Relaxed:
-          need_mem_bar = mismatched || can_access_non_heap;
+          need_mem_bar = mismatched && !adr_type->isa_aryptr();
           break;
       case Opaque:
           // Opaque uses CPUOrder membars for protection against code movement.
@@ -3015,7 +3021,7 @@ bool LibraryCallKit::inline_unsafe_load_store(const BasicType type, const LoadSt
       load_store = _gvn.transform(new DecodeNNode(load_store, load_store->get_ptr_type()));
     }
 #endif
-    if (can_move_pre_barrier()) {
+    if (can_move_pre_barrier() && kind == LS_get_set) {
       // Don't need to load pre_val. The old value is returned by load_store.
       // The pre_barrier can execute after the xchg as long as no safepoint
       // gets inserted between them.
@@ -3196,6 +3202,43 @@ bool LibraryCallKit::inline_native_classID() {
   set_result(tvalue);
   return true;
 
+}
+
+bool LibraryCallKit::inline_native_getBufferWriter() {
+  Node* tls_ptr = _gvn.transform(new ThreadLocalNode());
+
+  Node* jobj_ptr = basic_plus_adr(top(), tls_ptr,
+                                  in_bytes(TRACE_THREAD_DATA_WRITER_OFFSET)
+                                  );
+
+  Node* jobj = make_load(control(), jobj_ptr, TypeRawPtr::BOTTOM, T_ADDRESS, MemNode::unordered);
+
+  Node* jobj_cmp_null = _gvn.transform( new CmpPNode(jobj, null()) );
+  Node* test_jobj_eq_null  = _gvn.transform( new BoolNode(jobj_cmp_null, BoolTest::eq) );
+
+  IfNode* iff_jobj_null =
+    create_and_map_if(control(), test_jobj_eq_null, PROB_MIN, COUNT_UNKNOWN);
+
+  enum { _normal_path = 1,
+         _null_path = 2,
+         PATH_LIMIT };
+
+  RegionNode* result_rgn = new RegionNode(PATH_LIMIT);
+  PhiNode*    result_val = new PhiNode(result_rgn, TypePtr::BOTTOM);
+
+  Node* jobj_is_null = _gvn.transform(new IfTrueNode(iff_jobj_null));
+  result_rgn->init_req(_null_path, jobj_is_null);
+  result_val->init_req(_null_path, null());
+
+  Node* jobj_is_not_null = _gvn.transform(new IfFalseNode(iff_jobj_null));
+  result_rgn->init_req(_normal_path, jobj_is_not_null);
+
+  Node* res = make_load(jobj_is_not_null, jobj, TypeInstPtr::NOTNULL, T_OBJECT, MemNode::unordered);
+  result_val->init_req(_normal_path, res);
+
+  set_result(result_rgn, result_val);
+
+  return true;
 }
 
 #endif
@@ -4007,7 +4050,7 @@ bool LibraryCallKit::inline_array_copyOf(bool is_copyOfRange) {
       if (!stopped()) {
         newcopy = new_array(klass_node, length, 0);  // no arguments to push
 
-        ArrayCopyNode* ac = ArrayCopyNode::make(this, true, original, start, newcopy, intcon(0), moved, true,
+        ArrayCopyNode* ac = ArrayCopyNode::make(this, true, original, start, newcopy, intcon(0), moved, true, false,
                                                 load_object_klass(original), klass_node);
         if (!is_copyOfRange) {
           ac->set_copyof(validated);
@@ -4527,7 +4570,7 @@ void LibraryCallKit::copy_to_clone(Node* obj, Node* alloc_obj, Node* obj_size, b
 
   const TypePtr* raw_adr_type = TypeRawPtr::BOTTOM;
 
-  ArrayCopyNode* ac = ArrayCopyNode::make(this, false, src, NULL, dest, NULL, countx, false);
+  ArrayCopyNode* ac = ArrayCopyNode::make(this, false, src, NULL, dest, NULL, countx, false, false);
   ac->set_clonebasic();
   Node* n = _gvn.transform(ac);
   if (n == ac) {
@@ -4664,7 +4707,7 @@ bool LibraryCallKit::inline_native_clone(bool is_virtual) {
           set_control(is_obja);
           // Generate a direct call to the right arraycopy function(s).
           Node* alloc = tightly_coupled_allocation(alloc_obj, NULL);
-          ArrayCopyNode* ac = ArrayCopyNode::make(this, true, obj, intcon(0), alloc_obj, intcon(0), obj_length, alloc != NULL);
+          ArrayCopyNode* ac = ArrayCopyNode::make(this, true, obj, intcon(0), alloc_obj, intcon(0), obj_length, alloc != NULL, false);
           ac->set_cloneoop();
           Node* n = _gvn.transform(ac);
           assert(n == ac, "cannot disappear");
@@ -4843,7 +4886,8 @@ JVMState* LibraryCallKit::arraycopy_restore_alloc_state(AllocateArrayNode* alloc
 // deoptimize. This is possible because tightly_coupled_allocation()
 // guarantees there's no observer of the allocated array at this point
 // and the control flow is simple enough.
-void LibraryCallKit::arraycopy_move_allocation_here(AllocateArrayNode* alloc, Node* dest, JVMState* saved_jvms, int saved_reexecute_sp) {
+void LibraryCallKit::arraycopy_move_allocation_here(AllocateArrayNode* alloc, Node* dest, JVMState* saved_jvms,
+                                                    int saved_reexecute_sp, uint new_idx) {
   if (saved_jvms != NULL && !stopped()) {
     assert(alloc != NULL, "only with a tightly coupled allocation");
     // restore JVM state to the state at the arraycopy
@@ -4852,7 +4896,7 @@ void LibraryCallKit::arraycopy_move_allocation_here(AllocateArrayNode* alloc, No
     assert(saved_jvms->map()->i_o() == map()->i_o(), "IO state changed?");
     // If we've improved the types of some nodes (null check) while
     // emitting the guards, propagate them to the current state
-    map()->replaced_nodes().apply(saved_jvms->map());
+    map()->replaced_nodes().apply(saved_jvms->map(), new_idx);
     set_jvms(saved_jvms);
     _reexecute_sp = saved_reexecute_sp;
 
@@ -4910,6 +4954,7 @@ bool LibraryCallKit::inline_arraycopy() {
   Node* dest_offset = argument(3);  // type: int
   Node* length      = argument(4);  // type: int
 
+  uint new_idx = C->unique();
 
   // Check for allocation before we add nodes that would confuse
   // tightly_coupled_allocation()
@@ -5061,6 +5106,8 @@ bool LibraryCallKit::inline_arraycopy() {
     trap_bci = alloc->jvms()->bci();
   }
 
+  bool negative_length_guard_generated = false;
+
   if (!C->too_many_traps(trap_method, trap_bci, Deoptimization::Reason_intrinsic) &&
       can_emit_guards &&
       !src->is_top() && !dest->is_top()) {
@@ -5093,6 +5140,15 @@ bool LibraryCallKit::inline_arraycopy() {
                          load_array_length(dest),
                          slow_region);
 
+    // (6) length must not be negative.
+    // This is also checked in generate_arraycopy() during macro expansion, but
+    // we also have to check it here for the case where the ArrayCopyNode will
+    // be eliminated by Escape Analysis.
+    if (EliminateAllocations) {
+      generate_negative_guard(length, slow_region);
+      negative_length_guard_generated = true;
+    }
+
     // (9) each element of an oop array must be assignable
     Node* src_klass  = load_object_klass(src);
     Node* dest_klass = load_object_klass(dest);
@@ -5114,13 +5170,13 @@ bool LibraryCallKit::inline_arraycopy() {
     }
   }
 
-  arraycopy_move_allocation_here(alloc, dest, saved_jvms, saved_reexecute_sp);
+  arraycopy_move_allocation_here(alloc, dest, saved_jvms, saved_reexecute_sp, new_idx);
 
   if (stopped()) {
     return true;
   }
 
-  ArrayCopyNode* ac = ArrayCopyNode::make(this, true, src, src_offset, dest, dest_offset, length, alloc != NULL,
+  ArrayCopyNode* ac = ArrayCopyNode::make(this, true, src, src_offset, dest, dest_offset, length, alloc != NULL, negative_length_guard_generated,
                                           // Create LoadRange and LoadKlass nodes for use during macro expansion here
                                           // so the compiler has a chance to eliminate them: during macro expansion,
                                           // we have to set their control (CastPP nodes are eliminated).
@@ -5463,7 +5519,7 @@ bool LibraryCallKit::inline_montgomeryMultiply() {
   }
 
   assert(UseMontgomeryMultiplyIntrinsic, "not implemented on this platform");
-  const char* stubName = "montgomery_square";
+  const char* stubName = "montgomery_multiply";
 
   assert(callee()->signature()->size() == 7, "montgomeryMultiply has 7 parameters");
 
@@ -6285,7 +6341,7 @@ bool LibraryCallKit::inline_counterMode_AESCrypt(vmIntrinsics::ID id) {
 
 //------------------------------get_key_start_from_aescrypt_object-----------------------
 Node * LibraryCallKit::get_key_start_from_aescrypt_object(Node *aescrypt_object) {
-#ifdef PPC64
+#if defined(PPC64) || defined(S390)
   // MixColumns for decryption can be reduced by preprocessing MixColumns with round keys.
   // Intel's extention is based on this optimization and AESCrypt generates round keys by preprocessing MixColumns.
   // However, ppc64 vncipher processes MixColumns and requires the same round keys with encryption.

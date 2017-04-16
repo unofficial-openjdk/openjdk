@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -425,7 +425,7 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
 
 #ifdef _LP64
     case T_LONG:
-      assert(sig_bt[i+1] == T_VOID, "expecting VOID in other half");
+      assert((i + 1) < total_args_passed && sig_bt[i+1] == T_VOID, "expecting VOID in other half");
       // fall-through
     case T_OBJECT:
     case T_ARRAY:
@@ -441,7 +441,7 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
       break;
 #else
     case T_LONG:
-      assert(sig_bt[i+1] == T_VOID, "expecting VOID in other half");
+      assert((i + 1) < total_args_passed && sig_bt[i+1] == T_VOID, "expecting VOID in other half");
       // On 32-bit SPARC put longs always on the stack to keep the pressure off
       // integer argument registers.  They should be used for oops.
       slot = round_to(slot, 2);  // align
@@ -460,7 +460,7 @@ int SharedRuntime::java_calling_convention(const BasicType *sig_bt,
       break;
 
     case T_DOUBLE:
-      assert(sig_bt[i+1] == T_VOID, "expecting half");
+      assert((i + 1) < total_args_passed && sig_bt[i+1] == T_VOID, "expecting half");
       if (round_to(flt_reg, 2) + 1 < flt_reg_max) {
         flt_reg = round_to(flt_reg, 2);  // align
         FloatRegister r = as_FloatRegister(flt_reg);
@@ -1174,7 +1174,7 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
         regs[i].set1(int_stk_helper(j));
         break;
       case T_LONG:
-        assert(sig_bt[i+1] == T_VOID, "expecting half");
+        assert((i + 1) < total_args_passed && sig_bt[i+1] == T_VOID, "expecting half");
       case T_ADDRESS: // raw pointers, like current thread, for VM calls
       case T_ARRAY:
       case T_OBJECT:
@@ -1209,7 +1209,7 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
         break;
       case T_DOUBLE:
         {
-          assert(sig_bt[i + 1] == T_VOID, "expecting half");
+          assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
           // V9ism: doubles go in EVEN/ODD regs and stack slots
           int double_index = (j << 1);
           param_array_reg.set2(VMRegImpl::stack2reg(double_index));
@@ -1261,7 +1261,7 @@ int SharedRuntime::c_calling_convention(const BasicType *sig_bt,
         break;
       case T_DOUBLE:
       case T_LONG:
-        assert(sig_bt[i + 1] == T_VOID, "expecting half");
+        assert((i + 1) < total_args_passed && sig_bt[i + 1] == T_VOID, "expecting half");
         regs[i].set_pair(int_stk_helper(i + 1), int_stk_helper(i));
         break;
       case T_VOID: regs[i].set_bad(); break;
@@ -2754,15 +2754,30 @@ nmethod* SharedRuntime::generate_native_wrapper(MacroAssembler* masm,
   __ verify_thread(); // G2_thread must be correct
   __ reset_last_Java_frame();
 
-  // Unpack oop result
+  // Unbox oop result, e.g. JNIHandles::resolve value in I0.
   if (ret_type == T_OBJECT || ret_type == T_ARRAY) {
-      Label L;
-      __ addcc(G0, I0, G0);
-      __ brx(Assembler::notZero, true, Assembler::pt, L);
-      __ delayed()->ld_ptr(I0, 0, I0);
-      __ mov(G0, I0);
-      __ bind(L);
-      __ verify_oop(I0);
+    Label done, not_weak;
+    __ br_null(I0, false, Assembler::pn, done); // Use NULL as-is.
+    __ delayed()->andcc(I0, JNIHandles::weak_tag_mask, G0); // Test for jweak
+    __ brx(Assembler::zero, true, Assembler::pt, not_weak);
+    __ delayed()->ld_ptr(I0, 0, I0); // Maybe resolve (untagged) jobject.
+    // Resolve jweak.
+    __ ld_ptr(I0, -JNIHandles::weak_tag_value, I0);
+#if INCLUDE_ALL_GCS
+    if (UseG1GC) {
+      // Copy to O0 because macro doesn't allow pre_val in input reg.
+      __ mov(I0, O0);
+      __ g1_write_barrier_pre(noreg /* obj */,
+                              noreg /* index */,
+                              0 /* offset */,
+                              O0 /* pre_val */,
+                              G3_scratch /* tmp */,
+                              true /* preserve_o_regs */);
+    }
+#endif // INCLUDE_ALL_GCS
+    __ bind(not_weak);
+    __ verify_oop(I0);
+    __ bind(done);
   }
 
   if (CheckJNICalls) {

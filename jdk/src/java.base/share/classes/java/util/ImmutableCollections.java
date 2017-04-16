@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
+import jdk.internal.vm.annotation.Stable;
 
 /**
  * Container class for immutable collections. Not part of the public API.
@@ -53,7 +54,8 @@ class ImmutableCollections {
      */
     static final int SALT;
     static {
-        SALT = new Random().nextInt();
+        long nt = System.nanoTime();
+        SALT = (int)((nt >>> 32) ^ nt);
     }
 
     /** No instances. */
@@ -63,7 +65,7 @@ class ImmutableCollections {
      * The reciprocal of load factor. Given a number of elements
      * to store, multiply by this factor to get the table size.
      */
-    static final double EXPAND_FACTOR = 2.0;
+    static final int EXPAND_FACTOR = 2;
 
     static UnsupportedOperationException uoe() { return new UnsupportedOperationException(); }
 
@@ -84,7 +86,14 @@ class ImmutableCollections {
     }
 
     static final class List0<E> extends AbstractImmutableList<E> {
-        List0() { }
+        private static final List0<?> INSTANCE = new List0<>();
+
+        @SuppressWarnings("unchecked")
+        static <T> List0<T> instance() {
+            return (List0<T>) INSTANCE;
+        }
+
+        private List0() { }
 
         @Override
         public int size() {
@@ -97,6 +106,11 @@ class ImmutableCollections {
             return null;                  // but the compiler doesn't know this
         }
 
+        @Override
+        public Iterator<E> iterator() {
+            return Collections.emptyIterator();
+        }
+
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
             throw new InvalidObjectException("not serial proxy");
         }
@@ -104,9 +118,26 @@ class ImmutableCollections {
         private Object writeReplace() {
             return new CollSer(CollSer.IMM_LIST);
         }
+
+        @Override
+        public boolean contains(Object o) {
+            Objects.requireNonNull(o);
+            return false;
+        }
+
+        @Override
+        public boolean containsAll(Collection<?> o) {
+            return o.isEmpty(); // implicit nullcheck of o
+        }
+
+        @Override
+        public int hashCode() {
+            return 1;
+        }
     }
 
     static final class List1<E> extends AbstractImmutableList<E> {
+        @Stable
         private final E e0;
 
         List1(E e0) {
@@ -121,7 +152,6 @@ class ImmutableCollections {
         @Override
         public E get(int index) {
             Objects.checkIndex(index, 1);
-            // assert index == 0
             return e0;
         }
 
@@ -132,10 +162,22 @@ class ImmutableCollections {
         private Object writeReplace() {
             return new CollSer(CollSer.IMM_LIST, e0);
         }
+
+        @Override
+        public boolean contains(Object o) {
+            return o.equals(e0); // implicit nullcheck of o
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 + e0.hashCode();
+        }
     }
 
     static final class List2<E> extends AbstractImmutableList<E> {
+        @Stable
         private final E e0;
+        @Stable
         private final E e1;
 
         List2(E e0, E e1) {
@@ -158,6 +200,17 @@ class ImmutableCollections {
             }
         }
 
+        @Override
+        public boolean contains(Object o) {
+            return o.equals(e0) || o.equals(e1); // implicit nullcheck of o
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 31 + e0.hashCode();
+            return 31 * hash + e1.hashCode();
+        }
+
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
             throw new InvalidObjectException("not serial proxy");
         }
@@ -168,6 +221,7 @@ class ImmutableCollections {
     }
 
     static final class ListN<E> extends AbstractImmutableList<E> {
+        @Stable
         private final E[] elements;
 
         @SafeVarargs
@@ -192,6 +246,25 @@ class ImmutableCollections {
             return elements[index];
         }
 
+        @Override
+        public boolean contains(Object o) {
+            for (E e : elements) {
+                if (o.equals(e)) { // implicit nullcheck of o
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 1;
+            for (E e : elements) {
+                hash = 31 * hash + e.hashCode();
+            }
+            return hash;
+        }
+
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
             throw new InvalidObjectException("not serial proxy");
         }
@@ -214,7 +287,14 @@ class ImmutableCollections {
     }
 
     static final class Set0<E> extends AbstractImmutableSet<E> {
-        Set0() { }
+        private static final Set0<?> INSTANCE = new Set0<>();
+
+        @SuppressWarnings("unchecked")
+        static <T> Set0<T> instance() {
+            return (Set0<T>) INSTANCE;
+        }
+
+        private Set0() { }
 
         @Override
         public int size() {
@@ -223,7 +303,13 @@ class ImmutableCollections {
 
         @Override
         public boolean contains(Object o) {
-            return super.contains(Objects.requireNonNull(o));
+            Objects.requireNonNull(o);
+            return false;
+        }
+
+        @Override
+        public boolean containsAll(Collection<?> o) {
+            return o.isEmpty(); // implicit nullcheck of o
         }
 
         @Override
@@ -238,9 +324,15 @@ class ImmutableCollections {
         private Object writeReplace() {
             return new CollSer(CollSer.IMM_SET);
         }
+
+        @Override
+        public int hashCode() {
+            return 0;
+        }
     }
 
     static final class Set1<E> extends AbstractImmutableSet<E> {
+        @Stable
         private final E e0;
 
         Set1(E e0) {
@@ -254,7 +346,7 @@ class ImmutableCollections {
 
         @Override
         public boolean contains(Object o) {
-            return super.contains(Objects.requireNonNull(o));
+            return o.equals(e0); // implicit nullcheck of o
         }
 
         @Override
@@ -269,17 +361,21 @@ class ImmutableCollections {
         private Object writeReplace() {
             return new CollSer(CollSer.IMM_SET, e0);
         }
+
+        @Override
+        public int hashCode() {
+            return e0.hashCode();
+        }
     }
 
     static final class Set2<E> extends AbstractImmutableSet<E> {
-        private final E e0;
-        private final E e1;
+        @Stable
+        final E e0;
+        @Stable
+        final E e1;
 
         Set2(E e0, E e1) {
-            Objects.requireNonNull(e0);
-            Objects.requireNonNull(e1);
-
-            if (e0.equals(e1)) {
+            if (e0.equals(Objects.requireNonNull(e1))) { // implicit nullcheck of e0
                 throw new IllegalArgumentException("duplicate element: " + e0);
             }
 
@@ -299,7 +395,12 @@ class ImmutableCollections {
 
         @Override
         public boolean contains(Object o) {
-            return super.contains(Objects.requireNonNull(o));
+            return o.equals(e0) || o.equals(e1); // implicit nullcheck of o
+        }
+
+        @Override
+        public int hashCode() {
+            return e0.hashCode() + e1.hashCode();
         }
 
         @Override
@@ -343,18 +444,20 @@ class ImmutableCollections {
      * @param <E> the element type
      */
     static final class SetN<E> extends AbstractImmutableSet<E> {
-        private final E[] elements;
-        private final int size;
+        @Stable
+        final E[] elements;
+        @Stable
+        final int size;
 
         @SafeVarargs
         @SuppressWarnings("unchecked")
         SetN(E... input) {
             size = input.length; // implicit nullcheck of input
 
-            elements = (E[])new Object[(int)Math.ceil(EXPAND_FACTOR * input.length)];
+            elements = (E[])new Object[EXPAND_FACTOR * input.length];
             for (int i = 0; i < input.length; i++) {
-                E e = Objects.requireNonNull(input[i]);
-                int idx = probe(e);
+                E e = input[i];
+                int idx = probe(e); // implicit nullcheck of e
                 if (idx >= 0) {
                     throw new IllegalArgumentException("duplicate element: " + e);
                 } else {
@@ -370,8 +473,7 @@ class ImmutableCollections {
 
         @Override
         public boolean contains(Object o) {
-            Objects.requireNonNull(o);
-            return probe(o) >= 0;
+            return probe(o) >= 0; // implicit nullcheck of o
         }
 
         @Override
@@ -399,8 +501,21 @@ class ImmutableCollections {
             };
         }
 
+        @Override
+        public int hashCode() {
+            int h = 0;
+            for (E e : elements) {
+                if (e != null) {
+                    h += e.hashCode();
+                }
+            }
+            return h;
+        }
+
         // returns index at which element is present; or if absent,
-        // (-i - 1) where i is location where element should be inserted
+        // (-i - 1) where i is location where element should be inserted.
+        // Callers are relying on this method to perform an implicit nullcheck
+        // of pe
         private int probe(Object pe) {
             int idx = Math.floorMod(pe.hashCode() ^ SALT, elements.length);
             while (true) {
@@ -450,7 +565,14 @@ class ImmutableCollections {
     }
 
     static final class Map0<K,V> extends AbstractImmutableMap<K,V> {
-        Map0() { }
+        private static final Map0<?,?> INSTANCE = new Map0<>();
+
+        @SuppressWarnings("unchecked")
+        static <K,V> Map0<K,V> instance() {
+            return (Map0<K,V>) INSTANCE;
+        }
+
+        private Map0() { }
 
         @Override
         public Set<Map.Entry<K,V>> entrySet() {
@@ -459,12 +581,14 @@ class ImmutableCollections {
 
         @Override
         public boolean containsKey(Object o) {
-            return super.containsKey(Objects.requireNonNull(o));
+            Objects.requireNonNull(o);
+            return false;
         }
 
         @Override
         public boolean containsValue(Object o) {
-            return super.containsValue(Objects.requireNonNull(o));
+            Objects.requireNonNull(o);
+            return false;
         }
 
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -474,10 +598,17 @@ class ImmutableCollections {
         private Object writeReplace() {
             return new CollSer(CollSer.IMM_MAP);
         }
+
+        @Override
+        public int hashCode() {
+            return 0;
+        }
     }
 
     static final class Map1<K,V> extends AbstractImmutableMap<K,V> {
+        @Stable
         private final K k0;
+        @Stable
         private final V v0;
 
         Map1(K k0, V v0) {
@@ -492,12 +623,12 @@ class ImmutableCollections {
 
         @Override
         public boolean containsKey(Object o) {
-            return super.containsKey(Objects.requireNonNull(o));
+            return o.equals(k0); // implicit nullcheck of o
         }
 
         @Override
         public boolean containsValue(Object o) {
-            return super.containsValue(Objects.requireNonNull(o));
+            return o.equals(v0); // implicit nullcheck of o
         }
 
         private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
@@ -506,6 +637,11 @@ class ImmutableCollections {
 
         private Object writeReplace() {
             return new CollSer(CollSer.IMM_MAP, k0, v0);
+        }
+
+        @Override
+        public int hashCode() {
+            return k0.hashCode() ^ v0.hashCode();
         }
     }
 
@@ -519,17 +655,18 @@ class ImmutableCollections {
      * @param <V> the value type
      */
     static final class MapN<K,V> extends AbstractImmutableMap<K,V> {
-        private final Object[] table; // pairs of key, value
-        private final int size; // number of pairs
+        @Stable
+        final Object[] table; // pairs of key, value
+        @Stable
+        final int size; // number of pairs
 
         MapN(Object... input) {
-            Objects.requireNonNull(input);
-            if ((input.length & 1) != 0) {
+            if ((input.length & 1) != 0) { // implicit nullcheck of input
                 throw new InternalError("length is odd");
             }
             size = input.length >> 1;
 
-            int len = (int)Math.ceil(EXPAND_FACTOR * input.length);
+            int len = EXPAND_FACTOR * input.length;
             len = (len + 1) & ~1; // ensure table is even length
             table = new Object[len];
 
@@ -551,12 +688,30 @@ class ImmutableCollections {
 
         @Override
         public boolean containsKey(Object o) {
-            return probe(Objects.requireNonNull(o)) >= 0;
+            return probe(o) >= 0; // implicit nullcheck of o
         }
 
         @Override
         public boolean containsValue(Object o) {
-            return super.containsValue(Objects.requireNonNull(o));
+            for (int i = 1; i < table.length; i += 2) {
+                Object v = table[i];
+                if (v != null && o.equals(v)) { // implicit nullcheck of o
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 0;
+            for (int i = 0; i < table.length; i += 2) {
+                Object k = table[i];
+                if (k != null) {
+                    hash += k.hashCode() ^ table[i + 1].hashCode();
+                }
+            }
+            return hash;
         }
 
         @Override
@@ -616,7 +771,9 @@ class ImmutableCollections {
         }
 
         // returns index at which the probe key is present; or if absent,
-        // (-i - 1) where i is location where element should be inserted
+        // (-i - 1) where i is location where element should be inserted.
+        // Callers are relying on this method to perform an implicit nullcheck
+        // of pk.
         private int probe(Object pk) {
             int idx = Math.floorMod(pk.hashCode() ^ SALT, table.length >> 1) << 1;
             while (true) {
@@ -789,7 +946,7 @@ final class CollSer implements Serializable {
                     return Set.of(array);
                 case IMM_MAP:
                     if (array.length == 0) {
-                        return new ImmutableCollections.Map0<>();
+                        return ImmutableCollections.Map0.instance();
                     } else if (array.length == 2) {
                         return new ImmutableCollections.Map1<>(array[0], array[1]);
                     } else {

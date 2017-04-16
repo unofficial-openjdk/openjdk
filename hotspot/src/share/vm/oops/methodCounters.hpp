@@ -30,10 +30,13 @@
 #include "interpreter/invocationCounter.hpp"
 #include "runtime/arguments.hpp"
 
-class MethodCounters: public MetaspaceObj {
+class MethodCounters : public Metadata {
  friend class VMStructs;
  friend class JVMCIVMStructs;
  private:
+#if INCLUDE_AOT
+  Method*           _method;                     // Back link to Method
+#endif
 #if defined(COMPILER2) || INCLUDE_JVMCI
   int               _interpreter_invocation_count; // Count of times invoked (reused as prev_event_count in tiered)
   u2                _interpreter_throwout_count; // Count of times method was exited via exception while interpreting
@@ -64,7 +67,11 @@ class MethodCounters: public MetaspaceObj {
   u1                _highest_osr_comp_level;      // Same for OSR level
 #endif
 
-  MethodCounters(methodHandle mh) : _nmethod_age(INT_MAX)
+  MethodCounters(methodHandle mh) :
+#if INCLUDE_AOT
+                                    _method(mh()),
+#endif
+                                    _nmethod_age(INT_MAX)
 #ifdef TIERED
                                  , _rate(0),
                                    _prev_time(0),
@@ -102,14 +109,17 @@ class MethodCounters: public MetaspaceObj {
   }
 
  public:
+  virtual bool is_methodCounters() const volatile { return true; }
+
   static MethodCounters* allocate(methodHandle mh, TRAPS);
 
   void deallocate_contents(ClassLoaderData* loader_data) {}
-  DEBUG_ONLY(bool on_stack() { return false; })  // for template
 
-  static int size() { return sizeof(MethodCounters) / wordSize; }
+  AOT_ONLY(Method* method() const { return _method; })
 
-  bool is_klass() const { return false; }
+  static int size() {
+    return align_size_up(sizeof(MethodCounters), wordSize) / wordSize;
+  }
 
   void clear_counters();
 
@@ -242,5 +252,9 @@ class MethodCounters: public MetaspaceObj {
   static ByteSize backedge_mask_offset() {
     return byte_offset_of(MethodCounters, _backedge_mask);
   }
+
+  virtual const char* internal_name() const { return "{method counters}"; }
+  virtual void print_value_on(outputStream* st) const;
+
 };
 #endif //SHARE_VM_OOPS_METHODCOUNTERS_HPP

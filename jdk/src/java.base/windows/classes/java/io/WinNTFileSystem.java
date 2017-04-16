@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,8 @@
 
 package java.io;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Properties;
 import sun.security.action.GetPropertyAction;
@@ -231,11 +233,14 @@ class WinNTFileSystem extends FileSystem {
         int childStart = 0;
         int parentEnd = pn;
 
+        boolean isDirectoryRelative =
+            pn == 2 && isLetter(parent.charAt(0)) && parent.charAt(1) == ':';
+
         if ((cn > 1) && (c.charAt(0) == slash)) {
             if (c.charAt(1) == slash) {
                 /* Drop prefix when child is a UNC pathname */
                 childStart = 2;
-            } else {
+            } else if (!isDirectoryRelative) {
                 /* Drop prefix when child is drive-relative */
                 childStart = 1;
 
@@ -252,7 +257,7 @@ class WinNTFileSystem extends FileSystem {
 
         int strlen = parentEnd + cn - childStart;
         char[] theChars = null;
-        if (child.charAt(childStart) == slash) {
+        if (child.charAt(childStart) == slash || isDirectoryRelative) {
             theChars = new char[strlen];
             parent.getChars(0, parentEnd, theChars, 0);
             child.getChars(childStart, cn, theChars, parentEnd);
@@ -626,6 +631,27 @@ class WinNTFileSystem extends FileSystem {
     private native long getSpace0(File f, int t);
 
     /* -- Basic infrastructure -- */
+
+    // Obtain maximum file component length from GetVolumeInformation which
+    // expects the path to be null or a root component ending in a backslash
+    private native int getNameMax0(String path);
+
+    public int getNameMax(String path) {
+        String s = null;
+        if (path != null) {
+            File f = new File(path);
+            if (f.isAbsolute()) {
+                Path root = f.toPath().getRoot();
+                if (root != null) {
+                    s = root.toString();
+                    if (!s.endsWith("\\")) {
+                        s = s + "\\";
+                    }
+                }
+            }
+        }
+        return getNameMax0(s);
+    }
 
     @Override
     public int compare(File f1, File f2) {

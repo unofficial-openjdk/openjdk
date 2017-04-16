@@ -45,6 +45,10 @@
 #include <sys/sockio.h>
 #endif
 
+#if defined(MACOSX)
+#include <sys/sysctl.h>
+#endif
+
 #include "net_util.h"
 
 #include "java_net_SocketOptions.h"
@@ -230,29 +234,6 @@ int kernelIsV24 () {
     }
     return kernelV24;
 }
-
-int getScopeID (struct sockaddr *him) {
-    struct sockaddr_in6 *hext = (struct sockaddr_in6 *)him;
-    return hext->sin6_scope_id;
-}
-
-int cmpScopeID (unsigned int scope, struct sockaddr *him) {
-    struct sockaddr_in6 *hext = (struct sockaddr_in6 *)him;
-    return hext->sin6_scope_id == scope;
-}
-
-#else
-
-int getScopeID (struct sockaddr *him) {
-    struct sockaddr_in6 *him6 = (struct sockaddr_in6 *)him;
-    return him6->sin6_scope_id;
-}
-
-int cmpScopeID (unsigned int scope, struct sockaddr *him) {
-    struct sockaddr_in6 *him6 = (struct sockaddr_in6 *)him;
-    return him6->sin6_scope_id == scope;
-}
-
 #endif
 
 void
@@ -306,11 +287,6 @@ jint  IPv6_supported()
 
 jint  IPv6_supported()
 {
-#ifndef AF_INET6
-    return JNI_FALSE;
-#endif
-
-#ifdef AF_INET6
     int fd;
     void *ipv6_fn;
     SOCKETADDRESS sa;
@@ -415,7 +391,6 @@ jint  IPv6_supported()
     } else {
         return JNI_TRUE;
     }
-#endif /* AF_INET6 */
 }
 #endif /* DONT_ENABLE_IPV6 */
 
@@ -466,7 +441,7 @@ void NET_ThrowUnknownHostExceptionWithGaiError(JNIEnv *env,
     }
 }
 
-#if defined(__linux__) && defined(AF_INET6)
+#if defined(__linux__)
 
 /* following code creates a list of addresses from the kernel
  * routing table that are routed via the loopback address.
@@ -777,32 +752,32 @@ NET_EnableFastTcpLoopback(int fd) {
     return 0;
 }
 
-/* In the case of an IPv4 Inetaddress this method will return an
- * IPv4 mapped address where IPv6 is available and v4MappedAddress is TRUE.
- * Otherwise it will return a sockaddr_in structure for an IPv4 InetAddress.
-*/
+/**
+ * See net_util.h for documentation
+ */
 JNIEXPORT int JNICALL
-NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr *him,
-                          int *len, jboolean v4MappedAddress) {
-    jint family;
-    family = getInetAddress_family(env, iaObj);
-#ifdef AF_INET6
-    /* needs work. 1. family 2. clean up him6 etc deallocate memory */
-    if (ipv6_available() && !(family == java_net_InetAddress_IPv4 &&
-                              v4MappedAddress == JNI_FALSE)) {
-        struct sockaddr_in6 *him6 = (struct sockaddr_in6 *)him;
+NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port,
+                          SOCKETADDRESS *sa, int *len,
+                          jboolean v4MappedAddress)
+{
+    jint family = getInetAddress_family(env, iaObj);
+    memset((char *)sa, 0, sizeof(SOCKETADDRESS));
+
+    if (ipv6_available() &&
+        !(family == java_net_InetAddress_IPv4 &&
+          v4MappedAddress == JNI_FALSE))
+    {
         jbyte caddr[16];
         jint address;
 
-
         if (family == java_net_InetAddress_IPv4) {
             // convert to IPv4-mapped address
-            memset((char *) caddr, 0, 16);
+            memset((char *)caddr, 0, 16);
             address = getInetAddress_addr(env, iaObj);
             if (address == INADDR_ANY) {
                 /* we would always prefer IPv6 wildcard address
-                   caddr[10] = 0xff;
-                   caddr[11] = 0xff; */
+                 * caddr[10] = 0xff;
+                 * caddr[11] = 0xff; */
             } else {
                 caddr[10] = 0xff;
                 caddr[11] = 0xff;
@@ -814,22 +789,19 @@ NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr 
         } else {
             getInet6Address_ipaddress(env, iaObj, (char *)caddr);
         }
-        memset((char *)him6, 0, sizeof(struct sockaddr_in6));
-        him6->sin6_port = htons(port);
-        memcpy((void *)&(him6->sin6_addr), caddr, sizeof(struct in6_addr) );
-        him6->sin6_family = AF_INET6;
-        *len = sizeof(struct sockaddr_in6) ;
+        sa->sa6.sin6_port = htons(port);
+        memcpy((void *)&sa->sa6.sin6_addr, caddr, sizeof(struct in6_addr));
+        sa->sa6.sin6_family = AF_INET6;
+        if (len != NULL) {
+            *len = sizeof(struct sockaddr_in6);
+        }
 
-#if defined(_ALLBSD_SOURCE) && defined(_AF_INET6)
-// XXXBSD: should we do something with scope id here ? see below linux comment
-/* MMM: Come back to this! */
-#endif
-
+#ifdef __linux__
         /*
          * On Linux if we are connecting to a link-local address
          * we need to specify the interface in the scope_id (2.4 kernel only)
          *
-         * If the scope was cached the we use the cached value. If not cached but
+         * If the scope was cached then we use the cached value. If not cached but
          * specified in the Inet6Address we use that, but we first check if the
          * address needs to be routed via the loopback interface. In this case,
          * we override the specified value with that of the loopback interface.
@@ -837,9 +809,8 @@ NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr 
          * we try to determine a value from the routing table. In all these
          * cases the used value is cached for further use.
          */
-#ifdef __linux__
-        if (IN6_IS_ADDR_LINKLOCAL(&(him6->sin6_addr))) {
-            int cached_scope_id = 0, scope_id = 0;
+        if (IN6_IS_ADDR_LINKLOCAL(&sa->sa6.sin6_addr)) {
+            unsigned int cached_scope_id = 0, scope_id = 0;
 
             if (ia6_cachedscopeidID) {
                 cached_scope_id = (int)(*env)->GetIntField(env, iaObj, ia6_cachedscopeidID);
@@ -854,7 +825,7 @@ NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr 
                         /* check user-specified value for loopback case
                          * that needs to be overridden
                          */
-                        if (kernelIsV24() && needsLoopbackRoute (&him6->sin6_addr)) {
+                        if (kernelIsV24() && needsLoopbackRoute(&sa->sa6.sin6_addr)) {
                             cached_scope_id = lo_scope_id;
                             (*env)->SetIntField(env, iaObj, ia6_cachedscopeidID, cached_scope_id);
                         }
@@ -864,11 +835,11 @@ NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr 
                          * try determine the appropriate interface.
                          */
                         if (kernelIsV24()) {
-                            cached_scope_id = getDefaultIPv6Interface( &(him6->sin6_addr) );
+                            cached_scope_id = getDefaultIPv6Interface(&sa->sa6.sin6_addr);
                         } else {
-                            cached_scope_id = getLocalScopeID( (char *)&(him6->sin6_addr) );
+                            cached_scope_id = getLocalScopeID((char *)&(sa->sa6.sin6_addr));
                             if (cached_scope_id == 0) {
-                                cached_scope_id = getDefaultIPv6Interface( &(him6->sin6_addr) );
+                                cached_scope_id = getDefaultIPv6Interface(&sa->sa6.sin6_addr);
                             }
                         }
                         (*env)->SetIntField(env, iaObj, ia6_cachedscopeidID, cached_scope_id);
@@ -880,62 +851,38 @@ NET_InetAddressToSockaddr(JNIEnv *env, jobject iaObj, int port, struct sockaddr 
              * If we have a scope_id use the extended form
              * of sockaddr_in6.
              */
-
-            struct sockaddr_in6 *him6 =
-                    (struct sockaddr_in6 *)him;
-            him6->sin6_scope_id = cached_scope_id != 0 ?
-                                        cached_scope_id    : scope_id;
-            *len = sizeof(struct sockaddr_in6);
+            sa->sa6.sin6_scope_id = cached_scope_id == 0 ? scope_id : cached_scope_id;
         }
 #else
-        /* handle scope_id for solaris */
-
+        /* handle scope_id */
         if (family != java_net_InetAddress_IPv4) {
             if (ia6_scopeidID) {
-                him6->sin6_scope_id = getInet6Address_scopeid(env, iaObj);
+                sa->sa6.sin6_scope_id = getInet6Address_scopeid(env, iaObj);
             }
         }
 #endif
-    } else
-#endif /* AF_INET6 */
-        {
-            struct sockaddr_in *him4 = (struct sockaddr_in*)him;
-            jint address;
-            if (family == java_net_InetAddress_IPv6) {
-              JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", "Protocol family unavailable");
-              return -1;
-            }
-            memset((char *) him4, 0, sizeof(struct sockaddr_in));
-            address = getInetAddress_addr(env, iaObj);
-            him4->sin_port = htons((short) port);
-            him4->sin_addr.s_addr = htonl(address);
-            him4->sin_family = AF_INET;
+    } else {
+        jint address;
+        if (family != java_net_InetAddress_IPv4) {
+            JNU_ThrowByName(env, JNU_JAVANETPKG "SocketException", "Protocol family unavailable");
+            return -1;
+        }
+        address = getInetAddress_addr(env, iaObj);
+        sa->sa4.sin_port = htons(port);
+        sa->sa4.sin_addr.s_addr = htonl(address);
+        sa->sa4.sin_family = AF_INET;
+        if (len != NULL) {
             *len = sizeof(struct sockaddr_in);
         }
+    }
     return 0;
 }
 
 void
-NET_SetTrafficClass(struct sockaddr *him, int trafficClass) {
-#ifdef AF_INET6
-    if (him->sa_family == AF_INET6) {
-        struct sockaddr_in6 *him6 = (struct sockaddr_in6 *)him;
-        him6->sin6_flowinfo = htonl((trafficClass & 0xff) << 20);
+NET_SetTrafficClass(SOCKETADDRESS *sa, int trafficClass) {
+    if (sa->sa.sa_family == AF_INET6) {
+        sa->sa6.sin6_flowinfo = htonl((trafficClass & 0xff) << 20);
     }
-#endif /* AF_INET6 */
-}
-
-JNIEXPORT jint JNICALL
-NET_GetPortFromSockaddr(struct sockaddr *him) {
-#ifdef AF_INET6
-    if (him->sa_family == AF_INET6) {
-        return ntohs(((struct sockaddr_in6*)him)->sin6_port);
-
-        } else
-#endif /* AF_INET6 */
-            {
-                return ntohs(((struct sockaddr_in*)him)->sin_port);
-            }
 }
 
 int
@@ -1008,7 +955,6 @@ NET_MapSocketOption(jint cmd, int *level, int *optname) {
 
     int i;
 
-#ifdef AF_INET6
     if (ipv6_available()) {
         switch (cmd) {
             // Different multicast options if IPv6 is enabled
@@ -1031,7 +977,6 @@ NET_MapSocketOption(jint cmd, int *level, int *optname) {
 #endif
         }
     }
-#endif
 
     /*
      * Map the Java level option to the native level
@@ -1063,7 +1008,7 @@ NET_MapSocketOption(jint cmd, int *level, int *optname) {
  *       0 if no matching interface
  *      >1 interface index to use for the link-local address.
  */
-#if defined(__linux__) && defined(AF_INET6)
+#if defined(__linux__)
 int getDefaultIPv6Interface(struct in6_addr *target_addr) {
     FILE *f;
     char srcp[8][5];
@@ -1300,7 +1245,7 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
     if (level == IPPROTO_IP && opt == IP_TOS) {
         int *iptos;
 
-#if defined(AF_INET6) && defined(__linux__)
+#if defined(__linux__)
         if (ipv6_available()) {
             int optval = 1;
             if (setsockopt(fd, IPPROTO_IPV6, IPV6_FLOWINFO_SEND,
@@ -1502,9 +1447,9 @@ NET_SetSockOpt(int fd, int level, int  opt, const void *arg,
  *
  */
 int
-NET_Bind(int fd, struct sockaddr *him, int len)
+NET_Bind(int fd, SOCKETADDRESS *sa, int len)
 {
-#if defined(__solaris__) && defined(AF_INET6)
+#if defined(__solaris__)
     int level = -1;
     int exclbind = -1;
 #endif
@@ -1517,9 +1462,8 @@ NET_Bind(int fd, struct sockaddr *him, int len)
      * ## When IPv6 is enabled this will be an IPv4-mapped
      * ## with family set to AF_INET6
      */
-    if (him->sa_family == AF_INET) {
-        struct sockaddr_in *sa = (struct sockaddr_in *)him;
-        if ((ntohl(sa->sin_addr.s_addr) & 0x7f0000ff) == 0x7f0000ff) {
+    if (sa->sa.sa_family == AF_INET) {
+        if ((ntohl(sa->sa4.sin_addr.s_addr) & 0x7f0000ff) == 0x7f0000ff) {
             errno = EADDRNOTAVAIL;
             return -1;
         }
@@ -1538,8 +1482,9 @@ NET_Bind(int fd, struct sockaddr *him, int len)
      */
     alen = sizeof(arg);
 
-    if (useExclBind || getsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
-                   (char *)&arg, &alen) == 0) {
+    if (useExclBind ||
+        getsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *)&arg, &alen) == 0)
+    {
         if (useExclBind || arg == 0) {
             /*
              * SO_REUSEADDR is disabled or sun.net.useExclusiveBind
@@ -1547,8 +1492,8 @@ NET_Bind(int fd, struct sockaddr *him, int len)
              * UDP_EXCLBIND
              */
             alen = sizeof(arg);
-            if (getsockopt(fd, SOL_SOCKET, SO_TYPE, (char *)&arg,
-                           &alen) == 0) {
+            if (getsockopt(fd, SOL_SOCKET, SO_TYPE, (char *)&arg, &alen) == 0)
+            {
                 if (arg == SOCK_STREAM) {
                     level = IPPROTO_TCP;
                     exclbind = TCP_EXCLBIND;
@@ -1559,16 +1504,15 @@ NET_Bind(int fd, struct sockaddr *him, int len)
             }
 
             arg = 1;
-            setsockopt(fd, level, exclbind, (char *)&arg,
-                       sizeof(arg));
+            setsockopt(fd, level, exclbind, (char *)&arg, sizeof(arg));
         }
     }
 
 #endif
 
-    rv = bind(fd, him, len);
+    rv = bind(fd, &sa->sa, len);
 
-#if defined(__solaris__) && defined(AF_INET6)
+#if defined(__solaris__)
     if (rv < 0) {
         int en = errno;
         /* Restore *_EXCLBIND if the bind fails */

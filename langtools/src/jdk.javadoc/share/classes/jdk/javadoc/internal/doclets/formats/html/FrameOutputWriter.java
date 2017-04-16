@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,10 +29,12 @@ import jdk.javadoc.internal.doclets.formats.html.markup.HtmlAttr;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTag;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
+import jdk.javadoc.internal.doclets.formats.html.markup.RawHtml;
 import jdk.javadoc.internal.doclets.toolkit.Content;
 import jdk.javadoc.internal.doclets.toolkit.util.DocFileIOException;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPath;
 import jdk.javadoc.internal.doclets.toolkit.util.DocPaths;
+import jdk.javadoc.internal.doclets.toolkit.util.DocletConstants;
 
 
 /**
@@ -92,6 +94,15 @@ public class FrameOutputWriter extends HtmlDocletWriter {
         Content frame = getFrameDetails();
         HtmlTree body = new HtmlTree(HtmlTag.BODY);
         body.addAttr(HtmlAttr.ONLOAD, "loadFrames()");
+        String topFilePath = configuration.topFile.getPath();
+        String javaScriptRefresh = "\nif (targetPage == \"\" || targetPage == \"undefined\")\n" +
+                "     window.location.replace('" + topFilePath + "');\n";
+        RawHtml scriptContent = new RawHtml(javaScriptRefresh.replace("\n", DocletConstants.NL));
+        HtmlTree scriptTree = HtmlTree.SCRIPT();
+        scriptTree.addContent(scriptContent);
+        body.addContent(scriptTree);
+        Content noScript = HtmlTree.NOSCRIPT(contents.noScriptMessage);
+        body.addContent(noScript);
         if (configuration.allowTag(HtmlTag.MAIN)) {
             HtmlTree main = HtmlTree.MAIN(frame);
             body.addContent(main);
@@ -117,16 +128,28 @@ public class FrameOutputWriter extends HtmlDocletWriter {
         HtmlTree rightContainerDiv = new HtmlTree(HtmlTag.DIV);
         leftContainerDiv.addStyle(HtmlStyle.leftContainer);
         rightContainerDiv.addStyle(HtmlStyle.rightContainer);
-        if (noOfPackages <= 1) {
-            addAllClassesFrameTag(leftContainerDiv);
+        if (configuration.showModules && configuration.modules.size() > 1) {
+            addAllModulesFrameTag(leftContainerDiv);
         } else if (noOfPackages > 1) {
             addAllPackagesFrameTag(leftContainerDiv);
-            addAllClassesFrameTag(leftContainerDiv);
         }
+        addAllClassesFrameTag(leftContainerDiv);
         addClassFrameTag(rightContainerDiv);
         HtmlTree mainContainer = HtmlTree.DIV(HtmlStyle.mainContainer, leftContainerDiv);
         mainContainer.addContent(rightContainerDiv);
         return mainContainer;
+    }
+
+    /**
+     * Add the IFRAME tag for the frame that lists all modules.
+     *
+     * @param contentTree to which the information will be added
+     */
+    private void addAllModulesFrameTag(Content contentTree) {
+        HtmlTree frame = HtmlTree.IFRAME(DocPaths.MODULE_OVERVIEW_FRAME.getPath(),
+                "packageListFrame", configuration.getText("doclet.All_Modules"));
+        HtmlTree leftTop = HtmlTree.DIV(HtmlStyle.leftTop, frame);
+        contentTree.addContent(leftTop);
     }
 
     /**

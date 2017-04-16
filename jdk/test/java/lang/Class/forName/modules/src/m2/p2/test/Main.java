@@ -23,12 +23,9 @@
 
 package p2.test;
 
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
-
 public class Main {
     public static void main(String... args) throws Exception {
-        Layer boot = Layer.boot();
+        ModuleLayer boot = ModuleLayer.boot();
         Module m1 = boot.findModule("m1").get();
         Module m2 = Main.class.getModule();
 
@@ -44,7 +41,7 @@ public class Main {
         try {
             Class<?> c = findClass(m1, "p1.internal.B");
             c.newInstance();
-            throw new RuntimeException(c.getName() + " is not exported to m2");
+            throw new RuntimeException(c.getName() + " should not be exported to m2");
         } catch (IllegalAccessException e) {}
     }
 

@@ -161,6 +161,9 @@ endif
 JTREG_TESTVM_MEMORY_OPTION = -vmoption:-Xmx768m
 JTREG_OPTIONS += $(JTREG_TESTVM_MEMORY_OPTION)
 
+# Retain all files for failing tests
+JTREG_OPTIONS += -retain:fail,error
+
 ifdef EXTRA_JTREG_OPTIONS
   JTREG_OPTIONS += $(EXTRA_JTREG_OPTIONS)
 endif
@@ -211,7 +214,7 @@ ifdef JCK_TIMEOUT_FACTOR
 endif
 
 # Default verbosity setting for jtreg
-JTREG_VERBOSE ?= fail,error,nopass
+JTREG_VERBOSE ?= fail,error,time
 
 # Default verbosity setting for jck
 JCK_VERBOSE ?= non-pass
@@ -241,7 +244,7 @@ EXIT = exit
 EXIT_IF_FATAL = status=$$?; if [ $$status -ge $(1) ]; then exit $$status ; fi
 
 # Root of all test results
-TEST_OUTPUT_DIR = $(TEST_ROOT)/../build/$(PLATFORM)-$(ARCH)/test/langtools
+TEST_OUTPUT_DIR ?= $(TEST_ROOT)/../build/$(PLATFORM)-$(ARCH)/test/langtools
 ABS_TEST_OUTPUT_DIR := \
 	$(shell mkdir -p $(TEST_OUTPUT_DIR); \
 		cd  $(TEST_OUTPUT_DIR); \
@@ -318,7 +321,7 @@ jtreg-tests: check-jtreg FRC
 	@rm -f -r $(JTREG_OUTPUT_DIR)/JTwork $(JTREG_OUTPUT_DIR)/JTreport \
 	    $(JTREG_OUTPUT_DIR)/diff.html $(JTREG_OUTPUT_DIR)/status.txt
 	@mkdir -p $(JTREG_OUTPUT_DIR)
-	JT_JAVA=$(JT_JAVA) $(JTREG) \
+	( JT_JAVA=$(JT_JAVA) $(JTREG) \
 	  -a -ignore:quiet $(if $(JTREG_VERBOSE),-v:$(JTREG_VERBOSE)) \
 	  -r:$(JTREG_OUTPUT_DIR)/JTreport \
 	  -w:$(JTREG_OUTPUT_DIR)/JTwork \
@@ -327,10 +330,10 @@ jtreg-tests: check-jtreg FRC
 	  $(JTREG_EXCLUSIONS) \
 	  $(JTREG_OPTIONS) \
 	  $(JTREG_TESTDIRS) \
-	    2>&1 | tee $(JTREG_OUTPUT_DIR)/output.txt \
-	|| ( $(call EXIT_IF_FATAL,$(FATAL_JTREG_EXIT)) ; \
+	  || ( $(call EXIT_IF_FATAL,$(FATAL_JTREG_EXIT)) ; \
 	    echo $$status > $(JTREG_OUTPUT_DIR)/status.txt \
-	)
+	  ) \
+	) 2>&1 | tee $(JTREG_OUTPUT_DIR)/output.txt
 ifdef JTREG_REFERENCE
 	JT_JAVA=$(JT_JAVA) $(JTDIFF) -o $(JTREG_OUTPUT_DIR)/diff.html \
 	    $(JTREG_REFERENCE) $(JTREG_OUTPUT_DIR)/JTreport \
@@ -375,7 +378,7 @@ jck-compiler-tests: check-jck FRC
 	@rm -f -r $(JCK_COMPILER_OUTPUT_DIR)/work $(JCK_COMPILER_OUTPUT_DIR)/report \
 	    $(JCK_COMPILER_OUTPUT_DIR)/diff.html $(JCK_COMPILER_OUTPUT_DIR)/status.txt
 	@mkdir -p $(JCK_COMPILER_OUTPUT_DIR)
-	$(JT_JAVA)/bin/java -Xmx512m \
+	$(JT_JAVA)/bin/java -Xmx1024m \
 	    -jar $(JCK_HOME)/JCK-compiler-9/lib/jtjck.jar \
 	    $(if $(JCK_VERBOSE),$(if $(filter $(JCK_VERBOSE),summary),-v,-v:$(JCK_VERBOSE))) \
             -r:$(JCK_COMPILER_OUTPUT_DIR)/report \
@@ -426,7 +429,7 @@ jck-runtime-tests: check-jck FRC
 	@rm -f -r $(JCK_RUNTIME_OUTPUT_DIR)/work $(JCK_RUNTIME_OUTPUT_DIR)/report \
 	    $(JCK_RUNTIME_OUTPUT_DIR)/diff.html $(JCK_RUNTIME_OUTPUT_DIR)/status.txt
 	@mkdir -p $(JCK_RUNTIME_OUTPUT_DIR)
-	$(JT_JAVA)/bin/java -Xmx512m \
+	$(JT_JAVA)/bin/java -Xmx1024m \
 	    -jar $(JCK_HOME)/JCK-runtime-9/lib/jtjck.jar \
 	    $(if $(JCK_VERBOSE),$(if $(filter $(JCK_VERBOSE),summary),-v,-v:$(JCK_VERBOSE))) \
             -r:$(JCK_RUNTIME_OUTPUT_DIR)/report \

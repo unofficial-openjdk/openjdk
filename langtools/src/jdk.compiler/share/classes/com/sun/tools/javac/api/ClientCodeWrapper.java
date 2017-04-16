@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -348,9 +348,9 @@ public class ClientCodeWrapper {
         }
 
         @Override @DefinedBy(Api.COMPILER)
-        public Location getModuleLocation(Location location, String moduleName) throws IOException {
+        public Location getLocationForModule(Location location, String moduleName) throws IOException {
             try {
-                return clientJavaFileManager.getModuleLocation(location, moduleName);
+                return clientJavaFileManager.getLocationForModule(location, moduleName);
             } catch (ClientCodeException e) {
                 throw e;
             } catch (RuntimeException | Error e) {
@@ -359,9 +359,9 @@ public class ClientCodeWrapper {
         }
 
         @Override @DefinedBy(Api.COMPILER)
-        public Location getModuleLocation(Location location, JavaFileObject fo, String pkgName) throws IOException {
+        public Location getLocationForModule(Location location, JavaFileObject fo) throws IOException {
             try {
-                return clientJavaFileManager.getModuleLocation(location, fo, pkgName);
+                return clientJavaFileManager.getLocationForModule(location, unwrap(fo));
             } catch (ClientCodeException e) {
                 throw e;
             } catch (RuntimeException | Error e) {
@@ -381,9 +381,9 @@ public class ClientCodeWrapper {
         }
 
         @Override @DefinedBy(Api.COMPILER)
-        public Iterable<Set<Location>> listModuleLocations(Location location) throws IOException {
+        public Iterable<Set<Location>> listLocationsForModules(Location location) throws IOException {
             try {
-                return clientJavaFileManager.listModuleLocations(location);
+                return clientJavaFileManager.listLocationsForModules(location);
             } catch (ClientCodeException e) {
                 throw e;
             } catch (RuntimeException | Error e) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -296,6 +296,9 @@ class MacroAssembler: public Assembler {
   // Stores
   void store_check(Register obj);                // store check for obj - register is destroyed afterwards
   void store_check(Register obj, Address dst);   // same as above, dst is exact store location (reg. is destroyed)
+
+  void resolve_jobject(Register value, Register thread, Register tmp);
+  void clear_jweak_tag(Register possibly_jweak);
 
 #if INCLUDE_ALL_GCS
 
@@ -943,6 +946,23 @@ class MacroAssembler: public Assembler {
                    bool multi_block, XMMRegister shuf_mask);
 #endif
 
+#ifdef _LP64
+ private:
+  void sha512_AVX2_one_round_compute(Register old_h, Register a, Register b, Register c, Register d,
+                                     Register e, Register f, Register g, Register h, int iteration);
+
+  void sha512_AVX2_one_round_and_schedule(XMMRegister xmm4, XMMRegister xmm5, XMMRegister xmm6, XMMRegister xmm7,
+                                          Register a, Register b, Register c, Register d, Register e, Register f,
+                                          Register g, Register h, int iteration);
+
+  void addmq(int disp, Register r1, Register r2);
+ public:
+  void sha512_AVX2(XMMRegister msg, XMMRegister state0, XMMRegister state1, XMMRegister msgtmp0,
+                   XMMRegister msgtmp1, XMMRegister msgtmp2, XMMRegister msgtmp3, XMMRegister msgtmp4,
+                   Register buf, Register state, Register ofs, Register limit, Register rsp, bool multi_block,
+                   XMMRegister shuf_mask);
+#endif
+
   void fast_sha1(XMMRegister abcd, XMMRegister e0, XMMRegister e1, XMMRegister msg0,
                  XMMRegister msg1, XMMRegister msg2, XMMRegister msg3, XMMRegister shuf_mask,
                  Register buf, Register state, Register ofs, Register limit, Register rsp,
@@ -1068,7 +1088,7 @@ public:
   void movdqu(Address     dst, XMMRegister src);
   void movdqu(XMMRegister dst, Address src);
   void movdqu(XMMRegister dst, XMMRegister src);
-  void movdqu(XMMRegister dst, AddressLiteral src);
+  void movdqu(XMMRegister dst, AddressLiteral src, Register scratchReg = rscratch1);
   // AVX Unaligned forms
   void vmovdqu(Address     dst, XMMRegister src);
   void vmovdqu(XMMRegister dst, Address src);
@@ -1176,6 +1196,10 @@ public:
 
   void vpaddw(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len);
   void vpaddw(XMMRegister dst, XMMRegister nds, Address src, int vector_len);
+
+  void vpand(XMMRegister dst, XMMRegister nds, XMMRegister src, int vector_len) { Assembler::vpand(dst, nds, src, vector_len); }
+  void vpand(XMMRegister dst, XMMRegister nds, Address src, int vector_len) { Assembler::vpand(dst, nds, src, vector_len); }
+  void vpand(XMMRegister dst, XMMRegister nds, AddressLiteral src, int vector_len);
 
   void vpbroadcastw(XMMRegister dst, XMMRegister src);
 

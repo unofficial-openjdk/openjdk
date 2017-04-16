@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,7 +67,7 @@ public class AnnotationTypeFieldBuilder extends AbstractMemberBuilder {
     /**
      * The list of members being documented.
      */
-    protected SortedSet<Element> members;
+    protected List<Element> members;
 
     /**
      * The index of the current member that is being documented at this point
@@ -90,8 +90,8 @@ public class AnnotationTypeFieldBuilder extends AbstractMemberBuilder {
         super(context);
         this.typeElement = typeElement;
         this.writer = writer;
-        this.visibleMemberMap = new VisibleMemberMap(typeElement, memberType, configuration);
-        this.members = this.visibleMemberMap.getMembersFor(typeElement);
+        this.visibleMemberMap = configuration.getVisibleMemberMap(typeElement, memberType);
+        this.members = this.visibleMemberMap.getMembers(typeElement);
     }
 
 
@@ -118,26 +118,6 @@ public class AnnotationTypeFieldBuilder extends AbstractMemberBuilder {
         return "AnnotationTypeFieldDetails";
     }
 
-    /**
-     * Returns a list of members that will be documented for the given class.
-     * This information can be used for doclet specific documentation
-     * generation.
-     *
-     * @param typeElement the TypeElement we want to check.
-     * @return a list of members that will be documented.
-     */
-    public SortedSet<Element> members(TypeElement typeElement) {
-        return visibleMemberMap.getMembersFor(typeElement);
-    }
-
-    /**
-     * Returns the visible member map for the members of this class.
-     *
-     * @return the visible member map for the members of this class.
-     */
-    public VisibleMemberMap getVisibleMemberMap() {
-        return visibleMemberMap;
-    }
 
     /**
      * Returns whether or not there are members to document.
@@ -145,7 +125,7 @@ public class AnnotationTypeFieldBuilder extends AbstractMemberBuilder {
      */
     @Override
     public boolean hasMembersToDocument() {
-        return members.size() > 0;
+        return !members.isEmpty();
     }
 
     /**
@@ -172,16 +152,19 @@ public class AnnotationTypeFieldBuilder extends AbstractMemberBuilder {
         if (writer == null) {
             return;
         }
-        if (!members.isEmpty()) {
+        if (hasMembersToDocument()) {
             writer.addAnnotationFieldDetailsMarker(memberDetailsTree);
-            for (Element element : members) {
-                currentMember = element;
+
+            Element lastElement = members.get(members.size() - 1);
+            for (Element member : members) {
+                currentMember = member;
                 Content detailsTree = writer.getMemberTreeHeader();
                 writer.addAnnotationDetailsTreeHeader(typeElement, detailsTree);
-                Content annotationDocTree = writer.getAnnotationDocTreeHeader(element, detailsTree);
+                Content annotationDocTree = writer.getAnnotationDocTreeHeader(currentMember,
+                        detailsTree);
                 buildChildren(node, annotationDocTree);
                 detailsTree.addContent(writer.getAnnotationDoc(
-                        annotationDocTree, currentMember == members.last()));
+                        annotationDocTree, currentMember == lastElement));
                 memberDetailsTree.addContent(writer.getAnnotationDetails(detailsTree));
             }
         }

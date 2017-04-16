@@ -40,6 +40,8 @@
 #include "memory/universe.hpp"
 #include "memory/oopFactory.hpp"
 #include "oops/constantPool.hpp"
+#include "oops/objArrayKlass.hpp"
+#include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/wbtestmethods/parserTests.hpp"
 #include "prims/whitebox.hpp"
@@ -659,6 +661,9 @@ WB_ENTRY(jboolean, WB_IsMethodCompiled(JNIEnv* env, jobject o, jobject method, j
 WB_END
 
 WB_ENTRY(jboolean, WB_IsMethodCompilable(JNIEnv* env, jobject o, jobject method, jint comp_level, jboolean is_osr))
+  if (method == NULL || comp_level > MIN2((CompLevel) TieredStopAtLevel, CompLevel_highest_tier)) {
+    return false;
+  }
   jmethodID jmid = reflected_method_to_jmid(thread, env, method);
   CHECK_JNI_EXCEPTION_(env, JNI_FALSE);
   MutexLockerEx mu(Compile_lock);
@@ -760,7 +765,7 @@ WB_END
 
 bool WhiteBox::compile_method(Method* method, int comp_level, int bci, Thread* THREAD) {
   // Screen for unavailable/bad comp level or null method
-  if (method == NULL || comp_level > TieredStopAtLevel ||
+  if (method == NULL || comp_level > MIN2((CompLevel) TieredStopAtLevel, CompLevel_highest_tier) ||
       CompileBroker::compiler(comp_level) == NULL) {
     return false;
   }
@@ -1172,6 +1177,9 @@ WB_END
 
 int WhiteBox::get_blob_type(const CodeBlob* code) {
   guarantee(WhiteBoxAPI, "internal testing API :: WhiteBox has to be enabled");
+  if (code->is_aot()) {
+    return -1;
+  }
   return CodeCache::get_code_heap(code)->code_blob_type();
 }
 
@@ -1227,7 +1235,8 @@ WB_ENTRY(jobjectArray, WB_GetNMethod(JNIEnv* env, jobject o, jobject method, jbo
   if (code == NULL) {
     return result;
   }
-  int insts_size = code->insts_size();
+  int comp_level = code->comp_level();
+  int insts_size = comp_level == CompLevel_aot ? code->code_end() - code->code_begin() : code->insts_size();
 
   ThreadToNativeFromVM ttn(thread);
   jclass clazz = env->FindClass(vmSymbols::java_lang_Object()->as_C_string());
@@ -1242,7 +1251,7 @@ WB_ENTRY(jobjectArray, WB_GetNMethod(JNIEnv* env, jobject o, jobject method, jbo
   CHECK_JNI_EXCEPTION_(env, NULL);
   env->SetObjectArrayElement(result, 0, codeBlob);
 
-  jobject level = integerBox(thread, env, code->comp_level());
+  jobject level = integerBox(thread, env, comp_level);
   CHECK_JNI_EXCEPTION_(env, NULL);
   env->SetObjectArrayElement(result, 1, level);
 
@@ -1396,39 +1405,74 @@ WB_END
 
 WB_ENTRY(void, WB_DefineModule(JNIEnv* env, jobject o, jobject module, jstring version, jstring location,
                                 jobjectArray packages))
-  Modules::define_module(module, version, location, packages, CHECK);
+  ResourceMark rm(THREAD);
+
+  objArrayOop packages_oop = objArrayOop(JNIHandles::resolve(packages));
+  objArrayHandle packages_h(THREAD, packages_oop);
+  int num_packages = (packages_h == NULL ? 0 : packages_h->length());
+
+  char** pkgs = NULL;
+  if (num_packages > 0) {
+    pkgs = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char*, num_packages);
+    for (int x = 0; x < num_packages; x++) {
+      oop pkg_str = packages_h->obj_at(x);
+      if (pkg_str == NULL || !pkg_str->is_a(SystemDictionary::String_klass())) {
+        THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
+                  err_msg("Bad package name"));
+      }
+      pkgs[x] = java_lang_String::as_utf8_string(pkg_str);
+    }
+  }
+  Modules::define_module(module, version, location, (const char* const*)pkgs, num_packages, CHECK);
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExports(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
-  Modules::add_module_exports_qualified(from_module, package, to_module, CHECK);
+  ResourceMark rm(THREAD);
+  char* package_name = NULL;
+  if (package != NULL) {
+      package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
+  }
+  Modules::add_module_exports_qualified(from_module, package_name, to_module, CHECK);
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExportsToAllUnnamed(JNIEnv* env, jobject o, jclass module, jstring package))
-  Modules::add_module_exports_to_all_unnamed(module, package, CHECK);
+  ResourceMark rm(THREAD);
+  char* package_name = NULL;
+  if (package != NULL) {
+      package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
+  }
+  Modules::add_module_exports_to_all_unnamed(module, package_name, CHECK);
 WB_END
 
 WB_ENTRY(void, WB_AddModuleExportsToAll(JNIEnv* env, jobject o, jclass module, jstring package))
-  Modules::add_module_exports(module, package, NULL, CHECK);
+  ResourceMark rm(THREAD);
+  char* package_name = NULL;
+  if (package != NULL) {
+      package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
+  }
+  Modules::add_module_exports(module, package_name, NULL, CHECK);
 WB_END
 
 WB_ENTRY(void, WB_AddReadsModule(JNIEnv* env, jobject o, jobject from_module, jobject source_module))
   Modules::add_reads_module(from_module, source_module, CHECK);
 WB_END
 
-WB_ENTRY(jboolean, WB_CanReadModule(JNIEnv* env, jobject o, jobject asking_module, jobject source_module))
-  return Modules::can_read_module(asking_module, source_module, THREAD);
-WB_END
-
-WB_ENTRY(jboolean, WB_IsExportedToModule(JNIEnv* env, jobject o, jobject from_module, jstring package, jobject to_module))
-  return Modules::is_exported_to_module(from_module, package, to_module, THREAD);
-WB_END
-
 WB_ENTRY(void, WB_AddModulePackage(JNIEnv* env, jobject o, jclass module, jstring package))
-  Modules::add_module_package(module, package, CHECK);
+  ResourceMark rm(THREAD);
+  char* package_name = NULL;
+  if (package != NULL) {
+      package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
+  }
+  Modules::add_module_package(module, package_name, CHECK);
 WB_END
 
 WB_ENTRY(jobject, WB_GetModuleByPackageName(JNIEnv* env, jobject o, jobject loader, jstring package))
-  return Modules::get_module_by_package_name(loader, package, THREAD);
+  ResourceMark rm(THREAD);
+  char* package_name = NULL;
+  if (package != NULL) {
+      package_name = java_lang_String::as_utf8_string(JNIHandles::resolve_non_null(package));
+  }
+  return Modules::get_module_by_package_name(loader, package_name, THREAD);
 WB_END
 
 WB_ENTRY(jlong, WB_IncMetaspaceCapacityUntilGC(JNIEnv* env, jobject wb, jlong inc))
@@ -1866,10 +1910,6 @@ static JNINativeMethod methods[] = {
                                                       (void*)&WB_AddModuleExports },
   {CC"AddReadsModule",     CC"(Ljava/lang/Object;Ljava/lang/Object;)V",
                                                       (void*)&WB_AddReadsModule },
-  {CC"CanReadModule",      CC"(Ljava/lang/Object;Ljava/lang/Object;)Z",
-                                                      (void*)&WB_CanReadModule },
-  {CC"IsExportedToModule", CC"(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Object;)Z",
-                                                      (void*)&WB_IsExportedToModule },
   {CC"AddModulePackage",   CC"(Ljava/lang/Object;Ljava/lang/String;)V",
                                                       (void*)&WB_AddModulePackage },
   {CC"GetModuleByPackageName", CC"(Ljava/lang/Object;Ljava/lang/String;)Ljava/lang/Object;",

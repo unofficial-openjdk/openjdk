@@ -412,7 +412,7 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 HtmlTree tdClassDescription = new HtmlTree(HtmlTag.TD);
                 tdClassDescription.addStyle(HtmlStyle.colLast);
                 if (utils.isDeprecated(te)) {
-                    tdClassDescription.addContent(contents.deprecatedLabel);
+                    tdClassDescription.addContent(getDeprecatedPhrase(te));
                     List<? extends DocTree> tags = utils.getDeprecatedTrees(te);
                     if (!tags.isEmpty()) {
                         addSummaryDeprecatedComment(te, tags.get(0), tdClassDescription);
@@ -647,6 +647,13 @@ public class HtmlDocletWriter extends HtmlDocWriter {
                 tree.addContent(fixedNavDiv);
                 HtmlTree paddingDiv = HtmlTree.DIV(HtmlStyle.navPadding, Contents.SPACE);
                 tree.addContent(paddingDiv);
+                HtmlTree scriptTree = HtmlTree.SCRIPT();
+                String scriptCode = "<!--\n"
+                        + "$('.navPadding').css('padding-top', $('.fixedNav').css(\"height\"));\n"
+                        + "//-->\n";
+                RawHtml scriptContent = new RawHtml(scriptCode.replace("\n", DocletConstants.NL));
+                scriptTree.addContent(scriptContent);
+                tree.addContent(scriptTree);
             } else {
                 subDiv.addContent(getMarkerAnchor(SectionName.SKIP_NAVBAR_BOTTOM));
                 tree.addContent(subDiv);
@@ -826,8 +833,8 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @return a content tree for the link
      */
     protected Content getNavLinkTree() {
-        List<PackageElement> packages = new ArrayList<>(configuration.getSpecifiedPackages());
-        DocPath docPath = packages.size() == 1 && configuration.getSpecifiedClasses().isEmpty()
+        List<PackageElement> packages = new ArrayList<>(configuration.getSpecifiedPackageElements());
+        DocPath docPath = packages.size() == 1 && configuration.getSpecifiedTypeElements().isEmpty()
                 ? pathString(packages.get(0), DocPaths.PACKAGE_TREE)
                 : pathToRoot.resolve(DocPaths.OVERVIEW_TREE);
         return HtmlTree.LI(getHyperLink(docPath, contents.treeLabel, "", ""));
@@ -1046,48 +1053,6 @@ public class HtmlDocletWriter extends HtmlDocWriter {
     }
 
     /**
-     * Add package deprecation information to the documentation tree
-     *
-     * @param deprPkgs list of deprecated packages
-     * @param headingKey the caption for the deprecated package table
-     * @param tableSummary the summary for the deprecated package table
-     * @param tableHeader table headers for the deprecated package table
-     * @param contentTree the content tree to which the deprecated package table will be added
-     */
-    protected void addPackageDeprecatedAPI(SortedSet<Element> deprPkgs, String headingKey,
-            String tableSummary, List<String> tableHeader, Content contentTree) {
-        if (deprPkgs.size() > 0) {
-            Content caption = getTableCaption(configuration.getContent(headingKey));
-            Content table = (configuration.isOutputHtml5())
-                    ? HtmlTree.TABLE(HtmlStyle.deprecatedSummary, caption)
-                    : HtmlTree.TABLE(HtmlStyle.deprecatedSummary, tableSummary, caption);
-            table.addContent(getSummaryTableHeader(tableHeader, "col"));
-            Content tbody = new HtmlTree(HtmlTag.TBODY);
-            boolean altColor = true;
-            for (Element e : deprPkgs) {
-                PackageElement pkg = (PackageElement) e;
-                HtmlTree thRow = HtmlTree.TH_ROW_SCOPE(HtmlStyle.colFirst,
-                        getPackageLink(pkg, getPackageName(pkg)));
-                HtmlTree tr = HtmlTree.TR(thRow);
-                HtmlTree tdDesc = new HtmlTree(HtmlTag.TD);
-                tdDesc.addStyle(HtmlStyle.colLast);
-                List<? extends DocTree> tags = utils.getDeprecatedTrees(pkg);
-                if (!tags.isEmpty()) {
-                    addInlineDeprecatedComment(pkg, tags.get(0), tdDesc);
-                }
-                tr.addContent(tdDesc);
-                tr.addStyle(altColor ? HtmlStyle.altColor : HtmlStyle.rowColor);
-                altColor = !altColor;
-                tbody.addContent(tr);
-            }
-            table.addContent(tbody);
-            Content li = HtmlTree.LI(HtmlStyle.blockList, table);
-            Content ul = HtmlTree.UL(HtmlStyle.blockList, li);
-            contentTree.addContent(ul);
-        }
-    }
-
-    /**
      * Return the path to the class page for a typeElement.
      *
      * @param te   TypeElement for which the path is requested.
@@ -1177,8 +1142,10 @@ public class HtmlDocletWriter extends HtmlDocWriter {
      * @return a content for the module link
      */
     public Content getModuleLink(ModuleElement mdle, Content label) {
-        return getHyperLink(pathToRoot.resolve(
-                DocPaths.moduleSummary(mdle)), label, "", "");
+        boolean included = utils.isIncluded(mdle);
+        return (included)
+                ? getHyperLink(pathToRoot.resolve(DocPaths.moduleSummary(mdle)), label, "", "")
+                : label;
     }
 
     public Content interfaceName(TypeElement typeElement, boolean qual) {
@@ -1656,6 +1623,18 @@ public class HtmlDocletWriter extends HtmlDocWriter {
         CommentHelper ch = utils.getCommentHelper(element);
         List<? extends DocTree> description = ch.getDescription(configuration, tag);
         addCommentTags(element, tag, description, false, false, htmltree);
+    }
+
+    /**
+     * Get the deprecated phrase as content.
+     *
+     * @param e the Element for which the inline deprecated comment will be added
+     * @return a content tree for the deprecated phrase.
+     */
+    public Content getDeprecatedPhrase(Element e) {
+        return (utils.isDeprecatedForRemoval(e))
+                ? contents.deprecatedForRemovalPhrase
+                : contents.deprecatedPhrase;
     }
 
     /**

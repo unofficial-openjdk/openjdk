@@ -1,6 +1,6 @@
 ###########################################################################
 #
-# Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -125,6 +125,8 @@ java/beans/Introspector/8132566/OverrideUserDefPropertyInfoTest.java 8132565 gen
 
 java/lang/StringCoding/CheckEncodings.sh                        7008363 generic-all
 
+jdk/internal/misc/JavaLangAccess/NewUnsafeString.java           8176188 generic-all
+
 ############################################################################
 
 # jdk_instrument
@@ -135,20 +137,24 @@ java/lang/instrument/RetransformBigClass.sh                     8065756 generic-
 java/lang/instrument/BootClassPath/BootClassPathTest.sh         8072130 macosx-all
 
 java/lang/management/MemoryMXBean/Pending.java                  8158837 generic-all
-java/lang/management/MemoryMXBean/PendingAllGC.sh               8158760 generic-all
+java/lang/management/MemoryMXBean/PendingAllGC.sh               8158837 generic-all
 
 ############################################################################
 
 # jdk_io
 
-java/io/pathNames/GeneralWin32.java                             8156595 windows-all
+############################################################################
+
+# jdk_management
+
+com/sun/management/OperatingSystemMXBean/GetProcessCpuLoad.java 8030957 aix-all
+com/sun/management/OperatingSystemMXBean/GetSystemCpuLoad.java  8030957 aix-all
+sun/management/HotspotRuntimeMBean/GetSafepointSyncTime.java    8174734 generic-all
 
 ############################################################################
 
 # jdk_jmx
 
-com/sun/management/OperatingSystemMXBean/GetProcessCpuLoad.java 8030957 aix-all
-com/sun/management/OperatingSystemMXBean/GetSystemCpuLoad.java  8030957 aix-all
 javax/management/MBeanServer/OldMBeanServerTest.java            8030957 aix-all
 
 javax/management/remote/mandatory/notif/NotifReconnectDeadlockTest.java 8042215 generic-all
@@ -164,12 +170,6 @@ java/net/MulticastSocket/Test.java                              7145658 macosx-a
 
 java/net/DatagramSocket/SendDatagramToBadAddress.java           7143960 macosx-all
 
-java/net/httpclient/SplitResponse.java                          8157533 generic-all 
-
-java/net/httpclient/http2/BasicTest.java                        8157408 linux-all
-java/net/httpclient/http2/ErrorTest.java                        8158127 solaris-all,windows-all
-java/net/httpclient/http2/TLSConnection.java                    8157482 macosx-all
-
 ############################################################################
 
 # jdk_nio
@@ -177,8 +177,6 @@ java/net/httpclient/http2/TLSConnection.java                    8157482 macosx-a
 java/nio/channels/Selector/Wakeup.java                          6963118 windows-all
 
 java/nio/channels/DatagramChannel/ChangingAddress.java          7141822 macosx-all
-
-java/nio/channels/Selector/OutOfBand.java                       7132677 macosx-all
 
 java/nio/file/WatchService/Basic.java                           7158947 solaris-all Solaris 11
 java/nio/file/WatchService/MayFlies.java                        7158947 solaris-all Solaris 11
@@ -196,9 +194,9 @@ java/rmi/transport/checkLeaseInfoLeak/CheckLeaseLeak.java       7191877 generic-
 
 java/rmi/activation/Activatable/extLoadedImpl/ext.sh            8062724 generic-all
 
-sun/rmi/rmic/newrmic/equivalence/run.sh                         8145980 generic-all
+java/rmi/activation/ActivationGroup/downloadActivationGroup/DownloadActivationGroup.java 8169569 windows-all
 
-java/rmi/transport/dgcDeadLock/DGCDeadLock.java                 8029360 macosx-all
+java/rmi/registry/readTest/CodebaseTest.java                    8173324 windows-all
 
 ############################################################################
 
@@ -210,13 +208,21 @@ sun/security/tools/keytool/ListKeychainStore.sh                 8156889 macosx-a
 
 sun/security/tools/jarsigner/warnings/BadKeyUsageTest.java      8026393 generic-all
 
-sun/security/krb5/auto/HttpNegotiateServer.java                 8038079 generic-all
+javax/net/ssl/DTLS/PacketLossRetransmission.java                8169086 macosx-x64
+javax/net/ssl/DTLS/RespondToRetransmit.java                     8169086 macosx-x64
 
-sun/security/ssl/SSLSocketImpl/AsyncSSLSocketClose.java         8161232 macosx-all
+sun/security/ssl/X509KeyManager/PreferredKey.java               8176354 generic-all
 
 ############################################################################
 
 # jdk_sound
+javax/sound/sampled/DirectAudio/bug6372428.java        8055097 generic-all
+javax/sound/sampled/Clip/bug5070081.java               8055097 generic-all
+javax/sound/sampled/DataLine/LongFramePosition.java    8055097 generic-all
+
+javax/sound/sampled/Clip/Drain/ClipDrain.java          7062792 generic-all
+
+javax/sound/sampled/Mixers/DisabledAssertionCrash.java 7067310 generic-all
 
 ############################################################################
 
@@ -241,9 +247,13 @@ sanity/client/SwingSet/src/ButtonDemoScreenshotTest.java        8157338 generic-
 
 # core_tools
 
-tools/pack200/CommandLineTests.java                             7143279,8059906 generic-all
+tools/pack200/CommandLineTests.java                             8059906 generic-all
 
 tools/launcher/FXLauncherTest.java                              8068049 linux-all,macosx-all
+
+tools/jimage/JImageExtractTest.java                             8170120 generic-all
+tools/jimage/JImageListTest.java                                8170120 generic-all
+tools/jimage/JImageVerifyTest.java                              8170120 generic-all
 
 ############################################################################
 
@@ -251,7 +261,7 @@ tools/launcher/FXLauncherTest.java                              8068049 linux-al
 
 com/sun/jdi/RedefineImplementor.sh                              8004127 generic-all
 
-com/sun/jdi/JdbMethodExitTest.sh                                6902121 generic-all
+com/sun/jdi/JdbMethodExitTest.sh                                8171483 generic-all
 
 com/sun/jdi/RepStep.java                                        8043571 generic-all
 
@@ -267,8 +277,6 @@ com/sun/jdi/sde/SourceDebugExtensionTest.java                   8158066 windows-
 
 # jdk_util
 
-java/util/spi/ResourceBundleControlProvider/UserDefaultControlTest.java 8062512 generic-all
-
 java/util/BitSet/BitSetStreamTest.java                          8079538 generic-all
 
 ############################################################################
@@ -281,15 +289,7 @@ java/util/BitSet/BitSetStreamTest.java                          8079538 generic-
 
 sun/tools/jcmd/TestJcmdSanity.java                              8031482 windows-all
 
-sun/tools/jhsdb/BasicLauncherTest.java                          8160376 macosx-all
-
-sun/tools/jhsdb/HeapDumpTest.java                               8160376 macosx-all
-
-sun/tools/jhsdb/heapconfig/JMapHeapConfigTest.java              8160376 macosx-all
-
-sun/tools/jps/TestJpsJar.java                                   8165500 generic-all
-
-sun/tools/jps/TestJpsJarRelative.java                           6456333 generic-all
+sun/tools/jstat/jstatClassloadOutput1.sh                        8173942 generic-all
 
 sun/jvmstat/monitor/MonitoredVm/MonitorVmStartTerminate.java    8057732 generic-all
 
@@ -299,6 +299,10 @@ demo/jvmti/compiledMethodLoad/CompiledMethodLoadTest.java       8151899 generic-
 
 # jdk_other
 
-com/sun/jndi/ldap/DeadSSLLdapTimeoutTest.java                   8141370 linux-i586,macosx-all
+com/sun/jndi/ldap/DeadSSLLdapTimeoutTest.java                   8169942 linux-i586,macosx-all,windows-x64
+
+javax/rmi/PortableRemoteObject/8146975/RmiIiopReturnValueTest.java 8169737 linux-all
+
+org/omg/CORBA/OrbPropertiesTest.java			        8175177 generic-all
 
 ############################################################################

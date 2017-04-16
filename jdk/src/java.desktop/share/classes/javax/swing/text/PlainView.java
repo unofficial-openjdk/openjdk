@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +31,8 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Objects;
 import javax.swing.event.*;
-import java.lang.reflect.Module;
+import java.lang.ref.SoftReference;
+import java.util.HashMap;
 
 /**
  * Implements View interface for a simple multi-line text view
@@ -471,6 +472,7 @@ public class PlainView extends View implements TabExpander {
      *   represent a valid location in the associated document
      * @see View#modelToView
      */
+    @SuppressWarnings("deprecation")
     public Shape modelToView(int pos, Shape a, Position.Bias b) throws BadLocationException {
         // line coordinates
         Document doc = getDocument();
@@ -508,8 +510,8 @@ public class PlainView extends View implements TabExpander {
      * Provides a mapping from the view coordinate space to the logical
      * coordinate space of the model.
      *
-     * @param fx the X coordinate &gt;= 0
-     * @param fy the Y coordinate &gt;= 0
+     * @param x the X coordinate &gt;= 0
+     * @param y the Y coordinate &gt;= 0
      * @param a the allocated region to render into
      * @return the location within the model that best represents the
      *  given point in the view &gt;= 0
@@ -798,6 +800,7 @@ public class PlainView extends View implements TabExpander {
      * the given element.  It is assumed that the font
      * and font metrics are up-to-date.
      */
+    @SuppressWarnings("deprecation")
     private int getLineWidth(Element line) {
         if (line == null) {
             return 0;
@@ -816,10 +819,45 @@ public class PlainView extends View implements TabExpander {
         return w;
     }
 
-    static boolean isFPMethodOverriden(String method,
-                                Class<?> cls,
-                                Class<?>[] intTypes,
-                                Class<?>[] fpTypes)
+    static boolean getFPMethodOverridden(Class<?> cls, String method,
+                                         FPMethodArgs methodArgs) {
+        HashMap<FPMethodItem, Boolean> map = null;
+        boolean initialized = methodsOverriddenMapRef != null
+                              && (map = methodsOverriddenMapRef.get()) != null;
+
+        if (!initialized) {
+            map = new HashMap<>();
+            methodsOverriddenMapRef = new SoftReference<>(map);
+        }
+
+        FPMethodItem key = new FPMethodItem(cls, method);
+        Boolean isFPMethodOverridden = map.get(key);
+        if (isFPMethodOverridden == null) {
+            isFPMethodOverridden = checkFPMethodOverridden(cls, method, methodArgs);
+            map.put(key, isFPMethodOverridden);
+        }
+        return isFPMethodOverridden;
+    }
+
+    private static boolean checkFPMethodOverridden(final Class<?> className,
+                                                   final String methodName,
+                                                   final FPMethodArgs methodArgs) {
+
+        return AccessController
+                .doPrivileged(new PrivilegedAction<Boolean>() {
+                    @Override
+                    public Boolean run() {
+                        return isFPMethodOverridden(methodName, className,
+                                                    methodArgs.getMethodArguments(false),
+                                                    methodArgs.getMethodArguments(true));
+                    }
+                });
+    }
+
+    private static boolean isFPMethodOverridden(String method,
+                                                Class<?> cls,
+                                                Class<?>[] intTypes,
+                                                Class<?>[] fpTypes)
     {
         Module thisModule = PlainView.class.getModule();
         while (!thisModule.equals(cls.getModule())) {
@@ -836,6 +874,57 @@ public class PlainView extends View implements TabExpander {
             }
         }
         return true;
+    }
+
+    enum FPMethodArgs {
+
+        IGNN,
+        IIGNN,
+        GNNII,
+        GNNC;
+
+        public Class<?>[] getMethodArguments(boolean isFPType) {
+            Class<?> N = (isFPType) ? Float.TYPE : Integer.TYPE;
+            Class<?> G = (isFPType) ? Graphics2D.class : Graphics.class;
+            switch (this) {
+                case IGNN:
+                    return new Class<?>[]{Integer.TYPE, G, N, N};
+                case IIGNN:
+                    return new Class<?>[]{Integer.TYPE, Integer.TYPE, G, N, N};
+                case GNNII:
+                    return new Class<?>[]{G, N, N, Integer.TYPE, Integer.TYPE};
+                case GNNC:
+                    return new Class<?>[]{G, N, N, Character.TYPE};
+                default:
+                    throw new RuntimeException("Unknown method arguments!");
+            }
+        }
+    }
+
+     private static class FPMethodItem {
+
+        final Class<?> className;
+        final String methodName;
+
+        public FPMethodItem(Class<?> className, String methodName) {
+            this.className = className;
+            this.methodName = methodName;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof FPMethodItem) {
+                FPMethodItem that = (FPMethodItem) obj;
+                return this.className.equals(that.className)
+                        && this.methodName.equals(that.methodName);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * methodName.hashCode() + className.hashCode();
+        }
     }
 
     // --- member variables -----------------------------------------------
@@ -876,46 +965,13 @@ public class PlainView extends View implements TabExpander {
      */
     int firstLineOffset;
 
-    final boolean drawLineOverridden;
-    final boolean drawSelectedTextOverridden;
-    final boolean drawUnselectedTextOverridden;
-    final boolean useFloatingPointAPI;
-
-    {
-        final Class<?> CLS = getClass();
-        final Class<?> INT = Integer.TYPE;
-        final Class<?> FP = Float.TYPE;
-
-        drawLineOverridden = AccessController
-                .doPrivileged(new PrivilegedAction<Boolean>() {
-            @Override
-            public Boolean run() {
-                Class<?>[] intTypes = {INT, Graphics.class, INT, INT};
-                Class<?>[] fpTypes = {INT, Graphics2D.class, FP, FP};
-                return isFPMethodOverriden("drawLine", CLS, intTypes, fpTypes);
-            }
-        });
-
-        drawUnselectedTextOverridden = AccessController
-                .doPrivileged(new PrivilegedAction<Boolean>() {
-            @Override
-            public Boolean run() {
-                Class<?>[] intTypes = {Graphics.class, INT, INT, INT, INT};
-                Class<?>[] fpTypes = {Graphics2D.class, FP, FP, INT, INT};
-                return isFPMethodOverriden("drawUnselectedText", CLS, intTypes, fpTypes);
-            }
-        });
-
-        drawSelectedTextOverridden = AccessController
-                .doPrivileged(new PrivilegedAction<Boolean>() {
-            @Override
-            public Boolean run() {
-                Class<?>[] intTypes = {Graphics.class, INT, INT, INT, INT};
-                Class<?>[] fpTypes = {Graphics2D.class, FP, FP, INT, INT};
-                return isFPMethodOverriden("drawSelectedText", CLS, intTypes, fpTypes);
-            }
-        });
-
-        useFloatingPointAPI = drawUnselectedTextOverridden || drawSelectedTextOverridden;
-    }
+    private static SoftReference<HashMap<FPMethodItem, Boolean>> methodsOverriddenMapRef;
+    final boolean drawLineOverridden =
+            getFPMethodOverridden(getClass(), "drawLine", FPMethodArgs.IGNN);
+    final boolean drawSelectedTextOverridden =
+            getFPMethodOverridden(getClass(), "drawSelectedText", FPMethodArgs.GNNII);
+    final boolean drawUnselectedTextOverridden =
+            getFPMethodOverridden(getClass(), "drawUnselectedText", FPMethodArgs.GNNII);
+    final boolean useFloatingPointAPI =
+            drawUnselectedTextOverridden || drawSelectedTextOverridden;
 }

@@ -26,17 +26,16 @@
 package jdk.internal.loader;
 
 import java.lang.module.Configuration;
-import java.lang.module.ModuleReference;
 import java.lang.module.ResolvedModule;
-import java.lang.reflect.Layer;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
 /**
  * A pool of class loaders.
  *
- * @see Layer#defineModulesWithManyLoaders
+ * @see ModuleLayer#defineModulesWithManyLoaders
  */
 
 public final class LoaderPool {
@@ -51,7 +50,7 @@ public final class LoaderPool {
      * created with the given parent class loader as its parent.
      */
     public LoaderPool(Configuration cf,
-                      Layer parentLayer,
+                      List<ModuleLayer> parentLayers,
                       ClassLoader parentLoader)
     {
         Map<String, Loader> loaders = new HashMap<>();
@@ -63,7 +62,7 @@ public final class LoaderPool {
         this.loaders = loaders;
 
         // complete the initialization
-        loaders.values().forEach(l -> l.initRemotePackageMap(cf, parentLayer));
+        loaders.values().forEach(l -> l.initRemotePackageMap(cf, parentLayers));
     }
 
 

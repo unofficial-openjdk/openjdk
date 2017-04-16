@@ -104,7 +104,6 @@ public interface ObjectInputFilter {
      * @return  {@link Status#ALLOWED Status.ALLOWED} if accepted,
      *          {@link Status#REJECTED Status.REJECTED} if rejected,
      *          {@link Status#UNDECIDED Status.UNDECIDED} if undecided.
-     * @since 9
      */
     Status checkInput(FilterInfo filterInfo);
 
@@ -194,11 +193,17 @@ public interface ObjectInputFilter {
      * When setting the filter, it should be stateless and idempotent,
      * reporting the same result when passed the same arguments.
      * <p>
-     * The filter is configured using the {@link java.security.Security}
-     * property {@code jdk.serialFilter} and can be overridden by
-     * the System property {@code jdk.serialFilter}.
-     *
-     * The syntax is the same as for the {@link #createFilter(String) createFilter} method.
+     * The filter is configured during the initialization of the {@code ObjectInputFilter.Config}
+     * class. For example, by calling {@link #getSerialFilter() Config.getSerialFilter}.
+     * If the system property {@code jdk.serialFilter} is defined, it is used
+     * to configure the filter.
+     * If the system property is not defined, and the {@link java.security.Security}
+     * property {@code jdk.serialFilter} is defined then it is used to configure the filter.
+     * Otherwise, the filter is not configured during initialization.
+     * The syntax for each property is the same as for the
+     * {@link #createFilter(String) createFilter} method.
+     * If a filter is not configured, it can be set with
+     * {@link #setSerialFilter(ObjectInputFilter) Config.setSerialFilter}.
      *
      * @since 9
      */
@@ -317,7 +322,7 @@ public interface ObjectInputFilter {
          * Other patterns match or reject class or package name
          * as returned from {@link Class#getName() Class.getName()} and
          * if an optional module name is present
-         * {@link java.lang.reflect.Module#getName() class.getModule().getName()}.
+         * {@link Module#getName() class.getModule().getName()}.
          * Note that for arrays the element type is used in the pattern,
          * not the array type.
          * <ul>
@@ -344,16 +349,24 @@ public interface ObjectInputFilter {
          * The first pattern that matches, working from left to right, determines
          * the {@link Status#ALLOWED Status.ALLOWED}
          * or {@link Status#REJECTED Status.REJECTED} result.
-         * If nothing matches, the result is {@link Status#UNDECIDED Status.UNDECIDED}.
+         * If the limits are not exceeded and no pattern matches the class,
+         * the result is {@link Status#UNDECIDED Status.UNDECIDED}.
          *
          * @param pattern the pattern string to parse; not null
-         * @return a filter to check a class being deserialized; may be null;
+         * @return a filter to check a class being deserialized;
          *          {@code null} if no patterns
-         * @throws IllegalArgumentException
-         *                if a limit is missing the name, or the long value
-         *                is not a number or is negative,
-         *                or the module name is missing if the pattern contains "/"
-         *                or if the package is missing for ".*" and ".**"
+         * @throws IllegalArgumentException if the pattern string is illegal or
+         *         malformed and cannot be parsed.
+         *         In particular, if any of the following is true:
+         * <ul>
+         * <li>   if a limit is missing the name or the name is not one of
+         *        "maxdepth", "maxrefs", "maxbytes", or "maxarray"
+         * <li>   if the value of the limit can not be parsed by
+         *        {@link Long#parseLong Long.parseLong} or is negative
+         * <li>   if the pattern contains "/" and the module name is missing
+         *        or the remaining pattern is empty
+         * <li>   if the package is missing for ".*" and ".**"
+         * </ul>
          */
         public static ObjectInputFilter createFilter(String pattern) {
             Objects.requireNonNull(pattern, "pattern");
@@ -396,14 +409,19 @@ public interface ObjectInputFilter {
              * Returns an ObjectInputFilter from a string of patterns.
              *
              * @param pattern the pattern string to parse
-             * @return a filter to check a class being deserialized; not null
+             * @return a filter to check a class being deserialized;
+             *          {@code null} if no patterns
              * @throws IllegalArgumentException if the parameter is malformed
              *                if the pattern is missing the name, the long value
              *                is not a number or is negative.
              */
             static ObjectInputFilter createFilter(String pattern) {
-                Global filter = new Global(pattern);
-                return filter.isEmpty() ? null : filter;
+                try {
+                    return new Global(pattern);
+                } catch (UnsupportedOperationException uoe) {
+                    // no non-empty patterns
+                    return null;
+                }
             }
 
             /**
@@ -411,8 +429,10 @@ public interface ObjectInputFilter {
              *
              * @param pattern a pattern string of filters
              * @throws IllegalArgumentException if the pattern is malformed
+             * @throws UnsupportedOperationException if there are no non-empty patterns
              */
             private Global(String pattern) {
+                boolean hasLimits = false;
                 this.pattern = pattern;
 
                 maxArrayLength = Long.MAX_VALUE; // Default values are unlimited
@@ -430,6 +450,7 @@ public interface ObjectInputFilter {
                     }
                     if (parseLimit(p)) {
                         // If the pattern contained a limit setting, i.e. type=value
+                        hasLimits = true;
                         continue;
                     }
                     boolean negate = p.charAt(0) == '!';
@@ -504,18 +525,9 @@ public interface ObjectInputFilter {
                         filters.add(c -> moduleName.equals(c.getModule().getName()) ? patternFilter.apply(c) : Status.UNDECIDED);
                     }
                 }
-            }
-
-            /**
-             * Returns if this filter has any checks.
-             * @return {@code true} if the filter has any checks, {@code false} otherwise
-             */
-            private boolean isEmpty() {
-                return filters.isEmpty() &&
-                        maxArrayLength == Long.MAX_VALUE &&
-                        maxDepth == Long.MAX_VALUE &&
-                        maxReferences == Long.MAX_VALUE &&
-                        maxStreamBytes == Long.MAX_VALUE;
+                if (filters.isEmpty() && !hasLimits) {
+                    throw new UnsupportedOperationException("no non-empty patterns");
+                }
             }
 
             /**

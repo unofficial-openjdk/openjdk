@@ -213,16 +213,19 @@ public abstract class Signature extends SignatureSpi {
      * Java Cryptography Architecture Standard Algorithm Name Documentation</a>
      * for information about standard algorithm names.
      *
-     * @return the new Signature object.
+     * @return the new {@code Signature} object
      *
-     * @exception NoSuchAlgorithmException if no Provider supports a
-     *          Signature implementation for the
-     *          specified algorithm.
+     * @throws NoSuchAlgorithmException if no {@code Provider} supports a
+     *         {@code Signature} implementation for the
+     *         specified algorithm
+     *
+     * @throws NullPointerException if {@code algorithm} is {@code null}
      *
      * @see Provider
      */
     public static Signature getInstance(String algorithm)
             throws NoSuchAlgorithmException {
+        Objects.requireNonNull(algorithm, "null algorithm name");
         List<Service> list;
         if (algorithm.equalsIgnoreCase(RSA_SIGNATURE)) {
             list = GetInstance.getServices(rsaIds);
@@ -335,22 +338,25 @@ public abstract class Signature extends SignatureSpi {
      *
      * @param provider the name of the provider.
      *
-     * @return the new Signature object.
+     * @return the new {@code Signature} object
      *
-     * @exception NoSuchAlgorithmException if a SignatureSpi
-     *          implementation for the specified algorithm is not
-     *          available from the specified provider.
+     * @throws IllegalArgumentException if the provider name is {@code null}
+     *         or empty
      *
-     * @exception NoSuchProviderException if the specified provider is not
-     *          registered in the security provider list.
+     * @throws NoSuchAlgorithmException if a {@code SignatureSpi}
+     *         implementation for the specified algorithm is not
+     *         available from the specified provider
      *
-     * @exception IllegalArgumentException if the provider name is null
-     *          or empty.
+     * @throws NoSuchProviderException if the specified provider is not
+     *         registered in the security provider list
+     *
+     * @throws NullPointerException if {@code algorithm} is {@code null}
      *
      * @see Provider
      */
     public static Signature getInstance(String algorithm, String provider)
             throws NoSuchAlgorithmException, NoSuchProviderException {
+        Objects.requireNonNull(algorithm, "null algorithm name");
         if (algorithm.equalsIgnoreCase(RSA_SIGNATURE)) {
             // exception compatibility with existing code
             if ((provider == null) || (provider.length() == 0)) {
@@ -385,13 +391,15 @@ public abstract class Signature extends SignatureSpi {
      *
      * @param provider the provider.
      *
-     * @return the new Signature object.
+     * @return the new {@code Signature} object
      *
-     * @exception NoSuchAlgorithmException if a SignatureSpi
-     *          implementation for the specified algorithm is not available
-     *          from the specified Provider object.
+     * @throws IllegalArgumentException if the provider is {@code null}
      *
-     * @exception IllegalArgumentException if the provider is null.
+     * @throws NoSuchAlgorithmException if a {@code SignatureSpi}
+     *         implementation for the specified algorithm is not available
+     *         from the specified {@code Provider} object
+     *
+     * @throws NullPointerException if {@code algorithm} is {@code null}
      *
      * @see Provider
      *
@@ -399,6 +407,7 @@ public abstract class Signature extends SignatureSpi {
      */
     public static Signature getInstance(String algorithm, Provider provider)
             throws NoSuchAlgorithmException {
+        Objects.requireNonNull(algorithm, "null algorithm name");
         if (algorithm.equalsIgnoreCase(RSA_SIGNATURE)) {
             // exception compatibility with existing code
             if (provider == null) {
@@ -443,6 +452,10 @@ public abstract class Signature extends SignatureSpi {
         return this.provider;
     }
 
+    private String getProviderName() {
+        return (provider == null)  ? "(no provider)" : provider.getName();
+    }
+
     void chooseFirstProvider() {
         // empty, overridden in Delegate
     }
@@ -464,7 +477,7 @@ public abstract class Signature extends SignatureSpi {
 
         if (!skipDebug && pdebug != null) {
             pdebug.println("Signature." + algorithm +
-                " verification algorithm from: " + this.provider.getName());
+                " verification algorithm from: " + getProviderName());
         }
     }
 
@@ -513,7 +526,7 @@ public abstract class Signature extends SignatureSpi {
 
         if (!skipDebug && pdebug != null) {
             pdebug.println("Signature." + algorithm +
-                " verification algorithm from: " + this.provider.getName());
+                " verification algorithm from: " + getProviderName());
         }
     }
 
@@ -534,7 +547,7 @@ public abstract class Signature extends SignatureSpi {
 
         if (!skipDebug && pdebug != null) {
             pdebug.println("Signature." + algorithm +
-                " signing algorithm from: " + this.provider.getName());
+                " signing algorithm from: " + getProviderName());
         }
     }
 
@@ -557,7 +570,7 @@ public abstract class Signature extends SignatureSpi {
 
         if (!skipDebug && pdebug != null) {
             pdebug.println("Signature." + algorithm +
-                " signing algorithm from: " + this.provider.getName());
+                " signing algorithm from: " + getProviderName());
         }
     }
 

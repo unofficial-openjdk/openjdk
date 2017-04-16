@@ -4,9 +4,7 @@
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,10 +21,11 @@
  * questions.
  */
 
-/**
+/*
  * @test
  * @bug 8087112
- * @modules java.httpclient
+ * @modules jdk.incubator.httpclient
+ *          java.logging
  *          jdk.httpserver
  * @library /lib/testlibrary/
  * @build jdk.testlibrary.SimpleSSLContext
@@ -45,19 +44,32 @@
  * @run main/othervm/secure=java.lang.SecurityManager/policy=9.policy Security 9
  * @run main/othervm/secure=java.lang.SecurityManager/policy=0.policy Security 13
  * @run main/othervm/secure=java.lang.SecurityManager/policy=14.policy Security 14
- * @run main/othervm/secure=java.lang.SecurityManager/policy=15.policy Security 15
+ * @run main/othervm/secure=java.lang.SecurityManager/policy=15.policy -Djava.security.debug=access:domain,failure Security 15
  */
 
 // Tests 1, 10, 11 and 12 executed from Driver
 
-import com.sun.net.httpserver.*;
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpContext;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsServer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.File;
 import java.io.OutputStream;
 import java.lang.reflect.Constructor;
-import java.net.*;
-import java.net.http.*;
+import java.net.BindException;
+import java.net.InetSocketAddress;
+import java.net.ProxySelector;
+import java.net.URI;
+import java.net.URLClassLoader;
+import java.net.URL;
+import jdk.incubator.http.HttpHeaders;
+import jdk.incubator.http.HttpClient;
+import jdk.incubator.http.HttpRequest;
+import jdk.incubator.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -66,13 +78,19 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.*;
-import java.util.function.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Flow;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.lang.reflect.InvocationTargetException;
-import java.net.BindException;
+import static jdk.incubator.http.HttpResponse.BodyHandler.asString;
 
 /**
  * Security checks test
@@ -88,7 +106,7 @@ public class Security {
     static URI uri;
 
     interface Test {
-        public void execute() throws IOException, InterruptedException;
+        void execute() throws IOException, InterruptedException;
     }
 
     static class TestAndResult {
@@ -163,75 +181,71 @@ public class Security {
             // (0) policy does not have permission for file. Should fail
             test(false, () -> { // Policy 0
                 URI u = URI.create("http://127.0.0.1:" + port + "/files/foo.txt");
-                HttpRequest request = client.request(u)
-                        .GET();
-                HttpResponse response = request.response();
+                HttpRequest request = HttpRequest.newBuilder(u).GET().build();
+                HttpResponse<?> response = client.send(request, asString());
             }),
             // (1) policy has permission for file URL
             test(true, () -> { //Policy 1
                 URI u = URI.create("http://127.0.0.1:" + port + "/files/foo.txt");
-                HttpRequest request = client.request(u)
-                        .GET();
-                HttpResponse response = request.response();
+                HttpRequest request = HttpRequest.newBuilder(u).GET().build();
+                HttpResponse<?> response = client.send(request, asString());
             }),
             // (2) policy has permission for all file URLs under /files
             test(true, () -> { // Policy 2
                 URI u = URI.create("http://127.0.0.1:" + port + "/files/foo.txt");
-                HttpRequest request = client.request(u)
-                        .GET();
-                HttpResponse response = request.response();
+                HttpRequest request = HttpRequest.newBuilder(u).GET().build();
+                HttpResponse<?> response = client.send(request, asString());
             }),
             // (3) policy has permission for first URL but not redirected URL
             test(false, () -> { // Policy 3
                 URI u = URI.create("http://127.0.0.1:" + port + "/redirect/foo.txt");
-                HttpRequest request = client.request(u)
-                        .GET();
-                HttpResponse response = request.response();
+                HttpRequest request = HttpRequest.newBuilder(u).GET().build();
+                HttpResponse<?> response = client.send(request, asString());
             }),
             // (4) policy has permission for both first URL and redirected URL
             test(true, () -> { // Policy 4
                 URI u = URI.create("http://127.0.0.1:" + port + "/redirect/foo.txt");
-                HttpRequest request = client.request(u)
-                        .GET();
-                HttpResponse response = request.response();
+                HttpRequest request = HttpRequest.newBuilder(u).GET().build();
+                HttpResponse<?> response = client.send(request, asString());
             }),
             // (5) policy has permission for redirected but not first URL
             test(false, () -> { // Policy 5
                 URI u = URI.create("http://127.0.0.1:" + port + "/redirect/foo.txt");
-                HttpRequest request = client.request(u)
-                        .GET();
-                HttpResponse response = request.response();
+                HttpRequest request = HttpRequest.newBuilder(u).GET().build();
+                HttpResponse<?> response = client.send(request, asString());
             }),
             // (6) policy has permission for file URL, but not method
             test(false, () -> { //Policy 6
                 URI u = URI.create("http://127.0.0.1:" + port + "/files/foo.txt");
-                HttpRequest request = client.request(u)
-                        .GET();
-                HttpResponse response = request.response();
+                HttpRequest request = HttpRequest.newBuilder(u).GET().build();
+                HttpResponse<?> response = client.send(request, asString());
             }),
             // (7) policy has permission for file URL, method, but not header
             test(false, () -> { //Policy 7
                 URI u = URI.create("http://127.0.0.1:" + port + "/files/foo.txt");
-                HttpRequest request = client.request(u)
-                        .header("X-Foo", "bar")
-                        .GET();
-                HttpResponse response = request.response();
+                HttpRequest request = HttpRequest.newBuilder(u)
+                                                 .header("X-Foo", "bar")
+                                                 .GET()
+                                                 .build();
+                HttpResponse<?> response = client.send(request, asString());
             }),
             // (8) policy has permission for file URL, method and header
             test(true, () -> { //Policy 8
                 URI u = URI.create("http://127.0.0.1:" + port + "/files/foo.txt");
-                HttpRequest request = client.request(u)
-                        .header("X-Foo", "bar")
-                        .GET();
-                HttpResponse response = request.response();
+                HttpRequest request = HttpRequest.newBuilder(u)
+                                                 .header("X-Foo", "bar")
+                                                 .GET()
+                                                 .build();
+                HttpResponse<?> response = client.send(request, asString());
             }),
             // (9) policy has permission for file URL, method and header
             test(true, () -> { //Policy 9
                 URI u = URI.create("http://127.0.0.1:" + port + "/files/foo.txt");
-                HttpRequest request = client.request(u)
-                        .headers("X-Foo", "bar", "X-Bar", "foo")
-                        .GET();
-                HttpResponse response = request.response();
+                HttpRequest request = HttpRequest.newBuilder(u)
+                                                 .headers("X-Foo", "bar", "X-Bar", "foo")
+                                                 .GET()
+                                                 .build();
+                HttpResponse<?> response = client.send(request, asString());
             }),
             // (10) policy has permission for destination URL but not for proxy
             test(false, () -> { //Policy 10
@@ -248,10 +262,9 @@ public class Security {
             // (13) async version of test 0
             test(false, () -> { // Policy 0
                 URI u = URI.create("http://127.0.0.1:" + port + "/files/foo.txt");
-                HttpRequest request = client.request(u)
-                        .GET();
+                HttpRequest request = HttpRequest.newBuilder(u).GET().build();
                 try {
-                    HttpResponse response = request.responseAsync().get();
+                    HttpResponse<?> response = client.sendAsync(request, asString()).get();
                 } catch (ExecutionException e) {
                     if (e.getCause() instanceof SecurityException) {
                         throw (SecurityException)e.getCause();
@@ -263,10 +276,9 @@ public class Security {
             // (14) async version of test 1
             test(true, () -> { //Policy 1
                 URI u = URI.create("http://127.0.0.1:" + port + "/files/foo.txt");
-                HttpRequest request = client.request(u)
-                        .GET();
+                HttpRequest request = HttpRequest.newBuilder(u).GET().build();
                 try {
-                    HttpResponse response = request.responseAsync().get();
+                    HttpResponse<?> response = client.sendAsync(request, asString()).get();
                 } catch (ExecutionException e) {
                     if (e.getCause() instanceof SecurityException) {
                         throw (SecurityException)e.getCause();
@@ -279,52 +291,62 @@ public class Security {
             //      thread does not gain ungranted privileges.
             test(false, () -> { //Policy 12
                 URI u = URI.create("http://127.0.0.1:" + port + "/files/foo.txt");
-                HttpRequest request = client.request(u)
-                        .GET();
-                HttpResponse response = request.response();
-                HttpResponse.BodyProcessor<String> stproc = HttpResponse.asString();
+                HttpRequest request = HttpRequest.newBuilder(u).GET().build();
+                HttpResponse.BodyHandler<String> sth = asString();
 
-                CompletableFuture<String> cf;
-                cf = response.bodyAsync(new HttpResponse.BodyProcessor<String>() {
-                        public void onResponseBodyChunk(ByteBuffer b) throws IOException {
-                            // do some mischief here
-                            SecurityManager sm = System.getSecurityManager();
-                            System.setSecurityManager(null);
-                            System.setSecurityManager(sm);
-                            // problem if we get this far
-                            stproc.onResponseBodyChunk(b);
-                        }
-                        public String onResponseBodyStart(long contentLength,
-                                        HttpHeaders responseHeaders,
-                                        LongConsumer fc) throws IOException {
-
-                            SecurityManager sm = System.getSecurityManager();
-                            // should succeed.
-                            sm.checkPermission(new RuntimePermission("foobar"));
-                            return stproc.onResponseBodyStart(contentLength,responseHeaders, fc);
-                        }
-                        public String onResponseComplete() throws IOException {
-                            return stproc.onResponseComplete();
-                        }
-                        public void onResponseError(Throwable t) {
-                            stproc.onResponseError(t);
+                CompletableFuture<HttpResponse<String>> cf =
+                    client.sendAsync(request, new HttpResponse.BodyHandler<String>() {
+                        @Override
+                        public HttpResponse.BodyProcessor<String> apply(int status, HttpHeaders responseHeaders)  {
+                            final HttpResponse.BodyProcessor<String> stproc = sth.apply(status, responseHeaders);
+                            return new HttpResponse.BodyProcessor<String>() {
+                                @Override
+                                public CompletionStage<String> getBody() {
+                                    return stproc.getBody();
+                                }
+                                @Override
+                                public void onNext(ByteBuffer item) {
+                                    SecurityManager sm = System.getSecurityManager();
+                                    // should succeed.
+                                    sm.checkPermission(new RuntimePermission("foobar"));
+                                    // do some mischief here
+                                    System.setSecurityManager(null);
+                                    System.setSecurityManager(sm);
+                                    // problem if we get this far
+                                    stproc.onNext(item);
+                                }
+                                @Override
+                                public void onSubscribe(Flow.Subscription subscription) {
+                                    stproc.onSubscribe(subscription);
+                                }
+                                @Override
+                                public void onError(Throwable throwable) {
+                                    stproc.onError(throwable);
+                                }
+                                @Override
+                                public void onComplete() {
+                                    stproc.onComplete();
+                                }
+                            };
                         }
                     }
                 );
                 try {
-                    System.out.println("Body = " + cf.get());// should not reach here
-                } catch (ExecutionException e) {
-                    if (e.getCause() instanceof SecurityException) {
-                        throw (SecurityException)e.getCause();
-                    } else {
-                        throw new RuntimeException(e);
-                    }
+                    cf.join();
+                } catch (CompletionException e) {
+                    Throwable t = e.getCause();
+                    if (t instanceof SecurityException)
+                        throw (SecurityException)t;
+                    else
+                        throw new RuntimeException(t);
                 }
             })
         };
     }
 
-    private static void directProxyTest(int proxyPort, boolean samePort) throws IOException, InterruptedException {
+    private static void directProxyTest(int proxyPort, boolean samePort)
+        throws IOException, InterruptedException
+    {
         Object proxy = null;
         try {
             proxy = getProxy(proxyPort, true);
@@ -338,17 +360,17 @@ public class Security {
         if (!samePort)
             proxyPort++;
 
-        HttpClient cl = HttpClient.create()
-                .proxy(ProxySelector.of(
-                                new InetSocketAddress("127.0.0.1", proxyPort)))
-                .build();
+        InetSocketAddress addr = new InetSocketAddress("127.0.0.1", proxyPort);
+        HttpClient cl = HttpClient.newBuilder()
+                                    .proxy(ProxySelector.of(addr))
+                                    .build();
         clients.add(cl);
 
         URI u = URI.create("http://127.0.0.1:" + port + "/files/foo.txt");
-        HttpRequest request = cl.request(u)
-                .headers("X-Foo", "bar", "X-Bar", "foo")
-                .GET();
-        HttpResponse response = request.response();
+        HttpRequest request = HttpRequest.newBuilder(u)
+                                         .headers("X-Foo", "bar", "X-Bar", "foo")
+                                         .build();
+        HttpResponse<?> response = cl.send(request, asString());
     }
 
     static void runtest(Test r, String policy, boolean succeeds) {
@@ -384,12 +406,10 @@ public class Security {
         int testnum = Integer.parseInt(args[0]);
         String policy = args[0];
 
-        client = HttpClient
-            .create()
-            .followRedirects(HttpClient.Redirect.ALWAYS)
-            .build();
+        client = HttpClient.newBuilder()
+                           .followRedirects(HttpClient.Redirect.ALWAYS)
+                           .build();
 
-        clients.add(HttpClient.getDefault());
         clients.add(client);
 
         try {
@@ -399,8 +419,12 @@ public class Security {
         } finally {
             s1.stop(0);
             executor.shutdownNow();
-            for (HttpClient client : clients)
-                client.executorService().shutdownNow();
+            for (HttpClient client : clients) {
+                Executor e = client.executor();
+                if (e instanceof ExecutorService) {
+                    ((ExecutorService)e).shutdownNow();
+                }
+            }
         }
     }
 

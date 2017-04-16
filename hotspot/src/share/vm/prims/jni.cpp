@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2012 Red Hat, Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -935,8 +935,7 @@ class JNI_ArgumentPusherVaArg : public JNI_ArgumentPusher {
   inline void get_long()   { _arguments->push_long(va_arg(_ap, jlong)); }
   inline void get_float()  { _arguments->push_float((jfloat)va_arg(_ap, jdouble)); } // float is coerced to double w/ va_arg
   inline void get_double() { _arguments->push_double(va_arg(_ap, jdouble)); }
-  inline void get_object() { jobject l = va_arg(_ap, jobject);
-                             _arguments->push_oop(Handle((oop *)l, false)); }
+  inline void get_object() { _arguments->push_jobject(va_arg(_ap, jobject)); }
 
   inline void set_ap(va_list rap) {
     va_copy(_ap, rap);
@@ -1025,7 +1024,7 @@ class JNI_ArgumentPusherArray : public JNI_ArgumentPusher {
   inline void get_long()   { _arguments->push_long((_ap++)->j);  }
   inline void get_float()  { _arguments->push_float((_ap++)->f); }
   inline void get_double() { _arguments->push_double((_ap++)->d);}
-  inline void get_object() { _arguments->push_oop(Handle((oop *)(_ap++)->l, false)); }
+  inline void get_object() { _arguments->push_jobject((_ap++)->l); }
 
   inline void set_ap(const jvalue *rap) { _ap = rap; }
 
@@ -3475,40 +3474,6 @@ JNI_ENTRY(jobject, jni_GetModule(JNIEnv* env, jclass clazz))
 JNI_END
 
 
-JNI_ENTRY(void, jni_AddModuleReads(JNIEnv* env, jobject m1, jobject m2))
-  JNIWrapper("AddModuleReads");
-  if (m1 == NULL || m2 == NULL) {
-    THROW(vmSymbols::java_lang_NullPointerException());
-  }
-  JavaValue result(T_VOID);
-  Handle m1_h(THREAD, JNIHandles::resolve(m1));
-  if (!java_lang_reflect_Module::is_instance(m1_h())) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad m1 object");
-  }
-  Handle m2_h(THREAD, JNIHandles::resolve(m2));
-  if (!java_lang_reflect_Module::is_instance(m2_h())) {
-    THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(), "Bad m2 object");
-  }
-  JavaCalls::call_static(&result,
-                         KlassHandle(THREAD, SystemDictionary::module_Modules_klass()),
-                         vmSymbols::addReads_name(),
-                         vmSymbols::addReads_signature(),
-                         m1_h,
-                         m2_h,
-                         THREAD);
-JNI_END
-
-
-JNI_ENTRY(jboolean, jni_CanReadModule(JNIEnv* env, jobject m1, jobject m2))
-  JNIWrapper("CanReadModule");
-  if (m1 == NULL || m2 == NULL) {
-    THROW_(vmSymbols::java_lang_NullPointerException(), JNI_FALSE);
-  }
-  jboolean res = Modules::can_read_module(m1, m2, CHECK_false);
-  return res;
-JNI_END
-
-
 // Structure containing all jni functions
 struct JNINativeInterface_ jni_NativeInterface = {
     NULL,
@@ -3792,9 +3757,7 @@ struct JNINativeInterface_ jni_NativeInterface = {
 
     // Module features
 
-    jni_GetModule,
-    jni_AddModuleReads,
-    jni_CanReadModule
+    jni_GetModule
 };
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import java.util.NoSuchElementException;
 import javax.xml.namespace.QName;
 import javax.xml.soap.*;
 
+import com.sun.xml.internal.messaging.saaj.util.SAAJUtil;
 import org.w3c.dom.Element;
 
 import com.sun.xml.internal.messaging.saaj.soap.SOAPDocumentImpl;
@@ -41,19 +42,23 @@ public abstract class DetailImpl extends FaultElementImpl implements Detail {
         super(ownerDoc, detailName);
     }
 
+    public DetailImpl(SOAPDocumentImpl ownerDoc, Element domElement) {
+        super(ownerDoc, domElement);
+    }
+
     protected abstract DetailEntry createDetailEntry(Name name);
     protected abstract DetailEntry createDetailEntry(QName name);
 
     public DetailEntry addDetailEntry(Name name) throws SOAPException {
         DetailEntry entry = createDetailEntry(name);
         addNode(entry);
-        return (DetailEntry) circumventBug5034339(entry);
+        return entry;
     }
 
     public DetailEntry addDetailEntry(QName qname) throws SOAPException {
         DetailEntry entry = createDetailEntry(qname);
         addNode(entry);
-        return (DetailEntry) circumventBug5034339(entry);
+        return entry;
     }
 
     protected SOAPElement addElement(Name name) throws SOAPException {
@@ -65,8 +70,9 @@ public abstract class DetailImpl extends FaultElementImpl implements Detail {
     }
 
     protected SOAPElement convertToSoapElement(Element element) {
-        if (element instanceof DetailEntry) {
-            return (SOAPElement) element;
+        final javax.xml.soap.Node soapNode = getSoapDocument().find(element);
+        if (soapNode instanceof DetailEntry) {
+            return (SOAPElement) soapNode;
         } else {
             DetailEntry detailEntry =
                 createDetailEntry(NameImpl.copyElementName(element));
@@ -118,29 +124,5 @@ public abstract class DetailImpl extends FaultElementImpl implements Detail {
    protected  boolean isStandardFaultElement() {
        return true;
    }
-
-    //overriding this method since the only two uses of this method
-    // are in ElementImpl and DetailImpl
-    //whereas the original base impl does the correct job for calls to it inside ElementImpl
-    // But it would not work for DetailImpl.
-    protected SOAPElement circumventBug5034339(SOAPElement element) {
-
-        Name elementName = element.getElementName();
-        if (!isNamespaceQualified(elementName)) {
-            String prefix = elementName.getPrefix();
-            String defaultNamespace = getNamespaceURI(prefix);
-            if (defaultNamespace != null) {
-                Name newElementName =
-                    NameImpl.create(
-                        elementName.getLocalName(),
-                        elementName.getPrefix(),
-                        defaultNamespace);
-                SOAPElement newElement = createDetailEntry(newElementName);
-                replaceChild(newElement, element);
-                return newElement;
-            }
-        }
-        return element;
-    }
 
 }

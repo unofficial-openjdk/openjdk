@@ -30,17 +30,18 @@ import java.util.Map;
 
 import jdk.test.lib.apps.LingeredApp;
 import jdk.testlibrary.Utils;
-import jdk.testlibrary.Platform;
+import jdk.test.lib.Platform;
 
 /*
  * @test
  * @bug 8042397
  * @summary Unit test for jmap utility test heap configuration reader
- * @modules jdk.hotspot.agent/sun.jvm.hotspot
+ *
  * @library /test/lib
  * @library /lib/testlibrary
- * @build jdk.testlibrary.*
- * @build jdk.test.lib.apps.*
+ * @modules java.management
+ *          jdk.hotspot.agent/sun.jvm.hotspot
+ *
  * @build JMapHeapConfigTest TmtoolTestScenario
  * @run main JMapHeapConfigTest
  */

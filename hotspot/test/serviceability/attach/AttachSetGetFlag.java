@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,7 @@
  *          java.compiler
  *          java.management
  *          jdk.attach/sun.tools.attach
- *          jdk.jvmstat/sun.jvmstat.monitor
+ *          jdk.internal.jvmstat/sun.jvmstat.monitor
  * @run main AttachSetGetFlag
  */
 
@@ -80,7 +80,7 @@ public class AttachSetGetFlag {
     try {
       waitForReady(target);
 
-      int pid = (int)target.getPid();
+      int pid = (int)target.pid();
 
       HotSpotVirtualMachine vm = (HotSpotVirtualMachine)VirtualMachine.attach(((Integer)pid).toString());
 
@@ -116,7 +116,7 @@ public class AttachSetGetFlag {
     try {
       waitForReady(target);
 
-      int pid = (int)target.getPid();
+      int pid = (int)target.pid();
 
       HotSpotVirtualMachine vm = (HotSpotVirtualMachine)VirtualMachine.attach(((Integer)pid).toString());
 

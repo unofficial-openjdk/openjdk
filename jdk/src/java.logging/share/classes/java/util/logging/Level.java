@@ -24,10 +24,10 @@
  */
 
 package java.util.logging;
+
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.lang.reflect.Module;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
@@ -40,6 +40,8 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.Function;
 import jdk.internal.loader.ClassLoaderValue;
+import jdk.internal.misc.JavaUtilResourceBundleAccess;
+import jdk.internal.misc.SharedSecrets;
 
 /**
  * The Level class defines a set of standard logging levels that
@@ -74,7 +76,16 @@ import jdk.internal.loader.ClassLoaderValue;
  */
 
 public class Level implements java.io.Serializable {
-    private static final String defaultBundle = "sun.util.logging.resources.logging";
+    private static final String defaultBundle =
+        "sun.util.logging.resources.logging";
+
+    // Calling SharedSecrets.getJavaUtilResourceBundleAccess()
+    // forces the initialization of ResourceBundle.class, which
+    // can be too early if the VM has not finished booting yet.
+    private static final class RbAccess {
+        static final JavaUtilResourceBundleAccess RB_ACCESS =
+            SharedSecrets.getJavaUtilResourceBundleAccess();
+    }
 
     /**
      * @serial  The non-localized name of the level.
@@ -280,7 +291,7 @@ public class Level implements java.io.Serializable {
         // or its defining class loader, if it's unnamed module,
         // of this Level instance that can be a custom Level subclass;
         Module module = this.getClass().getModule();
-        ResourceBundle rb = ResourceBundle.getBundle(resourceBundleName,
+        ResourceBundle rb = RbAccess.RB_ACCESS.getBundle(resourceBundleName,
                 newLocale, module);
 
         final String localizedName = rb.getString(name);
@@ -681,11 +692,14 @@ public class Level implements java.io.Serializable {
                     Level levelObject = ref.get();
                     if (levelObject == null) continue;
                     Level other = ref.mirroredLevel;
+                    Class<? extends Level> type = levelObject.getClass();
                     if (l.value == other.value &&
                            (l.resourceBundleName == other.resourceBundleName ||
                                (l.resourceBundleName != null &&
                                 l.resourceBundleName.equals(other.resourceBundleName)))) {
-                        return Optional.of(levelObject);
+                        if (type == l.getClass()) {
+                            return Optional.of(levelObject);
+                        }
                     }
                 }
             }

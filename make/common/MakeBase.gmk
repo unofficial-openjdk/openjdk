@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -120,6 +120,10 @@ endef
 # To make this macro resilient against already escaped strings, first remove
 # any present escapes before escaping so that no double escapes are added.
 EscapeDollar = $(subst $$,\$$,$(subst \$$,$$,$(strip $1)))
+
+################################################################################
+# This macro works just like EscapeDollar above, but for #.
+EscapeHash = $(subst \#,\\\#,$(subst \\\#,\#,$(strip $1)))
 
 ################################################################################
 # This macro translates $ into $$ to protect the string from make itself.
@@ -333,43 +337,20 @@ else # HAS_FILE_FUNCTION = false
 endif # HAS_FILE_FUNCTION
 
 ################################################################################
-# The source tips can come from the Mercurial repository, or in the files
-# $(HGTIP_FILENAME) which contains the tip but is also positioned in the same
-# directory as the original .hg directory. The hgtip files are created in
-# CreateHgtipFiles.gmk.
-HGTIP_FILENAME := .hgtip
+
+# A file containing a way to uniquely identify the source code revision that
+# the build was created from
+SOURCE_REVISION_TRACKER := $(SUPPORT_OUTPUTDIR)/src-rev/source-revision-tracker
+
+# Locate all hg repositories included in the forest, as absolute paths
 FindAllReposAbs = \
     $(strip $(sort $(dir $(filter-out $(SRC_ROOT)/build/%, $(wildcard \
-        $(addprefix $(SRC_ROOT)/, \
-            .hg */.hg */*/.hg */*/.hg */*/*/.hg \
-            .hgtip */.hgtip */*/.hgtip */*/.hgtip */*/*/.hgtip \
-        ) \
+        $(addprefix $(SRC_ROOT)/, .hg */.hg */*/.hg */*/*/.hg) \
     )))))
 
+# Locate all hg repositories included in the forest, as relative paths
 FindAllReposRel = \
     $(strip $(subst $(SRC_ROOT)/,.,$(patsubst $(SRC_ROOT)/%/, %, $(FindAllReposAbs))))
-
-# Emit the repo:tip pairs to $@, but only if they changed since last time
-define GetSourceTips
-	$(CD) $(SRC_ROOT) ; \
-	for i in $(FindAllReposRel) IGNORE ; do \
-	  if [ "$${i}" = "IGNORE" ] ; then \
-	    continue; \
-	  elif [ -d $${i}/.hg -a "$(HG)" != "" ] ; then \
-	    $(PRINTF) " %s:%s" \
-	        "$${i}" `$(HG) tip --repository $${i} --template '{node|short}\n'` ; \
-	  elif [ -f $${i}/$(HGTIP_FILENAME) ] ; then \
-	    $(PRINTF) " %s:%s" \
-	        "$${i}" `$(CAT) $${i}/$(HGTIP_FILENAME)` ; \
-	  fi; \
-	done > $@.tmp
-	$(PRINTF) "\n" >> $@.tmp
-	if [ ! -f $@ ] || [ "`$(CAT) $@`" != "`$(CAT) $@.tmp`" ]; then \
-	  $(MV) $@.tmp $@ ; \
-	else \
-	  $(RM) $@.tmp ; \
-	fi
-endef
 
 ################################################################################
 
@@ -454,7 +435,7 @@ define NamedParamsMacroTemplate
       Too many named arguments to macro, please update MAX_PARAMS in MakeBase.gmk))
   # Iterate over 2 3 4... and evaluate the named parameters with $1_ as prefix
   $(foreach i,$(PARAM_SEQUENCE), $(if $(strip $($i)),\
-    $(strip $1)_$(strip $($i)))$(NEWLINE))
+    $(strip $1)_$(strip $(call EscapeHash, $(call DoubleDollar, $($i))))$(NEWLINE)))
   # Debug print all named parameter names and values
   $(if $(findstring $(LOG_LEVEL),debug trace), \
     $(info $0 $(strip $1) $(foreach i,$(PARAM_SEQUENCE), \
@@ -526,13 +507,17 @@ else ifeq ($(OPENJDK_TARGET_OS),macosx)
 	if [ -n "`$(XATTR) -l '$@'`" ]; then $(XATTR) -c '$@'; fi
   endef
 else
-  # Running mkdir and cp in the same shell speeds up copy intensive tasks in Cygwin
-  # significantly.
   define install-file
 	$(call MakeDir, $(@D))
 	$(CP) -fP '$<' '$@'
   endef
 endif
+
+# Variant of install file that does not preserve symlinks
+define install-file-nolink
+	$(call MakeDir, $(@D))
+	$(CP) -f '$<' '$@'
+endef
 
 ################################################################################
 # Take two paths and return the path of the last common directory.
@@ -709,8 +694,9 @@ define AddFileToCopy
   # 2 : Dest file
   # 3 : Variable to add targets to
   # 4 : Macro to call for copy operation
+  # 5 : Action text to log
   $2: $1
-	$$(call LogInfo, Copying $$(patsubst $(OUTPUT_ROOT)/%,%,$$@))
+	$$(call LogInfo, $(strip $5) $$(patsubst $(OUTPUT_ROOT)/%,%,$$@))
 	$$($$(strip $4))
 
   $3 += $2
@@ -736,6 +722,7 @@ identity = \
 #             Default is 'install-file'
 #   NAME_MACRO : Optionally supply a macro that rewrites the target file name
 #                based on the source file name
+#   LOG_ACTION : Optionally specify a different action text for log messages
 SetupCopyFiles = $(NamedParamsMacroTemplate)
 define SetupCopyFilesBody
 
@@ -752,6 +739,10 @@ define SetupCopyFilesBody
     $1_NAME_MACRO := identity
   endif
 
+  ifeq ($$($1_LOG_ACTION), )
+    $1_LOG_ACTION := Copying
+  endif
+
   # Remove any trailing slash from SRC and DEST
   $1_SRC := $$(patsubst %/,%,$$($1_SRC))
   $1_DEST := $$(patsubst %/,%,$$($1_DEST))
@@ -759,8 +750,57 @@ define SetupCopyFilesBody
   $$(foreach f, $$(patsubst $$($1_SRC)/%,%,$$($1_FILES)), \
       $$(eval $$(call AddFileToCopy, $$($1_SRC)/$$f, \
       $$($1_DEST)/$$(call $$(strip $$($1_NAME_MACRO)),$$(if $$($1_FLATTEN),$$(notdir $$f),$$f)), \
-      $1, $$($1_MACRO))))
+      $1, $$($1_MACRO), $$($1_LOG_ACTION))))
 
+endef
+
+################################################################################
+# Parse a multiple-keyword variable, like FOO="KEYWORD1=val1;KEYWORD2=val2;..."
+# These will be converted into a series of variables like FOO_KEYWORD1=val1,
+# FOO_KEYWORD2=val2, etc. Unknown keywords will cause an error.
+#
+# Parameter 1 is the name of the rule, and is also the name of the variable.
+#
+# Remaining parameters are named arguments. These include:
+#   KEYWORDS          A list of valid keywords
+#   STRING_KEYWORDS   A list of valid keywords, processed as string. This means
+#       that '%20' will be replaced by ' ' to allow for multi-word strings.
+#
+ParseKeywordVariable = $(NamedParamsMacroTemplate)
+define ParseKeywordVariableBody
+  ifneq ($$($1), )
+    # To preserve spaces, substitute them with a hopefully unique pattern
+    # before splitting and then re-substitute spaces back.
+    $1_MANGLED := $$(subst $$(SPACE),||||,$$($1))
+    $$(foreach mangled_part, $$(subst ;, , $$($1_MANGLED)), \
+      $$(eval mangled_part_eval := $$(call DoubleDollar, $$(mangled_part))) \
+      $$(eval part := $$$$(subst ||||,$$$$(SPACE),$$$$(mangled_part_eval))) \
+      $$(eval $1_NO_MATCH := true) \
+      $$(foreach keyword, $$($1_KEYWORDS), \
+        $$(eval keyword_eval := $$(call DoubleDollar, $$(keyword))) \
+        $$(if $$(filter $$(keyword)=%, $$(part)), \
+          $$(eval $(strip $1)_$$$$(keyword_eval) := $$$$(strip $$$$(patsubst $$$$(keyword_eval)=%, %, $$$$(part)))) \
+          $$(eval $1_NO_MATCH := ) \
+        ) \
+      ) \
+      $$(foreach keyword, $$($1_STRING_KEYWORDS), \
+        $$(eval keyword_eval := $$(call DoubleDollar, $$(keyword))) \
+        $$(if $$(filter $$(keyword)=%, $$(part)), \
+          $$(eval $(strip $1)_$$$$(keyword_eval) := $$$$(strip $$$$(subst %20, , $$$$(patsubst $$$$(keyword_eval)=%, %, $$$$(part))))) \
+          $$(eval $1_NO_MATCH := ) \
+        ) \
+      ) \
+      $$(if $$($1_NO_MATCH), \
+        $$(if $$(filter $$(part), $$($1_KEYWORDS) $$($1_STRING_KEYWORDS)), \
+          $$(info Keyword $$(part) for $1 needs to be assigned a value.) \
+        , \
+          $$(info $$(part) is not a valid keyword for $1.) \
+          $$(info Valid keywords: $$($1_KEYWORDS) $$($1_STRING_KEYWORDS).) \
+        ) \
+        $$(error Cannot continue) \
+      ) \
+    )
+  endif
 endef
 
 ################################################################################
@@ -771,6 +811,22 @@ endef
 
 ShellQuote = \
     $(SQUOTE)$(subst $(SQUOTE),$(SQUOTE)\$(SQUOTE)$(SQUOTE),$(strip $1))$(SQUOTE)
+
+################################################################################
+# FixPath
+#
+# On Windows, converts a path from cygwin/unix style (e.g. /bin/foo) into
+# "mixed mode" (e.g. c:/cygwin/bin/foo). On other platforms, return the path
+# unchanged.
+# This is normally not needed since we use the FIXPATH prefix for command lines,
+# but might be needed in certain circumstances.
+ifeq ($(OPENJDK_TARGET_OS), windows)
+  FixPath = \
+      $(shell $(CYGPATH) -m $1)
+else
+  FixPath = \
+      $1
+endif
 
 ################################################################################
 # Write to and read from file
@@ -833,7 +889,7 @@ DependOnVariableHelper = \
           $(if $(findstring $(LOG_LEVEL), trace), \
               $(info NewVariable $1: >$(strip $($1))<) \
               $(info OldVariable $1: >$(strip $($1_old))<)) \
-          $(call WriteFile, $1_old:=$(call DoubleDollar,$($1)), \
+          $(call WriteFile, $1_old:=$(call DoubleDollar,$(call EscapeHash,$($1))), \
               $(call DependOnVariableFileName, $1, $2))) \
         $(call DependOnVariableFileName, $1, $2) \
     )
@@ -871,18 +927,14 @@ ExecuteWithLog = \
   ( $(strip $2) > >($(TEE) $(strip $1).log) 2> >($(TEE) $(strip $1).log >&2) || \
       ( exitcode=$(DOLLAR)? && \
       $(CP) $(strip $1).log $(MAKESUPPORT_OUTPUTDIR)/failure-logs/$(subst /,_,$(patsubst $(BUILD_OUTPUT)/%,%,$(strip $1))).log && \
+      $(CP) $(strip $1).cmdline $(MAKESUPPORT_OUTPUTDIR)/failure-logs/$(subst /,_,$(patsubst $(BUILD_OUTPUT)/%,%,$(strip $1))).cmdline && \
       exit $(DOLLAR)exitcode ) )
 
 ################################################################################
 # Find lib dir for module
 # Param 1 - module name
-ifeq ($(OPENJDK_TARGET_OS_TYPE), unix)
-  FindLibDirForModule = \
-      $(SUPPORT_OUTPUTDIR)/modules_libs/$(strip $1)$(OPENJDK_TARGET_CPU_LIBDIR)
-else
-  FindLibDirForModule = \
-      $(SUPPORT_OUTPUTDIR)/modules_libs/$(strip $1)
-endif
+FindLibDirForModule = \
+    $(SUPPORT_OUTPUTDIR)/modules_libs/$(strip $1)
 
 ################################################################################
 # Return a string suitable for use after a -classpath or --module-path option. It
