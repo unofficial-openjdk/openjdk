@@ -938,7 +938,7 @@ public final class LauncherHelper {
     static void listAllModules(boolean printToStderr) {
         initOutput(printToStderr);
 
-        ModuleBootstrap.finder().findAll().stream()
+        ModuleBootstrap.limitedFinder().findAll().stream()
             .sorted(new JrtFirstComparator())
             .forEach(LauncherHelper::listModule);
     }
@@ -966,7 +966,7 @@ public final class LauncherHelper {
     static void describeModule(boolean printToStderr, String moduleName) {
         initOutput(printToStderr);
 
-        ModuleFinder finder = ModuleBootstrap.finder();
+        ModuleFinder finder = ModuleBootstrap.limitedFinder();
         ModuleReference mref = finder.find(moduleName).orElse(null);
         if (mref == null) {
             abort(null, "java.launcher.module.error4", moduleName);

@@ -57,6 +57,7 @@ import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.ModuleLoaderMap;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.module.Resources;
 import jdk.internal.org.objectweb.asm.AnnotationVisitor;
@@ -1084,7 +1085,7 @@ public final class Module implements AnnotatedElement {
             if (loader != null) {
                 moduleToLoader.put(name, loader);
                 loaders.add(loader);
-            } else if (!isBootLayer) {
+            } else if (!(clf instanceof ModuleLoaderMap.Mapper)) {
                 throw new IllegalArgumentException("loader can't be 'null'");
             }
         }
