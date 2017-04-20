@@ -129,8 +129,8 @@ import sun.security.util.SecurityConstants;
  *     classes and JDK-specific run-time classes that are defined by the
  *     platform class loader or its ancestors.</li>
  * <li>{@linkplain #getSystemClassLoader() System class loader}.
- *     It is also known as <em>application class
- *     loader</em> and is distinct from the platform class loader.
+ *     It is also known as <em>application class loader</em> and is distinct
+ *     from the platform class loader.
  *     The system class loader is typically used to define classes on the
  *     application class path, module path, and JDK-specific tools.
  *     The platform class loader is a parent or an ancestor of the system class
@@ -390,9 +390,8 @@ public abstract class ClassLoader {
      * delegation.
      *
      * <p> If there is a security manager, its {@link
-     * SecurityManager#checkCreateClassLoader()
-     * checkCreateClassLoader} method is invoked.  This may result in
-     * a security exception.  </p>
+     * SecurityManager#checkCreateClassLoader() checkCreateClassLoader} method
+     * is invoked.  This may result in a security exception.  </p>
      *
      * @param  parent
      *         The parent class loader

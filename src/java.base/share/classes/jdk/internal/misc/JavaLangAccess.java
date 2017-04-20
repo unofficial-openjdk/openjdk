@@ -25,13 +25,11 @@
 
 package jdk.internal.misc;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.module.ModuleDescriptor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.net.URL;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.util.Map;
@@ -155,12 +153,6 @@ public interface JavaLangAccess {
      * Returns a class loaded by the bootstrap class loader.
      */
     Class<?> findBootstrapClassOrNull(ClassLoader cl, String name);
-
-    /**
-     * Returns a URL to a resource with the given name in a module that is
-     * defined to the given class loader.
-     */
-    URL findResource(ClassLoader cl, String moduleName, String name) throws IOException;
 
     /**
      * Returns the Packages for the given class loader.

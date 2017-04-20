@@ -560,7 +560,6 @@ public final class ModuleInfo {
         return new ModuleTarget(osName, osArch);
     }
 
-
     /**
      * Reads the ModuleHashes attribute
      */
@@ -611,7 +610,6 @@ public final class ModuleInfo {
 
         return new ModuleResolution(flags);
     }
-
 
     /**
      * Returns true if the given attribute can be present at most once

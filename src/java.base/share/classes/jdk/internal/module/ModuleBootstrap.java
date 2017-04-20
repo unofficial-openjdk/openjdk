@@ -84,8 +84,9 @@ public final class ModuleBootstrap {
     // The ModulePatcher for the initial configuration
     private static final ModulePatcher patcher = initModulePatcher();
 
-    // ModuleFinder for the initial configuration
-    private static ModuleFinder initialFinder;
+    // ModuleFinders for the initial configuration
+    private static ModuleFinder unlimitedFinder;
+    private static ModuleFinder limitedFinder;
 
     /**
      * Returns the ModulePatcher for the initial configuration.
@@ -95,11 +96,20 @@ public final class ModuleBootstrap {
     }
 
     /**
-     * Returns the ModuleFinder for the initial configuration
+     * Returns the ModuleFinder for the initial configuration before observability
+     * is limited by the --limit-modules command line option.
      */
-    public static ModuleFinder finder() {
-        assert initialFinder != null;
-        return initialFinder;
+    public static ModuleFinder unlimitedFinder() {
+        assert unlimitedFinder != null;
+        return unlimitedFinder;
+    }
+
+    /**
+     * Returns the ModuleFinder for the initial configuration.
+     */
+    public static ModuleFinder limitedFinder() {
+        assert limitedFinder != null;
+        return limitedFinder;
     }
 
     /**
@@ -180,6 +190,7 @@ public final class ModuleBootstrap {
         }
 
         // --limit-modules
+        unlimitedFinder = finder;
         String propValue = getAndRemoveProperty("jdk.module.limitmods");
         if (propValue != null) {
             Set<String> mods = new HashSet<>();
@@ -188,6 +199,8 @@ public final class ModuleBootstrap {
             }
             finder = limitFinder(finder, mods, roots);
         }
+        limitedFinder = finder;
+
 
         // If there is no initial module specified then assume that the initial
         // module is the unnamed module of the application class loader. This
@@ -361,9 +374,6 @@ public final class ModuleBootstrap {
 
         // total time to initialize
         PerfCounters.bootstrapTime.addElapsedTimeFrom(t0);
-
-        // remember the ModuleFinder
-        initialFinder = finder;
 
         return bootLayer;
     }

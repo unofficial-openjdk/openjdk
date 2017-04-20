@@ -505,7 +505,7 @@ public final class ModulePatcher {
         public Resource find(String name) throws IOException {
             Path file = Resources.toFilePath(dir, name);
             if (file != null) {
-                return  newResource(name, dir, file);
+                return newResource(name, dir, file);
             } else {
                 return null;
             }

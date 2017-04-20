@@ -25,10 +25,10 @@
 
 package java.lang;
 
-import java.lang.RuntimePermission;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleDescriptor.Exports;
 import java.lang.module.ModuleDescriptor.Opens;
+import java.lang.module.ModuleReference;
 import java.lang.reflect.Member;
 import java.io.FileDescriptor;
 import java.io.File;
@@ -46,8 +46,9 @@ import java.util.Objects;
 import java.util.PropertyPermission;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+import jdk.internal.module.ModuleBootstrap;
+import jdk.internal.module.ModuleLoaderMap;
 import jdk.internal.reflect.CallerSensitive;
 import sun.security.util.SecurityConstants;
 
@@ -1431,28 +1432,21 @@ class SecurityManager {
         return packages;
     }
 
-    // The non-exported packages of the modules in the boot layer that are
-    // loaded by the platform class loader or its ancestors. A non-exported
-    // package is a package that either is not exported at all by its containing
-    // module or is exported in a qualified fashion by its containing module.
+    // The non-exported packages in modules defined to the boot or platform
+    // class loaders. A non-exported package is a package that is not exported
+    // or is only exported to specific modules.
     private static final Set<String> nonExportedPkgs;
 
     static {
-        // Get the modules in the boot layer
-        Stream<Module> bootLayerModules = ModuleLayer.boot().modules().stream();
-
-        // Filter out the modules loaded by the boot or platform loader
-        PrivilegedAction<Set<Module>> pa = () ->
-            bootLayerModules.filter(SecurityManager::isBootOrPlatformModule)
-                            .collect(Collectors.toSet());
-        Set<Module> modules = AccessController.doPrivileged(pa);
-
-        // Filter out the non-exported packages
-        nonExportedPkgs = modules.stream()
-                                 .map(Module::getDescriptor)
-                                 .map(SecurityManager::nonExportedPkgs)
-                                 .flatMap(Set::stream)
-                                 .collect(Collectors.toSet());
+        Set<String> bootModules = ModuleLoaderMap.bootModules();
+        Set<String> platformModules = ModuleLoaderMap.platformModules();
+        nonExportedPkgs = ModuleBootstrap.unlimitedFinder().findAll().stream()
+                .map(ModuleReference::descriptor)
+                .filter(md -> bootModules.contains(md.name())
+                              || platformModules.contains(md.name()))
+                .map(SecurityManager::nonExportedPkgs)
+                .flatMap(Set::stream)
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -1465,14 +1459,6 @@ class SecurityManager {
         synchronized (packageDefinitionLock) {
             packageDefinitionValid = false;
         }
-    }
-
-    /**
-     * Returns true if the module's loader is the boot or platform loader.
-     */
-    private static boolean isBootOrPlatformModule(Module m) {
-        return m.getClassLoader() == null ||
-               m.getClassLoader() == ClassLoader.getPlatformClassLoader();
     }
 
     /**

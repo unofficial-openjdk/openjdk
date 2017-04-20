@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 
  This code is free software; you can redistribute it and/or modify it
@@ -112,7 +112,9 @@ If it is a custom system class loader then it must define the
 The <code>premain</code> methods will be run under the same security and classloader 
 rules as the application <code>main</code> method.
 There are no modeling restrictions on what the agent <code>premain</code> method may do.
-Anything application <code>main</code> can do, including creating threads, is legal from <code>premain</code>.
+Anything application <code>main</code> can do, including creating threads, is legal from
+<code>premain</code>.
+
 
 <P>
 Each agent is passed its agent options via the <code>agentArgs</code> parameter.
@@ -198,69 +200,69 @@ The following manifest attributes are defined for an agent JAR file:
 <dl>
 <dt><code>Premain-Class</code></dt>
 <dd>
-                        When an agent is specified at JVM launch time this attribute
+            When an agent is specified at JVM launch time this attribute
 			specifies the agent class.
 			That is, the class containing the <code>premain</code> method.
-                        When an agent is specified at JVM launch time this attribute
+            When an agent is specified at JVM launch time this attribute
 			is required. If the attribute is not present the JVM will abort.
-                        Note: this is a class name, not a file name or path.							
+            Note: this is a class name, not a file name or path.
 </dd>
 
 <dt><code>Agent-Class</code></dt>
 <dd>
-                        If an implementation supports a mechanism to start agents 
-                        sometime after the VM has started then this attribute specifies
-                        the agent class.
-                        That is, the class containing the <code>agentmain</code> method.
-                        This attribute is required, if it is not present the agent
-                        will not be started.
-                        Note: this is a class name, not a file name or path.
+            If an implementation supports a mechanism to start agents
+            sometime after the VM has started then this attribute specifies
+            the agent class.
+            That is, the class containing the <code>agentmain</code> method.
+            This attribute is required, if it is not present the agent
+            will not be started.
+            Note: this is a class name, not a file name or path.
 </dd>			
 
 <dt><code>Boot-Class-Path</code></dt>
 <dd>
-                        A list of paths to be searched by the bootstrap class
-                        loader. Paths represent directories or libraries
-                        (commonly referred to as JAR or zip libraries on
-                        many platforms). 			
-                        These paths are searched by the
-                        bootstrap class loader after the platform specific
-                        mechanisms of locating a class have failed.
-                        Paths are searched in the order listed.
-                        Paths in the list are separated by one or more spaces.
-                        A path takes the syntax of the path component of a
-                        hierarchical URI. The path is
-                        absolute if it begins with a slash character ('/'),
-                        otherwise it is relative. A relative path is resolved
-                        against the absolute path of the agent JAR file.
-                        Malformed and non-existent paths are ignored.	
+            A list of paths to be searched by the bootstrap class
+            loader. Paths represent directories or libraries
+            (commonly referred to as JAR or zip libraries on
+            many platforms).
+            These paths are searched by the
+            bootstrap class loader after the platform specific
+            mechanisms of locating a class have failed.
+            Paths are searched in the order listed.
+            Paths in the list are separated by one or more spaces.
+            A path takes the syntax of the path component of a
+            hierarchical URI. The path is
+            absolute if it begins with a slash character ('/'),
+            otherwise it is relative. A relative path is resolved
+            against the absolute path of the agent JAR file.
+            Malformed and non-existent paths are ignored.
 			When an agent is started sometime after the VM has
 			started then paths that do not represent a JAR file
 			are ignored.
-                        This attribute is optional.
+            This attribute is optional.
 </dd>
 <dt><code>Can-Redefine-Classes</code></dt>
 <dd>
-                        Boolean (<code>true</code> or <code>false</code>, case irrelevant).
-                        Is the ability to redefine classes
-                        needed by this agent.
-                        Values other than <code>true</code> are considered <code>false</code>.
-                        This attribute is optional, the default is <code>false</code>.
+            Boolean (<code>true</code> or <code>false</code>, case irrelevant).
+            Is the ability to redefine classes
+            needed by this agent.
+            Values other than <code>true</code> are considered <code>false</code>.
+            This attribute is optional, the default is <code>false</code>.
 </dd>
 <dt><code>Can-Retransform-Classes</code></dt>
 <dd>
-                        Boolean (<code>true</code> or <code>false</code>, case irrelevant).
-                        Is the ability to retransform classes
-                        needed by this agent.
-                        Values other than <code>true</code> are considered <code>false</code>.
-                        This attribute is optional, the default is <code>false</code>.
+            Boolean (<code>true</code> or <code>false</code>, case irrelevant).
+            Is the ability to retransform classes
+            needed by this agent.
+            Values other than <code>true</code> are considered <code>false</code>.
+            This attribute is optional, the default is <code>false</code>.
 </dd>
 <dt><code>Can-Set-Native-Method-Prefix</code></dt>
 <dd>
-                        Boolean (<code>true</code> or <code>false</code>, case irrelevant).
-                        Is the ability to set native method prefix needed by this agent.
-                        Values other than <code>true</code> are considered <code>false</code>.
-                        This attribute is optional, the default is <code>false</code>.
+            Boolean (<code>true</code> or <code>false</code>, case irrelevant).
+            Is the ability to set native method prefix needed by this agent.
+            Values other than <code>true</code> are considered <code>false</code>.
+            This attribute is optional, the default is <code>false</code>.
 </dd>
 </dl>
 </blockquote>
