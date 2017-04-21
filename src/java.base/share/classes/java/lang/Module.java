@@ -1469,7 +1469,7 @@ public final class Module implements AnnotatedElement {
      *     the package name is a {@linkplain #getPackages() package} in the
      *     module then the resource can only be located by the caller of this
      *     method when the package is {@linkplain #isOpen(String,Module) open}
-     *     to at least the the caller's module. If the resource is not in a
+     *     to at least the caller's module. If the resource is not in a
      *     package in the module then the resource is not encapsulated. </li>
      * </ul>
      *
