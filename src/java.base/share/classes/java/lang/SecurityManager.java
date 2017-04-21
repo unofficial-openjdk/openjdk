@@ -1446,8 +1446,12 @@ class SecurityManager {
      * Record the non-exported packages of the modules in the given layer
      */
     static void addNonExportedPackages(ModuleLayer layer) {
+        Set<String> bootModules = ModuleLoaderMap.bootModules();
+        Set<String> platformModules = ModuleLoaderMap.platformModules();
         layer.modules().stream()
                 .map(Module::getDescriptor)
+                .filter(md -> bootModules.contains(md.name())
+                        || platformModules.contains(md.name()))
                 .map(SecurityManager::nonExportedPkgs)
                 .flatMap(Set::stream)
                 .forEach(pn -> nonExportedPkgs.put(pn, Boolean.TRUE));
