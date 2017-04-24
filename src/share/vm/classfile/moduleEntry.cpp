@@ -236,6 +236,9 @@ ModuleEntryTable::~ModuleEntryTable() {
       m = m->next();
 
       ResourceMark rm;
+      if (to_remove->name() != NULL) {
+        log_info(module, unload)("unloading module %s", to_remove->name()->as_C_string());
+      }
       log_debug(module)("ModuleEntryTable: deleting module: %s", to_remove->name() != NULL ?
                         to_remove->name()->as_C_string() : UNNAMED_MODULE);
 

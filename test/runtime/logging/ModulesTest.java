@@ -37,7 +37,10 @@ public class ModulesTest {
     public static void main(String[] args) throws Exception {
         testModuleTrace("-Xlog:module=trace", "-version");
         testModuleLoad("-Xlog:module+load", "-version");
-        testModuleLoad("-verbose:module", "-version");  // same as -Xlog:module+load
+        testModuleUnload("-Xlog:module+unload", "-version");
+
+        // same as -Xlog:module+load -Xlog:module+unload
+        testModuleLoad("-verbose:module", "-version");
     }
 
     static void testModuleTrace(String... args) throws Exception {
@@ -57,6 +60,11 @@ public class ModulesTest {
         OutputAnalyzer output = run(args);
         output.shouldContain("java.base location:");
         output.shouldContain("java.management location:");
+        output.shouldHaveExitValue(0);
+    }
+
+    static void testModuleUnload(String... args) throws Exception {
+        OutputAnalyzer output = run(args);
         output.shouldHaveExitValue(0);
     }
 
