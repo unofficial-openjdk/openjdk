@@ -935,18 +935,18 @@ public final class LauncherHelper {
     /**
      * Called by the launcher to list the observable modules.
      */
-    static void listAllModules(boolean printToStderr) {
+    static void listModules(boolean printToStderr) {
         initOutput(printToStderr);
 
         ModuleBootstrap.limitedFinder().findAll().stream()
             .sorted(new JrtFirstComparator())
-            .forEach(LauncherHelper::listModule);
+            .forEach(LauncherHelper::showModule);
     }
 
     /**
-     * Called by the launcher to list the resolved modules
+     * Called by the launcher to show the resolved modules
      */
-    static void listResolvedModules(boolean printToStderr) {
+    static void showResolvedModules(boolean printToStderr) {
         initOutput(printToStderr);
 
         ModuleLayer bootLayer = ModuleLayer.boot();
@@ -957,7 +957,7 @@ public final class LauncherHelper {
             .flatMap(Optional::stream)
             .map(ResolvedModule::reference)
             .sorted(new JrtFirstComparator())
-            .forEach(LauncherHelper::listModule);
+            .forEach(LauncherHelper::showModule);
     }
 
     /**
@@ -974,7 +974,7 @@ public final class LauncherHelper {
         ModuleDescriptor md = mref.descriptor();
 
         // one-line summary
-        listModule(mref);
+        showModule(mref);
 
         // unqualified exports (sorted by package)
         md.exports().stream()
@@ -1041,7 +1041,7 @@ public final class LauncherHelper {
     /**
      * Prints a single line with the module name, version and modifiers
      */
-    private static void listModule(ModuleReference mref) {
+    private static void showModule(ModuleReference mref) {
         ModuleDescriptor md = mref.descriptor();
         ostream.print(md.toNameAndVersion());
         mref.location()

@@ -280,7 +280,7 @@ public final class ModuleBootstrap {
         }
 
         PrintStream traceOutput = null;
-        if (Boolean.getBoolean("jdk.launcher.traceResolver"))
+        if (Boolean.getBoolean("jdk.module.showModuleResolution"))
             traceOutput = System.out;
 
         // run the resolver to create the configuration
