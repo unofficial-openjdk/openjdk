@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,24 +23,30 @@
 
 /*
  * @test
- * @bug 4102731
- * @summary Test the java.net.multicastsocket.leave method
- *
+ * @bug 8176901
+ * @summary The doclet should cope with bad HTML form
+ * @library ../lib
+ * @modules jdk.javadoc/jdk.javadoc.internal.tool
+ * @build JavadocTester
+ * @run main TestBadHtml
  */
 
-import java.net.*;
-import java.io.*;
+public class TestBadHtml extends JavadocTester {
 
-public class Leave {
+    public static void main(String... args) throws Exception {
+        TestBadHtml tester = new TestBadHtml();
+        tester.runTests();
+    }
 
-    public static void main(String args[]) throws Exception {
-        MulticastSocket socket = null;
-        InetAddress mca = null;
+    @Test
+    void testNegative() {
+        javadoc("-d", "out1",
+                "-sourcepath", testSrc,
+                "pkg1");
 
-        mca = InetAddress.getByName("224.80.80.80");
-        socket = new MulticastSocket();
-        socket.joinGroup(mca);
-        socket.leaveGroup(mca);
-        socket.close();
+        checkExit(Exit.ERROR);
+
+        checkOutput(Output.STDERR, false, "NullPointerException");
+        checkOutput(Output.OUT, false, "NullPointerException");
     }
 }
