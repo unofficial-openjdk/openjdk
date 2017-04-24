@@ -74,6 +74,7 @@ static char     *showSettings = NULL;     /* print but continue */
 static jboolean showResolvedModules = JNI_FALSE;
 static jboolean listModules = JNI_FALSE;
 static char     *describeModule = NULL;
+static jboolean validateModules = JNI_FALSE;
 
 static const char *_program_name;
 static const char *_launcher_name;
@@ -123,6 +124,7 @@ static void ShowSettings(JNIEnv* env, char *optString);
 static void ShowResolvedModules(JNIEnv* env);
 static void ListModules(JNIEnv* env);
 static void DescribeModule(JNIEnv* env, char* optString);
+static void ValidateModules(JNIEnv* env);
 
 static void SetPaths(int argc, char **argv);
 
@@ -429,6 +431,13 @@ JavaMain(void * _args)
     // describe a module, then exit
     if (describeModule != NULL) {
         DescribeModule(env, describeModule);
+        CHECK_EXCEPTION_LEAVE(1);
+        LEAVE();
+    }
+
+    // validate modules on the module path, then exit
+    if (validateModules) {
+        ValidateModules(env);
         CHECK_EXCEPTION_LEAVE(1);
         LEAVE();
     }
@@ -1287,6 +1296,10 @@ ParseArguments(int *pargc, char ***pargv,
             return JNI_TRUE;
         } else if (JLI_StrCmp(arg, "--show-resolved-modules") == 0) {
             showResolvedModules = JNI_TRUE;
+        } else if (JLI_StrCmp(arg, "--validate-modules") == 0) {
+            AddOption("-Djdk.module.minimumBoot=true", NULL);
+            validateModules = JNI_TRUE;
+            return JNI_TRUE;
         } else if (JLI_StrCmp(arg, "--describe-module") == 0 ||
                    JLI_StrCCmp(arg, "--describe-module=") == 0 ||
                    JLI_StrCmp(arg, "-d") == 0) {
@@ -1889,6 +1902,20 @@ DescribeModule(JNIEnv *env, char *optString)
     (*env)->CallStaticVoidMethod(env, cls, describeModuleID,
                                  USE_STDOUT,
                                  joptString);
+}
+
+/**
+ * Validate modules
+ */
+static void
+ValidateModules(JNIEnv *env)
+{
+    jmethodID validateModulesID;
+    jclass cls = GetLauncherHelperClass(env);
+    NULL_CHECK(cls);
+    NULL_CHECK(validateModulesID = (*env)->GetStaticMethodID(env, cls,
+            "validateModules", "(Z)V"));
+    (*env)->CallStaticVoidMethod(env, cls, validateModulesID, USE_STDOUT);
 }
 
 /*
