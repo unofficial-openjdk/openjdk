@@ -446,9 +446,9 @@ DEF_Agent_OnUnload(JavaVM *vm) {
 jint loadAgent(JNIEnv* env, jstring path) {
     JavaVM* vm;
     JPLISAgent* agent;
-    const char* jarfile;
-    jarAttribute* attributes;
-    char* agentClass;
+    const char* jarfile = NULL;
+    jarAttribute* attributes = NULL;
+    char* agentClass = NULL;
     char* bootClassPath;
     int oldLen, newLen;
     jint result = JNI_ERR;
@@ -526,7 +526,15 @@ jint loadAgent(JNIEnv* env, jstring path) {
     result = JNI_OK;
 
     releaseAndReturn:
-        (*env)->ReleaseStringUTFChars(env, path, jarfile);
+        if (agentClass != NULL) {
+            free(agentClass);
+        }
+        if (attributes != NULL) {
+            freeAttributes(attributes);
+        }
+        if (jarfile != NULL) {
+            (*env)->ReleaseStringUTFChars(env, path, jarfile);
+        }
 
     return result;
 }

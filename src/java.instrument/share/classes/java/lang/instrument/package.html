@@ -233,10 +233,10 @@ The following manifest attributes are defined for an agent JAR file:
 <dt><code>Premain-Class</code></dt>
 <dd>
             When an agent is specified at JVM launch time this attribute
-			specifies the agent class.
-			That is, the class containing the <code>premain</code> method.
+            specifies the agent class.
+            That is, the class containing the <code>premain</code> method.
             When an agent is specified at JVM launch time this attribute
-			is required. If the attribute is not present the JVM will abort.
+            is required. If the attribute is not present the JVM will abort.
             Note: this is a class name, not a file name or path.
 </dd>
 
@@ -250,7 +250,7 @@ The following manifest attributes are defined for an agent JAR file:
             will not be started.
             Note: this is a class name, not a file name or path.
 </dd>
-    
+
 <dt><code>Launcher-Agent-Class</code></dt>
 <dd>
             If an implementation supports a mechanism to start an application
@@ -260,7 +260,7 @@ The following manifest attributes are defined for an agent JAR file:
             is invoked.
 </dd>
 
-    <dt><code>Boot-Class-Path</code></dt>
+<dt><code>Boot-Class-Path</code></dt>
 <dd>
             A list of paths to be searched by the bootstrap class
             loader. Paths represent directories or libraries
@@ -277,9 +277,9 @@ The following manifest attributes are defined for an agent JAR file:
             otherwise it is relative. A relative path is resolved
             against the absolute path of the agent JAR file.
             Malformed and non-existent paths are ignored.
-			When an agent is started sometime after the VM has
-			started then paths that do not represent a JAR file
-			are ignored.
+            When an agent is started sometime after the VM has
+            started then paths that do not represent a JAR file
+            are ignored.
             This attribute is optional.
 </dd>
 <dt><code>Can-Redefine-Classes</code></dt>
