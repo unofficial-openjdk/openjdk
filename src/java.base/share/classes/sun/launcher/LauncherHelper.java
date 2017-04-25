@@ -1124,7 +1124,7 @@ public final class LauncherHelper {
     }
 
     /**
-     * A simple validator to checks for conflicts between modules.
+     * A simple validator to check for conflicts between modules.
      */
     static class ModuleValidator {
         private static final String MODULE_INFO = "module-info.class";
