@@ -42,9 +42,11 @@ import java.security.PrivilegedAction;
 import java.security.Security;
 import java.security.SecurityPermission;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.PropertyPermission;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import jdk.internal.module.ModuleBootstrap;
@@ -1435,19 +1437,26 @@ class SecurityManager {
     // The non-exported packages in modules defined to the boot or platform
     // class loaders. A non-exported package is a package that is not exported
     // or is only exported to specific modules.
-    private static final Set<String> nonExportedPkgs;
-
+    private static final Map<String, Boolean> nonExportedPkgs = new ConcurrentHashMap<>();
     static {
+        addNonExportedPackages(ModuleLayer.boot());
+    }
+
+    /**
+     * Record the non-exported packages of the modules in the given layer
+     */
+    static void addNonExportedPackages(ModuleLayer layer) {
         Set<String> bootModules = ModuleLoaderMap.bootModules();
         Set<String> platformModules = ModuleLoaderMap.platformModules();
-        nonExportedPkgs = ModuleBootstrap.unlimitedFinder().findAll().stream()
-                .map(ModuleReference::descriptor)
+        layer.modules().stream()
+                .map(Module::getDescriptor)
                 .filter(md -> bootModules.contains(md.name())
-                              || platformModules.contains(md.name()))
+                        || platformModules.contains(md.name()))
                 .map(SecurityManager::nonExportedPkgs)
                 .flatMap(Set::stream)
-                .collect(Collectors.toSet());
+                .forEach(pn -> nonExportedPkgs.put(pn, Boolean.TRUE));
     }
+
 
     /**
      * Called by java.security.Security
@@ -1521,7 +1530,7 @@ class SecurityManager {
         Objects.requireNonNull(pkg, "package name can't be null");
 
         // check if pkg is not exported to all modules
-        if (nonExportedPkgs.contains(pkg)) {
+        if (nonExportedPkgs.containsKey(pkg)) {
             checkPermission(
                 new RuntimePermission("accessClassInPackage." + pkg));
             return;
@@ -1620,7 +1629,7 @@ class SecurityManager {
         Objects.requireNonNull(pkg, "package name can't be null");
 
         // check if pkg is not exported to all modules
-        if (nonExportedPkgs.contains(pkg)) {
+        if (nonExportedPkgs.containsKey(pkg)) {
             checkPermission(
                 new RuntimePermission("defineClassInPackage." + pkg));
             return;

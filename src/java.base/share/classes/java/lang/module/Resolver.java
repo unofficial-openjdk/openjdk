@@ -28,6 +28,7 @@ package java.lang.module;
 import java.io.PrintStream;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
+import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -147,8 +148,7 @@ final class Resolver {
             }
 
             if (isTracing()) {
-                trace("Root module %s located", root);
-                mref.location().ifPresent(uri -> trace("  (%s)", uri));
+                trace("root %s", nameAndInfo(mref));
             }
 
             addFoundModule(mref);
@@ -180,9 +180,7 @@ final class Resolver {
                     ModuleDescriptor other = mref.descriptor();
                     q.offer(other);
                     if (isTracing()) {
-                        trace("Automatic module %s located, required by %s",
-                              other.name(), descriptor.name());
-                        mref.location().ifPresent(uri -> trace("  (%s)", uri));
+                        trace("%s requires %s", descriptor.name(), nameAndInfo(mref));
                     }
                 });
                 haveAllAutomaticModules = true;
@@ -213,21 +211,13 @@ final class Resolver {
                     }
                 }
 
+                if (isTracing() && !dn.equals("java.base")) {
+                    trace("%s requires %s", descriptor.name(), nameAndInfo(mref));
+                }
+
                 if (!nameToReference.containsKey(dn)) {
                     addFoundModule(mref);
                     q.offer(mref.descriptor());
-
-                    if (isTracing()) {
-                        String prefix;
-                        if (mref.descriptor().isAutomatic()) {
-                            prefix = "Automatic module";
-                        } else {
-                            prefix = "Module";
-                        }
-                        trace(prefix + " %s located, required by %s",
-                              dn, descriptor.name());
-                        mref.location().ifPresent(uri -> trace("  (%s)", uri));
-                    }
                 }
 
             }
@@ -291,6 +281,13 @@ final class Resolver {
         do {
             for (ModuleDescriptor descriptor : candidateConsumers) {
                 if (!descriptor.uses().isEmpty()) {
+
+                    // the modules that provide at least one service
+                    Set<ModuleDescriptor> modulesToBind = null;
+                    if (isTracing()) {
+                        modulesToBind = new HashSet<>();
+                    }
+
                     for (String service : descriptor.uses()) {
                         Set<ModuleReference> mrefs = availableProviders.get(service);
                         if (mrefs != null) {
@@ -298,15 +295,13 @@ final class Resolver {
                                 ModuleDescriptor provider = mref.descriptor();
                                 if (!provider.equals(descriptor)) {
 
-                                    trace("Module %s provides %s, used by %s",
-                                            provider.name(), service, descriptor.name());
+                                    if (isTracing() && modulesToBind.add(provider)) {
+                                        trace("%s binds %s", descriptor.name(),
+                                                nameAndInfo(mref));
+                                    }
 
                                     String pn = provider.name();
                                     if (!nameToReference.containsKey(pn)) {
-                                        if (isTracing()) {
-                                            mref.location()
-                                                .ifPresent(uri -> trace("  (%s)", uri));
-                                        }
                                         addFoundModule(mref);
                                         q.push(provider);
                                     }
@@ -412,12 +407,6 @@ final class Resolver {
     Map<ResolvedModule, Set<ResolvedModule>> finish(Configuration cf,
                                                     boolean check)
     {
-        if (isTracing()) {
-            trace("Result:");
-            Set<String> names = nameToReference.keySet();
-            names.stream().sorted().forEach(name -> trace("  %s", name));
-        }
-
         if (check) {
             detectCycles();
             checkHashes();
@@ -964,9 +953,17 @@ final class Resolver {
 
     private void trace(String fmt, Object ... args) {
         if (traceOutput != null) {
-            traceOutput.format("[Resolver] " + fmt, args);
+            traceOutput.format(fmt, args);
             traceOutput.println();
         }
     }
 
+    private String nameAndInfo(ModuleReference mref) {
+        ModuleDescriptor descriptor = mref.descriptor();
+        StringBuilder sb = new StringBuilder(descriptor.name());
+        mref.location().ifPresent(uri -> sb.append(" " + uri));
+        if (descriptor.isAutomatic())
+            sb.append(" automatic");
+        return sb.toString();
+    }
 }

@@ -170,6 +170,11 @@ public interface JavaLangAccess {
     String fastUUID(long lsb, long msb);
 
     /**
+     * Record the non-exported packages of the modules in the given layer
+     */
+    void addNonExportedPackages(ModuleLayer layer);
+
+    /**
      * Invalidate package access cache
      */
     void invalidatePackageAccessCache();

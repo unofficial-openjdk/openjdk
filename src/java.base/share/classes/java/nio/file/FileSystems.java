@@ -36,6 +36,8 @@ import java.util.Map;
 import java.util.ServiceConfigurationError;
 import java.util.ServiceLoader;
 
+import jdk.internal.misc.VM;
+
 /**
  * Factory methods for file systems. This class defines the {@link #getDefault
  * getDefault} method to get the default file system and factory methods to
@@ -120,8 +122,8 @@ public final class FileSystems {
 
             // if the property java.nio.file.spi.DefaultFileSystemProvider is
             // set then its value is the name of the default provider (or a list)
-            String propValue = System
-                .getProperty("java.nio.file.spi.DefaultFileSystemProvider");
+            String prop = "java.nio.file.spi.DefaultFileSystemProvider";
+            String propValue = VM.getSavedProperty(prop);
             if (propValue != null) {
                 for (String cn: propValue.split(",")) {
                     try {
@@ -184,7 +186,7 @@ public final class FileSystems {
      * @return  the default file system
      */
     public static FileSystem getDefault() {
-        if (jdk.internal.misc.VM.isBooted()) {
+        if (VM.isModuleSystemInited()) {
             return DefaultFileSystemHolder.defaultFileSystem;
         } else {
             return BuiltinFileSystemHolder.builtinFileSystem;

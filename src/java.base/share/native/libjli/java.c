@@ -71,9 +71,10 @@ static jboolean printTo = USE_STDERR;     /* where to print version/usage */
 static jboolean printXUsage = JNI_FALSE;  /* print and exit*/
 static jboolean dryRun = JNI_FALSE;       /* initialize VM and exit */
 static char     *showSettings = NULL;     /* print but continue */
-static jboolean listAllModules = JNI_FALSE;
-static jboolean listResolvedModules = JNI_FALSE;
+static jboolean showResolvedModules = JNI_FALSE;
+static jboolean listModules = JNI_FALSE;
 static char     *describeModule = NULL;
+static jboolean validateModules = JNI_FALSE;
 
 static const char *_program_name;
 static const char *_launcher_name;
@@ -120,9 +121,10 @@ static void SetApplicationClassPath(const char**);
 static void PrintJavaVersion(JNIEnv *env, jboolean extraLF);
 static void PrintUsage(JNIEnv* env, jboolean doXUsage);
 static void ShowSettings(JNIEnv* env, char *optString);
-static void ListAllModules(JNIEnv* env);
-static void ListResolvedModules(JNIEnv* env);
+static void ShowResolvedModules(JNIEnv* env);
+static void ListModules(JNIEnv* env);
 static void DescribeModule(JNIEnv* env, char* optString);
+static jboolean ValidateModules(JNIEnv* env);
 
 static void SetPaths(int argc, char **argv);
 
@@ -413,23 +415,31 @@ JavaMain(void * _args)
         CHECK_EXCEPTION_LEAVE(1);
     }
 
-    // list observable modules, then exit
-    if (listAllModules) {
-        ListAllModules(env);
+    // show resolved modules and continue
+    if (showResolvedModules) {
+        ShowResolvedModules(env);
         CHECK_EXCEPTION_LEAVE(1);
-        LEAVE();
     }
 
-    // list resolved modules and continue
-    if (listResolvedModules) {
-        ListResolvedModules(env);
+    // list observable modules, then exit
+    if (listModules) {
+        ListModules(env);
         CHECK_EXCEPTION_LEAVE(1);
+        LEAVE();
     }
 
     // describe a module, then exit
     if (describeModule != NULL) {
         DescribeModule(env, describeModule);
         CHECK_EXCEPTION_LEAVE(1);
+        LEAVE();
+    }
+
+    // validate modules on the module path, then exit
+    if (validateModules) {
+        jboolean okay = ValidateModules(env);
+        CHECK_EXCEPTION_LEAVE(1);
+        if (!okay) ret = 1;
         LEAVE();
     }
 
@@ -1283,10 +1293,14 @@ ParseArguments(int *pargc, char ***pargv,
             SetClassPath(value);
             mode = LM_CLASS;
         } else if (JLI_StrCmp(arg, "--list-modules") == 0) {
-            listAllModules = JNI_TRUE;
+            listModules = JNI_TRUE;
             return JNI_TRUE;
-        } else if (JLI_StrCmp(arg, "--list-resolved-modules") == 0) {
-            listResolvedModules = JNI_TRUE;
+        } else if (JLI_StrCmp(arg, "--show-resolved-modules") == 0) {
+            showResolvedModules = JNI_TRUE;
+        } else if (JLI_StrCmp(arg, "--validate-modules") == 0) {
+            AddOption("-Djdk.module.minimumBoot=true", NULL);
+            validateModules = JNI_TRUE;
+            return JNI_TRUE;
         } else if (JLI_StrCmp(arg, "--describe-module") == 0 ||
                    JLI_StrCCmp(arg, "--describe-module=") == 0 ||
                    JLI_StrCmp(arg, "-d") == 0) {
@@ -1354,9 +1368,9 @@ ParseArguments(int *pargc, char ***pargv,
             showSettings = arg;
         } else if (JLI_StrCmp(arg, "-Xdiag") == 0) {
             AddOption("-Dsun.java.launcher.diag=true", NULL);
-            AddOption("-Djdk.launcher.traceResolver=true", NULL);
-        } else if (JLI_StrCmp(arg, "-Xdiag:resolver") == 0) {
-            AddOption("-Djdk.launcher.traceResolver=true", NULL);
+        } else if (JLI_StrCmp(arg, "-Xdiag:resolver") == 0 ||
+                   JLI_StrCmp(arg, "--show-module-resolution") == 0) {
+            AddOption("-Djdk.module.showModuleResolution=true", NULL);
 /*
  * The following case provide backward compatibility with old-style
  * command line options.
@@ -1846,31 +1860,31 @@ ShowSettings(JNIEnv *env, char *optString)
 }
 
 /**
- * List observable modules
+ * Show resolved modules
  */
 static void
-ListAllModules(JNIEnv *env)
+ShowResolvedModules(JNIEnv *env)
 {
-    jmethodID listAllModulesID;
+    jmethodID showResolvedModulesID;
     jclass cls = GetLauncherHelperClass(env);
     NULL_CHECK(cls);
-    NULL_CHECK(listAllModulesID = (*env)->GetStaticMethodID(env, cls,
-            "listAllModules", "(Z)V"));
-    (*env)->CallStaticVoidMethod(env, cls, listAllModulesID, USE_STDOUT);
+    NULL_CHECK(showResolvedModulesID = (*env)->GetStaticMethodID(env, cls,
+            "showResolvedModules", "(Z)V"));
+    (*env)->CallStaticVoidMethod(env, cls, showResolvedModulesID, USE_STDOUT);
 }
 
 /**
- * List resolved modules
+ * List observable modules
  */
 static void
-ListResolvedModules(JNIEnv *env)
+ListModules(JNIEnv *env)
 {
-    jmethodID listResolvedModulesID;
+    jmethodID listModulesID;
     jclass cls = GetLauncherHelperClass(env);
     NULL_CHECK(cls);
-    NULL_CHECK(listResolvedModulesID = (*env)->GetStaticMethodID(env, cls,
-            "listResolvedModules", "(Z)V"));
-    (*env)->CallStaticVoidMethod(env, cls, listResolvedModulesID, USE_STDOUT);
+    NULL_CHECK(listModulesID = (*env)->GetStaticMethodID(env, cls,
+            "listModules", "(Z)V"));
+    (*env)->CallStaticVoidMethod(env, cls, listModulesID, USE_STDOUT);
 }
 
 /**
@@ -1889,6 +1903,20 @@ DescribeModule(JNIEnv *env, char *optString)
     (*env)->CallStaticVoidMethod(env, cls, describeModuleID,
                                  USE_STDOUT,
                                  joptString);
+}
+
+/**
+ * Validate modules
+ */
+static jboolean
+ValidateModules(JNIEnv *env)
+{
+    jmethodID validateModulesID;
+    jclass cls = GetLauncherHelperClass(env);
+    NULL_CHECK_RETURN_VALUE(cls, JNI_FALSE);
+    validateModulesID = (*env)->GetStaticMethodID(env, cls, "validateModules", "(Z)Z");
+    NULL_CHECK_RETURN_VALUE(cls, JNI_FALSE);
+    return (*env)->CallStaticBooleanMethod(env, cls, validateModulesID, USE_STDOUT);
 }
 
 /*

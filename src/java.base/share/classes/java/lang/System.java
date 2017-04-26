@@ -2119,6 +2119,9 @@ public final class System {
             public String fastUUID(long lsb, long msb) {
                 return Long.fastUUID(lsb, msb);
             }
+            public void addNonExportedPackages(ModuleLayer layer) {
+                SecurityManager.addNonExportedPackages(layer);
+            }
             public void invalidatePackageAccessCache() {
                 SecurityManager.invalidatePackageAccessCache();
             }
