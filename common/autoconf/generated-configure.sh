@@ -995,9 +995,8 @@ OPENJDK_TARGET_CPU_OSARCH
 OPENJDK_TARGET_CPU_ISADIR
 OPENJDK_TARGET_CPU_LEGACY_LIB
 OPENJDK_TARGET_CPU_LEGACY
-REQUIRED_OS_VERSION
-REQUIRED_OS_ARCH
-REQUIRED_OS_NAME
+OPENJDK_MODULE_TARGET_OS_ARCH
+OPENJDK_MODULE_TARGET_OS_NAME
 COMPILE_TYPE
 OPENJDK_TARGET_CPU_ENDIAN
 OPENJDK_TARGET_CPU_BITS
@@ -1974,7 +1973,8 @@ Optional Features:
   --enable-debug          set the debug level to fastdebug (shorthand for
                           --with-debug-level=fastdebug) [disabled]
   --enable-headless-only  only build headless (no GUI) support [disabled]
-  --enable-full-docs      build complete documentation [disabled]
+  --enable-full-docs      build complete documentation [enabled if all tools
+                          found]
   --disable-unlimited-crypto
                           Disable unlimited crypto policy [enabled]
   --disable-keep-packaged-modules
@@ -5180,7 +5180,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1492592126
+DATE_WHEN_GENERATED=1492975963
 
 ###############################################################################
 #
@@ -16028,32 +16028,17 @@ $as_echo_n "checking compilation type... " >&6; }
 $as_echo "$COMPILE_TYPE" >&6; }
 
 
-  if test "x$OPENJDK_TARGET_OS" = "xsolaris"; then
-    REQUIRED_OS_NAME=SunOS
-    REQUIRED_OS_VERSION=5.10
+  if test "x$OPENJDK_TARGET_OS" = xmacosx; then
+    OPENJDK_MODULE_TARGET_OS_NAME="macos"
+  else
+    OPENJDK_MODULE_TARGET_OS_NAME="$OPENJDK_TARGET_OS"
   fi
-  if test "x$OPENJDK_TARGET_OS" = "xlinux"; then
-    REQUIRED_OS_NAME=Linux
-    REQUIRED_OS_VERSION=2.6
-  fi
-  if test "x$OPENJDK_TARGET_OS" = "xwindows"; then
-    REQUIRED_OS_NAME=Windows
-    if test "x$OPENJDK_TARGET_CPU_BITS" = "x64"; then
-      REQUIRED_OS_VERSION=5.2
-    else
-      REQUIRED_OS_VERSION=5.1
-    fi
-  fi
-  if test "x$OPENJDK_TARGET_OS" = "xmacosx"; then
-    REQUIRED_OS_NAME="Mac OS X"
-    REQUIRED_OS_VERSION=11.2
-  fi
-  if test "x$OPENJDK_TARGET_OS" = "xaix"; then
-    REQUIRED_OS_NAME=AIX
-    REQUIRED_OS_VERSION=7.1
-  fi
-  REQUIRED_OS_ARCH=${OPENJDK_TARGET_CPU}
 
+  if test "x$OPENJDK_TARGET_CPU" = xx86_64; then
+    OPENJDK_MODULE_TARGET_OS_ARCH="amd64"
+  else
+    OPENJDK_MODULE_TARGET_OS_ARCH="$OPENJDK_TARGET_CPU"
+  fi
 
 
 
@@ -24745,6 +24730,17 @@ $as_echo "no, cannot generate full docs" >&6; }
     FULL_DOCS_DEP_MISSING=true
   fi
 
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pandoc" >&5
+$as_echo_n "checking for pandoc... " >&6; }
+  if test "x$PANDOC" != "x"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, cannot generate full docs" >&5
+$as_echo "no, cannot generate full docs" >&6; }
+    FULL_DOCS_DEP_MISSING=true
+  fi
+
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking full docs" >&5
 $as_echo_n "checking full docs... " >&6; }
   if test "x$enable_full_docs" = xyes; then
@@ -24794,9 +24790,16 @@ $as_echo "yes, forced" >&6; }
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, forced" >&5
 $as_echo "no, forced" >&6; }
   elif test "x$enable_full_docs" = x; then
-    ENABLE_FULL_DOCS=false
-    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, default" >&5
-$as_echo "no, default" >&6; }
+    # Check for prerequisites
+    if test "x$FULL_DOCS_DEP_MISSING" = xtrue; then
+      ENABLE_FULL_DOCS=false
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no, missing dependencies" >&5
+$as_echo "no, missing dependencies" >&6; }
+    else
+      ENABLE_FULL_DOCS=true
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes, dependencies present" >&5
+$as_echo "yes, dependencies present" >&6; }
+    fi
   else
     as_fn_error $? "--enable-full-docs can only take yes or no" "$LINENO" 5
   fi
