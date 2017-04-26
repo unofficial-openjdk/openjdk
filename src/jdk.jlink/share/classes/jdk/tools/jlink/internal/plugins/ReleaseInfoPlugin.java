@@ -141,8 +141,10 @@ public final class ReleaseInfoPlugin implements Plugin {
             desc.version().ifPresent(s -> release.put("JAVA_FULL_VERSION",
                     quote(s.toString())));
 
-            release.put("OS_NAME", quote(mod.osName()));
-            release.put("OS_ARCH", quote(mod.osArch()));
+            String targetPlatform = mod.targetPlatform();
+            String[] values = targetPlatform.split("-");
+            release.put("OS_NAME", quote(values[0]));
+            release.put("OS_ARCH", quote(values[1]));
         });
 
         // put topological sorted module names separated by space

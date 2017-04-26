@@ -398,12 +398,9 @@ public class JmodTask {
         md.mainClass().ifPresent(v -> sb.append("main-class ").append(v).append("\n"));
 
         if (target != null) {
-            String osName = target.osName();
-            if (osName != null)
-                sb.append("operating-system-name ").append(osName).append("\n");
-            String osArch = target.osArch();
-            if (osArch != null)
-                sb.append("operating-system-architecture ").append(osArch).append("\n");
+            String targetPlatform = target.targetPlatform();
+            if (!targetPlatform.isEmpty())
+                sb.append("platform ").append(targetPlatform).append("\n");
        }
 
        if (hashes != null) {
@@ -564,8 +561,13 @@ public class JmodTask {
                     extender.mainClass(mainClass);
 
                 // --os-name, --os-arch
-                if (osName != null || osArch != null)
-                    extender.targetPlatform(osName, osArch);
+                if (osName != null || osArch != null) {
+                    String value = "";
+                    if (osName != null) value += osName;
+                    value += "-";
+                    if (osArch != null) value += osArch;
+                    extender.targetPlatform(value);
+                }
 
                 // --module-version
                 if (moduleVersion != null)

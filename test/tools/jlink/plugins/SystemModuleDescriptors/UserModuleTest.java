@@ -220,8 +220,9 @@ public class UserModuleTest {
             throw new RuntimeException("ModuleTarget is missing for java.base");
         }
 
-        String osName = mt.osName();
-        String osArch = mt.osArch();
+        String[] values = mt.targetPlatform().split("-");
+        String osName = values[0];
+        String osArch = values[1];
 
         // create JMOD files
         Files.createDirectories(JMODS_DIR);

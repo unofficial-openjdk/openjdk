@@ -39,10 +39,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.StringJoiner;
 import java.util.stream.Collectors;
 
 import jdk.internal.module.ModuleHashes;
@@ -70,12 +68,10 @@ final class Resolver {
     // true if all automatic modules have been found
     private boolean haveAllAutomaticModules;
 
-    // module constraints on target platform
-    private String osName;
-    private String osArch;
+    // constraint on target platform
+    private String targetPlatform;
 
-    String osName() { return osName; }
-    String osArch() { return osArch; }
+    String targetPlatform() { return targetPlatform; }
 
     /**
      * @throws IllegalArgumentException if there are more than one parent and
@@ -90,35 +86,21 @@ final class Resolver {
         this.afterFinder = afterFinder;
         this.traceOutput = traceOutput;
 
-        // record constraints on target platform, checking that they don't conflict
+        // record constraint on target platform, checking there are on conflicts
         for (Configuration parent : parents) {
-            String value = parent.osName();
+            String value = parent.targetPlatform();
             if (value != null) {
-                if (osName == null) {
-                    osName = value;
+                if (targetPlatform == null) {
+                    targetPlatform = value;
                 } else {
-                    if (!value.equals(osName)) {
-                        failParentConflict("Operating System", osName, value);
-                    }
-                }
-            }
-            value = parent.osArch();
-            if (value != null) {
-                if (osArch == null) {
-                    osArch = value;
-                } else {
-                    if (!value.equals(osArch)) {
-                        failParentConflict("OS architecture", osArch, value);
+                    if (!value.equals(targetPlatform)) {
+                        String msg = "Parents have conflicting constraints on target" +
+                                     "  platform: " + targetPlatform + ", " + value;
+                        throw new IllegalArgumentException(msg);
                     }
                 }
             }
         }
-    }
-
-    private void failParentConflict(String constraint, String s1, String s2) {
-        String msg = "Parents have conflicting constraints on target "
-                     + constraint + ": " + s1 + ", " + s2;
-        throw new IllegalArgumentException(msg);
     }
 
     /**
@@ -344,58 +326,30 @@ final class Resolver {
         if (mref instanceof ModuleReferenceImpl) {
             ModuleTarget target = ((ModuleReferenceImpl)mref).moduleTarget();
             if (target != null)
-                checkTargetConstraints(mn, target);
+                checkTargetPlatform(mn, target);
         }
 
         nameToReference.put(mn, mref);
     }
 
     /**
-     * Check that the module's constraints on the target platform do not
-     * conflict with the constraints of other modules resolved so far or
-     * modules in parent configurations.
+     * Check that the module's constraints on the target platform does
+     * conflict with the constraint of other modules resolved so far.
      */
-    private void checkTargetConstraints(String mn, ModuleTarget target) {
-        String value = target.osName();
+    private void checkTargetPlatform(String mn, ModuleTarget target) {
+        String value = target.targetPlatform();
         if (value != null) {
-            if (osName == null) {
-                osName = value;
+            if (targetPlatform == null) {
+                targetPlatform = value;
             } else {
-                if (!value.equals(osName)) {
-                    failTargetConstraint(mn, target);
-                }
-            }
-        }
-        value = target.osArch();
-        if (value != null) {
-            if (osArch == null) {
-                osArch = value;
-            } else {
-                if (!value.equals(osArch)) {
-                    failTargetConstraint(mn, target);
+                if (!value.equals(targetPlatform)) {
+                    findFail("Module %s has constraints on target platform (%s)"
+                             + " that conflict with other modules: %s", mn,
+                             value, targetPlatform);
                 }
             }
         }
     }
-
-    private void failTargetConstraint(String mn, ModuleTarget target) {
-        String s1 = targetAsString(osName, osArch);
-        String s2 = targetAsString(target.osName(), target.osArch());
-        findFail("Module %s has constraints on target platform (%s) that"
-                 + " conflict with other modules: %s", mn, s1, s2);
-    }
-
-    private String targetAsString(ModuleTarget target) {
-        return targetAsString(target.osName(), target.osArch());
-    }
-
-    private String targetAsString(String osName, String osArch) {
-        return new StringJoiner("-")
-                .add(Objects.toString(osName, "*"))
-                .add(Objects.toString(osArch, "*"))
-                .toString();
-    }
-
 
     /**
      * Execute post-resolution checks and returns the module graph of resolved

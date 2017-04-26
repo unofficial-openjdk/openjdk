@@ -546,18 +546,13 @@ public final class ModuleInfo {
     private ModuleTarget readModuleTargetAttribute(DataInput in, ConstantPool cpool)
         throws IOException
     {
-        String osName = null;
-        String osArch = null;
+        String targetPlatform = null;
 
-        int name_index = in.readUnsignedShort();
-        if (name_index != 0)
-            osName = cpool.getUtf8(name_index);
+        int value_index = in.readUnsignedShort();
+        if (value_index != 0)
+            targetPlatform = cpool.getUtf8(value_index);
 
-        int arch_index = in.readUnsignedShort();
-        if (arch_index != 0)
-            osArch = cpool.getUtf8(arch_index);
-
-        return new ModuleTarget(osName, osArch);
+        return new ModuleTarget(targetPlatform);
     }
 
     /**

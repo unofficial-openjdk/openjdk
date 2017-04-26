@@ -27,20 +27,14 @@ package jdk.internal.module;
 
 public final class ModuleTarget {
 
-    private final String osName;
-    private final String osArch;
+    private final String targetPlatform;
 
-    public ModuleTarget(String osName, String osArch) {
-        this.osName = osName;
-        this.osArch = osArch;
+    public ModuleTarget(String targetPlatform) {
+        this.targetPlatform = targetPlatform;
     }
 
-    public String osName() {
-        return osName;
-    }
-
-    public String osArch() {
-        return osArch;
+    public String targetPlatform() {
+        return targetPlatform;
     }
 
 }
