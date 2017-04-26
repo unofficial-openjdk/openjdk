@@ -269,7 +269,6 @@ jdk_other = \
     javax/transaction \
     javax/xml \
     -javax/xml/crypto \
-    jdk/asm \
     jdk/internal/jline \
     com/sun/jndi \
     com/sun/corba \
@@ -715,7 +714,7 @@ needs_compact2 = \
   java/security/BasicPermission/Wildcard.java \
   java/util/Arrays/ParallelPrefix.java  \
   java/util/Arrays/SetAllTest.java  \
-  java/util/BitSet/BitSetStreamTest.java  \
+  java/util/BitSet/stream/BitSetStreamTest.java  \
   java/util/Collection/CollectionDefaults.java  \
   java/util/Collections/CheckedIdentityMap.java  \
   java/util/Collections/CheckedMapBash.java  \
