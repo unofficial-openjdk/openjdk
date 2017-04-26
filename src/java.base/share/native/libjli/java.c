@@ -124,7 +124,7 @@ static void ShowSettings(JNIEnv* env, char *optString);
 static void ShowResolvedModules(JNIEnv* env);
 static void ListModules(JNIEnv* env);
 static void DescribeModule(JNIEnv* env, char* optString);
-static void ValidateModules(JNIEnv* env);
+static jboolean ValidateModules(JNIEnv* env);
 
 static void SetPaths(int argc, char **argv);
 
@@ -437,8 +437,9 @@ JavaMain(void * _args)
 
     // validate modules on the module path, then exit
     if (validateModules) {
-        ValidateModules(env);
+        jboolean okay = ValidateModules(env);
         CHECK_EXCEPTION_LEAVE(1);
+        if (!okay) ret = 1;
         LEAVE();
     }
 
@@ -1907,15 +1908,15 @@ DescribeModule(JNIEnv *env, char *optString)
 /**
  * Validate modules
  */
-static void
+static jboolean
 ValidateModules(JNIEnv *env)
 {
     jmethodID validateModulesID;
     jclass cls = GetLauncherHelperClass(env);
-    NULL_CHECK(cls);
-    NULL_CHECK(validateModulesID = (*env)->GetStaticMethodID(env, cls,
-            "validateModules", "(Z)V"));
-    (*env)->CallStaticVoidMethod(env, cls, validateModulesID, USE_STDOUT);
+    NULL_CHECK_RETURN_VALUE(cls, JNI_FALSE);
+    validateModulesID = (*env)->GetStaticMethodID(env, cls, "validateModules", "(Z)Z");
+    NULL_CHECK_RETURN_VALUE(cls, JNI_FALSE);
+    return (*env)->CallStaticBooleanMethod(env, cls, validateModulesID, USE_STDOUT);
 }
 
 /*

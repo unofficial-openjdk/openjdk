@@ -1095,8 +1095,10 @@ public final class LauncherHelper {
     /**
      * Called by the launcher to validate the modules on the upgrade and
      * application module paths.
+     *
+     * @return {@code true} if no errors are found
      */
-    private static void validateModules(boolean printToStderr) {
+    private static boolean validateModules(boolean printToStderr) {
         initOutput(printToStderr);
 
         ModuleValidator validator = new ModuleValidator();
@@ -1121,16 +1123,26 @@ public final class LauncherHelper {
                     .map(Paths::get)
                     .forEach(validator::scan);
         }
+
+        return !validator.foundErrors();
     }
 
     /**
-     * A simple validator to check for conflicts between modules.
+     * A simple validator to check for errors and conflicts between modules.
      */
     static class ModuleValidator {
         private static final String MODULE_INFO = "module-info.class";
 
         private Map<String, ModuleReference> nameToModule = new HashMap<>();
         private Map<String, ModuleReference> packageToModule = new HashMap<>();
+        private boolean errorFound;
+
+        /**
+         * Returns true if at least one error was found
+         */
+        boolean foundErrors() {
+            return errorFound;
+        }
 
         /**
          * Prints the module location and name.
@@ -1167,6 +1179,7 @@ public final class LauncherHelper {
                         String mn = previous.descriptor().name();
                         ostream.println(INDENT + "contains " + pkg
                                         + " conflicts with module " + mn);
+                        errorFound = true;
                     }
                 }
             }
@@ -1184,6 +1197,7 @@ public final class LauncherHelper {
                 return;
             } catch (IOException ioe) {
                 ostream.println(entry + " " + ioe);
+                errorFound = true;
                 return;
             }
 
@@ -1216,6 +1230,7 @@ public final class LauncherHelper {
                         attrs = Files.readAttributes(entry, BasicFileAttributes.class);
                     } catch (IOException ioe) {
                         ostream.println(entry + " " + ioe);
+                        errorFound = true;
                         continue;
                     }
 
@@ -1239,6 +1254,7 @@ public final class LauncherHelper {
                             printModule(mref);
                             ostream.println(INDENT + "contains same module as "
                                             + previous.getFileName());
+                            errorFound = true;
                         } else {
                             process(mref);
                         }
@@ -1246,6 +1262,7 @@ public final class LauncherHelper {
                 }
             } catch (IOException ioe) {
                 ostream.println(dir + " " + ioe);
+                errorFound = true;
             }
         }
 
@@ -1263,6 +1280,7 @@ public final class LauncherHelper {
                 if (cause != null) {
                     ostream.println(INDENT + cause);
                 }
+                errorFound = true;
                 return Optional.empty();
             }
         }
