@@ -117,12 +117,6 @@ Anything application <code>main</code> can do, including creating threads, is le
 
 
 <P>
-The types visible to the agent class will be determined by the application and will
-minimally include the types in the <a href="{@docRoot}/java.base-summary.html">java.base</a>
-and <a href="{@docRoot}/java.instrument-summary.html">java.instrument</a> modules, and other
-types visible via the application class loader.
-
-<P>
 Each agent is passed its agent options via the <code>agentArgs</code> parameter.
 The agent options are passed as a single string,
 any additional parsing should be performed by the agent itself.
@@ -225,8 +219,34 @@ If the agent class does not implement this method then the JVM will attempt to i
 <p>
 The value of the <code>agentArgs</code> parameter is always the empty string.
 
+<P>
+The <code>agentmain</code> method should do any necessary initialization
+required to start the agent and return. If the agent cannot be started, for
+example the agent class cannot be loaded, the agent class does not define a
+conformant <code>agentmain</code> method, or the <code>agentmain</code> method
+throws an uncaught exception or error, the JVM will abort.
+
+
+<h3>Visibility</h3>
+
+The types visible to the agent class are the types visible to the system class
+loader. They minimally include the types in packages exported by
+<a href="{@docRoot}/java.base-summary.html">java.base</a> and
+<a href="{@docRoot}/java.instrument-summary.html">java.instrument</a>.
+Whether all {@linkplain ClassLoader#getPlatformClassLoader() platform classes}
+are visible or not will depend on the initial module or application.
+
+<p>
+Supporting classes that the agent makes visible to the bootstrap class loader
+(by means of {@link Instrumentation#appendToBootstrapClassLoaderSearch
+appendToBootstrapClassLoaderSearch} or the <code>Boot-Class-Path</code> attribute
+specified below) can only link to types defined to the bootstrap class loader.
+There is no guarantee that all platform classes are visible to the boot class
+loader.
+
 
 <h3>Manifest Attributes</h3>
+
 The following manifest attributes are defined for an agent JAR file:
 <blockquote>
 <dl>
@@ -239,7 +259,6 @@ The following manifest attributes are defined for an agent JAR file:
             is required. If the attribute is not present the JVM will abort.
             Note: this is a class name, not a file name or path.
 </dd>
-
 <dt><code>Agent-Class</code></dt>
 <dd>
             If an implementation supports a mechanism to start agents
@@ -250,16 +269,13 @@ The following manifest attributes are defined for an agent JAR file:
             will not be started.
             Note: this is a class name, not a file name or path.
 </dd>
-
 <dt><code>Launcher-Agent-Class</code></dt>
 <dd>
             If an implementation supports a mechanism to start an application
-            as an executable JAR then the main manifest may include the
-            <code>Launcher-Agent-Class</code> attribute to specify the class name
-            of an agent to start before the application <code>main</code> method
-            is invoked.
+            as an executable JAR then the main manifest may include this
+            attribute to specify the class name of an agent to start before the
+            application <code>main</code> method is invoked.
 </dd>
-
 <dt><code>Boot-Class-Path</code></dt>
 <dd>
             A list of paths to be searched by the bootstrap class
