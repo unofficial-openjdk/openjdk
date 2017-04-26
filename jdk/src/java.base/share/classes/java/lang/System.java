@@ -1763,6 +1763,7 @@ public final class System {
      * @since   1.1
      */
     @Deprecated(since="1.2", forRemoval=true)
+    @SuppressWarnings("removal")
     public static void runFinalizersOnExit(boolean value) {
         Runtime.runFinalizersOnExit(value);
     }
@@ -2117,6 +2118,9 @@ public final class System {
             }
             public String fastUUID(long lsb, long msb) {
                 return Long.fastUUID(lsb, msb);
+            }
+            public void addNonExportedPackages(ModuleLayer layer) {
+                SecurityManager.addNonExportedPackages(layer);
             }
             public void invalidatePackageAccessCache() {
                 SecurityManager.invalidatePackageAccessCache();

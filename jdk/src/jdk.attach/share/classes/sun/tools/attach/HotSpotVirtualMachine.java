@@ -51,10 +51,10 @@ public abstract class HotSpotVirtualMachine extends VirtualMachine {
     private static final boolean ALLOW_ATTACH_SELF;
     static {
         PrivilegedAction<ProcessHandle> pa = ProcessHandle::current;
-        CURRENT_PID = AccessController.doPrivileged(pa).getPid();
+        CURRENT_PID = AccessController.doPrivileged(pa).pid();
 
         String s = VM.getSavedProperty("jdk.attach.allowAttachSelf");
-        ALLOW_ATTACH_SELF = (s != null) && !"false".equals(s);
+        ALLOW_ATTACH_SELF = "".equals(s) || Boolean.parseBoolean(s);
     }
 
     HotSpotVirtualMachine(AttachProvider provider, String id)

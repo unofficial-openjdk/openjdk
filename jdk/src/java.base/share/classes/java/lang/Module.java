@@ -57,6 +57,7 @@ import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.ModuleLoaderMap;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.module.Resources;
 import jdk.internal.org.objectweb.asm.AnnotationVisitor;
@@ -1084,7 +1085,7 @@ public final class Module implements AnnotatedElement {
             if (loader != null) {
                 moduleToLoader.put(name, loader);
                 loaders.add(loader);
-            } else if (!isBootLayer) {
+            } else if (!(clf instanceof ModuleLoaderMap.Mapper)) {
                 throw new IllegalArgumentException("loader can't be 'null'");
             }
         }
@@ -1468,7 +1469,7 @@ public final class Module implements AnnotatedElement {
      *     the package name is a {@linkplain #getPackages() package} in the
      *     module then the resource can only be located by the caller of this
      *     method when the package is {@linkplain #isOpen(String,Module) open}
-     *     to at least the the caller's module. If the resource is not in a
+     *     to at least the caller's module. If the resource is not in a
      *     package in the module then the resource is not encapsulated. </li>
      * </ul>
      *

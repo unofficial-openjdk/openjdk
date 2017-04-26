@@ -41,7 +41,7 @@ public class AttachSelf {
         String value = System.getProperty("jdk.attach.allowAttachSelf");
         boolean canAttachSelf = (value != null) && !value.equals("false");
 
-        String vmid = "" + ProcessHandle.current().getPid();
+        String vmid = "" + ProcessHandle.current().pid();
 
         VirtualMachine vm = null;
         try {
