@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2017 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,10 +21,5 @@
  * questions.
  */
 
-package pkg;
+module m { }
 
-/**
- * Test comment for a class which has an <a name="named_anchor">anchor_with_name</a> and
- * an <a id="named_anchor1">anchor_with_id</a>.
- */
-public class A {}
