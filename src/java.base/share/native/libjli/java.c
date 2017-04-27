@@ -1294,19 +1294,16 @@ ParseArguments(int *pargc, char ***pargv,
             mode = LM_CLASS;
         } else if (JLI_StrCmp(arg, "--list-modules") == 0) {
             listModules = JNI_TRUE;
-            return JNI_TRUE;
         } else if (JLI_StrCmp(arg, "--show-resolved-modules") == 0) {
             showResolvedModules = JNI_TRUE;
         } else if (JLI_StrCmp(arg, "--validate-modules") == 0) {
             AddOption("-Djdk.module.minimumBoot=true", NULL);
             validateModules = JNI_TRUE;
-            return JNI_TRUE;
         } else if (JLI_StrCmp(arg, "--describe-module") == 0 ||
                    JLI_StrCCmp(arg, "--describe-module=") == 0 ||
                    JLI_StrCmp(arg, "-d") == 0) {
             REPORT_ERROR (has_arg_any_len, ARG_ERROR12, arg);
             describeModule = value;
-            return JNI_TRUE;
 /*
  * Parse white-space options
  */
@@ -1431,7 +1428,10 @@ ParseArguments(int *pargc, char ***pargv,
     }
 
     if (*pwhat == NULL) {
-        *pret = 1;
+        /* LM_UNKNOWN okay for options that exit */
+        if (!listModules && !describeModule && !validateModules) {
+            *pret = 1;
+        }
     } else if (mode == LM_UNKNOWN) {
         /* default to LM_CLASS if -m, -jar and -cp options are
          * not specified */
