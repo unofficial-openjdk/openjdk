@@ -40,6 +40,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import jdk.tools.jlink.internal.ModuleSorter;
 import jdk.tools.jlink.internal.Utils;
+import jdk.tools.jlink.plugin.PluginException;
 import jdk.tools.jlink.plugin.ResourcePool;
 import jdk.tools.jlink.plugin.ResourcePoolBuilder;
 import jdk.tools.jlink.plugin.ResourcePoolEntry;
@@ -132,20 +133,20 @@ public final class ReleaseInfoPlugin implements Plugin {
     public ResourcePool transform(ResourcePool in, ResourcePoolBuilder out) {
         in.transformAndCopy(Function.identity(), out);
 
-        Optional<ResourcePoolModule> javaBase = in.moduleView().findModule("java.base");
-        javaBase.ifPresent(mod -> {
-            // fill release information available from transformed "java.base" module!
-            ModuleDescriptor desc = mod.descriptor();
-            desc.version().ifPresent(s -> release.put("JAVA_VERSION",
-                    quote(parseVersion(s.toString()))));
-            desc.version().ifPresent(s -> release.put("JAVA_FULL_VERSION",
-                    quote(s.toString())));
+        ResourcePoolModule javaBase = in.moduleView().findModule("java.base")
+                                                     .orElse(null);
+        if (javaBase == null || javaBase.targetPlatform() == null) {
+            throw new PluginException("ModuleTarget attribute is missing for java.base module");
+        }
 
-            String targetPlatform = mod.targetPlatform();
-            String[] values = targetPlatform.split("-");
-            release.put("OS_NAME", quote(values[0]));
-            release.put("OS_ARCH", quote(values[1]));
-        });
+        // fill release information available from transformed "java.base" module!
+        ModuleDescriptor desc = javaBase.descriptor();
+        desc.version().ifPresent(s -> release.put("JAVA_VERSION",
+                                                  quote(parseVersion(s.toString()))));
+        desc.version().ifPresent(s -> release.put("JAVA_FULL_VERSION",
+                                                  quote(s.toString())));
+
+        release.put("TARGET_PLATFORM", quote(javaBase.targetPlatform()));
 
         // put topological sorted module names separated by space
         release.put("MODULES",  new ModuleSorter(in.moduleView())
@@ -154,7 +155,8 @@ public final class ReleaseInfoPlugin implements Plugin {
 
         // create a TOP level ResourcePoolEntry for "release" file.
         out.add(ResourcePoolEntry.create("/java.base/release",
-            ResourcePoolEntry.Type.TOP, releaseFileContent()));
+                                         ResourcePoolEntry.Type.TOP,
+                                         releaseFileContent()));
         return out.build();
     }
 

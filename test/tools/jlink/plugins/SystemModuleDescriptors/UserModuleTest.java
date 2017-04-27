@@ -229,8 +229,7 @@ public class UserModuleTest {
         Stream.of(modules).forEach(mn ->
             assertTrue(jmod("create",
                 "--class-path", MODS_DIR.resolve(mn).toString(),
-                "--os-name", osName,
-                "--os-arch", osArch,
+                "--target-platform", mt.targetPlatform(),
                 "--main-class", mn.replace('m', 'p') + ".Main",
                 JMODS_DIR.resolve(mn + ".jmod").toString()) == 0)
         );

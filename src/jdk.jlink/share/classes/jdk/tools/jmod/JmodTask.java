@@ -177,8 +177,7 @@ public class JmodTask {
         ModuleFinder moduleFinder;
         Version moduleVersion;
         String mainClass;
-        String osName;
-        String osArch;
+        String targetPlatform;
         Pattern modulesToHash;
         ModuleResolution moduleResolution;
         boolean dryrun;
@@ -463,8 +462,7 @@ public class JmodTask {
 
         final Version moduleVersion = options.moduleVersion;
         final String mainClass = options.mainClass;
-        final String osName = options.osName;
-        final String osArch = options.osArch;
+        final String targetPlatform = options.targetPlatform;
         final List<PathMatcher> excludes = options.excludes;
         final ModuleResolution moduleResolution = options.moduleResolution;
 
@@ -560,13 +558,9 @@ public class JmodTask {
                 if (mainClass != null)
                     extender.mainClass(mainClass);
 
-                // --os-name, --os-arch
-                if (osName != null || osArch != null) {
-                    String value = "";
-                    if (osName != null) value += osName;
-                    value += "-";
-                    if (osArch != null) value += osArch;
-                    extender.targetPlatform(value);
+                // --target-platform
+                if (targetPlatform != null) {
+                    extender.targetPlatform(targetPlatform);
                 }
 
                 // --module-version
@@ -1358,15 +1352,10 @@ public class JmodTask {
                         .withRequiredArg()
                         .withValuesConvertedBy(new ModuleVersionConverter());
 
-        OptionSpec<String> osName
-                = parser.accepts("os-name", getMessage("main.opt.os-name"))
+        OptionSpec<String> targetPlatform
+                = parser.accepts("target-platform", getMessage("main.opt.target-platform"))
                         .withRequiredArg()
-                        .describedAs(getMessage("main.opt.os-name.arg"));
-
-        OptionSpec<String> osArch
-                = parser.accepts("os-arch", getMessage("main.opt.os-arch"))
-                        .withRequiredArg()
-                        .describedAs(getMessage("main.opt.os-arch.arg"));
+                        .describedAs(getMessage("main.opt.target-platform.arg"));
 
         OptionSpec<Void> doNotResolveByDefault
                 = parser.accepts("do-not-resolve-by-default",
@@ -1431,10 +1420,8 @@ public class JmodTask {
                 options.moduleVersion = getLastElement(opts.valuesOf(moduleVersion));
             if (opts.has(mainClass))
                 options.mainClass = getLastElement(opts.valuesOf(mainClass));
-            if (opts.has(osName))
-                options.osName = getLastElement(opts.valuesOf(osName));
-            if (opts.has(osArch))
-                options.osArch = getLastElement(opts.valuesOf(osArch));
+            if (opts.has(targetPlatform))
+                options.targetPlatform = getLastElement(opts.valuesOf(targetPlatform));
             if (opts.has(warnIfResolved))
                 options.moduleResolution = getLastElement(opts.valuesOf(warnIfResolved));
             if (opts.has(doNotResolveByDefault)) {

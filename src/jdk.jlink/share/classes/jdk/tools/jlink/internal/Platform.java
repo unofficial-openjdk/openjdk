@@ -63,7 +63,7 @@ public enum Platform {
      */
     public static Platform getTargetPlatform(ResourcePoolModule module) {
         String targetPlatform = module.targetPlatform();
-        if (targetPlatform == null) {
+        if (targetPlatform != null) {
             return toPlatform(targetPlatform);
         } else {
             return Platform.UNKNOWN;
