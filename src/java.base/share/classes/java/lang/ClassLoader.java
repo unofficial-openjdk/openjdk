@@ -119,16 +119,22 @@ import sun.security.util.SecurityConstants;
  * The Java run-time has the following built-in class loaders:
  *
  * <ul>
- * <li>Bootstrap class loader.
+ * <li><p>Bootstrap class loader.
  *     It is the virtual machine's built-in class loader, typically represented
  *     as {@code null}, and does not have a parent.</li>
- * <li>{@linkplain #getPlatformClassLoader() Platform class loader}.
+ * <li><p>{@linkplain #getPlatformClassLoader() Platform class loader}.
  *     All <em>platform classes</em> are visible to the platform class loader
  *     that can be used as the parent of a {@code ClassLoader} instance.
  *     Platform classes include Java SE platform APIs, their implementation
  *     classes and JDK-specific run-time classes that are defined by the
- *     platform class loader or its ancestors.</li>
- * <li>{@linkplain #getSystemClassLoader() System class loader}.
+ *     platform class loader or its ancestors.
+ *     <p> To allow for upgrading/overriding of modules defined to the platform
+ *     class loader, and where classes in the upgraded version link to
+ *     classes in modules defined to the application class loader, the
+ *     platform class loader may delegate to application class loader.
+ *     In other words, classes in modules defined to the application class
+ *     loader may be visible to the platform class loader. </li>
+ * <li><p>{@linkplain #getSystemClassLoader() System class loader}.
  *     It is also known as <em>application class loader</em> and is distinct
  *     from the platform class loader.
  *     The system class loader is typically used to define classes on the
@@ -368,6 +374,10 @@ public abstract class ClassLoader {
      * Creates a new class loader of the specified name and using the
      * specified parent class loader for delegation.
      *
+     * @apiNote If the parent is specified as {@code null} (for the
+     * bootstrap class loader) then there is no guarantee that all platform
+     * classes are visible.
+     *
      * @param  name   class loader name; or {@code null} if not named
      * @param  parent the parent class loader
      *
@@ -392,6 +402,10 @@ public abstract class ClassLoader {
      * <p> If there is a security manager, its {@link
      * SecurityManager#checkCreateClassLoader() checkCreateClassLoader} method
      * is invoked.  This may result in a security exception.  </p>
+     *
+     * @apiNote If the parent is specified as {@code null} (for the
+     * bootstrap class loader) then there is no guarantee that all platform
+     * classes are visible.
      *
      * @param  parent
      *         The parent class loader
