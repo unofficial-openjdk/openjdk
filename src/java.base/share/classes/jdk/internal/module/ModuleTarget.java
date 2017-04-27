@@ -25,6 +25,11 @@
 
 package jdk.internal.module;
 
+/**
+ * Represents the module target.
+ *
+ * For now, this is a single value for the target platform, e.g. "linux-x64".
+ */
 public final class ModuleTarget {
 
     private final String targetPlatform;

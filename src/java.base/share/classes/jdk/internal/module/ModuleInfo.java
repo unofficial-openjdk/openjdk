@@ -548,9 +548,9 @@ public final class ModuleInfo {
     {
         String targetPlatform = null;
 
-        int value_index = in.readUnsignedShort();
-        if (value_index != 0)
-            targetPlatform = cpool.getUtf8(value_index);
+        int index = in.readUnsignedShort();
+        if (index != 0)
+            targetPlatform = cpool.getUtf8(index);
 
         return new ModuleTarget(targetPlatform);
     }

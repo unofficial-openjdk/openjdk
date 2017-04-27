@@ -86,7 +86,7 @@ final class Resolver {
         this.afterFinder = afterFinder;
         this.traceOutput = traceOutput;
 
-        // record constraint on target platform, checking there are on conflicts
+        // record constraint on target platform, checking for conflicts
         for (Configuration parent : parents) {
             String value = parent.targetPlatform();
             if (value != null) {

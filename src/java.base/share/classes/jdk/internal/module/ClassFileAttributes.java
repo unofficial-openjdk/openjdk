@@ -564,7 +564,8 @@ public final class ClassFileAttributes {
         }
 
         public ModuleTargetAttribute() {
-            this(null); }
+            this(null);
+        }
 
         public String targetPlatform() {
             return targetPlatform;
