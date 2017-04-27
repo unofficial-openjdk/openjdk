@@ -59,6 +59,7 @@ import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.zip.ZipException;
 import java.util.zip.ZipFile;
 
 import jdk.internal.jmod.JmodFile;
@@ -434,7 +435,7 @@ public class ModulePath implements ModuleFinder {
      * 3. The contents of any META-INF/services configuration files are mapped
      *    to "provides" declarations
      * 4. The Main-Class attribute in the main attributes of the JAR manifest
-     *    is mapped to the module descriptor mainClass
+     *    is mapped to the module descriptor mainClass if possible
      */
     private ModuleDescriptor deriveModuleDescriptor(JarFile jf)
         throws IOException
@@ -530,12 +531,10 @@ public class ModulePath implements ModuleFinder {
             String mainClass = attrs.getValue(Attributes.Name.MAIN_CLASS);
             if (mainClass != null) {
                 mainClass = mainClass.replace("/", ".");
-                String pn = packageName(mainClass);
-                if (!packages.contains(pn)) {
-                    String msg = "Main-Class " + mainClass + " not in module";
-                    throw new InvalidModuleDescriptorException(msg);
+                if (Checks.isClassName(mainClass)) {
+                    String pn = packageName(mainClass);
+                    if (packages.contains(pn)) builder.mainClass(mainClass);
                 }
-                builder.mainClass(mainClass);
             }
         }
 
@@ -617,6 +616,8 @@ public class ModulePath implements ModuleFinder {
             }
 
             return ModuleReferences.newJarModule(attrs, patcher, file);
+        } catch (ZipException e) {
+            throw new FindException("Error reading " + file, e);
         }
     }
 
