@@ -25,8 +25,8 @@
  * @test
  * @library /lib/testlibrary
  * @build ExecJarWithAgent Main Agent AgentHelper JarUtils jdk.testlibrary.*
- * @run main ExecJarWithAgent
- * @summary ...
+ * @run testng ExecJarWithAgent
+ * @summary Test starting agents in executable JAR files
  */
 
 import java.nio.file.Path;
@@ -35,13 +35,19 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.stream.Stream;
 
-import jdk.testlibrary.ProcessTools;
+import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
+import jdk.testlibrary.ProcessTools;
+import jdk.testlibrary.OutputAnalyzer;
+
+@Test
 public class ExecJarWithAgent {
 
-    public static void main(String[] args) throws Exception {
-
-        // executable JAR
+    /**
+     * Basic test of java -jar with agent in the executable JAR
+     */
+    public void testBasic() throws Exception {
         Manifest man = new Manifest();
         Attributes attrs = man.getMainAttributes();
         attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0.0");
@@ -67,12 +73,66 @@ public class ExecJarWithAgent {
         Path helper = Paths.get("helper.jar");
         JarUtils.createJarFile(helper, dir, "AgentHelper.class");
 
-        int exitCode = ProcessTools.executeTestJava("-jar", app.toString())
-                .outputTo(System.out)
-                .errorTo(System.out)
-                .getExitValue();
-        if (exitCode != 0)
-            throw new RuntimeException();
+        // java -jar app.jar
+        assertEquals(exec(app).getExitValue(), 0);
     }
+
+    /**
+     * Test that java -jar fails when the executable JAR has the
+     * Launcher-Agent-Class attribute but the class cannot be loaded.
+     */
+    public void testBadAgentClass() throws Exception {
+        Manifest man = new Manifest();
+        Attributes attrs = man.getMainAttributes();
+        attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0.0");
+        attrs.put(Attributes.Name.MAIN_CLASS, "Main");
+
+        // agent class does not exist
+        attrs.put(new Attributes.Name("Launcher-Agent-Class"), "BadAgent");
+
+        Path app = Paths.get("app.jar");
+        Path dir = Paths.get(System.getProperty("test.classes"));
+
+        JarUtils.createJarFile(app, man, dir, Paths.get("Main.class"));
+
+        // java -jar app.jar
+        int exitCode = exec(app).shouldContain("ClassNotFoundException").getExitValue();
+        assertNotEquals(exitCode, 0);
+    }
+
+    /**
+     * Test that java -jar fails when the executable JAR has the
+     * Launcher-Agent-Class attribute and the class does not define an
+     * agentmain method.
+     */
+    public void testNoAgentMain() throws Exception {
+        // manifest for the executable JAR
+        Manifest man = new Manifest();
+        Attributes attrs = man.getMainAttributes();
+        attrs.put(Attributes.Name.MANIFEST_VERSION, "1.0.0");
+        attrs.put(Attributes.Name.MAIN_CLASS, "Main");
+
+        // the main class does not define the agentmain method
+        attrs.put(new Attributes.Name("Launcher-Agent-Class"), "Main");
+
+        Path app = Paths.get("app.jar");
+        Path dir = Paths.get(System.getProperty("test.classes"));
+
+        JarUtils.createJarFile(app, man, dir, Paths.get("Main.class"));
+
+        // java -jar app.jar
+        int exitCode = exec(app).shouldContain("NoSuchMethodException").getExitValue();
+        assertNotEquals(exitCode, 0);
+    }
+
+    /**
+     * java -jar app.jar, returning the OutputAnalyzer to analyze the output
+     */
+    private OutputAnalyzer exec(Path appJar) throws Exception {
+        return ProcessTools.executeTestJava("-jar", appJar.toString())
+                .outputTo(System.out)
+                .errorTo(System.out);
+    }
+
 
 }
