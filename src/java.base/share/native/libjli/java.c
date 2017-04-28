@@ -1365,8 +1365,7 @@ ParseArguments(int *pargc, char ***pargv,
             showSettings = arg;
         } else if (JLI_StrCmp(arg, "-Xdiag") == 0) {
             AddOption("-Dsun.java.launcher.diag=true", NULL);
-        } else if (JLI_StrCmp(arg, "-Xdiag:resolver") == 0 ||
-                   JLI_StrCmp(arg, "--show-module-resolution") == 0) {
+        } else if (JLI_StrCmp(arg, "--show-module-resolution") == 0) {
             AddOption("-Djdk.module.showModuleResolution=true", NULL);
 /*
  * The following case provide backward compatibility with old-style
