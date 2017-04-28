@@ -108,6 +108,8 @@ public class ModuleDescriptorTest {
             { "x.false.x",      null },
             { "x.null.x",       null },
 
+            { "_",              null },
+
         };
     }
 

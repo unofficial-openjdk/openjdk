@@ -257,6 +257,7 @@ public final class Checks {
             "while",
             "true",
             "false",
-            "null"
+            "null",
+            "_"
     );
 }
