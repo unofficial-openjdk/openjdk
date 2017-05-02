@@ -33,7 +33,6 @@ import java.lang.module.ModuleDescriptor;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.function.Function;
@@ -141,10 +140,8 @@ public final class ReleaseInfoPlugin implements Plugin {
 
         // fill release information available from transformed "java.base" module!
         ModuleDescriptor desc = javaBase.descriptor();
-        desc.version().ifPresent(s -> release.put("JAVA_VERSION",
-                                                  quote(parseVersion(s.toString()))));
-        desc.version().ifPresent(s -> release.put("JAVA_FULL_VERSION",
-                                                  quote(s.toString())));
+        desc.version().ifPresent(v -> release.put("JAVA_VERSION",
+                                                  quote(parseVersion(v))));
 
         // put topological sorted module names separated by space
         release.put("MODULES",  new ModuleSorter(in.moduleView())
@@ -160,8 +157,8 @@ public final class ReleaseInfoPlugin implements Plugin {
 
     // Parse version string and return a string that includes only version part
     // leaving "pre", "build" information. See also: java.lang.Runtime.Version.
-    private static String parseVersion(String str) {
-        return Runtime.Version.parse(str)
+    private static String parseVersion(ModuleDescriptor.Version v) {
+        return Runtime.Version.parse(v.toString())
                       .version()
                       .stream()
                       .map(Object::toString)
