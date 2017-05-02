@@ -316,25 +316,41 @@ public class ModulePath implements ModuleFinder {
     {
         try {
 
+            // exploded module
             if (attrs.isDirectory()) {
                 return readExplodedModule(entry); // may return null
-            } else {
+            }
+
+            // JAR or JMOD file
+            if (attrs.isRegularFile()) {
                 String fn = entry.getFileName().toString();
-                if (attrs.isRegularFile()) {
-                    if (fn.endsWith(".jar")) {
+                boolean isDefaultFileSystem = isDefaultFileSystem(entry);
+
+                // JAR file
+                if (fn.endsWith(".jar")) {
+                    if (isDefaultFileSystem) {
                         return readJar(entry);
-                    } else if (isLinkPhase && fn.endsWith(".jmod")) {
-                        return readJMod(entry);
+                    } else {
+                        // the JAR file is in a custom file system so
+                        // need to copy it to the local file system
+                        Path tmpdir = Files.createTempDirectory("mlib");
+                        Path target = Files.copy(entry, tmpdir.resolve(fn));
+                        return readJar(target);
                     }
                 }
-                return null;
+
+                // JMOD file
+                if (isDefaultFileSystem && isLinkPhase && fn.endsWith(".jmod")) {
+                    return readJMod(entry);
+                }
             }
+
+            return null;
 
         } catch (InvalidModuleDescriptorException e) {
             throw new FindException("Error reading module: " + entry, e);
         }
     }
-
 
     /**
      * Returns a string with the file name of the module if possible.
@@ -733,6 +749,16 @@ public class ModulePath implements ModuleFinder {
             return false;
         }
     }
+
+
+    /**
+     * Return true if a path locates a path in the default file system
+     */
+    private boolean isDefaultFileSystem(Path path) {
+        return path.getFileSystem().provider()
+                .getScheme().equalsIgnoreCase("file");
+    }
+
 
     private static final PerfCounter scanTime
         = PerfCounter.newPerfCounter("jdk.module.finder.modulepath.scanTime");
