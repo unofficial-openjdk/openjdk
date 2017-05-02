@@ -208,7 +208,6 @@ public class IntegrationTest {
 
         checkReleaseProperty(props, "JAVA_VERSION");
         checkReleaseProperty(props, "JAVA_FULL_VERSION");
-        checkReleaseProperty(props, "TARGET_PLATFORM");
 
         if (!Files.exists(output.resolve("toto.txt"))) {
             throw new AssertionError("Post processing not called");

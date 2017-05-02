@@ -146,8 +146,6 @@ public final class ReleaseInfoPlugin implements Plugin {
         desc.version().ifPresent(s -> release.put("JAVA_FULL_VERSION",
                                                   quote(s.toString())));
 
-        release.put("TARGET_PLATFORM", quote(javaBase.targetPlatform()));
-
         // put topological sorted module names separated by space
         release.put("MODULES",  new ModuleSorter(in.moduleView())
                .sorted().map(ResourcePoolModule::name)
