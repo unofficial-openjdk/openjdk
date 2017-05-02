@@ -549,7 +549,9 @@ public class ModulePath implements ModuleFinder {
                 mainClass = mainClass.replace("/", ".");
                 if (Checks.isClassName(mainClass)) {
                     String pn = packageName(mainClass);
-                    if (packages.contains(pn)) builder.mainClass(mainClass);
+                    if (packages.contains(pn)) {
+                        builder.mainClass(mainClass);
+                    }
                 }
             }
         }

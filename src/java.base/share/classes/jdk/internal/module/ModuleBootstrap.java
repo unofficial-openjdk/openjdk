@@ -283,7 +283,8 @@ public final class ModuleBootstrap {
         }
 
         PrintStream traceOutput = null;
-        if (Boolean.getBoolean("jdk.module.showModuleResolution"))
+        propValue = getAndRemoveProperty("jdk.module.showModuleResolution");
+        if (propValue != null && Boolean.getBoolean(propValue))
             traceOutput = System.out;
 
         // run the resolver to create the configuration

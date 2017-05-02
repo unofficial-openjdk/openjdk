@@ -1868,8 +1868,8 @@ ShowResolvedModules(JNIEnv *env)
     jclass cls = GetLauncherHelperClass(env);
     NULL_CHECK(cls);
     NULL_CHECK(showResolvedModulesID = (*env)->GetStaticMethodID(env, cls,
-            "showResolvedModules", "(Z)V"));
-    (*env)->CallStaticVoidMethod(env, cls, showResolvedModulesID, USE_STDOUT);
+            "showResolvedModules", "()V"));
+    (*env)->CallStaticVoidMethod(env, cls, showResolvedModulesID);
 }
 
 /**
@@ -1882,8 +1882,8 @@ ListModules(JNIEnv *env)
     jclass cls = GetLauncherHelperClass(env);
     NULL_CHECK(cls);
     NULL_CHECK(listModulesID = (*env)->GetStaticMethodID(env, cls,
-            "listModules", "(Z)V"));
-    (*env)->CallStaticVoidMethod(env, cls, listModulesID, USE_STDOUT);
+            "listModules", "()V"));
+    (*env)->CallStaticVoidMethod(env, cls, listModulesID);
 }
 
 /**
@@ -1897,11 +1897,9 @@ DescribeModule(JNIEnv *env, char *optString)
     jclass cls = GetLauncherHelperClass(env);
     NULL_CHECK(cls);
     NULL_CHECK(describeModuleID = (*env)->GetStaticMethodID(env, cls,
-            "describeModule", "(ZLjava/lang/String;)V"));
+            "describeModule", "(Ljava/lang/String;)V"));
     NULL_CHECK(joptString = (*env)->NewStringUTF(env, optString));
-    (*env)->CallStaticVoidMethod(env, cls, describeModuleID,
-                                 USE_STDOUT,
-                                 joptString);
+    (*env)->CallStaticVoidMethod(env, cls, describeModuleID, joptString);
 }
 
 /**
@@ -1913,9 +1911,9 @@ ValidateModules(JNIEnv *env)
     jmethodID validateModulesID;
     jclass cls = GetLauncherHelperClass(env);
     NULL_CHECK_RETURN_VALUE(cls, JNI_FALSE);
-    validateModulesID = (*env)->GetStaticMethodID(env, cls, "validateModules", "(Z)Z");
+    validateModulesID = (*env)->GetStaticMethodID(env, cls, "validateModules", "()Z");
     NULL_CHECK_RETURN_VALUE(cls, JNI_FALSE);
-    return (*env)->CallStaticBooleanMethod(env, cls, validateModulesID, USE_STDOUT);
+    return (*env)->CallStaticBooleanMethod(env, cls, validateModulesID);
 }
 
 /*

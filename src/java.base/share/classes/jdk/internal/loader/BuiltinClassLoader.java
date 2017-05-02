@@ -172,8 +172,8 @@ public class BuiltinClassLoader
     }
 
     /**
-     * Register a module this this class loader. This has the effect of making
-     * the types in the module visible.
+     * Register a module this class loader. This has the effect of making the
+     * types in the module visible.
      */
     public void loadModule(ModuleReference mref) {
         String mn = mref.descriptor().name();

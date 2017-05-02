@@ -131,9 +131,9 @@ import sun.security.util.SecurityConstants;
  *     <p> To allow for upgrading/overriding of modules defined to the platform
  *     class loader, and where classes in the upgraded version link to
  *     classes in modules defined to the application class loader, the
- *     platform class loader may delegate to application class loader.
- *     In other words, classes in modules defined to the application class
- *     loader may be visible to the platform class loader. </li>
+ *     platform class loader may delegate to the application class loader.
+ *     In other words, classes in named modules defined to the application
+ *     class loader may be visible to the platform class loader. </li>
  * <li><p>{@linkplain #getSystemClassLoader() System class loader}.
  *     It is also known as <em>application class loader</em> and is distinct
  *     from the platform class loader.
