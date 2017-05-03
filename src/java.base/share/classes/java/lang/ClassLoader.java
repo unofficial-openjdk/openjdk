@@ -2219,6 +2219,11 @@ public abstract class ClassLoader {
      * this class loader are searched recursively (parent by parent)
      * for a {@code Package} of the given name.
      *
+     * @apiNote The {@link #getPlatformClassLoader() platform class loader}
+     * may delegate to the application class loader but the application class
+     * loader is not its ancestor. Therefore this method will not find
+     * packages defined to the application class loader.
+     *
      * @param  name
      *         The <a href="#name">package name</a>
      *
@@ -2263,6 +2268,14 @@ public abstract class ClassLoader {
      * and its ancestors.  The returned array may contain more than one
      * {@code Package} object of the same package name, each defined by
      * a different class loader in the class loader hierarchy.
+     *
+     * @apiNote The {@link #getPlatformClassLoader() platform class loader}
+     * may delegate to the application class loader. In other words,
+     * packages in modules defined to the application class loader may be
+     * visible to the platform class loader.  On the other hand,
+     * the application class loader is not an ancestor of the platform
+     * class loader and hence this method will not return any packages
+     * defined to the application class loader.
      *
      * @return  The array of {@code Package} objects defined by this
      *          class loader and its ancestors
