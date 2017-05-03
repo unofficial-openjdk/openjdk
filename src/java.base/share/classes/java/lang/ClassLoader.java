@@ -2221,8 +2221,9 @@ public abstract class ClassLoader {
      *
      * @apiNote The {@link #getPlatformClassLoader() platform class loader}
      * may delegate to the application class loader but the application class
-     * loader is not its ancestor. Therefore this method will not find
-     * packages defined to the application class loader.
+     * loader is not its ancestor.  When invoked on the platform class loader,
+     * this method  will not find packages defined to the application
+     * class loader.
      *
      * @param  name
      *         The <a href="#name">package name</a>
@@ -2273,9 +2274,9 @@ public abstract class ClassLoader {
      * may delegate to the application class loader. In other words,
      * packages in modules defined to the application class loader may be
      * visible to the platform class loader.  On the other hand,
-     * the application class loader is not an ancestor of the platform
-     * class loader and hence this method will not return any packages
-     * defined to the application class loader.
+     * the application class loader is not its ancestor and hence
+     * when invoked on the platform class loader, this method will not
+     * return any packages defined to the application class loader.
      *
      * @return  The array of {@code Package} objects defined by this
      *          class loader and its ancestors
