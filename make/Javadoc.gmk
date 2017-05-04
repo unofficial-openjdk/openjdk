@@ -27,12 +27,18 @@ default: all
 include $(SPEC)
 include MakeBase.gmk
 include Modules.gmk
+include ProcessMarkdown.gmk
 include ZipArchive.gmk
 include $(JDK_TOPDIR)/make/Tools.gmk
 include $(JDK_TOPDIR)/make/ModuleTools.gmk
 
 # This is needed to properly setup DOCS_MODULES.
 $(eval $(call ReadImportMetaData))
+
+################################################################################
+
+# Hook to include the corresponding custom file, if present.
+$(eval $(call IncludeCustomExtension, , Javadoc.gmk))
 
 ################################################################################
 # Javadoc settings
@@ -43,7 +49,7 @@ MODULES_SOURCE_PATH := $(call PathList, $(call GetModuleSrcPath) \
     $(SUPPORT_OUTPUTDIR)/rmic/* $(JDK_TOPDIR)/src/*/share/doc/stub)
 
 # Should we use -Xdocrootparent? Allow custom to overwrite.
-DOCROOTPARENT_FLAG = TRUE
+DOCROOTPARENT_FLAG ?= TRUE
 
 # URLs
 JAVADOC_BASE_URL := http://docs.oracle.com/javase/$(VERSION_SPECIFICATION)/docs
@@ -74,8 +80,10 @@ JAVADOC_TAGS := \
     -tag see \
     -tag 'jvms:a:See <cite>The Java&trade; Virtual Machine Specification</cite>:' \
     -tag 'jls:a:See <cite>The Java&trade; Language Specification</cite>:' \
+    -taglet build.tools.taglet.ExtLink \
     -taglet build.tools.taglet.Incubating \
     -tagletpath $(BUILDTOOLS_OUTPUTDIR)/jdk_tools_classes \
+    $(CUSTOM_JAVADOC_TAGS) \
     #
 
 # Which doclint checks to ignore
@@ -84,7 +92,7 @@ JAVADOC_DISABLED_DOCLINT := accessibility html missing syntax reference
 # The initial set of options for javadoc
 JAVADOC_OPTIONS := -XDignore.symbol.file=true -use -keywords -notimestamp \
     -serialwarn -encoding ISO-8859-1 -breakiterator -splitIndex --system none \
-    -html5 --expand-requires transitive
+    -html5 -javafx --expand-requires transitive
 
 # Should we add DRAFT stamps to the generated javadoc?
 ifeq ($(VERSION_IS_GA), true)
@@ -217,7 +225,7 @@ define SetupApiDocsGenerationBody
   $1_OPTIONS += -Xdoclint:all,$$(call CommaList, $$(addprefix -, \
       $$(JAVADOC_DISABLED_DOCLINT)))
 
-  ifneq ($$($$DOCROOTPARENT_FLAG), )
+  ifeq ($$($$DOCROOTPARENT_FLAG), TRUE)
     $1_OPTIONS += -Xdocrootparent $$(JAVADOC_BASE_URL)
   endif
 
@@ -349,7 +357,7 @@ $(eval $(call SetupApiDocsGeneration, JAVASE_API, \
 # unmodified
 
 ALL_MODULES := $(call FindAllModules)
-COPY_SPEC_FILTER := %.html %.gif %.jpg %.mib
+COPY_SPEC_FILTER := %.html %.gif %.jpg %.mib %.css
 
 $(foreach m, $(ALL_MODULES), \
   $(eval SPECS_$m := $(call FindModuleSpecsDirs, $m)) \
@@ -363,36 +371,35 @@ $(foreach m, $(ALL_MODULES), \
   ) \
 )
 
+# Copy the global resources
+GLOBAL_SPECS_RESOURCES_DIR := $(JDK_TOPDIR)/make/data/docs-resources/specs
+$(eval $(call SetupCopyFiles, COPY_GLOBAL_RESOURCES, \
+    SRC := $(GLOBAL_SPECS_RESOURCES_DIR), \
+    FILES := $(call CacheFind, $(GLOBAL_SPECS_RESOURCES_DIR)), \
+    DEST := $(JAVADOC_OUTPUTDIR)/specs/, \
+))
+JDK_SPECS_TARGETS += $(COPY_GLOBAL_RESOURCES)
+
 ifeq ($(ENABLE_FULL_DOCS), true)
   # For all markdown files in $module/share/specs directories, convert them to
   # html.
-  MARKDOWN_SPEC_FILTER := %.md
 
-  # Macro for SetupCopyFiles that converts from markdown to html using pandoc.
-  define markdown-to-html
-	$(call MakeDir, $(@D))
-	$(RM) $@
-	$(PANDOC) -t html -s -o $@ $<
-  endef
-
-  rename-md-to-html = \
-      $(patsubst %.md,%.html,$1)
+  GLOBAL_SPECS_DEFAULT_CSS_FILE := $(JAVADOC_OUTPUTDIR)/specs/resources/jdk-default.css
 
   $(foreach m, $(ALL_MODULES), \
     $(eval SPECS_$m := $(call FindModuleSpecsDirs, $m)) \
-    $(if $(SPECS_$m), \
-      $(eval $(call SetupCopyFiles, CONVERT_MARKDOWN_$m, \
-          SRC := $(SPECS_$m), \
-          FILES := $(filter $(MARKDOWN_SPEC_FILTER), $(call CacheFind, $(SPECS_$m))), \
-          DEST := $(JAVADOC_OUTPUTDIR)/specs/, \
-          MACRO := markdown-to-html, \
-          NAME_MACRO := rename-md-to-html, \
-          LOG_ACTION := Converting from markdown, \
-      )) \
-      $(eval JDK_SPECS_TARGETS += $(CONVERT_MARKDOWN_$m)) \
+    $(foreach d, $(SPECS_$m), \
+      $(if $(filter %.md, $(call CacheFind, $d)), \
+        $(eval $(call SetupProcessMarkdown, CONVERT_MARKDOWN_$m_$d, \
+            SRC := $d, \
+            FILES := $(filter %.md, $(call CacheFind, $d)), \
+            DEST := $(JAVADOC_OUTPUTDIR)/specs/, \
+            CSS := $(GLOBAL_SPECS_DEFAULT_CSS_FILE), \
+        )) \
+      ) \
+      $(eval JDK_SPECS_TARGETS += $(CONVERT_MARKDOWN_$m_$d)) \
     ) \
   )
-
 endif
 
 # Special treatment for generated documentation
@@ -426,11 +433,6 @@ $(eval $(call SetupZipArchive, BUILD_JAVADOC_ZIP, \
 ))
 
 ZIP_TARGETS += $(BUILD_JAVADOC_ZIP)
-
-################################################################################
-
-# Hook to include the corresponding custom file, if present.
-$(eval $(call IncludeCustomExtension, , Javadoc.gmk))
 
 ################################################################################
 
