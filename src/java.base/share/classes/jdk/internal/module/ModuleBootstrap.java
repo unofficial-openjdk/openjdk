@@ -145,7 +145,8 @@ public final class ModuleBootstrap {
         PerfCounters.defineBaseTime.addElapsedTimeFrom(t1);
 
         // special mode to boot with only java.base, ignores other options
-        if (System.getProperty("jdk.module.minimumBoot") != null) {
+        String propValue = getAndRemoveProperty("jdk.module.minimumBoot");
+        if (propValue != null) {
             return createMinimalBootLayer();
         }
 
@@ -195,7 +196,7 @@ public final class ModuleBootstrap {
 
         // --limit-modules
         unlimitedFinder = finder;
-        String propValue = getAndRemoveProperty("jdk.module.limitmods");
+        propValue = getAndRemoveProperty("jdk.module.limitmods");
         if (propValue != null) {
             Set<String> mods = new HashSet<>();
             for (String mod: propValue.split(",")) {
@@ -284,7 +285,7 @@ public final class ModuleBootstrap {
 
         PrintStream traceOutput = null;
         propValue = getAndRemoveProperty("jdk.module.showModuleResolution");
-        if (propValue != null && Boolean.getBoolean(propValue))
+        if (propValue != null && Boolean.parseBoolean(propValue))
             traceOutput = System.out;
 
         // run the resolver to create the configuration
