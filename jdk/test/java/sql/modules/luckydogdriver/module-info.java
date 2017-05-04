@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,32 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-
-/* @test
- * @bug 5027764
- * @summary Test jvmti demo gctest
- *
- * @compile ../DemoRun.java
- * @build BigHello Gctest
- * @run main Gctest BigHello
- */
-
-public class Gctest {
-
-    public static void main(String args[]) throws Exception {
-        DemoRun demo;
-
-        /* Run demo that uses JVMTI gctest agent (no options) */
-        demo = new DemoRun("gctest", "" /* options to gctest */ );
-        demo.runit(args[0]);
-
-        /* Make sure patterns in output look ok */
-        if (demo.output_contains("ERROR")) {
-            throw new RuntimeException("Test failed - ERROR seen in output");
-        }
-
-        /* Must be a pass. */
-        System.out.println("Test passed - cleanly terminated");
-    }
+module luckydogdriver {
+    requires transitive java.logging;
+    requires transitive java.sql;
+    exports luckydogtennis;
 }
