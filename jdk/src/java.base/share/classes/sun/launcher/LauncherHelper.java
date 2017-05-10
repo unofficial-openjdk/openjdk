@@ -416,6 +416,10 @@ public final class LauncherHelper {
         ostream =  (printToStderr) ? System.err : System.out;
     }
 
+    static void initOutput(PrintStream ps) {
+        ostream = ps;
+    }
+
     static String getMainClassFromJar(String jarname) {
         String mainValue;
         try (JarFile jarFile = new JarFile(jarname)) {
@@ -940,8 +944,8 @@ public final class LauncherHelper {
     /**
      * Called by the launcher to list the observable modules.
      */
-    static void listModules(boolean printToStderr) {
-        initOutput(printToStderr);
+    static void listModules() {
+        initOutput(System.out);
 
         ModuleBootstrap.limitedFinder().findAll().stream()
             .sorted(new JrtFirstComparator())
@@ -951,15 +955,13 @@ public final class LauncherHelper {
     /**
      * Called by the launcher to show the resolved modules
      */
-    static void showResolvedModules(boolean printToStderr) {
-        initOutput(printToStderr);
+    static void showResolvedModules() {
+        initOutput(System.out);
 
         ModuleLayer bootLayer = ModuleLayer.boot();
         Configuration cf = bootLayer.configuration();
 
-        bootLayer.modules().stream()
-            .map(m -> cf.findModule(m.getName()))
-            .flatMap(Optional::stream)
+        cf.modules().stream()
             .map(ResolvedModule::reference)
             .sorted(new JrtFirstComparator())
             .forEach(LauncherHelper::showModule);
@@ -968,8 +970,8 @@ public final class LauncherHelper {
     /**
      * Called by the launcher to describe a module
      */
-    static void describeModule(boolean printToStderr, String moduleName) {
-        initOutput(printToStderr);
+    static void describeModule(String moduleName) {
+        initOutput(System.out);
 
         ModuleFinder finder = ModuleBootstrap.limitedFinder();
         ModuleReference mref = finder.find(moduleName).orElse(null);
@@ -986,7 +988,7 @@ public final class LauncherHelper {
             .filter(e -> !e.isQualified())
             .sorted(Comparator.comparing(Exports::source))
             .map(e -> Stream.concat(Stream.of(e.source()),
-                    toStringStream(e.modifiers()))
+                                    toStringStream(e.modifiers()))
                     .collect(Collectors.joining(" ")))
             .forEach(sourceAndMods -> ostream.format("exports %s%n", sourceAndMods));
 
@@ -1061,7 +1063,7 @@ public final class LauncherHelper {
 
     /**
      * A ModuleReference comparator that considers modules in the run-time
-     * image ot be less than modules than not in the run-time image.
+     * image to be less than modules than not in the run-time image.
      */
     private static class JrtFirstComparator implements Comparator<ModuleReference> {
         private final Comparator<ModuleReference> real;
@@ -1098,8 +1100,8 @@ public final class LauncherHelper {
      *
      * @return {@code true} if no errors are found
      */
-    private static boolean validateModules(boolean printToStderr) {
-        initOutput(printToStderr);
+    private static boolean validateModules() {
+        initOutput(System.out);
 
         ModuleValidator validator = new ModuleValidator();
 

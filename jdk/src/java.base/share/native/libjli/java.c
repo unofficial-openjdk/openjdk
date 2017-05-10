@@ -1294,19 +1294,16 @@ ParseArguments(int *pargc, char ***pargv,
             mode = LM_CLASS;
         } else if (JLI_StrCmp(arg, "--list-modules") == 0) {
             listModules = JNI_TRUE;
-            return JNI_TRUE;
         } else if (JLI_StrCmp(arg, "--show-resolved-modules") == 0) {
             showResolvedModules = JNI_TRUE;
         } else if (JLI_StrCmp(arg, "--validate-modules") == 0) {
             AddOption("-Djdk.module.minimumBoot=true", NULL);
             validateModules = JNI_TRUE;
-            return JNI_TRUE;
         } else if (JLI_StrCmp(arg, "--describe-module") == 0 ||
                    JLI_StrCCmp(arg, "--describe-module=") == 0 ||
                    JLI_StrCmp(arg, "-d") == 0) {
             REPORT_ERROR (has_arg_any_len, ARG_ERROR12, arg);
             describeModule = value;
-            return JNI_TRUE;
 /*
  * Parse white-space options
  */
@@ -1368,8 +1365,7 @@ ParseArguments(int *pargc, char ***pargv,
             showSettings = arg;
         } else if (JLI_StrCmp(arg, "-Xdiag") == 0) {
             AddOption("-Dsun.java.launcher.diag=true", NULL);
-        } else if (JLI_StrCmp(arg, "-Xdiag:resolver") == 0 ||
-                   JLI_StrCmp(arg, "--show-module-resolution") == 0) {
+        } else if (JLI_StrCmp(arg, "--show-module-resolution") == 0) {
             AddOption("-Djdk.module.showModuleResolution=true", NULL);
 /*
  * The following case provide backward compatibility with old-style
@@ -1431,7 +1427,10 @@ ParseArguments(int *pargc, char ***pargv,
     }
 
     if (*pwhat == NULL) {
-        *pret = 1;
+        /* LM_UNKNOWN okay for options that exit */
+        if (!listModules && !describeModule && !validateModules) {
+            *pret = 1;
+        }
     } else if (mode == LM_UNKNOWN) {
         /* default to LM_CLASS if -m, -jar and -cp options are
          * not specified */
@@ -1869,8 +1868,8 @@ ShowResolvedModules(JNIEnv *env)
     jclass cls = GetLauncherHelperClass(env);
     NULL_CHECK(cls);
     NULL_CHECK(showResolvedModulesID = (*env)->GetStaticMethodID(env, cls,
-            "showResolvedModules", "(Z)V"));
-    (*env)->CallStaticVoidMethod(env, cls, showResolvedModulesID, USE_STDOUT);
+            "showResolvedModules", "()V"));
+    (*env)->CallStaticVoidMethod(env, cls, showResolvedModulesID);
 }
 
 /**
@@ -1883,8 +1882,8 @@ ListModules(JNIEnv *env)
     jclass cls = GetLauncherHelperClass(env);
     NULL_CHECK(cls);
     NULL_CHECK(listModulesID = (*env)->GetStaticMethodID(env, cls,
-            "listModules", "(Z)V"));
-    (*env)->CallStaticVoidMethod(env, cls, listModulesID, USE_STDOUT);
+            "listModules", "()V"));
+    (*env)->CallStaticVoidMethod(env, cls, listModulesID);
 }
 
 /**
@@ -1898,11 +1897,9 @@ DescribeModule(JNIEnv *env, char *optString)
     jclass cls = GetLauncherHelperClass(env);
     NULL_CHECK(cls);
     NULL_CHECK(describeModuleID = (*env)->GetStaticMethodID(env, cls,
-            "describeModule", "(ZLjava/lang/String;)V"));
+            "describeModule", "(Ljava/lang/String;)V"));
     NULL_CHECK(joptString = (*env)->NewStringUTF(env, optString));
-    (*env)->CallStaticVoidMethod(env, cls, describeModuleID,
-                                 USE_STDOUT,
-                                 joptString);
+    (*env)->CallStaticVoidMethod(env, cls, describeModuleID, joptString);
 }
 
 /**
@@ -1914,9 +1911,9 @@ ValidateModules(JNIEnv *env)
     jmethodID validateModulesID;
     jclass cls = GetLauncherHelperClass(env);
     NULL_CHECK_RETURN_VALUE(cls, JNI_FALSE);
-    validateModulesID = (*env)->GetStaticMethodID(env, cls, "validateModules", "(Z)Z");
+    validateModulesID = (*env)->GetStaticMethodID(env, cls, "validateModules", "()Z");
     NULL_CHECK_RETURN_VALUE(cls, JNI_FALSE);
-    return (*env)->CallStaticBooleanMethod(env, cls, validateModulesID, USE_STDOUT);
+    return (*env)->CallStaticBooleanMethod(env, cls, validateModulesID);
 }
 
 /*
