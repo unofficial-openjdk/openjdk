@@ -375,6 +375,7 @@ static SpecialFlag const special_jvm_flags[] = {
   // -------------- Deprecated Flags --------------
   // --- Non-alias flags - sorted by obsolete_in then expired_in:
   { "MaxGCMinorPauseMillis",        JDK_Version::jdk(8), JDK_Version::undefined(), JDK_Version::undefined() },
+  { "UseConcMarkSweepGC",           JDK_Version::jdk(9), JDK_Version::undefined(), JDK_Version::undefined() },
   { "AutoGCSelectPauseMillis",      JDK_Version::jdk(9), JDK_Version::undefined(), JDK_Version::jdk(10) },
   { "UseAutoGCSelectPolicy",        JDK_Version::jdk(9), JDK_Version::undefined(), JDK_Version::jdk(10) },
   { "UseParNewGC",                  JDK_Version::jdk(9), JDK_Version::undefined(), JDK_Version::jdk(10) },
@@ -2304,8 +2305,6 @@ jint Arguments::set_aggressive_heap_flags() {
   if (FLAG_SET_CMDLINE(bool, UseParallelGC, true) != Flag::SUCCESS) {
     return JNI_EINVAL;
   }
-  FLAG_SET_DEFAULT(ParallelGCThreads,
-          Abstract_VM_Version::parallel_worker_threads());
 
   // Encourage steady state memory management
   if (FLAG_SET_CMDLINE(uintx, ThresholdTolerance, 100) != Flag::SUCCESS) {
@@ -2516,6 +2515,9 @@ bool Arguments::check_vm_args_consistency() {
   status = status && check_jvmci_args_consistency();
 
   if (EnableJVMCI) {
+    PropertyList_unique_add(&_system_properties, "jdk.internal.vm.ci.enabled", "true",
+        AddProperty, UnwriteableProperty, InternalProperty);
+
     if (!ScavengeRootsInCode) {
       warning("forcing ScavengeRootsInCode non-zero because JVMCI is enabled");
       ScavengeRootsInCode = 1;
@@ -2836,11 +2838,14 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
         build_jvm_args(option->optionString);
     }
 
-    // -verbose:[class/gc/jni]
+    // -verbose:[class/module/gc/jni]
     if (match_option(option, "-verbose", &tail)) {
       if (!strcmp(tail, ":class") || !strcmp(tail, "")) {
         LogConfiguration::configure_stdout(LogLevel::Info, true, LOG_TAGS(class, load));
         LogConfiguration::configure_stdout(LogLevel::Info, true, LOG_TAGS(class, unload));
+      } else if (!strcmp(tail, ":module")) {
+        LogConfiguration::configure_stdout(LogLevel::Info, true, LOG_TAGS(module, load));
+        LogConfiguration::configure_stdout(LogLevel::Info, true, LOG_TAGS(module, unload));
       } else if (!strcmp(tail, ":gc")) {
         LogConfiguration::configure_stdout(LogLevel::Info, true, LOG_TAGS(gc));
       } else if (!strcmp(tail, ":jni")) {
