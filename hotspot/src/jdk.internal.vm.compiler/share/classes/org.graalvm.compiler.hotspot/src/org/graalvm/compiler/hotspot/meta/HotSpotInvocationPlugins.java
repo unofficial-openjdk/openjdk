@@ -38,6 +38,7 @@ import org.graalvm.compiler.nodes.type.StampTool;
 import org.graalvm.compiler.replacements.nodes.MacroNode;
 
 import jdk.vm.ci.meta.JavaKind;
+import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.meta.ResolvedJavaType;
 
 /**
@@ -46,7 +47,8 @@ import jdk.vm.ci.meta.ResolvedJavaType;
 final class HotSpotInvocationPlugins extends InvocationPlugins {
     final GraalHotSpotVMConfig config;
 
-    HotSpotInvocationPlugins(GraalHotSpotVMConfig config) {
+    HotSpotInvocationPlugins(GraalHotSpotVMConfig config, MetaAccessProvider metaAccess) {
+        super(metaAccess);
         this.config = config;
     }
 
@@ -71,7 +73,7 @@ final class HotSpotInvocationPlugins extends InvocationPlugins {
                 assert plugin.inlineOnly() : String.format("plugin that creates a %s (%s) must return true for inlineOnly(): %s", MacroNode.class.getSimpleName(), node, plugin);
             }
         }
-        if (GraalOptions.ImmutableCode.getValue()) {
+        if (GraalOptions.ImmutableCode.getValue(b.getOptions())) {
             for (Node node : newNodes) {
                 if (node.hasUsages() && node instanceof ConstantNode) {
                     ConstantNode c = (ConstantNode) node;

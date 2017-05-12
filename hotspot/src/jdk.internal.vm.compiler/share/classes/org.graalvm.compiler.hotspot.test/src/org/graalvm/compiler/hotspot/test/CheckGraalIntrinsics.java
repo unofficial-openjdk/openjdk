@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,11 +29,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+
+import org.junit.Test;
 
 import org.graalvm.compiler.api.test.Graal;
 import org.graalvm.compiler.hotspot.GraalHotSpotVMConfig;
@@ -42,15 +45,13 @@ import org.graalvm.compiler.hotspot.meta.HotSpotProviders;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderConfiguration.Plugins;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugin;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins;
-import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins.Binding;
 import org.graalvm.compiler.runtime.RuntimeProvider;
 import org.graalvm.compiler.test.GraalTest;
-import org.junit.Test;
+import org.graalvm.util.EconomicSet;
 
 import jdk.vm.ci.hotspot.HotSpotVMConfigStore;
 import jdk.vm.ci.hotspot.VMIntrinsicMethod;
 import jdk.vm.ci.meta.MetaAccessProvider;
-import jdk.vm.ci.meta.MetaUtil;
 import jdk.vm.ci.meta.MethodHandleAccessProvider.IntrinsicMethod;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 
@@ -63,10 +64,11 @@ import jdk.vm.ci.meta.ResolvedJavaMethod;
  */
 public class CheckGraalIntrinsics extends GraalTest {
 
-    public static boolean match(String type, Binding binding, VMIntrinsicMethod intrinsic) {
-        if (intrinsic.name.equals(binding.name)) {
-            if (intrinsic.descriptor.startsWith(binding.argumentsDescriptor)) {
-                if (type.equals(intrinsic.declaringClass)) {
+    public static boolean match(ResolvedJavaMethod method, VMIntrinsicMethod intrinsic) {
+        if (intrinsic.name.equals(method.getName())) {
+            if (intrinsic.descriptor.equals(method.getSignature().toMethodDescriptor())) {
+                String declaringClass = method.getDeclaringClass().toClassName().replace('.', '/');
+                if (declaringClass.equals(intrinsic.declaringClass)) {
                     return true;
                 }
             }
@@ -74,20 +76,16 @@ public class CheckGraalIntrinsics extends GraalTest {
         return false;
     }
 
-    public static InvocationPlugin findPlugin(Map<String, List<Binding>> bindings, VMIntrinsicMethod intrinsic) {
-        for (Map.Entry<String, List<Binding>> e : bindings.entrySet()) {
-            // Match format of VMIntrinsicMethod.declaringClass
-            String type = MetaUtil.internalNameToJava(e.getKey(), true, false).replace('.', '/');
-            for (Binding binding : e.getValue()) {
-                if (match(type, binding, intrinsic)) {
-                    return binding.plugin;
-                }
+    private static ResolvedJavaMethod findMethod(EconomicSet<ResolvedJavaMethod> methods, VMIntrinsicMethod intrinsic) {
+        for (ResolvedJavaMethod method : methods) {
+            if (match(method, intrinsic)) {
+                return method;
             }
         }
         return null;
     }
 
-    public static ResolvedJavaMethod resolveIntrinsic(MetaAccessProvider metaAccess, VMIntrinsicMethod intrinsic) throws ClassNotFoundException {
+    private static ResolvedJavaMethod resolveIntrinsic(MetaAccessProvider metaAccess, VMIntrinsicMethod intrinsic) throws ClassNotFoundException {
         Class<?> c = Class.forName(intrinsic.declaringClass.replace('/', '.'), false, CheckGraalIntrinsics.class.getClassLoader());
         for (Method javaMethod : c.getDeclaredMethods()) {
             if (javaMethod.getName().equals(intrinsic.name)) {
@@ -246,21 +244,21 @@ public class CheckGraalIntrinsics extends GraalTest {
                         "jdk/internal/misc/Unsafe.allocateUninitializedArray0(Ljava/lang/Class;I)Ljava/lang/Object;",
                         "jdk/internal/misc/Unsafe.compareAndExchangeByteAcquire(Ljava/lang/Object;JBB)B",
                         "jdk/internal/misc/Unsafe.compareAndExchangeByteRelease(Ljava/lang/Object;JBB)B",
-                        "jdk/internal/misc/Unsafe.compareAndExchangeByte(Ljava/lang/Object;JBB)B",
+                        "jdk/internal/misc/Unsafe.compareAndExchangeByteVolatile(Ljava/lang/Object;JBB)B",
                         "jdk/internal/misc/Unsafe.compareAndExchangeIntAcquire(Ljava/lang/Object;JII)I",
                         "jdk/internal/misc/Unsafe.compareAndExchangeIntRelease(Ljava/lang/Object;JII)I",
-                        "jdk/internal/misc/Unsafe.compareAndExchangeInt(Ljava/lang/Object;JII)I",
+                        "jdk/internal/misc/Unsafe.compareAndExchangeIntVolatile(Ljava/lang/Object;JII)I",
                         "jdk/internal/misc/Unsafe.compareAndExchangeLongAcquire(Ljava/lang/Object;JJJ)J",
                         "jdk/internal/misc/Unsafe.compareAndExchangeLongRelease(Ljava/lang/Object;JJJ)J",
-                        "jdk/internal/misc/Unsafe.compareAndExchangeLong(Ljava/lang/Object;JJJ)J",
+                        "jdk/internal/misc/Unsafe.compareAndExchangeLongVolatile(Ljava/lang/Object;JJJ)J",
                         "jdk/internal/misc/Unsafe.compareAndExchangeObjectAcquire(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
                         "jdk/internal/misc/Unsafe.compareAndExchangeObjectRelease(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
-                        "jdk/internal/misc/Unsafe.compareAndExchangeObject(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
+                        "jdk/internal/misc/Unsafe.compareAndExchangeObjectVolatile(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;",
                         "jdk/internal/misc/Unsafe.compareAndExchangeShortAcquire(Ljava/lang/Object;JSS)S",
                         "jdk/internal/misc/Unsafe.compareAndExchangeShortRelease(Ljava/lang/Object;JSS)S",
-                        "jdk/internal/misc/Unsafe.compareAndExchangeShort(Ljava/lang/Object;JSS)S",
-                        "jdk/internal/misc/Unsafe.compareAndSetByte(Ljava/lang/Object;JBB)Z",
-                        "jdk/internal/misc/Unsafe.compareAndSetShort(Ljava/lang/Object;JSS)Z",
+                        "jdk/internal/misc/Unsafe.compareAndExchangeShortVolatile(Ljava/lang/Object;JSS)S",
+                        "jdk/internal/misc/Unsafe.compareAndSwapByte(Ljava/lang/Object;JBB)Z",
+                        "jdk/internal/misc/Unsafe.compareAndSwapShort(Ljava/lang/Object;JSS)Z",
                         "jdk/internal/misc/Unsafe.copyMemory0(Ljava/lang/Object;JLjava/lang/Object;JJ)V",
                         "jdk/internal/misc/Unsafe.getAndAddByte(Ljava/lang/Object;JB)B",
                         "jdk/internal/misc/Unsafe.getAndAddShort(Ljava/lang/Object;JS)S",
@@ -295,26 +293,26 @@ public class CheckGraalIntrinsics extends GraalTest {
                         "jdk/internal/misc/Unsafe.putObjectOpaque(Ljava/lang/Object;JLjava/lang/Object;)V",
                         "jdk/internal/misc/Unsafe.putShortOpaque(Ljava/lang/Object;JS)V",
                         "jdk/internal/misc/Unsafe.unpark(Ljava/lang/Object;)V",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetBytePlain(Ljava/lang/Object;JBB)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetByteAcquire(Ljava/lang/Object;JBB)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetByteRelease(Ljava/lang/Object;JBB)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetByte(Ljava/lang/Object;JBB)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetIntPlain(Ljava/lang/Object;JII)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetIntAcquire(Ljava/lang/Object;JII)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetIntRelease(Ljava/lang/Object;JII)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetInt(Ljava/lang/Object;JII)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetLongPlain(Ljava/lang/Object;JJJ)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetLongAcquire(Ljava/lang/Object;JJJ)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetLongRelease(Ljava/lang/Object;JJJ)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetLong(Ljava/lang/Object;JJJ)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetObjectPlain(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetObjectAcquire(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetObjectRelease(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetObject(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetShortPlain(Ljava/lang/Object;JSS)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetShortAcquire(Ljava/lang/Object;JSS)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetShortRelease(Ljava/lang/Object;JSS)Z",
-                        "jdk/internal/misc/Unsafe.weakCompareAndSetShort(Ljava/lang/Object;JSS)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapByte(Ljava/lang/Object;JBB)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapByteAcquire(Ljava/lang/Object;JBB)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapByteRelease(Ljava/lang/Object;JBB)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapByteVolatile(Ljava/lang/Object;JBB)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapInt(Ljava/lang/Object;JII)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapIntAcquire(Ljava/lang/Object;JII)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapIntRelease(Ljava/lang/Object;JII)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapIntVolatile(Ljava/lang/Object;JII)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapLong(Ljava/lang/Object;JJJ)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapLongAcquire(Ljava/lang/Object;JJJ)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapLongRelease(Ljava/lang/Object;JJJ)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapLongVolatile(Ljava/lang/Object;JJJ)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapObject(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapObjectAcquire(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapObjectRelease(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapObjectVolatile(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapShort(Ljava/lang/Object;JSS)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapShortAcquire(Ljava/lang/Object;JSS)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapShortRelease(Ljava/lang/Object;JSS)Z",
+                        "jdk/internal/misc/Unsafe.weakCompareAndSwapShortVolatile(Ljava/lang/Object;JSS)Z",
                         "jdk/internal/util/Preconditions.checkIndex(IILjava/util/function/BiFunction;)I",
                         "jdk/jfr/internal/JVM.counterTime()J",
                         "jdk/jfr/internal/JVM.getBufferWriter()Ljava/lang/Object;",
@@ -428,20 +426,28 @@ public class CheckGraalIntrinsics extends GraalTest {
     public void test() throws ClassNotFoundException {
         HotSpotGraalRuntimeProvider rt = (HotSpotGraalRuntimeProvider) Graal.getRequiredCapability(RuntimeProvider.class);
         HotSpotProviders providers = rt.getHostBackend().getProviders();
+        Map<ResolvedJavaMethod, Object> impl = new HashMap<>();
         Plugins graphBuilderPlugins = providers.getGraphBuilderPlugins();
         InvocationPlugins invocationPlugins = graphBuilderPlugins.getInvocationPlugins();
+        for (ResolvedJavaMethod method : invocationPlugins.getMethods()) {
+            InvocationPlugin plugin = invocationPlugins.lookupInvocation(method);
+            assert plugin != null;
+            impl.put(method, plugin);
+        }
 
+        EconomicSet<ResolvedJavaMethod> methods = invocationPlugins.getMethods();
         HotSpotVMConfigStore store = rt.getVMConfig().getStore();
         List<VMIntrinsicMethod> intrinsics = store.getIntrinsics();
 
         List<String> missing = new ArrayList<>();
-        Map<String, List<Binding>> bindings = invocationPlugins.getBindings(true);
         for (VMIntrinsicMethod intrinsic : intrinsics) {
-            InvocationPlugin plugin = findPlugin(bindings, intrinsic);
-            if (plugin == null) {
-                ResolvedJavaMethod method = resolveIntrinsic(providers.getMetaAccess(), intrinsic);
+            ResolvedJavaMethod method = findMethod(methods, intrinsic);
+            if (method == null) {
+                method = resolveIntrinsic(providers.getMetaAccess(), intrinsic);
+
+                IntrinsicMethod intrinsicMethod = null;
                 if (method != null) {
-                    IntrinsicMethod intrinsicMethod = providers.getConstantReflection().getMethodHandleAccess().lookupMethodHandleIntrinsic(method);
+                    intrinsicMethod = providers.getConstantReflection().getMethodHandleAccess().lookupMethodHandleIntrinsic(method);
                     if (intrinsicMethod != null) {
                         continue;
                     }

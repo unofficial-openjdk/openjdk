@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1134,8 +1134,11 @@ void nmethod::log_state_change() const {
       xtty->end_elem();
     }
   }
+
+  const char *state_msg = _state == zombie ? "made zombie" : "made not entrant";
+  CompileTask::print_ul(this, state_msg);
   if (PrintCompilation && _state != unloaded) {
-    print_on(tty, _state == zombie ? "made zombie" : "made not entrant");
+    print_on(tty, state_msg);
   }
 }
 
@@ -1456,14 +1459,8 @@ void nmethod::post_compiled_method_unload() {
     JvmtiDeferredEvent event =
       JvmtiDeferredEvent::compiled_method_unload_event(this,
           _jmethod_id, insts_begin());
-    if (SafepointSynchronize::is_at_safepoint()) {
-      // Don't want to take the queueing lock. Add it as pending and
-      // it will get enqueued later.
-      JvmtiDeferredEventQueue::add_pending_event(event);
-    } else {
-      MutexLockerEx ml(Service_lock, Mutex::_no_safepoint_check_flag);
-      JvmtiDeferredEventQueue::enqueue(event);
-    }
+    MutexLockerEx ml(Service_lock, Mutex::_no_safepoint_check_flag);
+    JvmtiDeferredEventQueue::enqueue(event);
   }
 
   // The JVMTI CompiledMethodUnload event can be enabled or disabled at

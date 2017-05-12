@@ -40,7 +40,7 @@ public class Graal {
     private static final GraalRuntime runtime = initializeRuntime();
 
     private static GraalRuntime initializeRuntime() {
-        Services.initializeJVMCI();
+        Services.exportJVMCITo(Graal.class);
         JVMCICompiler compiler = JVMCI.getRuntime().getCompiler();
         if (compiler instanceof GraalJVMCICompiler) {
             GraalJVMCICompiler graal = (GraalJVMCICompiler) compiler;

@@ -25,7 +25,6 @@ package org.graalvm.compiler.hotspot.test;
 import static org.graalvm.compiler.core.common.CompilationIdentifier.INVALID_COMPILATION_ID;
 
 import java.util.List;
-import java.util.Map;
 
 import org.graalvm.compiler.api.test.Graal;
 import org.graalvm.compiler.core.test.GraalCompilerTest;
@@ -36,9 +35,9 @@ import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderConfiguration.Plugins;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugin;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins;
-import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins.Binding;
 import org.graalvm.compiler.nodes.graphbuilderconf.MethodSubstitutionPlugin;
 import org.graalvm.compiler.runtime.RuntimeProvider;
+import org.graalvm.util.EconomicSet;
 import org.junit.Test;
 
 import jdk.vm.ci.hotspot.HotSpotVMConfigStore;
@@ -51,27 +50,46 @@ import jdk.vm.ci.runtime.JVMCI;
  */
 public class TestIntrinsicCompiles extends GraalCompilerTest {
 
+    private static boolean match(ResolvedJavaMethod method, VMIntrinsicMethod intrinsic) {
+        if (intrinsic.name.equals(method.getName())) {
+            if (intrinsic.descriptor.equals(method.getSignature().toMethodDescriptor())) {
+                String declaringClass = method.getDeclaringClass().toClassName().replace('.', '/');
+                if (declaringClass.equals(intrinsic.declaringClass)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static ResolvedJavaMethod findMethod(EconomicSet<ResolvedJavaMethod> methods, VMIntrinsicMethod intrinsic) {
+        for (ResolvedJavaMethod method : methods) {
+            if (match(method, intrinsic)) {
+                return method;
+            }
+        }
+        return null;
+    }
+
     @Test
     @SuppressWarnings("try")
-    public void test() throws ClassNotFoundException {
+    public void test() {
         HotSpotGraalCompiler compiler = (HotSpotGraalCompiler) JVMCI.getRuntime().getCompiler();
         HotSpotGraalRuntimeProvider rt = (HotSpotGraalRuntimeProvider) Graal.getRequiredCapability(RuntimeProvider.class);
         HotSpotProviders providers = rt.getHostBackend().getProviders();
         Plugins graphBuilderPlugins = providers.getGraphBuilderPlugins();
         InvocationPlugins invocationPlugins = graphBuilderPlugins.getInvocationPlugins();
 
-        Map<String, List<Binding>> bindings = invocationPlugins.getBindings(true);
+        EconomicSet<ResolvedJavaMethod> pluginMethods = invocationPlugins.getMethods();
         HotSpotVMConfigStore store = rt.getVMConfig().getStore();
         List<VMIntrinsicMethod> intrinsics = store.getIntrinsics();
         for (VMIntrinsicMethod intrinsic : intrinsics) {
-            InvocationPlugin plugin = CheckGraalIntrinsics.findPlugin(bindings, intrinsic);
-            if (plugin != null) {
-                if (plugin instanceof MethodSubstitutionPlugin) {
-                    ResolvedJavaMethod method = CheckGraalIntrinsics.resolveIntrinsic(getMetaAccess(), intrinsic);
-                    if (!method.isNative()) {
-                        StructuredGraph graph = compiler.getIntrinsicGraph(method, providers, INVALID_COMPILATION_ID);
-                        getCode(method, graph);
-                    }
+            ResolvedJavaMethod method = findMethod(pluginMethods, intrinsic);
+            if (method != null) {
+                InvocationPlugin plugin = invocationPlugins.lookupInvocation(method);
+                if (plugin instanceof MethodSubstitutionPlugin && !method.isNative()) {
+                    StructuredGraph graph = compiler.getIntrinsicGraph(method, providers, INVALID_COMPILATION_ID, getInitialOptions());
+                    getCode(method, graph);
                 }
             }
         }

@@ -23,19 +23,15 @@
 package org.graalvm.compiler.nodes.graphbuilderconf;
 
 import static java.lang.String.format;
-import static org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins.LateClassPlugins.CLOSED_LATE_CLASS_PLUGIN;
 
-import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import org.graalvm.compiler.api.replacements.MethodSubstitution;
 import org.graalvm.compiler.api.replacements.MethodSubstitutionRegistry;
 import org.graalvm.compiler.bytecode.BytecodeProvider;
@@ -44,25 +40,17 @@ import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.graph.iterators.NodeIterable;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugin.Receiver;
+import org.graalvm.util.Equivalence;
+import org.graalvm.util.EconomicMap;
+import org.graalvm.util.EconomicSet;
+import org.graalvm.util.UnmodifiableMapCursor;
 
+import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.meta.MetaUtil;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
-import jdk.vm.ci.meta.ResolvedJavaType;
-import jdk.vm.ci.meta.Signature;
 
 /**
  * Manages a set of {@link InvocationPlugin}s.
- *
- * Most plugins are registered during initialization (i.e., before
- * {@link #lookupInvocation(ResolvedJavaMethod)} or {@link #getBindings} is called). These
- * registrations can be made with {@link Registration},
- * {@link #register(InvocationPlugin, String, String, Type...)},
- * {@link #register(InvocationPlugin, Type, String, Type...)} or
- * {@link #registerOptional(InvocationPlugin, Type, String, Type...)}. Initialization is not
- * thread-safe and so must only be performed by a single thread.
- *
- * Plugins that are not guaranteed to be made during initialization must use
- * {@link LateRegistration}.
  */
 public class InvocationPlugins {
 
@@ -381,138 +369,161 @@ public class InvocationPlugins {
     }
 
     /**
-     * Utility for registering plugins after Graal may have been initialized. Registrations made via
-     * this class are not finalized until {@link #close} is called.
+     * Key for a {@linkplain ClassPlugins#entries resolved} plugin registration. Due to the
+     * possibility of class redefinition, we cannot directly use {@link ResolvedJavaMethod}s as
+     * keys. A {@link ResolvedJavaMethod} implementation might implement {@code equals()} and
+     * {@code hashCode()} based on internal representation subject to change by class redefinition.
      */
-    public static class LateRegistration implements AutoCloseable {
+    static final class ResolvedJavaMethodKey {
+        private final ResolvedJavaMethod method;
 
-        private InvocationPlugins plugins;
-        private final List<Binding> bindings = new ArrayList<>();
-        private final Type declaringType;
-
-        /**
-         * Creates an object for registering {@link InvocationPlugin}s for methods declared by a
-         * given class.
-         *
-         * @param plugins where to register the plugins
-         * @param declaringType the class declaring the methods for which plugins will be registered
-         *            via this object
-         */
-        public LateRegistration(InvocationPlugins plugins, Type declaringType) {
-            this.plugins = plugins;
-            this.declaringType = declaringType;
-        }
-
-        /**
-         * Registers an invocation plugin for a given method. There must be no plugin currently
-         * registered for {@code method}.
-         *
-         * @param argumentTypes the argument types of the method. Element 0 of this array must be
-         *            the {@link Class} value for {@link InvocationPlugin.Receiver} iff the method
-         *            is non-static. Upon returning, element 0 will have been rewritten to
-         *            {@code declaringClass}
-         */
-        public void register(InvocationPlugin plugin, String name, Type... argumentTypes) {
-            boolean isStatic = argumentTypes.length == 0 || argumentTypes[0] != InvocationPlugin.Receiver.class;
-            if (!isStatic) {
-                argumentTypes[0] = declaringType;
-            }
-
-            assert isStatic || argumentTypes[0] == declaringType;
-            Binding binding = new Binding(plugin, isStatic, name, argumentTypes);
-            bindings.add(binding);
-
-            assert Checks.check(this.plugins, declaringType, binding);
-            assert Checks.checkResolvable(false, declaringType, binding);
+        ResolvedJavaMethodKey(ResolvedJavaMethod method) {
+            this.method = method;
         }
 
         @Override
-        public void close() {
-            assert plugins != null : String.format("Late registrations of invocation plugins for %s is already closed", declaringType);
-            plugins.registerLate(declaringType, bindings);
-            plugins = null;
-        }
-    }
-
-    /**
-     * Associates an {@link InvocationPlugin} with the details of a method it substitutes.
-     */
-    public static class Binding {
-        /**
-         * The plugin this binding is for.
-         */
-        public final InvocationPlugin plugin;
-
-        /**
-         * Specifies if the associated method is static.
-         */
-        public final boolean isStatic;
-
-        /**
-         * The name of the associated method.
-         */
-        public final String name;
-
-        /**
-         * A partial
-         * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html#jvms-4.3.3">method
-         * descriptor</a> for the associated method. The descriptor includes enclosing {@code '('}
-         * and {@code ')'} characters but omits the return type suffix.
-         */
-        public final String argumentsDescriptor;
-
-        /**
-         * Link in a list of bindings.
-         */
-        private Binding next;
-
-        Binding(InvocationPlugin data, boolean isStatic, String name, Type... argumentTypes) {
-            this.plugin = data;
-            this.isStatic = isStatic;
-            this.name = name;
-            StringBuilder buf = new StringBuilder();
-            buf.append('(');
-            for (int i = isStatic ? 0 : 1; i < argumentTypes.length; i++) {
-                buf.append(MetaUtil.toInternalName(argumentTypes[i].getTypeName()));
+        public boolean equals(Object obj) {
+            if (obj instanceof ResolvedJavaMethodKey) {
+                ResolvedJavaMethodKey that = (ResolvedJavaMethodKey) obj;
+                if (this.method.isStatic() == that.method.isStatic()) {
+                    if (this.method.getDeclaringClass().equals(that.method.getDeclaringClass())) {
+                        if (this.method.getName().equals(that.method.getName())) {
+                            if (this.method.getSignature().equals(that.method.getSignature())) {
+                                return true;
+                            }
+                        }
+                    }
+                }
             }
-            buf.append(')');
-            this.argumentsDescriptor = buf.toString();
-            assert !name.equals("<init>") || !isStatic : this;
+            return false;
         }
 
-        Binding(ResolvedJavaMethod resolved, InvocationPlugin data) {
-            this.plugin = data;
-            this.isStatic = resolved.isStatic();
-            this.name = resolved.getName();
-            Signature sig = resolved.getSignature();
-            String desc = sig.toMethodDescriptor();
-            assert desc.indexOf(')') != -1 : desc;
-            this.argumentsDescriptor = desc.substring(0, desc.indexOf(')') + 1);
-            assert !name.equals("<init>") || !isStatic : this;
+        @Override
+        public int hashCode() {
+            return this.method.getName().hashCode();
         }
 
         @Override
         public String toString() {
-            return name + argumentsDescriptor;
+            return "ResolvedJavaMethodKey<" + method + ">";
         }
     }
 
     /**
-     * Plugin registrations for already resolved methods. If non-null, then {@link #registrations}
-     * is null and no further registrations can be made.
+     * Key for {@linkplain ClassPlugins#registrations registering} an {@link InvocationPlugin} for a
+     * specific method.
      */
-    private final Map<ResolvedJavaMethod, InvocationPlugin> resolvedRegistrations;
+    static class MethodKey {
+        final boolean isStatic;
+
+        /**
+         * This method is optional. This is used for new API methods not present in previous JDK
+         * versions.
+         */
+        final boolean isOptional;
+
+        final String name;
+        final Type[] argumentTypes;
+        final InvocationPlugin value;
+
+        /**
+         * Used to lazily initialize {@link #resolved}.
+         */
+        private final MetaAccessProvider metaAccess;
+
+        private volatile ResolvedJavaMethod resolved;
+
+        MethodKey(MetaAccessProvider metaAccess, InvocationPlugin data, boolean isStatic, boolean isOptional, String name, Type... argumentTypes) {
+            this.metaAccess = metaAccess;
+            this.value = data;
+            this.isStatic = isStatic;
+            this.isOptional = isOptional;
+            this.name = name;
+            this.argumentTypes = argumentTypes;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof MethodKey) {
+                MethodKey that = (MethodKey) obj;
+                boolean res = this.name.equals(that.name) && areEqual(this.argumentTypes, that.argumentTypes);
+                assert !res || this.isStatic == that.isStatic;
+                return res;
+            }
+            return false;
+        }
+
+        private static boolean areEqual(Type[] args1, Type[] args2) {
+            if (args1.length == args2.length) {
+                for (int i = 0; i < args1.length; i++) {
+                    if (!args1[i].getTypeName().equals(args2[i].getTypeName())) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public int getDeclaredParameterCount() {
+            return isStatic ? argumentTypes.length : argumentTypes.length - 1;
+        }
+
+        @Override
+        public int hashCode() {
+            return name.hashCode();
+        }
+
+        private ResolvedJavaMethod resolve(Class<?> declaringClass) {
+            if (resolved == null) {
+                Executable method = resolveJava(declaringClass);
+                if (method == null) {
+                    return null;
+                }
+                resolved = metaAccess.lookupJavaMethod(method);
+            }
+            return resolved;
+        }
+
+        private Executable resolveJava(Class<?> declaringClass) {
+            try {
+                Executable res;
+                Class<?>[] parameterTypes = resolveTypes(argumentTypes, isStatic ? 0 : 1, argumentTypes.length);
+                if (name.equals("<init>")) {
+                    res = declaringClass.getDeclaredConstructor(parameterTypes);
+                } else {
+                    res = declaringClass.getDeclaredMethod(name, parameterTypes);
+                }
+                assert Modifier.isStatic(res.getModifiers()) == isStatic : res;
+                return res;
+            } catch (NoSuchMethodException | SecurityException e) {
+                if (isOptional) {
+                    return null;
+                }
+                throw new InternalError(e);
+            }
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder(name).append('(');
+            for (Type p : argumentTypes) {
+                if (sb.charAt(sb.length() - 1) != '(') {
+                    sb.append(", ");
+                }
+                sb.append(p.getTypeName());
+            }
+            return sb.append(')').toString();
+        }
+    }
+
+    private final MetaAccessProvider metaAccess;
+
+    private final EconomicMap<String, ClassPlugins> registrations = EconomicMap.create(Equivalence.DEFAULT);
 
     /**
-     * Map from class names in {@linkplain MetaUtil#toInternalName(String) internal} form to the
-     * invocation plugin bindings for the class. Tf non-null, then {@link #resolvedRegistrations}
-     * will be null.
-     */
-    private final Map<String, ClassPlugins> registrations;
-
-    /**
-     * Deferred registrations as well as the guard for delimiting the initial registration phase.
-     * The guard uses double-checked locking which is why this field is {@code volatile}.
+     * Deferred registrations as well as guard for initialization. The guard uses double-checked
+     * locking which is why this field is {@code volatile}.
      */
     private volatile List<Runnable> deferredRegistrations = new ArrayList<>();
 
@@ -526,159 +537,119 @@ public class InvocationPlugins {
     }
 
     /**
-     * Support for registering plugins once this object may be accessed by multiple threads.
+     * Per-class invocation plugins.
      */
-    private volatile LateClassPlugins lateRegistrations;
+    protected static class ClassPlugins {
+        private final Type declaringType;
 
-    /**
-     * Per-class bindings.
-     */
-    static class ClassPlugins {
+        private final List<MethodKey> registrations = new ArrayList<>();
 
-        /**
-         * Maps method names to binding lists.
-         */
-        private final Map<String, Binding> bindings = new HashMap<>();
-
-        /**
-         * Gets the invocation plugin for a given method.
-         *
-         * @return the invocation plugin for {@code method} or {@code null}
-         */
-        InvocationPlugin get(ResolvedJavaMethod method) {
-            assert !method.isBridge();
-            Binding binding = bindings.get(method.getName());
-            while (binding != null) {
-                if (method.isStatic() == binding.isStatic) {
-                    if (method.getSignature().toMethodDescriptor().startsWith(binding.argumentsDescriptor)) {
-                        return binding.plugin;
-                    }
-                }
-                binding = binding.next;
-            }
-            return null;
+        public ClassPlugins(Type declaringClass) {
+            this.declaringType = declaringClass;
         }
 
-        public void register(Binding binding, boolean allowOverwrite) {
+        /**
+         * Entry map that is initialized upon first call to {@link #get(ResolvedJavaMethod)}.
+         *
+         * Note: this must be volatile as threads may race to initialize it.
+         */
+        private volatile EconomicMap<ResolvedJavaMethodKey, InvocationPlugin> entries;
+
+        void initializeMap() {
+            if (!isClosed()) {
+                if (registrations.isEmpty()) {
+                    entries = EconomicMap.create(Equivalence.DEFAULT);
+                } else {
+                    Class<?> declaringClass = resolveType(declaringType, true);
+                    if (declaringClass == null) {
+                        // An optional type that could not be resolved
+                        entries = EconomicMap.create(Equivalence.DEFAULT);
+                    } else {
+                        EconomicMap<ResolvedJavaMethodKey, InvocationPlugin> newEntries = EconomicMap.create(Equivalence.DEFAULT);
+                        for (MethodKey methodKey : registrations) {
+                            ResolvedJavaMethod m = methodKey.resolve(declaringClass);
+                            if (m != null) {
+                                newEntries.put(new ResolvedJavaMethodKey(m), methodKey.value);
+                                if (entries != null) {
+                                    // Another thread finished initializing entries first
+                                    return;
+                                }
+                            }
+                        }
+                        entries = newEntries;
+                    }
+                }
+            }
+        }
+
+        public InvocationPlugin get(ResolvedJavaMethod method) {
+            if (!isClosed()) {
+                initializeMap();
+            }
+            return entries.get(new ResolvedJavaMethodKey(method));
+        }
+
+        public void register(MethodKey methodKey, boolean allowOverwrite) {
+            assert !isClosed() : "registration is closed: " + methodKey;
             if (allowOverwrite) {
-                if (lookup(binding) != null) {
-                    register(binding);
+                int index = registrations.indexOf(methodKey);
+                if (index >= 0) {
+                    registrations.set(index, methodKey);
                     return;
                 }
             } else {
-                assert lookup(binding) == null : "a value is already registered for " + binding;
+                assert !registrations.contains(methodKey) : "a value is already registered for " + declaringType + "." + methodKey;
             }
-            register(binding);
+            registrations.add(methodKey);
         }
 
-        InvocationPlugin lookup(Binding binding) {
-            Binding b = bindings.get(binding.name);
-            while (b != null) {
-                if (b.isStatic == binding.isStatic && b.argumentsDescriptor.equals(binding.argumentsDescriptor)) {
-                    return b.plugin;
-                }
-                b = b.next;
-            }
-            return null;
-        }
-
-        /**
-         * Registers {@code binding}.
-         */
-        void register(Binding binding) {
-            Binding head = bindings.get(binding.name);
-            assert binding.next == null;
-            binding.next = head;
-            bindings.put(binding.name, binding);
-        }
-    }
-
-    static class LateClassPlugins extends ClassPlugins {
-        static final String CLOSED_LATE_CLASS_PLUGIN = "-----";
-        private final String className;
-        private final LateClassPlugins next;
-
-        LateClassPlugins(LateClassPlugins next, String className) {
-            assert next == null || next.className != CLOSED_LATE_CLASS_PLUGIN : "Late registration of invocation plugins is closed";
-            this.next = next;
-            this.className = className;
+        public boolean isClosed() {
+            return entries != null;
         }
     }
 
     /**
-     * Registers a binding of a method to an invocation plugin.
+     * Adds an entry to this map for a specified method.
      *
-     * @param plugin invocation plugin to be associated with the specified method
+     * @param value value to be associated with the specified method
      * @param isStatic specifies if the method is static
+     * @param isOptional specifies if the method is optional
      * @param declaringClass the class declaring the method
      * @param name the name of the method
      * @param argumentTypes the argument types of the method. Element 0 of this array must be
      *            {@code declaringClass} iff the method is non-static.
      * @return an object representing the method
      */
-    Binding put(InvocationPlugin plugin, boolean isStatic, boolean allowOverwrite, Type declaringClass, String name, Type... argumentTypes) {
-        assert resolvedRegistrations == null : "registration is closed";
-        String internalName = MetaUtil.toInternalName(declaringClass.getTypeName());
+    MethodKey put(InvocationPlugin value, boolean isStatic, boolean isOptional, boolean allowOverwrite, Type declaringClass, String name, Type... argumentTypes) {
         assert isStatic || argumentTypes[0] == declaringClass;
-        assert deferredRegistrations != null : "initial registration is closed - use " + LateRegistration.class.getName() + " for late registrations";
 
+        String internalName = MetaUtil.toInternalName(declaringClass.getTypeName());
         ClassPlugins classPlugins = registrations.get(internalName);
         if (classPlugins == null) {
-            classPlugins = new ClassPlugins();
+            classPlugins = new ClassPlugins(declaringClass);
             registrations.put(internalName, classPlugins);
         }
-        Binding binding = new Binding(plugin, isStatic, name, argumentTypes);
-        classPlugins.register(binding, allowOverwrite);
-        return binding;
-    }
-
-    InvocationPlugin get(ResolvedJavaMethod method) {
-        if (resolvedRegistrations != null) {
-            return resolvedRegistrations.get(method);
-        } else {
-            if (!method.isBridge()) {
-                ResolvedJavaType declaringClass = method.getDeclaringClass();
-                flushDeferrables();
-                String internalName = declaringClass.getName();
-                ClassPlugins classPlugins = registrations.get(internalName);
-                InvocationPlugin res = null;
-                if (classPlugins != null) {
-                    res = classPlugins.get(method);
-                }
-                if (res == null) {
-                    LateClassPlugins lcp = findLateClassPlugins(internalName);
-                    if (lcp != null) {
-                        res = lcp.get(method);
-                    }
-                }
-                if (res != null) {
-                    if (canBeIntrinsified(declaringClass)) {
-                        return res;
-                    }
-                }
-            } else {
-                // Supporting plugins for bridge methods would require including
-                // the return type in the registered signature. Until needed,
-                // this extra complexity is best avoided.
-            }
-        }
-        return null;
+        assert isStatic || argumentTypes[0] == declaringClass;
+        MethodKey methodKey = new MethodKey(metaAccess, value, isStatic, isOptional, name, argumentTypes);
+        classPlugins.register(methodKey, allowOverwrite);
+        return methodKey;
     }
 
     /**
-     * Determines if methods in a given class can have invocation plugins.
-     *
-     * @param declaringClass the class to test
+     * Determines if a method denoted by a given {@link MethodKey} is in this map.
      */
-    protected boolean canBeIntrinsified(ResolvedJavaType declaringClass) {
-        return true;
+    boolean containsKey(Type declaringType, MethodKey key) {
+        String internalName = MetaUtil.toInternalName(declaringType.getTypeName());
+        ClassPlugins classPlugins = registrations.get(internalName);
+        return classPlugins != null && classPlugins.registrations.contains(key);
     }
 
-    LateClassPlugins findLateClassPlugins(String internalClassName) {
-        for (LateClassPlugins lcp = lateRegistrations; lcp != null; lcp = lcp.next) {
-            if (lcp.className.equals(internalClassName)) {
-                return lcp;
-            }
+    InvocationPlugin get(ResolvedJavaMethod method) {
+        flushDeferrables();
+        String internalName = method.getDeclaringClass().getName();
+        ClassPlugins classPlugins = registrations.get(internalName);
+        if (classPlugins != null) {
+            return classPlugins.get(method);
         }
         return null;
     }
@@ -693,39 +664,25 @@ public class InvocationPlugins {
                     deferredRegistrations = null;
                 }
             }
+            for (ClassPlugins e : registrations.getValues()) {
+                e.initializeMap();
+            }
         }
-    }
-
-    synchronized void registerLate(Type declaringType, List<Binding> bindings) {
-        String internalName = MetaUtil.toInternalName(declaringType.getTypeName());
-        assert findLateClassPlugins(internalName) == null : "Cannot have more than one late registration of invocation plugins for " + internalName;
-        LateClassPlugins lateClassPlugins = new LateClassPlugins(lateRegistrations, internalName);
-        for (Binding b : bindings) {
-            lateClassPlugins.register(b);
-        }
-        lateRegistrations = lateClassPlugins;
-    }
-
-    private synchronized boolean closeLateRegistrations() {
-        if (lateRegistrations == null || lateRegistrations.className != CLOSED_LATE_CLASS_PLUGIN) {
-            lateRegistrations = new LateClassPlugins(lateRegistrations, CLOSED_LATE_CLASS_PLUGIN);
-        }
-        return true;
     }
 
     /**
-     * Processes deferred registrations and then closes this object for future registration.
+     * Disallows new registrations of new plugins, and creates the internal tables for method
+     * lookup.
      */
     public void closeRegistration() {
-        assert closeLateRegistrations();
         flushDeferrables();
+        for (ClassPlugins e : registrations.getValues()) {
+            e.initializeMap();
+        }
     }
 
-    public boolean isEmpty() {
-        if (resolvedRegistrations != null) {
-            return resolvedRegistrations.isEmpty();
-        }
-        return registrations.size() == 0 && lateRegistrations == null;
+    public int size() {
+        return registrations.size();
     }
 
     /**
@@ -734,39 +691,47 @@ public class InvocationPlugins {
      */
     protected final InvocationPlugins parent;
 
-    /**
-     * Creates a set of invocation plugins with no parent.
-     */
-    public InvocationPlugins() {
-        this(null);
-    }
-
-    /**
-     * Creates a set of invocation plugins.
-     *
-     * @param parent if non-null, this object will be searched first when looking up plugins
-     */
-    public InvocationPlugins(InvocationPlugins parent) {
+    private InvocationPlugins(InvocationPlugins parent, MetaAccessProvider metaAccess) {
+        this.metaAccess = metaAccess;
         InvocationPlugins p = parent;
         this.parent = p;
-        this.registrations = new HashMap<>();
-        this.resolvedRegistrations = null;
     }
 
     /**
-     * Creates a closed set of invocation plugins for a set of resolved methods. Such an object
-     * cannot have further plugins registered.
+     * Creates a set of invocation plugins with a non-null {@linkplain #getParent() parent}.
      */
-    public InvocationPlugins(Map<ResolvedJavaMethod, InvocationPlugin> plugins, InvocationPlugins parent) {
+    public InvocationPlugins(InvocationPlugins parent) {
+        this(parent, parent.getMetaAccess());
+    }
+
+    public InvocationPlugins(Map<ResolvedJavaMethod, InvocationPlugin> plugins, InvocationPlugins parent, MetaAccessProvider metaAccess) {
+        this.metaAccess = metaAccess;
         this.parent = parent;
-        this.registrations = null;
+
         this.deferredRegistrations = null;
-        Map<ResolvedJavaMethod, InvocationPlugin> map = new HashMap<>(plugins.size());
 
         for (Map.Entry<ResolvedJavaMethod, InvocationPlugin> entry : plugins.entrySet()) {
-            map.put(entry.getKey(), entry.getValue());
+            ResolvedJavaMethod method = entry.getKey();
+            InvocationPlugin plugin = entry.getValue();
+
+            String internalName = method.getDeclaringClass().getName();
+            ClassPlugins classPlugins = registrations.get(internalName);
+            if (classPlugins == null) {
+                classPlugins = new ClassPlugins(null);
+                registrations.put(internalName, classPlugins);
+                classPlugins.entries = EconomicMap.create(Equivalence.DEFAULT);
+            }
+
+            classPlugins.entries.put(new ResolvedJavaMethodKey(method), plugin);
         }
-        this.resolvedRegistrations = map;
+    }
+
+    public MetaAccessProvider getMetaAccess() {
+        return metaAccess;
+    }
+
+    public InvocationPlugins(MetaAccessProvider metaAccess) {
+        this(null, metaAccess);
     }
 
     protected void register(InvocationPlugin plugin, boolean isOptional, boolean allowOverwrite, Type declaringClass, String name, Type... argumentTypes) {
@@ -774,9 +739,8 @@ public class InvocationPlugins {
         if (!isStatic) {
             argumentTypes[0] = declaringClass;
         }
-        Binding binding = put(plugin, isStatic, allowOverwrite, declaringClass, name, argumentTypes);
-        assert Checks.check(this, declaringClass, binding);
-        assert Checks.checkResolvable(isOptional, declaringClass, binding);
+        MethodKey methodKey = put(plugin, isStatic, isOptional, allowOverwrite, declaringClass, name, argumentTypes);
+        assert Checker.check(this, declaringClass, methodKey, plugin);
     }
 
     /**
@@ -826,54 +790,21 @@ public class InvocationPlugins {
     }
 
     /**
-     * Gets the set of registered invocation plugins.
-     *
-     * @return a map from class names in {@linkplain MetaUtil#toInternalName(String) internal} form
-     *         to the invocation plugin bindings for methods in the class
+     * Gets the set of methods for which invocation plugins have been registered. Once this method
+     * is called, no further registrations can be made.
      */
-    public Map<String, List<Binding>> getBindings(boolean includeParents) {
-        Map<String, List<Binding>> res = new HashMap<>();
-        if (parent != null && includeParents) {
-            res.putAll(parent.getBindings(true));
+    public EconomicSet<ResolvedJavaMethod> getMethods() {
+        EconomicSet<ResolvedJavaMethod> res = EconomicSet.create(Equivalence.DEFAULT);
+        if (parent != null) {
+            res.addAll(parent.getMethods());
         }
-        if (resolvedRegistrations != null) {
-            for (Map.Entry<ResolvedJavaMethod, InvocationPlugin> e : resolvedRegistrations.entrySet()) {
-                ResolvedJavaMethod method = e.getKey();
-                InvocationPlugin plugin = e.getValue();
-                String type = method.getDeclaringClass().getName();
-                List<Binding> bindings = res.get(type);
-                if (bindings == null) {
-                    bindings = new ArrayList<>();
-                    res.put(type, bindings);
-                }
-                bindings.add(new Binding(method, plugin));
-            }
-        } else {
-            flushDeferrables();
-            for (Map.Entry<String, ClassPlugins> e : registrations.entrySet()) {
-                String type = e.getKey();
-                ClassPlugins cp = e.getValue();
-                collectBindingsTo(res, type, cp);
-            }
-            for (LateClassPlugins lcp = lateRegistrations; lcp != null; lcp = lcp.next) {
-                String type = lcp.className;
-                collectBindingsTo(res, type, lcp);
+        flushDeferrables();
+        for (ClassPlugins cp : registrations.getValues()) {
+            for (ResolvedJavaMethodKey key : cp.entries.getKeys()) {
+                res.add(key.method);
             }
         }
         return res;
-    }
-
-    private static void collectBindingsTo(Map<String, List<Binding>> res, String type, ClassPlugins cp) {
-        for (Map.Entry<String, Binding> e : cp.bindings.entrySet()) {
-            List<Binding> bindings = res.get(type);
-            if (bindings == null) {
-                bindings = new ArrayList<>();
-                res.put(type, bindings);
-            }
-            for (Binding b = e.getValue(); b != null; b = b.next) {
-                bindings.add(b);
-            }
-        }
     }
 
     /**
@@ -886,35 +817,20 @@ public class InvocationPlugins {
 
     @Override
     public String toString() {
-        List<String> all = new ArrayList<>();
-        for (Map.Entry<String, List<Binding>> e : getBindings(false).entrySet()) {
-            String c = MetaUtil.internalNameToJava(e.getKey(), true, false);
-            for (Binding b : e.getValue()) {
-                all.add(c + '.' + b);
-            }
-        }
-        Collections.sort(all);
         StringBuilder buf = new StringBuilder();
-        String nl = String.format("%n");
-        for (String s : all) {
-            if (buf.length() != 0) {
-                buf.append(nl);
-            }
-            buf.append(s);
+        UnmodifiableMapCursor<String, ClassPlugins> entries = registrations.getEntries();
+        while (entries.advance()) {
+            buf.append(entries.getKey()).append('.').append(entries.getValue()).append(", ");
         }
-        if (parent != null) {
-            if (buf.length() != 0) {
-                buf.append(nl);
-            }
-            buf.append("// parent").append(nl).append(parent);
+
+        String s = buf.toString();
+        if (buf.length() != 0) {
+            s = s.substring(buf.length() - ", ".length());
         }
-        return buf.toString();
+        return s + " / parent: " + this.parent;
     }
 
-    /**
-     * Code only used in assertions. Putting this in a separate class reduces class load time.
-     */
-    private static class Checks {
+    private static class Checker {
         private static final int MAX_ARITY = 7;
         /**
          * The set of all {@link InvocationPlugin#apply} method signatures.
@@ -941,17 +857,10 @@ public class InvocationPlugins {
             SIGS = sigs.toArray(new Class<?>[sigs.size()][]);
         }
 
-        static boolean containsBinding(InvocationPlugins p, Type declaringType, Binding key) {
-            String internalName = MetaUtil.toInternalName(declaringType.getTypeName());
-            ClassPlugins classPlugins = p.registrations.get(internalName);
-            return classPlugins != null && classPlugins.lookup(key) != null;
-        }
-
-        public static boolean check(InvocationPlugins plugins, Type declaringType, Binding binding) {
-            InvocationPlugin plugin = binding.plugin;
+        public static boolean check(InvocationPlugins plugins, Type declaringType, MethodKey method, InvocationPlugin plugin) {
             InvocationPlugins p = plugins.parent;
             while (p != null) {
-                assert !containsBinding(p, declaringType, binding) : "a plugin is already registered for " + binding;
+                assert !p.containsKey(declaringType, method) : "a plugin is already registered for " + method;
                 p = p.parent;
             }
             if (plugin instanceof ForeignCallPlugin || plugin instanceof GeneratedInvocationPlugin) {
@@ -963,8 +872,8 @@ public class InvocationPlugins {
                 assert substitute.getAnnotation(MethodSubstitution.class) != null : format("Substitute method must be annotated with @%s: %s", MethodSubstitution.class.getSimpleName(), substitute);
                 return true;
             }
-            int arguments = parseParameters(binding.argumentsDescriptor).size();
-            assert arguments < SIGS.length : format("need to extend %s to support method with %d arguments: %s", InvocationPlugin.class.getSimpleName(), arguments, binding);
+            int arguments = method.getDeclaredParameterCount();
+            assert arguments < SIGS.length : format("need to extend %s to support method with %d arguments: %s", InvocationPlugin.class.getSimpleName(), arguments, method);
             for (Method m : plugin.getClass().getDeclaredMethods()) {
                 if (m.getName().equals("apply")) {
                     Class<?>[] parameterTypes = m.getParameterTypes();
@@ -973,24 +882,7 @@ public class InvocationPlugins {
                     }
                 }
             }
-            throw new AssertionError(format("graph builder plugin for %s not found", binding));
-        }
-
-        static boolean checkResolvable(boolean isOptional, Type declaringType, Binding binding) {
-            Class<?> declaringClass = InvocationPlugins.resolveType(declaringType, isOptional);
-            if (declaringClass == null) {
-                return true;
-            }
-            if (binding.name.equals("<init>")) {
-                if (resolveConstructor(declaringClass, binding) == null && !isOptional) {
-                    throw new AssertionError(String.format("Constructor not found: %s%s", declaringClass.getName(), binding.argumentsDescriptor));
-                }
-            } else {
-                if (resolveMethod(declaringClass, binding) == null && !isOptional) {
-                    throw new AssertionError(String.format("Method not found: %s.%s%s", declaringClass.getName(), binding.name, binding.argumentsDescriptor));
-                }
-            }
-            return true;
+            throw new AssertionError(format("graph builder plugin for %s not found", method));
         }
     }
 
@@ -1041,119 +933,31 @@ public class InvocationPlugins {
         if (type instanceof Class) {
             return (Class<?>) type;
         }
-        if (type instanceof OptionalLazySymbol) {
+        if (optional && type instanceof OptionalLazySymbol) {
             return ((OptionalLazySymbol) type).resolve();
         }
         return resolveClass(type.getTypeName(), optional);
     }
 
-    private static List<String> toInternalTypeNames(Class<?>[] types) {
-        String[] res = new String[types.length];
-        for (int i = 0; i < types.length; i++) {
-            res[i] = MetaUtil.toInternalName(types[i].getTypeName());
-        }
-        return Arrays.asList(res);
-    }
+    private static final Class<?>[] NO_CLASSES = {};
 
     /**
-     * Resolves a given binding to a method in a given class. If more than one method with the
-     * parameter types matching {@code binding} is found and the return types of all the matching
-     * methods form an inheritance chain, the one with the most specific type is returned; otherwise
-     * {@link NoSuchMethodError} is thrown.
+     * Resolves an array of {@link Type}s to an array of {@link Class}es.
      *
-     * @param declaringClass the class to search for a method matching {@code binding}
-     * @return the method (if any) in {@code declaringClass} matching binding
+     * @param types the types to resolve
+     * @param from the initial index of the range to be resolved, inclusive
+     * @param to the final index of the range to be resolved, exclusive
+     * @return the resolved class or null if resolution fails and {@code optional} is true
      */
-    public static Method resolveMethod(Class<?> declaringClass, Binding binding) {
-        if (binding.name.equals("<init>")) {
-            return null;
+    public static Class<?>[] resolveTypes(Type[] types, int from, int to) {
+        int length = to - from;
+        if (length <= 0) {
+            return NO_CLASSES;
         }
-        Method[] methods = declaringClass.getDeclaredMethods();
-        List<String> parameterTypeNames = parseParameters(binding.argumentsDescriptor);
-        for (int i = 0; i < methods.length; ++i) {
-            Method m = methods[i];
-            if (binding.isStatic == Modifier.isStatic(m.getModifiers()) && m.getName().equals(binding.name)) {
-                if (parameterTypeNames.equals(toInternalTypeNames(m.getParameterTypes()))) {
-                    for (int j = i + 1; j < methods.length; ++j) {
-                        Method other = methods[j];
-                        if (binding.isStatic == Modifier.isStatic(other.getModifiers()) && other.getName().equals(binding.name)) {
-                            if (parameterTypeNames.equals(toInternalTypeNames(other.getParameterTypes()))) {
-                                if (m.getReturnType().isAssignableFrom(other.getReturnType())) {
-                                    // `other` has a more specific return type - choose it
-                                    // (m is most likely a bridge method)
-                                    m = other;
-                                } else {
-                                    if (!other.getReturnType().isAssignableFrom(m.getReturnType())) {
-                                        throw new NoSuchMethodError(String.format(
-                                                        "Found 2 methods with same name and parameter types but unrelated return types:%n %s%n %s", m, other));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    return m;
-                }
-            }
+        Class<?>[] classes = new Class<?>[length];
+        for (int i = 0; i < length; i++) {
+            classes[i] = resolveType(types[i + from], false);
         }
-        return null;
-    }
-
-    /**
-     * Resolves a given binding to a constructor in a given class.
-     *
-     * @param declaringClass the class to search for a constructor matching {@code binding}
-     * @return the constructor (if any) in {@code declaringClass} matching binding
-     */
-    public static Constructor<?> resolveConstructor(Class<?> declaringClass, Binding binding) {
-        if (!binding.name.equals("<init>")) {
-            return null;
-        }
-        Constructor<?>[] constructors = declaringClass.getDeclaredConstructors();
-        List<String> parameterTypeNames = parseParameters(binding.argumentsDescriptor);
-        for (int i = 0; i < constructors.length; ++i) {
-            Constructor<?> c = constructors[i];
-            if (parameterTypeNames.equals(toInternalTypeNames(c.getParameterTypes()))) {
-                return c;
-            }
-        }
-        return null;
-    }
-
-    private static List<String> parseParameters(String argumentsDescriptor) {
-        assert argumentsDescriptor.startsWith("(") && argumentsDescriptor.endsWith(")") : argumentsDescriptor;
-        List<String> res = new ArrayList<>();
-        int cur = 1;
-        int end = argumentsDescriptor.length() - 1;
-        while (cur != end) {
-            char first;
-            int start = cur;
-            do {
-                first = argumentsDescriptor.charAt(cur++);
-            } while (first == '[');
-
-            switch (first) {
-                case 'L':
-                    int endObject = argumentsDescriptor.indexOf(';', cur);
-                    if (endObject == -1) {
-                        throw new GraalError("Invalid object type at index %d in signature: %s", cur, argumentsDescriptor);
-                    }
-                    cur = endObject + 1;
-                    break;
-                case 'V':
-                case 'I':
-                case 'B':
-                case 'C':
-                case 'D':
-                case 'F':
-                case 'J':
-                case 'S':
-                case 'Z':
-                    break;
-                default:
-                    throw new GraalError("Invalid character at index %d in signature: %s", cur, argumentsDescriptor);
-            }
-            res.add(argumentsDescriptor.substring(start, cur));
-        }
-        return res;
+        return classes;
     }
 }
