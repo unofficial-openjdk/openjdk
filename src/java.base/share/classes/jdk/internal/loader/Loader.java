@@ -79,8 +79,8 @@ import jdk.internal.module.Resources;
  * loader. This allows automatic modules (for example) to link to types in the
  * unnamed module of the parent class loader.
  *
- * @see ModuleModuleLayer#defineModulesWithOneLoader
- * @see ModuleModuleLayer#defineModulesWithManyLoaders
+ * @see ModuleLayer#defineModulesWithOneLoader
+ * @see ModuleLayer#defineModulesWithManyLoaders
  */
 
 public final class Loader extends SecureClassLoader {
