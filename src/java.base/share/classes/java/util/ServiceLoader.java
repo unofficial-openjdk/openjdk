@@ -164,14 +164,15 @@ import jdk.internal.reflect.Reflection;
  *
  * <p> When locating providers using a class loader then any providers in named
  * modules defined to the class loader, or any class loader that is reachable
- * via parent delegation, are located. Additionally, providers in module layers
- * other than the {@link ModuleLayer#boot() boot} layer, where the module layer
- * contains modules defined to the class loader, or any class loader reachable
- * via parent delegation, are also located. For example, suppose there is a
+ * via parent delegation, are located. Additionally, and with the exception
+ * of the bootstrap and {@linkplain ClassLoader#getPlatformClassLoader()
+ * platform} class loaders, if the class loader, or any class loader reachable
+ * via parent delegation, defines modules in one or more module layers then the
+ * providers in the module layers are located. For example, suppose there is a
  * module layer where each module is defined to its own class loader (see {@link
- * ModuleLayer#defineModulesWithManyLoaders defineModulesWithManyLoaders}). If the
- * {@code load} method is invoked to locate providers using any of these class
- * loaders for this layer then it will locate all of the providers in that
+ * ModuleLayer#defineModulesWithManyLoaders defineModulesWithManyLoaders}). If
+ * the {@code load} method is invoked to locate providers using any of these
+ * class loaders for this layer then it will locate all of the providers in that
  * layer, irrespective of their defining class loader.
  *
  * <p> In the case of unnamed modules then the service configuration files are
@@ -957,13 +958,25 @@ public final class ServiceLoader<S>
         }
 
         /**
+         * Returns the class loader that a module is defined to
+         */
+        private ClassLoader loaderFor(Module module) {
+            SecurityManager sm = System.getSecurityManager();
+            if (sm == null) {
+                return module.getClassLoader();
+            } else {
+                PrivilegedAction<ClassLoader> pa = module::getClassLoader;
+                return AccessController.doPrivileged(pa);
+            }
+        }
+
+        /**
          * Returns an iterator to iterate over the implementations of {@code
          * service} in modules defined to the given class loader or in custom
          * layers with a module defined to this class loader.
          */
         private Iterator<ServiceProvider> iteratorFor(ClassLoader loader) {
-
-            // modules defined to this class loader
+            // modules defined to the class loader
             ServicesCatalog catalog;
             if (loader == null) {
                 catalog = BootLoader.getServicesCatalog();
@@ -977,17 +990,20 @@ public final class ServiceLoader<S>
                 providers = catalog.findServices(serviceName);
             }
 
-            // modules in custom layers that define modules to the class loader
-            if (loader == null) {
+            // modules in layers that define modules to the class loader
+            ClassLoader platformClassLoader = ClassLoaders.platformClassLoader();
+            if (loader == null || loader == platformClassLoader) {
                 return providers.iterator();
             } else {
                 List<ServiceProvider> allProviders = new ArrayList<>(providers);
-                ModuleLayer bootLayer = ModuleLayer.boot();
                 Iterator<ModuleLayer> iterator = LANG_ACCESS.layers(loader).iterator();
                 while (iterator.hasNext()) {
                     ModuleLayer layer = iterator.next();
-                    if (layer != bootLayer) {
-                        allProviders.addAll(providers(layer));
+                    for (ServiceProvider sp : providers(layer)) {
+                        ClassLoader l = loaderFor(sp.module());
+                        if (l != null && l != platformClassLoader) {
+                            allProviders.add(sp);
+                        }
                     }
                 }
                 return allProviders.iterator();

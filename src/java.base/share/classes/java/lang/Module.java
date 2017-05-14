@@ -55,8 +55,10 @@ import java.util.stream.Stream;
 
 import jdk.internal.loader.BuiltinClassLoader;
 import jdk.internal.loader.BootLoader;
+import jdk.internal.loader.ClassLoaders;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.Checks;
 import jdk.internal.module.ModuleLoaderMap;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.module.Resources;
@@ -160,7 +162,6 @@ public final class Module implements AnnotatedElement {
         this.loader = loader;
         this.descriptor = descriptor;
     }
-
 
 
     /**
@@ -1025,15 +1026,8 @@ public final class Module implements AnnotatedElement {
         if (containsPackage(pn))
             return;
 
-        // check package name is legal for named modules
-        if (pn.isEmpty())
-            throw new IllegalArgumentException("Cannot add <unnamed> package");
-        for (int i=0; i<pn.length(); i++) {
-            char c = pn.charAt(i);
-            if (c == '/' || c == ';' || c == '[') {
-                throw new IllegalArgumentException("Illegal character: " + c);
-            }
-        }
+        // check the package name is legal
+        Checks.requirePackageName(pn);
 
         // create extraPackages if needed
         Map<String, Boolean> extraPackages = this.extraPackages;
@@ -1075,18 +1069,21 @@ public final class Module implements AnnotatedElement {
         Map<String, Module> nameToModule = new HashMap<>();
         Map<String, ClassLoader> moduleToLoader = new HashMap<>();
 
-        boolean isBootLayer = (ModuleLayer.boot() == null);
         Set<ClassLoader> loaders = new HashSet<>();
+        boolean hasPlatformModules = false;
 
         // map each module to a class loader
         for (ResolvedModule resolvedModule : cf.modules()) {
             String name = resolvedModule.name();
             ClassLoader loader = clf.apply(name);
-            if (loader != null) {
-                moduleToLoader.put(name, loader);
+            moduleToLoader.put(name, loader);
+            if (loader == null || loader == ClassLoaders.platformClassLoader()) {
+                hasPlatformModules = true;
+                if (loader == null && !(clf instanceof ModuleLoaderMap.Mapper)) {
+                    throw new IllegalArgumentException("loader can't be 'null'");
+                }
+            } else {
                 loaders.add(loader);
-            } else if (!(clf instanceof ModuleLoaderMap.Mapper)) {
-                throw new IllegalArgumentException("loader can't be 'null'");
             }
         }
 
@@ -1098,7 +1095,7 @@ public final class Module implements AnnotatedElement {
             URI uri = mref.location().orElse(null);
             ClassLoader loader = moduleToLoader.get(resolvedModule.name());
             Module m;
-            if (loader == null && isBootLayer && name.equals("java.base")) {
+            if (loader == null && name.equals("java.base")) {
                 // java.base is already defined to the VM
                 m = Object.class.getModule();
             } else {
@@ -1157,8 +1154,12 @@ public final class Module implements AnnotatedElement {
             initExportsAndOpens(m, nameToSource, nameToModule, layer.parents());
         }
 
-        // register the modules in the boot layer
-        if (isBootLayer) {
+        // if there are modules defined to the boot or platform class loaders
+        // then register the modules in the class loader's services catalog
+        if (hasPlatformModules) {
+            ClassLoader pcl = ClassLoaders.platformClassLoader();
+            ServicesCatalog bootCatalog = BootLoader.getServicesCatalog();
+            ServicesCatalog pclCatalog = ServicesCatalog.getServicesCatalog(pcl);
             for (ResolvedModule resolvedModule : cf.modules()) {
                 ModuleReference mref = resolvedModule.reference();
                 ModuleDescriptor descriptor = mref.descriptor();
@@ -1166,13 +1167,11 @@ public final class Module implements AnnotatedElement {
                     String name = descriptor.name();
                     Module m = nameToModule.get(name);
                     ClassLoader loader = moduleToLoader.get(name);
-                    ServicesCatalog catalog;
                     if (loader == null) {
-                        catalog = BootLoader.getServicesCatalog();
-                    } else {
-                        catalog = ServicesCatalog.getServicesCatalog(loader);
+                        bootCatalog.register(m);
+                    } else if (loader == pcl) {
+                        pclCatalog.register(m);
                     }
-                    catalog.register(m);
                 }
             }
         }
