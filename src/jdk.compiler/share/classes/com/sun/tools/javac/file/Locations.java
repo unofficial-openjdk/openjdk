@@ -29,6 +29,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.URI;
 import java.net.URL;
@@ -65,6 +66,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import javax.lang.model.SourceVersion;
 import javax.tools.JavaFileManager;
@@ -1340,6 +1343,17 @@ public class Locations {
                         if (Files.exists(moduleInfoClass)) {
                             String moduleName = readModuleName(moduleInfoClass);
                             return new Pair<>(moduleName, p);
+                        }
+                        Path mf = fs.getPath("META-INF/MANIFEST.MF");
+                        if (Files.exists(mf)) {
+                            try (InputStream in = Files.newInputStream(mf)) {
+                                Manifest man = new Manifest(in);
+                                Attributes attrs = man.getMainAttributes();
+                                if (attrs != null) {
+                                    String moduleName = attrs.getValue(new Attributes.Name("Automatic-Module-Name"));
+                                    if (moduleName != null) return new Pair<>(moduleName, p);
+                                }
+                            }
                         }
                     } catch (ModuleNameReader.BadClassFile e) {
                         log.error(Errors.LocnBadModuleInfo(p));
