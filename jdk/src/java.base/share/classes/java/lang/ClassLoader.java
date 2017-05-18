@@ -129,11 +129,13 @@ import sun.security.util.SecurityConstants;
  *     classes and JDK-specific run-time classes that are defined by the
  *     platform class loader or its ancestors.
  *     <p> To allow for upgrading/overriding of modules defined to the platform
- *     class loader, and where classes in the upgraded version link to
- *     classes in modules defined to the application class loader, the
- *     platform class loader may delegate to the application class loader.
- *     In other words, classes in named modules defined to the application
- *     class loader may be visible to the platform class loader. </li>
+ *     class loader, and where upgraded modules read modules defined to class
+ *     loaders other than the platform class loader and its ancestors, then
+ *     the platform class loader may have to delegate to other class loaders,
+ *     the application class loader for example.
+ *     In other words, classes in named modules defined to class loaders
+ *     other than the platform class loader and its ancestors may be visible
+ *     to the platform class loader. </li>
  * <li><p>{@linkplain #getSystemClassLoader() System class loader}.
  *     It is also known as <em>application class loader</em> and is distinct
  *     from the platform class loader.
