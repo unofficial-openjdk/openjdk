@@ -535,12 +535,12 @@ public final class Module implements AnnotatedElement {
             return true;
 
         // all packages are exported/open to self
-        if (other == this && containsPackage(pn))
+        if (other == this && descriptor.packages().contains(pn))
             return true;
 
         // all packages in open and automatic modules are open
         if (descriptor.isOpen() || descriptor.isAutomatic())
-            return containsPackage(pn);
+            return descriptor.packages().contains(pn);
 
         // exported/opened via module declaration/descriptor
         if (isStaticallyExportedOrOpen(pn, other, open))
@@ -831,7 +831,7 @@ public final class Module implements AnnotatedElement {
             return;
 
         // can only export a package in the module
-        if (!containsPackage(pn)) {
+        if (!descriptor.packages().contains(pn)) {
             throw new IllegalArgumentException("package " + pn
                                                + " not in contents");
         }
@@ -948,19 +948,6 @@ public final class Module implements AnnotatedElement {
 
     // -- packages --
 
-    // Additional packages that are added to the module at run-time.
-    private volatile Map<String, Boolean> extraPackages;
-
-    private boolean containsPackage(String pn) {
-        if (descriptor.packages().contains(pn))
-            return true;
-        Map<String, Boolean> extraPackages = this.extraPackages;
-        if (extraPackages != null && extraPackages.containsKey(pn))
-            return true;
-        return false;
-    }
-
-
     /**
      * Returns the set of package names for the packages in this module.
      *
@@ -975,17 +962,7 @@ public final class Module implements AnnotatedElement {
      */
     public Set<String> getPackages() {
         if (isNamed()) {
-
-            Set<String> packages = descriptor.packages();
-            Map<String, Boolean> extraPackages = this.extraPackages;
-            if (extraPackages == null) {
-                return packages;
-            } else {
-                return Stream.concat(packages.stream(),
-                                     extraPackages.keySet().stream())
-                        .collect(Collectors.toSet());
-            }
-
+            return descriptor.packages();
         } else {
             // unnamed module
             Stream<Package> packages;
@@ -996,59 +973,6 @@ public final class Module implements AnnotatedElement {
             }
             return packages.map(Package::getName).collect(Collectors.toSet());
         }
-    }
-
-    /**
-     * Add a package to this module without notifying the VM.
-     *
-     * @apiNote This method is VM white-box testing.
-     */
-    void implAddPackageNoSync(String pn) {
-        implAddPackage(pn.replace('/', '.'), false);
-    }
-
-    /**
-     * Add a package to this module.
-     *
-     * If {@code syncVM} is {@code true} then the VM is notified. This method is
-     * a no-op if this is an unnamed module or the module already contains the
-     * package.
-     *
-     * @throws IllegalArgumentException if the package name is not legal
-     * @throws IllegalStateException if the package is defined to another module
-     */
-    private void implAddPackage(String pn, boolean syncVM) {
-        // no-op if unnamed module
-        if (!isNamed())
-            return;
-
-        // no-op if module contains the package
-        if (containsPackage(pn))
-            return;
-
-        // check the package name is legal
-        Checks.requirePackageName(pn);
-
-        // create extraPackages if needed
-        Map<String, Boolean> extraPackages = this.extraPackages;
-        if (extraPackages == null) {
-            synchronized (this) {
-                extraPackages = this.extraPackages;
-                if (extraPackages == null)
-                    this.extraPackages = extraPackages = new ConcurrentHashMap<>();
-            }
-        }
-
-        // update VM first in case it fails. This is a no-op if another thread
-        // beats us to add the package first
-        if (syncVM) {
-            // throws IllegalStateException if defined to another module
-            addPackage0(this, pn);
-            if (descriptor.isOpen() || descriptor.isAutomatic()) {
-                addExportsToAll0(this, pn);
-            }
-        }
-        extraPackages.putIfAbsent(pn, Boolean.TRUE);
     }
 
 
@@ -1586,7 +1510,4 @@ public final class Module implements AnnotatedElement {
 
     // JVM_AddModuleExportsToAllUnnamed
     private static native void addExportsToAllUnnamed0(Module from, String pn);
-
-    // JVM_AddModulePackage
-    private static native void addPackage0(Module m, String pn);
 }
