@@ -245,6 +245,32 @@ public final class ModuleLayer {
         }
 
         /**
+         * Updates module {@code source} in the layer to export a package to
+         * module {@code target}. This method is a no-op if {@code source}
+         * already exports the package to at least {@code target}.
+         *
+         * @param  source
+         *         The source module
+         * @param  pn
+         *         The package name
+         * @param  target
+         *         The target module
+         *
+         * @return This controller
+         *
+         * @throws IllegalArgumentException
+         *         If {@code source} is not in the module layer or the package
+         *         is not in the source module
+         *
+         * @see Module#addExports
+         */
+        public Controller addExports(Module source, String pn, Module target) {
+            ensureInLayer(source);
+            source.implAddExports(pn, target);
+            return this;
+        }
+
+        /**
          * Updates module {@code source} in the layer to open a package to
          * module {@code target}. This method is a no-op if {@code source}
          * already opens the package to at least {@code target}.
@@ -254,7 +280,7 @@ public final class ModuleLayer {
          * @param  pn
          *         The package name
          * @param  target
-         *         The target module to read
+         *         The target module
          *
          * @return This controller
          *
