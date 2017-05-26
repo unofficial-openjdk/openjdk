@@ -128,7 +128,7 @@ or because the agent class does not have an appropriate <code>premain</code> met
 If a <code>premain</code> method throws an uncaught exception, the JVM will abort.
 
 
-<h3>Starting Agents After VM Startup</h3>
+<h3>Starting an Agent After VM Startup</h3>
 
 <p>
 An implementation may provide a mechanism to start agents sometime after the
@@ -192,7 +192,7 @@ or because the agent class does not have a conformant <code>agentmain</code> met
 not abort. If the <code>agentmain</code> method throws an uncaught exception it will be ignored.
 
 
-<h3>Deploying Agents in Executable JAR file</h3>
+<h3>Including an Agent in an Executable JAR file</h3>
 
 The JAR File Specification defines manifest attributes for standalone applications that are
 bundled as <em>executable JAR files</em>. If an implementation supports a mechanism to start
