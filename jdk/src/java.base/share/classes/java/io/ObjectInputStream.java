@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -216,7 +216,8 @@ import sun.reflect.misc.ReflectUtil;
  * @see java.io.DataInput
  * @see java.io.ObjectOutputStream
  * @see java.io.Serializable
- * @see <a href="../../../platform/serialization/spec/input.html"> Object Serialization Specification, Section 3, Object Input Classes</a>
+ * @see <a href="{@docRoot}/../specs/serialization/input.html">
+ *     Object Serialization Specification, Section 3, Object Input Classes</a>
  * @since   1.1
  */
 public class ObjectInputStream
@@ -1797,12 +1798,19 @@ public class ObjectInputStream
         } catch (ClassNotFoundException ex) {
             resolveEx = ex;
         }
+
+        // Call filterCheck on the class before reading anything else
+        filterCheck(cl, -1);
+
         skipCustomData();
 
-        desc.initProxy(cl, resolveEx, readClassDesc(false));
-
-        // Call filterCheck on the definition
-        filterCheck(desc.forClass(), -1);
+        try {
+            totalObjectRefs++;
+            depth++;
+            desc.initProxy(cl, resolveEx, readClassDesc(false));
+        } finally {
+            depth--;
+        }
 
         handles.finish(descHandle);
         passHandle = descHandle;
@@ -1847,12 +1855,19 @@ public class ObjectInputStream
         } catch (ClassNotFoundException ex) {
             resolveEx = ex;
         }
+
+        // Call filterCheck on the class before reading anything else
+        filterCheck(cl, -1);
+
         skipCustomData();
 
-        desc.initNonProxy(readDesc, cl, resolveEx, readClassDesc(false));
-
-        // Call filterCheck on the definition
-        filterCheck(desc.forClass(), -1);
+        try {
+            totalObjectRefs++;
+            depth++;
+            desc.initNonProxy(readDesc, cl, resolveEx, readClassDesc(false));
+        } finally {
+            depth--;
+        }
 
         handles.finish(descHandle);
         passHandle = descHandle;

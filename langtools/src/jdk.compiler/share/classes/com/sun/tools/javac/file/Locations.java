@@ -85,6 +85,7 @@ import com.sun.tools.javac.util.JDK9Wrappers;
 import com.sun.tools.javac.util.ListBuffer;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.jvm.ModuleNameReader;
+import com.sun.tools.javac.util.Assert;
 import com.sun.tools.javac.util.Pair;
 import com.sun.tools.javac.util.StringUtils;
 
@@ -224,6 +225,41 @@ public class Locations {
 
     public void setMultiReleaseValue(String multiReleaseValue) {
         fsEnv = Collections.singletonMap("multi-release", multiReleaseValue);
+    }
+
+    private boolean contains(Collection<Path> searchPath, Path file) throws IOException {
+
+        if (searchPath == null) {
+            return false;
+        }
+
+        Path enclosingJar = null;
+        if (file.getFileSystem().provider() == fsInfo.getJarFSProvider()) {
+            URI uri = file.toUri();
+            if (uri.getScheme().equals("jar")) {
+                String ssp = uri.getSchemeSpecificPart();
+                int sep = ssp.lastIndexOf("!");
+                if (ssp.startsWith("file:") && sep > 0) {
+                    enclosingJar = Paths.get(URI.create(ssp.substring(0, sep)));
+                }
+            }
+        }
+
+        Path nf = normalize(file);
+        for (Path p : searchPath) {
+            Path np = normalize(p);
+            if (np.getFileSystem() == nf.getFileSystem()
+                    && Files.isDirectory(np)
+                    && nf.startsWith(np)) {
+                return true;
+            }
+            if (enclosingJar != null
+                    && Files.isSameFile(enclosingJar, np)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -456,6 +492,11 @@ public class Locations {
         Iterable<Set<Location>> listLocationsForModules() throws IOException {
             return null;
         }
+
+        /**
+         * @see JavaFileManager#contains
+         */
+        abstract boolean contains(Path file) throws IOException;
     }
 
     /**
@@ -611,6 +652,15 @@ public class Locations {
 
             return Collections.singleton(moduleTable.locations());
         }
+
+        @Override
+        boolean contains(Path file) throws IOException {
+            if (moduleTable != null) {
+                return moduleTable.contains(file);
+            } else {
+                return (outputDir) != null && normalize(file).startsWith(normalize(outputDir));
+            }
+        }
     }
 
     /**
@@ -659,6 +709,11 @@ public class Locations {
 
         protected SearchPath createPath() {
             return new SearchPath();
+        }
+
+        @Override
+        boolean contains(Path file) throws IOException {
+            return Locations.this.contains(searchPath, file);
         }
     }
 
@@ -879,12 +934,17 @@ public class Locations {
         private void lazy() {
             if (searchPath == null) {
                 try {
-                searchPath = Collections.unmodifiableCollection(computePath());
+                    searchPath = Collections.unmodifiableCollection(computePath());
                 } catch (IOException e) {
                     // TODO: need better handling here, e.g. javac Abort?
                     throw new UncheckedIOException(e);
                 }
             }
+        }
+
+        @Override
+        boolean contains(Path file) throws IOException {
+            return Locations.this.contains(searchPath, file);
         }
     }
 
@@ -896,7 +956,7 @@ public class Locations {
      * The Location can be specified to accept overriding classes from the
      * {@code --patch-module <module>=<path> } parameter.
      */
-    private static class ModuleLocationHandler extends LocationHandler implements Location {
+    private class ModuleLocationHandler extends LocationHandler implements Location {
         private final LocationHandler parent;
         private final String name;
         private final String moduleName;
@@ -949,6 +1009,11 @@ public class Locations {
         }
 
         @Override
+        boolean contains(Path file) throws IOException {
+            return Locations.this.contains(searchPath, file);
+        }
+
+        @Override
         public String toString() {
             return name;
         }
@@ -957,7 +1022,7 @@ public class Locations {
     /**
      * A table of module location handlers, indexed by name and path.
      */
-    private static class ModuleTable {
+    private class ModuleTable {
         private final Map<String, ModuleLocationHandler> nameMap = new LinkedHashMap<>();
         private final Map<Path, ModuleLocationHandler> pathMap = new LinkedHashMap<>();
 
@@ -1008,6 +1073,10 @@ public class Locations {
             return nameMap.isEmpty();
         }
 
+        boolean contains(Path file) throws IOException {
+            return Locations.this.contains(pathMap.keySet(), file);
+        }
+
         Set<Location> locations() {
             return Collections.unmodifiableSet(nameMap.values().stream().collect(Collectors.toSet()));
         }
@@ -1040,11 +1109,25 @@ public class Locations {
         }
 
         @Override
+        public Location getLocationForModule(Path file) {
+            initModuleLocations();
+            return moduleTable.get(file);
+        }
+
+        @Override
         Iterable<Set<Location>> listLocationsForModules() {
             if (searchPath == null)
                 return Collections.emptyList();
 
             return ModulePathIterator::new;
+        }
+
+        @Override
+        boolean contains(Path file) throws IOException {
+            if (moduleTable == null) {
+                initModuleLocations();
+            }
+            return moduleTable.contains(file);
         }
 
         @Override
@@ -1349,6 +1432,7 @@ public class Locations {
 
     private class ModuleSourcePathLocationHandler extends BasicLocationHandler {
         private ModuleTable moduleTable;
+        private List<Path> paths;
 
         ModuleSourcePathLocationHandler() {
             super(StandardLocation.MODULE_SOURCE_PATH,
@@ -1368,11 +1452,15 @@ public class Locations {
             }
 
             Map<String, List<Path>> map = new LinkedHashMap<>();
+            List<Path> noSuffixPaths = new ArrayList<>();
+            boolean anySuffix = false;
             final String MARKER = "*";
             for (String seg: segments) {
                 int markStart = seg.indexOf(MARKER);
                 if (markStart == -1) {
-                    add(map, getPath(seg), null);
+                    Path p = getPath(seg);
+                    add(map, p, null);
+                    noSuffixPaths.add(p);
                 } else {
                     if (markStart == 0 || !isSeparator(seg.charAt(markStart - 1))) {
                         throw new IllegalArgumentException("illegal use of " + MARKER + " in " + seg);
@@ -1387,11 +1475,20 @@ public class Locations {
                         throw new IllegalArgumentException("illegal use of " + MARKER + " in " + seg);
                     } else {
                         suffix = getPath(seg.substring(markEnd + 1));
+                        anySuffix = true;
                     }
                     add(map, prefix, suffix);
+                    if (suffix == null) {
+                        noSuffixPaths.add(prefix);
+                    }
                 }
             }
 
+            initModuleTable(map);
+            paths = anySuffix ? null : noSuffixPaths;
+        }
+
+        private void initModuleTable(Map<String, List<Path>> map) {
             moduleTable = new ModuleTable();
             map.forEach((modName, modPath) -> {
                 boolean hasModuleInfo = modPath.stream().anyMatch(checkModuleInfo);
@@ -1509,12 +1606,25 @@ public class Locations {
 
         @Override
         Collection<Path> getPaths() {
-            throw new UnsupportedOperationException();
+            if (paths == null) {
+                // This may occur for a complex setting with --module-source-path option
+                // i.e. one that cannot be represented by a simple series of paths.
+                throw new IllegalStateException("paths not available");
+            }
+            return paths;
         }
 
         @Override
         void setPaths(Iterable<? extends Path> files) throws IOException {
-            throw new UnsupportedOperationException();
+            Map<String, List<Path>> map = new LinkedHashMap<>();
+            List<Path> newPaths = new ArrayList<>();
+            for (Path file : files) {
+                add(map, file, null);
+                newPaths.add(file);
+            }
+
+            initModuleTable(map);
+            paths = Collections.unmodifiableList(newPaths);
         }
 
         @Override
@@ -1563,6 +1673,11 @@ public class Locations {
                 return Collections.emptySet();
 
             return Collections.singleton(moduleTable.locations());
+        }
+
+        @Override
+        boolean contains(Path file) throws IOException {
+            return (moduleTable == null) ? false : moduleTable.contains(file);
         }
 
     }
@@ -1669,6 +1784,12 @@ public class Locations {
         Iterable<Set<Location>> listLocationsForModules() throws IOException {
             initSystemModules();
             return Collections.singleton(moduleTable.locations());
+        }
+
+        @Override
+        boolean contains(Path file) throws IOException {
+            initSystemModules();
+            return moduleTable.contains(file);
         }
 
         private void initSystemModules() throws IOException {
@@ -1801,6 +1922,11 @@ public class Locations {
         Iterable<Set<Location>> listLocationsForModules() throws IOException {
             return Collections.singleton(moduleTable.locations());
         }
+
+        @Override
+        boolean contains(Path file) throws IOException {
+            return moduleTable.contains(file);
+        }
     }
 
     Map<Location, LocationHandler> handlersForLocation;
@@ -1902,6 +2028,13 @@ public class Locations {
     Iterable<Set<Location>> listLocationsForModules(Location location) throws IOException {
         LocationHandler h = getHandler(location);
         return (h == null ? null : h.listLocationsForModules());
+    }
+
+    boolean contains(Location location, Path file) throws IOException {
+        LocationHandler h = getHandler(location);
+        if (h == null)
+            throw new IllegalArgumentException("unknown location");
+        return h.contains(file);
     }
 
     protected LocationHandler getHandler(Location location) {
