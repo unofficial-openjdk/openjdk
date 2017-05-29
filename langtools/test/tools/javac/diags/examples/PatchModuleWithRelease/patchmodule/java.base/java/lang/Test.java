@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,30 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.testlibrary;
 
-import java.util.function.Predicate;
-/**
- * A classloader, which using target classloader in case provided condition
- * for class name is met, and using parent otherwise
- */
-public class FilterClassLoader extends ClassLoader {
+package java.lang;
 
-    private final ClassLoader target;
-    private final Predicate<String> condition;
-
-    public FilterClassLoader(ClassLoader target, ClassLoader parent,
-            Predicate<String> condition) {
-        super(parent);
-        this.condition = condition;
-        this.target = target;
-    }
-
-    @Override
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
-        if (condition.test(name)) {
-            return target.loadClass(name);
-        }
-        return super.loadClass(name);
-    }
+class Test {
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,31 +21,8 @@
  * questions.
  */
 
-package jdk.testlibrary;
+// key: compiler.err.add.reads.with.release
+// options: --add-reads java.base=java.compiler --release 9
 
-import java.io.*;
-
-/**
- * Common library for various test serialization utility functions.
- */
-public final class SerializationUtils {
-    /*
-     * Serialize an object into byte array.
-     */
-    public static byte[] serialize(Object obj) throws Exception {
-        try (ByteArrayOutputStream bs = new ByteArrayOutputStream();
-                ObjectOutputStream out = new ObjectOutputStream(bs);) {
-            out.writeObject(obj);
-            return bs.toByteArray();
-        }
-    }
-
-    /*
-     * Deserialize an object from byte array.
-     */
-    public static Object deserialize(byte[] ba) throws Exception {
-        try (ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(ba));) {
-            return in.readObject();
-        }
-    }
+class AddReadsWithRelease {
 }

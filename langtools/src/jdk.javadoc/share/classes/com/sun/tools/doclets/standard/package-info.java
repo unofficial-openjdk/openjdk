@@ -1,10 +1,12 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * published by the Free Software Foundation.  Oracle designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -20,31 +22,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jdk.testlibrary;
-
-import java.net.URL;
-import java.net.URLClassLoader;
 
 /**
- * An url classloader, which trying to load class from provided URL[] first,
- * and using parent classloader in case it failed
- */
-public class ParentLastURLClassLoader extends URLClassLoader {
+<p style="font-style: italic; font-size:larger">
+<b>Note:</b> The declarations in this package have been superseded by those
+in the new package {@link jdk.javadoc.doclet}.
+</p>
+*/
 
-    public ParentLastURLClassLoader(URL urls[], ClassLoader parent) {
-        super(urls, parent);
-    }
-
-    @Override
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
-        try {
-            Class<?> c = findClass(name);
-            if (c != null) {
-                return c;
-            }
-        } catch (ClassNotFoundException e) {
-            // ignore
-        }
-        return super.loadClass(name);
-    }
-}
+package com.sun.tools.doclets.standard;
