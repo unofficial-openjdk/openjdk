@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@
  * @build bananascript/*
  * @compile src/pearscript/org/pear/PearScriptEngineFactory.java
  *          src/pearscript/org/pear/PearScript.java
- * @run testng/othervm Basic
+ * @run testng/othervm ModulesTest
  * @summary Basic test for ServiceLoader with a provider deployed as a module.
  */
 
@@ -56,7 +56,7 @@ import static org.testng.Assert.*;
  *    with a service configuration file.
  */
 
-public class Basic {
+public class ModulesTest {
 
     // Copy the services configuration file for "pearscript" into place.
     @BeforeTest
