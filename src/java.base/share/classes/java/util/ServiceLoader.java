@@ -84,10 +84,10 @@ import jdk.internal.reflect.Reflection;
  * <p> Providers deployed as explicit modules on the module path are
  * instantiated by a <em>provider factory</em> or directly via the provider's
  * constructor. In the module declaration then the class name specified in the
- * <i>provides</i> clause is a provider factory if it is public and defines a
- * public static no-args method named "{@code provider}". The return type of
- * the method must be assignable to the <i>service</i> type. If the class is
- * not a provider factory then it is public with a public zero-argument
+ * <i>provides</i> clause is a provider factory if it is public and explicitly
+ * declares a public static no-args method named "{@code provider}". The return
+ * type of the method must be assignable to the <i>service</i> type. If the
+ * class is not a provider factory then it is public with a public zero-argument
  * constructor. The requirement that the provider factory or provider class
  * be public helps to document the intent that the provider will be
  * instantiated by the service-provider loading facility.
@@ -101,11 +101,11 @@ import jdk.internal.reflect.Reflection;
  *
  * <p> where {@code com.example.CodecSet} is the service type, {@code
  * com.example.impl.StandardCodecs} is a provider class that is public with a
- * public no-args constructor, {@code com.example.impl.ExtendedCodecsFactory}
- * is a public class that defines a public static no-args method named
+ * public no-args constructor, {@code com.example.impl.ExtendedCodecsFactory} is
+ * a public class that explicitly declares a public static no-args method named
  * "{@code provider}" with a return type that is {@code CodecSet} or a subtype
- * of. For this example then {@code StandardCodecs}'s no-arg constructor will
- * be used to instantiate {@code StandardCodecs}. {@code ExtendedCodecsFactory}
+ * of. For this example then {@code StandardCodecs}'s no-arg constructor will be
+ * used to instantiate {@code StandardCodecs}. {@code ExtendedCodecsFactory}
  * will be treated as a provider factory and {@code
  * ExtendedCodecsFactory.provider()} will be invoked to obtain the provider.
  *
@@ -563,16 +563,10 @@ public final class ServiceLoader<S>
      *         provider method
      */
     private Method findStaticProviderMethod(Class<?> clazz) {
-        Method method = null;
-        try {
-            method = LANG_ACCESS.getMethodOrNull(clazz, "provider");
-        } catch (Throwable x) {
-            fail(service, "Unable to get public provider() method", x);
-        }
+        Method method = LANG_ACCESS.getDeclaredMethodOrNull(clazz, "provider");
         if (method != null) {
             int mods = method.getModifiers();
-            if (Modifier.isStatic(mods)) {
-                assert Modifier.isPublic(mods);
+            if (Modifier.isStatic(mods) && Modifier.isPublic(mods)) {
                 Method m = method;
                 PrivilegedAction<Void> pa = () -> {
                     m.setAccessible(true);

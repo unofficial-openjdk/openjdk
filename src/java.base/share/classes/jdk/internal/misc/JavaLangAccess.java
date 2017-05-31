@@ -44,11 +44,10 @@ import sun.nio.ch.Interruptible;
 public interface JavaLangAccess {
 
     /**
-     * Returns a {@code Method} object that reflects the specified public
-     * member method of the given class. Returns {@code null} if the
-     * method is not defined.
+     * Returns a {@code Method} object that reflects the specified declared
+     * method of the class or interface represented by this class object.
      */
-    Method getMethodOrNull(Class<?> klass, String name, Class<?>... parameterTypes);
+    Method getDeclaredMethodOrNull(Class<?> klass, String name, Class<?>... parameterTypes);
 
     /** Return the constant pool for a class. */
     ConstantPool getConstantPool(Class<?> klass);
