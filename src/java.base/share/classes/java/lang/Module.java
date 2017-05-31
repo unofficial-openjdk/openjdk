@@ -1002,10 +1002,11 @@ public final class Module implements AnnotatedElement {
             ClassLoader loader = clf.apply(name);
             moduleToLoader.put(name, loader);
             if (loader == null || loader == ClassLoaders.platformClassLoader()) {
-                hasPlatformModules = true;
-                if (loader == null && !(clf instanceof ModuleLoaderMap.Mapper)) {
-                    throw new IllegalArgumentException("loader can't be 'null'");
+                if (!(clf instanceof ModuleLoaderMap.Mapper)) {
+                    throw new IllegalArgumentException("loader can't be 'null'"
+                            + " or the platform class loader");
                 }
+                hasPlatformModules = true;
             } else {
                 loaders.add(loader);
             }

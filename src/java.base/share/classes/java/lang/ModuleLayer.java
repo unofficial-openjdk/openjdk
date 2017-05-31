@@ -602,10 +602,9 @@ public final class ModuleLayer {
      * <p> In addition, a layer cannot be created if the configuration contains
      * a module named "{@code java.base}", a configuration contains a module
      * with a package named "{@code java}" or a package name starting with
-     * "{@code java.}" and the module is mapped to a class loader other than
-     * the {@link ClassLoader#getPlatformClassLoader() platform class loader},
-     * or the function to map a module name to a class loader returns
-     * {@code null}. </p>
+     * "{@code java.}", or the function to map a module name to a class loader
+     * returns {@code null} or the {@linkplain ClassLoader#getPlatformClassLoader()
+     * platform class loader}. </p>
      *
      * <p> If the function to map a module name to class loader throws an error
      * or runtime exception then it is propagated to the caller of this method.
