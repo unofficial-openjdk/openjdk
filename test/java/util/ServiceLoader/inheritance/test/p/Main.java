@@ -21,7 +21,7 @@
  * questions.
  */
 
-package test;
+package p;
 
 import java.util.List;
 import java.util.ServiceLoader;

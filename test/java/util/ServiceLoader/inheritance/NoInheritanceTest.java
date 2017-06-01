@@ -21,35 +21,10 @@
  * questions.
  */
 
-package test;
-
-import java.util.ServiceConfigurationError;
-import java.util.ServiceLoader;
-import javax.script.ScriptEngineFactory;
-
-public class Main {
-
-    public static void main(String[] args) {
-        Module thisModule = Main.class.getModule();
-        assertTrue(thisModule.isNamed());
-
-        // this module does not declare that it uses ScriptEngineFactory
-        assertFalse(thisModule.canUse(ScriptEngineFactory.class));
-        try {
-            ServiceLoader.load(ScriptEngineFactory.class);
-            assertTrue(false);
-        } catch (ServiceConfigurationError expected) { }
-
-        // invoke addUses and retry
-        thisModule.addUses(ScriptEngineFactory.class);
-        ServiceLoader.load(ScriptEngineFactory.class).findFirst();
-    }
-
-    static void assertFalse(boolean value) {
-        if (value) throw new RuntimeException();
-    }
-
-    static void assertTrue(boolean value) {
-        if (!value) throw new RuntimeException();
-    }
-}
+/**
+ * @test
+ * @build test/*
+ * @run main/othervm test/p.Main
+ * @summary Basic test of ServiceLoader to ensure that static provider methods
+ *          are explicitly declared and not inherited from super classes
+ */

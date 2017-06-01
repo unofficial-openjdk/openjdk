@@ -21,10 +21,11 @@
  * questions.
  */
 
-import test.Main.*;
-
-module noinheritance {
-    exports test;
-    uses S;
-    provides S with P1, P2, P3;
-}
+/**
+ * @test
+ * @modules java.scripting
+ * @build test/*
+ * @run main/othervm test/p.Main
+ * @summary Basic test of ServiceLoader.load from named modules that does
+ *          does delcare the use
+ */

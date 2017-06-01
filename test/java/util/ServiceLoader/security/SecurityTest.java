@@ -23,9 +23,7 @@
 
 /**
  * @test
- * @library modules
- * @build noinheritance/*
- * @run main/othervm noinheritance/test.Main
- * @summary Basic test of ServiceLoader to ensure that static provider methods
- *          are explicitly declared and not inherited from super classes
+ * @build test/*
+ * @run testng/othervm test/p.Tests
+ * @summary Tests to exercise ServiceLoader with a security manager
  */

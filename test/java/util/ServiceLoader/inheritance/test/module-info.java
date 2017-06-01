@@ -21,7 +21,10 @@
  * questions.
  */
 
-module nouses {
-    exports test;
-    requires java.scripting;
+import p.Main.*;
+
+module test {
+    exports p;
+    uses S;
+    provides S with P1, P2, P3;
 }

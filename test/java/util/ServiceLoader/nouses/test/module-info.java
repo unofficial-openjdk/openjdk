@@ -21,12 +21,7 @@
  * questions.
  */
 
-/**
- * @test
- * @library modules
- * @modules java.scripting
- * @build nouses/*
- * @run main/othervm nouses/test.Main
- * @summary Basic test of ServiceLoader.load from named modules that does
- *          does delcare the use
- */
+module test {
+    exports p;
+    requires java.scripting;
+}

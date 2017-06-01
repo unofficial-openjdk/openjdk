@@ -26,8 +26,8 @@
  * @library modules
  * @modules java.scripting
  * @build bananascript/*
- * @compile src/pearscript/org/pear/PearScriptEngineFactory.java
- *          src/pearscript/org/pear/PearScript.java
+ * @compile classpath/pearscript/org/pear/PearScriptEngineFactory.java
+ *          classpath/pearscript/org/pear/PearScript.java
  * @run testng/othervm ModulesTest
  * @summary Basic test for ServiceLoader with a provider deployed as a module.
  */
@@ -65,7 +65,7 @@ public class ModulesTest {
         Path classes = Paths.get(System.getProperty("test.classes", ""));
         String st = ScriptEngineFactory.class.getName();
         Path config = Paths.get("META-INF", "services", st);
-        Path source = src.resolve("src").resolve("pearscript").resolve(config);
+        Path source = src.resolve("classpath").resolve("pearscript").resolve(config);
         Path target = classes.resolve(config);
         Files.createDirectories(target.getParent());
         Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
