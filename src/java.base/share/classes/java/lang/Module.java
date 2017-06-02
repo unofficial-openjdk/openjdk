@@ -43,6 +43,7 @@ import java.security.PrivilegedAction;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,7 +59,6 @@ import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.ClassLoaders;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
-import jdk.internal.module.Checks;
 import jdk.internal.module.ModuleLoaderMap;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.module.Resources;
@@ -250,12 +250,10 @@ public final class Module implements AnnotatedElement {
 
     // special Module to mean "all unnamed modules"
     private static final Module ALL_UNNAMED_MODULE = new Module(null);
+    private static final Set<Module> ALL_UNNAMED_MODULE_SET = Set.of(ALL_UNNAMED_MODULE);
 
     // special Module to mean "everyone"
     private static final Module EVERYONE_MODULE = new Module(null);
-
-    // set contains EVERYONE_MODULE, used when a package is opened or
-    // exported unconditionally
     private static final Set<Module> EVERYONE_SET = Set.of(EVERYONE_MODULE);
 
 
@@ -556,7 +554,7 @@ public final class Module implements AnnotatedElement {
 
     /**
      * Returns {@code true} if this module exports or opens a package to
-     * the given module via its module declaration.
+     * the given module via its module declaration or CLI options.
      */
     private boolean isStaticallyExportedOrOpen(String pn, Module other, boolean open) {
         // package is open to everyone or <other>
@@ -564,9 +562,10 @@ public final class Module implements AnnotatedElement {
         if (openPackages != null) {
             Set<Module> targets = openPackages.get(pn);
             if (targets != null) {
-                if (targets.contains(EVERYONE_MODULE))
+                if (targets.contains(EVERYONE_MODULE) || targets.contains(other))
                     return true;
-                if (other != EVERYONE_MODULE && targets.contains(other))
+                if (other != EVERYONE_MODULE
+                    && !other.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
                     return true;
             }
         }
@@ -577,9 +576,10 @@ public final class Module implements AnnotatedElement {
             if (exportedPackages != null) {
                 Set<Module> targets = exportedPackages.get(pn);
                 if (targets != null) {
-                    if (targets.contains(EVERYONE_MODULE))
+                    if (targets.contains(EVERYONE_MODULE) || targets.contains(other))
                         return true;
-                    if (other != EVERYONE_MODULE && targets.contains(other))
+                    if (other != EVERYONE_MODULE
+                        && !other.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
                         return true;
                 }
             }
@@ -801,14 +801,13 @@ public final class Module implements AnnotatedElement {
     }
 
     /**
-     * Updates this module to export a package to all unnamed modules.
+     * Updates this module to open a package to all unnamed modules.
      *
      * @apiNote Used by the --add-opens command line option.
      */
     void implAddOpensToAllUnnamed(String pn) {
         implAddExportsOrOpens(pn, Module.ALL_UNNAMED_MODULE, true, true);
     }
-
 
     /**
      * Updates a module to export or open a module to another module.
@@ -850,13 +849,46 @@ public final class Module implements AnnotatedElement {
         // add package name to reflectivelyExports if absent
         Map<String, Boolean> map = reflectivelyExports
             .computeIfAbsent(this, other,
-                             (m1, m2) -> new ConcurrentHashMap<>());
-
+                    (m1, m2) -> new ConcurrentHashMap<>());
         if (open) {
             map.put(pn, Boolean.TRUE);  // may need to promote from FALSE to TRUE
         } else {
             map.putIfAbsent(pn, Boolean.FALSE);
         }
+    }
+
+    /**
+     * Updates a module to open all packages returned by the given iterator to
+     * all unnamed modules.
+     *
+     * @apiNote Used during startup to open packages for illegal access.
+     */
+    void implAddOpensToAllUnnamed(Iterator<String> iterator) {
+        if (jdk.internal.misc.VM.isModuleSystemInited()) {
+            iterator.forEachRemaining(pn ->
+                implAddExportsOrOpens(pn, ALL_UNNAMED_MODULE, true, true));
+            return;
+        }
+
+        // replace this module's openPackages map with a new map that opens
+        // the packages to all unnamed modules.
+        Map<String, Set<Module>> openPackages = this.openPackages;
+        if (openPackages == null) {
+            openPackages = new HashMap<>();
+        } else {
+            openPackages = new HashMap<>(openPackages);
+        }
+        while (iterator.hasNext()) {
+            String pn = iterator.next();
+            Set<Module> prev = openPackages.putIfAbsent(pn, ALL_UNNAMED_MODULE_SET);
+            if (prev != null) {
+                prev.add(ALL_UNNAMED_MODULE);
+            }
+
+            // update VM to export the package
+            addExportsToAllUnnamed0(this, pn);
+        }
+        this.openPackages = openPackages;
     }
 
 

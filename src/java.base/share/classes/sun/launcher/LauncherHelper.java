@@ -89,6 +89,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jdk.internal.misc.VM;
+import jdk.internal.module.IllegalAccessLogger;
 import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.Modules;
 
@@ -487,22 +488,38 @@ public final class LauncherHelper {
      * {@code <module>/<package> ( <module>/<package>)*}.
      */
     static void addExportsOrOpens(String value, boolean open) {
+        IllegalAccessLogger logger = IllegalAccessLogger.illegalAccessLogger();
+        IllegalAccessLogger.Builder b = (logger != null) ? logger.toBuilder() : null;
+
         for (String moduleAndPackage : value.split(" ")) {
             String[] s = moduleAndPackage.trim().split("/");
             if (s.length == 2) {
                 String mn = s[0];
                 String pn = s[1];
-
-                ModuleLayer.boot().findModule(mn).ifPresent(m -> {
-                    if (m.getDescriptor().packages().contains(pn)) {
+                ModuleLayer.boot()
+                    .findModule(mn)
+                    .filter(m -> m.getDescriptor().packages().contains(pn))
+                    .ifPresent(m -> {
                         if (open) {
                             Modules.addOpensToAllUnnamed(m, pn);
+                            if (b != null) {
+                                // no logging for this package
+                                b.doNotLogAccessToOpenPackage(m, pn);
+                            }
                         } else {
                             Modules.addExportsToAllUnnamed(m, pn);
+                            if (b != null) {
+                                // no logging for public types/members in package
+                                b.doNotLogAccessToExportedPackage(m, pn);
+                            }
                         }
-                    }
-                });
+                    });
             }
+        }
+
+        // replace logger
+        if (b != null) {
+            b.complete();
         }
     }
 
@@ -618,7 +635,7 @@ public final class LauncherHelper {
             }
         } catch (LinkageError le) {
             abort(null, "java.launcher.module.error3", mainClass, m.getName(),
-                le.getClass().getName() + ": " + le.getLocalizedMessage());
+                    le.getClass().getName() + ": " + le.getLocalizedMessage());
         }
         if (c == null) {
             abort(null, "java.launcher.module.error2", mainClass, mainModule);
@@ -719,7 +736,7 @@ public final class LauncherHelper {
                       mainClass.getName(), mainClass.getModule(),
                       e.getClass().getName(), e.getLocalizedMessage());
             } else {
-                abort(e,"java.launcher.cls.error7", mainClass.getName(),
+                abort(e, "java.launcher.cls.error7", mainClass.getName(),
                       e.getClass().getName(), e.getLocalizedMessage());
             }
         }

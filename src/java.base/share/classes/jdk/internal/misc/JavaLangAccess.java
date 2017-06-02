@@ -32,6 +32,7 @@ import java.lang.reflect.Method;
 import java.net.URI;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -222,12 +223,17 @@ public interface JavaLangAccess {
     void addOpens(Module m1, String pkg, Module m2);
 
     /**
-     * Updates a module m to open a package to all unnamed modules.
+     * Updates module m to open a package to all unnamed modules.
      */
     void addOpensToAllUnnamed(Module m, String pkg);
 
     /**
-     * Updates a module m to use a service.
+     * Updates module m to open all packages returned by the given iterator.
+     */
+    void addOpensToAllUnnamed(Module m, Iterator<String> packages);
+
+    /**
+     * Updates module m to use a service.
      */
     void addUses(Module m, Class<?> service);
 

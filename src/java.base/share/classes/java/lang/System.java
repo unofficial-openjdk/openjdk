@@ -47,6 +47,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.nio.channels.Channel;
 import java.nio.channels.spi.SelectorProvider;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -2160,6 +2161,9 @@ public final class System {
             }
             public void addOpensToAllUnnamed(Module m, String pn) {
                 m.implAddOpensToAllUnnamed(pn);
+            }
+            public void addOpensToAllUnnamed(Module m, Iterator<String> packages) {
+                m.implAddOpensToAllUnnamed(packages);
             }
             public void addUses(Module m, Class<?> service) {
                 m.implAddUses(service);
