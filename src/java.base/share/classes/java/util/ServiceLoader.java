@@ -560,23 +560,43 @@ public final class ServiceLoader<S>
      * Returns the public static "provider" method if found.
      *
      * @throws ServiceConfigurationError if there is an error finding the
+     *         provider method or there is more than one public static
      *         provider method
      */
     private Method findStaticProviderMethod(Class<?> clazz) {
-        Method method = LANG_ACCESS.getDeclaredMethodOrNull(clazz, "provider");
-        if (method != null) {
+        List<Method> methods = null;
+        try {
+            methods = LANG_ACCESS.getDeclaredPublicMethods(clazz, "provider");
+        } catch (Throwable x) {
+            fail(service, "Unable to get public provider() method", x);
+        }
+        if (methods.isEmpty()) {
+            // does not declare a public provider method
+            return null;
+        }
+
+        // locate the static methods, can be at most one
+        Method result = null;
+        for (Method method : methods) {
             int mods = method.getModifiers();
-            if (Modifier.isStatic(mods) && Modifier.isPublic(mods)) {
-                Method m = method;
-                PrivilegedAction<Void> pa = () -> {
-                    m.setAccessible(true);
-                    return null;
-                };
-                AccessController.doPrivileged(pa);
-                return method;
+            assert Modifier.isPublic(mods);
+            if (Modifier.isStatic(mods)) {
+                if (result != null) {
+                    fail(service, clazz + " declares more than one"
+                         + " public static provider() method");
+                }
+                result = method;
             }
         }
-        return null;
+        if (result != null) {
+            Method m = result;
+            PrivilegedAction<Void> pa = () -> {
+                m.setAccessible(true);
+                return null;
+            };
+            AccessController.doPrivileged(pa);
+        }
+        return result;
     }
 
     /**

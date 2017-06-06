@@ -33,6 +33,7 @@ import java.net.URI;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -45,12 +46,15 @@ import sun.nio.ch.Interruptible;
 public interface JavaLangAccess {
 
     /**
-     * Returns a {@code Method} object that reflects the specified declared
-     * method of the class or interface represented by this class object.
+     * Returns the list of {@code Method} objects for the declared public
+     * methods of this class or interface that have the specified method name
+     * and parameter types.
      */
-    Method getDeclaredMethodOrNull(Class<?> klass, String name, Class<?>... parameterTypes);
+    List<Method> getDeclaredPublicMethods(Class<?> klass, String name, Class<?>... parameterTypes);
 
-    /** Return the constant pool for a class. */
+    /**
+     * Return the constant pool for a class.
+     */
     ConstantPool getConstantPool(Class<?> klass);
 
     /**
@@ -95,7 +99,9 @@ public interface JavaLangAccess {
      */
     <E extends Enum<E>> E[] getEnumConstantsShared(Class<E> klass);
 
-    /** Set thread's blocker field. */
+    /**
+     * Set thread's blocker field.
+     */
     void blockedOn(Thread t, Interruptible b);
 
     /**
