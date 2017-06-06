@@ -908,10 +908,11 @@ Node* LoadNode::can_see_arraycopy_value(Node* st, PhaseTransform* phase) const {
         ld->set_req(0, ld_alloc->in(0));
       }
     } else {
+      Node* src = ac->in(ArrayCopyNode::Src);
       Node* addp = in(MemNode::Address)->clone();
       assert(addp->in(AddPNode::Base) == addp->in(AddPNode::Address), "should be");
-      addp->set_req(AddPNode::Base, ac->in(ArrayCopyNode::Src));
-      addp->set_req(AddPNode::Address, ac->in(ArrayCopyNode::Src));
+      addp->set_req(AddPNode::Base, src);
+      addp->set_req(AddPNode::Address, src);
 
       const TypeAryPtr* ary_t = phase->type(in(MemNode::Address))->isa_aryptr();
       BasicType ary_elem  = ary_t->klass()->as_array_klass()->element_type()->basic_type();
@@ -927,6 +928,12 @@ Node* LoadNode::can_see_arraycopy_value(Node* st, PhaseTransform* phase) const {
       Node* offset = phase->transform(new AddXNode(addp->in(AddPNode::Offset), diff));
       addp->set_req(AddPNode::Offset, offset);
       ld->set_req(MemNode::Address, phase->transform(addp));
+
+      const TypeX *ld_offs_t = phase->type(offset)->isa_intptr_t();
+
+      if (!ac->as_ArrayCopy()->can_replace_dest_load_with_src_load(ld_offs_t->_lo, ld_offs_t->_hi, phase)) {
+        return NULL;
+      }
 
       if (in(0) != NULL) {
         assert(ac->in(0) != NULL, "alloc must have control");
@@ -1123,6 +1130,9 @@ Node* LoadNode::Identity(PhaseGVN* phase) {
       // Use _idx of address base (could be Phi node) for boxed values.
       intptr_t   ignore = 0;
       Node*      base = AddPNode::Ideal_base_and_offset(in(Address), phase, ignore);
+      if (base == NULL) {
+        return this;
+      }
       this_iid = base->_idx;
     }
     const Type* this_type = bottom_type();
@@ -3947,9 +3957,10 @@ Node* InitializeNode::complete_stores(Node* rawctl, Node* rawmem, Node* rawptr,
     // if it is the last unused 4 bytes of an instance, forget about it
     intptr_t size_limit = phase->find_intptr_t_con(size_in_bytes, max_jint);
     if (zeroes_done + BytesPerLong >= size_limit) {
-      assert(allocation() != NULL, "");
-      if (allocation()->Opcode() == Op_Allocate) {
-        Node* klass_node = allocation()->in(AllocateNode::KlassNode);
+      AllocateNode* alloc = allocation();
+      assert(alloc != NULL, "must be present");
+      if (alloc != NULL && alloc->Opcode() == Op_Allocate) {
+        Node* klass_node = alloc->in(AllocateNode::KlassNode);
         ciKlass* k = phase->type(klass_node)->is_klassptr()->klass();
         if (zeroes_done == k->layout_helper())
           zeroes_done = size_limit;
