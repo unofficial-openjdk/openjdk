@@ -123,14 +123,14 @@ import jdk.internal.reflect.Reflection;
  * <i>provides</i> allow consumers of a service to be <i>linked</i> to modules
  * containing providers of the service.
  *
- * <p> A service provider that is packaged as a JAR file for the class path is
- * identified by placing a <i>provider-configuration file</i> in the resource
- * directory {@code META-INF/services}. The file's name is the fully-qualified
- * <a href="../lang/ClassLoader.html#name">binary name</a> of the service's
- * type. The file contains a list of fully-qualified binary names of concrete
- * provider classes, one per line.  Space and tab characters surrounding each
- * name, as well as blank lines, are ignored.  The comment character is
- * {@code '#'} (<code>'&#92;u0023'</code>,
+ * <p><a id="format"> A service provider that is packaged as a JAR file for
+ * the class path is identified by placing a <i>provider-configuration file</i>
+ * in the resource directory {@code META-INF/services}.</a> The file's name is
+ * the fully-qualified <a href="../lang/ClassLoader.html#name">binary name</a>
+ * of the service's type. The file contains a list of fully-qualified binary
+ * names of concrete provider classes, one per line.  Space and tab characters
+ * surrounding each name, as well as blank lines, are ignored.  The comment
+ * character is {@code '#'} (<code>'&#92;u0023'</code>,
  * <span style="font-size:smaller;">NUMBER SIGN</span>); on
  * each line all characters following the first comment character are ignored.
  * The file must be encoded in UTF-8.
@@ -237,6 +237,60 @@ import jdk.internal.reflect.Reflection;
  *            .map(Provider::get)
  *            .collect(Collectors.toSet());
  * }</pre>
+ *
+ * <h2> Errors </h2>
+ *
+ * <p>  When using the service loader's {@link #iterator() iterator} then its
+ * {@code hasNext} and {@code next} methods will fail with {@link
+ * ServiceConfigurationError} if an error occurs locating or instantiating a
+ * provider. When processing the service loader's {@link #stream() stream} then
+ * {@code ServiceConfigurationError} is thrown by whatever method causes a
+ * provider class to be loaded.
+ *
+ * <p> When loading or instantiating a provider class in a named module then
+ * {@code ServiceConfigurationError} can be thrown for the following reasons: </p>
+ *
+ * <ul>
+ *
+ *   <li> The provider class cannot be loaded. </li>
+ *
+ *   <li> The provider class is not a provider factory or is not a subclass of
+ *   the service type with a public zero-argument constructor. </li>
+ *
+ *   <li> The provider class explicitly declares a public static no-args method
+ *   named "{@code provider}" with a return type that is not a subclass of the
+ *   service type. </li>
+ *
+ *   <li> The provider class explicitly declares more than one public static
+ *   no-args method named "{@code provider}". </li>
+ *
+ *   <li> The provider class is a provider factory and its public static no-args
+ *   method "{@code provider}" method returns {@code null} or throws an
+ *   exception. </li>
+ *
+ *   <li> The provider class is not a provider factory and cannot be instantiated
+ *   with its public zero-argument constructor. </li>
+ *
+ * </ul>
+ *
+ * <p> When reading a provider-configuration file, or loading or instantiating a
+ * provider class named in a provider-configuration file, then {@code
+ * ServiceConfigurationError} can be thrown for the following reasons:
+ *
+ * <ul>
+ *
+ *   <li> The format of the provider-configuration file violates the <a
+ *   href="ServiceLoader.html#format">format</a> specified above; </li>
+ *
+ *   <li> An {@link IOException IOException} occurs while reading the
+ *   provider-configuration file; </li>
+ *
+ *   <li> The provider class cannot be loaded; </li>
+ *
+ *   <li> The provider class is not a subclass of the service type, does not
+ *   define a public zero-argument constructor, or cannot be instantiated; </li>
+ *
+ * </ul>
  *
  * <h2> Security </h2>
  *
