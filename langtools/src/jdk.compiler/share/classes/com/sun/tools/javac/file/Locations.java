@@ -1351,7 +1351,14 @@ public class Locations {
                                 Attributes attrs = man.getMainAttributes();
                                 if (attrs != null) {
                                     String moduleName = attrs.getValue(new Attributes.Name("Automatic-Module-Name"));
-                                    if (moduleName != null) return new Pair<>(moduleName, p);
+                                    if (moduleName != null) {
+                                        if (isModuleName(moduleName)) {
+                                            return new Pair<>(moduleName, p);
+                                        } else {
+                                            log.error(Errors.LocnCantGetModuleNameForJar(p));
+                                            return null;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1442,6 +1449,22 @@ public class Locations {
             }
         }
 
+        //from jdk.internal.module.Checks:
+        /**
+         * Returns {@code true} if the given name is a legal module name.
+         */
+        private boolean isModuleName(String name) {
+            int next;
+            int off = 0;
+            while ((next = name.indexOf('.', off)) != -1) {
+                String id = name.substring(off, next);
+                if (!SourceVersion.isName(id))
+                    return false;
+                off = next+1;
+            }
+            String last = name.substring(off);
+            return SourceVersion.isName(last);
+        }
     }
 
     private class ModuleSourcePathLocationHandler extends BasicLocationHandler {
