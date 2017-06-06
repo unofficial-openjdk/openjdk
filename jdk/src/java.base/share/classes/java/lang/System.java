@@ -47,6 +47,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.nio.channels.Channel;
 import java.nio.channels.spi.SelectorProvider;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -575,9 +576,13 @@ public final class System {
      * system properties, a set of system properties is first created and
      * initialized. This set of system properties always includes values
      * for the following keys:
-     * <table summary="Shows property keys and associated values">
+     * <table class="striped">
+     * <caption style="display:none">Shows property keys and associated values</caption>
+     * <thead>
      * <tr><th>Key</th>
      *     <th>Description of Associated Value</th></tr>
+     * </thead>
+     * <tbody>
      * <tr><td><code>java.version</code></td>
      *     <td>Java Runtime Environment version which may be interpreted
      *     as a {@link Runtime.Version}</td></tr>
@@ -636,6 +641,7 @@ public final class System {
      *     <td>User's home directory</td></tr>
      * <tr><td><code>user.dir</code></td>
      *     <td>User's current working directory</td></tr>
+     * </tbody>
      * </table>
      * <p>
      * Multiple paths in a system property value are separated by the path
@@ -647,9 +653,13 @@ public final class System {
      *
      * @implNote In addition to the standard system properties, the system
      * properties may include the following keys:
-     * <table summary="Shows property keys and associated values">
+     * <table class="striped">
+     * <caption style="display:none">Shows property keys and associated values</caption>
+     * <thead>
      * <tr><th>Key</th>
      *     <th>Description of Associated Value</th></tr>
+     * </thead>
+     * <tbody>
      * <tr><td>{@code jdk.module.path}</td>
      *     <td>The application module path</td></tr>
      * <tr><td>{@code jdk.module.upgrade.path}</td>
@@ -658,6 +668,7 @@ public final class System {
      *     <td>The module name of the initial/main module</td></tr>
      * <tr><td>{@code jdk.module.main.class}</td>
      *     <td>The main class name of the initial module</td></tr>
+     * </tbody>
      * </table>
      *
      * @return     the system properties
@@ -2057,8 +2068,8 @@ public final class System {
     private static void setJavaLangAccess() {
         // Allow privileged classes outside of java.lang
         SharedSecrets.setJavaLangAccess(new JavaLangAccess() {
-            public Method getMethodOrNull(Class<?> klass, String name, Class<?>... parameterTypes) {
-                return klass.getMethodOrNull(name, parameterTypes);
+            public Method getDeclaredMethodOrNull(Class<?> klass, String name, Class<?>... parameterTypes) {
+                return klass.getDeclaredMethodOrNull(name, parameterTypes);
             }
             public jdk.internal.reflect.ConstantPool getConstantPool(Class<?> klass) {
                 return klass.getConstantPool();
@@ -2150,6 +2161,9 @@ public final class System {
             }
             public void addOpensToAllUnnamed(Module m, String pn) {
                 m.implAddOpensToAllUnnamed(pn);
+            }
+            public void addOpensToAllUnnamed(Module m, Iterator<String> packages) {
+                m.implAddOpensToAllUnnamed(packages);
             }
             public void addUses(Module m, Class<?> service) {
                 m.implAddUses(service);

@@ -724,18 +724,23 @@ public final class Class<T> implements java.io.Serializable,
      * one or more '{@code [}' characters representing the depth of the array
      * nesting.  The encoding of element type names is as follows:
      *
-     * <blockquote><table summary="Element types and encodings">
-     * <tr><th> Element Type <th> &nbsp;&nbsp;&nbsp; <th> Encoding
-     * <tr><td> boolean      <td> &nbsp;&nbsp;&nbsp; <td style="text-align:center"> Z
-     * <tr><td> byte         <td> &nbsp;&nbsp;&nbsp; <td style="text-align:center"> B
-     * <tr><td> char         <td> &nbsp;&nbsp;&nbsp; <td style="text-align:center"> C
+     * <blockquote><table class="borderless">
+     * <caption style="display:none">Element types and encodings</caption>
+     * <thead>
+     * <tr><th style="padding-right:3em;"> Element Type <th> Encoding
+     * </thead>
+     * <tbody>
+     * <tr><td> boolean      <td style="text-align:center"> Z
+     * <tr><td> byte         <td style="text-align:center"> B
+     * <tr><td> char         <td style="text-align:center"> C
      * <tr><td> class or interface
-     *                       <td> &nbsp;&nbsp;&nbsp; <td style="text-align:center"> L<i>classname</i>;
-     * <tr><td> double       <td> &nbsp;&nbsp;&nbsp; <td style="text-align:center"> D
-     * <tr><td> float        <td> &nbsp;&nbsp;&nbsp; <td style="text-align:center"> F
-     * <tr><td> int          <td> &nbsp;&nbsp;&nbsp; <td style="text-align:center"> I
-     * <tr><td> long         <td> &nbsp;&nbsp;&nbsp; <td style="text-align:center"> J
-     * <tr><td> short        <td> &nbsp;&nbsp;&nbsp; <td style="text-align:center"> S
+     *                       <td style="text-align:center"> L<i>classname</i>;
+     * <tr><td> double       <td style="text-align:center"> D
+     * <tr><td> float        <td style="text-align:center"> F
+     * <tr><td> int          <td style="text-align:center"> I
+     * <tr><td> long         <td style="text-align:center"> J
+     * <tr><td> short        <td style="text-align:center"> S
+     * </tbody>
      * </table></blockquote>
      *
      * <p> The class or interface name <i>classname</i> is the binary name of
@@ -2062,25 +2067,6 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     /**
-     * Returns a {@code Method} object that reflects the specified public
-     * member method of the class or interface represented by this
-     * {@code Class} object.
-     *
-     * @param name the name of the method
-     * @param parameterTypes the list of parameters
-     * @return the {@code Method} object that matches the specified
-     *         {@code name} and {@code parameterTypes}; {@code null}
-     *         if the method is not found or the name is
-     *         "&lt;init&gt;"or "&lt;clinit&gt;".
-     */
-    Method getMethodOrNull(String name, Class<?>... parameterTypes) {
-        Objects.requireNonNull(name);
-        Method method = getMethod0(name, parameterTypes);
-        return method == null ? null : getReflectionFactory().copyMethod(method);
-    }
-
-
-    /**
      * Returns a {@code Constructor} object that reflects the specified
      * public constructor of the class represented by this {@code Class}
      * object. The {@code parameterTypes} parameter is an array of
@@ -2220,7 +2206,6 @@ public final class Class<T> implements java.io.Serializable,
 
 
     /**
-     *
      * Returns an array containing {@code Method} objects reflecting all the
      * declared methods of the class or interface represented by this {@code
      * Class} object, including public, protected, default (package)
@@ -2448,6 +2433,21 @@ public final class Class<T> implements java.io.Serializable,
         return getReflectionFactory().copyMethod(method);
     }
 
+    /**
+     * Returns a {@code Method} object that reflects the specified declared
+     * method of the class or interface represented by this class object.
+     *
+     * @param name the name of the method
+     * @param parameterTypes the parameter array
+     * @return the {@code Method} object for the method of this class
+     *         matching the specified name and parameters or {@code null} if
+     *         not found (or the name is "&lt;init&gt;"or "&lt;clinit&gt;")
+     */
+    Method getDeclaredMethodOrNull(String name, Class<?>... parameterTypes) {
+        Method[] methods = privateGetDeclaredMethods(false);
+        Method method = searchMethods(methods, name, parameterTypes);
+        return (method != null) ? getReflectionFactory().copyMethod(method) : null;
+    }
 
     /**
      * Returns a {@code Constructor} object that reflects the specified

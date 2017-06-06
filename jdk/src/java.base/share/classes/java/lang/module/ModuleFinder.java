@@ -246,7 +246,7 @@ public interface ModuleFinder {
      *
      *     <li><p> The {@link ModuleDescriptor#version() version}, and the
      *     module name when the attribute "{@code Automatic-Module-Name}" is not
-     *     present, are derived rom the file name of the JAR file as follows: </p>
+     *     present, are derived from the file name of the JAR file as follows: </p>
      *
      *     <ul>
      *
