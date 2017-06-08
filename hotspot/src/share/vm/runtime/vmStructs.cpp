@@ -972,6 +972,7 @@ typedef RehashableHashtable<Symbol*, mtSymbol>   RehashableSymbolHashtable;
   nonstatic_field(JavaThread,                  _vframe_array_last,                            vframeArray*)                          \
   nonstatic_field(JavaThread,                  _satb_mark_queue,                              SATBMarkQueue)                         \
   nonstatic_field(JavaThread,                  _dirty_card_queue,                             DirtyCardQueue)                        \
+  volatile_nonstatic_field(JavaThread,         _terminated,                                   JavaThread::TerminatedTypes)           \
   nonstatic_field(Thread,                      _resource_area,                                ResourceArea*)                         \
   nonstatic_field(CompilerThread,              _env,                                          ciEnv*)                                \
                                                                                                                                      \
@@ -2216,6 +2217,7 @@ typedef RehashableHashtable<Symbol*, mtSymbol>   RehashableSymbolHashtable;
   declare_toplevel_type(JavaThread*)                                      \
   declare_toplevel_type(java_lang_Class)                                  \
   declare_integer_type(JavaThread::AsyncRequests)                         \
+  declare_integer_type(JavaThread::TerminatedTypes)                       \
   declare_toplevel_type(jbyte*)                                           \
   declare_toplevel_type(jbyte**)                                          \
   declare_toplevel_type(jint*)                                            \
@@ -2438,6 +2440,8 @@ typedef RehashableHashtable<Symbol*, mtSymbol>   RehashableSymbolHashtable;
   declare_constant(_thread_in_Java_trans)                                 \
   declare_constant(_thread_blocked)                                       \
   declare_constant(_thread_blocked_trans)                                 \
+  declare_constant(JavaThread::_not_terminated)                           \
+  declare_constant(JavaThread::_thread_exiting)                           \
                                                                           \
   /******************************/                                        \
   /* Klass misc. enum constants */                                        \
