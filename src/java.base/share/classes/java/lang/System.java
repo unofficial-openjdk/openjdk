@@ -2122,9 +2122,6 @@ public final class System {
             public Class<?> findBootstrapClassOrNull(ClassLoader cl, String name) {
                 return cl.findBootstrapClassOrNull(name);
             }
-            public Stream<Package> packages(ClassLoader cl) {
-                return cl.packages();
-            }
             public Package definePackage(ClassLoader cl, String name, Module module) {
                 return cl.definePackage(name, module);
             }
@@ -2168,6 +2165,12 @@ public final class System {
             }
             public void addUses(Module m, Class<?> service) {
                 m.implAddUses(service);
+            }
+            public boolean isReflectivelyExported(Module m, String pn, Module other) {
+                return m.isReflectivelyExported(pn, other);
+            }
+            public boolean isReflectivelyOpened(Module m, String pn, Module other) {
+                return m.isReflectivelyOpened(pn, other);
             }
             public ServicesCatalog getServicesCatalog(ModuleLayer layer) {
                 return layer.getServicesCatalog();

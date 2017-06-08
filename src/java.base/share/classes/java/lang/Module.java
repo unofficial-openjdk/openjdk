@@ -59,6 +59,7 @@ import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.ClassLoaders;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.IllegalAccessLogger;
 import jdk.internal.module.ModuleLoaderMap;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.module.Resources;
@@ -588,10 +589,9 @@ public final class Module implements AnnotatedElement {
         return false;
     }
 
-
     /**
-     * Returns {@code true} if this module reflectively exports or opens given
-     * package package to the given module.
+     * Returns {@code true} if this module reflectively exports or opens the
+     * given package to the given module.
      */
     private boolean isReflectivelyExportedOrOpen(String pn, Module other, boolean open) {
         // exported or open to all modules
@@ -631,6 +631,22 @@ public final class Module implements AnnotatedElement {
         }
 
         return false;
+    }
+
+    /**
+     * Returns {@code true} if this module reflectively exports the
+     * given package to the given module.
+     */
+    boolean isReflectivelyExported(String pn, Module other) {
+        return isReflectivelyExportedOrOpen(pn, other, false);
+    }
+
+    /**
+     * Returns {@code true} if this module reflectively opens the
+     * given package to the given module.
+     */
+    boolean isReflectivelyOpened(String pn, Module other) {
+        return isReflectivelyExportedOrOpen(pn, other, true);
     }
 
 
@@ -825,9 +841,28 @@ public final class Module implements AnnotatedElement {
         if (!isNamed() || descriptor.isOpen() || descriptor.isAutomatic())
             return;
 
-        // nothing to do if already exported/open to other
-        if (implIsExportedOrOpen(pn, other, open))
-            return;
+        // check if the package is already exported/open to other
+        if (implIsExportedOrOpen(pn, other, open)) {
+
+            // if the package is exported/open for illegal access then we need
+            // to record that it has also been exported/opened reflectively so
+            // that the IllegalAccessLogger doesn't emit a warning.
+            boolean needToAdd = false;
+            if (!other.isNamed()) {
+                IllegalAccessLogger l = IllegalAccessLogger.illegalAccessLogger();
+                if (l != null) {
+                    if (open) {
+                        needToAdd = l.isOpenForIllegalAccess(this, pn);
+                    } else {
+                        needToAdd = l.isExportedForIllegalAccess(this, pn);
+                    }
+                }
+            }
+            if (!needToAdd) {
+                // nothing to do
+                return;
+            }
+        }
 
         // can only export a package in the module
         if (!descriptor.packages().contains(pn)) {
@@ -849,7 +884,7 @@ public final class Module implements AnnotatedElement {
         // add package name to reflectivelyExports if absent
         Map<String, Boolean> map = reflectivelyExports
             .computeIfAbsent(this, other,
-                    (m1, m2) -> new ConcurrentHashMap<>());
+                             (m1, m2) -> new ConcurrentHashMap<>());
         if (open) {
             map.put(pn, Boolean.TRUE);  // may need to promote from FALSE to TRUE
         } else {
@@ -1001,7 +1036,7 @@ public final class Module implements AnnotatedElement {
             if (loader == null) {
                 packages = BootLoader.packages();
             } else {
-                packages = SharedSecrets.getJavaLangAccess().packages(loader);
+                packages = loader.packages();
             }
             return packages.map(Package::getName).collect(Collectors.toSet());
         }

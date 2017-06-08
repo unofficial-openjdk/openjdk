@@ -161,11 +161,6 @@ public interface JavaLangAccess {
     Class<?> findBootstrapClassOrNull(ClassLoader cl, String name);
 
     /**
-     * Returns the Packages for the given class loader.
-     */
-    Stream<Package> packages(ClassLoader cl);
-
-    /**
      * Define a Package of the given name and module by the given class loader.
      */
     Package definePackage(ClassLoader cl, String name, Module module);
@@ -242,6 +237,16 @@ public interface JavaLangAccess {
      * Updates module m to use a service.
      */
     void addUses(Module m, Class<?> service);
+
+    /**
+     * Returns true if module m reflectively exports a package to other
+     */
+    boolean isReflectivelyExported(Module module, String pn, Module other);
+
+    /**
+     * Returns true if module m reflectively opens a package to other
+     */
+    boolean isReflectivelyOpened(Module module, String pn, Module other);
 
     /**
      * Returns the ServicesCatalog for the given Layer.
