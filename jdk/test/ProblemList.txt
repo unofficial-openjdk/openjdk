@@ -219,9 +219,13 @@ sun/security/ssl/X509KeyManager/PreferredKey.java               8176354 generic-
 ############################################################################
 
 # jdk_sound
-javax/sound/sampled/DirectAudio/bug6372428.java        8055097 generic-all
-javax/sound/sampled/Clip/bug5070081.java               8055097 generic-all
-javax/sound/sampled/DataLine/LongFramePosition.java    8055097 generic-all
+javax/sound/sampled/AudioInputStream/FrameLengthAfterConversion.java 8178401 windows-all
+
+javax/sound/sampled/Clip/ClipCloseLoss.java                          8178403 generic-all
+
+javax/sound/sampled/DirectAudio/bug6372428.java                      8055097 generic-all
+javax/sound/sampled/Clip/bug5070081.java                             8055097 generic-all
+javax/sound/sampled/DataLine/LongFramePosition.java                  8055097 generic-all
 
 javax/sound/sampled/Clip/Drain/ClipDrain.java          7062792 generic-all
 
@@ -257,8 +261,6 @@ tools/launcher/FXLauncherTest.java                              8068049 linux-al
 tools/jimage/JImageExtractTest.java                             8170120 generic-all
 tools/jimage/JImageListTest.java                                8170120 generic-all
 tools/jimage/JImageVerifyTest.java                              8170120 generic-all
-
-tools/jar/multiRelease/RuntimeTest.java                         8173905 generic-all
 
 tools/schemagen/MultiReleaseJarTest.java                        8174692 generic-all
 tools/wsgen/MultiReleaseJarTest.java                            8174692 generic-all
