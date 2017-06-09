@@ -26,7 +26,7 @@
  * @modules java.base/jdk.internal.misc
  *          java.base/sun.security.x509
  *          java.activation
- * @library /lib/testlibrary src
+ * @library /lib/testlibrary modules
  * @build IllegalAccessTest TryAccess JarUtils CompilerUtils jdk.testlibrary.*
  * @build m/*
  * @run testng/othervm/timeout=180 IllegalAccessTest
@@ -283,7 +283,7 @@ public class IllegalAccessTest {
     }
 
     /**
-     * Specify --add-exports to export package
+     * Specify --add-exports to export a package
      */
     public void testWithAddExportsOption() throws Exception {
         // warning
@@ -301,7 +301,7 @@ public class IllegalAccessTest {
     }
 
     /**
-     * Specify --add-open to open package
+     * Specify --add-open to open a package
      */
     public void testWithAddOpensOption() throws Exception {
         // warning
@@ -316,6 +316,67 @@ public class IllegalAccessTest {
                 + ",setAccessibleNonPublicMemberExportedPackage",
             successWithWarning(),
             "--add-opens", "java.base/java.lang=ALL-UNNAMED");
+    }
+
+    /**
+     * Test reflective API to export a package
+     */
+    public void testWithReflectiveExports() throws Exception {
+        // compile patch for java.base
+        Path src = Paths.get(TEST_SRC, "patchsrc", "java.base");
+        Path patch = Files.createDirectories(Paths.get("patches", "java.base"));
+        assertTrue(CompilerUtils.compile(src, patch,
+                                         "--patch-module", "java.base=" + src));
+
+        // reflectively export, then access
+        run("exportNonExportedPackages,reflectPublicMemberNonExportedPackage",
+                successNoWarning(),
+                "--patch-module", "java.base=" + patch);
+
+        // access, reflectively export, access again
+        List<String> output = run("reflectPublicMemberNonExportedPackage,"
+                        + "exportNonExportedPackages,"
+                        + "reflectPublicMemberNonExportedPackage",
+                "--patch-module", "java.base="+patch,
+                "--illegal-access=warn").asLines();
+        assertTrue(count(output, "WARNING") == 1);  // one warning
+    }
+
+    /**
+     * Test reflective API to open a package
+     */
+    public void testWithReflectiveOpens() throws Exception {
+        // compile patch for java.base
+        Path src = Paths.get(TEST_SRC, "patchsrc", "java.base");
+        Path patch = Files.createDirectories(Paths.get("patches", "java.base"));
+        assertTrue(CompilerUtils.compile(src, patch,
+                                         "--patch-module", "java.base=" + src));
+
+        // reflectively open exported package, then access
+        run("openExportedPackage,setAccessibleNonPublicMemberExportedPackage",
+                successNoWarning(),
+                "--patch-module", "java.base=" + patch);
+
+        // access, reflectively open exported package, access again
+        List<String> output1 = run("setAccessibleNonPublicMemberExportedPackage"
+                        + ",openExportedPackage"
+                        + ",setAccessibleNonPublicMemberExportedPackage",
+                "--patch-module", "java.base=" + patch,
+                "--illegal-access=warn").asLines();
+        assertTrue(count(output1, "WARNING") == 1);  // one warning
+
+        // reflectively open non-exported packages, then access
+        run("openNonExportedPackages,setAccessibleNonPublicMemberNonExportedPackage",
+                successNoWarning(),
+                "--patch-module", "java.base=" + patch);
+
+        // access, reflectively open non-exported package, access again
+        List<String> output2 = run("setAccessibleNonPublicMemberNonExportedPackage"
+                        + ",openNonExportedPackages"
+                        + ",setAccessibleNonPublicMemberNonExportedPackage",
+                "--patch-module", "java.base=" + patch,
+                "--illegal-access=warn").asLines();
+        assertTrue(count(output2, "WARNING") == 1);  // one warning
     }
 
     /**
@@ -336,8 +397,8 @@ public class IllegalAccessTest {
         run(jarfile, "setAccessibleNonPublicMemberExportedPackage", successWithWarning());
 
         // attempt two illegal accesses, one allowed by Add-Exports
-        run(jarfile, "reflectPublicMemberNonExportedPackage"
-                + ",setAccessibleNonPublicMemberExportedPackage",
+        run(jarfile, "reflectPublicMemberNonExportedPackage,"
+                + "setAccessibleNonPublicMemberExportedPackage",
             successWithWarning());
     }
 
@@ -359,8 +420,8 @@ public class IllegalAccessTest {
         run(jarfile, "reflectPublicMemberNonExportedPackage", successWithWarning());
 
         // attempt two illegal accesses, one allowed by Add-Opens
-        run(jarfile, "reflectPublicMemberNonExportedPackage"
-                + ",setAccessibleNonPublicMemberExportedPackage",
+        run(jarfile, "reflectPublicMemberNonExportedPackage,"
+                + "setAccessibleNonPublicMemberExportedPackage",
             successWithWarning());
     }
 
@@ -419,7 +480,6 @@ public class IllegalAccessTest {
                 fail("Value specified to --illegal-access not recognized"),
                 "--illegal-access=BAD");
     }
-
 
     private int count(Iterable<String> lines, CharSequence cs) {
         int count = 0;

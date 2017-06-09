@@ -168,4 +168,27 @@ public class TryAccess {
         Class<?> clazz = Class.forName("p.Type");
         MethodHandles.privateLookupIn(clazz, MethodHandles.lookup());
     }
+
+
+    // -- export/open packages to this unnamed module --
+
+    static void exportNonExportedPackages() throws Exception {
+        Class<?> helper = Class.forName("java.lang.Helper");
+        Method m = helper.getMethod("export", String.class, Module.class);
+        m.invoke(null, "sun.security.x509", TryAccess.class.getModule());
+        m.invoke(null, "sun.nio.ch", TryAccess.class.getModule());
+    }
+
+    static void openExportedPackage() throws Exception {
+        Class<?> helper = Class.forName("java.lang.Helper");
+        Method m = helper.getMethod("open", String.class, Module.class);
+        m.invoke(null, "java.lang", TryAccess.class.getModule());
+    }
+
+    static void openNonExportedPackages() throws Exception {
+        Class<?> helper = Class.forName("java.lang.Helper");
+        Method m = helper.getMethod("open", String.class, Module.class);
+        m.invoke(null, "sun.security.x509", TryAccess.class.getModule());
+        m.invoke(null, "sun.nio.ch", TryAccess.class.getModule());
+    }
 }
