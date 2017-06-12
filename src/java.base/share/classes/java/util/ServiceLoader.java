@@ -154,76 +154,6 @@ import jdk.internal.reflect.Reflection;
  * order, and then lazily locates any remaining providers. Caches are cleared
  * via the {@link #reload reload} method.
  *
- * <h2> Locating providers </h2>
- *
- * <p> The {@code load} methods locate providers using a class loader or module
- * {@link ModuleLayer layer}. When locating providers using a class loader then
- * providers in both named and unnamed modules may be located. When locating
- * providers using a module layer then only providers in named modules in
- * the layer (or parent layers) are located.
- *
- * <p> When locating providers using a class loader then any providers in named
- * modules defined to the class loader, or any class loader that is reachable
- * via parent delegation, are located. Additionally, and with the exception
- * of the bootstrap and {@linkplain ClassLoader#getPlatformClassLoader()
- * platform} class loaders, if the class loader, or any class loader reachable
- * via parent delegation, defines modules in one or more module layers then the
- * providers in the module layers are located. For example, suppose there is a
- * module layer where each module is defined to its own class loader (see {@link
- * ModuleLayer#defineModulesWithManyLoaders defineModulesWithManyLoaders}). If
- * the {@code load} method is invoked to locate providers using any of these
- * class loaders for this layer then it will locate all of the providers in that
- * layer, irrespective of their defining class loader.
- *
- * <p> In the case of unnamed modules then the service configuration files are
- * located using the class loader's {@link ClassLoader#getResources(String)
- * ClassLoader.getResources(String)} method. Any providers listed should be
- * visible via the class loader specified to the {@code load} method. If a
- * provider in a named module is listed then it is ignored - this is to avoid
- * duplicates that would otherwise arise when a module has both a
- * <i>provides</i> clause and a service configuration file in {@code
- * META-INF/services} that lists the same provider.
- *
- * <h2> Ordering </h2>
- *
- * <p> Service loaders created to locate providers using a {@code ClassLoader}
- * locate providers as follows:
- * <ul>
- *     <li> Providers in named modules are located before providers on the
- *     class path (or more generally, unnamed modules). </li>
- *
- *     <li> When locating providers in named modules then the service loader
- *     will locate providers in modules defined to the class loader, then its
- *     parent class loader, its parent parent, and so on to the bootstrap class
- *     loader. If a {@code ClassLoader}, or any class loader in the parent
- *     delegation chain, defines modules in a custom {@link ModuleLayer} then
- *     all providers in that layer are located, irrespective of their class
- *     loader. The ordering of modules defined to the same class loader, or the
- *     ordering of modules in a layer, is not defined. </li>
- *
- *     <li> If a named module declares more than one provider then the providers
- *     are located in the iteration order of the {@link
- *     java.lang.module.ModuleDescriptor.Provides#providers() providers} list.
- *     Providers added dynamically by instrumentation agents ({@link
- *     java.lang.instrument.Instrumentation#redefineModule redefineModule})
- *     are always located after providers declared by the module. </li>
- *
- *     <li> When locating providers in unnamed modules then the ordering is
- *     based on the order that the class loader's {@link
- *     ClassLoader#getResources(String) ClassLoader.getResources(String)}
- *     method finds the service configuration files. </li>
- * </ul>
- *
- * <p> Service loaders created to locate providers in a {@linkplain ModuleLayer
- * module layer} will first locate providers in the layer, before locating
- * providers in parent layers. Traversal of parent layers is depth-first with
- * each layer visited at most once. For example, suppose L0 is the boot layer,
- * L1 and L2 are custom layers with L0 as their parent. Now suppose that L3 is
- * created with L1 and L2 as the parents (in that order). Using a service
- * loader to locate providers with L3 as the content will locate providers
- * in the following order: L3, L1, L0, L2. The ordering of modules in a layer
- * is not defined.
- *
  * <h2> Selection and filtering </h2>
  *
  * <p> Selecting a provider or filtering providers will usually involve invoking
@@ -836,7 +766,7 @@ public final class ServiceLoader<S>
 
         @Override
         public int hashCode() {
-            return Objects.hash(type, acc);
+            return Objects.hash(service, type, acc);
         }
 
         @Override
@@ -845,7 +775,8 @@ public final class ServiceLoader<S>
                 return false;
             @SuppressWarnings("unchecked")
             ProviderImpl<?> that = (ProviderImpl<?>)ob;
-            return this.type == that.type
+            return this.service == that.service
+                    && this.type == that.type
                     && Objects.equals(this.acc, that.acc);
         }
     }
@@ -1567,7 +1498,68 @@ public final class ServiceLoader<S>
 
     /**
      * Creates a new service loader for the given service type and class
-     * loader.
+     * loader. The service loader locates service providers in both named and
+     * unnamed modules:
+     *
+     * <ul>
+     *   <li><p> Service providers are located in named modules defined to the
+     *   class loader, or any class loader that is reachable via parent
+     *   delegation. </p>
+     *
+     *   <p> Additionally, and with the exception of the bootstrap and {@linkplain
+     *   ClassLoader#getPlatformClassLoader() platform} class loaders, if the
+     *   class loader, or any class loader reachable via parent delegation,
+     *   defines modules in a module layer then the providers in the module layer
+     *   are located. For example, suppose there is a module layer where each
+     *   module is defined to its own class loader (see {@link
+     *   ModuleLayer#defineModulesWithManyLoaders defineModulesWithManyLoaders}).
+     *   If this {@code ServiceLoader.load} method is invoked to locate providers
+     *   using any of the class loaders created for this layer then it will locate
+     *   all of the providers in that layer, irrespective of their defining class
+     *   loader. </p></li>
+     *
+     *   <li><p> A provider is an unnamed modules is located if its class
+     *   name is listed in a service configuration file located by the the class
+     *   loader's {@link ClassLoader#getResources(String) getResources} method.
+     *   The provider class must be visible to the class loader. If a provider
+     *   class is in a named module is listed then it is ignored (this is to
+     *   avoid duplicates that would otherwise arise when a module has both a
+     *   <i>provides</i> clause and a service configuration file in {@code
+     *   META-INF/services} that lists the same provider). </p> </li>
+     * </ul>
+     *
+     * <p> The ordering that providers are located when using a service loader
+     * created by this method is as follows:
+     *
+     * <ul>
+     *     <li><p> Providers in named modules are located before service
+     *     providers in unnamed modules.</p></li>
+     *
+     *     <li><p> When locating providers in named modules then the service
+     *     loader will first locate any service providers in modules defined to
+     *     the class loader, then its parent class loader, its parent parent,
+     *     and so on to the bootstrap class loader. If a class loader or any
+     *     class loader in the parent delegation chain, defines modules in a
+     *     module layer then all providers in that layer are located
+     *     (irrespective of their class loader) before providers in the parent
+     *     class loader are located. The ordering of modules defined to the
+     *     same class loader, or the ordering of modules in a layer, is not
+     *     defined. </p></li>
+     *
+     *     <li><p> If a named module declares more than one provider then the
+     *     providers are located in the order that its module descriptor
+     *     {@linkplain java.lang.module.ModuleDescriptor.Provides#providers()
+     *     lists the providers}. Providers added dynamically by instrumentation
+     *     agents (see {@link java.lang.instrument.Instrumentation#redefineModule
+     *     redefineModule}) are always located after providers declared by the
+     *     module. </p></li>
+     *
+     *     <li><p> When locating providers in unnamed modules then the
+     *     ordering is based on the order that the class loader's {@link
+     *     ClassLoader#getResources(String) getResources} method finds the
+     *     service configuration files and within that, the order that the class
+     *     names are listed in the file. </p></li>
+     * </ul>
      *
      * @param  <S> the class of the service type
      *
@@ -1679,9 +1671,30 @@ public final class ServiceLoader<S>
     }
 
     /**
-     * Creates a new service loader for the given service type that loads
-     * service providers from modules in the given {@code ModuleLayer} and its
-     * ancestors.
+     * Creates a new service loader for the given service type to load service
+     * providers from modules in the given module layer and its ancestors. It
+     * does not locate providers in unnamed modules.
+     *
+     * <p> The ordering that service providers are located when using a service
+     * loader created by this method is as follows:
+     *
+     * <ul>
+     *   <li><p> Providers are located in a module layer before locating providers
+     *   in parent layers. Traversal of parent layers is depth-first with each
+     *   layer visited at most once. For example, suppose L0 is the boot layer, L1
+     *   and L2 are modules layers with L0 as their parent. Now suppose that L3 is
+     *   created with L1 and L2 as the parents (in that order). Using a service
+     *   loader to locate providers with L3 as the context will locate providers
+     *   in the following order: L3, L1, L0, L2. </p></li>
+     *
+     *   <li><p> If a named module declares more than one provider then the
+     *   providers are located in the order that its module descriptor
+     *   {@linkplain java.lang.module.ModuleDescriptor.Provides#providers()
+     *   lists the providers}. Providers added dynamically by instrumentation
+     *   agents are always located after providers declared by the module. </p></li>
+     *
+     *   <li><p> The ordering of modules in a module layer is not defined. </p></li>
+     * </ul>
      *
      * @apiNote Unlike the other load methods defined here, the service type
      * is the second parameter. The reason for this is to avoid source
