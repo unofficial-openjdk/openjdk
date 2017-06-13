@@ -81,16 +81,82 @@ import jdk.internal.reflect.Reflection;
  * single class or interface could possibly unify them, so no such type is
  * defined here.
  *
- * <p> Providers deployed as explicit modules on the module path are
- * instantiated by a <em>provider factory</em> or directly via the provider's
- * constructor. In the module declaration then the class name specified in the
- * <i>provides</i> clause is a provider factory if it is public and explicitly
- * declares a public static no-args method named "{@code provider}". The return
- * type of the method must be assignable to the <i>service</i> type. If the
- * class is not a provider factory then it is public with a public zero-argument
- * constructor. The requirement that the provider factory or provider class
- * be public helps to document the intent that the provider will be
- * instantiated by the service-provider loading facility.
+ * <p> A service loader is created by invoking one of the static {@code load}
+ * methods that {@code ServiceLoader} defines. The resulting service loader
+ * can be used to locate and instantiate service provider implementations by
+ * means of its {@link #iterator() iterator} ({@code ServiceLoader} implements
+ * {@code Iterable}) or by consuming elements from its {@link #stream() stream}.
+ *
+ * <p> As an example, suppose the service type is {@code com.example.CodecSet}
+ * and it defines two abstract methods to obtain encoders and decoders:
+ * <pre>{@code
+ *     package com.example;
+ *     public interface CodecSet {
+ *         Encoder getEncoder(String encodingName);
+ *         Decoder getDecoder(String encodingName);
+ *     }
+ * }</pre>
+ * With this example, the following uses the service loader's iterator to find
+ * a provider that supports a specific encoding:
+ * <pre>{@code
+ *     public Encoder getEncoder(String encodingName) {
+ *         ServiceLoader<CodeSet> loader = ServiceLoader.load(CodeSet.class);
+ *         for (CodecSet cs : loader) {
+ *             Encoder encoder = cs.getEncoder(encodingName);
+ *             if (encoder != null)
+ *                 return encoder;
+ *         }
+ *         return null;
+ *    }
+ * }</pre>
+ *
+ * <p> Selecting a provider or filtering providers will usually involve invoking
+ * a provider method. In the {@code CodeSet} example, the {@code getEncoder}
+ * method is used to select the implementation. Where selection or filtering based
+ * on the provider class is needed then it can be done when consuming the elements
+ * of the service loader's stream. As an example, the following collects the
+ * {@code CodeSet} implementations that have a specific annotation:
+ * <pre>{@code
+ *     Set<CodecSet> providers = ServiceLoader.load(CodecSet.class)
+ *            .stream()
+ *            .filter(p -> p.type().isAnnotationPresent(Managed.class))
+ *            .map(Provider::get)
+ *            .collect(Collectors.toSet());
+ * }</pre>
+ *
+ * <p> Providers are located and instantiated lazily, that is, on demand.  A
+ * service loader maintains a cache of the providers that have been loaded so
+ * far. Each invocation of the {@code iterator} method returns an iterator that
+ * first yields all of the elements cached from previous iteration, in
+ * instantiation order, and then lazily locates and instantiates any remaining
+ * providers, adding each one to the cache in turn.  Similarly, each invocation
+ * of the {@code stream} method returns a stream that first processes all
+ * providers loaded by previous stream operations, in load order, and then lazily
+ * locates any remaining providers. Caches are cleared via the {@link #reload
+ * reload} method.
+ *
+ * <h3> Deploying provider classes in modules  </h3>
+ *
+ * <p> A provider deployed as an explicit module must have an appropriate
+ * <i>provides</i> clause in its module descriptor to declare that the module
+ * provides an implementation of the service.
+ *
+ * <p> A provider deployed as an explicit module is instantiated by a
+ * <em>provider factory</em> or directly via the provider's constructor. In the
+ * module declaration then the class name specified in the <i>provides</i> clause
+ * is a provider factory if it is public and explicitly declares a public static
+ * no-args method named "{@code provider}". The return type of the method must be
+ * assignable to the <i>service</i> type. If the class is not a provider factory
+ * then it is public with a public zero-argument constructor. The requirement
+ * that the provider factory or provider class be public helps to document the
+ * intent that the provider will be instantiated by the service-provider loading
+ * facility.
+ *
+ * <p> Providers deployed as {@link
+ * java.lang.module.ModuleDescriptor#isAutomatic automatic-modules} on the
+ * module path must have a public zero-argument constructor. If the provider
+ * also declares a public static method named  "{@code provider}" then it is
+ * ignored.
  *
  * <p> As an example, suppose a module declares the following:
  *
@@ -99,31 +165,26 @@ import jdk.internal.reflect.Reflection;
  *     provides com.example.CodecSet with com.example.impl.ExtendedCodecsFactory;
  * }</pre>
  *
- * <p> where {@code com.example.CodecSet} is the service type, {@code
- * com.example.impl.StandardCodecs} is a provider class that is public with a
- * public no-args constructor, {@code com.example.impl.ExtendedCodecsFactory} is
- * a public class that explicitly declares a public static no-args method named
- * "{@code provider}" with a return type that is {@code CodecSet} or a subtype
- * of. For this example then {@code StandardCodecs}'s no-arg constructor will be
- * used to instantiate {@code StandardCodecs}. {@code ExtendedCodecsFactory}
+ * where
+ * <ul>
+ *     <li> {@code com.example.CodecSet} is the service type as above </li>
+ *     <li> {@code com.example.impl.StandardCodecs} is a provider class
+ *     (implements {@code CodecSet}) that is public with a public no-args
+ *     constructor </li>
+ *     <li> {@code com.example.impl.ExtendedCodecsFactory} is a public class
+ *     that explicitly declares a public static no-args method named
+ *     "{@code provider}" with a return type that is {@code CodecSet} or a
+ *     subtype of. </li>
+ * </ul>
+ *
+ * <p> For this example then {@code StandardCodecs}'s no-arg constructor will
+ * be used to instantiate {@code StandardCodecs}. {@code ExtendedCodecsFactory}
  * will be treated as a provider factory and {@code
  * ExtendedCodecsFactory.provider()} will be invoked to obtain the provider.
  *
- * <p> Providers deployed on the class path or as {@link
- * java.lang.module.ModuleDescriptor#isAutomatic automatic-modules} on the
- * module path must have a public zero-argument constructor.
+ * <h3> Deploying provider classes on the class path </h3>
  *
- * <p> An application or library using this loading facility and developed
- * and deployed as an explicit module must have an appropriate <i>uses</i>
- * clause in its <i>module descriptor</i> to declare that the module uses
- * implementations of the service. A corresponding requirement is that a
- * provider deployed as an explicit module must have an appropriate
- * <i>provides</i> clause in its module descriptor to declare that the module
- * provides an implementation of the service. The <i>uses</i> and
- * <i>provides</i> allow consumers of a service to be <i>linked</i> to modules
- * containing providers of the service.
- *
- * <p><a id="format"> A service provider that is packaged as a JAR file for
+ * <p><a id="format">A service provider that is packaged as a JAR file for
  * the class path is identified by placing a <i>provider-configuration file</i>
  * in the resource directory {@code META-INF/services}.</a> The file's name is
  * the fully-qualified <a href="../lang/ClassLoader.html#name">binary name</a>
@@ -141,39 +202,39 @@ import jdk.internal.reflect.Reflection;
  * unit as the provider itself. The provider must be visible from the same
  * class loader that was initially queried to locate the configuration file;
  * note that this is not necessarily the class loader from which the file was
- * actually loaded.
+ * actually located.
  *
- * <p> Providers are located and instantiated lazily, that is, on demand.  A
- * service loader maintains a cache of the providers that have been loaded so
- * far. Each invocation of the {@link #iterator iterator} method returns an
- * iterator that first yields all of the elements cached from previous
- * iteration, in instantiation order, and then lazily locates and instantiates
- * any remaining providers, adding each one to the cache in turn.  Similarly,
- * each invocation of the {@link #stream stream} method returns a stream that
- * first processes all providers loaded by previous stream operations, in load
- * order, and then lazily locates any remaining providers. Caches are cleared
- * via the {@link #reload reload} method.
+ * <p> For the example, then suppose {@code com.example.impl.StandardCodecs} is
+ * packaged in a JAR file for the class path then the JAR file will contain a
+ * file named:
+ * <blockquote>{@code
+ *     META-INF/services/com.example.CodecSet
+ * }</blockquote>
+ * that contains the line:
+ * <blockquote>{@code
+ *     com.example.impl.StandardCodecs    # Standard codecs
+ * }</blockquote>
  *
- * <h2> Selection and filtering </h2>
+ * <h3> Using ServiceLoader from code in modules </h3>
  *
- * <p> Selecting a provider or filtering providers will usually involve invoking
- * a provider method. Where selection or filtering based on the provider class is
- * needed then it can be done using a {@link #stream() stream}. For example, the
- * following collects the providers that have a specific annotation:
- * <pre>{@code
- *     Set<CodecSet> providers = ServiceLoader.load(CodecSet.class)
- *            .stream()
- *            .filter(p -> p.type().isAnnotationPresent(Managed.class))
- *            .map(Provider::get)
- *            .collect(Collectors.toSet());
- * }</pre>
+ * <p> An application or library using this loading facility and developed
+ * and deployed as an explicit module must have an appropriate <i>uses</i>
+ * clause in its <i>module descriptor</i> to declare that the module uses
+ * implementations of the service. Combined with the requirement is that a
+ * provider deployed as an explicit module must have an appropriate
+ * <i>provides</i> clause allows consumers of a service to be <i>linked</i>
+ * to modules containing providers of the service.
  *
- * <h2> Errors </h2>
+ * <p> For the example, if code in a module uses a service loader to load
+ * implementations of {@code com.example.CodecSet} then its module will declare
+ * the usage with: <pre>{@code    uses com.example.CodecSet; }</pre>
  *
- * <p>  When using the service loader's {@link #iterator() iterator} then its
- * {@code hasNext} and {@code next} methods will fail with {@link
- * ServiceConfigurationError} if an error occurs locating or instantiating a
- * provider. When processing the service loader's {@link #stream() stream} then
+ * <h3> Errors </h3>
+ *
+ * <p>  When using the service loader's {@code iterator} then its {@link
+ * Iterator#hasNext() hasNext} and {@link Iterator#next() next} methods will
+ * fail with {@link ServiceConfigurationError} if an error occurs locating or
+ * instantiating a provider. When processing the service loader's stream then
  * {@code ServiceConfigurationError} is thrown by whatever method causes a
  * provider class to be loaded.
  *
@@ -222,7 +283,7 @@ import jdk.internal.reflect.Reflection;
  *
  * </ul>
  *
- * <h2> Security </h2>
+ * <h3> Security </h3>
  *
  * <p> Service loaders always execute in the security context of the caller
  * of the iterator or stream methods and may also be restricted by the security
@@ -231,90 +292,15 @@ import jdk.internal.reflect.Reflection;
  * the methods of the iterators which they return, from within a privileged
  * security context.
  *
- * <h2> Concurrency </h2>
+ * <h3> Concurrency </h3>
  *
  * <p> Instances of this class are not safe for use by multiple concurrent
  * threads.
  *
- * <h2> Null handling </h2>
+ * <h3> Null handling </h3>
  *
  * <p> Unless otherwise specified, passing a {@code null} argument to any
  * method in this class will cause a {@link NullPointerException} to be thrown.
- *
- * <h2> Example </h2>
- * <p> Suppose we have a service type {@code com.example.CodecSet} which is
- * intended to represent sets of encoder/decoder pairs for some protocol.  In
- * this case it is an abstract class with two abstract methods:
- *
- * <blockquote><pre>
- * public abstract Encoder getEncoder(String encodingName);
- * public abstract Decoder getDecoder(String encodingName);</pre></blockquote>
- *
- * Each method returns an appropriate object or {@code null} if the provider
- * does not support the given encoding.  Typical providers support more than
- * one encoding.
- *
- * <p> The {@code CodecSet} class creates and saves a single service instance
- * at initialization:
- *
- * <pre>{@code
- * private static ServiceLoader<CodecSet> codecSetLoader
- *     = ServiceLoader.load(CodecSet.class);
- * }</pre>
- *
- * <p> To locate an encoder for a given encoding name it defines a static
- * factory method which iterates through the known and available providers,
- * returning only when it has located a suitable encoder or has run out of
- * providers.
- *
- * <pre>{@code
- * public static Encoder getEncoder(String encodingName) {
- *     for (CodecSet cp : codecSetLoader) {
- *         Encoder enc = cp.getEncoder(encodingName);
- *         if (enc != null)
- *             return enc;
- *     }
- *     return null;
- * }}</pre>
- *
- * <p> A {@code getDecoder} method is defined similarly.
- *
- * <p> If the code creating and using the service loader is developed as
- * a module then its module descriptor will declare the usage with:
- * <pre>{@code uses com.example.CodecSet;}</pre>
- *
- * <p> Now suppose that {@code com.example.impl.StandardCodecs} is an
- * implementation of the {@code CodecSet} service and developed as a module.
- * In that case then the module with the service provider module will declare
- * this in its module descriptor:
- * <pre>{@code provides com.example.CodecSet with com.example.impl.StandardCodecs;
- * }</pre>
- *
- * <p> On the other hand, suppose {@code com.example.impl.StandardCodecs} is
- * packaged in a JAR file for the class path then the JAR file will contain a
- * file named:
- * <pre>{@code META-INF/services/com.example.CodecSet}</pre>
- * that contains the single line:
- * <pre>{@code com.example.impl.StandardCodecs    # Standard codecs}</pre>
- *
- * <p><span style="font-weight: bold; padding-right: 1em">Usage Note</span> If
- * the class path of a class loader that is used for provider loading includes
- * remote network URLs then those URLs will be dereferenced in the process of
- * searching for provider-configuration files.
- *
- * <p> This activity is normal, although it may cause puzzling entries to be
- * created in web-server logs.  If a web server is not configured correctly,
- * however, then this activity may cause the provider-loading algorithm to fail
- * spuriously.
- *
- * <p> A web server should return an HTTP 404 (Not Found) response when a
- * requested resource does not exist.  Sometimes, however, web servers are
- * erroneously configured to return an HTTP 200 (OK) response along with a
- * helpful HTML error page in such cases.  This will cause a {@link
- * ServiceConfigurationError} to be thrown when this class attempts to parse
- * the HTML page as a provider-configuration file.  The best solution to this
- * problem is to fix the misconfigured web server to return the correct
- * response code (HTTP 404) along with the HTML error page.
  *
  * @param  <S>
  *         The type of the service to be loaded by this loader
@@ -1528,8 +1514,8 @@ public final class ServiceLoader<S>
      *   META-INF/services} that lists the same provider). </p> </li>
      * </ul>
      *
-     * <p> The ordering that providers are located when using a service loader
-     * created by this method is as follows:
+     * <p> The ordering that the service loader's iterator and stream locate
+     * providers and yield elements is as follows:
      *
      * <ul>
      *     <li><p> Providers in named modules are located before service
@@ -1560,6 +1546,24 @@ public final class ServiceLoader<S>
      *     service configuration files and within that, the order that the class
      *     names are listed in the file. </p></li>
      * </ul>
+     *
+     * @apiNote If the class path of the class loader includes remote network
+     * URLs then those URLs may be dereferenced in the process of searching for
+     * provider-configuration files.
+     *
+     * <p> This activity is normal, although it may cause puzzling entries to be
+     * created in web-server logs.  If a web server is not configured correctly,
+     * however, then this activity may cause the provider-loading algorithm to fail
+     * spuriously.
+     *
+     * <p> A web server should return an HTTP 404 (Not Found) response when a
+     * requested resource does not exist.  Sometimes, however, web servers are
+     * erroneously configured to return an HTTP 200 (OK) response along with a
+     * helpful HTML error page in such cases.  This will cause a {@link
+     * ServiceConfigurationError} to be thrown when this class attempts to parse
+     * the HTML page as a provider-configuration file.  The best solution to this
+     * problem is to fix the misconfigured web server to return the correct
+     * response code (HTTP 404) along with the HTML error page.
      *
      * @param  <S> the class of the service type
      *
@@ -1596,13 +1600,13 @@ public final class ServiceLoader<S>
      *
      * <p> An invocation of this convenience method of the form
      * <pre>{@code
-     * ServiceLoader.load(service)
+     *     ServiceLoader.load(service)
      * }</pre>
      *
      * is equivalent to
      *
      * <pre>{@code
-     * ServiceLoader.load(service, Thread.currentThread().getContextClassLoader())
+     *     ServiceLoader.load(service, Thread.currentThread().getContextClassLoader())
      * }</pre>
      *
      * @apiNote Service loader objects obtained with this method should not be
@@ -1641,7 +1645,7 @@ public final class ServiceLoader<S>
      * <p> This convenience method is equivalent to: </p>
      *
      * <pre>{@code
-     * ServiceLoader.load(service, ClassLoader.getPlatformClassLoader())
+     *     ServiceLoader.load(service, ClassLoader.getPlatformClassLoader())
      * }</pre>
      *
      * <p> This method is intended for use when only installed providers are
@@ -1675,8 +1679,8 @@ public final class ServiceLoader<S>
      * providers from modules in the given module layer and its ancestors. It
      * does not locate providers in unnamed modules.
      *
-     * <p> The ordering that service providers are located when using a service
-     * loader created by this method is as follows:
+     * <p> The ordering that the service loader's iterator and stream locate
+     * providers and yield elements is as follows:
      *
      * <ul>
      *   <li><p> Providers are located in a module layer before locating providers
