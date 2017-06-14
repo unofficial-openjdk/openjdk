@@ -303,7 +303,6 @@ public final class Loader extends SecureClassLoader {
 
     // -- resources --
 
-
     /**
      * Returns a URL to a resource of the given name in a module defined to
      * this class loader.
@@ -388,6 +387,36 @@ public final class Loader extends SecureClassLoader {
 
     @Override
     public Enumeration<URL> findResources(String name) throws IOException {
+        return Collections.enumeration(findResourcesAsList(name));
+    }
+
+    @Override
+    public URL getResource(String name) {
+        // this loader
+        URL url = findResource(name);
+        if (url != null) {
+            return url;
+        } else {
+            // parent loader
+            return parent.getResource(name);
+        }
+    }
+
+    @Override
+    public Enumeration<URL> getResources(String name) throws IOException {
+        // this loader
+        List<URL> urls = findResourcesAsList(name);
+
+        // parent loader
+        parent.getResources(name).asIterator().forEachRemaining(urls::add);
+
+        return Collections.enumeration(urls);
+    }
+
+    /**
+     * Finds all resources with the given name in this class loader.
+     */
+    private List<URL> findResourcesAsList(String name) throws IOException {
         List<URL> urls = new ArrayList<>();
         String pn = Resources.toPackageName(name);
         LoadedModule module = localPackageToModule.get(pn);
@@ -395,7 +424,7 @@ public final class Loader extends SecureClassLoader {
             try {
                 URL url = findResource(module.name(), name);
                 if (url != null
-                    && (name.endsWith(".class")
+                        && (name.endsWith(".class")
                         || url.toString().endsWith("/")
                         || isOpen(module.mref(), pn))) {
                     urls.add(url);
@@ -414,7 +443,7 @@ public final class Loader extends SecureClassLoader {
                 }
             }
         }
-        return Collections.enumeration(urls);
+        return urls;
     }
 
 
