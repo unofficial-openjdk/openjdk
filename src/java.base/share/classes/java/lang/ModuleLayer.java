@@ -531,6 +531,10 @@ public final class ModuleLayer {
      * methods) in the module defined to the class loader before searching
      * the parent class loader. </p>
      *
+     * <p> If there is a security manager then the class loaders created by
+     * this method will load classes and resources with privileges that are
+     * restricted by the calling context of this method. </p>
+     *
      * @param  cf
      *         The configuration for the layer
      * @param  parentLayers
