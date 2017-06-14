@@ -70,10 +70,9 @@
  * name of the <i>agent class</i>. The agent class must implement a public
  * static {@code premain} method similar in principle to the {@code main}
  * application entry point. After the Java Virtual Machine (JVM) has
- * initialized, each {@code premain} method will be called in the order the
- * agents were specified on the command line, then the real application {@code
- * main} method will be called. Each {@code premain} method must return in
- * order for the startup sequence to proceed.
+ * initialized, the {@code premain} method will be called, then the real
+ * application {@code main} method. The {@code premain} method must return
+ * in order for the startup to proceed.
  *
  * <p> The {@code premain} method has one of two possible signatures. The
  * JVM first attempts to invoke the following method on the agent class:
@@ -105,7 +104,9 @@
  * from the command-line interface. When it does, then it supports the
  * {@code -javaagent} option as specified above. The {@code -javaagent} option
  * may be used multiple times on the same command-line, thus starting multiple
- * agents. More than one agent may use the same <i>{@code <jarpath>}</i>.
+ * agents. The {@code premain} methods will be called in the order that the
+ * agents are specified on the command line. More than one agent may use the
+ * same <i>{@code <jarpath>}</i>.
  *
  * <p> There are no modeling restrictions on what the agent {@code premain}
  * method may do. Anything application {@code main} can do, including creating
@@ -204,16 +205,27 @@
  *
  * <p> The classes visible to the agent class are the classes visible to the system
  * class loader and minimally include:
+ *
  * <ul>
+ *
  *   <li><p> The classes in packages exported by the modules in the {@linkplain
  *   ModuleLayer#boot() boot layer}. Whether the boot layer contains all platform
  *   modules or not will depend on the initial module or how the application was
  *   started. </p></li>
+ *
  *   <li><p> The classes that can be defined by the system class loader (typically
  *   the class path) to be members of its unnamed module. </p></li>
+ *
  *   <li><p> Any classes that the agent arranges to be defined by the bootstrap
  *   class loader to be members of its unnamed module. </p></li>
+ *
  * </ul>
+ *
+ * <p> If agent classes need to link to classes in platform (or other) modules
+ * that are not in the boot layer then the application may need to be started in
+ * a way that ensures that these modules are in the boot layer. In the JDK
+ * implementation for example, the {@code --add-modules} command line option can
+ * be used to add modules to the set of root modules to resolve at startup. </p>
  *
  * <p> Supporting classes that the agent arranges to be loaded by the bootstrap
  * class loader (by means of {@link Instrumentation#appendToBootstrapClassLoaderSearch
