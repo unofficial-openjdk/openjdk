@@ -28,6 +28,7 @@ package jdk.internal.loader;
 import java.io.File;
 import java.io.FilePermission;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.module.Configuration;
 import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleReader;
@@ -52,11 +53,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Spliterator;
+import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.Resources;
@@ -392,6 +399,8 @@ public final class Loader extends SecureClassLoader {
 
     @Override
     public URL getResource(String name) {
+        Objects.requireNonNull(name);
+
         // this loader
         URL url = findResource(name);
         if (url != null) {
@@ -404,46 +413,77 @@ public final class Loader extends SecureClassLoader {
 
     @Override
     public Enumeration<URL> getResources(String name) throws IOException {
+        Objects.requireNonNull(name);
+
         // this loader
         List<URL> urls = findResourcesAsList(name);
 
         // parent loader
-        parent.getResources(name).asIterator().forEachRemaining(urls::add);
+        Enumeration<URL> e = parent.getResources(name);
 
-        return Collections.enumeration(urls);
+        // concat the URLs with the URLs returned by the parent
+        return new Enumeration<>() {
+            final Iterator<URL> iterator = urls.iterator();
+            @Override
+            public boolean hasMoreElements() {
+                return (iterator.hasNext() || e.hasMoreElements());
+            }
+            @Override
+            public URL nextElement() {
+                if (iterator.hasNext()) {
+                    return iterator.next();
+                } else {
+                    return e.nextElement();
+                }
+            }
+        };
+    }
+
+    @Override
+    public Stream<URL> resources(String name) {
+        Objects.requireNonNull(name);
+        // ordering not specified
+        int characteristics = (Spliterator.NONNULL | Spliterator.IMMUTABLE |
+                               Spliterator.SIZED | Spliterator.SUBSIZED);
+        Supplier<Spliterator<URL>> supplier = () -> {
+            try {
+                List<URL> urls = findResourcesAsList(name);
+                return Spliterators.spliterator(urls, characteristics);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        };
+        Stream<URL> s1 = StreamSupport.stream(supplier, characteristics, false);
+        Stream<URL> s2 = parent.resources(name);
+        return Stream.concat(s1, s2);
     }
 
     /**
-     * Finds all resources with the given name in this class loader.
+     * Finds the resources with the given name in this class loader.
      */
     private List<URL> findResourcesAsList(String name) throws IOException {
-        List<URL> urls = new ArrayList<>();
         String pn = Resources.toPackageName(name);
         LoadedModule module = localPackageToModule.get(pn);
         if (module != null) {
-            try {
-                URL url = findResource(module.name(), name);
-                if (url != null
-                        && (name.endsWith(".class")
-                        || url.toString().endsWith("/")
-                        || isOpen(module.mref(), pn))) {
-                    urls.add(url);
-                }
-            } catch (IOException ioe) {
-                // ignore
+            URL url = findResource(module.name(), name);
+            if (url != null
+                    && (name.endsWith(".class")
+                    || url.toString().endsWith("/")
+                    || isOpen(module.mref(), pn))) {
+                return List.of(url);
+            } else {
+                return Collections.emptyList();
             }
         } else {
+            List<URL> urls = new ArrayList<>();
             for (ModuleReference mref : nameToModule.values()) {
-                try {
-                    URL url = findResource(mref.descriptor().name(), name);
-                    if (url != null)
-                        urls.add(url);
-                } catch (IOException ioe) {
-                    // ignore
+                URL url = findResource(mref.descriptor().name(), name);
+                if (url != null) {
+                    urls.add(url);
                 }
             }
+            return urls;
         }
-        return urls;
     }
 
 

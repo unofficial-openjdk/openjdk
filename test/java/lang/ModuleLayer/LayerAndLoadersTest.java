@@ -567,8 +567,9 @@ public class LayerAndLoadersTest {
         URL url2 = loader.getResources("module-info.class").nextElement();
         assertEquals(url1.toURI(), url2.toURI());
 
-        // list of modules names read from module-info.class
-        List<String> list = getModuleInfos(loader);
+        // use getResources to find module-info.class resources
+        Enumeration<URL> urls = loader.getResources("module-info.class");
+        List<String> list = readModuleNames(urls);
 
         // m1, m2, ... should be first (order not specified)
         int count = cf.modules().size();
@@ -578,6 +579,26 @@ public class LayerAndLoadersTest {
 
         // java.base should be after m1, m2, ...
         assertTrue(list.indexOf("java.base") >= count);
+
+        // check resources(String)
+        List<String> list2 = loader.resources("module-info.class")
+                .map(this::readModuleName)
+                .collect(Collectors.toList());
+        assertEquals(list2, list);
+
+        // check nulls
+        try {
+            loader.getResource(null);
+            assertTrue(false);
+        } catch (NullPointerException e) { }
+        try {
+            loader.getResources(null);
+            assertTrue(false);
+        } catch (NullPointerException e) { }
+        try {
+            loader.resources(null);
+            assertTrue(false);
+        } catch (NullPointerException e) { }
     }
 
     /**
@@ -596,10 +617,11 @@ public class LayerAndLoadersTest {
 
             // getResource should find the module-info.class for the module
             URL url = loader.getResource("module-info.class");
-            assertEquals(readModuleInfo(url), name);
+            assertEquals(readModuleName(url), name);
 
             // list of modules names read from module-info.class
-            List<String> list = getModuleInfos(loader);
+            Enumeration<URL> urls = loader.getResources("module-info.class");
+            List<String> list = readModuleNames(urls);
 
             // module should be the first element
             assertTrue(list.indexOf(name) == 0);
@@ -613,20 +635,39 @@ public class LayerAndLoadersTest {
 
             // java.base cannot be the first element
             assertTrue(list.indexOf("java.base") > 0);
+
+            // check resources(String)
+            List<String> list2 = loader.resources("module-info.class")
+                    .map(this::readModuleName)
+                    .collect(Collectors.toList());
+            assertEquals(list2, list);
+
+            // check nulls
+            try {
+                loader.getResource(null);
+                assertTrue(false);
+            } catch (NullPointerException e) { }
+            try {
+                loader.getResources(null);
+                assertTrue(false);
+            } catch (NullPointerException e) { }
+            try {
+                loader.resources(null);
+                assertTrue(false);
+            } catch (NullPointerException e) { }
         }
     }
 
-    private List<String> getModuleInfos(ClassLoader loader) throws Exception {
+    private List<String> readModuleNames(Enumeration<URL> e) {
         List<String> list = new ArrayList<>();
-        Enumeration<URL> e = loader.getResources("module-info.class");
         while (e.hasMoreElements()) {
             URL url = e.nextElement();
-            list.add(readModuleInfo(url));
+            list.add(readModuleName(url));
         }
         return list;
     }
 
-    private String readModuleInfo(URL url) {
+    private String readModuleName(URL url) {
         try (InputStream in = url.openStream()) {
             ModuleDescriptor descriptor = ModuleDescriptor.read(in);
             return descriptor.name();

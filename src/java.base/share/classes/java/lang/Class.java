@@ -2446,13 +2446,14 @@ public final class Class<T> implements java.io.Serializable,
      */
     List<Method> getDeclaredPublicMethods(String name, Class<?>... parameterTypes) {
         Method[] methods = privateGetDeclaredMethods(/* publicOnly */ true);
+        ReflectionFactory factory = getReflectionFactory();
         List<Method> result = new ArrayList<>();
         for (Method method : methods) {
             if (method.getName().equals(name)
                 && Arrays.equals(
-                    reflectionFactory.getExecutableSharedParameterTypes(method),
+                    factory.getExecutableSharedParameterTypes(method),
                     parameterTypes)) {
-                result.add(getReflectionFactory().copyMethod(method));
+                result.add(factory.copyMethod(method));
             }
         }
         return result;

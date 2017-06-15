@@ -403,7 +403,7 @@ public final class ModuleBootstrap {
      */
     private static void loadModules(Configuration cf,
                                     Function<String, ClassLoader> clf) {
-      for (ResolvedModule resolvedModule : cf.modules()) {
+        for (ResolvedModule resolvedModule : cf.modules()) {
             ModuleReference mref = resolvedModule.reference();
             String name = resolvedModule.name();
             ClassLoader loader = clf.apply(name);

@@ -599,26 +599,6 @@ public final class ServiceLoader<S>
     }
 
     /**
-     * Returns true if the given class is assignable to a class or interface
-     * with the given name.
-     */
-    private boolean isAssignable(Class<?> clazz, String className) {
-        Class<?> c = clazz;
-        while (c != null) {
-            if (c.getName().equals(className)) {
-                return true;
-            }
-            for (Class<?> interf : c.getInterfaces()) {
-                if (interf.getName().equals(className)) {
-                    return true;
-                }
-            }
-            c = c.getSuperclass();
-        }
-        return false;
-    }
-
-    /**
      * A Provider implementation that supports invoking, with reduced
      * permissions, the static factory to obtain the provider or the
      * provider's no-arg constructor.
@@ -1171,7 +1151,7 @@ public final class ServiceLoader<S>
                             = (Constructor<? extends S>)getConstructor(clazz);
                         ProviderImpl<S> p = new ProviderImpl<S>(service, type, ctor, acc);
                         nextProvider = (ProviderImpl<T>) p;
-                    } else if (!isAssignable(clazz, serviceName)) {
+                    } else {
                         fail(service, clazz.getName() + " not a subtype");
                     }
                 } catch (ServiceConfigurationError e) {
