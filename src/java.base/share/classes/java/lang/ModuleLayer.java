@@ -245,6 +245,32 @@ public final class ModuleLayer {
         }
 
         /**
+         * Updates module {@code source} in the layer to export a package to
+         * module {@code target}. This method is a no-op if {@code source}
+         * already exports the package to at least {@code target}.
+         *
+         * @param  source
+         *         The source module
+         * @param  pn
+         *         The package name
+         * @param  target
+         *         The target module
+         *
+         * @return This controller
+         *
+         * @throws IllegalArgumentException
+         *         If {@code source} is not in the module layer or the package
+         *         is not in the source module
+         *
+         * @see Module#addExports
+         */
+        public Controller addExports(Module source, String pn, Module target) {
+            ensureInLayer(source);
+            source.implAddExports(pn, target);
+            return this;
+        }
+
+        /**
          * Updates module {@code source} in the layer to open a package to
          * module {@code target}. This method is a no-op if {@code source}
          * already opens the package to at least {@code target}.
@@ -254,7 +280,7 @@ public final class ModuleLayer {
          * @param  pn
          *         The package name
          * @param  target
-         *         The target module to read
+         *         The target module
          *
          * @return This controller
          *
@@ -576,10 +602,9 @@ public final class ModuleLayer {
      * <p> In addition, a layer cannot be created if the configuration contains
      * a module named "{@code java.base}", a configuration contains a module
      * with a package named "{@code java}" or a package name starting with
-     * "{@code java.}" and the module is mapped to a class loader other than
-     * the {@link ClassLoader#getPlatformClassLoader() platform class loader},
-     * or the function to map a module name to a class loader returns
-     * {@code null}. </p>
+     * "{@code java.}", or the function to map a module name to a class loader
+     * returns {@code null} or the {@linkplain ClassLoader#getPlatformClassLoader()
+     * platform class loader}. </p>
      *
      * <p> If the function to map a module name to class loader throws an error
      * or runtime exception then it is propagated to the caller of this method.
