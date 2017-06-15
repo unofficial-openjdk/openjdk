@@ -2941,10 +2941,6 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       if (!create_property("jdk.module.illegalAccess", tail, ExternalProperty)) {
         return JNI_ENOMEM;
       }
-    } else if (match_option(option, "--permit-illegal-access")) {
-      if (!create_property("jdk.module.illegalAccess", "warn", ExternalProperty)) {
-        return JNI_ENOMEM;
-      }
     // -agentlib and -agentpath
     } else if (match_option(option, "-agentlib:", &tail) ||
           (is_absolute_path = match_option(option, "-agentpath:", &tail))) {
