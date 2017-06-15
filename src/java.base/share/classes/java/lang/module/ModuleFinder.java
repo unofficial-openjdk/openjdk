@@ -48,7 +48,7 @@ import jdk.internal.module.SystemModuleFinder;
 /**
  * A finder of modules. A {@code ModuleFinder} is used to find modules during
  * <a href="package-summary.html#resolution">resolution</a> or
- * <a href="package-summary.html#servicebinding">service binding</a>.
+ * <a href="Configuration.html#service-binding">service binding</a>.
  *
  * <p> A {@code ModuleFinder} can only find one module with a given name. A
  * {@code ModuleFinder} that finds modules in a sequence of directories, for
