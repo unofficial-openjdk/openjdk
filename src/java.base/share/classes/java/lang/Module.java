@@ -558,34 +558,39 @@ public final class Module implements AnnotatedElement {
      * the given module via its module declaration or CLI options.
      */
     private boolean isStaticallyExportedOrOpen(String pn, Module other, boolean open) {
-        // package is open to everyone or <other>
+        // test if package is open to everyone or <other>
         Map<String, Set<Module>> openPackages = this.openPackages;
-        if (openPackages != null) {
-            Set<Module> targets = openPackages.get(pn);
-            if (targets != null) {
-                if (targets.contains(EVERYONE_MODULE) || targets.contains(other))
-                    return true;
-                if (other != EVERYONE_MODULE
-                    && !other.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
-                    return true;
-            }
+        if (openPackages != null && allows(openPackages.get(pn), other)) {
+            return true;
         }
 
         if (!open) {
-            // package is exported to everyone or <other>
+            // test package is exported to everyone or <other>
             Map<String, Set<Module>> exportedPackages = this.exportedPackages;
-            if (exportedPackages != null) {
-                Set<Module> targets = exportedPackages.get(pn);
-                if (targets != null) {
-                    if (targets.contains(EVERYONE_MODULE) || targets.contains(other))
-                        return true;
-                    if (other != EVERYONE_MODULE
-                        && !other.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
-                        return true;
-                }
+            if (exportedPackages != null && allows(exportedPackages.get(pn), other)) {
+                return true;
             }
         }
 
+        return false;
+    }
+
+    /**
+     * Returns {@code true} if targets is non-null and contains EVERYONE_MODULE
+     * or the given module. Also returns true if the given module is an unnamed
+     * module and targets contains ALL_UNNAMED_MODULE.
+     */
+    private boolean allows(Set<Module> targets, Module module) {
+       if (targets != null) {
+           if (targets.contains(EVERYONE_MODULE))
+               return true;
+           if (module != EVERYONE_MODULE) {
+               if (targets.contains(module))
+                   return true;
+               if (!module.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
+                   return true;
+           }
+        }
         return false;
     }
 
@@ -900,9 +905,7 @@ public final class Module implements AnnotatedElement {
      */
     void implAddOpensToAllUnnamed(Iterator<String> iterator) {
         if (jdk.internal.misc.VM.isModuleSystemInited()) {
-            iterator.forEachRemaining(pn ->
-                implAddExportsOrOpens(pn, ALL_UNNAMED_MODULE, true, true));
-            return;
+            throw new IllegalStateException("Module system already initialized");
         }
 
         // replace this module's openPackages map with a new map that opens
