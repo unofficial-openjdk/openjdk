@@ -45,6 +45,7 @@ import sun.security.jca.*;
  * {@code conf/security/java.security} in the Java installation directory.
  *
  * @author Benjamin Renaud
+ * @since 1.1
  */
 
 public final class Security {
@@ -1040,8 +1041,8 @@ public final class Security {
      * an empty Set if there is no provider that supports the
      * specified service or if serviceName is null. For a complete list
      * of Java cryptographic services, please see the
-     * <a href="../../../technotes/guides/security/crypto/CryptoSpec.html">Java
-     * Cryptography Architecture API Specification &amp; Reference</a>.
+     * {@extLink security_guide_jca
+     * Java Cryptography Architecture (JCA) Reference Guide}.
      * Note: the returned set is immutable.
      *
      * @param serviceName the name of the Java cryptographic
