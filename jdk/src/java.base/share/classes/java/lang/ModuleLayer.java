@@ -423,7 +423,7 @@ public final class ModuleLayer {
      * class loader and defines all modules to that class loader.
      *
      * <p> The class loader created by this method implements <em>direct
-     * delegation</em> when loading types from modules. When its {@link
+     * delegation</em> when loading classes from modules. If the {@link
      * ClassLoader#loadClass(String, boolean) loadClass} method is invoked to
      * load a class then it uses the package name of the class to map it to a
      * module. This may be a module in this layer and hence defined to the same
@@ -434,6 +434,12 @@ public final class ModuleLayer {
      * When {@code loadClass} is invoked to load classes that do not map to a
      * module then it delegates to the parent class loader. </p>
      *
+     * <p> The class loader created by this method locates resources
+     * ({@link ClassLoader#getResource(String) getResource}, {@link
+     * ClassLoader#getResources(String) getResources}, and other resource
+     * methods) in all modules in the layer before searching the parent class
+     * loader. </p>
+     *
      * <p> Attempting to create a layer with all modules defined to the same
      * class loader can fail for the following reasons:
      *
@@ -443,8 +449,8 @@ public final class ModuleLayer {
      *     configuration have the same package. </p></li>
      *
      *     <li><p> <em>Split delegation</em>: The resulting class loader would
-     *     need to delegate to more than one class loader in order to load types
-     *     in a specific package. </p></li>
+     *     need to delegate to more than one class loader in order to load
+     *     classes in a specific package. </p></li>
      *
      * </ul>
      *
@@ -507,7 +513,7 @@ public final class ModuleLayer {
      * class loader.
      *
      * <p> The class loaders created by this method implement <em>direct
-     * delegation</em> when loading types from modules. When {@link
+     * delegation</em> when loading classes from modules. If the {@link
      * ClassLoader#loadClass(String, boolean) loadClass} method is invoked to
      * load a class then it uses the package name of the class to map it to a
      * module. The package may be in the module defined to the class loader.
@@ -515,9 +521,15 @@ public final class ModuleLayer {
      * module defined to the class loader. It may be in a package exported by a
      * module in a parent layer. The class loader delegates to the class loader
      * of the module, throwing {@code ClassNotFoundException} if not found by
-     * that class loader.
-     * When {@code loadClass} is invoked to load classes that do not map to a
-     * module then it delegates to the parent class loader. </p>
+     * that class loader. When {@code loadClass} is invoked to load a class
+     * that does not map to a module then it delegates to the parent class
+     * loader. </p>
+     *
+     * <p> The class loaders created by this method locate resources
+     * ({@link ClassLoader#getResource(String) getResource}, {@link
+     * ClassLoader#getResources(String) getResources}, and other resource
+     * methods) in the module defined to the class loader before searching
+     * the parent class loader. </p>
      *
      * <p> If there is a security manager then the class loaders created by
      * this method will load classes and resources with privileges that are

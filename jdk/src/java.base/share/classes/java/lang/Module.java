@@ -59,6 +59,7 @@ import jdk.internal.loader.BootLoader;
 import jdk.internal.loader.ClassLoaders;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
+import jdk.internal.module.IllegalAccessLogger;
 import jdk.internal.module.ModuleLoaderMap;
 import jdk.internal.module.ServicesCatalog;
 import jdk.internal.module.Resources;
@@ -557,41 +558,45 @@ public final class Module implements AnnotatedElement {
      * the given module via its module declaration or CLI options.
      */
     private boolean isStaticallyExportedOrOpen(String pn, Module other, boolean open) {
-        // package is open to everyone or <other>
+        // test if package is open to everyone or <other>
         Map<String, Set<Module>> openPackages = this.openPackages;
-        if (openPackages != null) {
-            Set<Module> targets = openPackages.get(pn);
-            if (targets != null) {
-                if (targets.contains(EVERYONE_MODULE) || targets.contains(other))
-                    return true;
-                if (other != EVERYONE_MODULE
-                    && !other.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
-                    return true;
-            }
+        if (openPackages != null && allows(openPackages.get(pn), other)) {
+            return true;
         }
 
         if (!open) {
-            // package is exported to everyone or <other>
+            // test package is exported to everyone or <other>
             Map<String, Set<Module>> exportedPackages = this.exportedPackages;
-            if (exportedPackages != null) {
-                Set<Module> targets = exportedPackages.get(pn);
-                if (targets != null) {
-                    if (targets.contains(EVERYONE_MODULE) || targets.contains(other))
-                        return true;
-                    if (other != EVERYONE_MODULE
-                        && !other.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
-                        return true;
-                }
+            if (exportedPackages != null && allows(exportedPackages.get(pn), other)) {
+                return true;
             }
         }
 
         return false;
     }
 
+    /**
+     * Returns {@code true} if targets is non-null and contains EVERYONE_MODULE
+     * or the given module. Also returns true if the given module is an unnamed
+     * module and targets contains ALL_UNNAMED_MODULE.
+     */
+    private boolean allows(Set<Module> targets, Module module) {
+       if (targets != null) {
+           if (targets.contains(EVERYONE_MODULE))
+               return true;
+           if (module != EVERYONE_MODULE) {
+               if (targets.contains(module))
+                   return true;
+               if (!module.isNamed() && targets.contains(ALL_UNNAMED_MODULE))
+                   return true;
+           }
+        }
+        return false;
+    }
 
     /**
-     * Returns {@code true} if this module reflectively exports or opens given
-     * package package to the given module.
+     * Returns {@code true} if this module reflectively exports or opens the
+     * given package to the given module.
      */
     private boolean isReflectivelyExportedOrOpen(String pn, Module other, boolean open) {
         // exported or open to all modules
@@ -631,6 +636,22 @@ public final class Module implements AnnotatedElement {
         }
 
         return false;
+    }
+
+    /**
+     * Returns {@code true} if this module reflectively exports the
+     * given package to the given module.
+     */
+    boolean isReflectivelyExported(String pn, Module other) {
+        return isReflectivelyExportedOrOpen(pn, other, false);
+    }
+
+    /**
+     * Returns {@code true} if this module reflectively opens the
+     * given package to the given module.
+     */
+    boolean isReflectivelyOpened(String pn, Module other) {
+        return isReflectivelyExportedOrOpen(pn, other, true);
     }
 
 
@@ -825,9 +846,28 @@ public final class Module implements AnnotatedElement {
         if (!isNamed() || descriptor.isOpen() || descriptor.isAutomatic())
             return;
 
-        // nothing to do if already exported/open to other
-        if (implIsExportedOrOpen(pn, other, open))
-            return;
+        // check if the package is already exported/open to other
+        if (implIsExportedOrOpen(pn, other, open)) {
+
+            // if the package is exported/open for illegal access then we need
+            // to record that it has also been exported/opened reflectively so
+            // that the IllegalAccessLogger doesn't emit a warning.
+            boolean needToAdd = false;
+            if (!other.isNamed()) {
+                IllegalAccessLogger l = IllegalAccessLogger.illegalAccessLogger();
+                if (l != null) {
+                    if (open) {
+                        needToAdd = l.isOpenForIllegalAccess(this, pn);
+                    } else {
+                        needToAdd = l.isExportedForIllegalAccess(this, pn);
+                    }
+                }
+            }
+            if (!needToAdd) {
+                // nothing to do
+                return;
+            }
+        }
 
         // can only export a package in the module
         if (!descriptor.packages().contains(pn)) {
@@ -849,7 +889,7 @@ public final class Module implements AnnotatedElement {
         // add package name to reflectivelyExports if absent
         Map<String, Boolean> map = reflectivelyExports
             .computeIfAbsent(this, other,
-                    (m1, m2) -> new ConcurrentHashMap<>());
+                             (m1, m2) -> new ConcurrentHashMap<>());
         if (open) {
             map.put(pn, Boolean.TRUE);  // may need to promote from FALSE to TRUE
         } else {
@@ -865,9 +905,7 @@ public final class Module implements AnnotatedElement {
      */
     void implAddOpensToAllUnnamed(Iterator<String> iterator) {
         if (jdk.internal.misc.VM.isModuleSystemInited()) {
-            iterator.forEachRemaining(pn ->
-                implAddExportsOrOpens(pn, ALL_UNNAMED_MODULE, true, true));
-            return;
+            throw new IllegalStateException("Module system already initialized");
         }
 
         // replace this module's openPackages map with a new map that opens
@@ -1001,7 +1039,7 @@ public final class Module implements AnnotatedElement {
             if (loader == null) {
                 packages = BootLoader.packages();
             } else {
-                packages = SharedSecrets.getJavaLangAccess().packages(loader);
+                packages = loader.packages();
             }
             return packages.map(Package::getName).collect(Collectors.toSet());
         }

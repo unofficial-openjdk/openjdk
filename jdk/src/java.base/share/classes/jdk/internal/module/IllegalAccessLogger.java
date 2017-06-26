@@ -32,9 +32,7 @@ import java.security.AccessController;
 import java.security.CodeSource;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +42,10 @@ import java.util.StringJoiner;
 import java.util.WeakHashMap;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import static java.util.Collections.*;
+
+import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
 
 /**
  * Supports logging of access to members of exported and concealed packages
@@ -101,7 +103,7 @@ public final class IllegalAccessLogger {
          */
         public Builder logAccessToConcealedPackages(Module m, Set<String> packages) {
             ensureNotComplete();
-            moduleToConcealedPackages.put(m, Collections.unmodifiableSet(packages));
+            moduleToConcealedPackages.put(m, unmodifiableSet(packages));
             return this;
         }
 
@@ -111,42 +113,7 @@ public final class IllegalAccessLogger {
          */
         public Builder logAccessToExportedPackages(Module m, Set<String> packages) {
             ensureNotComplete();
-            moduleToExportedPackages.put(m, Collections.unmodifiableSet(packages));
-            return this;
-        }
-
-        /**
-         * Change the logging of reflective-access for a package that is now
-         * exported.
-         */
-        public Builder doNotLogAccessToExportedPackage(Module m, String pn) {
-            ensureNotComplete();
-            Set<String> packages = moduleToConcealedPackages.get(m);
-            if (packages != null && packages.contains(pn)) {
-                packages = new HashSet<>(packages);
-                packages.remove(pn);
-                moduleToConcealedPackages.put(m, Collections.unmodifiableSet(packages));
-            }
-            return this;
-        }
-
-        /**
-         * Change the logging of reflective-access for a package that is now
-         * open.
-         */
-        public Builder doNotLogAccessToOpenPackage(Module m, String pn) {
-            ensureNotComplete();
-
-            // package may be concealed package
-            doNotLogAccessToExportedPackage(m, pn);
-
-            // or may be exported package
-            Set<String> packages = moduleToExportedPackages.get(m);
-            if (packages != null && packages.contains(pn)) {
-                packages = new HashSet<>(packages);
-                packages.remove(pn);
-                moduleToExportedPackages.put(m, Collections.unmodifiableSet(packages));
-            }
+            moduleToExportedPackages.put(m, unmodifiableSet(packages));
             return this;
         }
 
@@ -154,14 +121,15 @@ public final class IllegalAccessLogger {
          * Builds the IllegalAccessLogger and sets it as the system-wise logger.
          */
         public void complete() {
-            logger = new IllegalAccessLogger(mode,
-                                             warningStream,
-                                             moduleToConcealedPackages,
-                                             moduleToExportedPackages);
+            Map<Module, Set<String>> map1 = unmodifiableMap(moduleToConcealedPackages);
+            Map<Module, Set<String>> map2 = unmodifiableMap(moduleToExportedPackages);
+            logger = new IllegalAccessLogger(mode, warningStream, map1, map2);
             complete = true;
         }
     }
 
+    // need access to java.lang.Module
+    private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
     // system-wide IllegalAccessLogger
     private static volatile IllegalAccessLogger logger;
@@ -199,17 +167,27 @@ public final class IllegalAccessLogger {
     }
 
     /**
-     * Returns that a Builder that is seeded with the packages known to this logger.
+     * Returns true if the module exports a concealed package for illegal
+     * access.
      */
-    public Builder toBuilder() {
-        Builder b = new Builder(mode, warningStream);
-        for (Map.Entry<Module, Set<String>> e : moduleToConcealedPackages.entrySet()) {
-            b.logAccessToConcealedPackages(e.getKey(), e.getValue());
-        }
-        for (Map.Entry<Module, Set<String>> e : moduleToExportedPackages.entrySet()) {
-            b.logAccessToExportedPackages(e.getKey(), e.getValue());
-        }
-        return b;
+    public boolean isExportedForIllegalAccess(Module module, String pn) {
+        Set<String> packages = moduleToConcealedPackages.get(module);
+        if (packages != null && packages.contains(pn))
+            return true;
+        return false;
+    }
+
+    /**
+     * Returns true if the module opens a concealed or exported package for
+     * illegal access.
+     */
+    public boolean isOpenForIllegalAccess(Module module, String pn) {
+        if (isExportedForIllegalAccess(module, pn))
+            return true;
+        Set<String> packages = moduleToExportedPackages.get(module);
+        if (packages != null && packages.contains(pn))
+            return true;
+        return false;
     }
 
     /**
@@ -221,9 +199,13 @@ public final class IllegalAccessLogger {
     public void logIfExportedForIllegalAccess(Class<?> caller,
                                               Class<?> target,
                                               Supplier<String> whatSupplier) {
-        Set<String> packages = moduleToConcealedPackages.get(target.getModule());
-        if (packages != null && packages.contains(target.getPackageName())) {
-            log(caller, whatSupplier.get());
+        Module targetModule = target.getModule();
+        String targetPackage = target.getPackageName();
+        if (isExportedForIllegalAccess(targetModule, targetPackage)) {
+            Module callerModule = caller.getModule();
+            if (!JLA.isReflectivelyExported(targetModule, targetPackage, callerModule)) {
+                log(caller, whatSupplier.get());
+            }
         }
     }
 
@@ -236,8 +218,13 @@ public final class IllegalAccessLogger {
     public void logIfOpenedForIllegalAccess(Class<?> caller,
                                             Class<?> target,
                                             Supplier<String> whatSupplier) {
-        if (isOpenForIllegalAccess(target)) {
-            log(caller, whatSupplier.get());
+        Module targetModule = target.getModule();
+        String targetPackage = target.getPackageName();
+        if (isOpenForIllegalAccess(targetModule, targetPackage)) {
+            Module callerModule = caller.getModule();
+            if (!JLA.isReflectivelyOpened(targetModule, targetPackage, callerModule)) {
+                log(caller, whatSupplier.get());
+            }
         }
     }
 
@@ -246,22 +233,25 @@ public final class IllegalAccessLogger {
      * opened for illegal access.
      */
     public void logIfOpenedForIllegalAccess(MethodHandles.Lookup caller, Class<?> target) {
-        if (isOpenForIllegalAccess(target)) {
+        Module targetModule = target.getModule();
+        String targetPackage = target.getPackageName();
+        if (isOpenForIllegalAccess(targetModule, targetPackage)) {
             Class<?> callerClass = caller.lookupClass();
-            URL url = codeSource(callerClass);
-            final String source;
-            if (url == null) {
-                source = callerClass.getName();
-            } else {
-                source = callerClass.getName() + " (" + url + ")";
+            Module callerModule = callerClass.getModule();
+            if (!JLA.isReflectivelyOpened(targetModule, targetPackage, callerModule)) {
+                URL url = codeSource(callerClass);
+                final String source;
+                if (url == null) {
+                    source = callerClass.getName();
+                } else {
+                    source = callerClass.getName() + " (" + url + ")";
+                }
+                log(callerClass, target.getName(), () ->
+                    "WARNING: Illegal reflective access using Lookup on " + source
+                    + " to " + target);
             }
-            log(callerClass, target.getName(), () ->
-                "WARNING: Illegal reflective access using Lookup on " + source
-                + " to " + target);
         }
     }
-
-
 
     /**
      * Logs access by a caller class. The {@code what} parameter describes
@@ -325,20 +315,6 @@ public final class IllegalAccessLogger {
             }
             warningStream.println(msg);
         }
-    }
-
-    /**
-     * Returns true if the package contain the target class has been opened for
-     * illegal access.
-     */
-    private boolean isOpenForIllegalAccess(Class<?> target) {
-        Set<String> packages = moduleToExportedPackages.get(target.getModule());
-        if (packages != null && packages.contains(target.getPackageName()))
-            return true;
-        packages = moduleToConcealedPackages.get(target.getModule());
-        if (packages != null && packages.contains(target.getPackageName()))
-            return true;
-        return false;
     }
 
     /**

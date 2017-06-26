@@ -89,10 +89,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jdk.internal.misc.VM;
-import jdk.internal.module.IllegalAccessLogger;
 import jdk.internal.module.ModuleBootstrap;
 import jdk.internal.module.Modules;
-
 
 public final class LauncherHelper {
 
@@ -488,9 +486,6 @@ public final class LauncherHelper {
      * {@code <module>/<package> ( <module>/<package>)*}.
      */
     static void addExportsOrOpens(String value, boolean open) {
-        IllegalAccessLogger logger = IllegalAccessLogger.illegalAccessLogger();
-        IllegalAccessLogger.Builder b = (logger != null) ? logger.toBuilder() : null;
-
         for (String moduleAndPackage : value.split(" ")) {
             String[] s = moduleAndPackage.trim().split("/");
             if (s.length == 2) {
@@ -502,24 +497,11 @@ public final class LauncherHelper {
                     .ifPresent(m -> {
                         if (open) {
                             Modules.addOpensToAllUnnamed(m, pn);
-                            if (b != null) {
-                                // no logging for this package
-                                b.doNotLogAccessToOpenPackage(m, pn);
-                            }
                         } else {
                             Modules.addExportsToAllUnnamed(m, pn);
-                            if (b != null) {
-                                // no logging for public types/members in package
-                                b.doNotLogAccessToExportedPackage(m, pn);
-                            }
                         }
                     });
             }
-        }
-
-        // replace logger
-        if (b != null) {
-            b.complete();
         }
     }
 

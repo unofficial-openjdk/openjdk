@@ -50,6 +50,7 @@ import java.net.URL;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -2434,19 +2435,28 @@ public final class Class<T> implements java.io.Serializable,
     }
 
     /**
-     * Returns a {@code Method} object that reflects the specified declared
-     * method of the class or interface represented by this class object.
+     * Returns the list of {@code Method} objects for the declared public
+     * methods of this class or interface that have the specified method name
+     * and parameter types.
      *
      * @param name the name of the method
      * @param parameterTypes the parameter array
-     * @return the {@code Method} object for the method of this class
-     *         matching the specified name and parameters or {@code null} if
-     *         not found (or the name is "&lt;init&gt;"or "&lt;clinit&gt;")
+     * @return the list of {@code Method} objects for the public methods of
+     *         this class matching the specified name and parameters
      */
-    Method getDeclaredMethodOrNull(String name, Class<?>... parameterTypes) {
-        Method[] methods = privateGetDeclaredMethods(false);
-        Method method = searchMethods(methods, name, parameterTypes);
-        return (method != null) ? getReflectionFactory().copyMethod(method) : null;
+    List<Method> getDeclaredPublicMethods(String name, Class<?>... parameterTypes) {
+        Method[] methods = privateGetDeclaredMethods(/* publicOnly */ true);
+        ReflectionFactory factory = getReflectionFactory();
+        List<Method> result = new ArrayList<>();
+        for (Method method : methods) {
+            if (method.getName().equals(name)
+                && Arrays.equals(
+                    factory.getExecutableSharedParameterTypes(method),
+                    parameterTypes)) {
+                result.add(factory.copyMethod(method));
+            }
+        }
+        return result;
     }
 
     /**
@@ -2875,19 +2885,19 @@ public final class Class<T> implements java.io.Serializable,
         static <T> boolean casReflectionData(Class<?> clazz,
                                              SoftReference<ReflectionData<T>> oldData,
                                              SoftReference<ReflectionData<T>> newData) {
-            return unsafe.compareAndSwapObject(clazz, reflectionDataOffset, oldData, newData);
+            return unsafe.compareAndSetObject(clazz, reflectionDataOffset, oldData, newData);
         }
 
         static <T> boolean casAnnotationType(Class<?> clazz,
                                              AnnotationType oldType,
                                              AnnotationType newType) {
-            return unsafe.compareAndSwapObject(clazz, annotationTypeOffset, oldType, newType);
+            return unsafe.compareAndSetObject(clazz, annotationTypeOffset, oldType, newType);
         }
 
         static <T> boolean casAnnotationData(Class<?> clazz,
                                              AnnotationData oldData,
                                              AnnotationData newData) {
-            return unsafe.compareAndSwapObject(clazz, annotationDataOffset, oldData, newData);
+            return unsafe.compareAndSetObject(clazz, annotationDataOffset, oldData, newData);
         }
     }
 
