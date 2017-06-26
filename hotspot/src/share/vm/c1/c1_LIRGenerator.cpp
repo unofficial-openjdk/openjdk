@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -545,11 +545,11 @@ void LIRGenerator::arithmetic_op(Bytecodes::Code code, LIR_Opr result, LIR_Opr l
 
     case Bytecodes::_imul:
       {
-        bool    did_strength_reduce = false;
+        bool did_strength_reduce = false;
 
         if (right->is_constant()) {
-          int c = right->as_jint();
-          if (is_power_of_2(c)) {
+          jint c = right->as_jint();
+          if (c > 0 && is_power_of_2(c)) {
             // do not need tmp here
             __ shift_left(left_op, exact_log2(c), result_op);
             did_strength_reduce = true;
@@ -3212,13 +3212,13 @@ void LIRGenerator::do_Intrinsic(Intrinsic* x) {
   // java.nio.Buffer.checkIndex
   case vmIntrinsics::_checkIndex:     do_NIOCheckIndex(x); break;
 
-  case vmIntrinsics::_compareAndSwapObject:
+  case vmIntrinsics::_compareAndSetObject:
     do_CompareAndSwap(x, objectType);
     break;
-  case vmIntrinsics::_compareAndSwapInt:
+  case vmIntrinsics::_compareAndSetInt:
     do_CompareAndSwap(x, intType);
     break;
-  case vmIntrinsics::_compareAndSwapLong:
+  case vmIntrinsics::_compareAndSetLong:
     do_CompareAndSwap(x, longType);
     break;
 
