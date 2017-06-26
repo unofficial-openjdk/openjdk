@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,16 @@
  */
 
 /**
- * Defines the subset of the W3C Document Object Model (DOM) API that is not part
- * of the Java SE API.
+ * Provides interfaces for DOM Level 2 HTML Specification. Refer to the
+ * <a href='http://www.w3.org/TR/2000/CR-DOM-Level-2-20000510'>
+ * Document Object Model (DOM) Level 2 Specification</a>,
+ * the HTML module extends the Core API to describe objects and methods specific
+ * to HTML documents that comply with
+ * <a href='https://www.w3.org/TR/1998/REC-html40-19980424/'>
+ * HTML 4.0 Specification</a>.
  *
- * @moduleGraph
- * @since 9
+ *
+ * @since 1.4
  */
-module jdk.xml.dom {
-    requires transitive java.xml;
 
-    exports org.w3c.dom.css;
-    exports org.w3c.dom.html;
-    exports org.w3c.dom.stylesheets;
-    exports org.w3c.dom.xpath;
-}
+package org.w3c.dom.html;
