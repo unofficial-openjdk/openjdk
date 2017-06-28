@@ -5151,7 +5151,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1497900133
+DATE_WHEN_GENERATED=1498593591
 
 ###############################################################################
 #
@@ -53989,7 +53989,7 @@ $as_echo "no, forced" >&6; }
 
   if test "x$ENABLE_AOT" = "xtrue"; then
     # Only enable AOT on X64 platforms.
-    if test "x$OPENJDK_TARGET_OS" != "xwindows" && test "x$OPENJDK_TARGET_CPU" = "xx86_64"; then
+    if test "x$OPENJDK_TARGET_CPU" = "xx86_64"; then
       if test -e "$HOTSPOT_TOPDIR/src/jdk.aot"; then
         if test -e "$HOTSPOT_TOPDIR/src/jdk.internal.vm.compiler"; then
           ENABLE_AOT="true"
