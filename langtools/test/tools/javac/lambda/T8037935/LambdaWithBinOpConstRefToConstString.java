@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,45 +23,21 @@
 
 /*
  * @test
- * @bug 8008949
- * @summary verify that doc-files get copied
- * @library ../lib/
- * @build JavadocTester
- * @build TestDocFiles
- * @run main TestDocFiles
+ * @bug 8037935
+ * @summary Javac: final local String var referenced in binary/unary op in lambda produces code that does not verify
+ * @run main LambdaWithBinOpConstRefToConstString
  */
 
-public class TestDocFiles extends JavadocTester {
+interface MyFI {
+    void accept();
+}
 
-    private static final String BUG_ID = "8008949";
-    private static final String[][] TEST = {
-        {"tmp/pkg/doc-files/test.txt", "test file"}};
-
-    private static final String[] ARGS =
-        new String[] {
-            "-d", "tmp", "-sourcepath", SRC_DIR, "pkg"};
-
-    /**
-     * The entry point of the test.
-     * @param args the array of command line arguments.
-     */
+public class LambdaWithBinOpConstRefToConstString {
     public static void main(String[] args) {
-        TestDocFiles tester = new TestDocFiles();
-        run(tester, ARGS, TEST, NO_TEST);
-        tester.printSummary();
-    }
+        final String CONSTANT_STRING_VALUE = "mwmwm";
 
-    /**
-     * {@inheritDoc}
-     */
-    public String getBugId() {
-        return BUG_ID;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public String getBugName() {
-        return getClass().getName();
+        MyFI consumeStrings = () -> {
+            System.out.println(" local constant: " + CONSTANT_STRING_VALUE);
+        };
     }
 }
