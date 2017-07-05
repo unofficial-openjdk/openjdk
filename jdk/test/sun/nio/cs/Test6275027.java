@@ -1,12 +1,10 @@
 /*
- * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,11 +21,22 @@
  * have any questions.
  */
 
-// stdafx.cpp : source file that includes just the standard includes
-//      getver.pch will be the pre-compiled header
-//      stdafx.obj will contain the pre-compiled type information
+/* @test
+   @bug 6275027
+   @summary Check if StreamEncoder works correctly when fed with unpaired
+            surrogates.
+ */
 
-#include "stdafx.h"
+import java.io.*;
+public class Test6275027 {
+    public static void main( String arg[] ) throws Exception {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+        ps.print("\uda00");
+        ps.print("\uda01");
+        ps.close();
+        if (!"??".equals(baos.toString()))
+            throw new Exception("failed");
+    }
 
-// TODO: reference any additional headers you need in STDAFX.H
-// and not in this file
+}
