@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,14 +29,14 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodType;
+package jdk.dynalink.test;
+
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import jdk.dynalink.CallSiteDescriptor;
 import jdk.dynalink.NamedOperation;
 import jdk.dynalink.NamespaceOperation;
@@ -48,69 +48,61 @@ import jdk.dynalink.linker.GuardingDynamicLinker;
 import jdk.dynalink.linker.GuardingDynamicLinkerExporter;
 import jdk.dynalink.linker.LinkRequest;
 import jdk.dynalink.linker.LinkerServices;
-import jdk.dynalink.linker.TypeBasedGuardingDynamicLinker;
-import jdk.dynalink.linker.support.Guards;
-import jdk.dynalink.linker.support.Lookup;
+import jdk.dynalink.linker.support.SimpleLinkRequest;
 
 /**
  * This is a dynalink pluggable linker (see http://openjdk.java.net/jeps/276).
- * This linker adds "stream" property to Java arrays. The appropriate Stream
- * type object is returned for "stream" property on Java arrays. Note that
- * the dynalink beans linker just adds "length" property and Java array objects
- * don't have any other property. "stream" property does not conflict with anything
- * else!
+ * This linker translater underscore_separated method names to CamelCase names
+ * used in Java APIs.
  */
-public final class ArrayStreamLinkerExporter extends GuardingDynamicLinkerExporter {
-    static {
-        System.out.println("pluggable dynalink array stream linker loaded");
-    }
+public final class TrustedUnderscoreNameLinkerExporter extends GuardingDynamicLinkerExporter {
+    private static final Pattern UNDERSCORE_NAME = Pattern.compile("_(.)");
 
-    public static Object arrayToStream(final Object array) {
-        if (array instanceof int[]) {
-            return IntStream.of((int[])array);
-        } else if (array instanceof long[]) {
-            return LongStream.of((long[])array);
-        } else if (array instanceof double[]) {
-            return DoubleStream.of((double[])array);
-        } else if (array instanceof Object[]) {
-            return Stream.of((Object[])array);
-        } else {
-            throw new IllegalArgumentException();
+    // translate underscore_separated name as a CamelCase name
+    private static String translateToCamelCase(final String name) {
+        final Matcher m = UNDERSCORE_NAME.matcher(name);
+        final StringBuilder buf = new StringBuilder();
+        while (m.find()) {
+            m.appendReplacement(buf, m.group(1).toUpperCase());
         }
+        m.appendTail(buf);
+        return buf.toString();
     }
-
-    private static final MethodType GUARD_TYPE = MethodType.methodType(Boolean.TYPE, Object.class);
-    private static final MethodHandle ARRAY_TO_STREAM = Lookup.PUBLIC.findStatic(
-            ArrayStreamLinkerExporter.class, "arrayToStream",
-            MethodType.methodType(Object.class, Object.class));
 
     @Override
     public List<GuardingDynamicLinker> get() {
         final ArrayList<GuardingDynamicLinker> linkers = new ArrayList<>();
-        linkers.add(new TypeBasedGuardingDynamicLinker() {
-            @Override
-            public boolean canLinkType(final Class<?> type) {
-                return type == Object[].class || type == int[].class ||
-                       type == long[].class || type == double[].class;
-            }
-
+        linkers.add(new GuardingDynamicLinker() {
             @Override
             public GuardedInvocation getGuardedInvocation(final LinkRequest request,
                 final LinkerServices linkerServices) throws Exception {
-                final Object self = request.getReceiver();
-                if (self == null || !canLinkType(self.getClass())) {
-                    return null;
-                }
-
                 final CallSiteDescriptor desc = request.getCallSiteDescriptor();
                 final Operation op = desc.getOperation();
                 final Object name = NamedOperation.getName(op);
-                final boolean getProp = NamespaceOperation.contains(
-                        NamedOperation.getBaseOperation(op),
-                        StandardOperation.GET, StandardNamespace.PROPERTY);
-                if (getProp && "stream".equals(name)) {
-                    return new GuardedInvocation(ARRAY_TO_STREAM,
-                        Guards.isOfClass(self.getClass(), GUARD_TYPE));
+                final Operation namespaceOp = NamedOperation.getBaseOperation(op);
+                // is this a named GET_METHOD?
+                final boolean isGetMethod =
+                        NamespaceOperation.getBaseOperation(namespaceOp) == StandardOperation.GET
+                        && StandardNamespace.findFirst(namespaceOp) == StandardNamespace.METHOD;
+                if (isGetMethod && name instanceof String) {
+                    final String str = (String)name;
+                    if (str.indexOf('_') == -1) {
+                        return null;
+                    }
+
+                    final String nameStr = translateToCamelCase(str);
+                    // create a new call descriptor to use translated name
+                    final CallSiteDescriptor newDesc = AccessController.doPrivileged(
+                        new PrivilegedAction<CallSiteDescriptor>() {
+                            @Override
+                            public CallSiteDescriptor run() {
+                                return desc.changeOperation(((NamedOperation)op).changeName(nameStr));
+                            }
+                        });
+                    // create a new Link request to link the call site with translated name
+                    final LinkRequest newRequest = request.replaceArguments(newDesc, request.getArguments());
+                    // return guarded invocation linking the translated request
+                    return linkerServices.getGuardedInvocation(newRequest);
                 }
 
                 return null;
