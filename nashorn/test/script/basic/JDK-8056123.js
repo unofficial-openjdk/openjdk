@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,37 +22,24 @@
  */
 
 /**
- * JDK-8015969: Needs to enforce and document that global "context" and "engine" can't be modified when running via jsr223
+ * JDK-8056123: Anonymous function statements leak internal function names into global scope
  *
  * @test
- * @option -scripting
  * @run
  */
 
-var m = new javax.script.ScriptEngineManager();
-var e = m.getEngineByName("nashorn");
-
-e.put("fail", fail);
-e.eval(<<EOF
-
-'use strict';
-
-try {
-    delete context;
-    fail("FAILED!! context delete should have thrown error");
-} catch (e) {
-    if (! (e instanceof SyntaxError)) {
-        fail("SyntaxError expected but got " + e);
-    }
+// do *not* introduce newlines before this line!
+function () { // line 32
+  print("hello function!");
 }
 
-try {
-    delete engine;
-    fail("FAILED!! engine delete should have thrown error");
-} catch (e) {
-    if (! (e instanceof SyntaxError)) {
-        fail("SyntaxError expected but got " + e);
-    }
+if (typeof this["L:32"] != 'undefined') {
+   fail("anonymous function statement leaks name in global");
 }
 
-EOF);
+var keys = Object.keys(this);
+for (var i in keys) {
+    if (keys[i].contains("L:")) {
+        fail("found " + keys[i] + " in global scope");
+    }
+}
