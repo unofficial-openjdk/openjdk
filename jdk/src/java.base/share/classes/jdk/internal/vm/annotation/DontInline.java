@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,23 +23,28 @@
  * questions.
  */
 
-package sun.invoke.anon;
+package jdk.internal.vm.annotation;
 
-/** Exception used when there is an error in the constant pool
- *  format.
+import java.lang.annotation.*;
+
+/**
+ * A method or constructor may be annotated as "don't inline" if the inlining of
+ * this method should not be performed by the HotSpot VM.
+ * <p>
+ * This annotation must be used sparingly.  It is useful when the only
+ * reasonable alternative is to bind the name of a specific method or
+ * constructor into the HotSpot VM for special handling by the inlining policy.
+ * This annotation must not be relied on as an alternative to avoid tuning the
+ * VM's inlining policy.  In a few cases, it may act as a temporary workaround
+ * until the profiling and inlining performed by the HotSpot VM is sufficiently
+ * improved.
+ *
+ * @implNote
+ * This annotation only takes effect for methods or constructors of classes
+ * loaded by the boot loader.  Annotations on methods or constructors of classes
+ * loaded outside of the boot loader are ignored.
  */
-public class InvalidConstantPoolFormatException extends Exception {
-    private static final long serialVersionUID=-6103888330523770949L;
-
-    public InvalidConstantPoolFormatException(String message,Throwable cause) {
-        super(message,cause);
-    }
-
-    public InvalidConstantPoolFormatException(String message) {
-        super(message);
-    }
-
-    public InvalidConstantPoolFormatException(Throwable cause) {
-        super(cause);
-    }
+@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface DontInline {
 }

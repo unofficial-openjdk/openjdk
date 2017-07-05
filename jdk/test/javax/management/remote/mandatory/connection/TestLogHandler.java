@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Red Hat Inc.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,21 +21,44 @@
  * questions.
  */
 
-/**
- * @test
- * @bug 8080535
- * @summary Static storages should be initialized with optimal capacity
- * @library /lib/testlibrary
- * @build jdk.testlibrary.OptimalCapacity
- * @run main OptimalMapSize
- */
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
 
-import jdk.testlibrary.OptimalCapacity;
+public class TestLogHandler extends Handler {
 
-public class OptimalMapSize {
-    public static void main(String[] args) throws Throwable {
-        OptimalCapacity.ofIdentityHashMap(
-                Class.forName("sun.invoke.anon.ConstantPoolPatch"),
-                "CONSTANT_VALUE_CLASS_TAG", 6);
+    private final String illegal;
+    private boolean testFailed;
+
+    public TestLogHandler(String illegal) {
+        this.illegal = illegal;
+        this.testFailed = false;
     }
+
+    @Override
+    public void publish(LogRecord record) {
+        String msg = record.getMessage();
+        String method = record.getSourceMethodName();
+        String className = record.getSourceClassName();
+        if (msg.contains(illegal)) {
+            testFailed = true;
+        }
+        if (msg.contains("attribute names=")) {
+            System.err.println("LOG: " + className + "." + method + ": " + msg);
+        }
+    }
+
+    @Override
+    public void flush() {
+        // nothing
+    }
+
+    @Override
+    public void close() throws SecurityException {
+        // nothing
+    }
+
+    public boolean testFailed() {
+        return testFailed;
+    }
+
 }
