@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 1998, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,12 +21,40 @@
  * questions.
  */
 
-#include <windows.h>
-#include "jni.h"
-#include "jni_util.h"
+/**
+ * @test
+ * @bug     7169362
+ * @author  sogoel
+ * @summary Repeatable annotations in random order
+ * @compile MultipleAnnoMixedOrder.java
+ */
 
-JNIEXPORT jobject JNICALL
-Java_java_io_FileSystem_getFileSystem(JNIEnv *env, jclass ignored)
-{
-    return JNU_NewObjectByName(env, "java/io/WinNTFileSystem", "()V");
+import java.lang.annotation.ContainedBy;
+import java.lang.annotation.ContainerFor;
+
+@ContainedBy(FooContainer.class)
+@interface Foo {
+    int getNumbers();
 }
+
+@ContainerFor(Foo.class)
+@interface FooContainer {
+  Foo[] value();
+}
+
+@ContainedBy(BazContainer.class)
+@interface Baz {
+    String getStr();
+}
+
+@ContainerFor(Baz.class)
+@interface BazContainer {
+  Baz[] value();
+}
+
+@Foo(getNumbers=1)
+@Baz(getStr="hello")
+@Foo(getNumbers=2)
+@Baz(getStr="world")
+public class MultipleAnnoMixedOrder  {}
+

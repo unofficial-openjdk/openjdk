@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,13 +21,14 @@
  * questions.
  */
 
-#include "jni.h"
-#include "jni_util.h"
-#include "java_io_FileSystem.h"
+/**
+ * @test
+ * @compile ClassUsingAnotherAuxiliary.java NotAClassName.java
+ * @compile -Xlint:auxiliaryclass ClassUsingAnotherAuxiliary.java NotAClassName.java
+ * @compile/fail/ref=ClassUsingAnotherAuxiliary.out -XDrawDiagnostics -Werror -Xlint:auxiliaryclass ClassUsingAnotherAuxiliary.java NotAClassName.java
+ */
 
-
-JNIEXPORT jobject JNICALL
-Java_java_io_FileSystem_getFileSystem(JNIEnv *env, jclass ignored)
-{
-    return JNU_NewObjectByName(env, "java/io/UnixFileSystem", "()V");
+class ClassUsingAnotherAuxiliary {
+    AnAuxiliaryClass ahem;
 }
+
