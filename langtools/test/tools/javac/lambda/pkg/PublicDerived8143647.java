@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,9 +21,13 @@
  * questions.
  */
 
-// key: compiler.warn.diamond.redundant.args.1
-// options: -XDfind=diamond
+package pkg;
 
-class DiamondRedundantArgs1<X> {
-   DiamondRedundantArgs1<?> fs = new DiamondRedundantArgs1<String>();
+abstract class PackagePrivateBase8143647 {
+    public String getX() {
+        return "PackagePrivateBase";
+    }
+}
+
+public class PublicDerived8143647 extends PackagePrivateBase8143647 {
 }

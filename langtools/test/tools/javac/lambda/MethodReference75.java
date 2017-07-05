@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,27 +23,24 @@
 
 /*
  * @test
- * @bug 6413876
- * @summary REGRESSION javac -d /directory/ creates destination directories
- * @modules java.compiler
- *          jdk.compiler
+ * @bug 8143647
+ * @summary Javac compiles method reference that allows results in an IllegalAccessError
+ * @run main MethodReference75
  */
 
-import java.io.*;
-import javax.tools.*;
+import pkg.PublicDerived8143647;
 
-public class T6413876 {
-    public static void main(String... args) {
-        test("-d");
-        test("-s");
-    }
-
-    private static void test(String outOpt) {
-        File testSrc = new File(System.getProperty("test.src", "."));
-        File file = new File(testSrc, T6413876.class.getName()+".java");
-        Tool t = ToolProvider.getSystemJavaCompiler();
-        int rc = t.run(null, null, null, outOpt, "NotADir", file.getPath());
-        if (rc == 0)
-            throw new AssertionError("compilation succeeded unexpectedly");
+public class MethodReference75 {
+    public static void main(String[] args) {
+        if (java.util.Arrays
+                .asList(new PublicDerived8143647())
+                .stream()
+                .map(PublicDerived8143647::getX)
+                .findFirst()
+                .get()
+                .equals("PackagePrivateBase"))
+            System.out.println("OK");
+        else
+            throw new AssertionError("Unexpected output");
     }
 }
