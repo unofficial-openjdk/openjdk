@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,7 +21,7 @@
  * questions.
  */
 
-package jdk.testlibrary;
+package jdk.test.lib.compiler;
 
 import javax.tools.JavaCompiler;
 import javax.tools.StandardJavaFileManager;
@@ -67,9 +67,9 @@ public final class CompilerUtils {
                 .collect(Collectors.toList());
 
         Files.createDirectories(destination);
-        jfm.setLocation(StandardLocation.CLASS_PATH, Collections.EMPTY_LIST);
+        jfm.setLocation(StandardLocation.CLASS_PATH, Collections.emptyList());
         jfm.setLocationFromPaths(StandardLocation.CLASS_OUTPUT,
-                                 Arrays.asList(destination));
+                Collections.singletonList(destination));
 
         List<String> opts = Arrays.asList(options);
         JavaCompiler.CompilationTask task
