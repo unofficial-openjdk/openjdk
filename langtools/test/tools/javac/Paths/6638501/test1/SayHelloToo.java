@@ -1,12 +1,10 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,11 +21,11 @@
  * have any questions.
  */
 
-body { color: black; background-color: #eeffee }
-body.contents {  background-color: #ddffdd } 
+import test.HelloImpl;
 
-li { margin-top:10px }
-p.note { font-size:smaller }
+public class SayHelloToo extends HelloImpl {
+  public static void main(String... args) {
+    new SayHelloToo().Hello();
+}
 
-.code { font-family:monospace }
-
+}

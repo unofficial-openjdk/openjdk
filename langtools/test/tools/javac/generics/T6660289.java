@@ -1,5 +1,5 @@
 /*
- * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +23,12 @@
 
 /*
  * @test
- * @bug 4642850
- * @summary compiler allows Object += String
- * @author gafter
- *
- * @compile/fail ObjectAppend.java
+ * @bug     6660289
+ * @summary declared bound in inner class referring a type variable of the outer class
+ * @author Maurizio Cimadamore
+ * @compile T6660289.java
  */
 
-class ObjectAppend {{
-    Object o = null;
-    o += "string";
-}}
+public class T6660289<E> {
+     class Inner<S extends E> {}
+}
