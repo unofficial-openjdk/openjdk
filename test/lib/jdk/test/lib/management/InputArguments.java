@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,27 +21,21 @@
  * questions.
  */
 
-/*
- * @test TestUseAutoGCSelectPolicy
- * @key gc
- * @bug 8166461 8167494
- * @summary Test that UseAutoGCSelectPolicy and AutoGCSelectPauseMillis do print a warning message
- * @library /test/lib
- * @modules java.base/jdk.internal.misc
- *          java.management
- */
+package jdk.test.lib.management;
 
-import jdk.test.lib.process.ProcessTools;
-import jdk.test.lib.process.OutputAnalyzer;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
+import java.util.List;
 
-public class TestUseAutoGCSelectPolicy {
-
-  public static void main(String args[]) throws Exception {
-    ProcessBuilder pb = ProcessTools.createJavaProcessBuilder("-XX:+UseAutoGCSelectPolicy", "-XX:AutoGCSelectPauseMillis=3000", "-version");
-    OutputAnalyzer output = new OutputAnalyzer(pb.start());
-    output.shouldContain("UseAutoGCSelectPolicy was deprecated in version 9.0");
-    output.shouldContain("AutoGCSelectPauseMillis was deprecated in version 9.0");
-    output.shouldNotContain("error");
-    output.shouldHaveExitValue(0);
-  }
+public class InputArguments {
+    /**
+     * Gets the array of strings containing input arguments passed to the VM
+     *
+     * @return arguments
+     */
+    public static String[] getVmInputArgs() {
+        RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
+        List<String> args = runtime.getInputArguments();
+        return args.toArray(new String[args.size()]);
+    }
 }
