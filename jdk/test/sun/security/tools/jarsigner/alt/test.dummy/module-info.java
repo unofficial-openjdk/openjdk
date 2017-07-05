@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,17 +21,6 @@
  * questions.
  */
 
-/**
- * Classes to support module descriptors and creating configurations of modules
- * by means of resolution and service binding.
- *
- * <p> Unless otherwise noted, passing a {@code null} argument to a constructor
- * or method of any class or interface in this package will cause a {@link
- * java.lang.NullPointerException NullPointerException} to be thrown. Additionally,
- * invoking a method with an array or collection containing a {@code null} element
- * will cause a {@code NullPointerException}, unless otherwise specified. </p>
- *
- * @since 9
- */
-
-package java.lang.module;
+module test.dummy {
+    provides java.security.Provider with org.test.dummy.DummyProvider;
+}
