@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,22 @@
  * questions.
  */
 
-package javax.lang.model.element;
+/*
+ * @test
+ * @bug 8176714
+ * @summary javac is wrongly assuming that field JCMemberReference.overloadKind has been assigned to
+ * @compile TimingOfMReferenceCheckingTest01.java
+ */
 
-public interface Extra {}
+import java.util.function.*;
+
+public class TimingOfMReferenceCheckingTest01 {
+    <Z> void g(Consumer<Z> fzr, Z z) {}
+
+    void test(boolean cond) {
+       g(cond ? this::m : this::m, "");
+    }
+
+    void m(String s) {}
+    void m(Integer i) {}
+}

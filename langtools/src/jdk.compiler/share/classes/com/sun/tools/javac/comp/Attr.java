@@ -448,13 +448,21 @@ public class Attr extends JCTree.Visitor {
 
         NORMAL,
 
-        NO_TREE_UPDATE {     // Mode signalling 'fake check' - skip tree update
+        /**
+         * Mode signalling 'fake check' - skip tree update. A side-effect of this mode is
+         * that the captured var cache in {@code InferenceContext} will be used in read-only
+         * mode when performing inference checks.
+         */
+        NO_TREE_UPDATE {
             @Override
             public boolean updateTreeType() {
                 return false;
             }
         },
-        NO_INFERENCE_HOOK { // Mode signalling that caller will manage free types in tree decorations.
+        /**
+         * Mode signalling that caller will manage free types in tree decorations.
+         */
+        NO_INFERENCE_HOOK {
             @Override
             public boolean installPostInferenceHook() {
                 return false;
@@ -1517,7 +1525,9 @@ public class Attr extends JCTree.Visitor {
                             isBooleanOrNumeric(env, condTree.falsepart);
                 case APPLY:
                     JCMethodInvocation speculativeMethodTree =
-                            (JCMethodInvocation)deferredAttr.attribSpeculative(tree, env, unknownExprInfo);
+                            (JCMethodInvocation)deferredAttr.attribSpeculative(
+                                    tree, env, unknownExprInfo,
+                                    argumentAttr.withLocalCacheContext());
                     Symbol msym = TreeInfo.symbol(speculativeMethodTree.meth);
                     Type receiverType = speculativeMethodTree.meth.hasTag(IDENT) ?
                             env.enclClass.type :
@@ -1528,10 +1538,13 @@ public class Attr extends JCTree.Visitor {
                     JCExpression className =
                             removeClassParams.translate(((JCNewClass)tree).clazz);
                     JCExpression speculativeNewClassTree =
-                            (JCExpression)deferredAttr.attribSpeculative(className, env, unknownTypeInfo);
+                            (JCExpression)deferredAttr.attribSpeculative(
+                                    className, env, unknownTypeInfo,
+                                    argumentAttr.withLocalCacheContext());
                     return primitiveOrBoxed(speculativeNewClassTree.type);
                 default:
-                    Type speculativeType = deferredAttr.attribSpeculative(tree, env, unknownExprInfo).type;
+                    Type speculativeType = deferredAttr.attribSpeculative(tree, env, unknownExprInfo,
+                            argumentAttr.withLocalCacheContext()).type;
                     return primitiveOrBoxed(speculativeType);
             }
         }
@@ -3769,7 +3782,7 @@ public class Attr extends JCTree.Visitor {
                 break;
             case MTH: {
                 owntype = checkMethod(site, sym,
-                        new ResultInfo(resultInfo.pkind, resultInfo.pt.getReturnType(), resultInfo.checkContext),
+                        new ResultInfo(resultInfo.pkind, resultInfo.pt.getReturnType(), resultInfo.checkContext, resultInfo.checkMode),
                         env, TreeInfo.args(env.tree), resultInfo.pt.getParameterTypes(),
                         resultInfo.pt.getTypeArguments());
                 break;
