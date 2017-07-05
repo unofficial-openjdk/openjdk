@@ -28,7 +28,7 @@
 
 package pkg1;
 
-public interface UsedInterface {
+public interface UsedInterface<T> {
 
     /**
      * Does nothing
