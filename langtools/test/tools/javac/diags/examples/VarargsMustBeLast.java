@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,15 +21,8 @@
  * questions.
  */
 
-/*
- * @test
- * @bug 8008708
- * @compile Foo.java
- * @compile Test.java
- */
-class Test {
-    void test(FooLib fl) {
-        fl.m1(x->{});
-        fl.m2(x->{});
-    }
+// key: compiler.err.varargs.must.be.last
+
+class VarargMustBeFinal {
+    public void invalidVarArg(String... invalidVarArg, String extra) { }
 }
