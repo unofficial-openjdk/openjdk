@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,37 +19,36 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
+ */
+
+/**
  * @test
- * @bug 6530694
- * @summary Checks that sun.util.CoreResourceBundleControl does not apply
- *     to the application provided Swing resources.
- * @modules java.desktop
- * @run main/othervm -Djava.awt.headless=true Bug6530694
+ * @bug 8147531
+ * @summary  Check j.l.Character.getName and codePointOf
  */
 
 import java.util.Locale;
-import javax.swing.UIDefaults;
-import javax.swing.UIManager;
 
-public class Bug6530694 {
-    Bug6530694() {
-        Locale.setDefault(Locale.GERMANY);
-        UIDefaults defs = UIManager.getDefaults();
-        defs.addResourceBundle("Bug6530694");
-        String str = defs.getString("testkey");
-        if (!"testvalue".equals(str)) {
-            throw new RuntimeException("Could not load the resource for de_DE locale");
-        }
-    }
+public class CharacterName {
 
     public static void main(String[] args) {
-        Locale reservedLocale = Locale.getDefault();
-        try {
-            new Bug6530694();
-        } finally {
-            // restore the reserved locale
-            Locale.setDefault(reservedLocale);
+        for (int cp = 0; cp < Character.MAX_CODE_POINT; cp++) {
+            if (!Character.isValidCodePoint(cp)) {
+                try {
+                    Character.getName(cp);
+                } catch (IllegalArgumentException x) {
+                    continue;
+                }
+                throw new RuntimeException("Invalid failed: " + cp);
+            } else if (Character.getType(cp) == Character.UNASSIGNED) {
+                if (Character.getName(cp) != null)
+                    throw new RuntimeException("Unsigned failed: " + cp);
+            } else {
+                String name = Character.getName(cp);
+                if (cp != Character.codePointOf(name) ||
+                    cp != Character.codePointOf(name.toLowerCase(Locale.ENGLISH)))
+                throw new RuntimeException("Roundtrip failed: " + cp);
+            }
         }
     }
 }
