@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,16 +21,16 @@
  * have any questions.
  */
 
-/**
+/*
  * @test
- * @bug 5045412 6627366
- * @compile -Xlint:serial -XDfailcomplete=java.io.Serializable Foo.java
+ * @bug 6676362
+ * @summary Spurious forward reference error with final var + instance variable initializer
+ * @author Maurizio Cimadamore
+ *
+ * @compile T6676362a.java
  */
 
-/**
- * @test
- * @bug 5045412 6627366
- * @compile -Xlint:serial -XDfailcomplete=java.io.Serializable Foo.java Bar.java
- */
-
-class Foo { }
+public class T6676362a {
+    Object o = new Object() {Object m() {return o2;}};
+    final Object o2 = o;
+}

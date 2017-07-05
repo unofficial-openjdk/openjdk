@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,16 +21,19 @@
  * have any questions.
  */
 
-/**
+/*
  * @test
- * @bug 5045412 6627366
- * @compile -Xlint:serial -XDfailcomplete=java.io.Serializable Foo.java
+ * @bug 6734819
+ * @summary Javac performs flows analysis on already translated classes
+ * @author Maurizio Cimadamore
+ *
+ * @compile/ref=T6734819a.out -XDrawDiagnostics -Xlint:all -XDverboseCompilePolicy T6734819a.java
  */
+class Y extends W {}
+class W extends Z {}
 
-/**
- * @test
- * @bug 5045412 6627366
- * @compile -Xlint:serial -XDfailcomplete=java.io.Serializable Foo.java Bar.java
- */
-
-class Foo { }
+class Z {
+    void m(Z z) {
+        W w = (W)z;
+    }
+}
