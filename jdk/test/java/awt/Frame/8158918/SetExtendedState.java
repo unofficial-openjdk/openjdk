@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,24 +21,28 @@
  * questions.
  */
 
-/* @test
- * @bug 4495577
- * @summary Ensure that sun.misc.Unsafe cannot (easily)
- *          be accessed from user code
- * @modules jdk.unsupported
+/*
+ * @test
+ * @bug 8158918
+ * @summary setExtendedState(1) for maximized Frame results in state==7
+ * @run main SetExtendedState
  */
+import java.awt.Frame;
 
+public class SetExtendedState {
 
-public class Safe {
-
-    public static void main(String[] args) throws Exception {
-        try {
-            sun.misc.Unsafe.getUnsafe();
-        } catch (Exception x) {
-            System.err.println("Thrown as expected: " + x);
-            return;
+    public static void main(String[] args) {
+        Frame frame = new Frame("frame");
+        frame.setBounds(100, 100, 200, 200);
+        frame.setVisible(true);
+        frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+        frame.setExtendedState(Frame.ICONIFIED);
+        if (frame.getExtendedState() != Frame.ICONIFIED) {
+            frame.dispose();
+            throw new RuntimeException("Test Failed");
         }
-        throw new Exception("No exception thrown");
+        frame.dispose();
     }
-
 }
+
+
