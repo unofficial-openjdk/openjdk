@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 2001, 2006, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,23 +21,23 @@
  * questions.
  */
 
-package sun.misc;
-
-import java.io.File;
-import java.io.FilenameFilter;
-
-/**
- * This class checks that only jar and zip files are included in the file list.
- * This class is used in extension installation support (ExtensionDependency).
- *
- * @deprecated this class will be removed in a future release.
- * @author  Michael Colburn
+/*
+ * @test
+ * @bug 8143852
+ * @summary Rename functional interface method type parameters during most specific test
+ * @compile MostSpecific15.java
  */
-@Deprecated
-public class JarFilter implements FilenameFilter {
+class MostSpecific15 {
+    interface F1 { <X> Object apply(X arg); }
+    interface F2 { <Y> String apply(Y arg); }
 
-    public boolean accept(File dir, String name) {
-        String lower = name.toLowerCase();
-        return lower.endsWith(".jar") || lower.endsWith(".zip");
+    static void m1(F1 f) {}
+    static void m1(F2 f) {}
+
+    static String foo(Object in) { return "a"; }
+
+    void test() {
+        m1(MostSpecific15::foo);
     }
+
 }

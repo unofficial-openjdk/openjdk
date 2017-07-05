@@ -1,12 +1,10 @@
 /*
- * Copyright (c) 1995, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Oracle designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Oracle in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -22,12 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package sun.misc;
 
-import java.io.IOException;
+/*
+ * @test
+ * @bug 8143852
+ * @summary Test that generic function interface method bounds are the same
+ * @compile MostSpecific20.java
+ */
+class MostSpecific20 {
+    interface F1 { <X extends Iterable<X>> Object apply(X arg); }
+    interface F2 { <Y extends Iterable<Y>> String apply(Y arg); }
 
-/** This exception is thrown when EOF is reached */
-public class CEStreamExhausted extends IOException {
-    static final long serialVersionUID = -5889118049525891904L;
+    static void m1(F1 f) {}
+    static void m1(F2 f) {}
+
+    static String foo(Object in) { return "a"; }
+
+    void test() {
+        m1(MostSpecific20::foo);
+    }
+
 }
-
