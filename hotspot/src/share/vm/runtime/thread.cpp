@@ -1200,7 +1200,7 @@ WatcherThread* WatcherThread::_watcher_thread   = NULL;
 bool WatcherThread::_startable = false;
 volatile bool  WatcherThread::_should_terminate = false;
 
-WatcherThread::WatcherThread() : Thread(), _crash_protection(NULL) {
+WatcherThread::WatcherThread() : Thread() {
   assert(watcher_thread() == NULL, "we can only allocate one WatcherThread");
   if (os::create_thread(this, os::watcher_thread)) {
     _watcher_thread = this;
@@ -2193,6 +2193,11 @@ void JavaThread::handle_special_runtime_exit_condition(bool check_asyncs) {
   if (check_asyncs) {
     check_and_handle_async_exceptions();
   }
+#if INCLUDE_TRACE
+  if (is_trace_suspend()) {
+    TRACE_SUSPEND_THREAD(this);
+  }
+#endif
 }
 
 void JavaThread::send_thread_stop(oop java_throwable)  {
@@ -2423,6 +2428,11 @@ void JavaThread::check_safepoint_and_suspend_for_native_trans(JavaThread *thread
       fatal("missed deoptimization!");
     }
   }
+#if INCLUDE_TRACE
+  if (thread->is_trace_suspend()) {
+    TRACE_SUSPEND_THREAD(thread);
+  }
+#endif
 }
 
 // Slow path when the native==>VM/Java barriers detect a safepoint is in
