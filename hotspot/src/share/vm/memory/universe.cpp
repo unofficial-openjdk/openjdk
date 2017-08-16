@@ -517,7 +517,11 @@ void Universe::fixup_mirrors(TRAPS) {
 #define assert_pll_ownership() assert_pll_locked(owned_by_self)
 
 oop Universe::reference_pending_list() {
-  assert_pll_ownership();
+  if (Thread::current()->is_VM_thread()) {
+    assert_pll_locked(is_locked);
+  } else {
+    assert_pll_ownership();
+  }
   return _reference_pending_list;
 }
 

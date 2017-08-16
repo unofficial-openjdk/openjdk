@@ -4396,6 +4396,15 @@ void G1CollectedHeap::enqueue_discovered_references(G1ParScanThreadStateSet* per
   rp->verify_no_references_recorded();
   assert(!rp->discovery_enabled(), "should have been disabled");
 
+  // If during an initial mark pause we install a pending list head which is not otherwise reachable
+  // ensure that it is marked in the bitmap for concurrent marking to discover.
+  if (collector_state()->during_initial_mark_pause()) {
+    oop pll_head = Universe::reference_pending_list();
+    if (pll_head != NULL) {
+      _cm->mark_in_next_bitmap(pll_head);
+    }
+  }
+
   // FIXME
   // CM's reference processing also cleans up the string and symbol tables.
   // Should we do that here also? We could, but it is a serial operation
