@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,23 +21,29 @@
  * questions.
  */
 
-/*
+/**
  * @test
- * @requires vm.aot
- * @library /test/lib /testlibrary /
- * @modules java.base/jdk.internal.misc
- * @build compiler.calls.common.InvokeVirtual
- *        compiler.aot.AotCompiler
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *      sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main compiler.aot.AotCompiler
- *      -libname AotInvokeVirtual2InterpretedTest.so
- *      -class compiler.calls.common.InvokeVirtual
- *      -compile compiler.calls.common.InvokeVirtual.caller()V
- * @run main/othervm -XX:+UseAOT
- *      -XX:AOTLibrary=./AotInvokeVirtual2InterpretedTest.so
- *      -XX:CompileCommand=exclude,compiler.calls.common.InvokeVirtual::callee
- *      -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
- *      compiler.calls.common.InvokeVirtual -checkCallerCompileLevel -1
- * @summary check calls from aot to interpreted code, using invokevirtual
+ * @bug 4755500
+ * @summary calling Math.round(NaN) can break subsequent calls to Math.round()
+ * @run main compiler.floatingpoint.TestRound
  */
+
+package compiler.floatingpoint;
+
+public class TestRound {
+    public static void main(String[] args) {
+        // Note: it's really only necessary to run this loop 8 times to
+        // reproduce the bug, but the 10000-length loop causes compilation
+        // of Math.round() without any other command-line flags.
+        // A bug in the d2l NaN case was causing overflow of the FPU
+        // stack, yielding subsequent wrong results for flds.
+        for (int i = 0; i < 10_000; i++) {
+            Math.round(Double.NaN);
+        }
+        if (Math.round(1d) != 1) {
+            throw new AssertionError("TEST FAILED");
+        }
+        System.out.println("Test passed.");
+    }
+}
+

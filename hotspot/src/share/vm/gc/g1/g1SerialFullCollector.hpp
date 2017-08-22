@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,25 +19,31 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
+ *
  */
 
-/*
- * @test
- * @requires vm.aot
- * @library /test/lib /testlibrary /
- * @modules java.base/jdk.internal.misc
- * @build compiler.calls.common.InvokeVirtual
- *        compiler.aot.AotCompiler
- * @run main ClassFileInstaller sun.hotspot.WhiteBox
- *      sun.hotspot.WhiteBox$WhiteBoxPermission
- * @run main compiler.aot.AotCompiler
- *      -libname AotInvokeVirtual2InterpretedTest.so
- *      -class compiler.calls.common.InvokeVirtual
- *      -compile compiler.calls.common.InvokeVirtual.caller()V
- * @run main/othervm -XX:+UseAOT
- *      -XX:AOTLibrary=./AotInvokeVirtual2InterpretedTest.so
- *      -XX:CompileCommand=exclude,compiler.calls.common.InvokeVirtual::callee
- *      -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:.
- *      compiler.calls.common.InvokeVirtual -checkCallerCompileLevel -1
- * @summary check calls from aot to interpreted code, using invokevirtual
- */
+#ifndef SHARE_VM_GC_G1_G1SERIALCOLLECTOR_HPP
+#define SHARE_VM_GC_G1_G1SERIALCOLLECTOR_HPP
+
+#include "memory/allocation.hpp"
+
+class G1FullGCScope;
+class ReferenceProcessor;
+
+class G1SerialFullCollector : StackObj {
+  G1FullGCScope*                       _scope;
+  ReferenceProcessor*                  _reference_processor;
+  ReferenceProcessorIsAliveMutator     _is_alive_mutator;
+  ReferenceProcessorMTDiscoveryMutator _mt_discovery_mutator;
+
+  void rebuild_remembered_sets();
+
+public:
+  G1SerialFullCollector(G1FullGCScope* scope, ReferenceProcessor* reference_processor);
+
+  void prepare_collection();
+  void collect();
+  void complete_collection();
+};
+
+#endif // SHARE_VM_GC_G1_G1SERIALCOLLECTOR_HPP
