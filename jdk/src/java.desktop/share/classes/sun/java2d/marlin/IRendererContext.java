@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.java.swing;
 
-/**
- * This class is preserved for backward compatibility with JDK 6.
- *
- * @deprecated Use {@link javax.swing.Painter} instead.
- */
-@Deprecated
-public interface Painter<T> extends javax.swing.Painter<T> {
+package sun.java2d.marlin;
+
+interface IRendererContext extends MarlinConst {
+
+    public RendererStats stats();
+
+    public OffHeapArray newOffHeapArray(final long initialSize);
+
+    public IntArrayCache.Reference newCleanIntArrayRef(final int initialSize);
+
 }
