@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,20 @@
  */
 
 /**
- * Defines the subset of the W3C Document Object Model (DOM) API that is not part
- * of the Java SE API.
+ * Provides interfaces for DOM Level 3 XPath Specification. The XPath module
+ * provides simple functionalities to access a DOM tree using
+ * <a href='https://www.w3.org/TR/1999/REC-xpath-19991116/'>XPath 1.0</a>.
+ * <p>
+ * The interfaces and classes in this package came from
+ * Document Object Model (DOM) Level 3 XPath Specification,
+ * Working Draft 20 August 2002. Refer to
+ * <a href='https://www.w3.org/TR/DOM-Level-3-XPath/'>
+ * Document Object Model (DOM) Level 3 XPath Specification, Version 1.0,
+ * W3C Working Group Note 26 February 2004</a> except that the values of
+ * {@link XPathException#INVALID_EXPRESSION_ERR} and {@link XPathException#TYPE_ERR}
+ * are 1 and 2 respectively (instead of 51 and 52).
  *
- * @moduleGraph
- * @since 9
+ * @since 1.4
  */
-module jdk.xml.dom {
-    requires transitive java.xml;
 
-    exports org.w3c.dom.css;
-    exports org.w3c.dom.html;
-    exports org.w3c.dom.stylesheets;
-    exports org.w3c.dom.xpath;
-}
+package org.w3c.dom.xpath;

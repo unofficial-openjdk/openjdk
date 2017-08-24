@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,15 @@
  */
 
 /**
- * Defines the subset of the W3C Document Object Model (DOM) API that is not part
- * of the Java SE API.
+ * Provides interfaces for DOM Level 2 Style Specification. Refer to the
+ * <a href='http://www.w3.org/TR/2000/REC-DOM-Level-2-Style-20001113'>
+ *     Document Object Model (DOM) Level 2 Style Specification</a>,
+ * the CSS and stylesheets modules define the Document Object Model Level 2 Style
+ * Sheets and Cascading Style Sheets (CSS) that allow programs and scripts to
+ * dynamically access and update the content of style sheets documents.
  *
- * @moduleGraph
- * @since 9
+ *
+ * @since 1.4
  */
-module jdk.xml.dom {
-    requires transitive java.xml;
 
-    exports org.w3c.dom.css;
-    exports org.w3c.dom.html;
-    exports org.w3c.dom.stylesheets;
-    exports org.w3c.dom.xpath;
-}
+package org.w3c.dom.stylesheets;
