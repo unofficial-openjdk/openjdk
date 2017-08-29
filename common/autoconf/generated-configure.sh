@@ -5151,7 +5151,7 @@ VS_SDK_PLATFORM_NAME_2013=
 #CUSTOM_AUTOCONF_INCLUDE
 
 # Do not change or remove the following line, it is needed for consistency checks:
-DATE_WHEN_GENERATED=1503949566
+DATE_WHEN_GENERATED=1504027321
 
 ###############################################################################
 #
@@ -52064,7 +52064,7 @@ LDFLAGS_JDKLIB="${LDFLAGS_JDKLIB} ${JAVA_BASE_LDFLAGS}"
       SOLARIS_LIBM_LIBS="/usr/lib/sparcv9/libm.so.1"
     fi
     JVM_LIBS="$JVM_LIBS -lsocket -lsched -ldl $SOLARIS_LIBM_LIBS -lCrun \
-        -lthread -ldoor -lc -ldemangle -lnsl -lkstat -lrt"
+        -lthread -ldoor -lc -ldemangle -lnsl -lrt"
   elif test "x$OPENJDK_TARGET_OS" = xmacosx; then
     JVM_LIBS="$JVM_LIBS -lm"
   elif test "x$OPENJDK_TARGET_OS" = xaix; then
@@ -52943,7 +52943,7 @@ OPENJDK_BUILD_LDFLAGS_JDKLIB="${OPENJDK_BUILD_LDFLAGS_JDKLIB} ${OPENJDK_BUILD_JA
       OPENJDK_BUILD_SOLARIS_LIBM_LIBS="/usr/lib/sparcv9/libm.so.1"
     fi
     OPENJDK_BUILD_JVM_LIBS="$OPENJDK_BUILD_JVM_LIBS -lsocket -lsched -ldl $SOLARIS_LIBM_LIBS -lCrun \
-        -lthread -ldoor -lc -ldemangle -lnsl -lkstat -lrt"
+        -lthread -ldoor -lc -ldemangle -lnsl -lrt"
   elif test "x$OPENJDK_BUILD_OS" = xmacosx; then
     OPENJDK_BUILD_JVM_LIBS="$OPENJDK_BUILD_JVM_LIBS -lm"
   elif test "x$OPENJDK_BUILD_OS" = xaix; then
@@ -65798,8 +65798,12 @@ $as_echo "yes, forced" >&6; }
     fi
     INCLUDE_GRAAL="true"
   else
-    # By default enable graal build where AOT is available
-    if test "x$ENABLE_AOT" = "xtrue"; then
+    # By default enable graal build on linux-x64 or where AOT is available.
+    # graal build requires jvmci.
+    if test "x$JVM_FEATURES_jvmci" = "xjvmci" && \
+        (test "x$OPENJDK_TARGET_CPU" = "xx86_64" && \
+         test "x$OPENJDK_TARGET_OS" = "xlinux" || \
+         test "x$ENABLE_AOT" = "xtrue") ; then
       { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
       JVM_FEATURES_graal="graal"
