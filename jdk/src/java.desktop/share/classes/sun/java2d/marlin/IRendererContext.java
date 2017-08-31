@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,14 @@
  * questions.
  */
 
-package apple.laf;
+package sun.java2d.marlin;
 
-/*
- * This class is essentially a placeholder since
- * "apple.laf.AquaLookAndFeel" is so widely used, documented,
- * and hard coded that it is impractical to remove it.
- */
-@SuppressWarnings("serial") // JDK implementation class
-public class AquaLookAndFeel extends com.apple.laf.AquaLookAndFeel { }
+interface IRendererContext extends MarlinConst {
+
+    public RendererStats stats();
+
+    public OffHeapArray newOffHeapArray(final long initialSize);
+
+    public IntArrayCache.Reference newCleanIntArrayRef(final int initialSize);
+
+}
