@@ -43,8 +43,6 @@ import java.lang.module.ModuleDescriptor;
 import java.lang.module.ModuleFinder;
 import java.lang.module.ModuleReference;
 import java.lang.module.ModuleReader;
-import java.lang.reflect.Layer;
-import java.lang.reflect.Module;
 import java.security.AccessController;
 import java.security.CodeSigner;
 import java.security.CodeSource;
@@ -435,13 +433,13 @@ public final class TemplatesImpl implements Templates, Serializable {
             }
         };
 
-        Layer bootLayer = Layer.boot();
+        ModuleLayer bootLayer = ModuleLayer.boot();
 
         Configuration cf = bootLayer.configuration()
                 .resolve(finder, ModuleFinder.of(), Set.of(mn));
 
-        PrivilegedAction<Layer> pa = () -> bootLayer.defineModules(cf, name -> loader);
-        Layer layer = AccessController.doPrivileged(pa);
+        PrivilegedAction<ModuleLayer> pa = () -> bootLayer.defineModules(cf, name -> loader);
+        ModuleLayer layer = AccessController.doPrivileged(pa);
 
         Module m = layer.findModule(mn).get();
         assert m.getLayer() == layer;
@@ -486,7 +484,7 @@ public final class TemplatesImpl implements Templates, Serializable {
             ModuleDescriptor descriptor =
                 ModuleDescriptor.newModule(mn, Set.of(ModuleDescriptor.Modifier.SYNTHETIC))
                                 .requires("java.xml")
-                                .exports(pn)
+                                .exports(pn, Set.of("java.xml"))
                                 .build();
 
             Module m = createModule(descriptor, loader);

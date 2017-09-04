@@ -43,11 +43,10 @@ import java.util.stream.Stream;
 
 /**
  * A configuration that is the result of <a href="package-summary.html#resolution">
- * resolution</a> or resolution with <a href="package-summary.html#servicebinding">
- * service binding</a>.
+ * resolution</a> or resolution with <a href="#service-binding">service binding</a>.
  *
  * <p> A configuration encapsulates the <em>readability graph</em> that is the
- * output of resolution. A readability graph is a directed graph where the nodes
+ * output of resolution. A readability graph is a directed graph whose vertices
  * are of type {@link ResolvedModule} and the edges represent the readability
  * amongst the modules. {@code Configuration} defines the {@link #modules()
  * modules()} method to get the set of resolved modules in the graph. {@code
@@ -64,11 +63,11 @@ import java.util.stream.Stream;
  * with the receiver as the parent configuration. The static methods are for
  * more advanced cases where there can be more than one parent configuration. </p>
  *
- * <p> Each {@link java.lang.reflect.Layer layer} of modules in the Java virtual
+ * <p> Each {@link java.lang.ModuleLayer layer} of modules in the Java virtual
  * machine is created from a configuration. The configuration for the {@link
- * java.lang.reflect.Layer#boot() boot} layer is obtained by invoking {@code
- * Layer.boot().configuration()}. The configuration for the boot layer will
- * often be the parent when creating new configurations. </p>
+ * java.lang.ModuleLayer#boot() boot} layer is obtained by invoking {@code
+ * ModuleLayer.boot().configuration()}. The configuration for the boot layer
+ * will often be the parent when creating new configurations. </p>
  *
  * <h3> Example </h3>
  *
@@ -81,7 +80,7 @@ import java.util.stream.Stream;
  * <pre>{@code
  *    ModuleFinder finder = ModuleFinder.of(dir1, dir2, dir3);
  *
- *    Configuration parent = Layer.boot().configuration();
+ *    Configuration parent = ModuleLayer.boot().configuration();
  *
  *    Configuration cf = parent.resolve(finder, ModuleFinder.of(), Set.of("myapp"));
  *    cf.modules().forEach(m -> {
@@ -95,7 +94,7 @@ import java.util.stream.Stream;
  *
  * @since 9
  * @spec JPMS
- * @see java.lang.reflect.Layer
+ * @see java.lang.ModuleLayer
  */
 public final class Configuration {
 
@@ -109,23 +108,17 @@ public final class Configuration {
     private final Set<ResolvedModule> modules;
     private final Map<String, ResolvedModule> nameToModule;
 
-    // module constraints on target
-    private final String osName;
-    private final String osArch;
-    private final String osVersion;
+    // constraint on target platform
+    private final String targetPlatform;
 
-    String osName() { return osName; }
-    String osArch() { return osArch; }
-    String osVersion() { return osVersion; }
+    String targetPlatform() { return targetPlatform; }
 
     private Configuration() {
         this.parents = Collections.emptyList();
         this.graph = Collections.emptyMap();
         this.modules = Collections.emptySet();
         this.nameToModule = Collections.emptyMap();
-        this.osName = null;
-        this.osArch = null;
-        this.osVersion = null;
+        this.targetPlatform = null;
     }
 
     private Configuration(List<Configuration> parents,
@@ -150,9 +143,7 @@ public final class Configuration {
         this.modules = Set.of(moduleArray);
         this.nameToModule = Map.ofEntries(nameEntries);
 
-        this.osName = resolver.osName();
-        this.osArch = resolver.osArch();
-        this.osVersion = resolver.osVersion();
+        this.targetPlatform = resolver.targetPlatform();
     }
 
     /**
@@ -184,8 +175,8 @@ public final class Configuration {
      *         If resolution fails for any of the observability-related reasons
      *         specified by the static {@code resolve} method
      * @throws ResolutionException
-     *         If any of the post-resolution consistency checks specified by
-     *         the  static {@code resolve} method fail
+     *         If resolution fails any of the consistency checks specified by
+     *         the static {@code resolve} method
      * @throws SecurityException
      *         If locating a module is denied by the security manager
      */
@@ -227,8 +218,8 @@ public final class Configuration {
      *         If resolution fails for any of the observability-related reasons
      *         specified by the static {@code resolve} method
      * @throws ResolutionException
-     *         If any of the post-resolution consistency checks specified by
-     *         the  static {@code resolve} method fail
+     *         If resolution fails any of the consistency checks specified by
+     *         the static {@code resolve} method
      * @throws SecurityException
      *         If locating a module is denied by the security manager
      */
@@ -242,7 +233,7 @@ public final class Configuration {
 
     /**
      * Resolves a collection of root modules, with service binding, and with
-     * the empty configuration as its parent. The post resolution checks
+     * the empty configuration as its parent. The consistency checks
      * are optionally run.
      *
      * This method is used to create the configuration for the boot layer.
@@ -272,15 +263,15 @@ public final class Configuration {
      * or dependences that are located in a parent configuration are resolved
      * no further and are not included in the resulting configuration. </p>
      *
-     * <p> When all modules have been resolved then the resulting dependency
-     * graph is checked to ensure that it does not contain cycles. A
-     * readability graph is constructed, and in conjunction with the module
-     * exports and service use, checked for consistency. </p>
+     * <p> When all modules have been enumerated then a readability graph
+     * is computed, and in conjunction with the module exports and service use,
+     * checked for consistency. </p>
      *
      * <p> Resolution may fail with {@code FindException} for the following
      * <em>observability-related</em> reasons: </p>
      *
      * <ul>
+     *
      *     <li><p> A root module, or a direct or transitive dependency, is not
      *     found. </p></li>
      *
@@ -289,22 +280,19 @@ public final class Configuration {
      *     descriptor ({@code module-info.class}) or two versions of the same
      *     module are found in the same directory. </p></li>
      *
-     *     <li><p> A module with the required name is found but the module
-     *     requires a different {@link ModuleDescriptor#osName() operating
-     *     system}, {@link ModuleDescriptor#osArch() architecture}, or {@link
-     *     ModuleDescriptor#osVersion() version} to other modules that have
-     *     been resolved for the new configuration or modules in the parent
-     *     configurations. </p></li>
-     *
      * </ul>
      *
-     * <p> Post-resolution consistency checks may fail with {@code
-     * ResolutionException} for the following reasons: </p>
+     * <p> Resolution may fail with {@code ResolutionException} if any of the
+     * following consistency checks fail: </p>
      *
      * <ul>
      *
      *     <li><p> A cycle is detected, say where module {@code m1} requires
      *     module {@code m2} and {@code m2} requires {@code m1}. </p></li>
+     *
+     *     <li><p> A module reads two or more modules with the same name. This
+     *     includes the case where a module reads another with the same name as
+     *     itself. </p></li>
      *
      *     <li><p> Two or more modules in the configuration export the same
      *     package to a module that reads both. This includes the case where a
@@ -319,8 +307,9 @@ public final class Configuration {
      * </ul>
      *
      * @implNote In the implementation then observability of modules may depend
-     * on referential integrity checks that ensure different builds of tightly
-     * coupled modules are not combined in the same configuration.
+     * on referential integrity or other checks that ensure different builds of
+     * tightly coupled modules or modules for specific operating systems or
+     * architectures are not combined in the same configuration.
      *
      * @param  before
      *         The <em>before</em> module finder to find modules
@@ -338,9 +327,11 @@ public final class Configuration {
      *         root modules
      *
      * @throws FindException
-     *         If resolution fails for an observability-related reason
+     *         If resolution fails for any of observability-related reasons
+     *         specified above
      * @throws ResolutionException
-     *         If a post-resolution consistency checks fails
+     *         If resolution fails for any of the consistency checks specified
+     *         above
      * @throws IllegalArgumentException
      *         If the list of parents is empty, or the list has two or more
      *         parents with modules for different target operating systems,
@@ -377,11 +368,11 @@ public final class Configuration {
      * resolve} except that the graph of resolved modules is augmented
      * with modules induced by the service-use dependence relation. </p>
      *
-     * <p> More specifically, the root modules are resolved as if by calling
-     * {@code resolve}. The resolved modules, and all modules in the
-     * parent configurations, with {@link ModuleDescriptor#uses() service
-     * dependences} are then examined. All modules found by the given module
-     * finders that {@link ModuleDescriptor#provides() provide} an
+     * <p id="service-binding"> More specifically, the root modules are
+     * resolved as if by calling {@code resolve}. The resolved modules, and
+     * all modules in the parent configurations, with {@link ModuleDescriptor#uses()
+     * service dependences} are then examined. All modules found by the given
+     * module finders that {@link ModuleDescriptor#provides() provide} an
      * implementation of one or more of the service types are added to the
      * module graph and then resolved as if by calling the {@code
      * resolve} method. Adding modules to the module graph may introduce new
@@ -411,8 +402,8 @@ public final class Configuration {
      *         If resolution fails for any of the observability-related reasons
      *         specified by the static {@code resolve} method
      * @throws ResolutionException
-     *         If any of the post-resolution consistency checks specified by
-     *         the  static {@code resolve} method fail
+     *         If resolution fails any of the consistency checks specified by
+     *         the static {@code resolve} method
      * @throws IllegalArgumentException
      *         If the list of parents is empty, or the list has two or more
      *         parents with modules for different target operating systems,

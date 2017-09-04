@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -187,7 +187,7 @@ public class JShellTool implements MessageHandler {
     private Options options;
 
     SourceCodeAnalysis analysis;
-    JShell state = null;
+    private JShell state = null;
     Subscription shutdownSubscription = null;
 
     static final EditorSetting BUILT_IN_EDITOR = new EditorSetting(null, false);
@@ -195,6 +195,7 @@ public class JShellTool implements MessageHandler {
     private boolean debug = false;
     public boolean testPrompt = false;
     private Startup startup = null;
+    private boolean isCurrentlyRunningStartup = false;
     private String executionControlSpec = null;
     private EditorSetting editor = BUILT_IN_EDITOR;
 
@@ -266,7 +267,17 @@ public class JShellTool implements MessageHandler {
     // compiler/runtime init option values
     private static class Options {
 
-        private Map<OptionKind, List<String>> optMap = new HashMap<>();
+        private final Map<OptionKind, List<String>> optMap;
+
+        // New blank Options
+        Options() {
+            optMap = new HashMap<>();
+        }
+
+        // Options as a copy
+        private Options(Options opts) {
+            optMap = new HashMap<>(opts.optMap);
+        }
 
         private String[] selectOptions(Predicate<Entry<OptionKind, List<String>>> pred) {
             return optMap.entrySet().stream()
@@ -292,17 +303,20 @@ public class JShellTool implements MessageHandler {
                     .addAll(vals);
         }
 
-        void override(Options newer) {
+        // return a new Options, with parameter options overriding receiver options
+        Options override(Options newer) {
+            Options result = new Options(this);
             newer.optMap.entrySet().stream()
                     .forEach(e -> {
                         if (e.getKey().onlyOne) {
                             // Only one allowed, override last
-                            optMap.put(e.getKey(), e.getValue());
+                            result.optMap.put(e.getKey(), e.getValue());
                         } else {
                             // Additive
-                            addAll(e.getKey(), e.getValue());
+                            result.addAll(e.getKey(), e.getValue());
                         }
                     });
+            return result;
         }
     }
 
@@ -349,9 +363,56 @@ public class JShellTool implements MessageHandler {
             }
         }
 
+        // check that the supplied string represent valid class/module paths
+        // converting any ~/ to user home
+        private Collection<String> validPaths(Collection<String> vals, String context, boolean isModulePath) {
+            Stream<String> result = vals.stream()
+                    .map(s -> Arrays.stream(s.split(File.pathSeparator))
+                        .map(sp -> toPathResolvingUserHome(sp))
+                        .filter(p -> checkValidPathEntry(p, context, isModulePath))
+                        .map(p -> p.toString())
+                        .collect(Collectors.joining(File.pathSeparator)));
+            if (failed) {
+                return Collections.emptyList();
+            } else {
+                return result.collect(toList());
+            }
+        }
+
+        // Adapted from compiler method Locations.checkValidModulePathEntry
+        private boolean checkValidPathEntry(Path p, String context, boolean isModulePath) {
+            if (!Files.exists(p)) {
+                msg("jshell.err.file.not.found", context, p);
+                failed = true;
+                return false;
+            }
+            if (Files.isDirectory(p)) {
+                // if module-path, either an exploded module or a directory of modules
+                return true;
+            }
+
+            String name = p.getFileName().toString();
+            int lastDot = name.lastIndexOf(".");
+            if (lastDot > 0) {
+                switch (name.substring(lastDot)) {
+                    case ".jar":
+                        return true;
+                    case ".jmod":
+                        if (isModulePath) {
+                            return true;
+                        }
+                }
+            }
+            msg("jshell.err.arg", context, p);
+            failed = true;
+            return false;
+        }
+
         Options parse(OptionSet options) {
-            addOptions(OptionKind.CLASS_PATH, options.valuesOf(argClassPath));
-            addOptions(OptionKind.MODULE_PATH, options.valuesOf(argModulePath));
+            addOptions(OptionKind.CLASS_PATH,
+                    validPaths(options.valuesOf(argClassPath), "--class-path", false));
+            addOptions(OptionKind.MODULE_PATH,
+                    validPaths(options.valuesOf(argModulePath), "--module-path", true));
             addOptions(OptionKind.ADD_MODULES, options.valuesOf(argAddModules));
             addOptions(OptionKind.ADD_EXPORTS, options.valuesOf(argAddExports).stream()
                     .map(mp -> mp.contains("=") ? mp : mp + "=ALL-UNNAMED")
@@ -826,7 +887,14 @@ public class JShellTool implements MessageHandler {
         // initialize editor settings
         configEditor();
         // initialize JShell instance
-        resetState();
+        try {
+            resetState();
+        } catch (IllegalStateException ex) {
+            // Display just the cause (not a exception backtrace)
+            cmderr.println(ex.getMessage());
+            //abort
+            return;
+        }
         // Read replay history from last jshell session into previous history
         replayableHistoryPrevious = ReplayableHistory.fromPrevious(prefs);
         // load snippet/command files given on command-line
@@ -972,7 +1040,19 @@ public class JShellTool implements MessageHandler {
         analysis = state.sourceCodeAnalysis();
         live = true;
 
-        startUpRun(startup.toString());
+        // Run the start-up script.
+        // Avoid an infinite loop running start-up while running start-up.
+        // This could, otherwise, occur when /env /reset or /reload commands are
+        // in the start-up script.
+        if (!isCurrentlyRunningStartup) {
+            try {
+                isCurrentlyRunningStartup = true;
+                startUpRun(startup.toString());
+            } finally {
+                isCurrentlyRunningStartup = false;
+            }
+        }
+        // Record subsequent snippets in the main namespace.
         currentNameSpace = mainNamespace;
     }
 
@@ -1369,12 +1449,18 @@ public class JShellTool implements MessageHandler {
             List<Suggestion> result;
             int pastSpace = code.indexOf(' ') + 1; // zero if no space
             if (pastSpace == 0) {
+                // initially suggest commands (with slash) and subjects,
+                // however, if their subject starts without slash, include
+                // commands without slash
+                boolean noslash = code.length() > 0 && !code.startsWith("/");
                 result = new FixedCompletionProvider(commands.values().stream()
                         .filter(cmd -> cmd.kind.showInHelp || cmd.kind == CommandKind.HELP_SUBJECT)
-                        .map(c -> c.command + " ")
+                        .map(c -> ((noslash && c.command.startsWith("/"))
+                                ? c.command.substring(1)
+                                : c.command) + " ")
                         .toArray(String[]::new))
                         .completionSuggestions(code, cursor, anchor);
-            } else if (code.startsWith("/se")) {
+            } else if (code.startsWith("/se") || code.startsWith("se")) {
                 result = new FixedCompletionProvider(SET_SUBCOMMANDS)
                         .completionSuggestions(code.substring(pastSpace), cursor - pastSpace, anchor);
             } else {
@@ -1629,19 +1715,34 @@ public class JShellTool implements MessageHandler {
         return commandCompletions.completionSuggestions(code, cursor, anchor);
     }
 
-    public String commandDocumentation(String code, int cursor, boolean shortDescription) {
+    public List<String> commandDocumentation(String code, int cursor, boolean shortDescription) {
         code = code.substring(0, cursor);
         int space = code.indexOf(' ');
+        String prefix = space != (-1) ? code.substring(0, space) : code;
+        List<String> result = new ArrayList<>();
 
-        if (space != (-1)) {
-            String cmd = code.substring(0, space);
-            Command command = commands.get(cmd);
-            if (command != null) {
-                return getResourceString(command.helpKey + (shortDescription ? ".summary" : ""));
+        List<Entry<String, Command>> toShow =
+                commands.entrySet()
+                        .stream()
+                        .filter(e -> e.getKey().startsWith(prefix))
+                        .filter(e -> e.getValue().kind.showInHelp)
+                        .sorted((e1, e2) -> e1.getKey().compareTo(e2.getKey()))
+                        .collect(Collectors.toList());
+
+        if (toShow.size() == 1) {
+            result.add(getResourceString(toShow.get(0).getValue().helpKey + (shortDescription ? ".summary" : "")));
+        } else {
+            for (Entry<String, Command> e : toShow) {
+                result.add(e.getKey() + "\n" +getResourceString(e.getValue().helpKey + (shortDescription ? ".summary" : "")));
             }
         }
 
-        return null;
+        return result;
+    }
+
+    // Attempt to stop currently running evaluation
+    void stop() {
+        state.stop();
     }
 
     // --- Command implementations ---
@@ -2022,8 +2123,11 @@ public class JShellTool implements MessageHandler {
         ArgTokenizer at = new ArgTokenizer("/help", arg);
         String subject = at.next();
         if (subject != null) {
+            // check if the requested subject is a help subject or
+            // a command, with or without slash
             Command[] matches = commands.values().stream()
-                    .filter(c -> c.command.startsWith(subject))
+                    .filter(c -> c.command.startsWith(subject)
+                              || c.command.substring(1).startsWith(subject))
                     .toArray(Command[]::new);
             if (matches.length == 1) {
                 String cmd = matches[0].command;
@@ -2048,6 +2152,18 @@ public class JShellTool implements MessageHandler {
                 }
                 return true;
             } else {
+                // failing everything else, check if this is the start of
+                // a /set sub-command name
+                String[] subs = Arrays.stream(SET_SUBCOMMANDS)
+                        .filter(s -> s.startsWith(subject))
+                        .toArray(String[]::new);
+                if (subs.length > 0) {
+                    for (String sub : subs) {
+                        hardrb("help.set." + sub);
+                        hard("");
+                    }
+                    return true;
+                }
                 errormsg("jshell.err.help.arg", arg);
             }
         }
@@ -2474,15 +2590,17 @@ public class JShellTool implements MessageHandler {
     }
 
     private boolean cmdReset(String rawargs) {
+        Options oldOptions = rawargs.trim().isEmpty()? null : options;
         if (!parseCommandLineLikeFlags(rawargs, new OptionParserBase())) {
             return false;
         }
         live = false;
         fluffmsg("jshell.msg.resetting.state");
-        return true;
+        return doReload(null, false, oldOptions);
     }
 
     private boolean cmdReload(String rawargs) {
+        Options oldOptions = rawargs.trim().isEmpty()? null : options;
         OptionParserReload ap = new OptionParserReload();
         if (!parseCommandLineLikeFlags(rawargs, ap)) {
             return false;
@@ -2499,7 +2617,7 @@ public class JShellTool implements MessageHandler {
             history = replayableHistory;
             fluffmsg("jshell.err.reload.restarting.state");
         }
-        boolean success = doReload(history, !ap.quiet());
+        boolean success = doReload(history, !ap.quiet(), oldOptions);
         if (success && ap.restore()) {
             // if we are restoring from previous, then if nothing was added
             // before time of exit, there is nothing to save
@@ -2526,17 +2644,32 @@ public class JShellTool implements MessageHandler {
             }
             return false;
         }
+        Options oldOptions = options;
         if (!parseCommandLineLikeFlags(rawargs, new OptionParserBase())) {
             return false;
         }
         fluffmsg("jshell.msg.set.restore");
-        return doReload(replayableHistory, false);
+        return doReload(replayableHistory, false, oldOptions);
     }
 
-    private boolean doReload(ReplayableHistory history, boolean echo) {
-        resetState();
-        run(new ReloadIOContext(history.iterable(),
-                echo ? cmdout : null));
+    private boolean doReload(ReplayableHistory history, boolean echo, Options oldOptions) {
+        if (oldOptions != null) {
+            try {
+                resetState();
+            } catch (IllegalStateException ex) {
+                currentNameSpace = mainNamespace; // back out of start-up (messages)
+                errormsg("jshell.err.restart.failed", ex.getMessage());
+                // attempt recovery to previous option settings
+                options = oldOptions;
+                resetState();
+            }
+        } else {
+            resetState();
+        }
+        if (history != null) {
+            run(new ReloadIOContext(history.iterable(),
+                    echo ? cmdout : null));
+        }
         return true;
     }
 
@@ -2552,7 +2685,7 @@ public class JShellTool implements MessageHandler {
             errormsg("jshell.err.unexpected.at.end", ap.nonOptions(), rawargs);
             return false;
         }
-        options.override(opts);
+        options = options.override(opts);
         return true;
     }
 
@@ -2797,7 +2930,7 @@ public class JShellTool implements MessageHandler {
         }
     }
     //where
-    private boolean processCompleteSource(String source) throws IllegalStateException {
+    boolean processCompleteSource(String source) throws IllegalStateException {
         debug("Compiling: %s", source);
         boolean failed = false;
         boolean isActive = false;

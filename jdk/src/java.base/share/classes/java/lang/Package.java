@@ -27,7 +27,6 @@ package java.lang;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Module;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -103,10 +102,14 @@ import jdk.internal.reflect.Reflection;
  * with the {@link Package#getPackages Package.getPackages()} and
  * {@link ClassLoader#getDefinedPackages} methods.
  *
+ * @implNote
+ * The <a href="ClassLoader.html#builtinLoaders">builtin class loaders</a>
+ * do not explicitly define {@code Package} objects for packages in
+ * <em>named modules</em>.  Instead those packages are automatically defined
+ * and have no specification and implementation versioning information.
+ *
  * @jvms 5.3 Run-time package
- * @see <a href="../../../technotes/guides/jar/jar.html#versioning">
- * The JAR File Specification: Package Versioning</a>
- * @see <a href="../../../technotes/guides/jar/jar.html#sealing">
+ * @see <a href="{@docRoot}/../specs/jar/jar.html#sealing">
  * The JAR File Specification: Package Sealing</a>
  * @see ClassLoader#definePackage(String, String, String, String, String, String, String, URL)
  *

@@ -25,6 +25,7 @@
  * @test
  * @summary Negative tests for jlink
  * @bug 8130861
+ * @bug 8174718
  * @author Andrei Eremeev
  * @library ../lib
  * @modules java.base/jdk.internal.jimage
@@ -50,6 +51,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import jdk.internal.module.ModuleInfoWriter;
 import org.testng.SkipException;
@@ -176,7 +178,7 @@ public class JLinkNegativeTest {
                     .output(imageFile)
                     .addMods("not_zip")
                     .modulePath(helper.defaultModulePath())
-                    .call().assertFailure("Error: java.util.zip.ZipException: zip file is empty");
+                    .call().assertFailure("Error: Error reading");
         } finally {
             deleteDirectory(jar);
         }
@@ -191,7 +193,7 @@ public class JLinkNegativeTest {
                     .output(imageFile)
                     .addMods("not_zip")
                     .modulePath(helper.defaultModulePath())
-                    .call().assertFailure("Error: java.io.IOException: Invalid jmod file");
+                    .call().assertFailure("Error: java.io.IOException: Invalid JMOD file");
         } finally {
             deleteDirectory(jmod);
         }
@@ -344,6 +346,29 @@ public class JLinkNegativeTest {
         } finally {
             deleteDirectory(jar1);
             deleteDirectory(jar2);
+        }
+    }
+
+    public void testInconsistentModuleInfo() throws IOException {
+        String moduleName = "inconsistentJar";
+        List<String> classNames = Arrays.asList("xorg.acme.internal.B");
+        Path module = helper.generateModuleCompiledClasses(
+                helper.getJarSrcDir(), helper.getJarClassesDir(), moduleName, classNames);
+
+        try (OutputStream out = Files.newOutputStream(module.resolve("module-info.class"))) {
+            ModuleInfoWriter.write(ModuleDescriptor.newModule(moduleName)
+                    .requires("java.base")
+                    .packages(Set.of("org.acme.internal"))
+                    .build(), out);
+        }
+
+        Path jar = JImageGenerator.createJarFile(helper.getJarDir().resolve(moduleName + ".jar"), module);
+        try {
+            helper.generateDefaultImage(moduleName)
+                  .assertFailure("Module inconsistentJar's descriptor indicates the set of packages is : " +
+                  "[org.acme.internal], but module contains packages: [xorg.acme.internal]");
+        } finally {
+            deleteDirectory(jar);
         }
     }
 }

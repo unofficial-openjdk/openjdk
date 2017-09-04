@@ -41,7 +41,6 @@ import java.lang.module.ModuleDescriptor.Requires;
 import java.lang.module.ModuleDescriptor.Provides;
 import java.lang.module.ModuleDescriptor.Requires.Modifier;
 import java.lang.module.ModuleDescriptor.Version;
-import java.lang.reflect.Module;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,11 +49,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.lang.module.ModuleDescriptor.Requires.Modifier.*;
 
+import jdk.internal.misc.JavaLangModuleAccess;
 import jdk.internal.misc.SharedSecrets;
 import jdk.internal.module.ModuleInfoWriter;
 import org.testng.annotations.DataProvider;
@@ -64,8 +65,8 @@ import static org.testng.Assert.*;
 @Test
 public class ModuleDescriptorTest {
 
-    @DataProvider(name = "invalidjavaidentifiers")
-    public Object[][] invalidJavaIdentifiers() {
+    @DataProvider(name = "invalidNames")
+    public Object[][] invalidNames() {
         return new Object[][]{
 
             { null,             null },
@@ -82,6 +83,32 @@ public class ModuleDescriptorTest {
             { "foo.bar.1",      null },
             { "foo.bar.1gus",   null },
             { "foo.bar.[gus]",  null },
+
+            { "class",          null },
+            { "interface",      null },
+            { "true",           null },
+            { "false",          null },
+            { "null",           null },
+
+            { "x.class",        null },
+            { "x.interface",    null },
+            { "x.true",         null },
+            { "x.false",        null },
+            { "x.null",         null },
+
+            { "class.x",        null },
+            { "interface.x",    null },
+            { "true.x",         null },
+            { "false.x",        null },
+            { "null.x",         null },
+
+            { "x.class.x",      null },
+            { "x.interface.x",  null },
+            { "x.true.x",       null },
+            { "x.false.x",      null },
+            { "x.null.x",       null },
+
+            { "_",              null },
 
         };
     }
@@ -198,7 +225,7 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.newModule("m").requires(EnumSet.allOf(Modifier.class), "m");
     }
 
-    @Test(dataProvider = "invalidjavaidentifiers",
+    @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
     public void testRequiresWithBadModuleName(String mn, String ignore) {
         requires(EnumSet.noneOf(Modifier.class), mn);
@@ -405,7 +432,7 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.newModule("foo").exports("p", Collections.emptySet());
     }
 
-    @Test(dataProvider = "invalidjavaidentifiers",
+    @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
     public void testExportsWithBadName(String pn, String ignore) {
         ModuleDescriptor.newModule("foo").exports(pn);
@@ -567,7 +594,7 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.newModule("foo").opens("p", Collections.emptySet());
     }
 
-    @Test(dataProvider = "invalidjavaidentifiers",
+    @Test(dataProvider = "invalidNames",
             expectedExceptions = IllegalArgumentException.class )
     public void testOpensWithBadName(String pn, String ignore) {
         ModuleDescriptor.newModule("foo").opens(pn);
@@ -663,7 +690,7 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.newModule("foo").uses("S");
     }
 
-    @Test(dataProvider = "invalidjavaidentifiers",
+    @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
     public void testUsesWithBadName(String service, String ignore) {
         ModuleDescriptor.newModule("foo").uses(service);
@@ -736,13 +763,13 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.newModule("foo").provides("p.S", List.of("P"));
     }
 
-    @Test(dataProvider = "invalidjavaidentifiers",
+    @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
     public void testProvidesWithBadService(String service, String ignore) {
         ModuleDescriptor.newModule("foo").provides(service, List.of("p.Provider"));
     }
 
-    @Test(dataProvider = "invalidjavaidentifiers",
+    @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
     public void testProvidesWithBadProvider(String provider, String ignore) {
         List<String> names = new ArrayList<>(); // allows nulls
@@ -927,7 +954,7 @@ public class ModuleDescriptorTest {
         assertTrue(Objects.equals(packages, Set.of("p1", "p2", "p3", "p4", "p5")));
     }
 
-    @Test(dataProvider = "invalidjavaidentifiers",
+    @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
     public void testPackagesWithBadName(String pn, String ignore) {
         Set<String> pkgs = new HashSet<>();  // allows nulls
@@ -942,7 +969,7 @@ public class ModuleDescriptorTest {
         assertEquals(mn, "foo");
     }
 
-    @Test(dataProvider = "invalidjavaidentifiers",
+    @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
     public void testBadModuleName(String mn, String ignore) {
         ModuleDescriptor.newModule(mn);
@@ -985,6 +1012,107 @@ public class ModuleDescriptorTest {
     @Test(expectedExceptions = IllegalArgumentException.class )
     public void testEmptyVersion() {
         ModuleDescriptor.newModule("foo").version("");
+    }
+
+
+    @DataProvider(name = "unparseableVersions")
+    public Object[][] unparseableVersions() {
+        return new Object[][]{
+
+                { null,  "A1" },    // no version < unparseable
+                { "A1",  "A2" },    // unparseable < unparseable
+                { "A1",  "1.0" },   // unparseable < parseable
+
+        };
+    }
+
+    /**
+     * Basic test for unparseable module versions
+     */
+    @Test(dataProvider = "unparseableVersions")
+    public void testUnparseableModuleVersion(String vs1, String vs2) {
+        ModuleDescriptor descriptor1 = newModule("m", vs1);
+        ModuleDescriptor descriptor2 = newModule("m", vs2);
+
+        if (vs1 != null && !isParsableVersion(vs1)) {
+            assertFalse(descriptor1.version().isPresent());
+            assertTrue(descriptor1.rawVersion().isPresent());
+            assertEquals(descriptor1.rawVersion().get(), vs1);
+        }
+
+        if (vs2 != null && !isParsableVersion(vs2)) {
+            assertFalse(descriptor2.version().isPresent());
+            assertTrue(descriptor2.rawVersion().isPresent());
+            assertEquals(descriptor2.rawVersion().get(), vs2);
+        }
+
+        assertFalse(descriptor1.equals(descriptor2));
+        assertFalse(descriptor2.equals(descriptor1));
+        assertTrue(descriptor1.compareTo(descriptor2) == -1);
+        assertTrue(descriptor2.compareTo(descriptor1) == 1);
+    }
+
+    /**
+     * Basic test for requiring a module with an unparseable version recorded
+     * at compile version.
+     */
+    @Test(dataProvider = "unparseableVersions")
+    public void testUnparseableCompiledVersion(String vs1, String vs2) {
+        Requires r1 = newRequires("m", vs1);
+        Requires r2 = newRequires("m", vs2);
+
+        if (vs1 != null && !isParsableVersion(vs1)) {
+            assertFalse(r1.compiledVersion().isPresent());
+            assertTrue(r1.rawCompiledVersion().isPresent());
+            assertEquals(r1.rawCompiledVersion().get(), vs1);
+        }
+
+        if (vs2 != null && !isParsableVersion(vs2)) {
+            assertFalse(r2.compiledVersion().isPresent());
+            assertTrue(r2.rawCompiledVersion().isPresent());
+            assertEquals(r2.rawCompiledVersion().get(), vs2);
+        }
+
+        assertFalse(r1.equals(r2));
+        assertFalse(r2.equals(r1));
+        assertTrue(r1.compareTo(r2) == -1);
+        assertTrue(r2.compareTo(r1) == 1);
+    }
+
+    private ModuleDescriptor newModule(String name, String vs) {
+        JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
+        Builder builder = JLMA.newModuleBuilder(name, false, Set.of());
+        if (vs != null)
+            builder.version(vs);
+        builder.requires("java.base");
+        ByteBuffer bb = ModuleInfoWriter.toByteBuffer(builder.build());
+        return ModuleDescriptor.read(bb);
+    }
+
+    private Requires newRequires(String name, String vs) {
+        JavaLangModuleAccess JLMA = SharedSecrets.getJavaLangModuleAccess();
+        Builder builder = JLMA.newModuleBuilder("foo", false, Set.of());
+        if (vs == null) {
+            builder.requires(name);
+        } else {
+            JLMA.requires(builder, Set.of(), name, vs);
+        }
+        Set<ModuleDescriptor.Requires> requires = builder.build().requires();
+        Iterator<ModuleDescriptor.Requires> iterator = requires.iterator();
+        ModuleDescriptor.Requires r = iterator.next();
+        if (r.name().equals("java.base")) {
+            r = iterator.next();
+        }
+        return r;
+    }
+
+    private boolean isParsableVersion(String vs) {
+        try {
+            Version.parse(vs);
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
 
@@ -1162,66 +1290,13 @@ public class ModuleDescriptorTest {
         ModuleDescriptor.newModule("foo").mainClass("Main");
     }
 
-    @Test(dataProvider = "invalidjavaidentifiers",
+    @Test(dataProvider = "invalidNames",
           expectedExceptions = IllegalArgumentException.class )
     public void testMainClassWithBadName(String mainClass, String ignore) {
         Builder builder = ModuleDescriptor.newModule("foo");
         builder.mainClass(mainClass);
     }
 
-
-    // osName
-
-    public void testOsName() {
-        String osName = ModuleDescriptor.newModule("foo").osName("Linux").build().osName().get();
-        assertEquals(osName, "Linux");
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNullOsName() {
-        ModuleDescriptor.newModule("foo").osName(null);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testEmptyOsName() {
-        ModuleDescriptor.newModule("foo").osName("");
-    }
-
-
-    // osArch
-
-    public void testOsArch() {
-        String osArch = ModuleDescriptor.newModule("foo").osName("arm").build().osName().get();
-        assertEquals(osArch, "arm");
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNullOsArch() {
-        ModuleDescriptor.newModule("foo").osArch(null);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testEmptyOsArch() {
-        ModuleDescriptor.newModule("foo").osArch("");
-    }
-
-
-    // osVersion
-
-    public void testOsVersion() {
-        String osVersion = ModuleDescriptor.newModule("foo").osName("11.2").build().osName().get();
-        assertEquals(osVersion, "11.2");
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNullOsVersion() {
-        ModuleDescriptor.newModule("foo").osVersion(null);
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testEmptyOsVersion() {
-        ModuleDescriptor.newModule("foo").osVersion("");
-    }
 
     // reads
 
@@ -1239,7 +1314,9 @@ public class ModuleDescriptorTest {
         }
     };
 
-    // basic test reading module-info.class
+    /**
+     * Basic test reading module-info.class
+     */
     public void testRead() throws Exception {
         Module base = Object.class.getModule();
 
@@ -1256,6 +1333,7 @@ public class ModuleDescriptorTest {
             assertEquals(descriptor.name(), "java.base");
         }
     }
+
     /**
      * Test ModuleDescriptor with a packager finder
      */

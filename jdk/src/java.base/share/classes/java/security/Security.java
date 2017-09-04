@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1996, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,7 @@ import sun.security.jca.*;
  * {@code conf/security/java.security} in the Java installation directory.
  *
  * @author Benjamin Renaud
+ * @since 1.1
  */
 
 public final class Security {
@@ -281,8 +282,8 @@ public final class Security {
     /**
      * Gets a specified property for an algorithm. The algorithm name
      * should be a standard name. See the <a href=
-     * "{@docRoot}/../technotes/guides/security/StandardNames.html">
-     * Java Cryptography Architecture Standard Algorithm Name Documentation</a>
+     * "{@docRoot}/../specs/security/standard-names.html">
+     * Java Security Standard Algorithm Names Specification</a>
      * for information about standard algorithm names.
      *
      * One possible use is by specialized algorithm parsers, which may map
@@ -511,8 +512,8 @@ public final class Security {
      * </ul>
      *
      * <p> See the <a href=
-     * "{@docRoot}/../technotes/guides/security/StandardNames.html">
-     * Java Cryptography Architecture Standard Algorithm Name Documentation</a>
+     * "{@docRoot}/../specs/security/standard-names.html">
+     * Java Security Standard Algorithm Names Specification</a>
      * for information about standard cryptographic service names, standard
      * algorithm names and standard attribute names.
      *
@@ -582,8 +583,8 @@ public final class Security {
      * </ul>
      *
      * <p> See the <a href=
-     * "../../../technotes/guides/security/StandardNames.html">
-     * Java Cryptography Architecture Standard Algorithm Name Documentation</a>
+     * "{@docRoot}/../specs/security/standard-names.html">
+     * Java Security Standard Algorithm Names Specification</a>
      * for information about standard cryptographic service names, standard
      * algorithm names and standard attribute names.
      *
@@ -1040,8 +1041,8 @@ public final class Security {
      * an empty Set if there is no provider that supports the
      * specified service or if serviceName is null. For a complete list
      * of Java cryptographic services, please see the
-     * <a href="../../../technotes/guides/security/crypto/CryptoSpec.html">Java
-     * Cryptography Architecture API Specification &amp; Reference</a>.
+     * {@extLink security_guide_jca
+     * Java Cryptography Architecture (JCA) Reference Guide}.
      * Note: the returned set is immutable.
      *
      * @param serviceName the name of the Java cryptographic

@@ -31,7 +31,6 @@ import java.io.UncheckedIOException;
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.Module;
 import java.net.URL;
 import java.security.AccessController;
 import java.security.AccessControlContext;
@@ -94,12 +93,20 @@ import sun.security.util.SecurityConstants;
  * <p> Class loaders may typically be used by security managers to indicate
  * security domains.
  *
+ * <p> In addition to loading classes, a class loader is also responsible for
+ * locating resources. A resource is some data (a "{@code .class}" file,
+ * configuration data, or an image for example) that is identified with an
+ * abstract '/'-separated path name. Resources are typically packaged with an
+ * application or library so that they can be located by code in the
+ * application or library. In some cases, the resources are included so that
+ * they can be located by other libraries.
+ *
  * <p> The {@code ClassLoader} class uses a delegation model to search for
  * classes and resources.  Each instance of {@code ClassLoader} has an
- * associated parent class loader.  When requested to find a class or
- * resource, a {@code ClassLoader} instance will delegate the search for the
- * class or resource to its parent class loader before attempting to find the
- * class or resource itself.
+ * associated parent class loader. When requested to find a class or
+ * resource, a {@code ClassLoader} instance will usually delegate the search
+ * for the class or resource to its parent class loader before attempting to
+ * find the class or resource itself.
  *
  * <p> Class loaders that support concurrent loading of classes are known as
  * <em>{@linkplain #isRegisteredAsParallelCapable() parallel capable}</em> class
@@ -115,23 +122,31 @@ import sun.security.util.SecurityConstants;
  * duration of the class loading process (see {@link #loadClass
  * loadClass} methods).
  *
- * <h3> <a name="builtinLoaders">Run-time Built-in Class Loaders</a></h3>
+ * <h3> <a id="builtinLoaders">Run-time Built-in Class Loaders</a></h3>
  *
  * The Java run-time has the following built-in class loaders:
  *
  * <ul>
- * <li>Bootstrap class loader.
+ * <li><p>Bootstrap class loader.
  *     It is the virtual machine's built-in class loader, typically represented
  *     as {@code null}, and does not have a parent.</li>
- * <li>{@linkplain #getPlatformClassLoader() Platform class loader}.
+ * <li><p>{@linkplain #getPlatformClassLoader() Platform class loader}.
  *     All <em>platform classes</em> are visible to the platform class loader
  *     that can be used as the parent of a {@code ClassLoader} instance.
  *     Platform classes include Java SE platform APIs, their implementation
  *     classes and JDK-specific run-time classes that are defined by the
- *     platform class loader or its ancestors.</li>
- * <li>{@linkplain #getSystemClassLoader() System class loader}.
- *     It is also known as <em>application class
- *     loader</em> and is distinct from the platform class loader.
+ *     platform class loader or its ancestors.
+ *     <p> To allow for upgrading/overriding of modules defined to the platform
+ *     class loader, and where upgraded modules read modules defined to class
+ *     loaders other than the platform class loader and its ancestors, then
+ *     the platform class loader may have to delegate to other class loaders,
+ *     the application class loader for example.
+ *     In other words, classes in named modules defined to class loaders
+ *     other than the platform class loader and its ancestors may be visible
+ *     to the platform class loader. </li>
+ * <li><p>{@linkplain #getSystemClassLoader() System class loader}.
+ *     It is also known as <em>application class loader</em> and is distinct
+ *     from the platform class loader.
  *     The system class loader is typically used to define classes on the
  *     application class path, module path, and JDK-specific tools.
  *     The platform class loader is a parent or an ancestor of the system class
@@ -184,7 +199,7 @@ import sun.security.util.SecurityConstants;
  *     }
  * </pre></blockquote>
  *
- * <h3> <a name="name">Binary names</a> </h3>
+ * <h3> <a id="name">Binary names</a> </h3>
  *
  * <p> Any class name provided as a {@code String} parameter to methods in
  * {@code ClassLoader} must be a binary name as defined by
@@ -352,9 +367,7 @@ public abstract class ClassLoader {
     private ClassLoader(Void unused, String name, ClassLoader parent) {
         this.name = name;
         this.parent = parent;
-        this.unnamedModule
-            = SharedSecrets.getJavaLangReflectModuleAccess()
-                           .defineUnnamedModule(this);
+        this.unnamedModule = new Module(this);
         if (ParallelLoaders.isRegistered(this.getClass())) {
             parallelLockMap = new ConcurrentHashMap<>();
             package2certs = new ConcurrentHashMap<>();
@@ -370,6 +383,10 @@ public abstract class ClassLoader {
     /**
      * Creates a new class loader of the specified name and using the
      * specified parent class loader for delegation.
+     *
+     * @apiNote If the parent is specified as {@code null} (for the
+     * bootstrap class loader) then there is no guarantee that all platform
+     * classes are visible.
      *
      * @param  name   class loader name; or {@code null} if not named
      * @param  parent the parent class loader
@@ -393,9 +410,12 @@ public abstract class ClassLoader {
      * delegation.
      *
      * <p> If there is a security manager, its {@link
-     * SecurityManager#checkCreateClassLoader()
-     * checkCreateClassLoader} method is invoked.  This may result in
-     * a security exception.  </p>
+     * SecurityManager#checkCreateClassLoader() checkCreateClassLoader} method
+     * is invoked.  This may result in a security exception.  </p>
+     *
+     * @apiNote If the parent is specified as {@code null} (for the
+     * bootstrap class loader) then there is no guarantee that all platform
+     * classes are visible.
      *
      * @param  parent
      *         The parent class loader
@@ -488,7 +508,7 @@ public abstract class ClassLoader {
      *
      *   <li><p> Invoke the {@link #loadClass(String) loadClass} method
      *   on the parent class loader.  If the parent is {@code null} the class
-     *   loader built-in to the virtual machine is used, instead.  </p></li>
+     *   loader built into the virtual machine is used, instead.  </p></li>
      *
      *   <li><p> Invoke the {@link #findClass(String)} method to find the
      *   class.  </p></li>
@@ -671,8 +691,9 @@ public abstract class ClassLoader {
      * This method should be overridden by class loader implementations that
      * follow the delegation model for loading classes, and will be invoked by
      * the {@link #loadClass loadClass} method after checking the
-     * parent class loader for the requested class.  The default implementation
-     * throws a {@code ClassNotFoundException}.
+     * parent class loader for the requested class.
+     *
+     * @implSpec The default implementation throws {@code ClassNotFoundException}.
      *
      * @param  name
      *         The <a href="#name">binary name</a> of the class
@@ -983,7 +1004,7 @@ public abstract class ClassLoader {
     {
         protectionDomain = preDefineClass(name, protectionDomain);
         String source = defineClassSourceLocation(protectionDomain);
-        Class<?> c = defineClass1(name, b, off, len, protectionDomain, source);
+        Class<?> c = defineClass1(this, name, b, off, len, protectionDomain, source);
         postDefineClass(c, protectionDomain);
         return c;
     }
@@ -1075,17 +1096,17 @@ public abstract class ClassLoader {
 
         protectionDomain = preDefineClass(name, protectionDomain);
         String source = defineClassSourceLocation(protectionDomain);
-        Class<?> c = defineClass2(name, b, b.position(), len, protectionDomain, source);
+        Class<?> c = defineClass2(this, name, b, b.position(), len, protectionDomain, source);
         postDefineClass(c, protectionDomain);
         return c;
     }
 
-    private native Class<?> defineClass1(String name, byte[] b, int off, int len,
-                                         ProtectionDomain pd, String source);
+    static native Class<?> defineClass1(ClassLoader loader, String name, byte[] b, int off, int len,
+                                        ProtectionDomain pd, String source);
 
-    private native Class<?> defineClass2(String name, java.nio.ByteBuffer b,
-                                         int off, int len, ProtectionDomain pd,
-                                         String source);
+    static native Class<?> defineClass2(ClassLoader loader, String name, java.nio.ByteBuffer b,
+                                        int off, int len, ProtectionDomain pd,
+                                        String source);
 
     // true if the name is null or has the potential to be a valid binary name
     private boolean checkName(String name) {
@@ -1117,8 +1138,9 @@ public abstract class ClassLoader {
                 putIfAbsent(pname, (certs == null? nocerts:certs));
         }
         if (pcerts != null && !compareCerts(pcerts, certs)) {
-            throw new SecurityException("class \""+ name +
-                 "\"'s signer information does not match signer information of other classes in the same package");
+            throw new SecurityException("class \"" + name
+                + "\"'s signer information does not match signer information"
+                + " of other classes in the same package");
         }
     }
 
@@ -1319,12 +1341,7 @@ public abstract class ClassLoader {
      * that is independent of the location of the code.
      *
      * <p> The name of a resource is a '{@code /}'-separated path name that
-     * identifies the resource.
-     *
-     * <p> This method will first search the parent class loader for the
-     * resource; if the parent is {@code null} the path of the class loader
-     * built-in to the virtual machine is searched.  That failing, this method
-     * will invoke {@link #findResource(String)} to find the resource.  </p>
+     * identifies the resource. </p>
      *
      * <p> Resources in named modules are subject to the encapsulation rules
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
@@ -1333,6 +1350,11 @@ public abstract class ClassLoader {
      * packages of named modules when the package is {@link Module#isOpen(String)
      * opened} unconditionally (even if the caller of this method is in the
      * same module as the resource). </p>
+     *
+     * @implSpec The default implementation will first search the parent class
+     * loader for the resource; if the parent is {@code null} the path of the
+     * class loader built into the virtual machine is searched. If not found,
+     * this method will invoke {@link #findResource(String)} to find the resource.
      *
      * @apiNote Where several modules are defined to the same class loader,
      * and where more than one module contains a resource with the given name,
@@ -1377,10 +1399,7 @@ public abstract class ClassLoader {
      * that is independent of the location of the code.
      *
      * <p> The name of a resource is a {@code /}-separated path name that
-     * identifies the resource.
-     *
-     * <p> The delegation order for searching is described in the documentation
-     * for {@link #getResource(String)}.  </p>
+     * identifies the resource. </p>
      *
      * <p> Resources in named modules are subject to the encapsulation rules
      * specified by {@link Module#getResourceAsStream Module.getResourceAsStream}.
@@ -1388,7 +1407,15 @@ public abstract class ClassLoader {
      * name ending with "{@code .class}", this method will only find resources in
      * packages of named modules when the package is {@link Module#isOpen(String)
      * opened} unconditionally (even if the caller of this method is in the
-     * same module as the resource).</p>
+     * same module as the resource). </p>
+     *
+     * @implSpec The default implementation will first search the parent class
+     * loader for the resource; if the parent is {@code null} the path of the
+     * class loader built into the virtual machine is searched. It then
+     * invokes {@link #findResources(String)} to find the resources with the
+     * name in this class loader. It returns an enumeration whose elements
+     * are the URLs found by searching the parent class loader followed by
+     * the elements found with {@code findResources}.
      *
      * @apiNote Where several modules are defined to the same class loader,
      * and where more than one module contains a resource with the given name,
@@ -1413,8 +1440,6 @@ public abstract class ClassLoader {
      * @throws  IOException
      *          If I/O errors occur
      * @throws  NullPointerException If {@code name} is {@code null}
-     *
-     * @see  #findResources(String)
      *
      * @since  1.2
      * @revised 9
@@ -1443,9 +1468,6 @@ public abstract class ClassLoader {
      * <p> The name of a resource is a {@code /}-separated path name that
      * identifies the resource.
      *
-     * <p> The search order is described in the documentation for {@link
-     * #getResource(String)}.
-     *
      * <p> The resources will be located when the returned stream is evaluated.
      * If the evaluation results in an {@code IOException} then the I/O
      * exception is wrapped in an {@link UncheckedIOException} that is then
@@ -1458,6 +1480,10 @@ public abstract class ClassLoader {
      * packages of named modules when the package is {@link Module#isOpen(String)
      * opened} unconditionally (even if the caller of this method is in the
      * same module as the resource). </p>
+     *
+     * @implSpec The default implementation invokes {@link #getResources(String)
+     * getResources} to find all the resources with the given name and returns
+     * a stream with the elements in the enumeration as the source.
      *
      * @apiNote When overriding this method it is recommended that an
      * implementation ensures that any delegation is consistent with the {@link
@@ -1475,8 +1501,6 @@ public abstract class ClassLoader {
      *          is denied by the security manager, will not be in the stream.
      *
      * @throws  NullPointerException If {@code name} is {@code null}
-     *
-     * @see  #findResources(String)
      *
      * @since  9
      */
@@ -1496,7 +1520,7 @@ public abstract class ClassLoader {
 
     /**
      * Finds the resource with the given name. Class loader implementations
-     * should override this method to specify where to find resources.
+     * should override this method.
      *
      * <p> For resources in named modules then the method must implement the
      * rules for encapsulation specified in the {@code Module} {@link
@@ -1504,6 +1528,8 @@ public abstract class ClassLoader {
      * it must not find non-"{@code .class}" resources in packages of named
      * modules unless the package is {@link Module#isOpen(String) opened}
      * unconditionally. </p>
+     *
+     * @implSpec The default implementation returns {@code null}.
      *
      * @param  name
      *         The resource name
@@ -1525,8 +1551,7 @@ public abstract class ClassLoader {
     /**
      * Returns an enumeration of {@link java.net.URL URL} objects
      * representing all the resources with the given name. Class loader
-     * implementations should override this method to specify where to load
-     * resources from.
+     * implementations should override this method.
      *
      * <p> For resources in named modules then the method must implement the
      * rules for encapsulation specified in the {@code Module} {@link
@@ -1534,6 +1559,9 @@ public abstract class ClassLoader {
      * it must not find non-"{@code .class}" resources in packages of named
      * modules unless the package is {@link Module#isOpen(String) opened}
      * unconditionally. </p>
+     *
+     * @implSpec The default implementation returns an enumeration that
+     * contains no elements.
      *
      * @param  name
      *         The resource name
@@ -1889,7 +1917,8 @@ public abstract class ClassLoader {
                 // the system class loader is the built-in app class loader during startup
                 return getBuiltinAppClassLoader();
             case 3:
-                throw new InternalError("getSystemClassLoader should only be called after VM booted");
+                String msg = "getSystemClassLoader should only be called after VM booted";
+                throw new InternalError(msg);
             case 4:
                 // system fully initialized
                 assert VM.isBooted() && scl != null;
@@ -2136,9 +2165,7 @@ public abstract class ClassLoader {
      * @revised 9
      * @spec JPMS
      *
-     * @see <a href="../../../technotes/guides/jar/jar.html#versioning">
-     *      The JAR File Specification: Package Versioning</a>
-     * @see <a href="../../../technotes/guides/jar/jar.html#sealing">
+     * @see <a href="{@docRoot}/../specs/jar/jar.html#sealing">
      *      The JAR File Specification: Package Sealing</a>
      */
     protected Package definePackage(String name, String specTitle,
@@ -2209,6 +2236,12 @@ public abstract class ClassLoader {
      * this class loader are searched recursively (parent by parent)
      * for a {@code Package} of the given name.
      *
+     * @apiNote The {@link #getPlatformClassLoader() platform class loader}
+     * may delegate to the application class loader but the application class
+     * loader is not its ancestor.  When invoked on the platform class loader,
+     * this method  will not find packages defined to the application
+     * class loader.
+     *
      * @param  name
      *         The <a href="#name">package name</a>
      *
@@ -2253,6 +2286,14 @@ public abstract class ClassLoader {
      * and its ancestors.  The returned array may contain more than one
      * {@code Package} object of the same package name, each defined by
      * a different class loader in the class loader hierarchy.
+     *
+     * @apiNote The {@link #getPlatformClassLoader() platform class loader}
+     * may delegate to the application class loader. In other words,
+     * packages in modules defined to the application class loader may be
+     * visible to the platform class loader.  On the other hand,
+     * the application class loader is not its ancestor and hence
+     * when invoked on the platform class loader, this method will not
+     * return any packages defined to the application class loader.
      *
      * @return  The array of {@code Package} objects defined by this
      *          class loader and its ancestors
@@ -2348,6 +2389,7 @@ public abstract class ClassLoader {
             this.isBuiltin = isBuiltin;
         }
 
+        @SuppressWarnings("deprecation")
         protected void finalize() {
             synchronized (loadedLibraryNames) {
                 if (fromClass.getClassLoader() != null && loaded) {
@@ -2859,7 +2901,7 @@ public abstract class ClassLoader {
         } catch (NoSuchFieldException e) {
             throw new InternalError(e);
         }
-        return unsafe.compareAndSwapObject(this, offset, null, obj);
+        return unsafe.compareAndSetObject(this, offset, null, obj);
     }
 }
 

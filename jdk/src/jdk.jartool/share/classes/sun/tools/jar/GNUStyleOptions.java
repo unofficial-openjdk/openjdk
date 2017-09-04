@@ -95,7 +95,7 @@ class GNUStyleOptions {
                     tool.xflag = true;
                 }
             },
-            new Option(false, OptionType.MAIN_OPERATION, "--print-module-descriptor", "-d") {
+            new Option(false, OptionType.MAIN_OPERATION, "--describe-module", "-d") {
                 void process(Main tool, String opt, String arg) throws BadArgs {
                     if (tool.cflag || tool.iflag  || tool.tflag || tool.uflag || tool.xflag)
                         throw new BadArgs("error.multiple.main.operations").showUsage(true);
@@ -118,7 +118,7 @@ class GNUStyleOptions {
                 void process(Main jartool, String opt, String arg) {
                     jartool.nflag = true;
                 }
-                boolean isHidden() { return true; }
+                boolean isExtra() { return true; }
             },
             new Option(true, OptionType.CREATE_UPDATE, "--main-class", "-e") {
                 void process(Main jartool, String opt, String arg) {

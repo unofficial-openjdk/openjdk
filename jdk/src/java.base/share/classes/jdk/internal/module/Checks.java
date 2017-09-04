@@ -25,6 +25,8 @@
 
 package jdk.internal.module;
 
+import java.util.Set;
+
 /**
  * Utility class for checking module, package, and class names.
  */
@@ -45,18 +47,17 @@ public final class Checks {
         int next;
         int off = 0;
         while ((next = name.indexOf('.', off)) != -1) {
-            if (isJavaIdentifier(name, off, (next - off)) == -1) {
-                String id = name.substring(off, next);
+            String id = name.substring(off, next);
+            if (!isJavaIdentifier(id)) {
                 throw new IllegalArgumentException(name + ": Invalid module name"
                         + ": '" + id + "' is not a Java identifier");
             }
             off = next+1;
         }
-        int last = isJavaIdentifier(name, off, name.length() - off);
-        if (last == -1) {
-            String id = name.substring(off);
+        String last = name.substring(off);
+        if (!isJavaIdentifier(last)) {
             throw new IllegalArgumentException(name + ": Invalid module name"
-                    + ": '" + id + "' is not a Java identifier");
+                    + ": '" + last + "' is not a Java identifier");
         }
         return name;
     }
@@ -68,14 +69,13 @@ public final class Checks {
         int next;
         int off = 0;
         while ((next = name.indexOf('.', off)) != -1) {
-            if (isJavaIdentifier(name, off, (next - off)) == -1)
+            String id = name.substring(off, next);
+            if (!isJavaIdentifier(id))
                 return false;
             off = next+1;
         }
-        int last = isJavaIdentifier(name, off, name.length() - off);
-        if (last == -1)
-            return false;
-        return true;
+        String last = name.substring(off);
+        return isJavaIdentifier(last);
     }
 
     /**
@@ -144,12 +144,13 @@ public final class Checks {
         int next;
         int off = 0;
         while ((next = name.indexOf('.', off)) != -1) {
-            if (isJavaIdentifier(name, off, (next - off)) == -1)
+            String id = name.substring(off, next);
+            if (!isJavaIdentifier(id))
                 return false;
             off = next+1;
         }
-        int count = name.length() - off;
-        return (isJavaIdentifier(name, off, count) != -1);
+        String last = name.substring(off);
+        return isJavaIdentifier(last);
     }
 
     /**
@@ -164,79 +165,99 @@ public final class Checks {
         int next;
         int off = 0;
         while ((next = name.indexOf('.', off)) != -1) {
-            if (isJavaIdentifier(name, off, (next - off)) == -1) {
-                String id = name.substring(off, next);
+            String id = name.substring(off, next);
+            if (!isJavaIdentifier(id)) {
                 throw new IllegalArgumentException(name + ": Invalid " + what
                         + ": '" + id + "' is not a Java identifier");
             }
             off = next + 1;
         }
-        if (isJavaIdentifier(name, off, name.length() - off) == -1) {
-            String id = name.substring(off, name.length());
+        String last = name.substring(off);
+        if (!isJavaIdentifier(last)) {
             throw new IllegalArgumentException(name + ": Invalid " + what
-                    + ": '" + id + "' is not a Java identifier");
+                    + ": '" + last + "' is not a Java identifier");
         }
         return name;
     }
 
     /**
-     * Returns {@code true} if the last character of the given name is legal
-     * as the last character of a module name.
-     *
-     * @throws IllegalArgumentException if name is empty
+     * Returns true if the given char sequence is a legal Java identifier,
+     * otherwise false.
      */
-    public static boolean hasLegalModuleNameLastCharacter(String name) {
-        if (name.isEmpty())
-            throw new IllegalArgumentException("name is empty");
-        int len = name.length();
-        if (isASCIIString(name)) {
-            char c = name.charAt(len-1);
-            return Character.isJavaIdentifierStart(c);
-        } else {
-            int i = 0;
-            int cp = -1;
-            while (i < len) {
-                cp = name.codePointAt(i);
-                i += Character.charCount(cp);
-            }
-            return Character.isJavaIdentifierStart(cp);
-        }
-    }
+    private static boolean isJavaIdentifier(CharSequence cs) {
+        if (cs.length() == 0 || RESERVED.contains(cs))
+            return false;
 
-    /**
-     * Returns true if the given string only contains ASCII characters.
-     */
-    private static boolean isASCIIString(String s) {
-        int i = 0;
-        while (i < s.length()) {
-            int c = s.charAt(i);
-            if (c > 0x7F)
-                return false;
-            i++;
-        }
-        return true;
-    }
-
-    /**
-     * Checks if a char sequence is a legal Java identifier, returning the code
-     * point of the last character if legal or {@code -1} if not legal.
-     */
-    private static int isJavaIdentifier(CharSequence cs, int offset, int count) {
-        if (count == 0)
-            return -1;
-        int first = Character.codePointAt(cs, offset);
+        int first = Character.codePointAt(cs, 0);
         if (!Character.isJavaIdentifierStart(first))
-            return -1;
+            return false;
 
-        int cp = first;
         int i = Character.charCount(first);
-        while (i < count) {
-            cp = Character.codePointAt(cs, offset+i);
+        while (i < cs.length()) {
+            int cp = Character.codePointAt(cs, i);
             if (!Character.isJavaIdentifierPart(cp))
-                return -1;
+                return false;
             i += Character.charCount(cp);
         }
 
-        return cp;
+        return true;
     }
+
+    // keywords, boolean and null literals, not allowed in identifiers
+    private static final Set<String> RESERVED = Set.of(
+            "abstract",
+            "assert",
+            "boolean",
+            "break",
+            "byte",
+            "case",
+            "catch",
+            "char",
+            "class",
+            "const",
+            "continue",
+            "default",
+            "do",
+            "double",
+            "else",
+            "enum",
+            "extends",
+            "final",
+            "finally",
+            "float",
+            "for",
+            "goto",
+            "if",
+            "implements",
+            "import",
+            "instanceof",
+            "int",
+            "interface",
+            "long",
+            "native",
+            "new",
+            "package",
+            "private",
+            "protected",
+            "public",
+            "return",
+            "short",
+            "static",
+            "strictfp",
+            "super",
+            "switch",
+            "synchronized",
+            "this",
+            "throw",
+            "throws",
+            "transient",
+            "try",
+            "void",
+            "volatile",
+            "while",
+            "true",
+            "false",
+            "null",
+            "_"
+    );
 }

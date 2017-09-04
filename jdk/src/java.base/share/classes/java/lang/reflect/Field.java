@@ -60,6 +60,7 @@ import sun.reflect.annotation.TypeAnnotationParser;
  *
  * @author Kenneth Russell
  * @author Nakul Saraiya
+ * @since 1.1
  */
 public final
 class Field extends AccessibleObject implements Member {
@@ -322,6 +323,11 @@ class Field extends AccessibleObject implements Member {
             + getType().getTypeName() + " "
             + getDeclaringClass().getTypeName() + "."
             + getName());
+    }
+
+    @Override
+    String toShortString() {
+        return "field " + getDeclaringClass().getTypeName() + "." + getName();
     }
 
     /**

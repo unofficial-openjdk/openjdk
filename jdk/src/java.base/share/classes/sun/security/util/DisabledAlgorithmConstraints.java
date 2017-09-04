@@ -27,6 +27,8 @@ package sun.security.util;
 
 import sun.security.validator.Validator;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.security.CryptoPrimitive;
 import java.security.AlgorithmParameters;
 import java.security.Key;
@@ -670,8 +672,14 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
                 }
 
                 if (debug != null) {
-                    debug.println("Checking if usage constraint " + v +
-                            " matches " + cp.getVariant());
+                    debug.println("Checking if usage constraint \"" + v +
+                            "\" matches \"" + cp.getVariant() + "\"");
+                    // Because usage checking can come from many places
+                    // a stack trace is very helpful.
+                    ByteArrayOutputStream ba = new ByteArrayOutputStream();
+                    PrintStream ps = new PrintStream(ba);
+                    (new Exception()).printStackTrace(ps);
+                    debug.println(ba.toString());
                 }
                 if (cp.getVariant().compareTo(v) == 0) {
                     if (next(cp)) {
@@ -695,7 +703,6 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
         private int minSize;            // the minimal available key size
         private int maxSize;            // the maximal available key size
         private int prohibitedSize = -1;    // unavailable key sizes
-        private int size;
 
         public KeySizeConstraint(String algo, Operator operator, int length) {
             algorithm = algo;
@@ -753,8 +760,9 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
                     return;
                 }
                 throw new CertPathValidatorException(
-                        "Algorithm constraints check failed on keysize limits. "
-                        + algorithm + " " + size + "bit key" + extendedMsg(cp),
+                        "Algorithm constraints check failed on keysize limits. " +
+                        algorithm + " " + KeyUtil.getKeySize(key) + "bit key" +
+                        extendedMsg(cp),
                         null, null, -1, BasicReason.ALGORITHM_CONSTRAINED);
             }
         }
@@ -781,7 +789,7 @@ public class DisabledAlgorithmConstraints extends AbstractAlgorithmConstraints {
                 return true;
             }
 
-            size = KeyUtil.getKeySize(key);
+            int size = KeyUtil.getKeySize(key);
             if (size == 0) {
                 return false;    // we don't allow any key of size 0.
             } else if (size > 0) {
