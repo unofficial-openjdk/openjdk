@@ -60,7 +60,7 @@ import sun.security.x509.X500Name;
 
 /*
  * @test
- * @bug 6543842 6543440 6939248 8009636 8024302 8163304 8169911 8169688
+ * @bug 6543842 6543440 6939248 8009636 8024302 8163304 8169911 8169688 8171121
  * @summary checking response of timestamp
  * @modules java.base/sun.security.pkcs
  *          java.base/sun.security.timestamp
@@ -463,7 +463,7 @@ public class TimestampCheck {
                 .shouldMatch("Timestamp signature algorithm: .*key.*weak");
         verify(file, "-J-Djava.security.debug=jar")
                 .shouldHaveExitValue(0)
-                .shouldMatch("SignatureException:.*Disabled");
+                .shouldMatch("SignatureException:.*disabled");
     }
 
     static void checkHalfWeak(String file) throws Throwable {

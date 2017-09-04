@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,37 +23,23 @@
  * questions.
  */
 
-package sun.security.util;
+package com.sun.xml.internal.bind.marshaller;
 
-import java.security.cert.X509Certificate;
+import java.io.IOException;
+import java.io.Writer;
 
 /**
- * This class is a wrapper for keeping state and passing objects between PKIX,
- * AlgorithmChecker, and DisabledAlgorithmConstraints.
+ * Performs no character escaping.
+ *
+ * @author
+ *     Roman Grigoriadi (roman.grigoriadi@oracle.com)
  */
-public class CertConstraintParameters {
-    // A certificate being passed to check against constraints.
-    private final X509Certificate cert;
+public class NoEscapeHandler implements CharacterEscapeHandler {
 
-    // This is true if the trust anchor in the certificate chain matches a cert
-    // in AnchorCertificates
-    private final boolean trustedMatch;
+    public static final NoEscapeHandler theInstance = new NoEscapeHandler();
 
-    public CertConstraintParameters(X509Certificate c, boolean match) {
-        cert = c;
-        trustedMatch = match;
-    }
-
-    public CertConstraintParameters(X509Certificate c) {
-        this(c, false);
-    }
-
-    // Returns if the trust anchor has a match if anchor checking is enabled.
-    public boolean isTrustedMatch() {
-        return trustedMatch;
-    }
-
-    public X509Certificate getCertificate() {
-        return cert;
+    @Override
+    public void escape(char[] ch, int start, int length, boolean isAttVal, Writer out) throws IOException {
+        out.write(ch, start, length);
     }
 }
