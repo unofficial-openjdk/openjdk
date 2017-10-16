@@ -21,21 +21,45 @@
  * questions.
  */
 
-import p.Tests.*;
+/*
+ * @test
+ * @bug 8184989
+ * @summary Incorrect class file created when passing lambda in inner class constructor and outer is subclass
+ * @run main LambdaInSuperCallCapturingOuterThis3
+ */
 
-module test {
-    uses S1;
-    uses S2;
-    uses S3;
-    uses S4;
-    uses S5;
-    uses S6;
-    provides S1 with P1;
-    provides S2 with P2;
-    provides S3 with P3;
-    provides S4 with P4;
-    provides S5 with P5;
-    provides S6 with P6;
-    requires testng;
-    exports p to testng;
+interface I8184989_3 {
+    public default boolean test(){
+        return true;
+    }
+}
+
+class A8184989_3 implements I8184989_3 {
+    class AA {
+        public AA(Condition8184989_3<AA> condition) {
+            if (condition.check(this) != true) {
+                throw new AssertionError("Incorrect output");
+            }
+        }
+    }
+}
+
+interface Condition8184989_3<T> {
+    boolean check(T t);
+}
+
+public class LambdaInSuperCallCapturingOuterThis3 extends A8184989_3 {
+    public boolean test() {return false;}
+    public void b() {}
+
+    class C extends A8184989_3 {
+        public class BA extends AA {
+            public BA() {
+                super(o -> {b(); return test();});
+            }
+        }
+    }
+    public static void main(String[] args) {
+        new LambdaInSuperCallCapturingOuterThis3().new C().new BA();
+    }
 }
