@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -387,7 +387,7 @@ unichar NsCharToJavaChar(unichar nsChar, NSUInteger modifiers, BOOL spaceKeyType
     if (nsChar == 0 && spaceKeyTyped == YES) {
         return java_awt_event_KeyEvent_VK_SPACE;
     }
-	
+
     // otherwise return character unchanged
     return nsChar;
 }
@@ -439,7 +439,8 @@ static unichar NsGetDeadKeyChar(unsigned short keyCode)
 static void
 NsCharToJavaVirtualKeyCode(unichar ch, BOOL isDeadChar,
                            NSUInteger flags, unsigned short key,
-                           jint *keyCode, jint *keyLocation, BOOL *postsTyped, unichar *deadChar)
+                           jint *keyCode, jint *keyLocation, BOOL *postsTyped,
+                           unichar *deadChar)
 {
     static size_t size = sizeof(keyTable) / sizeof(struct _key);
     NSInteger offset;
@@ -481,7 +482,8 @@ NsCharToJavaVirtualKeyCode(unichar ch, BOOL isDeadChar,
         offset = ch - '0';
         // make sure in range for decimal digits
         if (offset >= 0 && offset <= 9)    {
-            jboolean numpad = (flags & NSNumericPadKeyMask) != 0;
+            jboolean numpad = ((flags & NSNumericPadKeyMask) &&
+                               (key > 81 && key < 93));
             *postsTyped = YES;
             if (numpad) {
                 *keyCode = offset + java_awt_event_KeyEvent_VK_NUMPAD0;
@@ -562,10 +564,10 @@ jint NsKeyModifiersToJavaModifiers(NSUInteger nsFlags, BOOL isExtMods)
 {
     jint javaModifiers = 0;
     const struct _nsKeyToJavaModifier* cur;
-	
+
     for (cur = nsKeyToJavaModifierTable; cur->nsMask != 0; ++cur) {
         if ((cur->nsMask & nsFlags) != 0) {
-			
+
             if (cur->nsMask == NSAlternateKeyMask) {
                 if (leftAltKeyPressed == YES) {
                     javaModifiers |= isExtMods? cur->javaExtMask : cur->javaMask;
@@ -707,16 +709,17 @@ JNF_COCOA_ENTER(env);
 
     jint jkeyCode = java_awt_event_KeyEvent_VK_UNDEFINED;
     jint jkeyLocation = java_awt_event_KeyEvent_KEY_LOCATION_UNKNOWN;
-    jchar testDeadChar = 0;
+    jint testDeadChar = 0;
 
     NsCharToJavaVirtualKeyCode((unichar)testChar, isDeadChar,
                                (NSUInteger)modifierFlags, (unsigned short)keyCode,
-                               &jkeyCode, &jkeyLocation, &postsTyped, &testDeadChar);
+                               &jkeyCode, &jkeyLocation, &postsTyped,
+                               (unichar *) &testDeadChar);
 
-    // out = [jkeyCode, jkeyLocation];
+    // out = [jkeyCode, jkeyLocation, deadChar];
     (*env)->SetIntArrayRegion(env, outData, 0, 1, &jkeyCode);
     (*env)->SetIntArrayRegion(env, outData, 1, 1, &jkeyLocation);
-    (*env)->SetIntArrayRegion(env, outData, 2, 1, (jint *)&testDeadChar);
+    (*env)->SetIntArrayRegion(env, outData, 2, 1, &testDeadChar);
 
     (*env)->ReleaseIntArrayElements(env, inData, data, 0);
 

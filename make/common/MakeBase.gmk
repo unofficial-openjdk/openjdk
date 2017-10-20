@@ -689,8 +689,9 @@ ifneq ($(DISABLE_CACHE_FIND), true)
     ifneq ($$(FIND_CACHE_NEW_DIRS), )
       # Remove any trailing slash from dirs in the cache dir list
       FIND_CACHE_DIRS += $$(patsubst %/,%, $$(FIND_CACHE_NEW_DIRS))
-      FIND_CACHE := $$(sort $$(FIND_CACHE) $$(shell $(FIND) $$(FIND_CACHE_NEW_DIRS) \
-          \( -type f -o -type l \) $2 | $(TR) ' ' '?'))
+      FIND_CACHE := $$(sort $$(FIND_CACHE) \
+          $$(shell $(FIND) $$(wildcard $$(FIND_CACHE_NEW_DIRS)) \
+              \( -type f -o -type l \) $2 | $(TR) ' ' '?'))
     endif
   endef
 
@@ -706,7 +707,7 @@ ifneq ($(DISABLE_CACHE_FIND), true)
   # Param 2 - (optional) specialization. Normally "-a \( ... \)" expression.
   define CacheFind
     $(if $(filter-out $(addsuffix /%,- $(FIND_CACHE_DIRS)) $(FIND_CACHE_DIRS),$1), \
-      $(if $(wildcard $1), $(shell $(FIND) $1 \( -type f -o -type l \) $2 \
+      $(if $(wildcard $1), $(shell $(FIND) $(wildcard $1) \( -type f -o -type l \) $2 \
           | $(TR) ' ' '?')), \
       $(filter $(addsuffix /%,$(patsubst %/,%,$1)) $1,$(FIND_CACHE)))
   endef
@@ -716,7 +717,9 @@ else
   # Param 1 - Dirs to find in
   # Param 2 - (optional) specialization. Normally "-a \( ... \)" expression.
   define CacheFind
-    $(shell $(FIND) $1 \( -type f -o -type l \) $2 | $(TR) ' ' '?')
+    $(if $(wildcard $1, \
+      $(shell $(FIND) $(wildcard $1) \( -type f -o -type l \) $2 | $(TR) ' ' '?') \
+    )
   endef
 endif
 
@@ -781,10 +784,19 @@ define SetupCopyFilesBody
   $1_SRC := $$(patsubst %/,%,$$($1_SRC))
   $1_DEST := $$(patsubst %/,%,$$($1_DEST))
 
+  # Need to wrap arguments in DoubleDollar because of the eval nested inside an
+  # eval macro body.
   $$(foreach f, $$(patsubst $$($1_SRC)/%,%,$$($1_FILES)), \
-      $$(eval $$(call AddFileToCopy, $$($1_SRC)/$$f, \
-      $$($1_DEST)/$$(call $$(strip $$($1_NAME_MACRO)),$$(if $$($1_FLATTEN),$$(notdir $$f),$$f)), \
-      $1, $$($1_MACRO), $$($1_LOG_ACTION))))
+    $$(eval $$(call AddFileToCopy, \
+        $$(call DoubleDollar, $$($1_SRC)/$$f), \
+        $$(call DoubleDollar, \
+            $$($1_DEST)/$$(call $$(strip $$($1_NAME_MACRO)),$$(if $$($1_FLATTEN),$$(notdir $$f),$$f)) \
+        ), \
+        $1, \
+        $$($1_MACRO), \
+        $$($1_LOG_ACTION) \
+    )) \
+  )
 
 endef
 
