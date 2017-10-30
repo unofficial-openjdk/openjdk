@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,13 +113,15 @@ static const size_t UINT_CHARS = 10;
  */
 class PerfMemory : AllStatic {
     friend class VMStructs;
+    friend class PerfMemoryTest;
   private:
     static char*  _start;
     static char*  _end;
     static char*  _top;
     static size_t _capacity;
     static PerfDataPrologue*  _prologue;
-    static jint   _initialized;
+    static int    _initialized;
+    static bool   _destroyed;
 
     static void create_memory_region(size_t sizep);
     static void delete_memory_region();
@@ -135,7 +137,9 @@ class PerfMemory : AllStatic {
     static char* end() { return _end; }
     static size_t used() { return (size_t) (_top - _start); }
     static size_t capacity() { return _capacity; }
-    static bool is_initialized() { return _initialized != 0; }
+    static bool is_initialized();
+    static bool is_destroyed() { return _destroyed; }
+    static bool is_usable() { return is_initialized() && !is_destroyed(); }
     static bool contains(char* addr) {
       return ((_start != NULL) && (addr >= _start) && (addr < _end));
     }

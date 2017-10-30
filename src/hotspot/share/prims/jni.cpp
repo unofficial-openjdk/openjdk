@@ -24,6 +24,8 @@
  */
 
 #include "precompiled.hpp"
+#include "jni.h"
+#include "jvm.h"
 #include "ci/ciReplay.hpp"
 #include "classfile/altHashing.hpp"
 #include "classfile/classFileStream.hpp"
@@ -51,11 +53,9 @@
 #include "oops/symbol.hpp"
 #include "oops/typeArrayKlass.hpp"
 #include "oops/typeArrayOop.hpp"
-#include "prims/jni.h"
 #include "prims/jniCheck.hpp"
 #include "prims/jniExport.hpp"
 #include "prims/jniFastGetField.hpp"
-#include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "prims/jvmtiThreadState.hpp"
@@ -92,7 +92,7 @@
 #include "jvmci/jvmciRuntime.hpp"
 #endif
 
-static jint CurrentVersion = JNI_VERSION_9;
+static jint CurrentVersion = JNI_VERSION_10;
 
 #ifdef _WIN32
 extern LONG WINAPI topLevelExceptionFilter(_EXCEPTION_POINTERS* );
@@ -263,7 +263,7 @@ void jfieldIDWorkaround::verify_instance_jfieldID(Klass* k, jfieldID id) {
 
 #ifdef ASSERT
   Histogram* JNIHistogram;
-  static volatile jint JNIHistogram_lock = 0;
+  static volatile int JNIHistogram_lock = 0;
 
   class JNIHistogramElement : public HistogramElement {
     public:
@@ -396,35 +396,33 @@ JNI_ENTRY(jclass, jni_FindClass(JNIEnv *env, const char *name))
   }
 
   //%note jni_3
-  Handle loader;
   Handle protection_domain;
   // Find calling class
   Klass* k = thread->security_get_caller_class(0);
+  // default to the system loader when no context
+  Handle loader(THREAD, SystemDictionary::java_system_loader());
   if (k != NULL) {
-    loader = Handle(THREAD, k->class_loader());
     // Special handling to make sure JNI_OnLoad and JNI_OnUnload are executed
     // in the correct class context.
-    if (loader.is_null() &&
+    if (k->class_loader() == NULL &&
         k->name() == vmSymbols::java_lang_ClassLoader_NativeLibrary()) {
       JavaValue result(T_OBJECT);
       JavaCalls::call_static(&result, k,
                              vmSymbols::getFromClass_name(),
                              vmSymbols::void_class_signature(),
-                             thread);
-      if (HAS_PENDING_EXCEPTION) {
-        Handle ex(thread, thread->pending_exception());
-        CLEAR_PENDING_EXCEPTION;
-        THROW_HANDLE_0(ex);
-      }
+                             CHECK_NULL);
+      // When invoked from JNI_OnLoad, NativeLibrary::getFromClass returns
+      // a non-NULL Class object.  When invoked from JNI_OnUnload,
+      // it will return NULL to indicate no context.
       oop mirror = (oop) result.get_jobject();
-      loader = Handle(THREAD,
-        InstanceKlass::cast(java_lang_Class::as_Klass(mirror))->class_loader());
-      protection_domain = Handle(THREAD,
-        InstanceKlass::cast(java_lang_Class::as_Klass(mirror))->protection_domain());
+      if (mirror != NULL) {
+        Klass* fromClass = java_lang_Class::as_Klass(mirror);
+        loader = Handle(THREAD, fromClass->class_loader());
+        protection_domain = Handle(THREAD, fromClass->protection_domain());
+      }
+    } else {
+      loader = Handle(THREAD, k->class_loader());
     }
-  } else {
-    // We call ClassLoader.getSystemClassLoader to obtain the system class loader.
-    loader = Handle(THREAD, SystemDictionary::java_system_loader());
   }
 
   TempNewSymbol sym = SymbolTable::new_symbol(name, CHECK_NULL);
@@ -3279,9 +3277,9 @@ JNI_END
 
 // Initialization state for three routines below relating to
 // java.nio.DirectBuffers
-static          jint directBufferSupportInitializeStarted = 0;
-static volatile jint directBufferSupportInitializeEnded   = 0;
-static volatile jint directBufferSupportInitializeFailed  = 0;
+static          int directBufferSupportInitializeStarted = 0;
+static volatile int directBufferSupportInitializeEnded   = 0;
+static volatile int directBufferSupportInitializeFailed  = 0;
 static jclass    bufferClass                 = NULL;
 static jclass    directBufferClass           = NULL;
 static jclass    directByteBufferClass       = NULL;
@@ -3775,7 +3773,7 @@ void copy_jni_function_table(const struct JNINativeInterface_ *new_jni_NativeInt
   intptr_t *a = (intptr_t *) jni_functions();
   intptr_t *b = (intptr_t *) new_jni_NativeInterface;
   for (uint i=0; i <  sizeof(struct JNINativeInterface_)/sizeof(void *); i++) {
-    Atomic::store_ptr(*b++, a++);
+    Atomic::store(*b++, a++);
   }
 }
 
@@ -3846,9 +3844,9 @@ struct JNINativeInterface_* jni_functions_nocheck() {
 extern const struct JNIInvokeInterface_ jni_InvokeInterface;
 
 // Global invocation API vars
-volatile jint vm_created = 0;
+volatile int vm_created = 0;
 // Indicate whether it is safe to recreate VM
-volatile jint safe_to_recreate_vm = 1;
+volatile int safe_to_recreate_vm = 1;
 struct JavaVM_ main_vm = {&jni_InvokeInterface};
 
 
@@ -3896,11 +3894,11 @@ static jint JNI_CreateJavaVM_inner(JavaVM **vm, void **penv, void *args) {
 #if defined(ZERO) && defined(ASSERT)
   {
     jint a = 0xcafebabe;
-    jint b = Atomic::xchg(0xdeadbeef, &a);
+    jint b = Atomic::xchg((jint) 0xdeadbeef, &a);
     void *c = &a;
-    void *d = Atomic::xchg_ptr(&b, &c);
+    void *d = Atomic::xchg(&b, &c);
     assert(a == (jint) 0xdeadbeef && b == (jint) 0xcafebabe, "Atomic::xchg() works");
-    assert(c == &b && d == &a, "Atomic::xchg_ptr() works");
+    assert(c == &b && d == &a, "Atomic::xchg() works");
   }
 #endif // ZERO && ASSERT
 
@@ -4047,7 +4045,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_GetCreatedJavaVMs(JavaVM **vm_buf, jsize
 
   HOTSPOT_JNI_GETCREATEDJAVAVMS_ENTRY((void **) vm_buf, bufLen, (uintptr_t *) numVMs);
 
-  if (vm_created) {
+  if (vm_created == 1) {
     if (numVMs != NULL) *numVMs = 1;
     if (bufLen > 0)     *vm_buf = (JavaVM *)(&main_vm);
   } else {
@@ -4067,7 +4065,7 @@ static jint JNICALL jni_DestroyJavaVM_inner(JavaVM *vm) {
   jint res = JNI_ERR;
   DT_RETURN_MARK(DestroyJavaVM, jint, (const jint&)res);
 
-  if (!vm_created) {
+  if (vm_created == 0) {
     res = JNI_ERR;
     return res;
   }
@@ -4088,7 +4086,7 @@ static jint JNICALL jni_DestroyJavaVM_inner(JavaVM *vm) {
   ThreadStateTransition::transition_from_native(thread, _thread_in_vm);
   if (Threads::destroy_vm()) {
     // Should not change thread state, VM is gone
-    vm_created = false;
+    vm_created = 0;
     res = JNI_OK;
     return res;
   } else {
@@ -4228,7 +4226,7 @@ static jint attach_current_thread(JavaVM *vm, void **penv, void *_args, bool dae
 
 jint JNICALL jni_AttachCurrentThread(JavaVM *vm, void **penv, void *_args) {
   HOTSPOT_JNI_ATTACHCURRENTTHREAD_ENTRY(vm, penv, _args);
-  if (!vm_created) {
+  if (vm_created == 0) {
   HOTSPOT_JNI_ATTACHCURRENTTHREAD_RETURN((uint32_t) JNI_ERR);
     return JNI_ERR;
   }
@@ -4287,7 +4285,7 @@ jint JNICALL jni_GetEnv(JavaVM *vm, void **penv, jint version) {
   jint ret = JNI_ERR;
   DT_RETURN_MARK(GetEnv, jint, (const jint&)ret);
 
-  if (!vm_created) {
+  if (vm_created == 0) {
     *penv = NULL;
     ret = JNI_EDETACHED;
     return ret;
@@ -4338,7 +4336,7 @@ jint JNICALL jni_GetEnv(JavaVM *vm, void **penv, jint version) {
 
 jint JNICALL jni_AttachCurrentThreadAsDaemon(JavaVM *vm, void **penv, void *_args) {
   HOTSPOT_JNI_ATTACHCURRENTTHREADASDAEMON_ENTRY(vm, penv, _args);
-  if (!vm_created) {
+  if (vm_created == 0) {
   HOTSPOT_JNI_ATTACHCURRENTTHREADASDAEMON_RETURN((uint32_t) JNI_ERR);
     return JNI_ERR;
   }

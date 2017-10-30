@@ -23,6 +23,7 @@
  */
 
 // no precompiled headers
+#include "jvm.h"
 #include "asm/macroAssembler.hpp"
 #include "classfile/classLoader.hpp"
 #include "classfile/systemDictionary.hpp"
@@ -30,13 +31,11 @@
 #include "code/icBuffer.hpp"
 #include "code/vtableStubs.hpp"
 #include "interpreter/interpreter.hpp"
-#include "jvm_windows.h"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "nativeInst_x86.hpp"
 #include "os_share_windows.hpp"
 #include "prims/jniFastGetField.hpp"
-#include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/extendedPC.hpp"
@@ -50,6 +49,7 @@
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.inline.hpp"
 #include "runtime/timer.hpp"
+#include "symbolengine.hpp"
 #include "unwind_windows_x86.hpp"
 #include "utilities/events.hpp"
 #include "utilities/vmError.hpp"
@@ -219,7 +219,7 @@ void os::initialize_thread(Thread* thr) {
 // Atomics and Stub Functions
 
 typedef jint      xchg_func_t            (jint,     volatile jint*);
-typedef intptr_t  xchg_ptr_func_t        (intptr_t, volatile intptr_t*);
+typedef intptr_t  xchg_long_func_t       (jlong,    volatile jlong*);
 typedef jint      cmpxchg_func_t         (jint,     volatile jint*,  jint);
 typedef jbyte     cmpxchg_byte_func_t    (jbyte,    volatile jbyte*, jbyte);
 typedef jlong     cmpxchg_long_func_t    (jlong,    volatile jlong*, jlong);
@@ -243,12 +243,12 @@ jint os::atomic_xchg_bootstrap(jint exchange_value, volatile jint* dest) {
   return old_value;
 }
 
-intptr_t os::atomic_xchg_ptr_bootstrap(intptr_t exchange_value, volatile intptr_t* dest) {
+intptr_t os::atomic_xchg_long_bootstrap(jlong exchange_value, volatile jlong* dest) {
   // try to use the stub:
-  xchg_ptr_func_t* func = CAST_TO_FN_PTR(xchg_ptr_func_t*, StubRoutines::atomic_xchg_ptr_entry());
+  xchg_long_func_t* func = CAST_TO_FN_PTR(xchg_long_func_t*, StubRoutines::atomic_xchg_long_entry());
 
   if (func != NULL) {
-    os::atomic_xchg_ptr_func = func;
+    os::atomic_xchg_long_func = func;
     return (*func)(exchange_value, dest);
   }
   assert(Threads::number_of_threads() == 0, "for bootstrap only");
@@ -338,7 +338,7 @@ intptr_t os::atomic_add_ptr_bootstrap(intptr_t add_value, volatile intptr_t* des
 }
 
 xchg_func_t*         os::atomic_xchg_func         = os::atomic_xchg_bootstrap;
-xchg_ptr_func_t*     os::atomic_xchg_ptr_func     = os::atomic_xchg_ptr_bootstrap;
+xchg_long_func_t*    os::atomic_xchg_long_func    = os::atomic_xchg_long_bootstrap;
 cmpxchg_func_t*      os::atomic_cmpxchg_func      = os::atomic_cmpxchg_bootstrap;
 cmpxchg_byte_func_t* os::atomic_cmpxchg_byte_func = os::atomic_cmpxchg_byte_bootstrap;
 add_func_t*          os::atomic_add_func          = os::atomic_add_bootstrap;
@@ -397,6 +397,12 @@ bool os::platform_print_native_stack(outputStream* st, const void* context,
         // may not contain what Java expects, and may cause the frame() constructor
         // to crash. Let's just print out the symbolic address.
         frame::print_C_frame(st, buf, buf_size, pc);
+        // print source file and line, if available
+        char buf[128];
+        int line_no;
+        if (SymbolEngine::get_source_info(pc, buf, sizeof(buf), &line_no)) {
+          st->print("  (%s:%d)", buf, line_no);
+        }
         st->cr();
       }
       lastpc = pc;

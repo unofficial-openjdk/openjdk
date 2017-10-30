@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "jvm.h"
 #include "classfile/classFileStream.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/stackMapTable.hpp"
@@ -40,7 +41,6 @@
 #include "oops/instanceKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/typeArrayOop.hpp"
-#include "prims/jvm.h"
 #include "runtime/fieldDescriptor.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/interfaceSupport.hpp"
@@ -69,14 +69,14 @@ static void* volatile _verify_byte_codes_fn = NULL;
 static volatile jint _is_new_verify_byte_codes_fn = (jint) true;
 
 static void* verify_byte_codes_fn() {
-  if (OrderAccess::load_ptr_acquire(&_verify_byte_codes_fn) == NULL) {
+  if (OrderAccess::load_acquire(&_verify_byte_codes_fn) == NULL) {
     void *lib_handle = os::native_java_library();
     void *func = os::dll_lookup(lib_handle, "VerifyClassCodesForMajorVersion");
-    OrderAccess::release_store_ptr(&_verify_byte_codes_fn, func);
+    OrderAccess::release_store(&_verify_byte_codes_fn, func);
     if (func == NULL) {
       _is_new_verify_byte_codes_fn = false;
       func = os::dll_lookup(lib_handle, "VerifyClassCodes");
-      OrderAccess::release_store_ptr(&_verify_byte_codes_fn, func);
+      OrderAccess::release_store(&_verify_byte_codes_fn, func);
     }
   }
   return (void*)_verify_byte_codes_fn;

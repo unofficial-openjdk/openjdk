@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "jvm.h"
 #include "ci/ciConstant.hpp"
 #include "ci/ciEnv.hpp"
 #include "ci/ciField.hpp"
@@ -49,7 +50,6 @@
 #include "oops/objArrayKlass.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/oop.inline.hpp"
-#include "prims/jvm.h"
 #include "prims/jvmtiExport.hpp"
 #include "runtime/init.hpp"
 #include "runtime/reflection.hpp"
@@ -1218,12 +1218,12 @@ void ciEnv::dump_compile_data(outputStream* out) {
                 method->signature()->as_quoted_ascii(),
                 entry_bci, comp_level);
   if (compiler_data() != NULL) {
-    if (is_c2_compile(comp_level)) { // C2 or Shark
+    if (is_c2_compile(comp_level)) {
 #ifdef COMPILER2
       // Dump C2 inlining data.
       ((Compile*)compiler_data())->dump_inline_data(out);
 #endif
-    } else if (is_c1_compile(comp_level)) { // C1
+    } else if (is_c1_compile(comp_level)) {
 #ifdef COMPILER1
       // Dump C1 inlining data.
       ((Compilation*)compiler_data())->dump_inline_data(out);

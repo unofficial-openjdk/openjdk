@@ -322,7 +322,9 @@
 #endif
 
 #if defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__APPLE__)
+#ifndef BSD
 #define BSD
+#endif // BSD defined in <sys/param.h>
 #define BSD_ONLY(code) code
 #define NOT_BSD(code)
 #else
@@ -344,14 +346,6 @@
 #else
 #define ZERO_ONLY(code)
 #define NOT_ZERO(code) code
-#endif
-
-#if defined(SHARK)
-#define SHARK_ONLY(code) code
-#define NOT_SHARK(code)
-#else
-#define SHARK_ONLY(code)
-#define NOT_SHARK(code) code
 #endif
 
 #if defined(IA32) || defined(AMD64)

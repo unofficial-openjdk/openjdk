@@ -25,8 +25,8 @@
 #ifndef SHARE_VM_RUNTIME_OS_HPP
 #define SHARE_VM_RUNTIME_OS_HPP
 
+#include "jvm.h"
 #include "jvmtifiles/jvmti.h"
-#include "prims/jvm.h"
 #include "runtime/extendedPC.hpp"
 #include "runtime/handles.hpp"
 #include "utilities/macros.hpp"
@@ -213,7 +213,7 @@ class os: AllStatic {
     // the bootstrap routine for the stub generator needs to check
     // the processor count directly and leave the bootstrap routine
     // in place until called after initialization has ocurred.
-    return (_processor_count != 1) || AssumeMP;
+    return AssumeMP || (_processor_count != 1);
   }
   static julong available_memory();
   static julong physical_memory();
