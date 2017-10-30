@@ -42,6 +42,7 @@ import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.util.xml.PropertiesDefaultHandler;
 
 /**
@@ -121,6 +122,10 @@ import jdk.internal.util.xml.PropertiesDefaultHandler;
  * <p>This class is thread-safe: multiple threads can share a single
  * {@code Properties} object without the need for external synchronization.
  *
+ * @apiNote
+ * The {@code Properties} class does not inherit the concept of a load factor
+ * from its superclass, {@code Hashtable}.
+ *
  * @author  Arthur van Hoff
  * @author  Michael McCloskey
  * @author  Xueming Shen
@@ -147,25 +152,49 @@ class Properties extends Hashtable<Object,Object> {
      * simple read operations.  Writes and bulk operations remain synchronized,
      * as in Hashtable.
      */
-    private transient ConcurrentHashMap<Object, Object> map =
-            new ConcurrentHashMap<>(8);
+    private transient ConcurrentHashMap<Object, Object> map;
 
     /**
      * Creates an empty property list with no default values.
+     *
+     * @implNote The initial capacity of a {@code Properties} object created
+     * with this constructor is unspecified.
      */
     public Properties() {
-        this(null);
+        this(null, 8);
+    }
+
+    /**
+     * Creates an empty property list with no default values, and with an
+     * initial size accommodating the specified number of elements without the
+     * need to dynamically resize.
+     *
+     * @param  initialCapacity the {@code Properties} will be sized to
+     *         accommodate this many elements
+     * @throws IllegalArgumentException if the initial capacity is less than
+     *         zero.
+     */
+    public Properties(int initialCapacity) {
+        this(null, initialCapacity);
     }
 
     /**
      * Creates an empty property list with the specified defaults.
      *
+     * @implNote The initial capacity of a {@code Properties} object created
+     * with this constructor is unspecified.
+     *
      * @param   defaults   the defaults.
      */
     public Properties(Properties defaults) {
+        this(defaults, 8);
+    }
+
+    private Properties(Properties defaults, int initialCapacity) {
         // use package-private constructor to
         // initialize unused fields with dummy values
         super((Void) null);
+        map = new ConcurrentHashMap<>(initialCapacity);
         this.defaults = defaults;
     }
 
@@ -1440,6 +1469,16 @@ class Properties extends Hashtable<Object,Object> {
         if (elements < 0) {
             throw new StreamCorruptedException("Illegal # of Elements: " + elements);
         }
+
+        // Constructing the backing map will lazily create an array when the first element is
+        // added, so check it before construction. Note that CHM's constructor takes a size
+        // that is the number of elements to be stored -- not the table size -- so it must be
+        // inflated by the default load factor of 0.75, then inflated to the next power of two.
+        // (CHM uses the same power-of-two computation as HashMap, and HashMap.tableSizeFor is
+        // accessible here.) Check Map.Entry[].class since it's the nearest public type to
+        // what is actually created.
+        SharedSecrets.getJavaObjectInputStreamAccess()
+                     .checkArray(s, Map.Entry[].class, HashMap.tableSizeFor((int)(elements / 0.75)));
 
         // create CHM of appropriate capacity
         map = new ConcurrentHashMap<>(elements);
