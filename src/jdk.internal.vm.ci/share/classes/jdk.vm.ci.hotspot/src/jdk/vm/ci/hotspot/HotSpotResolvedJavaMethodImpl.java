@@ -320,8 +320,8 @@ final class HotSpotResolvedJavaMethodImpl extends HotSpotMethod implements HotSp
     /**
      * Sets flags on {@code method} indicating that it should never be inlined or compiled by the VM.
      */
-    public void setNotInlineableOrCompileable() {
-        compilerToVM().setNotInlineableOrCompileable(this);
+    public void setNotInlinableOrCompilable() {
+        compilerToVM().setNotInlinableOrCompilable(this);
     }
 
     /**
@@ -776,5 +776,9 @@ final class HotSpotResolvedJavaMethodImpl extends HotSpotMethod implements HotSp
             return hasCompiledCodeAtLevel(level);
         }
         return compilerToVM().hasCompiledCodeForOSR(this, entryBCI, level);
+    }
+
+    public int methodIdnum() {
+        return UNSAFE.getChar(getConstMethod() + config().constMethodMethodIdnumOffset);
     }
 }

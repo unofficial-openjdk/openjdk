@@ -147,7 +147,7 @@ MallocSite* MallocSiteTable::lookup_or_add(const NativeCallStack& key, size_t* b
     if (entry == NULL) return NULL;
 
     // swap in the head
-    if (Atomic::cmpxchg_ptr((void*)entry, (volatile void *)&_table[index], NULL) == NULL) {
+    if (Atomic::cmpxchg(entry, &_table[index], (MallocSiteHashtableEntry*)NULL) == NULL) {
       return entry->data();
     }
 
@@ -235,8 +235,8 @@ bool MallocSiteTable::walk_malloc_site(MallocSiteWalker* walker) {
 
 
 void MallocSiteTable::AccessLock::exclusiveLock() {
-  jint target;
-  jint val;
+  int target;
+  int val;
 
   assert(_lock_state != ExclusiveLock, "Can only call once");
   assert(*_lock >= 0, "Can not content exclusive lock");
@@ -256,4 +256,8 @@ void MallocSiteTable::AccessLock::exclusiveLock() {
 #endif
   }
   _lock_state = ExclusiveLock;
+}
+
+bool MallocSiteHashtableEntry::atomic_insert(MallocSiteHashtableEntry* entry) {
+  return Atomic::cmpxchg(entry, &_next, (MallocSiteHashtableEntry*)NULL) == NULL;
 }

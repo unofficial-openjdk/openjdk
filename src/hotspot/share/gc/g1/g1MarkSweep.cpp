@@ -43,6 +43,7 @@
 #include "gc/shared/modRefBarrierSet.hpp"
 #include "gc/shared/referencePolicy.hpp"
 #include "gc/shared/space.hpp"
+#include "gc/shared/weakProcessor.hpp"
 #include "oops/instanceRefKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/jvmtiExport.hpp"
@@ -61,7 +62,7 @@ void G1MarkSweep::invoke_at_safepoint(ReferenceProcessor* rp,
   assert(SafepointSynchronize::is_at_safepoint(), "must be at a safepoint");
   HandleMark hm;  // Discard invalid handles created during gc
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   DerivedPointerTable::clear();
 #endif
 #ifdef ASSERT
@@ -95,7 +96,7 @@ void G1MarkSweep::invoke_at_safepoint(ReferenceProcessor* rp,
   // Prepare compaction.
   mark_sweep_phase2();
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   // Don't add any more derived pointers during phase3
   DerivedPointerTable::set_active(false);
 #endif
@@ -110,7 +111,7 @@ void G1MarkSweep::invoke_at_safepoint(ReferenceProcessor* rp,
   BiasedLocking::restore_marks();
   GenMarkSweep::deallocate_stacks();
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   // Now update the derived pointers.
   DerivedPointerTable::update_pointers();
 #endif
@@ -184,6 +185,11 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
   // This is the point where the entire marking should have completed.
   assert(GenMarkSweep::_marking_stack.is_empty(), "Marking should have completed");
 
+  {
+    GCTraceTime(Debug, gc, phases) trace("Weak Processing", gc_timer());
+    WeakProcessor::weak_oops_do(&GenMarkSweep::is_alive, &do_nothing_cl);
+  }
+
   if (ClassUnloading) {
     GCTraceTime(Debug, gc, phases) trace("Class Unloading", gc_timer());
 
@@ -198,7 +204,7 @@ void G1MarkSweep::mark_sweep_phase1(bool& marked_for_unloading,
 
   if (VerifyDuringGC) {
     HandleMark hm;  // handle scope
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
     DerivedPointerTableDeactivate dpt_deact;
 #endif
     g1h->prepare_for_verify();
@@ -272,7 +278,7 @@ void G1MarkSweep::mark_sweep_phase3() {
 
   // Now adjust pointers in remaining weak roots.  (All of which should
   // have been cleared if they pointed to non-surviving objects.)
-  JNIHandles::weak_oops_do(&GenMarkSweep::adjust_pointer_closure);
+  WeakProcessor::oops_do(&GenMarkSweep::adjust_pointer_closure);
 
   if (G1StringDedup::is_enabled()) {
     G1StringDedup::oops_do(&GenMarkSweep::adjust_pointer_closure);

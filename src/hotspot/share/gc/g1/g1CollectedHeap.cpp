@@ -29,14 +29,14 @@
 #include "code/codeCache.hpp"
 #include "code/icBuffer.hpp"
 #include "gc/g1/bufferingOopClosure.hpp"
-#include "gc/g1/concurrentG1Refine.hpp"
-#include "gc/g1/concurrentG1RefineThread.hpp"
 #include "gc/g1/concurrentMarkThread.inline.hpp"
 #include "gc/g1/g1Allocator.inline.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
 #include "gc/g1/g1CollectionSet.hpp"
 #include "gc/g1/g1CollectorPolicy.hpp"
 #include "gc/g1/g1CollectorState.hpp"
+#include "gc/g1/g1ConcurrentRefine.hpp"
+#include "gc/g1/g1ConcurrentRefineThread.hpp"
 #include "gc/g1/g1EvacStats.inline.hpp"
 #include "gc/g1/g1FullGCScope.hpp"
 #include "gc/g1/g1GCPhaseTimes.hpp"
@@ -54,10 +54,10 @@
 #include "gc/g1/g1SerialFullCollector.hpp"
 #include "gc/g1/g1StringDedup.hpp"
 #include "gc/g1/g1YCTypes.hpp"
+#include "gc/g1/g1YoungRemSetSamplingThread.hpp"
 #include "gc/g1/heapRegion.inline.hpp"
 #include "gc/g1/heapRegionRemSet.hpp"
 #include "gc/g1/heapRegionSet.inline.hpp"
-#include "gc/g1/suspendibleThreadSet.hpp"
 #include "gc/g1/vm_operations_g1.hpp"
 #include "gc/shared/gcHeapSummary.hpp"
 #include "gc/shared/gcId.hpp"
@@ -68,8 +68,10 @@
 #include "gc/shared/generationSpec.hpp"
 #include "gc/shared/isGCActiveMark.hpp"
 #include "gc/shared/preservedMarks.inline.hpp"
+#include "gc/shared/suspendibleThreadSet.hpp"
 #include "gc/shared/referenceProcessor.inline.hpp"
 #include "gc/shared/taskqueue.inline.hpp"
+#include "gc/shared/weakProcessor.hpp"
 #include "logging/log.hpp"
 #include "memory/allocation.hpp"
 #include "memory/iterator.hpp"
@@ -139,13 +141,6 @@ void G1RegionMappingChangedListener::on_commit(uint start_idx, size_t num_region
   // The from card cache is not the memory that is actually committed. So we cannot
   // take advantage of the zero_filled parameter.
   reset_from_card_cache(start_idx, num_regions);
-}
-
-// Returns true if the reference points to an object that
-// can move in an incremental collection.
-bool G1CollectedHeap::is_scavengable(const void* p) {
-  HeapRegion* hr = heap_region_containing(p);
-  return !hr->is_pinned();
 }
 
 // Private methods.
@@ -1547,6 +1542,7 @@ void G1CollectedHeap::shrink(size_t shrink_bytes) {
 
 G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* collector_policy) :
   CollectedHeap(),
+  _young_gen_sampling_thread(NULL),
   _collector_policy(collector_policy),
   _gc_timer_stw(new (ResourceObj::C_HEAP, mtGC) STWGCTimer()),
   _gc_tracer_stw(new (ResourceObj::C_HEAP, mtGC) G1NewTracer()),
@@ -1560,7 +1556,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* collector_policy) :
   _bot(NULL),
   _hot_card_cache(NULL),
   _g1_rem_set(NULL),
-  _cg1r(NULL),
+  _cr(NULL),
   _g1mm(NULL),
   _preserved_marks_set(true /* in_c_heap */),
   _secondary_free_list("Secondary Free List", new SecondaryFreeRegionListMtSafeChecker()),
@@ -1639,8 +1635,17 @@ G1RegionToSpaceMapper* G1CollectedHeap::create_aux_memory_mapper(const char* des
 
 jint G1CollectedHeap::initialize_concurrent_refinement() {
   jint ecode = JNI_OK;
-  _cg1r = ConcurrentG1Refine::create(&ecode);
+  _cr = G1ConcurrentRefine::create(&ecode);
   return ecode;
+}
+
+jint G1CollectedHeap::initialize_young_gen_sampling_thread() {
+  _young_gen_sampling_thread = new G1YoungRemSetSamplingThread();
+  if (_young_gen_sampling_thread->osthread() == NULL) {
+    vm_shutdown_during_initialization("Could not create G1YoungRemSetSamplingThread");
+    return JNI_ENOMEM;
+  }
+  return JNI_OK;
 }
 
 jint G1CollectedHeap::initialize() {
@@ -1774,7 +1779,7 @@ jint G1CollectedHeap::initialize() {
     vm_shutdown_during_initialization("Could not create/initialize G1ConcurrentMark");
     return JNI_ENOMEM;
   }
-  _cmThread = _cm->cmThread();
+  _cmThread = _cm->cm_thread();
 
   // Now expand into the initial heap size.
   if (!expand(init_byte_size, _workers)) {
@@ -1795,10 +1800,15 @@ jint G1CollectedHeap::initialize() {
     return ecode;
   }
 
+  ecode = initialize_young_gen_sampling_thread();
+  if (ecode != JNI_OK) {
+    return ecode;
+  }
+
   JavaThread::dirty_card_queue_set().initialize(DirtyCardQ_CBL_mon,
                                                 DirtyCardQ_FL_lock,
-                                                (int)concurrent_g1_refine()->yellow_zone(),
-                                                (int)concurrent_g1_refine()->red_zone(),
+                                                (int)concurrent_refine()->yellow_zone(),
+                                                (int)concurrent_refine()->red_zone(),
                                                 Shared_DirtyCardQ_lock,
                                                 NULL,  // fl_owner
                                                 true); // init_free_ids
@@ -1842,11 +1852,20 @@ void G1CollectedHeap::stop() {
   // Stop all concurrent threads. We do this to make sure these threads
   // do not continue to execute and access resources (e.g. logging)
   // that are destroyed during shutdown.
-  _cg1r->stop();
+  _cr->stop();
+  _young_gen_sampling_thread->stop();
   _cmThread->stop();
   if (G1StringDedup::is_enabled()) {
     G1StringDedup::stop();
   }
+}
+
+void G1CollectedHeap::safepoint_synchronize_begin() {
+  SuspendibleThreadSet::synchronize();
+}
+
+void G1CollectedHeap::safepoint_synchronize_end() {
+  SuspendibleThreadSet::desynchronize();
 }
 
 size_t G1CollectedHeap::conservative_max_heap_alignment() {
@@ -2388,9 +2407,8 @@ void G1CollectedHeap::print_on(outputStream* st) const {
   st->print(" %-20s", "garbage-first heap");
   st->print(" total " SIZE_FORMAT "K, used " SIZE_FORMAT "K",
             capacity()/K, used_unlocked()/K);
-  st->print(" [" PTR_FORMAT ", " PTR_FORMAT ", " PTR_FORMAT ")",
+  st->print(" [" PTR_FORMAT ", " PTR_FORMAT ")",
             p2i(_hrm.reserved().start()),
-            p2i(_hrm.reserved().start() + _hrm.length() + HeapRegion::GrainWords),
             p2i(_hrm.reserved().end()));
   st->cr();
   st->print("  region size " SIZE_FORMAT "K, ", HeapRegion::GrainBytes / K);
@@ -2435,7 +2453,8 @@ void G1CollectedHeap::print_gc_threads_on(outputStream* st) const {
   _cmThread->print_on(st);
   st->cr();
   _cm->print_worker_threads_on(st);
-  _cg1r->print_worker_threads_on(st); // also prints the sample thread
+  _cr->print_threads_on(st);
+  _young_gen_sampling_thread->print_on(st);
   if (G1StringDedup::is_enabled()) {
     G1StringDedup::print_worker_threads_on(st);
   }
@@ -2445,7 +2464,8 @@ void G1CollectedHeap::gc_threads_do(ThreadClosure* tc) const {
   workers()->threads_do(tc);
   tc->do_thread(_cmThread);
   _cm->threads_do(tc);
-  _cg1r->threads_do(tc); // also iterates over the sample thread
+  _cr->threads_do(tc);
+  tc->do_thread(_young_gen_sampling_thread);
   if (G1StringDedup::is_enabled()) {
     G1StringDedup::threads_do(tc);
   }
@@ -2577,7 +2597,7 @@ void G1CollectedHeap::gc_epilogue(bool full) {
   // FIXME: what is this about?
   // I'm ignoring the "fill_newgen()" call if "alloc_event_enabled"
   // is set.
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   assert(DerivedPointerTable::is_empty(), "derived pointer present");
 #endif
   // always_do_update_barrier = true;
@@ -2990,7 +3010,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 
       _verifier->check_bitmaps("GC Start");
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
       DerivedPointerTable::clear();
 #endif
 
@@ -3029,7 +3049,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
         g1_policy()->record_collection_pause_start(sample_start_time_sec);
 
         if (collector_state()->during_initial_mark_pause()) {
-          concurrent_mark()->checkpointRootsInitialPre();
+          concurrent_mark()->checkpoint_roots_initial_pre();
         }
 
         g1_policy()->finalize_collection_set(target_pause_time_ms, &_survivor);
@@ -3100,7 +3120,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
           // We have to do this before we notify the CM threads that
           // they can start working to make sure that all the
           // appropriate initialization is done on the CM object.
-          concurrent_mark()->checkpointRootsInitialPost();
+          concurrent_mark()->checkpoint_roots_initial_post();
           collector_state()->set_mark_in_progress(true);
           // Note that we don't actually trigger the CM thread at
           // this point. We do that later when we're sure that
@@ -3458,10 +3478,10 @@ private:
 
   // Variables used to claim nmethods.
   CompiledMethod* _first_nmethod;
-  volatile CompiledMethod* _claimed_nmethod;
+  CompiledMethod* volatile _claimed_nmethod;
 
   // The list of nmethods that need to be processed by the second pass.
-  volatile CompiledMethod* _postponed_list;
+  CompiledMethod* volatile _postponed_list;
   volatile uint            _num_entered_barrier;
 
  public:
@@ -3480,7 +3500,7 @@ private:
     if(iter.next_alive()) {
       _first_nmethod = iter.method();
     }
-    _claimed_nmethod = (volatile CompiledMethod*)_first_nmethod;
+    _claimed_nmethod = _first_nmethod;
   }
 
   ~G1CodeCacheUnloadingTask() {
@@ -3496,9 +3516,9 @@ private:
   void add_to_postponed_list(CompiledMethod* nm) {
       CompiledMethod* old;
       do {
-        old = (CompiledMethod*)_postponed_list;
+        old = _postponed_list;
         nm->set_unloading_next(old);
-      } while ((CompiledMethod*)Atomic::cmpxchg_ptr(nm, &_postponed_list, old) != old);
+      } while (Atomic::cmpxchg(nm, &_postponed_list, old) != old);
   }
 
   void clean_nmethod(CompiledMethod* nm) {
@@ -3527,7 +3547,7 @@ private:
     do {
       *num_claimed_nmethods = 0;
 
-      first = (CompiledMethod*)_claimed_nmethod;
+      first = _claimed_nmethod;
       last = CompiledMethodIterator(first);
 
       if (first != NULL) {
@@ -3541,7 +3561,7 @@ private:
         }
       }
 
-    } while ((CompiledMethod*)Atomic::cmpxchg_ptr(last.method(), &_claimed_nmethod, first) != first);
+    } while (Atomic::cmpxchg(last.method(), &_claimed_nmethod, first) != first);
   }
 
   CompiledMethod* claim_postponed_nmethod() {
@@ -3549,14 +3569,14 @@ private:
     CompiledMethod* next;
 
     do {
-      claim = (CompiledMethod*)_postponed_list;
+      claim = _postponed_list;
       if (claim == NULL) {
         return NULL;
       }
 
       next = claim->unloading_next();
 
-    } while ((CompiledMethod*)Atomic::cmpxchg_ptr(next, &_postponed_list, claim) != claim);
+    } while (Atomic::cmpxchg(next, &_postponed_list, claim) != claim);
 
     return claim;
   }
@@ -3620,7 +3640,7 @@ Monitor* G1CodeCacheUnloadingTask::_lock = new Monitor(Mutex::leaf, "Code Cache 
 
 class G1KlassCleaningTask : public StackObj {
   BoolObjectClosure*                      _is_alive;
-  volatile jint                           _clean_klass_tree_claimed;
+  volatile int                            _clean_klass_tree_claimed;
   ClassLoaderDataGraphKlassIteratorAtomic _klass_iterator;
 
  public:
@@ -3636,7 +3656,7 @@ class G1KlassCleaningTask : public StackObj {
       return false;
     }
 
-    return Atomic::cmpxchg(1, (jint*)&_clean_klass_tree_claimed, 0) == 0;
+    return Atomic::cmpxchg(1, &_clean_klass_tree_claimed, 0) == 0;
   }
 
   InstanceKlass* claim_next_klass() {
@@ -3673,7 +3693,7 @@ public:
 
 class G1ResolvedMethodCleaningTask : public StackObj {
   BoolObjectClosure* _is_alive;
-  volatile jint      _resolved_method_task_claimed;
+  volatile int       _resolved_method_task_claimed;
 public:
   G1ResolvedMethodCleaningTask(BoolObjectClosure* is_alive) :
       _is_alive(is_alive), _resolved_method_task_claimed(0) {}
@@ -3682,7 +3702,7 @@ public:
     if (_resolved_method_task_claimed) {
       return false;
     }
-    return Atomic::cmpxchg(1, (jint*)&_resolved_method_task_claimed, 0) == 0;
+    return Atomic::cmpxchg(1, &_resolved_method_task_claimed, 0) == 0;
   }
 
   // These aren't big, one thread can do it all.
@@ -4127,17 +4147,6 @@ public:
   }
 };
 
-void G1CollectedHeap::process_weak_jni_handles() {
-  double ref_proc_start = os::elapsedTime();
-
-  G1STWIsAliveClosure is_alive(this);
-  G1KeepAliveClosure keep_alive(this);
-  JNIHandles::weak_oops_do(&is_alive, &keep_alive);
-
-  double ref_proc_time = os::elapsedTime() - ref_proc_start;
-  g1_policy()->phase_times()->record_ref_proc_time(ref_proc_time * 1000.0);
-}
-
 void G1CollectedHeap::preserve_cm_referents(G1ParScanThreadStateSet* per_thread_states) {
   // Any reference objects, in the collection set, that were 'discovered'
   // by the CM ref processor should have already been copied (either by
@@ -4164,7 +4173,7 @@ void G1CollectedHeap::preserve_cm_referents(G1ParScanThreadStateSet* per_thread_
   // To avoid spawning task when there is no work to do, check that
   // a concurrent cycle is active and that some references have been
   // discovered.
-  if (concurrent_mark()->cmThread()->during_cycle() &&
+  if (concurrent_mark()->cm_thread()->during_cycle() &&
       ref_processor_cm()->has_discovered_references()) {
     double preserve_cm_referents_start = os::elapsedTime();
     uint no_of_gc_workers = workers()->active_workers();
@@ -4368,14 +4377,23 @@ void G1CollectedHeap::post_evacuate_collection_set(EvacuationInfo& evacuation_in
     process_discovered_references(per_thread_states);
   } else {
     ref_processor_stw()->verify_no_references_recorded();
-    process_weak_jni_handles();
+  }
+
+  G1STWIsAliveClosure is_alive(this);
+  G1KeepAliveClosure keep_alive(this);
+
+  {
+    double start = os::elapsedTime();
+
+    WeakProcessor::weak_oops_do(&is_alive, &keep_alive);
+
+    double time_ms = (os::elapsedTime() - start) * 1000.0;
+    g1_policy()->phase_times()->record_ref_proc_time(time_ms);
   }
 
   if (G1StringDedup::is_enabled()) {
     double fixup_start = os::elapsedTime();
 
-    G1STWIsAliveClosure is_alive(this);
-    G1KeepAliveClosure keep_alive(this);
     G1StringDedup::unlink_or_oops_do(&is_alive, &keep_alive, true, g1_policy()->phase_times());
 
     double fixup_time_ms = (os::elapsedTime() - fixup_start) * 1000.0;
@@ -4421,7 +4439,7 @@ void G1CollectedHeap::post_evacuate_collection_set(EvacuationInfo& evacuation_in
   purge_code_root_memory();
 
   redirty_logged_cards();
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   double start = os::elapsedTime();
   DerivedPointerTable::update_pointers();
   g1_policy()->phase_times()->record_derived_pointer_table_update_time((os::elapsedTime() - start) * 1000.0);
@@ -4448,7 +4466,7 @@ void G1CollectedHeap::free_region(HeapRegion* hr,
 
   if (G1VerifyBitmaps) {
     MemRegion mr(hr->bottom(), hr->end());
-    concurrent_mark()->clearRangePrevBitmap(mr);
+    concurrent_mark()->clear_range_in_prev_bitmap(mr);
   }
 
   // Clear the card counts for this region.
@@ -4814,7 +4832,7 @@ class G1FreeHumongousRegionClosure : public HeapRegionClosure {
     G1CollectedHeap* g1h = G1CollectedHeap::heap();
 
     oop obj = (oop)r->bottom();
-    G1CMBitMap* next_bitmap = g1h->concurrent_mark()->nextMarkBitMap();
+    G1CMBitMap* next_bitmap = g1h->concurrent_mark()->next_mark_bitmap();
 
     // The following checks whether the humongous object is live are sufficient.
     // The main additional check (in addition to having a reference from the roots
@@ -5323,17 +5341,20 @@ public:
   void do_oop(narrowOop* p) { do_oop_work(p); }
 };
 
-void G1CollectedHeap::register_nmethod(nmethod* nm) {
-  CollectedHeap::register_nmethod(nm);
+// Returns true if the reference points to an object that
+// can move in an incremental collection.
+bool G1CollectedHeap::is_scavengable(oop obj) {
+  HeapRegion* hr = heap_region_containing(obj);
+  return !hr->is_pinned();
+}
 
+void G1CollectedHeap::register_nmethod(nmethod* nm) {
   guarantee(nm != NULL, "sanity");
   RegisterNMethodOopClosure reg_cl(this, nm);
   nm->oops_do(&reg_cl);
 }
 
 void G1CollectedHeap::unregister_nmethod(nmethod* nm) {
-  CollectedHeap::unregister_nmethod(nm);
-
   guarantee(nm != NULL, "sanity");
   UnregisterNMethodOopClosure reg_cl(this, nm);
   nm->oops_do(&reg_cl, true);

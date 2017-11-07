@@ -49,21 +49,35 @@ struct CodeBlobType {
 // CodeBlob - superclass for all entries in the CodeCache.
 //
 // Subtypes are:
-//   CompiledMethod       : Compiled Java methods (include method that calls to native code)
-//     nmethod            : JIT Compiled Java methods
-//   RuntimeBlob          : Non-compiled method code; generated glue code
-//     RuntimeStub        : Call to VM runtime methods
-//     DeoptimizationBlob : Used for deoptimization
-//     ExceptionBlob      : Used for stack unrolling
-//     SafepointBlob      : Used to handle illegal instruction exceptions
+//  CompiledMethod       : Compiled Java methods (include method that calls to native code)
+//   nmethod             : JIT Compiled Java methods
+//   AOTCompiledMethod   : AOT Compiled Java methods - Not in the CodeCache!
+//                         AOTCompiledMethod objects are allocated in the C-Heap, the code they
+//                         point to is allocated in the AOTCodeHeap which is in the C-Heap as
+//                         well (i.e. it's the memory where the shared library was loaded to)
+//  RuntimeBlob          : Non-compiled method code; generated glue code
+//   BufferBlob          : Used for non-relocatable code such as interpreter, stubroutines, etc.
+//    AdapterBlob        : Used to hold C2I/I2C adapters
+//    MethodHandlesAdapterBlob : Used to hold MethodHandles adapters
+//   RuntimeStub         : Call to VM runtime methods
+//   SingletonBlob       : Super-class for all blobs that exist in only one instance
+//    DeoptimizationBlob : Used for deoptimization
+//    ExceptionBlob      : Used for stack unrolling
+//    SafepointBlob      : Used to handle illegal instruction exceptions
+//    UncommonTrapBlob   : Used to handle uncommon traps
 //
 //
-// Layout:
+// Layout (all except AOTCompiledMethod) : continuous in the CodeCache
 //   - header
 //   - relocation
 //   - content space
 //     - instruction space
 //   - data space
+//
+// Layout (AOTCompiledMethod) : in the C-Heap
+//   - header -\
+//     ...     |
+//   - code  <-/
 
 
 class CodeBlobLayout;
@@ -125,7 +139,6 @@ public:
   inline bool is_compiled_by_c1() const    { return _type == compiler_c1; };
   inline bool is_compiled_by_c2() const    { return _type == compiler_c2; };
   inline bool is_compiled_by_jvmci() const { return _type == compiler_jvmci; };
-  inline bool is_compiled_by_shark() const { return _type == compiler_shark; };
   const char* compiler_name() const;
 
   // Casting
@@ -157,6 +170,13 @@ public:
   int relocation_size() const                    { return (address) relocation_end() - (address) relocation_begin(); }
   int content_size() const                       { return           content_end()    -           content_begin();    }
   int code_size() const                          { return           code_end()       -           code_begin();       }
+  // Only used from CodeCache::free_unused_tail() after the Interpreter blob was trimmed
+  void adjust_size(size_t used) {
+    _size = (int)used;
+    _data_offset = (int)used;
+    _code_end = (address)this + used;
+    _data_end = (address)this + used;
+  }
 
   // Containment
   bool blob_contains(address addr) const         { return header_begin()       <= addr && addr < data_end();       }

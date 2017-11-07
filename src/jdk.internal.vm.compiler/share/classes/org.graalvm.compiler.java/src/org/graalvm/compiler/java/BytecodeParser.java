@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -342,7 +342,7 @@ import org.graalvm.compiler.nodes.calc.AddNode;
 import org.graalvm.compiler.nodes.calc.AndNode;
 import org.graalvm.compiler.nodes.calc.CompareNode;
 import org.graalvm.compiler.nodes.calc.ConditionalNode;
-import org.graalvm.compiler.nodes.calc.DivNode;
+import org.graalvm.compiler.nodes.calc.FloatDivNode;
 import org.graalvm.compiler.nodes.calc.FloatConvertNode;
 import org.graalvm.compiler.nodes.calc.IntegerBelowNode;
 import org.graalvm.compiler.nodes.calc.IntegerEqualsNode;
@@ -382,6 +382,7 @@ import org.graalvm.compiler.nodes.graphbuilderconf.InlineInvokePlugin.InlineInfo
 import org.graalvm.compiler.nodes.graphbuilderconf.IntrinsicContext;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugin;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins.InvocationPluginReceiver;
+import org.graalvm.compiler.nodes.graphbuilderconf.InvokeDynamicPlugin;
 import org.graalvm.compiler.nodes.graphbuilderconf.NodePlugin;
 import org.graalvm.compiler.nodes.graphbuilderconf.ProfilingPlugin;
 import org.graalvm.compiler.nodes.java.ArrayLengthNode;
@@ -434,6 +435,7 @@ import jdk.vm.ci.meta.ResolvedJavaMethod;
 import jdk.vm.ci.meta.ResolvedJavaType;
 import jdk.vm.ci.meta.Signature;
 import jdk.vm.ci.meta.TriState;
+import org.graalvm.compiler.core.common.type.IntegerStamp;
 
 /**
  * The {@code GraphBuilder} class parses the bytecode of a method and builds the IR graph.
@@ -933,8 +935,13 @@ public class BytecodeParser implements GraphBuilderContext {
      * @param type the unresolved type of the constant
      */
     protected void handleUnresolvedLoadConstant(JavaType type) {
-        assert !graphBuilderConfig.eagerResolving();
-        append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        assert !graphBuilderConfig.unresolvedIsError();
+        DeoptimizeNode deopt = append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        /*
+         * Track source position for deopt nodes even if
+         * GraphBuilderConfiguration.trackNodeSourcePosition is not set.
+         */
+        deopt.updateNodeSourcePosition(() -> createBytecodePosition());
     }
 
     /**
@@ -942,7 +949,7 @@ public class BytecodeParser implements GraphBuilderContext {
      * @param object the object value whose type is being checked against {@code type}
      */
     protected void handleUnresolvedCheckCast(JavaType type, ValueNode object) {
-        assert !graphBuilderConfig.eagerResolving();
+        assert !graphBuilderConfig.unresolvedIsError();
         append(new FixedGuardNode(graph.addOrUniqueWithInputs(IsNullNode.create(object)), Unresolved, InvalidateRecompile));
         frameState.push(JavaKind.Object, appendConstant(JavaConstant.NULL_POINTER));
     }
@@ -952,9 +959,10 @@ public class BytecodeParser implements GraphBuilderContext {
      * @param object the object value whose type is being checked against {@code type}
      */
     protected void handleUnresolvedInstanceOf(JavaType type, ValueNode object) {
-        assert !graphBuilderConfig.eagerResolving();
+        assert !graphBuilderConfig.unresolvedIsError();
         AbstractBeginNode successor = graph.add(new BeginNode());
         DeoptimizeNode deopt = graph.add(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        deopt.updateNodeSourcePosition(() -> createBytecodePosition());
         append(new IfNode(graph.addOrUniqueWithInputs(IsNullNode.create(object)), successor, deopt, 1));
         lastInstr = successor;
         frameState.push(JavaKind.Int, appendConstant(JavaConstant.INT_0));
@@ -964,8 +972,9 @@ public class BytecodeParser implements GraphBuilderContext {
      * @param type the type being instantiated
      */
     protected void handleUnresolvedNewInstance(JavaType type) {
-        assert !graphBuilderConfig.eagerResolving();
-        append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        assert !graphBuilderConfig.unresolvedIsError();
+        DeoptimizeNode deopt = append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        deopt.updateNodeSourcePosition(() -> createBytecodePosition());
     }
 
     /**
@@ -973,8 +982,9 @@ public class BytecodeParser implements GraphBuilderContext {
      * @param length the length of the array
      */
     protected void handleUnresolvedNewObjectArray(JavaType type, ValueNode length) {
-        assert !graphBuilderConfig.eagerResolving();
-        append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        assert !graphBuilderConfig.unresolvedIsError();
+        DeoptimizeNode deopt = append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        deopt.updateNodeSourcePosition(() -> createBytecodePosition());
     }
 
     /**
@@ -982,8 +992,9 @@ public class BytecodeParser implements GraphBuilderContext {
      * @param dims the dimensions for the multi-array
      */
     protected void handleUnresolvedNewMultiArray(JavaType type, ValueNode[] dims) {
-        assert !graphBuilderConfig.eagerResolving();
-        append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        assert !graphBuilderConfig.unresolvedIsError();
+        DeoptimizeNode deopt = append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        deopt.updateNodeSourcePosition(() -> createBytecodePosition());
     }
 
     /**
@@ -991,8 +1002,9 @@ public class BytecodeParser implements GraphBuilderContext {
      * @param receiver the object containing the field or {@code null} if {@code field} is static
      */
     protected void handleUnresolvedLoadField(JavaField field, ValueNode receiver) {
-        assert !graphBuilderConfig.eagerResolving();
-        append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        assert !graphBuilderConfig.unresolvedIsError();
+        DeoptimizeNode deopt = append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        deopt.updateNodeSourcePosition(() -> createBytecodePosition());
     }
 
     /**
@@ -1001,16 +1013,18 @@ public class BytecodeParser implements GraphBuilderContext {
      * @param receiver the object containing the field or {@code null} if {@code field} is static
      */
     protected void handleUnresolvedStoreField(JavaField field, ValueNode value, ValueNode receiver) {
-        assert !graphBuilderConfig.eagerResolving();
-        append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        assert !graphBuilderConfig.unresolvedIsError();
+        DeoptimizeNode deopt = append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        deopt.updateNodeSourcePosition(() -> createBytecodePosition());
     }
 
     /**
      * @param type
      */
     protected void handleUnresolvedExceptionType(JavaType type) {
-        assert !graphBuilderConfig.eagerResolving();
-        append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        assert !graphBuilderConfig.unresolvedIsError();
+        DeoptimizeNode deopt = append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        deopt.updateNodeSourcePosition(() -> createBytecodePosition());
     }
 
     /**
@@ -1018,11 +1032,12 @@ public class BytecodeParser implements GraphBuilderContext {
      * @param invokeKind
      */
     protected void handleUnresolvedInvoke(JavaMethod javaMethod, InvokeKind invokeKind) {
-        assert !graphBuilderConfig.eagerResolving();
-        append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        assert !graphBuilderConfig.unresolvedIsError();
+        DeoptimizeNode deopt = append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+        deopt.updateNodeSourcePosition(() -> createBytecodePosition());
     }
 
-    private AbstractBeginNode handleException(ValueNode exceptionObject, int bci) {
+    private AbstractBeginNode handleException(ValueNode exceptionObject, int bci, boolean deoptimizeOnly) {
         assert bci == BytecodeFrame.BEFORE_BCI || bci == bci() : "invalid bci";
         debug.log("Creating exception dispatch edges at %d, exception object=%s, exception seen=%s", bci, exceptionObject, (profilingInfo == null ? "" : profilingInfo.getExceptionSeen(bci)));
 
@@ -1044,8 +1059,12 @@ public class BytecodeParser implements GraphBuilderContext {
         this.controlFlowSplit = true;
         FixedWithNextNode finishedDispatch = finishInstruction(dispatchBegin, dispatchState);
 
-        createHandleExceptionTarget(finishedDispatch, bci, dispatchState);
-
+        if (deoptimizeOnly) {
+            DeoptimizeNode deoptimizeNode = graph.add(new DeoptimizeNode(DeoptimizationAction.None, DeoptimizationReason.TransferToInterpreter));
+            dispatchBegin.setNext(BeginNode.begin(deoptimizeNode));
+        } else {
+            createHandleExceptionTarget(finishedDispatch, bci, dispatchState);
+        }
         return dispatchBegin;
     }
 
@@ -1097,7 +1116,7 @@ public class BytecodeParser implements GraphBuilderContext {
     }
 
     protected ValueNode genFloatDiv(ValueNode x, ValueNode y) {
-        return DivNode.create(x, y);
+        return FloatDivNode.create(x, y);
     }
 
     protected ValueNode genFloatRem(ValueNode x, ValueNode y) {
@@ -1201,7 +1220,7 @@ public class BytecodeParser implements GraphBuilderContext {
         ValueNode exception = frameState.pop(JavaKind.Object);
         FixedGuardNode nullCheck = append(new FixedGuardNode(graph.addOrUniqueWithInputs(IsNullNode.create(exception)), NullCheckException, InvalidateReprofile, true));
         ValueNode nonNullException = graph.maybeAddOrUnique(PiNode.create(exception, exception.stamp().join(objectNonNull()), nullCheck));
-        lastInstr.setNext(handleException(nonNullException, bci()));
+        lastInstr.setNext(handleException(nonNullException, bci(), false));
     }
 
     protected LogicNode createInstanceOf(TypeReference type, ValueNode object) {
@@ -1261,12 +1280,12 @@ public class BytecodeParser implements GraphBuilderContext {
         }
         BytecodeExceptionNode exception = graph.add(new BytecodeExceptionNode(metaAccess, NullPointerException.class));
         AbstractBeginNode falseSucc = graph.add(new BeginNode());
-        ValueNode nonNullReceiver = graph.addOrUnique(PiNode.create(receiver, objectNonNull(), falseSucc));
+        ValueNode nonNullReceiver = graph.addOrUniqueWithInputs(PiNode.create(receiver, objectNonNull(), falseSucc));
         append(new IfNode(graph.addOrUniqueWithInputs(IsNullNode.create(receiver)), exception, falseSucc, SLOW_PATH_PROBABILITY));
         lastInstr = falseSucc;
 
         exception.setStateAfter(createFrameState(bci(), exception));
-        exception.setNext(handleException(exception, bci()));
+        exception.setNext(handleException(exception, bci(), false));
         EXPLICIT_EXCEPTIONS.increment(debug);
         return nonNullReceiver;
     }
@@ -1278,7 +1297,7 @@ public class BytecodeParser implements GraphBuilderContext {
         lastInstr = trueSucc;
 
         exception.setStateAfter(createFrameState(bci(), exception));
-        exception.setNext(handleException(exception, bci()));
+        exception.setNext(handleException(exception, bci(), false));
     }
 
     protected ValueNode genArrayLength(ValueNode x) {
@@ -1307,7 +1326,12 @@ public class BytecodeParser implements GraphBuilderContext {
         return false;
     }
 
-    protected void genInvokeStatic(JavaMethod target) {
+    protected void genInvokeStatic(int cpi, int opcode) {
+        JavaMethod target = lookupMethod(cpi, opcode);
+        genInvokeStatic(target);
+    }
+
+    void genInvokeStatic(JavaMethod target) {
         if (callTargetIsResolved(target)) {
             ResolvedJavaMethod resolvedTarget = (ResolvedJavaMethod) target;
             ResolvedJavaType holder = resolvedTarget.getDeclaringClass();
@@ -1332,6 +1356,11 @@ public class BytecodeParser implements GraphBuilderContext {
         }
     }
 
+    protected void genInvokeInterface(int cpi, int opcode) {
+        JavaMethod target = lookupMethod(cpi, opcode);
+        genInvokeInterface(target);
+    }
+
     protected void genInvokeInterface(JavaMethod target) {
         if (callTargetIsResolved(target)) {
             ValueNode[] args = frameState.popArguments(target.getSignature().getParameterCount(true));
@@ -1341,44 +1370,108 @@ public class BytecodeParser implements GraphBuilderContext {
         }
     }
 
-    protected void genInvokeDynamic(JavaMethod target) {
-        if (target instanceof ResolvedJavaMethod) {
-            JavaConstant appendix = constantPool.lookupAppendix(stream.readCPI4(), Bytecodes.INVOKEDYNAMIC);
-            if (appendix != null) {
-                frameState.push(JavaKind.Object, ConstantNode.forConstant(appendix, metaAccess, graph));
-            }
-            ValueNode[] args = frameState.popArguments(target.getSignature().getParameterCount(false));
-            appendInvoke(InvokeKind.Static, (ResolvedJavaMethod) target, args);
-        } else {
+    protected void genInvokeDynamic(int cpi, int opcode) {
+        JavaMethod target = lookupMethod(cpi, opcode);
+        genInvokeDynamic(target);
+    }
+
+    void genInvokeDynamic(JavaMethod target) {
+        if (!(target instanceof ResolvedJavaMethod) || !genDynamicInvokeHelper((ResolvedJavaMethod) target, stream.readCPI4(), INVOKEDYNAMIC)) {
             handleUnresolvedInvoke(target, InvokeKind.Static);
         }
     }
 
-    protected void genInvokeVirtual(JavaMethod target) {
-        if (callTargetIsResolved(target)) {
-            /*
-             * Special handling for runtimes that rewrite an invocation of MethodHandle.invoke(...)
-             * or MethodHandle.invokeExact(...) to a static adapter. HotSpot does this - see
-             * https://wikis.oracle.com/display/HotSpotInternals/Method+handles +and+invokedynamic
-             */
-            boolean hasReceiver = !((ResolvedJavaMethod) target).isStatic();
-            JavaConstant appendix = constantPool.lookupAppendix(stream.readCPI(), Bytecodes.INVOKEVIRTUAL);
-            if (appendix != null) {
-                frameState.push(JavaKind.Object, ConstantNode.forConstant(appendix, metaAccess, graph));
-            }
-            ValueNode[] args = frameState.popArguments(target.getSignature().getParameterCount(hasReceiver));
-            if (hasReceiver) {
-                appendInvoke(InvokeKind.Virtual, (ResolvedJavaMethod) target, args);
-            } else {
-                appendInvoke(InvokeKind.Static, (ResolvedJavaMethod) target, args);
-            }
-        } else {
-            handleUnresolvedInvoke(target, InvokeKind.Virtual);
-        }
-
+    protected void genInvokeVirtual(int cpi, int opcode) {
+        JavaMethod target = lookupMethod(cpi, opcode);
+        genInvokeVirtual(target);
     }
 
-    protected void genInvokeSpecial(JavaMethod target) {
+    private boolean genDynamicInvokeHelper(ResolvedJavaMethod target, int cpi, int opcode) {
+        assert opcode == INVOKEDYNAMIC || opcode == INVOKEVIRTUAL;
+
+        InvokeDynamicPlugin invokeDynamicPlugin = graphBuilderConfig.getPlugins().getInvokeDynamicPlugin();
+
+        if (opcode == INVOKEVIRTUAL && invokeDynamicPlugin != null && !invokeDynamicPlugin.isResolvedDynamicInvoke(this, cpi, opcode)) {
+            // regular invokevirtual, let caller handle it
+            return false;
+        }
+
+        if (GeneratePIC.getValue(options) && (invokeDynamicPlugin == null || !invokeDynamicPlugin.supportsDynamicInvoke(this, cpi, opcode))) {
+            // bail out if static compiler and no dynamic type support
+            append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+            return true;
+        }
+
+        JavaConstant appendix = constantPool.lookupAppendix(cpi, opcode);
+        ValueNode appendixNode = null;
+
+        if (appendix != null) {
+            if (invokeDynamicPlugin != null) {
+                invokeDynamicPlugin.recordDynamicMethod(this, cpi, opcode, target);
+
+                // Will perform runtime type checks and static initialization
+                FrameState stateBefore = frameState.create(bci(), getNonIntrinsicAncestor(), false, null, null);
+                appendixNode = invokeDynamicPlugin.genAppendixNode(this, cpi, opcode, appendix, stateBefore);
+            } else {
+                appendixNode = ConstantNode.forConstant(appendix, metaAccess, graph);
+            }
+
+            frameState.push(JavaKind.Object, appendixNode);
+
+        } else if (GeneratePIC.getValue(options)) {
+            // Need to emit runtime guard and perform static initialization.
+            // Not implemented yet.
+            append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
+            return true;
+        }
+
+        boolean hasReceiver = (opcode == INVOKEDYNAMIC) ? false : !target.isStatic();
+        ValueNode[] args = frameState.popArguments(target.getSignature().getParameterCount(hasReceiver));
+        if (hasReceiver) {
+            appendInvoke(InvokeKind.Virtual, target, args);
+        } else {
+            appendInvoke(InvokeKind.Static, target, args);
+        }
+
+        return true;
+    }
+
+    void genInvokeVirtual(JavaMethod target) {
+        if (!genInvokeVirtualHelper(target)) {
+            handleUnresolvedInvoke(target, InvokeKind.Virtual);
+        }
+    }
+
+    private boolean genInvokeVirtualHelper(JavaMethod target) {
+        if (!callTargetIsResolved(target)) {
+            return false;
+        }
+
+        ResolvedJavaMethod resolvedTarget = (ResolvedJavaMethod) target;
+        int cpi = stream.readCPI();
+
+        /*
+         * Special handling for runtimes that rewrite an invocation of MethodHandle.invoke(...) or
+         * MethodHandle.invokeExact(...) to a static adapter. HotSpot does this - see
+         * https://wiki.openjdk.java.net/display/HotSpot/Method+handles+and+invokedynamic
+         */
+
+        if (genDynamicInvokeHelper(resolvedTarget, cpi, INVOKEVIRTUAL)) {
+            return true;
+        }
+
+        ValueNode[] args = frameState.popArguments(target.getSignature().getParameterCount(true));
+        appendInvoke(InvokeKind.Virtual, (ResolvedJavaMethod) target, args);
+
+        return true;
+    }
+
+    protected void genInvokeSpecial(int cpi, int opcode) {
+        JavaMethod target = lookupMethod(cpi, opcode);
+        genInvokeSpecial(target);
+    }
+
+    void genInvokeSpecial(JavaMethod target) {
         if (callTargetIsResolved(target)) {
             assert target != null;
             assert target.getSignature() != null;
@@ -1444,8 +1537,8 @@ public class BytecodeParser implements GraphBuilderContext {
     @Override
     public void handleReplacedInvoke(CallTargetNode callTarget, JavaKind resultType) {
         BytecodeParser intrinsicCallSiteParser = getNonIntrinsicAncestor();
-        boolean withExceptionEdge = intrinsicCallSiteParser == null ? !omitInvokeExceptionEdge(null) : !intrinsicCallSiteParser.omitInvokeExceptionEdge(null);
-        createNonInlinedInvoke(withExceptionEdge, bci(), callTarget, resultType);
+        ExceptionEdgeAction exceptionEdgeAction = intrinsicCallSiteParser == null ? getActionForInvokeExceptionEdge(null) : intrinsicCallSiteParser.getActionForInvokeExceptionEdge(null);
+        createNonInlinedInvoke(exceptionEdgeAction, bci(), callTarget, resultType);
     }
 
     protected Invoke appendInvoke(InvokeKind initialInvokeKind, ResolvedJavaMethod initialTargetMethod, ValueNode[] args) {
@@ -1515,7 +1608,7 @@ public class BytecodeParser implements GraphBuilderContext {
 
         int invokeBci = bci();
         JavaTypeProfile profile = getProfileForInvoke(invokeKind);
-        boolean withExceptionEdge = !omitInvokeExceptionEdge(inlineInfo);
+        ExceptionEdgeAction edgeAction = getActionForInvokeExceptionEdge(inlineInfo);
         boolean partialIntrinsicExit = false;
         if (intrinsicContext != null && intrinsicContext.isCallToOriginal(targetMethod)) {
             partialIntrinsicExit = true;
@@ -1526,7 +1619,7 @@ public class BytecodeParser implements GraphBuilderContext {
                 // must use the same context as the call to the intrinsic.
                 invokeBci = intrinsicCallSiteParser.bci();
                 profile = intrinsicCallSiteParser.getProfileForInvoke(invokeKind);
-                withExceptionEdge = !intrinsicCallSiteParser.omitInvokeExceptionEdge(inlineInfo);
+                edgeAction = intrinsicCallSiteParser.getActionForInvokeExceptionEdge(inlineInfo);
             } else {
                 // We are parsing the intrinsic for the root compilation or for inlining,
                 // This call is a partial intrinsic exit, and we do not have profile information
@@ -1536,7 +1629,7 @@ public class BytecodeParser implements GraphBuilderContext {
                 assert intrinsicContext.isPostParseInlined();
                 invokeBci = BytecodeFrame.UNKNOWN_BCI;
                 profile = null;
-                withExceptionEdge = graph.method().getAnnotation(Snippet.class) == null;
+                edgeAction = graph.method().getAnnotation(Snippet.class) == null ? ExceptionEdgeAction.INCLUDE_AND_HANDLE : ExceptionEdgeAction.OMIT;
             }
 
             if (originalMethod.isStatic()) {
@@ -1549,10 +1642,10 @@ public class BytecodeParser implements GraphBuilderContext {
             Signature sig = originalMethod.getSignature();
             returnType = sig.getReturnType(method.getDeclaringClass());
             resultType = sig.getReturnKind();
-            assert checkPartialIntrinsicExit(intrinsicCallSiteParser == null ? null : intrinsicCallSiteParser.currentInvoke.args, args);
+            assert intrinsicContext.allowPartialIntrinsicArgumentMismatch() || checkPartialIntrinsicExit(intrinsicCallSiteParser == null ? null : intrinsicCallSiteParser.currentInvoke.args, args);
             targetMethod = originalMethod;
         }
-        Invoke invoke = createNonInlinedInvoke(withExceptionEdge, invokeBci, args, targetMethod, invokeKind, resultType, returnType, profile);
+        Invoke invoke = createNonInlinedInvoke(edgeAction, invokeBci, args, targetMethod, invokeKind, resultType, returnType, profile);
         if (partialIntrinsicExit) {
             // This invoke must never be later inlined as it might select the intrinsic graph.
             // Until there is a mechanism to guarantee that any late inlining will not select
@@ -1610,14 +1703,14 @@ public class BytecodeParser implements GraphBuilderContext {
         } else {
             for (int i = 0; i < recursiveArgs.length; i++) {
                 ValueNode arg = GraphUtil.unproxify(recursiveArgs[i]);
-                assert arg instanceof ParameterNode && ((ParameterNode) arg).index() == i : String.format("argument %d of call denoting partial intrinsic exit should be a %s with index %d, not %s", i,
-                                ParameterNode.class.getSimpleName(), i, arg);
+                assert arg instanceof ParameterNode && ((ParameterNode) arg).index() == i : String.format("argument %d of call denoting partial intrinsic exit should be a %s with index %d, not %s",
+                                i, ParameterNode.class.getSimpleName(), i, arg);
             }
         }
         return true;
     }
 
-    protected Invoke createNonInlinedInvoke(boolean withExceptionEdge, int invokeBci, ValueNode[] invokeArgs, ResolvedJavaMethod targetMethod,
+    protected Invoke createNonInlinedInvoke(ExceptionEdgeAction exceptionEdge, int invokeBci, ValueNode[] invokeArgs, ResolvedJavaMethod targetMethod,
                     InvokeKind invokeKind, JavaKind resultType, JavaType returnType, JavaTypeProfile profile) {
 
         StampPair returnStamp = graphBuilderConfig.getPlugins().getOverridingStamp(this, returnType, false);
@@ -1626,7 +1719,7 @@ public class BytecodeParser implements GraphBuilderContext {
         }
 
         MethodCallTargetNode callTarget = graph.add(createMethodCallTarget(invokeKind, targetMethod, invokeArgs, returnStamp, profile));
-        Invoke invoke = createNonInlinedInvoke(withExceptionEdge, invokeBci, callTarget, resultType);
+        Invoke invoke = createNonInlinedInvoke(exceptionEdge, invokeBci, callTarget, resultType);
 
         for (InlineInvokePlugin plugin : graphBuilderConfig.getPlugins().getInlineInvokePlugins()) {
             plugin.notifyNotInlined(this, targetMethod, invoke);
@@ -1635,11 +1728,11 @@ public class BytecodeParser implements GraphBuilderContext {
         return invoke;
     }
 
-    protected Invoke createNonInlinedInvoke(boolean withExceptionEdge, int invokeBci, CallTargetNode callTarget, JavaKind resultType) {
-        if (!withExceptionEdge) {
+    protected Invoke createNonInlinedInvoke(ExceptionEdgeAction exceptionEdge, int invokeBci, CallTargetNode callTarget, JavaKind resultType) {
+        if (exceptionEdge == ExceptionEdgeAction.OMIT) {
             return createInvoke(invokeBci, callTarget, resultType);
         } else {
-            Invoke invoke = createInvokeWithException(invokeBci, callTarget, resultType);
+            Invoke invoke = createInvokeWithException(invokeBci, callTarget, resultType, exceptionEdge);
             AbstractBeginNode beginNode = graph.add(KillingBeginNode.create(LocationIdentity.any()));
             invoke.setNext(beginNode);
             lastInstr = beginNode;
@@ -1648,20 +1741,29 @@ public class BytecodeParser implements GraphBuilderContext {
     }
 
     /**
-     * If the method returns true, the invocation of the given {@link MethodCallTargetNode call
-     * target} does not need an exception edge.
+     * Describes what should be done with the exception edge of an invocation. The edge can be
+     * omitted or included. An included edge can handle the exception or transfer execution to the
+     * interpreter for handling (deoptimize).
      */
-    protected boolean omitInvokeExceptionEdge(InlineInfo lastInlineInfo) {
+    protected enum ExceptionEdgeAction {
+        OMIT,
+        INCLUDE_AND_HANDLE,
+        INCLUDE_AND_DEOPTIMIZE
+    }
+
+    protected ExceptionEdgeAction getActionForInvokeExceptionEdge(InlineInfo lastInlineInfo) {
         if (lastInlineInfo == InlineInfo.DO_NOT_INLINE_WITH_EXCEPTION) {
-            return false;
+            return ExceptionEdgeAction.INCLUDE_AND_HANDLE;
         } else if (lastInlineInfo == InlineInfo.DO_NOT_INLINE_NO_EXCEPTION) {
-            return true;
+            return ExceptionEdgeAction.OMIT;
+        } else if (lastInlineInfo == InlineInfo.DO_NOT_INLINE_DEOPTIMIZE_ON_EXCEPTION) {
+            return ExceptionEdgeAction.INCLUDE_AND_DEOPTIMIZE;
         } else if (graphBuilderConfig.getBytecodeExceptionMode() == BytecodeExceptionMode.CheckAll) {
-            return false;
+            return ExceptionEdgeAction.INCLUDE_AND_HANDLE;
         } else if (graphBuilderConfig.getBytecodeExceptionMode() == BytecodeExceptionMode.ExplicitOnly) {
-            return false;
+            return ExceptionEdgeAction.INCLUDE_AND_HANDLE;
         } else if (graphBuilderConfig.getBytecodeExceptionMode() == BytecodeExceptionMode.OmitAll) {
-            return true;
+            return ExceptionEdgeAction.OMIT;
         } else {
             assert graphBuilderConfig.getBytecodeExceptionMode() == BytecodeExceptionMode.Profile;
             // be conservative if information was not recorded (could result in endless
@@ -1671,12 +1773,12 @@ public class BytecodeParser implements GraphBuilderContext {
                     if (profilingInfo != null) {
                         TriState exceptionSeen = profilingInfo.getExceptionSeen(bci());
                         if (exceptionSeen == TriState.FALSE) {
-                            return true;
+                            return ExceptionEdgeAction.OMIT;
                         }
                     }
                 }
             }
-            return false;
+            return ExceptionEdgeAction.INCLUDE_AND_HANDLE;
         }
     }
 
@@ -1799,7 +1901,7 @@ public class BytecodeParser implements GraphBuilderContext {
                     if (newProfile != profile) {
                         if (newProfile.getTypes().length == 0) {
                             // All profiled types select the intrinsic so
-                            // emit a fixed guard instead of a if-then-else.
+                            // emit a fixed guard instead of an if-then-else.
                             lastInstr = append(new FixedGuardNode(compare, TypeCheckedInliningViolated, InvalidateReprofile, false));
                             return new IntrinsicGuard(currentLastInstr, intrinsicReceiver, mark, null, null);
                         }
@@ -1878,7 +1980,7 @@ public class BytecodeParser implements GraphBuilderContext {
                     }
 
                     lastInstr = intrinsicGuard.nonIntrinsicBranch;
-                    createNonInlinedInvoke(omitInvokeExceptionEdge(null), bci(), args, targetMethod, invokeKind, resultType, returnType, intrinsicGuard.profile);
+                    createNonInlinedInvoke(getActionForInvokeExceptionEdge(null), bci(), args, targetMethod, invokeKind, resultType, returnType, intrinsicGuard.profile);
 
                     EndNode nonIntrinsicEnd = append(new EndNode());
                     AbstractMergeNode mergeNode = graph.add(new MergeNode());
@@ -2149,9 +2251,9 @@ public class BytecodeParser implements GraphBuilderContext {
         TTY.println(s);
     }
 
-    protected BytecodeParserError asParserError(Throwable e) {
+    protected RuntimeException throwParserError(Throwable e) {
         if (e instanceof BytecodeParserError) {
-            return (BytecodeParserError) e;
+            throw (BytecodeParserError) e;
         }
         BytecodeParser bp = this;
         BytecodeParserError res = new BytecodeParserError(e);
@@ -2159,7 +2261,7 @@ public class BytecodeParser implements GraphBuilderContext {
             res.addContext("parsing " + bp.code.asStackTraceElement(bp.bci()));
             bp = bp.parent;
         }
-        return res;
+        throw res;
     }
 
     protected void parseAndInlineCallee(ResolvedJavaMethod targetMethod, ValueNode[] args, IntrinsicContext calleeIntrinsicContext) {
@@ -2215,7 +2317,7 @@ public class BytecodeParser implements GraphBuilderContext {
             if (calleeBeforeUnwindNode != null) {
                 ValueNode calleeUnwindValue = parser.getUnwindValue();
                 assert calleeUnwindValue != null;
-                calleeBeforeUnwindNode.setNext(handleException(calleeUnwindValue, bci()));
+                calleeBeforeUnwindNode.setNext(handleException(calleeUnwindValue, bci(), false));
             }
         }
     }
@@ -2231,7 +2333,7 @@ public class BytecodeParser implements GraphBuilderContext {
         return invoke;
     }
 
-    protected InvokeWithExceptionNode createInvokeWithException(int invokeBci, CallTargetNode callTarget, JavaKind resultType) {
+    protected InvokeWithExceptionNode createInvokeWithException(int invokeBci, CallTargetNode callTarget, JavaKind resultType, ExceptionEdgeAction exceptionEdgeAction) {
         if (currentBlock != null && stream.nextBCI() > currentBlock.endBci) {
             /*
              * Clear non-live locals early so that the exception handler entry gets the cleared
@@ -2240,7 +2342,7 @@ public class BytecodeParser implements GraphBuilderContext {
             frameState.clearNonLiveLocals(currentBlock, liveness, false);
         }
 
-        AbstractBeginNode exceptionEdge = handleException(null, bci());
+        AbstractBeginNode exceptionEdge = handleException(null, bci(), exceptionEdgeAction == ExceptionEdgeAction.INCLUDE_AND_DEOPTIMIZE);
         InvokeWithExceptionNode invoke = append(new InvokeWithExceptionNode(callTarget, exceptionEdge, invokeBci));
         frameState.pushReturn(resultType, invoke);
         invoke.setStateAfter(createFrameState(stream.nextBCI(), invoke));
@@ -2271,18 +2373,41 @@ public class BytecodeParser implements GraphBuilderContext {
             }
         }
 
+        ValueNode realReturnVal = processReturnValue(returnVal, returnKind);
+
         frameState.setRethrowException(false);
         frameState.clearStack();
-        beforeReturn(returnVal, returnKind);
+        beforeReturn(realReturnVal, returnKind);
         if (parent == null) {
-            append(new ReturnNode(returnVal));
+            append(new ReturnNode(realReturnVal));
         } else {
             if (returnDataList == null) {
                 returnDataList = new ArrayList<>();
             }
-            returnDataList.add(new ReturnToCallerData(returnVal, lastInstr));
+            returnDataList.add(new ReturnToCallerData(realReturnVal, lastInstr));
             lastInstr = null;
         }
+    }
+
+    private ValueNode processReturnValue(ValueNode value, JavaKind kind) {
+        JavaKind returnKind = method.getSignature().getReturnKind();
+        if (kind != returnKind) {
+            // sub-word integer
+            assert returnKind.isNumericInteger() && returnKind.getStackKind() == JavaKind.Int;
+            IntegerStamp stamp = (IntegerStamp) value.stamp();
+
+            // the bytecode verifier doesn't check that the value is in the correct range
+            if (stamp.lowerBound() < returnKind.getMinValue() || returnKind.getMaxValue() < stamp.upperBound()) {
+                ValueNode narrow = append(genNarrow(value, returnKind.getBitCount()));
+                if (returnKind.isUnsigned()) {
+                    return append(genZeroExtend(narrow, 32));
+                } else {
+                    return append(genSignExtend(narrow, 32));
+                }
+            }
+        }
+
+        return value;
     }
 
     private void beforeReturn(ValueNode x, JavaKind kind) {
@@ -2706,6 +2831,8 @@ public class BytecodeParser implements GraphBuilderContext {
     }
 
     private void createExceptionDispatch(ExceptionDispatchBlock block) {
+        lastInstr = finishInstruction(lastInstr, frameState);
+
         assert frameState.stackSize() == 1 : frameState;
         if (block.handler.isCatchAll()) {
             assert block.getSuccessorCount() == 1;
@@ -2837,7 +2964,7 @@ public class BytecodeParser implements GraphBuilderContext {
                 // Don't wrap bailouts as parser errors
                 throw e;
             } catch (Throwable e) {
-                throw asParserError(e);
+                throw throwParserError(e);
             }
 
             if (lastInstr == null || lastInstr.next() != null) {
@@ -3257,7 +3384,7 @@ public class BytecodeParser implements GraphBuilderContext {
         int nextBC = stream.readUByte(nextBCI);
         if (nextBCI <= currentBlock.endBci && nextBC == Bytecodes.GETFIELD) {
             stream.next();
-            genGetField(lookupField(stream.readCPI(), Bytecodes.GETFIELD), value);
+            genGetField(stream.readCPI(), Bytecodes.GETFIELD, value);
         } else {
             frameState.push(JavaKind.Object, value);
         }
@@ -3506,15 +3633,18 @@ public class BytecodeParser implements GraphBuilderContext {
         return result;
     }
 
-    private JavaField lookupField(int cpi, int opcode) {
+    protected JavaField lookupField(int cpi, int opcode) {
         maybeEagerlyResolve(cpi, opcode);
         JavaField result = constantPool.lookupField(cpi, method, opcode);
+
         if (graphBuilderConfig.eagerResolving()) {
-            assert result instanceof ResolvedJavaField : "Not resolved: " + result;
-            ResolvedJavaType declaringClass = ((ResolvedJavaField) result).getDeclaringClass();
-            if (!declaringClass.isInitialized()) {
-                assert declaringClass.isInterface() : "Declaring class not initialized but not an interface? " + declaringClass;
-                declaringClass.initialize();
+            assert !graphBuilderConfig.unresolvedIsError() || result instanceof ResolvedJavaField : "Not resolved: " + result;
+            if (result instanceof ResolvedJavaField) {
+                ResolvedJavaType declaringClass = ((ResolvedJavaField) result).getDeclaringClass();
+                if (!declaringClass.isInitialized()) {
+                    assert declaringClass.isInterface() : "Declaring class not initialized but not an interface? " + declaringClass;
+                    declaringClass.initialize();
+                }
             }
         }
         assert !graphBuilderConfig.unresolvedIsError() || (result instanceof ResolvedJavaField && ((ResolvedJavaField) result).getDeclaringClass().isInitialized()) : result;
@@ -3524,11 +3654,11 @@ public class BytecodeParser implements GraphBuilderContext {
     private Object lookupConstant(int cpi, int opcode) {
         maybeEagerlyResolve(cpi, opcode);
         Object result = constantPool.lookupConstant(cpi);
-        assert !graphBuilderConfig.eagerResolving() || !(result instanceof JavaType) || (result instanceof ResolvedJavaType) : result;
+        assert !graphBuilderConfig.unresolvedIsError() || !(result instanceof JavaType) || (result instanceof ResolvedJavaType) : result;
         return result;
     }
 
-    private void maybeEagerlyResolve(int cpi, int bytecode) {
+    protected void maybeEagerlyResolve(int cpi, int bytecode) {
         if (intrinsicContext != null) {
             constantPool.loadReferencedType(cpi, bytecode);
         } else if (graphBuilderConfig.eagerResolving()) {
@@ -3653,9 +3783,12 @@ public class BytecodeParser implements GraphBuilderContext {
         }
     }
 
-    void genNewInstance(int cpi) {
+    protected void genNewInstance(int cpi) {
         JavaType type = lookupType(cpi, NEW);
+        genNewInstance(type);
+    }
 
+    void genNewInstance(JavaType type) {
         if (!(type instanceof ResolvedJavaType) || !((ResolvedJavaType) type).isInitialized()) {
             handleUnresolvedNewInstance(type);
             return;
@@ -3790,8 +3923,13 @@ public class BytecodeParser implements GraphBuilderContext {
         frameState.push(JavaKind.Object, append(createNewMultiArray(resolvedType, dims)));
     }
 
-    private void genGetField(JavaField field) {
-        genGetField(field, frameState.pop(JavaKind.Object));
+    protected void genGetField(int cpi, int opcode) {
+        genGetField(cpi, opcode, frameState.pop(JavaKind.Object));
+    }
+
+    protected void genGetField(int cpi, int opcode, ValueNode receiverInput) {
+        JavaField field = lookupField(cpi, opcode);
+        genGetField(field, receiverInput);
     }
 
     private void genGetField(JavaField field, ValueNode receiverInput) {
@@ -3867,7 +4005,12 @@ public class BytecodeParser implements GraphBuilderContext {
         return false;
     }
 
-    private void genPutField(JavaField field) {
+    protected void genPutField(int cpi, int opcode) {
+        JavaField field = lookupField(cpi, opcode);
+        genPutField(field);
+    }
+
+    protected void genPutField(JavaField field) {
         genPutField(field, frameState.pop(field.getJavaKind()));
     }
 
@@ -3893,6 +4036,11 @@ public class BytecodeParser implements GraphBuilderContext {
         } else {
             handleUnresolvedStoreField(field, value, receiver);
         }
+    }
+
+    protected void genGetStatic(int cpi, int opcode) {
+        JavaField field = lookupField(cpi, opcode);
+        genGetStatic(field);
     }
 
     private void genGetStatic(JavaField field) {
@@ -3956,7 +4104,12 @@ public class BytecodeParser implements GraphBuilderContext {
         return null;
     }
 
-    private void genPutStatic(JavaField field) {
+    protected void genPutStatic(int cpi, int opcode) {
+        JavaField field = lookupField(cpi, opcode);
+        genPutStatic(field);
+    }
+
+    protected void genPutStatic(JavaField field) {
         ValueNode value = frameState.pop(field.getJavaKind());
         ResolvedJavaField resolvedField = resolveStaticFieldAccess(field, value);
         if (resolvedField == null) {
@@ -4320,15 +4473,15 @@ public class BytecodeParser implements GraphBuilderContext {
             case DRETURN        : genReturn(frameState.pop(JavaKind.Double), JavaKind.Double); break;
             case ARETURN        : genReturn(frameState.pop(JavaKind.Object), JavaKind.Object); break;
             case RETURN         : genReturn(null, JavaKind.Void); break;
-            case GETSTATIC      : cpi = stream.readCPI(); genGetStatic(lookupField(cpi, opcode)); break;
-            case PUTSTATIC      : cpi = stream.readCPI(); genPutStatic(lookupField(cpi, opcode)); break;
-            case GETFIELD       : cpi = stream.readCPI(); genGetField(lookupField(cpi, opcode)); break;
-            case PUTFIELD       : cpi = stream.readCPI(); genPutField(lookupField(cpi, opcode)); break;
-            case INVOKEVIRTUAL  : cpi = stream.readCPI(); genInvokeVirtual(lookupMethod(cpi, opcode)); break;
-            case INVOKESPECIAL  : cpi = stream.readCPI(); genInvokeSpecial(lookupMethod(cpi, opcode)); break;
-            case INVOKESTATIC   : cpi = stream.readCPI(); genInvokeStatic(lookupMethod(cpi, opcode)); break;
-            case INVOKEINTERFACE: cpi = stream.readCPI(); genInvokeInterface(lookupMethod(cpi, opcode)); break;
-            case INVOKEDYNAMIC  : cpi = stream.readCPI4(); genInvokeDynamic(lookupMethod(cpi, opcode)); break;
+            case GETSTATIC      : cpi = stream.readCPI(); genGetStatic(cpi, opcode); break;
+            case PUTSTATIC      : cpi = stream.readCPI(); genPutStatic(cpi, opcode); break;
+            case GETFIELD       : cpi = stream.readCPI(); genGetField(cpi, opcode); break;
+            case PUTFIELD       : cpi = stream.readCPI(); genPutField(cpi, opcode); break;
+            case INVOKEVIRTUAL  : cpi = stream.readCPI(); genInvokeVirtual(cpi, opcode); break;
+            case INVOKESPECIAL  : cpi = stream.readCPI(); genInvokeSpecial(cpi, opcode); break;
+            case INVOKESTATIC   : cpi = stream.readCPI(); genInvokeStatic(cpi, opcode); break;
+            case INVOKEINTERFACE: cpi = stream.readCPI(); genInvokeInterface(cpi, opcode); break;
+            case INVOKEDYNAMIC  : cpi = stream.readCPI4(); genInvokeDynamic(cpi, opcode); break;
             case NEW            : genNewInstance(stream.readCPI()); break;
             case NEWARRAY       : genNewPrimitiveArray(stream.readLocalIndex()); break;
             case ANEWARRAY      : genNewObjectArray(stream.readCPI()); break;

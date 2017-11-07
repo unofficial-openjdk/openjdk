@@ -37,7 +37,7 @@ import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.ResolvedJavaType;
 import sun.misc.Unsafe;
 
-@NodeInfo(nameTemplate = "VirtualArray {p#componentType/s}[{p#length}]")
+@NodeInfo(nameTemplate = "VirtualArray({p#objectId}) {p#componentType/s}[{p#length}]")
 public class VirtualArrayNode extends VirtualObjectNode implements ArrayLengthProvider {
 
     public static final NodeClass<VirtualArrayNode> TYPE = NodeClass.create(VirtualArrayNode.class);
@@ -76,7 +76,7 @@ public class VirtualArrayNode extends VirtualObjectNode implements ArrayLengthPr
     @Override
     public String toString(Verbosity verbosity) {
         if (verbosity == Verbosity.Name) {
-            return super.toString(Verbosity.Name) + " " + componentType.getName() + "[" + length + "]";
+            return super.toString(Verbosity.Name) + "(" + getObjectId() + ") " + componentType.getName() + "[" + length + "]";
         } else {
             return super.toString(verbosity);
         }
@@ -137,8 +137,9 @@ public class VirtualArrayNode extends VirtualObjectNode implements ArrayLengthPr
         }
         long offset;
         if (ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN && componentType.isPrimitive()) {
-            // On big endian, we do just get expect the type be right aligned in this memory slot
-            offset = constantOffset - (componentType.getJavaKind().getByteCount() - Math.min(componentType.getJavaKind().getByteCount(), 4 + expectedEntryKind.getByteCount()));
+            // On big endian, we expect the value to be correctly aligned in memory
+            int componentByteCount = componentType.getJavaKind().getByteCount();
+            offset = constantOffset - (componentByteCount - Math.min(componentByteCount, 4 + expectedEntryKind.getByteCount()));
         } else {
             offset = constantOffset;
         }

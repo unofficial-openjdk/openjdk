@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,6 @@
  */
 package org.graalvm.compiler.hotspot.meta;
 
-import static jdk.vm.ci.meta.DeoptimizationAction.InvalidateRecompile;
-import static jdk.vm.ci.meta.DeoptimizationReason.Unresolved;
 import static org.graalvm.compiler.core.common.GraalOptions.GeneratePIC;
 import static org.graalvm.compiler.hotspot.meta.HotSpotAOTProfilingPlugin.Options.TieredAOT;
 import static org.graalvm.compiler.hotspot.replacements.HotSpotReplacementsUtil.JAVA_THREAD_THREAD_OBJECT_LOCATION;
@@ -41,6 +39,7 @@ import java.util.zip.CRC32;
 import org.graalvm.compiler.api.replacements.SnippetReflectionProvider;
 import org.graalvm.compiler.bytecode.BytecodeProvider;
 import org.graalvm.compiler.core.common.spi.ForeignCallsProvider;
+import org.graalvm.compiler.core.common.type.StampFactory;
 import org.graalvm.compiler.debug.GraalError;
 import org.graalvm.compiler.hotspot.GraalHotSpotVMConfig;
 import org.graalvm.compiler.hotspot.nodes.CurrentJavaThreadNode;
@@ -63,7 +62,6 @@ import org.graalvm.compiler.hotspot.replacements.ThreadSubstitutions;
 import org.graalvm.compiler.hotspot.replacements.arraycopy.ArrayCopyNode;
 import org.graalvm.compiler.hotspot.word.HotSpotWordTypes;
 import org.graalvm.compiler.nodes.ConstantNode;
-import org.graalvm.compiler.nodes.DeoptimizeNode;
 import org.graalvm.compiler.nodes.DynamicPiNode;
 import org.graalvm.compiler.nodes.FixedGuardNode;
 import org.graalvm.compiler.nodes.LogicNode;
@@ -71,6 +69,7 @@ import org.graalvm.compiler.nodes.NamedLocationIdentity;
 import org.graalvm.compiler.nodes.PiNode;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.calc.AddNode;
+import org.graalvm.compiler.nodes.calc.IntegerConvertNode;
 import org.graalvm.compiler.nodes.calc.LeftShiftNode;
 import org.graalvm.compiler.nodes.graphbuilderconf.ForeignCallPlugin;
 import org.graalvm.compiler.nodes.graphbuilderconf.GraphBuilderConfiguration.Plugins;
@@ -80,7 +79,6 @@ import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugin.Receiver;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins;
 import org.graalvm.compiler.nodes.graphbuilderconf.InvocationPlugins.Registration;
 import org.graalvm.compiler.nodes.graphbuilderconf.NodeIntrinsicPluginFactory;
-import org.graalvm.compiler.nodes.graphbuilderconf.NodePlugin;
 import org.graalvm.compiler.nodes.java.InstanceOfDynamicNode;
 import org.graalvm.compiler.nodes.memory.HeapAccess.BarrierType;
 import org.graalvm.compiler.nodes.memory.address.AddressNode;
@@ -101,13 +99,9 @@ import org.graalvm.compiler.word.WordTypes;
 import org.graalvm.word.LocationIdentity;
 
 import jdk.vm.ci.code.CodeUtil;
-import jdk.vm.ci.hotspot.HotSpotObjectConstant;
-import jdk.vm.ci.hotspot.HotSpotResolvedJavaType;
-import jdk.vm.ci.hotspot.HotSpotResolvedObjectType;
 import jdk.vm.ci.meta.ConstantReflectionProvider;
 import jdk.vm.ci.meta.DeoptimizationAction;
 import jdk.vm.ci.meta.DeoptimizationReason;
-import jdk.vm.ci.meta.JavaConstant;
 import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
@@ -139,42 +133,9 @@ public class HotSpotGraphBuilderPlugins {
         plugins.appendTypePlugin(nodePlugin);
         plugins.appendNodePlugin(nodePlugin);
         OptionValues options = replacements.getOptions();
-        if (GeneratePIC.getValue(options)) {
-            // AOT needs to filter out bad invokes
-            plugins.prependNodePlugin(new NodePlugin() {
-                @Override
-                public boolean handleInvoke(GraphBuilderContext b, ResolvedJavaMethod method, ValueNode[] args) {
-                    if (b.parsingIntrinsic()) {
-                        return false;
-                    }
-                    // check if the holder has a valid fingerprint
-                    if (((HotSpotResolvedObjectType) method.getDeclaringClass()).getFingerprint() == 0) {
-                        // Deopt otherwise
-                        b.append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
-                        return true;
-                    }
-                    // the last argument that may come from appendix, check if it is a supported
-                    // constant type
-                    if (args.length > 0) {
-                        JavaConstant constant = args[args.length - 1].asJavaConstant();
-                        if (constant != null && constant instanceof HotSpotObjectConstant) {
-                            HotSpotResolvedJavaType type = (HotSpotResolvedJavaType) ((HotSpotObjectConstant) constant).getType();
-                            Class<?> clazz = type.mirror();
-                            if (clazz.equals(String.class)) {
-                                return false;
-                            }
-                            if (Class.class.isAssignableFrom(clazz) && ((HotSpotResolvedObjectType) type).getFingerprint() != 0) {
-                                return false;
-                            }
-                            b.append(new DeoptimizeNode(InvalidateRecompile, Unresolved));
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-            });
+        if (!GeneratePIC.getValue(options)) {
+            plugins.appendNodePlugin(new MethodHandlePlugin(constantReflection.getMethodHandleAccess(), true));
         }
-        plugins.appendNodePlugin(new MethodHandlePlugin(constantReflection.getMethodHandleAccess(), true));
         plugins.appendInlineInvokePlugin(replacements);
         if (InlineDuringParsing.getValue(options)) {
             plugins.appendInlineInvokePlugin(new InlineDuringParsingPlugin());
@@ -196,7 +157,9 @@ public class HotSpotGraphBuilderPlugins {
                 registerClassPlugins(plugins, config, replacementBytecodeProvider);
                 registerSystemPlugins(invocationPlugins, foreignCalls);
                 registerThreadPlugins(invocationPlugins, metaAccess, wordTypes, config, replacementBytecodeProvider);
-                registerCallSitePlugins(invocationPlugins);
+                if (!GeneratePIC.getValue(options)) {
+                    registerCallSitePlugins(invocationPlugins);
+                }
                 registerReflectionPlugins(invocationPlugins, replacementBytecodeProvider);
                 registerConstantPoolPlugins(invocationPlugins, wordTypes, config, replacementBytecodeProvider);
                 registerAESPlugins(invocationPlugins, config, replacementBytecodeProvider);
@@ -355,8 +318,8 @@ public class HotSpotGraphBuilderPlugins {
     private static boolean readMetaspaceConstantPoolElement(GraphBuilderContext b, ValueNode constantPoolOop, ValueNode index, JavaKind elementKind, WordTypes wordTypes, GraalHotSpotVMConfig config) {
         ValueNode constants = getMetaspaceConstantPool(b, constantPoolOop, wordTypes, config);
         int shift = CodeUtil.log2(wordTypes.getWordKind().getByteCount());
-        ValueNode scaledIndex = b.add(new LeftShiftNode(index, b.add(ConstantNode.forInt(shift))));
-        ValueNode offset = b.add(new AddNode(scaledIndex, b.add(ConstantNode.forInt(config.constantPoolSize))));
+        ValueNode scaledIndex = b.add(new LeftShiftNode(IntegerConvertNode.convert(index, StampFactory.forKind(JavaKind.Long)), b.add(ConstantNode.forInt(shift))));
+        ValueNode offset = b.add(new AddNode(scaledIndex, b.add(ConstantNode.forLong(config.constantPoolSize))));
         AddressNode elementAddress = b.add(new OffsetAddressNode(constants, offset));
         boolean notCompressible = false;
         ValueNode elementValue = WordOperationPlugin.readOp(b, elementKind, elementAddress, NamedLocationIdentity.getArrayLocation(elementKind), BarrierType.NONE, notCompressible);

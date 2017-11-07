@@ -26,7 +26,7 @@
 #ifndef SHARE_VM_UTILITIES_GLOBALDEFINITIONS_XLC_HPP
 #define SHARE_VM_UTILITIES_GLOBALDEFINITIONS_XLC_HPP
 
-#include "prims/jni.h"
+#include "jni.h"
 
 // This file holds compiler-dependent includes,
 // globally used constants & types, class (forward)
@@ -86,6 +86,7 @@
 // In this case you need to copy the following defines to a position after #include <dirent.h>
 // (see jmv_aix.h).
 #ifdef AIX
+  #include <dirent.h>
   #ifdef _LP64
     #undef NULL
     #define NULL 0L

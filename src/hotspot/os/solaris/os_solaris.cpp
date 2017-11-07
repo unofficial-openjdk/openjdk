@@ -23,6 +23,7 @@
  */
 
 // no precompiled headers
+#include "jvm.h"
 #include "classfile/classLoader.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -31,7 +32,6 @@
 #include "compiler/compileBroker.hpp"
 #include "compiler/disassembler.hpp"
 #include "interpreter/interpreter.hpp"
-#include "jvm_solaris.h"
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
@@ -39,7 +39,6 @@
 #include "os_share_solaris.hpp"
 #include "os_solaris.inline.hpp"
 #include "prims/jniFastGetField.hpp"
-#include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/atomic.hpp"
@@ -4076,6 +4075,7 @@ int_fnP_cond_tP os::Solaris::_cond_broadcast;
 int_fnP_cond_tP_i_vP os::Solaris::_cond_init;
 int_fnP_cond_tP os::Solaris::_cond_destroy;
 int os::Solaris::_cond_scope = USYNC_THREAD;
+bool os::Solaris::_synchronization_initialized;
 
 void os::Solaris::synchronization_init() {
   if (UseLWPSynchronization) {
@@ -4125,6 +4125,7 @@ void os::Solaris::synchronization_init() {
       os::Solaris::set_cond_destroy(::cond_destroy);
     }
   }
+  _synchronization_initialized = true;
 }
 
 bool os::Solaris::liblgrp_init() {
@@ -4197,9 +4198,6 @@ void os::init(void) {
   if (hdl) {
     dladdr1_func = CAST_TO_FN_PTR(dladdr1_func_type, dlsym(hdl, "dladdr1"));
   }
-
-  // (Solaris only) this switches to calls that actually do locking.
-  ThreadCritical::initialize();
 
   main_thread = thr_self();
 

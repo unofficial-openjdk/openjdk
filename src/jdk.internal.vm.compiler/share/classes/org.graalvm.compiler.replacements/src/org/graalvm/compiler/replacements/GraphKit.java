@@ -75,7 +75,6 @@ import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.JavaType;
 import jdk.vm.ci.meta.MetaAccessProvider;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
-import jdk.vm.ci.meta.ResolvedJavaType;
 import jdk.vm.ci.meta.Signature;
 
 /**
@@ -238,11 +237,11 @@ public class GraphKit implements GraphBuilderTool {
 
         if (frameStateBuilder != null) {
             if (invoke.getStackKind() != JavaKind.Void) {
-                frameStateBuilder.push(returnType.getJavaKind(), invoke);
+                frameStateBuilder.push(invoke.getStackKind(), invoke);
             }
             invoke.setStateAfter(frameStateBuilder.create(bci, invoke));
             if (invoke.getStackKind() != JavaKind.Void) {
-                frameStateBuilder.pop(returnType.getJavaKind());
+                frameStateBuilder.pop(invoke.getStackKind());
             }
         }
         return invoke;
@@ -250,6 +249,10 @@ public class GraphKit implements GraphBuilderTool {
 
     protected MethodCallTargetNode createMethodCallTarget(InvokeKind invokeKind, ResolvedJavaMethod targetMethod, ValueNode[] args, StampPair returnStamp, @SuppressWarnings("unused") int bci) {
         return new MethodCallTargetNode(invokeKind, targetMethod, args, returnStamp, null);
+    }
+
+    protected final JavaKind asKind(JavaType type) {
+        return wordTypes != null ? wordTypes.asKind(type) : type.getJavaKind();
     }
 
     /**
@@ -267,14 +270,12 @@ public class GraphKit implements GraphBuilderTool {
         }
         int argIndex = 0;
         if (!isStatic) {
-            ResolvedJavaType expectedType = method.getDeclaringClass();
-            JavaKind expected = wordTypes == null ? expectedType.getJavaKind() : wordTypes.asKind(expectedType);
+            JavaKind expected = asKind(method.getDeclaringClass());
             JavaKind actual = args[argIndex++].stamp().getStackKind();
             assert expected == actual : graph + ": wrong kind of value for receiver argument of call to " + method + " [" + actual + " != " + expected + "]";
         }
         for (int i = 0; i != signature.getParameterCount(false); i++) {
-            JavaType expectedType = signature.getParameterType(i, method.getDeclaringClass());
-            JavaKind expected = wordTypes == null ? expectedType.getJavaKind().getStackKind() : wordTypes.asKind(expectedType).getStackKind();
+            JavaKind expected = asKind(signature.getParameterType(i, method.getDeclaringClass())).getStackKind();
             JavaKind actual = args[argIndex++].stamp().getStackKind();
             if (expected != actual) {
                 throw new AssertionError(graph + ": wrong kind of value for argument " + i + " of call to " + method + " [" + actual + " != " + expected + "]");
@@ -475,11 +476,11 @@ public class GraphKit implements GraphBuilderTool {
         invoke.setNext(noExceptionEdge);
         if (frameStateBuilder != null) {
             if (invoke.getStackKind() != JavaKind.Void) {
-                frameStateBuilder.push(returnType.getJavaKind(), invoke);
+                frameStateBuilder.push(invoke.getStackKind(), invoke);
             }
             invoke.setStateAfter(frameStateBuilder.create(invokeBci, invoke));
             if (invoke.getStackKind() != JavaKind.Void) {
-                frameStateBuilder.pop(returnType.getJavaKind());
+                frameStateBuilder.pop(invoke.getStackKind());
             }
         }
         lastFixedNode = null;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -404,8 +404,8 @@ processJavaStart(   JPLISAgent *    agent,
 
 
     /*
-     *  Then turn off the VMInit handler and turn on the ClassFileLoadHook.
-     *  This way it is on before anyone registers a transformer.
+     *  Register a handler for ClassFileLoadHook (without enabling this event).
+     *  Turn off the VMInit handler.
      */
     if ( result ) {
         result = setLivePhaseEventHandlers(agent);
@@ -649,17 +649,6 @@ setLivePhaseEventHandlers(  JPLISAgent * agent) {
         jplis_assert(jvmtierror == JVMTI_ERROR_NONE);
     }
 
-    if ( jvmtierror == JVMTI_ERROR_NONE ) {
-        /* turn on ClassFileLoadHook */
-        jvmtierror = (*jvmtienv)->SetEventNotificationMode(
-                                                    jvmtienv,
-                                                    JVMTI_ENABLE,
-                                                    JVMTI_EVENT_CLASS_FILE_LOAD_HOOK,
-                                                    NULL /* all threads */);
-        check_phase_ret_false(jvmtierror);
-        jplis_assert(jvmtierror == JVMTI_ERROR_NONE);
-    }
-
     return (jvmtierror == JVMTI_ERROR_NONE);
 }
 
@@ -783,7 +772,10 @@ getModuleObject(jvmtiEnv*               jvmti,
     int len = (last_slash == NULL) ? 0 : (int)(last_slash - cname);
     char* pkg_name_buf = (char*)malloc(len + 1);
 
-    jplis_assert_msg(pkg_name_buf != NULL, "OOM error in native tmp buffer allocation");
+    if (pkg_name_buf == NULL) {
+        fprintf(stderr, "OOM error in native tmp buffer allocation");
+        return NULL;
+    }
     if (last_slash != NULL) {
         strncpy(pkg_name_buf, cname, len);
     }
@@ -1094,6 +1086,21 @@ isRetransformClassesSupported(JNIEnv * jnienv, JPLISAgent * agent) {
 }
 
 void
+setHasTransformers(JNIEnv * jnienv, JPLISAgent * agent, jboolean has) {
+    jvmtiEnv *          jvmtienv = jvmti(agent);
+    jvmtiError          jvmtierror;
+
+    jplis_assert(jvmtienv != NULL);
+    jvmtierror = (*jvmtienv)->SetEventNotificationMode(
+                                            jvmtienv,
+                                            has? JVMTI_ENABLE : JVMTI_DISABLE,
+                                            JVMTI_EVENT_CLASS_FILE_LOAD_HOOK,
+                                            NULL /* all threads */);
+    check_phase_ret(jvmtierror);
+    jplis_assert(jvmtierror == JVMTI_ERROR_NONE);
+}
+
+void
 setHasRetransformableTransformers(JNIEnv * jnienv, JPLISAgent * agent, jboolean has) {
     jvmtiEnv *          retransformerEnv     = retransformableEnvironment(agent);
     jvmtiError          jvmtierror;
@@ -1104,6 +1111,7 @@ setHasRetransformableTransformers(JNIEnv * jnienv, JPLISAgent * agent, jboolean 
                                                     has? JVMTI_ENABLE : JVMTI_DISABLE,
                                                     JVMTI_EVENT_CLASS_FILE_LOAD_HOOK,
                                                     NULL /* all threads */);
+    check_phase_ret(jvmtierror);
     jplis_assert(jvmtierror == JVMTI_ERROR_NONE);
 }
 
@@ -1181,6 +1189,10 @@ retransformClasses(JNIEnv * jnienv, JPLISAgent * agent, jobjectArray classes) {
     if (classArray != NULL) {
         deallocate(retransformerEnv, (void*)classArray);
     }
+
+    /* Return back if we executed the JVMTI API in a wrong phase
+     */
+    check_phase_ret(errorCode);
 
     if (errorCode != JVMTI_ERROR_NONE) {
         createAndThrowThrowableFromJVMTIErrorCode(jnienv, errorCode);

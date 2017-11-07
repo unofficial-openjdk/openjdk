@@ -26,6 +26,7 @@
 #define _WIN32_WINNT 0x0600
 
 // no precompiled headers
+#include "jvm.h"
 #include "classfile/classLoader.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -34,7 +35,6 @@
 #include "compiler/compileBroker.hpp"
 #include "compiler/disassembler.hpp"
 #include "interpreter/interpreter.hpp"
-#include "jvm_windows.h"
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
@@ -42,7 +42,6 @@
 #include "os_share_windows.hpp"
 #include "os_windows.inline.hpp"
 #include "prims/jniFastGetField.hpp"
-#include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/atomic.hpp"
@@ -74,6 +73,7 @@
 #include "utilities/growableArray.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/vmError.hpp"
+#include "symbolengine.hpp"
 #include "windbghelp.hpp"
 
 
@@ -99,6 +99,7 @@
 #include <imagehlp.h>             // For os::dll_address_to_function_name
 // for enumerating dll libraries
 #include <vdmdbg.h>
+#include <psapi.h>
 
 // for timer info max values which include all bits
 #define ALL_64_BITS CONST64(-1)
@@ -134,6 +135,8 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved) {
     if (ForceTimeHighResolution) {
       timeBeginPeriod(1L);
     }
+    WindowsDbgHelp::pre_initialize();
+    SymbolEngine::pre_initialize();
     break;
   case DLL_PROCESS_DETACH:
     if (ForceTimeHighResolution) {
@@ -428,7 +431,7 @@ static unsigned __stdcall thread_native_entry(Thread* thread) {
   // When the VMThread gets here, the main thread may have already exited
   // which frees the CodeHeap containing the Atomic::add code
   if (thread != VMThread::vm_thread() && VMThread::vm_thread() != NULL) {
-    Atomic::dec_ptr((intptr_t*)&os::win32::_os_thread_count);
+    Atomic::dec(&os::win32::_os_thread_count);
   }
 
   // If a thread has not deleted itself ("delete this") as part of its
@@ -634,7 +637,7 @@ bool os::create_thread(Thread* thread, ThreadType thr_type,
     return NULL;
   }
 
-  Atomic::inc_ptr((intptr_t*)&os::win32::_os_thread_count);
+  Atomic::inc(&os::win32::_os_thread_count);
 
   // Store info on the Win32 thread into the OSThread
   osthread->set_thread_handle(thread_handle);
@@ -1319,6 +1322,8 @@ static int _print_module(const char* fname, address base_address,
 void * os::dll_load(const char *name, char *ebuf, int ebuflen) {
   void * result = LoadLibrary(name);
   if (result != NULL) {
+    // Recalculate pdb search path if a DLL was loaded successfully.
+    SymbolEngine::recalc_search_path();
     return result;
   }
 
@@ -3651,7 +3656,7 @@ int os::win32::exit_process_or_thread(Ept what, int exit_code) {
 
     static INIT_ONCE init_once_crit_sect = INIT_ONCE_STATIC_INIT;
     static CRITICAL_SECTION crit_sect;
-    static volatile jint process_exiting = 0;
+    static volatile DWORD process_exiting = 0;
     int i, j;
     DWORD res;
     HANDLE hproc, hthr;
@@ -3670,7 +3675,7 @@ int os::win32::exit_process_or_thread(Ept what, int exit_code) {
       if (what != EPT_THREAD) {
         // Atomically set process_exiting before the critical section
         // to increase the visibility between racing threads.
-        Atomic::cmpxchg((jint)GetCurrentThreadId(), &process_exiting, 0);
+        Atomic::cmpxchg(GetCurrentThreadId(), &process_exiting, (DWORD)0);
       }
       EnterCriticalSection(&crit_sect);
 
@@ -3788,7 +3793,7 @@ int os::win32::exit_process_or_thread(Ept what, int exit_code) {
 
     if (!registered &&
         OrderAccess::load_acquire(&process_exiting) != 0 &&
-        process_exiting != (jint)GetCurrentThreadId()) {
+        process_exiting != GetCurrentThreadId()) {
       // Some other thread is about to call exit(), so we don't let
       // the current unregistered thread proceed to exit() or _endthreadex()
       while (true) {
@@ -4031,6 +4036,8 @@ jint os::init_2(void) {
   if (initSock() != JNI_OK) {
     return JNI_ERR;
   }
+
+  SymbolEngine::recalc_search_path();
 
   return JNI_OK;
 }

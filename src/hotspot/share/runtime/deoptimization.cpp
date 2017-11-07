@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "jvm.h"
 #include "classfile/systemDictionary.hpp"
 #include "code/codeCache.hpp"
 #include "code/debugInfoRec.hpp"
@@ -40,7 +41,6 @@
 #include "oops/oop.inline.hpp"
 #include "oops/fieldStreams.hpp"
 #include "oops/verifyOopClosure.hpp"
-#include "prims/jvm.h"
 #include "prims/jvmtiThreadState.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/compilationPolicy.hpp"
@@ -192,7 +192,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
 
   bool realloc_failures = false;
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   // Reallocate the non-escaping objects and restore their fields. Then
   // relock objects if synchronization on them was eliminated.
 #ifndef INCLUDE_JVMCI
@@ -282,7 +282,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
     }
   }
 #endif // INCLUDE_JVMCI
-#endif // COMPILER2 || INCLUDE_JVMCI
+#endif // COMPILER2_OR_JVMCI
 
   ScopeDesc* trap_scope = chunk->at(0)->scope();
   Handle exceptionObject;
@@ -303,7 +303,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   NoSafepointVerifier no_safepoint;
 
   vframeArray* array = create_vframeArray(thread, deoptee, &map, chunk, realloc_failures);
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   if (realloc_failures) {
     pop_frames_failed_reallocs(thread, array);
   }
@@ -339,7 +339,6 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
 
   }
 
-#ifndef SHARK
   // Compute the caller frame based on the sender sp of stub_frame and stored frame sizes info.
   CodeBlob* cb = stub_frame.cb();
   // Verify we have the right vframeArray
@@ -359,9 +358,6 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
          strcmp("Stub<UncommonTrapStub.uncommonTrapHandler>", cb->name()) == 0,
          "unexpected code blob: %s", cb->name());
 #endif
-#else
-  intptr_t* unpack_sp = stub_frame.sender(&dummy_map).unextended_sp();
-#endif // !SHARK
 
   // This is a guarantee instead of an assert because if vframe doesn't match
   // we will unpack the wrong deoptimized frame and wind up in strange places
@@ -488,9 +484,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
 
   frame_pcs[0] = deopt_sender.raw_pc();
 
-#ifndef SHARK
   assert(CodeCache::find_blob_unsafe(frame_pcs[0]) != NULL, "bad pc");
-#endif // SHARK
 
 #ifdef INCLUDE_JVMCI
   if (exceptionObject() != NULL) {
@@ -798,7 +792,7 @@ int Deoptimization::deoptimize_dependents() {
 Deoptimization::DeoptAction Deoptimization::_unloaded_action
   = Deoptimization::Action_reinterpret;
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
 bool Deoptimization::realloc_objects(JavaThread* thread, frame* fr, GrowableArray<ScopeValue*>* objects, TRAPS) {
   Handle pending_exception(THREAD, thread->pending_exception());
   const char* exception_file = thread->exception_file();
@@ -1157,7 +1151,7 @@ void Deoptimization::print_objects(GrowableArray<ScopeValue*>* objects, bool rea
   }
 }
 #endif
-#endif // COMPILER2 || INCLUDE_JVMCI
+#endif // COMPILER2_OR_JVMCI
 
 vframeArray* Deoptimization::create_vframeArray(JavaThread* thread, frame fr, RegisterMap *reg_map, GrowableArray<compiledVFrame*>* chunk, bool realloc_failures) {
   Events::log(thread, "DEOPT PACKING pc=" INTPTR_FORMAT " sp=" INTPTR_FORMAT, p2i(fr.pc()), p2i(fr.sp()));
@@ -1217,7 +1211,7 @@ vframeArray* Deoptimization::create_vframeArray(JavaThread* thread, frame fr, Re
   return array;
 }
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
 void Deoptimization::pop_frames_failed_reallocs(JavaThread* thread, vframeArray* array) {
   // Reallocation of some scalar replaced objects failed. Record
   // that we need to pop all the interpreter frames for the
@@ -1386,7 +1380,7 @@ address Deoptimization::deoptimize_for_missing_exception_handler(CompiledMethod*
   RegisterMap reg_map(thread, UseBiasedLocking);
   frame runtime_frame = thread->last_frame();
   frame caller_frame = runtime_frame.sender(&reg_map);
-  assert(caller_frame.cb()->as_nmethod_or_null() == cm, "expect top frame nmethod");
+  assert(caller_frame.cb()->as_compiled_method_or_null() == cm, "expect top frame compiled method");
   Deoptimization::deoptimize(thread, caller_frame, &reg_map, Deoptimization::Reason_not_compiled_exception_handler);
 
   MethodData* trap_mdo = get_method_data(thread, cm->method(), true);
@@ -1449,7 +1443,7 @@ Deoptimization::get_method_data(JavaThread* thread, const methodHandle& m,
   return mdo;
 }
 
-#if defined(COMPILER2) || defined(SHARK) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
 void Deoptimization::load_class_by_index(const constantPoolHandle& constant_pool, int index, TRAPS) {
   // in case of an unresolved klass entry, load the class.
   if (constant_pool->tag_at(index).is_unresolved_klass()) {
@@ -1680,19 +1674,9 @@ JRT_ENTRY(void, Deoptimization::uncommon_trap_inner(JavaThread* thread, jint tra
         tty->print(" compiler=%s compile_id=%d", nm->compiler_name(), nm->compile_id());
 #if INCLUDE_JVMCI
         if (nm->is_nmethod()) {
-          oop installedCode = nm->as_nmethod()->jvmci_installed_code();
-          if (installedCode != NULL) {
-            oop installedCodeName = NULL;
-            if (installedCode->is_a(InstalledCode::klass())) {
-              installedCodeName = InstalledCode::name(installedCode);
-            }
-            if (installedCodeName != NULL) {
-              tty->print(" (JVMCI: installedCodeName=%s) ", java_lang_String::as_utf8_string(installedCodeName));
-            } else {
-              tty->print(" (JVMCI: installed code has no name) ");
-            }
-          } else if (nm->is_compiled_by_jvmci()) {
-            tty->print(" (JVMCI: no installed code) ");
+          char* installed_code_name = nm->as_nmethod()->jvmci_installed_code_name(buf, sizeof(buf));
+          if (installed_code_name != NULL) {
+            tty->print(" (JVMCI: installed code name=%s) ", installed_code_name);
           }
         }
 #endif
@@ -2366,7 +2350,7 @@ void Deoptimization::print_statistics() {
     if (xtty != NULL)  xtty->tail("statistics");
   }
 }
-#else // COMPILER2 || SHARK || INCLUDE_JVMCI
+#else // COMPILER2_OR_JVMCI
 
 
 // Stubs for C1 only system.
@@ -2402,4 +2386,4 @@ const char* Deoptimization::format_trap_state(char* buf, size_t buflen,
   return buf;
 }
 
-#endif // COMPILER2 || SHARK || INCLUDE_JVMCI
+#endif // COMPILER2_OR_JVMCI

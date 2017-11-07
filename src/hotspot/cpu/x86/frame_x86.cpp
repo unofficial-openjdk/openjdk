@@ -383,6 +383,7 @@ void frame::verify_deopt_original_pc(CompiledMethod* nm, intptr_t* unextended_sp
 
 //------------------------------------------------------------------------------
 // frame::adjust_unextended_sp
+#ifdef ASSERT
 void frame::adjust_unextended_sp() {
   // On x86, sites calling method handle intrinsics and lambda forms are treated
   // as any other call site. Therefore, no special action is needed when we are
@@ -394,11 +395,12 @@ void frame::adjust_unextended_sp() {
       // If the sender PC is a deoptimization point, get the original PC.
       if (sender_cm->is_deopt_entry(_pc) ||
           sender_cm->is_deopt_mh_entry(_pc)) {
-        DEBUG_ONLY(verify_deopt_original_pc(sender_cm, _unextended_sp));
+        verify_deopt_original_pc(sender_cm, _unextended_sp);
       }
     }
   }
 }
+#endif
 
 //------------------------------------------------------------------------------
 // frame::update_map_with_saved_link
@@ -434,11 +436,11 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
   // This is the sp before any possible extension (adapter/locals).
   intptr_t* unextended_sp = interpreter_frame_sender_sp();
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   if (map->update_map()) {
     update_map_with_saved_link(map, (intptr_t**) addr_at(link_offset));
   }
-#endif // COMPILER2 || INCLUDE_JVMCI
+#endif // COMPILER2_OR_JVMCI
 
   return frame(sender_sp, unextended_sp, link(), sender_pc());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,7 +59,7 @@ public interface HotSpotResolvedJavaMethod extends ResolvedJavaMethod {
     /**
      * Sets flags on {@code method} indicating that it should never be inlined or compiled by the VM.
      */
-    void setNotInlineableOrCompileable();
+    void setNotInlinableOrCompilable();
 
     /**
      * Returns true if this method is one of the special methods that is ignored by security stack
@@ -122,4 +122,6 @@ public interface HotSpotResolvedJavaMethod extends ResolvedJavaMethod {
     int allocateCompileId(int entryBCI);
 
     boolean hasCodeAtLevel(int entryBCI, int level);
+
+    int methodIdnum();
 }

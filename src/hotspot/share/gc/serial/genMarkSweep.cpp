@@ -43,6 +43,7 @@
 #include "gc/shared/referencePolicy.hpp"
 #include "gc/shared/space.hpp"
 #include "gc/shared/strongRootsScope.hpp"
+#include "gc/shared/weakProcessor.hpp"
 #include "oops/instanceRefKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/jvmtiExport.hpp"
@@ -91,7 +92,7 @@ void GenMarkSweep::invoke_at_safepoint(ReferenceProcessor* rp, bool clear_all_so
   mark_sweep_phase2();
 
   // Don't add any more derived pointers during phase3
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   assert(DerivedPointerTable::is_active(), "Sanity");
   DerivedPointerTable::set_active(false);
 #endif
@@ -219,6 +220,11 @@ void GenMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
 
   // This is the point where the entire marking should have completed.
   assert(_marking_stack.is_empty(), "Marking should have completed");
+
+  {
+    GCTraceTime(Debug, gc, phases) tm_m("Weak Processing", gc_timer());
+    WeakProcessor::weak_oops_do(&is_alive, &do_nothing_cl);
+  }
 
   {
     GCTraceTime(Debug, gc, phases) tm_m("Class Unloading", gc_timer());

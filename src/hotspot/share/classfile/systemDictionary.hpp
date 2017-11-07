@@ -384,7 +384,7 @@ public:
 
 public:
   // Sharing support.
-  static void reorder_dictionary_for_sharing();
+  static void reorder_dictionary_for_sharing() NOT_CDS_RETURN;
   static void combine_shared_dictionaries();
   static size_t count_bytes_for_buckets();
   static size_t count_bytes_for_table();
@@ -484,11 +484,14 @@ public:
   static bool Object_klass_loaded()         { return WK_KLASS(Object_klass) != NULL; }
   static bool ClassLoader_klass_loaded()    { return WK_KLASS(ClassLoader_klass) != NULL; }
 
-  // Returns default system loader
+  // Returns java system loader
   static oop java_system_loader();
 
-  // Compute the default system loader
-  static void compute_java_system_loader(TRAPS);
+  // Returns java platform loader
+  static oop java_platform_loader();
+
+  // Compute the java system and platform loaders
+  static void compute_java_loaders(TRAPS);
 
   // Register a new class loader
   static ClassLoaderData* register_loader(Handle class_loader, TRAPS);
@@ -652,11 +655,8 @@ protected:
   // Setup link to hierarchy
   static void add_to_hierarchy(InstanceKlass* k, TRAPS);
 
-  // We pass in the hashtable index so we can calculate it outside of
-  // the SystemDictionary_lock.
-
   // Basic find on loaded classes
-  static InstanceKlass* find_class(int index, unsigned int hash,
+  static InstanceKlass* find_class(unsigned int hash,
                                    Symbol* name, Dictionary* dictionary);
   static InstanceKlass* find_class(Symbol* class_name, ClassLoaderData* loader_data);
 
@@ -682,10 +682,10 @@ protected:
   static void initialize_preloaded_classes(TRAPS);
 
   // Class loader constraints
-  static void check_constraints(int index, unsigned int hash,
+  static void check_constraints(unsigned int hash,
                                 InstanceKlass* k, Handle loader,
                                 bool defining, TRAPS);
-  static void update_dictionary(int d_index, unsigned int d_hash,
+  static void update_dictionary(unsigned int d_hash,
                                 int p_index, unsigned int p_hash,
                                 InstanceKlass* k, Handle loader,
                                 TRAPS);
@@ -700,6 +700,7 @@ protected:
   static InstanceKlass* _box_klasses[T_VOID+1];
 
   static oop  _java_system_loader;
+  static oop  _java_platform_loader;
 
   static bool _has_loadClassInternal;
   static bool _has_checkPackageAccess;

@@ -412,6 +412,7 @@ C2V_VMENTRY(jobjectArray, readConfiguration, (JNIEnv *env))
       } else if (strcmp(vmField.typeString, "address") == 0 ||
                  strcmp(vmField.typeString, "intptr_t") == 0 ||
                  strcmp(vmField.typeString, "uintptr_t") == 0 ||
+                 strcmp(vmField.typeString, "OopHandle") == 0 ||
                  strcmp(vmField.typeString, "size_t") == 0 ||
                  // All foo* types are addresses.
                  vmField.typeString[strlen(vmField.typeString) - 1] == '*') {
@@ -999,7 +1000,7 @@ C2V_VMENTRY(jlong, getMaxCallTargetOffset, (JNIEnv*, jobject, jlong addr))
   return -1;
 C2V_END
 
-C2V_VMENTRY(void, setNotInlineableOrCompileable,(JNIEnv *, jobject,  jobject jvmci_method))
+C2V_VMENTRY(void, setNotInlinableOrCompilable,(JNIEnv *, jobject,  jobject jvmci_method))
   methodHandle method = CompilerToVM::asMethod(jvmci_method);
   method->set_not_c1_compilable();
   method->set_not_c2_compilable();
@@ -1017,7 +1018,7 @@ C2V_VMENTRY(jint, installCode, (JNIEnv *jniEnv, jobject, jobject target, jobject
   Handle installed_code_handle(THREAD, JNIHandles::resolve(installed_code));
   Handle speculation_log_handle(THREAD, JNIHandles::resolve(speculation_log));
 
-  JVMCICompiler* compiler = JVMCICompiler::instance(CHECK_JNI_ERR);
+  JVMCICompiler* compiler = JVMCICompiler::instance(true, CHECK_JNI_ERR);
 
   TraceTime install_time("installCode", JVMCICompiler::codeInstallTimer());
   bool is_immutable_PIC = HotSpotCompiledCode::isImmutablePIC(compiled_code_handle) > 0;
@@ -1038,7 +1039,7 @@ C2V_VMENTRY(jint, installCode, (JNIEnv *jniEnv, jobject, jobject target, jobject
   if (result != JVMCIEnv::ok) {
     assert(cb == NULL, "should be");
   } else {
-    if (!installed_code_handle.is_null()) {
+    if (installed_code_handle.not_null()) {
       assert(installed_code_handle->is_a(InstalledCode::klass()), "wrong type");
       nmethod::invalidate_installed_code(installed_code_handle, CHECK_0);
       {
@@ -1055,13 +1056,6 @@ C2V_VMENTRY(jint, installCode, (JNIEnv *jniEnv, jobject, jobject target, jobject
           HotSpotInstalledCode::set_size(installed_code_handle, cb->size());
           HotSpotInstalledCode::set_codeStart(installed_code_handle, (jlong) cb->code_begin());
           HotSpotInstalledCode::set_codeSize(installed_code_handle, cb->code_size());
-        }
-      }
-      nmethod* nm = cb->as_nmethod_or_null();
-      if (nm != NULL && installed_code_handle->is_scavengable()) {
-        assert(nm->detect_scavenge_root_oops(), "nm should be scavengable if installed_code is scavengable");
-        if (!UseG1GC) {
-          assert(nm->on_scavenge_root_list(), "nm should be on scavengable list");
         }
       }
     }
@@ -1117,13 +1111,15 @@ C2V_VMENTRY(jint, getMetadata, (JNIEnv *jniEnv, jobject, jobject target, jobject
 
   AOTOopRecorder* recorder = code_metadata.get_oop_recorder();
 
-  int nr_meta_strings = recorder->nr_meta_strings();
-  objArrayOop metadataArray = oopFactory::new_objectArray(nr_meta_strings, CHECK_(JVMCIEnv::cache_full));
+  int nr_meta_refs = recorder->nr_meta_refs();
+  objArrayOop metadataArray = oopFactory::new_objectArray(nr_meta_refs, CHECK_(JVMCIEnv::cache_full));
   objArrayHandle metadataArrayHandle(THREAD, metadataArray);
-  for (int i = 0; i < nr_meta_strings; ++i) {
-    const char* element = recorder->meta_element(i);
-    Handle java_string = java_lang_String::create_from_str(element, CHECK_(JVMCIEnv::cache_full));
-    metadataArrayHandle->obj_at_put(i, java_string());
+  for (int i = 0; i < nr_meta_refs; ++i) {
+    jobject element = recorder->meta_element(i);
+    if (element == NULL) {
+      return JVMCIEnv::cache_full;
+    }
+    metadataArrayHandle->obj_at_put(i, JNIHandles::resolve(element));
   }
   HotSpotMetaData::set_metadata(metadata_handle, metadataArrayHandle());
 
@@ -1140,7 +1136,7 @@ C2V_VMENTRY(jint, getMetadata, (JNIEnv *jniEnv, jobject, jobject target, jobject
 C2V_END
 
 C2V_VMENTRY(void, resetCompilationStatistics, (JNIEnv *jniEnv, jobject))
-  JVMCICompiler* compiler = JVMCICompiler::instance(CHECK);
+  JVMCICompiler* compiler = JVMCICompiler::instance(true, CHECK);
   CompilerStatistics* stats = compiler->stats();
   stats->_standard.reset();
   stats->_osr.reset();
@@ -1518,6 +1514,48 @@ C2V_VMENTRY(void, resolveInvokeHandleInPool, (JNIEnv*, jobject, jobject jvmci_co
   }
 C2V_END
 
+C2V_VMENTRY(jint, isResolvedInvokeHandleInPool, (JNIEnv*, jobject, jobject jvmci_constant_pool, jint index))
+  constantPoolHandle cp = CompilerToVM::asConstantPool(jvmci_constant_pool);
+  ConstantPoolCacheEntry* cp_cache_entry = cp->cache()->entry_at(cp->decode_cpcache_index(index));
+  if (cp_cache_entry->is_resolved(Bytecodes::_invokehandle)) {
+    // MethodHandle.invoke* --> LambdaForm?
+    ResourceMark rm;
+
+    LinkInfo link_info(cp, index, CATCH);
+
+    Klass* resolved_klass = link_info.resolved_klass();
+
+    Symbol* name_sym = cp->name_ref_at(index);
+
+    vmassert(MethodHandles::is_method_handle_invoke_name(resolved_klass, name_sym), "!");
+    vmassert(MethodHandles::is_signature_polymorphic_name(resolved_klass, name_sym), "!");
+
+    methodHandle adapter_method(cp_cache_entry->f1_as_method());
+
+    methodHandle resolved_method(adapter_method);
+
+    // Can we treat it as a regular invokevirtual?
+    if (resolved_method->method_holder() == resolved_klass && resolved_method->name() == name_sym) {
+      vmassert(!resolved_method->is_static(),"!");
+      vmassert(MethodHandles::is_signature_polymorphic_method(resolved_method()),"!");
+      vmassert(!MethodHandles::is_signature_polymorphic_static(resolved_method->intrinsic_id()), "!");
+      vmassert(cp_cache_entry->appendix_if_resolved(cp) == NULL, "!");
+      vmassert(cp_cache_entry->method_type_if_resolved(cp) == NULL, "!");
+
+      methodHandle m(LinkResolver::linktime_resolve_virtual_method_or_null(link_info));
+      vmassert(m == resolved_method, "!!");
+      return -1;
+    }
+
+    return Bytecodes::_invokevirtual;
+  }
+  if (cp_cache_entry->is_resolved(Bytecodes::_invokedynamic)) {
+    return Bytecodes::_invokedynamic;
+  }
+  return -1;
+C2V_END
+
+
 C2V_VMENTRY(jobject, getSignaturePolymorphicHolders, (JNIEnv*, jobject))
   objArrayHandle holders = oopFactory::new_objArray_handle(SystemDictionary::String_klass(), 2, CHECK_NULL);
   Handle mh = java_lang_String::create_from_str("Ljava/lang/invoke/MethodHandle;", CHECK_NULL);
@@ -1652,7 +1690,7 @@ C2V_VMENTRY(void, writeDebugOutput, (JNIEnv*, jobject, jbyteArray bytes, jint of
   }
   while (length > 0) {
     jbyte* start = array->byte_at_addr(offset);
-    tty->write((char*) start, MIN2(length, O_BUFLEN));
+    tty->write((char*) start, MIN2(length, (jint)O_BUFLEN));
     length -= O_BUFLEN;
     offset += O_BUFLEN;
   }
@@ -1775,7 +1813,7 @@ JNINativeMethod CompilerToVM::methods[] = {
   {CC "getImplementor",                               CC "(" HS_RESOLVED_KLASS ")" HS_RESOLVED_KLASS,                                       FN_PTR(getImplementor)},
   {CC "getStackTraceElement",                         CC "(" HS_RESOLVED_METHOD "I)" STACK_TRACE_ELEMENT,                                   FN_PTR(getStackTraceElement)},
   {CC "methodIsIgnoredBySecurityStackWalk",           CC "(" HS_RESOLVED_METHOD ")Z",                                                       FN_PTR(methodIsIgnoredBySecurityStackWalk)},
-  {CC "setNotInlineableOrCompileable",                CC "(" HS_RESOLVED_METHOD ")V",                                                       FN_PTR(setNotInlineableOrCompileable)},
+  {CC "setNotInlinableOrCompilable",                  CC "(" HS_RESOLVED_METHOD ")V",                                                       FN_PTR(setNotInlinableOrCompilable)},
   {CC "isCompilable",                                 CC "(" HS_RESOLVED_METHOD ")Z",                                                       FN_PTR(isCompilable)},
   {CC "hasNeverInlineDirective",                      CC "(" HS_RESOLVED_METHOD ")Z",                                                       FN_PTR(hasNeverInlineDirective)},
   {CC "shouldInlineMethod",                           CC "(" HS_RESOLVED_METHOD ")Z",                                                       FN_PTR(shouldInlineMethod)},
@@ -1794,6 +1832,7 @@ JNINativeMethod CompilerToVM::methods[] = {
   {CC "resolveFieldInPool",                           CC "(" HS_CONSTANT_POOL "I" HS_RESOLVED_METHOD "B[I)" HS_RESOLVED_KLASS,              FN_PTR(resolveFieldInPool)},
   {CC "resolveInvokeDynamicInPool",                   CC "(" HS_CONSTANT_POOL "I)V",                                                        FN_PTR(resolveInvokeDynamicInPool)},
   {CC "resolveInvokeHandleInPool",                    CC "(" HS_CONSTANT_POOL "I)V",                                                        FN_PTR(resolveInvokeHandleInPool)},
+  {CC "isResolvedInvokeHandleInPool",                 CC "(" HS_CONSTANT_POOL "I)I",                                                        FN_PTR(isResolvedInvokeHandleInPool)},
   {CC "resolveMethod",                                CC "(" HS_RESOLVED_KLASS HS_RESOLVED_METHOD HS_RESOLVED_KLASS ")" HS_RESOLVED_METHOD, FN_PTR(resolveMethod)},
   {CC "getSignaturePolymorphicHolders",               CC "()[" STRING,                                                                      FN_PTR(getSignaturePolymorphicHolders)},
   {CC "getVtableIndexForInterfaceMethod",             CC "(" HS_RESOLVED_KLASS HS_RESOLVED_METHOD ")I",                                     FN_PTR(getVtableIndexForInterfaceMethod)},

@@ -479,8 +479,8 @@ void RegisterSaver::restore_result_registers(MacroAssembler* masm, int frame_siz
 
 // Is vector's size (in bytes) bigger than a size saved by default?
 bool SharedRuntime::is_wide_vector(int size) {
-  // Note, MaxVectorSize == 8 on PPC64.
-  assert(size <= 8, "%d bytes vectors are not supported", size);
+  // Note, MaxVectorSize == 8/16 on PPC64.
+  assert(size <= (SuperwordUseVSX ? 16 : 8), "%d bytes vectors are not supported", size);
   return size > 8;
 }
 
@@ -1469,8 +1469,31 @@ static void save_or_restore_arguments(MacroAssembler* masm,
   }
   // Save or restore single word registers.
   for (int i = 0; i < total_in_args; i++) {
-    // PPC64: pass ints as longs: must only deal with floats here.
-    if (in_regs[i].first()->is_FloatRegister()) {
+    if (in_regs[i].first()->is_Register()) {
+      int offset = slot * VMRegImpl::stack_slot_size;
+      // Value lives in an input register. Save it on stack.
+      switch (in_sig_bt[i]) {
+        case T_BOOLEAN:
+        case T_CHAR:
+        case T_BYTE:
+        case T_SHORT:
+        case T_INT:
+          if (map != NULL) {
+            __ stw(in_regs[i].first()->as_Register(), offset, R1_SP);
+          } else {
+            __ lwa(in_regs[i].first()->as_Register(), offset, R1_SP);
+          }
+          slot++;
+          assert(slot <= stack_slots, "overflow (after INT or smaller stack slot)");
+          break;
+        case T_ARRAY:
+        case T_LONG:
+          // handled above
+          break;
+        case T_OBJECT:
+        default: ShouldNotReachHere();
+      }
+    } else if (in_regs[i].first()->is_FloatRegister()) {
       if (in_sig_bt[i] == T_FLOAT) {
         int offset = slot * VMRegImpl::stack_slot_size;
         slot++;
@@ -2234,9 +2257,6 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   __ release();
   // TODO: PPC port assert(4 == JavaThread::sz_thread_state(), "unexpected field size");
   __ stw(R0, thread_(thread_state));
-  if (UseMembar) {
-    __ fence();
-  }
 
 
   // The JNI call
@@ -2393,9 +2413,6 @@ nmethod *SharedRuntime::generate_native_wrapper(MacroAssembler *masm,
   __ release();
   // TODO: PPC port assert(4 == JavaThread::sz_thread_state(), "unexpected field size");
   __ stw(R0, thread_(thread_state));
-  if (UseMembar) {
-    __ fence();
-  }
   __ bind(after_transition);
 
   // Reguard any pages if necessary.

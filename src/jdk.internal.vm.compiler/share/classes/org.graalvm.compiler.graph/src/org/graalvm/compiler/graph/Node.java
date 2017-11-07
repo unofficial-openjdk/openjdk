@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import org.graalvm.compiler.core.common.Fields;
 import org.graalvm.compiler.core.common.type.AbstractPointerStamp;
@@ -598,6 +599,15 @@ public abstract class Node implements Cloneable, Formattable, NodeInterface {
         }
     }
 
+    /**
+     * Update the source position only if it is null.
+     */
+    public void updateNodeSourcePosition(Supplier<NodeSourcePosition> sourcePositionSupp) {
+        if (this.sourcePosition == null) {
+            setNodeSourcePosition(sourcePositionSupp.get());
+        }
+    }
+
     public DebugCloseable withNodeSourcePosition() {
         return graph.withNodeSourcePosition(this);
     }
@@ -742,7 +752,7 @@ public abstract class Node implements Cloneable, Formattable, NodeInterface {
             assert !graph.isFrozen();
             NodeEventListener listener = graph.nodeEventListener;
             if (listener != null) {
-                listener.inputChanged(node);
+                listener.event(Graph.NodeEvent.INPUT_CHANGED, node);
             }
         }
     }
@@ -752,7 +762,7 @@ public abstract class Node implements Cloneable, Formattable, NodeInterface {
             assert !graph.isFrozen();
             NodeEventListener listener = graph.nodeEventListener;
             if (listener != null && node.isAlive()) {
-                listener.usagesDroppedToZero(node);
+                listener.event(Graph.NodeEvent.ZERO_USAGES, node);
             }
         }
     }

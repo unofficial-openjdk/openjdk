@@ -144,6 +144,7 @@ public final class BinaryContainer implements SymbolTable {
         {"SharedRuntime::exception_handler_for_return_address",        "_aot_exception_handler_for_return_address"},
         {"SharedRuntime::register_finalizer",                          "_aot_register_finalizer"},
         {"SharedRuntime::OSR_migration_end",                           "_aot_OSR_migration_end"},
+        {"CompilerRuntime::resolve_dynamic_invoke",                    "_aot_resolve_dynamic_invoke"},
         {"CompilerRuntime::resolve_string_by_symbol",                  "_aot_resolve_string_by_symbol"},
         {"CompilerRuntime::resolve_klass_by_symbol",                   "_aot_resolve_klass_by_symbol"},
         {"CompilerRuntime::resolve_method_by_symbol_and_load_counters","_aot_resolve_method_by_symbol_and_load_counters"},
@@ -190,6 +191,8 @@ public final class BinaryContainer implements SymbolTable {
         {"StubRoutines::_unsafe_arraycopy", "_aot_stub_routines_unsafe_arraycopy"},
 
         {"StubRoutines::_checkcast_arraycopy", "_aot_stub_routines_checkcast_arraycopy"},
+
+        {"StubRoutines::_generic_arraycopy", "_aot_stub_routines_generic_arraycopy"},
 
         {"StubRoutines::_aescrypt_encryptBlock", "_aot_stub_routines_aescrypt_encryptBlock"},
         {"StubRoutines::_aescrypt_decryptBlock", "_aot_stub_routines_aescrypt_decryptBlock"},

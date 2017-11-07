@@ -280,7 +280,7 @@ public interface GraphBuilderContext extends GraphBuilderTool {
             ObjectStamp receiverStamp = (ObjectStamp) value.stamp();
             Stamp stamp = receiverStamp.join(objectNonNull());
             FixedGuardNode fixedGuard = append(new FixedGuardNode(condition, NullCheckException, action, true));
-            ValueNode nonNullReceiver = getGraph().addOrUnique(PiNode.create(value, stamp, fixedGuard));
+            ValueNode nonNullReceiver = getGraph().addOrUniqueWithInputs(PiNode.create(value, stamp, fixedGuard));
             // TODO: Propogating the non-null into the frame state would
             // remove subsequent null-checks on the same value. However,
             // it currently causes an assertion failure when merging states.
@@ -295,4 +295,20 @@ public interface GraphBuilderContext extends GraphBuilderTool {
     default void notifyReplacedCall(ResolvedJavaMethod targetMethod, ConstantNode node) {
 
     }
+
+    /**
+     * Interface whose instances hold inlining information about the current context, in a wider
+     * sense. The wider sense in this case concerns graph building approaches that don't necessarily
+     * keep a chain of {@link GraphBuilderContext} instances normally available through
+     * {@linkplain #getParent()}. Examples of such approaches are partial evaluation and incremental
+     * inlining.
+     */
+    interface ExternalInliningContext {
+        int getInlinedDepth();
+    }
+
+    default ExternalInliningContext getExternalInliningContext() {
+        return null;
+    }
+
 }

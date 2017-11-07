@@ -2006,7 +2006,7 @@ inline bool CallbackInvoker::invoke_basic_stack_ref_callback(jvmtiHeapRootKind r
                                                              jlong thread_tag,
                                                              jint depth,
                                                              jmethodID method,
-                                                             jint slot,
+                                                             int slot,
                                                              oop obj) {
   assert(ServiceUtil::visible_oop(obj), "checking");
 
@@ -3026,8 +3026,7 @@ inline bool VM_HeapWalkOperation::collect_simple_roots() {
   // Preloaded classes and loader from the system dictionary
   blk.set_kind(JVMTI_HEAP_REFERENCE_SYSTEM_CLASS);
   SystemDictionary::always_strong_oops_do(&blk);
-  KlassToOopClosure klass_blk(&blk);
-  ClassLoaderDataGraph::always_strong_oops_do(&blk, &klass_blk, false);
+  ClassLoaderDataGraph::always_strong_oops_do(&blk, false);
   if (blk.stopped()) {
     return false;
   }
