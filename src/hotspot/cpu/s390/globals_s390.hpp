@@ -71,7 +71,7 @@ define_pd_global(intx,  StackReservedPages,          DEFAULT_STACK_RESERVED_PAGE
 define_pd_global(bool, RewriteBytecodes,     true);
 define_pd_global(bool, RewriteFrequentPairs, true);
 
-define_pd_global(bool, UseMembar,            false);
+define_pd_global(bool, UseMembar,            true);
 
 define_pd_global(bool, PreserveFramePointer, false);
 
@@ -84,6 +84,8 @@ define_pd_global(bool, CompactStrings, true);
 
 // 8146801 (Short Array Allocation): No performance work done here yet.
 define_pd_global(intx, InitArrayShortSize, 1*BytesPerLong);
+
+define_pd_global(bool, ThreadLocalHandshakes, false);
 
 #define ARCH_FLAGS(develop, product, diagnostic, experimental, notproduct, range, constraint, writeable) \
                                                                               \

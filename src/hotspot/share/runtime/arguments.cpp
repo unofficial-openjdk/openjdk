@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "jvm.h"
 #include "classfile/classLoader.hpp"
 #include "classfile/javaAssertions.hpp"
 #include "classfile/moduleEntry.hpp"
@@ -39,7 +40,6 @@
 #include "memory/allocation.inline.hpp"
 #include "memory/universe.inline.hpp"
 #include "oops/oop.inline.hpp"
-#include "prims/jvm.h"
 #include "prims/jvmtiExport.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/arguments_ext.hpp"
@@ -50,6 +50,7 @@
 #include "runtime/globals_extension.hpp"
 #include "runtime/java.hpp"
 #include "runtime/os.hpp"
+#include "runtime/safepointMechanism.hpp"
 #include "runtime/vm_version.hpp"
 #include "services/management.hpp"
 #include "services/memTracker.hpp"
@@ -382,6 +383,9 @@ static SpecialFlag const special_jvm_flags[] = {
   { "MaxRAMFraction",               JDK_Version::jdk(10),  JDK_Version::undefined(), JDK_Version::undefined() },
   { "MinRAMFraction",               JDK_Version::jdk(10),  JDK_Version::undefined(), JDK_Version::undefined() },
   { "InitialRAMFraction",           JDK_Version::jdk(10),  JDK_Version::undefined(), JDK_Version::undefined() },
+  { "UseMembar",                    JDK_Version::jdk(10), JDK_Version::jdk(11), JDK_Version::jdk(12) },
+  { "FastTLABRefill",               JDK_Version::jdk(10), JDK_Version::jdk(11), JDK_Version::jdk(12) },
+  { "IgnoreUnverifiableClassesDuringDump", JDK_Version::jdk(10),  JDK_Version::undefined(), JDK_Version::undefined() },
 
   // --- Deprecated alias flags (see also aliased_jvm_flags) - sorted by obsolete_in then expired_in:
   { "DefaultMaxRAMFraction",        JDK_Version::jdk(8),  JDK_Version::undefined(), JDK_Version::undefined() },
@@ -395,6 +399,10 @@ static SpecialFlag const special_jvm_flags[] = {
   { "MinSleepInterval",              JDK_Version::jdk(9),      JDK_Version::jdk(10), JDK_Version::jdk(11) },
   { "PermSize",                      JDK_Version::undefined(), JDK_Version::jdk(8),  JDK_Version::undefined() },
   { "MaxPermSize",                   JDK_Version::undefined(), JDK_Version::jdk(8),  JDK_Version::undefined() },
+  { "SharedReadWriteSize",           JDK_Version::undefined(), JDK_Version::jdk(10), JDK_Version::undefined() },
+  { "SharedReadOnlySize",            JDK_Version::undefined(), JDK_Version::jdk(10), JDK_Version::undefined() },
+  { "SharedMiscDataSize",            JDK_Version::undefined(), JDK_Version::jdk(10), JDK_Version::undefined() },
+  { "SharedMiscCodeSize",            JDK_Version::undefined(), JDK_Version::jdk(10), JDK_Version::undefined() },
 
 #ifdef TEST_VERIFY_SPECIAL_JVM_FLAGS
   { "dep > obs",                    JDK_Version::jdk(9), JDK_Version::jdk(8), JDK_Version::undefined() },
@@ -1859,7 +1867,7 @@ void Arguments::set_ergonomics_flags() {
 #endif
   select_gc();
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
   // Shared spaces work fine with other GCs but causes bytecode rewriting
   // to be disabled, which hurts interpreter performance and decreases
   // server performance.  When -server is specified, keep the default off
@@ -2088,9 +2096,10 @@ void Arguments::set_heap_size() {
   // respecting the maximum and minimum sizes of the heap.
   if (FLAG_IS_DEFAULT(MaxHeapSize)) {
     julong reasonable_max = (julong)((phys_mem * MaxRAMPercentage) / 100);
-    if (phys_mem <= (julong)((MaxHeapSize * MinRAMPercentage) / 100)) {
+    const julong reasonable_min = (julong)((phys_mem * MinRAMPercentage) / 100);
+    if (reasonable_min < MaxHeapSize) {
       // Small physical memory, so use a minimum fraction of it for the heap
-      reasonable_max = (julong)((phys_mem * MinRAMPercentage) / 100);
+      reasonable_max = reasonable_min;
     } else {
       // Not-small physical memory, so require a heap at least
       // as large as MaxHeapSize
@@ -4612,6 +4621,32 @@ jint Arguments::apply_ergo() {
     UseOptoBiasInlining = false;
   }
 #endif
+
+  bool aot_enabled = UseAOT && AOTLibrary != NULL;
+  bool jvmci_enabled = NOT_JVMCI(false) JVMCI_ONLY(EnableJVMCI || UseJVMCICompiler);
+  bool handshakes_supported = SafepointMechanism::supports_thread_local_poll() && !aot_enabled && !jvmci_enabled && ThreadLocalHandshakes;
+  // ThreadLocalHandshakesConstraintFunc handles the constraints.
+  // Here we try to figure out if a mutual exclusive option have been set that conflict with a default.
+  if (handshakes_supported) {
+    FLAG_SET_DEFAULT(UseAOT, false); // Clear the AOT flag to make sure it doesn't try to initialize.
+  } else {
+    if (FLAG_IS_DEFAULT(ThreadLocalHandshakes) && ThreadLocalHandshakes) {
+      if (aot_enabled) {
+        // If user enabled AOT but ThreadLocalHandshakes is at default set it to false.
+        log_debug(ergo)("Disabling ThreadLocalHandshakes for UseAOT.");
+        FLAG_SET_DEFAULT(ThreadLocalHandshakes, false);
+      } else if (jvmci_enabled){
+        // If user enabled JVMCI but ThreadLocalHandshakes is at default set it to false.
+        log_debug(ergo)("Disabling ThreadLocalHandshakes for EnableJVMCI/UseJVMCICompiler.");
+        FLAG_SET_DEFAULT(ThreadLocalHandshakes, false);
+      }
+    }
+  }
+  if (FLAG_IS_DEFAULT(ThreadLocalHandshakes) || !SafepointMechanism::supports_thread_local_poll()) {
+    log_debug(ergo)("ThreadLocalHandshakes %s", ThreadLocalHandshakes ? "enabled." : "disabled.");
+  } else {
+    log_info(ergo)("ThreadLocalHandshakes %s", ThreadLocalHandshakes ? "enabled." : "disabled.");
+  }
 
   return JNI_OK;
 }

@@ -23,8 +23,8 @@
  */
 
 #include "precompiled.hpp"
-#include "gc/g1/concurrentG1Refine.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
+#include "gc/g1/g1ConcurrentRefine.hpp"
 #include "gc/g1/heapRegion.hpp"
 #include "gc/g1/heapRegionManager.inline.hpp"
 #include "gc/g1/heapRegionSet.inline.hpp"
@@ -327,9 +327,7 @@ bool HeapRegionManager::allocate_containing_regions(MemRegion range, size_t* com
   return true;
 }
 
-void HeapRegionManager::par_iterate(HeapRegionClosure* blk, uint worker_id, HeapRegionClaimer* hrclaimer) const {
-  const uint start_index = hrclaimer->start_region_for_worker(worker_id);
-
+void HeapRegionManager::par_iterate(HeapRegionClosure* blk, HeapRegionClaimer* hrclaimer, const uint start_index) const {
   // Every worker will actually look at all regions, skipping over regions that
   // are currently not committed.
   // This also (potentially) iterates over regions newly allocated during GC. This
@@ -493,7 +491,7 @@ HeapRegionClaimer::~HeapRegionClaimer() {
   }
 }
 
-uint HeapRegionClaimer::start_region_for_worker(uint worker_id) const {
+uint HeapRegionClaimer::offset_for_worker(uint worker_id) const {
   assert(worker_id < _n_workers, "Invalid worker_id.");
   return _n_regions * worker_id / _n_workers;
 }

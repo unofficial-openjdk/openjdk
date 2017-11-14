@@ -37,6 +37,7 @@
 #include "oops/oop.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "runtime/javaCalls.hpp"
+#include "runtime/safepointMechanism.inline.hpp"
 #include "utilities/align.hpp"
 
 // frequently used constants
@@ -45,7 +46,7 @@
 // use).
 ConstantOopWriteValue* CodeInstaller::_oop_null_scope_value = new (ResourceObj::C_HEAP, mtCompiler) ConstantOopWriteValue(NULL);
 ConstantIntValue*      CodeInstaller::_int_m1_scope_value = new (ResourceObj::C_HEAP, mtCompiler) ConstantIntValue(-1);
-ConstantIntValue*      CodeInstaller::_int_0_scope_value =  new (ResourceObj::C_HEAP, mtCompiler) ConstantIntValue(0);
+ConstantIntValue*      CodeInstaller::_int_0_scope_value =  new (ResourceObj::C_HEAP, mtCompiler) ConstantIntValue((jint)0);
 ConstantIntValue*      CodeInstaller::_int_1_scope_value =  new (ResourceObj::C_HEAP, mtCompiler) ConstantIntValue(1);
 ConstantIntValue*      CodeInstaller::_int_2_scope_value =  new (ResourceObj::C_HEAP, mtCompiler) ConstantIntValue(2);
 LocationValue*         CodeInstaller::_illegal_value = new (ResourceObj::C_HEAP, mtCompiler) LocationValue(Location());
@@ -854,9 +855,10 @@ JVMCIEnv::CodeInstallResult CodeInstaller::initialize_buffer(CodeBuffer& buffer,
     }
     last_pc_offset = pc_offset;
 
-    if (SafepointSynchronize::do_call_back()) {
+    JavaThread* thread = JavaThread::current();
+    if (SafepointMechanism::poll(thread)) {
       // this is a hacky way to force a safepoint check but nothing else was jumping out at me.
-      ThreadToNativeFromVM ttnfv(JavaThread::current());
+      ThreadToNativeFromVM ttnfv(thread);
     }
   }
 

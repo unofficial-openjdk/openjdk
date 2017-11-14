@@ -525,10 +525,14 @@ public class WhiteBox {
   public native boolean areSharedStringsIgnored();
   public native boolean isCDSIncludedInVmBuild();
   public native Object  getResolvedReferences(Class<?> c);
+  public native boolean areOpenArchiveHeapObjectsMapped();
 
   // Compiler Directive
   public native int addCompilerDirective(String compDirect);
   public native void removeCompilerDirective(int count);
+
+  // Handshakes
+  public native int handshakeWalkStack(Thread t, boolean all_threads);
 
   // Returns true on linux if library has the noexecstack flag set.
   public native boolean checkLibSpecifiesNoexecstack(String libfilename);

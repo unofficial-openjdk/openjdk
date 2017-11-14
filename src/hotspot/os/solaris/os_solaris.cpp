@@ -23,6 +23,7 @@
  */
 
 // no precompiled headers
+#include "jvm.h"
 #include "classfile/classLoader.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
@@ -31,7 +32,6 @@
 #include "compiler/compileBroker.hpp"
 #include "compiler/disassembler.hpp"
 #include "interpreter/interpreter.hpp"
-#include "jvm_solaris.h"
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/filemap.hpp"
@@ -39,7 +39,6 @@
 #include "os_share_solaris.hpp"
 #include "os_solaris.inline.hpp"
 #include "prims/jniFastGetField.hpp"
-#include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/atomic.hpp"
@@ -2191,10 +2190,6 @@ int os::signal_wait() {
 
 static int page_size = -1;
 
-// The mmap MAP_ALIGN flag is supported on Solaris 9 and later.  init_2() will
-// clear this var if support is not available.
-static bool has_map_align = true;
-
 int os::vm_page_size() {
   assert(page_size != -1, "must call os::init");
   return page_size;
@@ -2561,7 +2556,7 @@ char* os::Solaris::anon_mmap(char* requested_addr, size_t bytes,
 
   if (fixed) {
     flags |= MAP_FIXED;
-  } else if (has_map_align && (alignment_hint > (size_t) vm_page_size())) {
+  } else if (alignment_hint > (size_t) vm_page_size()) {
     flags |= MAP_ALIGN;
     addr = (char*) alignment_hint;
   }
@@ -4222,28 +4217,6 @@ extern "C" {
 jint os::init_2(void) {
   // try to enable extended file IO ASAP, see 6431278
   os::Solaris::try_enable_extended_io();
-
-  // Allocate a single page and mark it as readable for safepoint polling.  Also
-  // use this first mmap call to check support for MAP_ALIGN.
-  address polling_page = (address)Solaris::mmap_chunk((char*)page_size,
-                                                      page_size,
-                                                      MAP_PRIVATE | MAP_ALIGN,
-                                                      PROT_READ);
-  if (polling_page == NULL) {
-    has_map_align = false;
-    polling_page = (address)Solaris::mmap_chunk(NULL, page_size, MAP_PRIVATE,
-                                                PROT_READ);
-  }
-
-  os::set_polling_page(polling_page);
-  log_info(os)("SafePoint Polling address: " INTPTR_FORMAT, p2i(polling_page));
-
-  if (!UseMembar) {
-    address mem_serialize_page = (address)Solaris::mmap_chunk(NULL, page_size, MAP_PRIVATE, PROT_READ | PROT_WRITE);
-    guarantee(mem_serialize_page != NULL, "mmap Failed for memory serialize page");
-    os::set_memory_serialize_page(mem_serialize_page);
-    log_info(os)("Memory Serialize Page address: " INTPTR_FORMAT, p2i(mem_serialize_page));
-  }
 
   // Check and sets minimum stack sizes against command line options
   if (Posix::set_minimum_stack_sizes() == JNI_ERR) {

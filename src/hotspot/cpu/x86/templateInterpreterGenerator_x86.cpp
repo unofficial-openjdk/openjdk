@@ -257,7 +257,7 @@ address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state, i
 #if INCLUDE_JVMCI
   // Check if we need to take lock at entry of synchronized method.  This can
   // only occur on method entry so emit it only for vtos with step 0.
-  if ((UseJVMCICompiler || UseAOT) && state == vtos && step == 0) {
+  if ((EnableJVMCI || UseAOT) && state == vtos && step == 0) {
     Label L;
     __ cmpb(Address(thread, JavaThread::pending_monitorenter_offset()), 0);
     __ jcc(Assembler::zero, L);
@@ -270,7 +270,7 @@ address TemplateInterpreterGenerator::generate_deopt_entry_for(TosState state, i
     __ bind(L);
   } else {
 #ifdef ASSERT
-    if (UseJVMCICompiler) {
+    if (EnableJVMCI) {
       Label L;
       __ cmpb(Address(r15_thread, JavaThread::pending_monitorenter_offset()), 0);
       __ jccb(Assembler::zero, L);
@@ -1141,14 +1141,17 @@ address TemplateInterpreterGenerator::generate_native_entry(bool synchronized) {
   // check for safepoint operation in progress and/or pending suspend requests
   {
     Label Continue;
-    __ cmp32(ExternalAddress(SafepointSynchronize::address_of_state()),
-             SafepointSynchronize::_not_synchronized);
+    Label slow_path;
 
-    Label L;
-    __ jcc(Assembler::notEqual, L);
+#ifndef _LP64
+    __ safepoint_poll(slow_path);
+#else
+    __ safepoint_poll(slow_path, r15_thread, rscratch1);
+#endif
+
     __ cmpl(Address(thread, JavaThread::suspend_flags_offset()), 0);
     __ jcc(Assembler::equal, Continue);
-    __ bind(L);
+    __ bind(slow_path);
 
     // Don't use call_VM as it will see a possible pending exception
     // and forward it and never return here preventing us from

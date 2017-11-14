@@ -23,6 +23,7 @@
  */
 
 // no precompiled headers
+#include "jvm.h"
 #include "asm/macroAssembler.hpp"
 #include "macroAssembler_sparc.hpp"
 #include "classfile/classLoader.hpp"
@@ -32,12 +33,10 @@
 #include "code/icBuffer.hpp"
 #include "code/vtableStubs.hpp"
 #include "interpreter/interpreter.hpp"
-#include "jvm_solaris.h"
 #include "memory/allocation.inline.hpp"
 #include "nativeInst_sparc.hpp"
 #include "os_share_solaris.hpp"
 #include "prims/jniFastGetField.hpp"
-#include "prims/jvm.h"
 #include "prims/jvm_misc.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/extendedPC.hpp"
@@ -448,7 +447,7 @@ JVM_handle_solaris_signal(int sig, siginfo_t* info, void* ucVoid,
       // a fault inside compiled code, the interpreter, or a stub
 
       // Support Safepoint Polling
-      if ( sig == SIGSEGV && (address)info->si_addr == os::get_polling_page() ) {
+      if (sig == SIGSEGV && os::is_poll_address((address)info->si_addr)) {
         stub = SharedRuntime::get_poll_stub(pc);
       }
 

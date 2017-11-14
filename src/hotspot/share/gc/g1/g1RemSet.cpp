@@ -23,15 +23,15 @@
  */
 
 #include "precompiled.hpp"
-#include "gc/g1/concurrentG1Refine.hpp"
 #include "gc/g1/dirtyCardQueue.hpp"
 #include "gc/g1/g1BlockOffsetTable.inline.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
+#include "gc/g1/g1ConcurrentRefine.hpp"
 #include "gc/g1/g1FromCardCache.hpp"
 #include "gc/g1/g1GCPhaseTimes.hpp"
 #include "gc/g1/g1HotCardCache.hpp"
 #include "gc/g1/g1OopClosures.inline.hpp"
-#include "gc/g1/g1RemSet.inline.hpp"
+#include "gc/g1/g1RemSet.hpp"
 #include "gc/g1/g1SATBCardTableModRefBS.inline.hpp"
 #include "gc/g1/heapRegion.inline.hpp"
 #include "gc/g1/heapRegionManager.inline.hpp"
@@ -298,7 +298,7 @@ G1RemSet::~G1RemSet() {
 }
 
 uint G1RemSet::num_par_rem_sets() {
-  return MAX2(DirtyCardQueueSet::num_par_ids() + ConcurrentG1Refine::thread_num(), ParallelGCThreads);
+  return MAX2(DirtyCardQueueSet::num_par_ids() + G1ConcurrentRefine::thread_num(), ParallelGCThreads);
 }
 
 void G1RemSet::initialize(size_t capacity, uint max_regions) {
@@ -532,7 +532,7 @@ public:
 
 void G1RemSet::scrub(uint worker_num, HeapRegionClaimer *hrclaimer) {
   G1ScrubRSClosure scrub_cl(&_card_live_data);
-  _g1->heap_region_par_iterate(&scrub_cl, worker_num, hrclaimer);
+  _g1->heap_region_par_iterate_from_worker_offset(&scrub_cl, hrclaimer, worker_num);
 }
 
 inline void check_card_ptr(jbyte* card_ptr, CardTableModRefBS* ct_bs) {

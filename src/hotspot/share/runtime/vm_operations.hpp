@@ -69,6 +69,9 @@
   template(G1CollectFull)                         \
   template(G1CollectForAllocation)                \
   template(G1IncCollectionPause)                  \
+  template(HandshakeOneThread)                    \
+  template(HandshakeAllThreads)                   \
+  template(HandshakeFallback)                     \
   template(DestroyAllocationContext)              \
   template(EnableBiasedLocking)                   \
   template(RevokeBias)                            \
@@ -111,6 +114,7 @@
   template(ThreadsSuspendJVMTI)                   \
   template(ICBufferFull)                          \
   template(ScavengeMonitors)                      \
+  template(PrintMetadata)                         \
 
 class VM_Operation: public CHeapObj<mtInternal> {
  public:
@@ -371,6 +375,17 @@ class VM_PrintJNI: public VM_Operation {
   VM_PrintJNI()                         { _out = tty; }
   VM_PrintJNI(outputStream* out)        { _out = out; }
   VMOp_Type type() const                { return VMOp_PrintJNI; }
+  void doit();
+};
+
+class VM_PrintMetadata : public VM_Operation {
+ private:
+  outputStream* _out;
+  size_t        _scale;
+ public:
+  VM_PrintMetadata(outputStream* out, size_t scale) : _out(out), _scale(scale) {};
+
+  VMOp_Type type() const  { return VMOp_PrintMetadata; }
   void doit();
 };
 

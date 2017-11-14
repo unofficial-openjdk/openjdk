@@ -99,11 +99,11 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
 #define CI_COMPILER_COUNT 0
 #else
 
-#if defined(COMPILER2) || INCLUDE_JVMCI
+#if COMPILER2_OR_JVMCI
 #define CI_COMPILER_COUNT 2
 #else
 #define CI_COMPILER_COUNT 1
-#endif // COMPILER2 || INCLUDE_JVMCI
+#endif // COMPILER2_OR_JVMCI
 
 #endif // no compilers
 
@@ -597,6 +597,13 @@ public:
                                                                             \
   develop(bool, CleanChunkPoolAsync, true,                                  \
           "Clean the chunk pool asynchronously")                            \
+                                                                            \
+  product_pd(bool, ThreadLocalHandshakes,                                   \
+          "Use thread-local polls instead of global poll for safepoints.")  \
+          constraint(ThreadLocalHandshakesConstraintFunc,AfterErgo)         \
+                                                                            \
+  diagnostic(uint, HandshakeTimeout, 0,                                     \
+          "If nonzero set a timeout in milliseconds for handshakes")        \
                                                                             \
   experimental(bool, AlwaysSafeConstructors, false,                         \
           "Force safe construction, as if all fields are final.")           \
@@ -1144,8 +1151,8 @@ public:
   notproduct(bool, PrintSystemDictionaryAtExit, false,                      \
           "Print the system dictionary at exit")                            \
                                                                             \
-  experimental(intx, PredictedLoadedClassCount, 0,                          \
-          "Experimental: Tune loaded class cache starting size")            \
+  diagnostic(bool, DynamicallyResizeSystemDictionaries, true,               \
+          "Dynamically resize system dictionaries as needed")               \
                                                                             \
   diagnostic(bool, UnsyncloadClass, false,                                  \
           "Unstable: VM calls loadClass unsynchronized. Custom "            \
@@ -2013,8 +2020,8 @@ public:
   product(bool, ZeroTLAB, false,                                            \
           "Zero out the newly created TLAB")                                \
                                                                             \
-  product(bool, FastTLABRefill, true,                                       \
-          "Use fast TLAB refill code")                                      \
+  product(bool, FastTLABRefill, false,                                      \
+          "(Deprecated) Use fast TLAB refill code")                         \
                                                                             \
   product(bool, TLABStats, true,                                            \
           "Provide more detailed and expensive TLAB statistics.")           \
@@ -3901,18 +3908,6 @@ public:
           "If PrintSharedArchiveAndExit is true, also print the shared "    \
           "dictionary")                                                     \
                                                                             \
-  product(size_t, SharedReadWriteSize, 0,                                   \
-          "Deprecated")                                                     \
-                                                                            \
-  product(size_t, SharedReadOnlySize, 0,                                    \
-          "Deprecated")                                                     \
-                                                                            \
-  product(size_t, SharedMiscDataSize,  0,                                   \
-          "Deprecated")                                                     \
-                                                                            \
-  product(size_t, SharedMiscCodeSize,  0,                                   \
-          "Deprecated")                                                     \
-                                                                            \
   product(size_t, SharedBaseAddress, LP64_ONLY(32*G)                        \
           NOT_LP64(LINUX_ONLY(2*G) NOT_LINUX(0)),                           \
           "Address to allocate shared memory region for class data")        \
@@ -3922,7 +3917,7 @@ public:
           "Average number of symbols per bucket in shared table")           \
           range(2, 246)                                                     \
                                                                             \
-  diagnostic(bool, IgnoreUnverifiableClassesDuringDump, false,              \
+  diagnostic(bool, IgnoreUnverifiableClassesDuringDump, true,              \
           "Do not quit -Xshare:dump even if we encounter unverifiable "     \
           "classes. Just exclude them from the shared dictionary.")         \
                                                                             \
