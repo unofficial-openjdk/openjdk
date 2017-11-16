@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,45 +23,19 @@
  * questions.
  */
 
-package sun.java2d.jules;
+package sun.awt;
 
-public class JulesTile {
-    byte[] imgBuffer;
-    long pixmanImgPtr = 0;
-    int tilePos;
+/**
+ * Used for replacing window owner with another non-Swing window.
+ * It is useful in case of JavaFX-Swing interop:
+ * it helps to keep Swing dialogs above its owner(JavaFX stage).
+ */
 
-    public JulesTile() {
-    }
+public interface OverrideNativeWindowHandle {
 
-    public byte[] getImgBuffer() {
-        if(imgBuffer == null) {
-            imgBuffer = new byte[1024];
-        }
-
-        return imgBuffer;
-    }
-
-    public long getPixmanImgPtr() {
-        return pixmanImgPtr;
-    }
-
-    public void setPixmanImgPtr(long pixmanImgPtr) {
-        this.pixmanImgPtr = pixmanImgPtr;
-    }
-
-    public boolean hasBuffer() {
-        return imgBuffer != null;
-    }
-
-    public int getTilePos() {
-        return tilePos;
-    }
-
-    public void setTilePos(int tilePos) {
-        this.tilePos = tilePos;
-    }
-
-    public void setImgBuffer(byte[] imgBuffer){
-        this.imgBuffer = imgBuffer;
-    }
+    /**
+     * Replaces an owner window with a window with provided handle.
+     * @param handle native window handle
+     */
+    void overrideWindowHandle(final long handle);
 }
