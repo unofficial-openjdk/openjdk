@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, Red Hat, Inc. and/or its affiliates.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,17 @@
  *
  */
 
-#include "precompiled.hpp"
-#include "gc/g1/g1MarkSweep.hpp"
+#ifndef SHARE_GC_SERIAL_SERIALARGUMENTS_HPP
+#define SHARE_GC_SERIAL_SERIALARGUMENTS_HPP
 
-void G1MarkSweep::prepare_compaction() {
-  G1PrepareCompactClosure blk;
-  G1MarkSweep::prepare_compaction_work(&blk);
-}
+#include "gc/shared/gcArguments.hpp"
+
+class CollectedHeap;
+
+class SerialArguments : public GCArguments {
+public:
+  virtual size_t conservative_max_heap_alignment();
+  virtual CollectedHeap* create_heap();
+};
+
+#endif // SHARE_GC_SERIAL_SERIALARGUMENTS_HPP

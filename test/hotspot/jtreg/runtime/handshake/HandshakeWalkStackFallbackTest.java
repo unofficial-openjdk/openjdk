@@ -22,28 +22,13 @@
  *
  */
 
-#ifndef SHARE_VM_GC_G1_G1SERIALCOLLECTOR_HPP
-#define SHARE_VM_GC_G1_G1SERIALCOLLECTOR_HPP
+/*
+ * @test HandshakeWalkStackFallbackTest
+ * @summary This test the global safepoint fallback path for handshakes
+ * @library /testlibrary /test/lib
+ * @build HandshakeWalkStackTest
+ * @run main ClassFileInstaller sun.hotspot.WhiteBox
+ *                              sun.hotspot.WhiteBox$WhiteBoxPermission
+ * @run main/othervm -Xbootclasspath/a:. -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -XX:-ThreadLocalHandshakes HandshakeWalkStackTest
+ */
 
-#include "memory/allocation.hpp"
-
-class G1FullGCScope;
-class ReferenceProcessor;
-
-class G1SerialFullCollector : StackObj {
-  G1FullGCScope*                       _scope;
-  ReferenceProcessor*                  _reference_processor;
-  ReferenceProcessorIsAliveMutator     _is_alive_mutator;
-  ReferenceProcessorMTDiscoveryMutator _mt_discovery_mutator;
-
-  void rebuild_remembered_sets();
-
-public:
-  G1SerialFullCollector(G1FullGCScope* scope, ReferenceProcessor* reference_processor);
-
-  void prepare_collection();
-  void collect();
-  void complete_collection();
-};
-
-#endif // SHARE_VM_GC_G1_G1SERIALCOLLECTOR_HPP
