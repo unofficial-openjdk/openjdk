@@ -1,0 +1,9 @@
+language: c
+
+install:
+- sudo apt-get update && sudo apt-get build-dep --yes openjdk-7-jdk
+
+script:
+- bash ./configure
+- travis_wait 59 make
+- sudo make install
