@@ -124,8 +124,6 @@ java/beans/Introspector/8132566/OverrideUserDefPropertyInfoTest.java 8132565 gen
 
 java/lang/StringCoding/CheckEncodings.sh                        7008363 generic-all
 
-jdk/internal/misc/JavaLangAccess/NewUnsafeString.java           8176188 generic-all
-
 java/lang/String/nativeEncoding/StringPlatformChars.java        8182569 windows-all,solaris-all
 
 ############################################################################
@@ -173,8 +171,6 @@ java/net/MulticastSocket/SetLoopbackMode.java                   7122846 macosx-a
 java/net/MulticastSocket/Test.java                              7145658 macosx-all
 
 java/net/DatagramSocket/SendDatagramToBadAddress.java           7143960 macosx-all
-
-java/net/httpclient/websocket/ConnectionHandover.java           8188895 windows-all
 
 ############################################################################
 

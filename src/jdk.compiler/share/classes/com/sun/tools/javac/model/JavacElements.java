@@ -51,6 +51,7 @@ import com.sun.tools.javac.code.Directive.OpensFlag;
 import com.sun.tools.javac.code.Directive.RequiresDirective;
 import com.sun.tools.javac.code.Directive.RequiresFlag;
 import com.sun.tools.javac.code.Scope.WriteableScope;
+import com.sun.tools.javac.code.Source.Feature;
 import com.sun.tools.javac.code.Symbol.*;
 import com.sun.tools.javac.comp.AttrContext;
 import com.sun.tools.javac.comp.Enter;
@@ -114,7 +115,7 @@ public class JavacElements implements Elements {
         javacTaskImpl = t instanceof JavacTaskImpl ? (JavacTaskImpl) t : null;
         log = Log.instance(context);
         Source source = Source.instance(context);
-        allowModules = source.allowModules();
+        allowModules = Feature.MODULES.allowedInSource(source);
     }
 
     @Override @DefinedBy(Api.LANGUAGE_MODEL)
@@ -196,9 +197,18 @@ public class JavacElements implements Elements {
         for (ModuleSymbol msym : modules.allModules()) {
             S sym = nameToSymbol(msym, nameStr, clazz);
 
-            if (sym != null) {
-                if (!allowModules || clazz == ClassSymbol.class || !sym.members().isEmpty()) {
-                    //do not add packages without members:
+            if (sym == null)
+                continue;
+
+            if (clazz == ClassSymbol.class) {
+                // Always include classes
+                found.add(sym);
+            } else if (clazz == PackageSymbol.class) {
+                // In module mode, ignore the "spurious" empty packages that "enclose" module-specific packages.
+                // For example, if a module contains classes or package info in package p.q.r, it will also appear
+                // to have additional packages p.q and p, even though these packages have no content other
+                // than the subpackage.  We don't want those empty packages showing up in searches for p or p.q.
+                if (!sym.members().isEmpty() || ((PackageSymbol) sym).package_info != null) {
                     found.add(sym);
                 }
             }
