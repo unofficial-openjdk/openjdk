@@ -202,6 +202,9 @@ jdk_security = \
     :jdk_security3 \
     :jdk_security4
 
+jdk_security_infra = \
+    security/infra/java/security/cert/CertPathValidator/certification
+
 jdk_text = \
     java/text \
     sun/text
@@ -350,6 +353,18 @@ jdk_desktop = \
 # SwingSet3 tests.
 jdk_client_sanity = \
     sanity/client/SwingSet
+
+# This test group represents a subset of tests which are expected to
+# exercise most of the most commonly used code in Swing applications.
+# New failures in this area may be a problem.
+jdk_swing_core = \
+     :jdk_client_sanity \
+     javax/swing
+
+# The most commonly used printing APIs are included here along with swing core.
+jdk_desktop_core = \
+    :jdk_swing_core \
+    java/awt/print
 
 ###############################################################################
 #

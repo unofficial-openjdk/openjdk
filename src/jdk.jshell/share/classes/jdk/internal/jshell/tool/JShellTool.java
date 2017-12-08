@@ -43,6 +43,7 @@ import java.lang.module.ModuleReference;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.MessageFormat;
@@ -114,6 +115,7 @@ import jdk.internal.editor.spi.BuildInEditorProvider;
 import jdk.internal.editor.external.ExternalEditor;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
+import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toList;
 import static jdk.jshell.Snippet.SubKind.TEMP_VAR_EXPRESSION_SUBKIND;
@@ -135,6 +137,9 @@ public class JShellTool implements MessageHandler {
 
     private static final Pattern LINEBREAK = Pattern.compile("\\R");
     private static final Pattern ID = Pattern.compile("[se]?\\d+([-\\s].*)?");
+    private static final Pattern RERUN_ID = Pattern.compile("/" + ID.pattern());
+    private static final Pattern RERUN_PREVIOUS = Pattern.compile("/\\-\\d+( .*)?");
+    private static final Pattern SET_SUB = Pattern.compile("/?set .*");
             static final String RECORD_SEPARATOR = "\u241E";
     private static final String RB_NAME_PREFIX  = "jdk.internal.jshell.tool.resources";
     private static final String VERSION_RB_NAME = RB_NAME_PREFIX + ".version";
@@ -226,6 +231,8 @@ public class JShellTool implements MessageHandler {
     static final Pattern BUILTIN_FILE_PATTERN = Pattern.compile("\\w+");
     static final String BUILTIN_FILE_PATH_FORMAT = "/jdk/jshell/tool/resources/%s.jsh";
     static final String INT_PREFIX = "int $$exit$$ = ";
+
+    static final int OUTPUT_WIDTH = 72;
 
     // match anything followed by whitespace
     private static final Pattern OPTION_PRE_PATTERN =
@@ -381,7 +388,7 @@ public class JShellTool implements MessageHandler {
         private Collection<String> validPaths(Collection<String> vals, String context, boolean isModulePath) {
             Stream<String> result = vals.stream()
                     .map(s -> Arrays.stream(s.split(File.pathSeparator))
-                        .map(sp -> toPathResolvingUserHome(sp))
+                        .flatMap(sp -> toPathImpl(sp, context))
                         .filter(p -> checkValidPathEntry(p, context, isModulePath))
                         .map(p -> p.toString())
                         .collect(Collectors.joining(File.pathSeparator)));
@@ -419,6 +426,16 @@ public class JShellTool implements MessageHandler {
             msg("jshell.err.arg", context, p);
             failed = true;
             return false;
+        }
+
+        private Stream<Path> toPathImpl(String path, String context) {
+            try {
+                return Stream.of(toPathResolvingUserHome(path));
+            } catch (InvalidPathException ex) {
+                msg("jshell.err.file.not.found", context, path);
+                failed = true;
+                return Stream.empty();
+            }
         }
 
         Options parse(OptionSet options) {
@@ -1303,8 +1320,8 @@ public class JShellTool implements MessageHandler {
         Command[] candidates = findCommand(cmd, c -> c.kind.isRealCommand);
         switch (candidates.length) {
             case 0:
-                // not found, it is either a snippet command or an error
-                if (ID.matcher(cmd.substring(1)).matches()) {
+                // not found, it is either a rerun-ID command or an error
+                if (RERUN_ID.matcher(cmd).matches()) {
                     // it is in the form of a snipppet id, see if it is a valid history reference
                     rerunHistoryEntriesById(input);
                 } else {
@@ -1837,7 +1854,7 @@ public class JShellTool implements MessageHandler {
 
     public List<String> commandDocumentation(String code, int cursor, boolean shortDescription) {
         code = code.substring(0, cursor).replaceAll("\\h+", " ");
-        String stripped = code.replaceFirst("/help ", "");
+        String stripped = code.replaceFirst("/(he(lp?)?|\\?) ", "");
         boolean inHelp = !code.equals(stripped);
         int space = stripped.indexOf(' ');
         String prefix = space != (-1) ? stripped.substring(0, space) : stripped;
@@ -1845,24 +1862,30 @@ public class JShellTool implements MessageHandler {
 
         List<Entry<String, String>> toShow;
 
-        if (stripped.matches("/set .*") || stripped.matches("set .*")) {
+        if (SET_SUB.matcher(stripped).matches()) {
             String setSubcommand = stripped.replaceFirst("/?set ([^ ]*)($| .*)", "$1");
             toShow =
                 Arrays.stream(SET_SUBCOMMANDS)
                        .filter(s -> s.startsWith(setSubcommand))
-                       .map(s -> new SimpleEntry<>("/set " + s, "help.set." + s))
-                       .collect(Collectors.toList());
+                        .map(s -> new SimpleEntry<>("/set " + s, "help.set." + s))
+                        .collect(toList());
+        } else if (RERUN_ID.matcher(stripped).matches()) {
+            toShow =
+                singletonList(new SimpleEntry<>("/<id>", "help.rerun"));
+        } else if (RERUN_PREVIOUS.matcher(stripped).matches()) {
+            toShow =
+                singletonList(new SimpleEntry<>("/-<n>", "help.rerun"));
         } else {
             toShow =
                 commands.values()
                         .stream()
                         .filter(c -> c.command.startsWith(prefix)
-                                     || c.command.substring(1).startsWith(prefix))
-                        .filter(c -> c.kind.showInHelp ||
-                                     (inHelp && c.kind == CommandKind.HELP_SUBJECT))
+                                  || c.command.substring(1).startsWith(prefix))
+                        .filter(c -> c.kind.showInHelp
+                                  || (inHelp && c.kind == CommandKind.HELP_SUBJECT))
                         .sorted((c1, c2) -> c1.command.compareTo(c2.command))
                         .map(c -> new SimpleEntry<>(c.command, c.helpKey))
-                        .collect(Collectors.toList());
+                        .collect(toList());
         }
 
         if (toShow.size() == 1 && !inHelp) {
@@ -2347,17 +2370,14 @@ public class JShellTool implements MessageHandler {
                         return false;
                     }
                     if (!which.equals("_blank")) {
-                        hardrb("help.set." + which);
+                        printHelp("/set " + which, "help.set." + which);
                         return true;
                     }
                 }
             }
             if (matches.length > 0) {
                 for (Command c : matches) {
-                    hard("");
-                    hard("%s", c.command);
-                    hard("");
-                    hardrb(c.helpKey);
+                    printHelp(c.command, c.helpKey);
                 }
                 return true;
             } else {
@@ -2368,8 +2388,7 @@ public class JShellTool implements MessageHandler {
                         .toArray(String[]::new);
                 if (subs.length > 0) {
                     for (String sub : subs) {
-                        hardrb("help.set." + sub);
-                        hard("");
+                        printHelp("/set " + sub, "help.set." + sub);
                     }
                     return true;
                 }
@@ -2389,6 +2408,16 @@ public class JShellTool implements MessageHandler {
                 cmd -> getResourceString(cmd.helpKey + ".summary")
         );
         return true;
+    }
+
+    private void printHelp(String name, String key) {
+        int len = name.length();
+        String centered = "%" + ((OUTPUT_WIDTH + len) / 2) + "s";
+        hard("");
+        hard(centered, name);
+        hard(centered, Stream.generate(() -> "=").limit(len).collect(Collectors.joining()));
+        hard("");
+        hardrb(key);
     }
 
     private boolean cmdHistory() {

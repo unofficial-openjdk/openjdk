@@ -30,6 +30,7 @@ import static jdk.dynalink.StandardNamespace.PROPERTY;
 import static jdk.dynalink.StandardOperation.CALL;
 import static jdk.dynalink.StandardOperation.GET;
 import static jdk.dynalink.StandardOperation.NEW;
+import static jdk.dynalink.StandardOperation.REMOVE;
 import static jdk.dynalink.StandardOperation.SET;
 
 import java.lang.invoke.CallSite;
@@ -39,7 +40,9 @@ import java.lang.invoke.MethodType;
 import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import jdk.dynalink.CallSiteDescriptor;
 import jdk.dynalink.DynamicLinker;
 import jdk.dynalink.DynamicLinkerFactory;
@@ -90,6 +93,7 @@ public class BeanLinkerTest {
     private static final Operation GET_ELEMENT = GET.withNamespace(ELEMENT);
     private static final Operation GET_METHOD = GET.withNamespace(METHOD);
     private static final Operation SET_ELEMENT = SET.withNamespace(ELEMENT);
+    private static final Operation REMOVE_ELEMENT = REMOVE.withNamespace(ELEMENT);
 
     private static final MethodHandle findThrower(final String name) {
         try {
@@ -121,8 +125,8 @@ public class BeanLinkerTest {
             final CallSiteDescriptor desc = req.getCallSiteDescriptor();
             final Operation op = desc.getOperation();
             final Operation baseOp = NamedOperation.getBaseOperation(op);
-            if (baseOp != GET_ELEMENT && baseOp != SET_ELEMENT) {
-                // We only handle GET_ELEMENT and SET_ELEMENT.
+            if (baseOp != GET_ELEMENT && baseOp != SET_ELEMENT && baseOp != REMOVE_ELEMENT) {
+                // We only handle GET_ELEMENT, SET_ELEMENT and REMOVE_ELEMENT.
                 return null;
             }
 
@@ -243,13 +247,56 @@ public class BeanLinkerTest {
         Assert.assertEquals((int) cs.getTarget().invoke(list, 1), (int) list.get(1));
         Assert.assertEquals((int) cs.getTarget().invoke(list, 2), (int) list.get(2));
         try {
-            final int x = (int) cs.getTarget().invoke(list, -1);
+            cs.getTarget().invoke(list, -1);
             throw new RuntimeException("expected IndexOutOfBoundsException");
         } catch (final IndexOutOfBoundsException ex) {
         }
 
         try {
-            final int x = (int) cs.getTarget().invoke(list, list.size());
+            cs.getTarget().invoke(list, list.size());
+            throw new RuntimeException("expected IndexOutOfBoundsException");
+        } catch (final IndexOutOfBoundsException ex) {
+        }
+    }
+
+    private Object invokeWithFixedKey(boolean publicLookup, Operation op, Object name, MethodType mt, Object... args) throws Throwable {
+        return createCallSite(publicLookup, op.named(name), mt).getTarget().invokeWithArguments(args);
+    }
+
+    @Test(dataProvider = "flags")
+    public void getElementWithFixedKeyTest(final boolean publicLookup) throws Throwable {
+        final MethodType mt = MethodType.methodType(int.class, Object.class);
+
+        final int[] arr = {23, 42};
+        Assert.assertEquals((int) invokeWithFixedKey(publicLookup, GET_ELEMENT, 0, mt, arr), 23);
+        Assert.assertEquals((int) invokeWithFixedKey(publicLookup, GET_ELEMENT, 1, mt, arr), 42);
+        try {
+            invokeWithFixedKey(publicLookup, GET_ELEMENT, -1, mt, arr);
+            throw new RuntimeException("expected ArrayIndexOutOfBoundsException");
+        } catch (final ArrayIndexOutOfBoundsException ex) {
+        }
+
+        try {
+            invokeWithFixedKey(publicLookup, GET_ELEMENT, arr.length, mt, arr);
+            throw new RuntimeException("expected ArrayIndexOutOfBoundsException");
+        } catch (final ArrayIndexOutOfBoundsException ex) {
+        }
+
+        final List<Integer> list = new ArrayList<>();
+        list.add(23);
+        list.add(430);
+        list.add(-4354);
+        for (int i = 0; i < 3; ++i) {
+            Assert.assertEquals((int) invokeWithFixedKey(publicLookup, GET_ELEMENT, i, mt, list), (int) list.get(i));
+        }
+        try {
+            invokeWithFixedKey(publicLookup, GET_ELEMENT, -1, mt, list);
+            throw new RuntimeException("expected IndexOutOfBoundsException");
+        } catch (final IndexOutOfBoundsException ex) {
+        }
+
+        try {
+            invokeWithFixedKey(publicLookup, GET_ELEMENT, list.size(), mt, list);
             throw new RuntimeException("expected IndexOutOfBoundsException");
         } catch (final IndexOutOfBoundsException ex) {
         }
@@ -286,7 +333,9 @@ public class BeanLinkerTest {
         cs.getTarget().invoke(list, 0, -list.get(0));
         Assert.assertEquals((int) list.get(0), -23);
         cs.getTarget().invoke(list, 1, -430);
+        Assert.assertEquals((int) list.get(1), -430);
         cs.getTarget().invoke(list, 2, 4354);
+        Assert.assertEquals((int) list.get(2), 4354);
         try {
             cs.getTarget().invoke(list, -1, 343);
             throw new RuntimeException("expected IndexOutOfBoundsException");
@@ -295,6 +344,52 @@ public class BeanLinkerTest {
 
         try {
             cs.getTarget().invoke(list, list.size(), 43543);
+            throw new RuntimeException("expected IndexOutOfBoundsException");
+        } catch (final IndexOutOfBoundsException ex) {
+        }
+    }
+
+    @Test(dataProvider = "flags")
+    public void setElementWithFixedKeyTest(final boolean publicLookup) throws Throwable {
+        final MethodType mt = MethodType.methodType(void.class, Object.class, int.class);
+
+        final int[] arr = {23, 42};
+        invokeWithFixedKey(publicLookup, SET_ELEMENT, 0, mt, arr, 0);
+        Assert.assertEquals(arr[0], 0);
+        invokeWithFixedKey(publicLookup, SET_ELEMENT, 1, mt, arr, -5);
+        Assert.assertEquals(arr[1], -5);
+
+        try {
+            invokeWithFixedKey(publicLookup, SET_ELEMENT, -1, mt, arr, 12);
+            throw new RuntimeException("expected ArrayIndexOutOfBoundsException");
+        } catch (final ArrayIndexOutOfBoundsException ex) {
+        }
+
+        try {
+            invokeWithFixedKey(publicLookup, SET_ELEMENT, arr.length, mt, arr, 20);
+            throw new RuntimeException("expected ArrayIndexOutOfBoundsException");
+        } catch (final ArrayIndexOutOfBoundsException ex) {
+        }
+
+        final List<Integer> list = new ArrayList<>();
+        list.add(23);
+        list.add(430);
+        list.add(-4354);
+
+        invokeWithFixedKey(publicLookup, SET_ELEMENT, 0, mt, list, -list.get(0));
+        Assert.assertEquals((int) list.get(0), -23);
+        invokeWithFixedKey(publicLookup, SET_ELEMENT, 1, mt, list, -430);
+        Assert.assertEquals((int) list.get(1), -430);
+        invokeWithFixedKey(publicLookup, SET_ELEMENT, 2, mt, list, 4354);
+        Assert.assertEquals((int) list.get(2), 4354);
+        try {
+            invokeWithFixedKey(publicLookup, SET_ELEMENT, -1, mt, list, 343);
+            throw new RuntimeException("expected IndexOutOfBoundsException");
+        } catch (final IndexOutOfBoundsException ex) {
+        }
+
+        try {
+            invokeWithFixedKey(publicLookup, SET_ELEMENT, list.size(), mt, list, 43543);
             throw new RuntimeException("expected IndexOutOfBoundsException");
         } catch (final IndexOutOfBoundsException ex) {
         }
@@ -446,5 +541,86 @@ public class BeanLinkerTest {
                 Assert.assertTrue(th instanceof AccessControlException);
             }
         }
+    }
+
+    @Test(dataProvider = "flags")
+    public void removeElementFromListTest(final boolean publicLookup) throws Throwable {
+        final MethodType mt = MethodType.methodType(void.class, Object.class, int.class);
+        final CallSite cs = createCallSite(publicLookup, REMOVE_ELEMENT, mt);
+
+        final List<Integer> list = new ArrayList<>(List.of(23, 430, -4354));
+
+        cs.getTarget().invoke(list, 1);
+        Assert.assertEquals(list, List.of(23, -4354));
+        cs.getTarget().invoke(list, 1);
+        Assert.assertEquals(list, List.of(23));
+        cs.getTarget().invoke(list, 0);
+        Assert.assertEquals(list, List.of());
+        try {
+            cs.getTarget().invoke(list, -1);
+            throw new RuntimeException("expected IndexOutOfBoundsException");
+        } catch (final IndexOutOfBoundsException ex) {
+        }
+
+        try {
+            cs.getTarget().invoke(list, list.size());
+            throw new RuntimeException("expected IndexOutOfBoundsException");
+        } catch (final IndexOutOfBoundsException ex) {
+        }
+    }
+
+    @Test(dataProvider = "flags")
+    public void removeElementFromListWithFixedKeyTest(final boolean publicLookup) throws Throwable {
+        final MethodType mt = MethodType.methodType(void.class, Object.class);
+
+        final List<Integer> list = new ArrayList<>(List.of(23, 430, -4354));
+
+        createCallSite(publicLookup, REMOVE_ELEMENT.named(1), mt).getTarget().invoke(list);
+        Assert.assertEquals(list, List.of(23, -4354));
+        createCallSite(publicLookup, REMOVE_ELEMENT.named(1), mt).getTarget().invoke(list);
+        Assert.assertEquals(list, List.of(23));
+        createCallSite(publicLookup, REMOVE_ELEMENT.named(0), mt).getTarget().invoke(list);
+        Assert.assertEquals(list, List.of());
+        try {
+            createCallSite(publicLookup, REMOVE_ELEMENT.named(-1), mt).getTarget().invoke(list);
+            throw new RuntimeException("expected IndexOutOfBoundsException");
+        } catch (final IndexOutOfBoundsException ex) {
+        }
+
+        try {
+            createCallSite(publicLookup, REMOVE_ELEMENT.named(list.size()), mt).getTarget().invoke(list);
+            throw new RuntimeException("expected IndexOutOfBoundsException");
+        } catch (final IndexOutOfBoundsException ex) {
+        }
+    }
+
+    @Test(dataProvider = "flags")
+    public void removeElementFromMapTest(final boolean publicLookup) throws Throwable {
+        final MethodType mt = MethodType.methodType(void.class, Object.class, Object.class);
+        final CallSite cs = createCallSite(publicLookup, REMOVE_ELEMENT, mt);
+
+        final Map<String, String> map = new HashMap<>(Map.of("k1", "v1", "k2", "v2", "k3", "v3"));
+
+        cs.getTarget().invoke(map, "k2");
+        Assert.assertEquals(map, Map.of("k1", "v1", "k3", "v3"));
+        cs.getTarget().invoke(map, "k4");
+        Assert.assertEquals(map, Map.of("k1", "v1", "k3", "v3"));
+        cs.getTarget().invoke(map, "k1");
+        Assert.assertEquals(map, Map.of("k3", "v3"));
+    }
+
+
+    @Test(dataProvider = "flags")
+    public void removeElementFromMapWithFixedKeyTest(final boolean publicLookup) throws Throwable {
+        final MethodType mt = MethodType.methodType(void.class, Object.class);
+
+        final Map<String, String> map = new HashMap<>(Map.of("k1", "v1", "k2", "v2", "k3", "v3"));
+
+        createCallSite(publicLookup, REMOVE_ELEMENT.named("k2"), mt).getTarget().invoke(map);
+        Assert.assertEquals(map, Map.of("k1", "v1", "k3", "v3"));
+        createCallSite(publicLookup, REMOVE_ELEMENT.named("k4"), mt).getTarget().invoke(map);
+        Assert.assertEquals(map, Map.of("k1", "v1", "k3", "v3"));
+        createCallSite(publicLookup, REMOVE_ELEMENT.named("k1"), mt).getTarget().invoke(map);
+        Assert.assertEquals(map, Map.of("k3", "v3"));
     }
 }

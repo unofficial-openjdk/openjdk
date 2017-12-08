@@ -2365,9 +2365,6 @@ public class Utils {
 
     List<Element> getItems(Element e, boolean filter, ElementKind select) {
         List<Element> elements = new ArrayList<>();
-        // maintain backward compatibility by returning a null list, see AnnotationDocType.methods().
-        if (configuration.backwardCompatibility && e.getKind() == ANNOTATION_TYPE)
-            return elements;
         return new SimpleElementVisitor9<List<Element>, Void>() {
 
             @Override
@@ -2676,7 +2673,8 @@ public class Utils {
     }
 
     /**
-     * package name, an unnamed package is returned as &lt;Unnamed&gt;
+     * Get the package name for a given package element. An unnamed package is returned as &lt;Unnamed&gt;
+     *
      * @param pkg
      * @return
      */
@@ -2685,6 +2683,19 @@ public class Utils {
             return DocletConstants.DEFAULT_PACKAGE_NAME;
         }
         return pkg.getQualifiedName().toString();
+    }
+
+    /**
+     * Get the module name for a given module element. An unnamed module is returned as &lt;Unnamed&gt;
+     *
+     * @param mdle a ModuleElement
+     * @return
+     */
+    public String getModuleName(ModuleElement mdle) {
+        if (mdle == null || mdle.isUnnamed()) {
+            return DocletConstants.DEFAULT_ELEMENT_NAME;
+        }
+        return mdle.getQualifiedName().toString();
     }
 
     public boolean isAttribute(DocTree doctree) {

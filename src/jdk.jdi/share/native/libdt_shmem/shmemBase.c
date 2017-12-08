@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,10 @@
 #include "sysShmem.h"
 #include "shmemBase.h"
 #include "jdwpTransport.h"  /* for Packet, TransportCallback */
+
+#if defined(_WIN32)
+  #define PRId64 "I64d"
+#endif
 
 #define MIN(x,y) ((x)<(y)?(x):(y))
 
@@ -537,7 +541,7 @@ openConnection(SharedMemoryTransport *transport, jlong otherPID,
         return SYS_NOMEM;
     }
 
-    sprintf(connection->name, "%s.%ld", transport->name, sysProcessGetID());
+    sprintf(connection->name, "%s.%" PRId64, transport->name, sysProcessGetID());
     error = sysSharedMemOpen(connection->name, &connection->sharedMemory,
                              &connection->shared);
     if (error != SYS_OK) {
@@ -601,7 +605,7 @@ createConnection(SharedMemoryTransport *transport, jlong otherPID,
         return SYS_NOMEM;
     }
 
-    sprintf(connection->name, "%s.%ld", transport->name, otherPID);
+    sprintf(connection->name, "%s.%" PRId64, transport->name, otherPID);
     error = sysSharedMemCreate(connection->name, sizeof(SharedMemory),
                                &connection->sharedMemory, &connection->shared);
     if (error != SYS_OK) {
@@ -1045,7 +1049,7 @@ shmemBase_sendPacket(SharedMemoryConnection *connection, const jdwpPacket *packe
         CHECK_ERROR(sendBytes(connection, &packet->type.cmd.cmd, sizeof(jbyte)));
     }
 
-    data_length = packet->type.cmd.len - 11;
+    data_length = packet->type.cmd.len - JDWP_HEADER_SIZE;
     SHMEM_GUARANTEE(data_length >= 0);
     CHECK_ERROR(sendBytes(connection, &data_length, sizeof(jint)));
 
@@ -1121,10 +1125,10 @@ shmemBase_receivePacket(SharedMemoryConnection *connection, jdwpPacket *packet)
     if (data_length < 0) {
         return SYS_ERR;
     } else if (data_length == 0) {
-        packet->type.cmd.len = 11;
+        packet->type.cmd.len = JDWP_HEADER_SIZE;
         packet->type.cmd.data = NULL;
     } else {
-        packet->type.cmd.len = data_length + 11;
+        packet->type.cmd.len = data_length + JDWP_HEADER_SIZE;
         packet->type.cmd.data = (*callback->alloc)(data_length);
         if (packet->type.cmd.data == NULL) {
             return SYS_ERR;
