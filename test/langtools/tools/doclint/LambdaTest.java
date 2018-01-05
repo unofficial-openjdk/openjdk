@@ -21,34 +21,34 @@
  * questions.
  */
 
-package pkg1;
+/*
+ * @test
+ * @bug 8194069
+ * @summary ignore declarations in lambda expressions
+ * @modules jdk.compiler/com.sun.tools.doclint
+ * @build DocLintTester
+ * @run main DocLintTester -Xmsgs:all SyntheticTest.java
+ */
+
+package acme;
+
+import java.util.Arrays;
+import java.util.Set;
+import java.util.function.Function;
 
 /**
- * This class is marked as deprecated and has a mixture of different types of
- * methods such as "Instance Methods", "Abstract Methods" and "Concrete
- * Methods". None of the methods are marked as deprecated but since the class is
- * deprecated, the methods will also be deprecated and "Deprecated Methods" tab
- * will also be shown with all the methods.
+ * The class has docs.
  */
-@Deprecated
-public abstract class D {
-
+public final class LambdaTest
+{
     /**
-     * This is the first abstract instance method.
+     * The field itself has docs.
      */
-    public abstract void readObject();
-
-    /**
-     * This is the first concrete instance method.
-     */
-    public final void setStub() {
-    }
-
-    /**
-     * This is the second concrete instance method.
-     * @return a string
-     */
-    public String getParameter() {
-         return "test";
-     }
+    // Ensure no warning for lambda parameter, at 'string ->'
+    static final Function<String, String> someFunction = string -> {
+        // Ensure no warning for 'localVariable'
+        int localVariable = 3;
+        return Integer.toString(localVariable);
+    };
 }
+
