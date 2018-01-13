@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,9 +49,6 @@
 #include "runtime/signature.hpp"
 #include "runtime/vframe.hpp"
 #include "utilities/copy.hpp"
-#if INCLUDE_ALL_GCS
-#include "gc/g1/g1SATBCardTableModRefBS.hpp"
-#endif // INCLUDE_ALL_GCS
 
 ConstantPool* ConstantPool::allocate(ClassLoaderData* loader_data, int length, TRAPS) {
   Array<u1>* tags = MetadataFactory::new_array<u1>(loader_data, length, 0, CHECK_NULL);
@@ -333,13 +330,8 @@ void ConstantPool::restore_unshareable_info(TRAPS) {
     if (MetaspaceShared::open_archive_heap_region_mapped() &&
         _cache->archived_references() != NULL) {
       oop archived = _cache->archived_references();
-      // Make sure GC knows the cached object is now live. This is necessary after
-      // initial GC marking and during concurrent marking as strong roots are only
-      // scanned during initial marking (at the start of the GC marking).
-      assert(UseG1GC, "Requires G1 GC");
-      G1SATBCardTableModRefBS::enqueue(archived);
       // Create handle for the archived resolved reference array object
-      Handle refs_handle(THREAD, (oop)archived);
+      Handle refs_handle(THREAD, archived);
       set_resolved_references(loader_data->add_handle(refs_handle));
     } else
 #endif
