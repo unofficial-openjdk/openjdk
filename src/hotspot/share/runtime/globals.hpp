@@ -78,21 +78,21 @@ define_pd_global(bool, TieredCompilation,            false);
 
 define_pd_global(intx, CompileThreshold,             0);
 
-define_pd_global(intx, OnStackReplacePercentage,     0);
-define_pd_global(bool, ResizeTLAB,                   false);
-define_pd_global(intx, FreqInlineSize,               0);
+define_pd_global(intx,   OnStackReplacePercentage,   0);
+define_pd_global(bool,   ResizeTLAB,                 false);
+define_pd_global(intx,   FreqInlineSize,             0);
 define_pd_global(size_t, NewSizeThreadIncrease,      4*K);
-define_pd_global(intx, InlineClassNatives,           true);
-define_pd_global(intx, InlineUnsafeOps,              true);
-define_pd_global(intx, InitialCodeCacheSize,         160*K);
-define_pd_global(intx, ReservedCodeCacheSize,        32*M);
-define_pd_global(intx, NonProfiledCodeHeapSize,      0);
-define_pd_global(intx, ProfiledCodeHeapSize,         0);
-define_pd_global(intx, NonNMethodCodeHeapSize,       32*M);
+define_pd_global(bool,   InlineClassNatives,         true);
+define_pd_global(bool,   InlineUnsafeOps,            true);
+define_pd_global(uintx,  InitialCodeCacheSize,       160*K);
+define_pd_global(uintx,  ReservedCodeCacheSize,      32*M);
+define_pd_global(uintx,  NonProfiledCodeHeapSize,    0);
+define_pd_global(uintx,  ProfiledCodeHeapSize,       0);
+define_pd_global(uintx,  NonNMethodCodeHeapSize,     32*M);
 
-define_pd_global(intx, CodeCacheExpansionSize,       32*K);
-define_pd_global(intx, CodeCacheMinBlockLength,      1);
-define_pd_global(intx, CodeCacheMinimumUseSpace,     200*K);
+define_pd_global(uintx,  CodeCacheExpansionSize,     32*K);
+define_pd_global(uintx,  CodeCacheMinBlockLength,    1);
+define_pd_global(uintx,  CodeCacheMinimumUseSpace,   200*K);
 define_pd_global(size_t, MetaspaceSize,              ScaleForWordSize(4*M));
 define_pd_global(bool, NeverActAsServerClassMachine, true);
 define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
@@ -2041,11 +2041,6 @@ public:
           "Maximum ergonomically set heap size (in bytes); zero means use " \
           "MaxRAM * MaxRAMPercentage / 100")                                \
           range(0, max_uintx)                                               \
-                                                                            \
-  experimental(bool, UseCGroupMemoryLimitForHeap, false,                    \
-          "Use CGroup memory limit as physical memory limit for heap "      \
-          "sizing"                                                          \
-          "Deprecated, replaced by container support")                      \
                                                                             \
   product(uintx, MaxRAMFraction, 4,                                         \
           "Maximum fraction (1/n) of real memory used for maximum heap "    \
