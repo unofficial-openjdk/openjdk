@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,34 +21,11 @@
  * questions.
  */
 
-/* @test
-   @bug 4116016
-   @summary Ensure that finalizers are not invoked more than once when on-exit
-            finalization is enabled and a finalizer invokes System.exit after
-            System.exit has already been invoked
-   @build FinExit
-   @run shell FinExit.sh
- */
+// key: compiler.err.invalid.lambda.parameter.declaration
+// key: compiler.misc.var.and.explicit.not.allowed
 
+import java.util.function.*;
 
-public class FinExit {
-
-    boolean finalized = false;
-
-    public void finalize() {
-        if (finalized) {
-            System.out.println("2");
-        } else {
-            finalized = true;
-            System.out.println("1");
-            System.exit(0);
-        }
-    }
-
-    public static void main(String[] args) throws Exception {
-        System.runFinalizersOnExit(true);
-        Object o = new FinExit();
-        System.exit(0);
-    }
-
+class VarExplicitLambda {
+    IntBinaryOperator f = (int x, var y) -> x + y;
 }
