@@ -51,14 +51,6 @@ java.base_EXCLUDES += java/lang/doc-files
 # data files and shouldn't go in the product
 java.base_EXCLUDE_FILES += sun/text/resources/BreakIteratorRules.java
 
-ifneq ($(filter solaris macosx linux windows,$(OPENJDK_TARGET_OS)), )
-  java.base_EXCLUDE_FILES += \
-      sun/nio/ch/AbstractPollSelectorImpl.java \
-      sun/nio/ch/PollSelectorImpl.java \
-      sun/nio/ch/PollSelectorProvider.java \
-      #
-endif
-
 ifneq ($(OPENJDK_TARGET_OS), solaris)
   java.base_EXCLUDE_FILES += \
       SolarisLoginModule.java \
@@ -249,6 +241,10 @@ java.management.rmi_ADD_JAVAC_FLAGS += -Xdoclint:all/protected '-Xdoclint/packag
 ################################################################################
 
 java.prefs_ADD_JAVAC_FLAGS += -Xdoclint:all/protected '-Xdoclint/package:java.*,javax.*'
+
+################################################################################
+
+java.transaction.xa_ADD_JAVAC_FLAGS += -Xdoclint:all/protected '-Xdoclint/package:javax.*'
 
 ################################################################################
 

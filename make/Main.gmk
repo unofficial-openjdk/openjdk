@@ -266,14 +266,11 @@ endef
 
 $(foreach v, $(JVM_VARIANTS), $(eval $(call DeclareHotspotLibsRecipe,$v)))
 
-hotspot-jsig:
-	+($(CD) $(TOPDIR)/make/hotspot && $(MAKE) $(MAKE_ARGS) -f lib/CompileLibjsig.gmk)
-
 hotspot-ide-project:
 	+($(CD) $(TOPDIR)/make/hotspot && $(MAKE) $(MAKE_ARGS) -f ide/CreateVSProject.gmk)
 
 ALL_TARGETS += $(HOTSPOT_VARIANT_TARGETS) $(HOTSPOT_VARIANT_GENSRC_TARGETS) \
-    $(HOTSPOT_VARIANT_LIBS_TARGETS) hotspot-jsig hotspot-ide-project
+    $(HOTSPOT_VARIANT_LIBS_TARGETS) hotspot-ide-project
 
 ################################################################################
 # Build demos targets
@@ -399,10 +396,13 @@ docs-zip:
 update-build-docs:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f UpdateBuildDocs.gmk)
 
+update-x11wrappers:
+	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f UpdateX11Wrappers.gmk)
+
 ALL_TARGETS += docs-jdk-api-javadoc docs-jdk-api-modulegraph \
     docs-javase-api-javadoc docs-javase-api-modulegraph \
     docs-reference-api-javadoc docs-reference-api-modulegraph docs-jdk-specs \
-    docs-jdk-index docs-zip update-build-docs
+    docs-jdk-index docs-zip update-build-docs update-x11wrappers
 
 ################################################################################
 # Cross compilation support
@@ -724,9 +724,9 @@ else
 
   # If not already set, set the JVM target so that the JVM will be built.
   JVM_MAIN_TARGETS ?= hotspot
-   
+
   # Building java.base-jmod requires all of VM (ie hotspot) to be built.
-  java.base-jmod: $(JVM_MAIN_TARGETS) 
+  java.base-jmod: $(JVM_MAIN_TARGETS)
 
   # Declare dependencies from <module>-jmod to all other module targets
   # When creating a BUILDJDK, the java compilation has already been done by the
@@ -830,7 +830,7 @@ else
 
   # If not already set, then set the JVM specific docs targets
   JVM_DOCS_TARGETS ?= hotspot-$(JVM_VARIANT_MAIN)-gensrc
-  
+
   # The gensrc steps for hotspot and jdk.jdi create html spec files.
   docs-jdk-specs: $(JVM_DOCS_TARGETS) jdk.jdi-gensrc \
       docs-jdk-index
@@ -894,6 +894,8 @@ else
 
   generate-summary: jmods buildtools-modules
 
+  update-x11wrappers: java.base-copy buildtools-jdk
+
 endif
 
 ################################################################################
@@ -904,9 +906,7 @@ JVM_TOOLS_TARGETS ?= buildtools-hotspot
 buildtools: buildtools-langtools interim-langtools interim-rmic \
     buildtools-jdk $(JVM_TOOLS_TARGETS)
 
-hotspot: $(HOTSPOT_VARIANT_TARGETS) hotspot-jsig
-
-hotspot-libs: hotspot-jsig
+hotspot: $(HOTSPOT_VARIANT_TARGETS)
 
 # Create targets hotspot-libs and hotspot-gensrc.
 $(foreach v, $(JVM_VARIANTS), \
