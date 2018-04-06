@@ -37,7 +37,6 @@
 #include "classfile/verificationType.hpp"
 #include "classfile/verifier.hpp"
 #include "classfile/vmSymbols.hpp"
-#include "gc/shared/gcLocker.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "memory/allocation.hpp"
@@ -58,10 +57,12 @@
 #include "oops/symbol.hpp"
 #include "prims/jvmtiExport.hpp"
 #include "prims/jvmtiThreadState.hpp"
+#include "runtime/arguments.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/perfData.hpp"
 #include "runtime/reflection.hpp"
+#include "runtime/safepointVerifiers.hpp"
 #include "runtime/signature.hpp"
 #include "runtime/timer.hpp"
 #include "services/classLoadingService.hpp"
@@ -69,6 +70,7 @@
 #include "trace/traceMacros.hpp"
 #include "utilities/align.hpp"
 #include "utilities/bitMap.inline.hpp"
+#include "utilities/copy.hpp"
 #include "utilities/exceptions.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/growableArray.hpp"
@@ -88,6 +90,7 @@
 
 #define JAVA_CLASSFILE_MAGIC              0xCAFEBABE
 #define JAVA_MIN_SUPPORTED_VERSION        45
+#define JAVA_PREVIEW_MINOR_VERSION        65535
 
 // Used for two backward compatibility reasons:
 // - to check for new additions to the class file format in JDK1.5
@@ -4699,12 +4702,63 @@ static bool has_illegal_visibility(jint flags) {
           (is_protected && is_private));
 }
 
-static bool is_supported_version(u2 major, u2 minor){
+// A legal major_version.minor_version must be one of the following:
+//
+//   Major_version = 45, any minor_version.
+//   Major_version >= 46 and major_version <= current_major_version and minor_version = 0.
+//   Major_version = current_major_version and minor_version = 65535 and --enable-preview is present.
+//
+static void verify_class_version(u2 major, u2 minor, Symbol* class_name, TRAPS){
   const u2 max_version = JVM_CLASSFILE_MAJOR_VERSION;
-  return (major >= JAVA_MIN_SUPPORTED_VERSION) &&
-         (major <= max_version) &&
-         ((major != max_version) ||
-          (minor <= JVM_CLASSFILE_MINOR_VERSION));
+  if (major != JAVA_MIN_SUPPORTED_VERSION) { // All 45.* are ok including 45.65535
+    if (minor == JAVA_PREVIEW_MINOR_VERSION) {
+      if (major != max_version) {
+        ResourceMark rm(THREAD);
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_UnsupportedClassVersionError(),
+          "%s (class file version %u.%u) was compiled with preview features that are unsupported. "
+          "This version of the Java Runtime only recognizes preview features for class file version %u.%u",
+          class_name->as_C_string(), major, minor, JVM_CLASSFILE_MAJOR_VERSION, JAVA_PREVIEW_MINOR_VERSION);
+        return;
+      }
+
+      if (!Arguments::enable_preview()) {
+        ResourceMark rm(THREAD);
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_UnsupportedClassVersionError(),
+          "Preview features are not enabled for %s (class file version %u.%u). Try running with '--enable-preview'",
+          class_name->as_C_string(), major, minor);
+        return;
+      }
+
+    } else { // minor != JAVA_PREVIEW_MINOR_VERSION
+      if (major > max_version) {
+        ResourceMark rm(THREAD);
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_UnsupportedClassVersionError(),
+          "%s has been compiled by a more recent version of the Java Runtime (class file version %u.%u), "
+          "this version of the Java Runtime only recognizes class file versions up to %u.0",
+          class_name->as_C_string(), major, minor, JVM_CLASSFILE_MAJOR_VERSION);
+      } else if (major < JAVA_MIN_SUPPORTED_VERSION) {
+        ResourceMark rm(THREAD);
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_UnsupportedClassVersionError(),
+          "%s (class file version %u.%u) was compiled with an invalid major version",
+          class_name->as_C_string(), major, minor);
+      } else if (minor != 0) {
+        ResourceMark rm(THREAD);
+        Exceptions::fthrow(
+          THREAD_AND_LOCATION,
+          vmSymbols::java_lang_UnsupportedClassVersionError(),
+          "%s (class file version %u.%u) was compiled with an invalid non-zero minor version",
+          class_name->as_C_string(), major, minor);
+      }
+    }
+  }
 }
 
 void ClassFileParser::verify_legal_field_modifiers(jint flags,
@@ -5423,6 +5477,8 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
   // has to be changed accordingly.
   ik->set_initial_method_idnum(ik->methods()->length());
 
+  ik->set_this_class_index(_this_class_index);
+
   if (is_anonymous()) {
     // _this_class_index is a CONSTANT_Class entry that refers to this
     // anonymous class itself. If this class needs to refer to its own methods or
@@ -5546,6 +5602,13 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
       ResourceMark rm;
       const char* module_name = (module_entry->name() == NULL) ? UNNAMED_MODULE : module_entry->name()->as_C_string();
       ik->print_class_load_logging(_loader_data, module_name, _stream);
+    }
+
+    if (ik->minor_version() == JAVA_PREVIEW_MINOR_VERSION &&
+        ik->major_version() != JAVA_MIN_SUPPORTED_VERSION &&
+        log_is_enabled(Info, class, preview)) {
+      ResourceMark rm;
+      log_info(class, preview)("Loading preview feature type %s", ik->external_name());
     }
 
     if (log_is_enabled(Debug, class, resolve))  {
@@ -5863,20 +5926,7 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
   }
 
   // Check version numbers - we check this even with verifier off
-  if (!is_supported_version(_major_version, _minor_version)) {
-    ResourceMark rm(THREAD);
-    Exceptions::fthrow(
-      THREAD_AND_LOCATION,
-      vmSymbols::java_lang_UnsupportedClassVersionError(),
-      "%s has been compiled by a more recent version of the Java Runtime (class file version %u.%u), "
-      "this version of the Java Runtime only recognizes class file versions up to %u.%u",
-      _class_name->as_C_string(),
-      _major_version,
-      _minor_version,
-      JVM_CLASSFILE_MAJOR_VERSION,
-      JVM_CLASSFILE_MINOR_VERSION);
-    return;
-  }
+  verify_class_version(_major_version, _minor_version, _class_name, CHECK);
 
   stream->guarantee_more(3, CHECK); // length, first cp tag
   u2 cp_size = stream->get_u2_fast();

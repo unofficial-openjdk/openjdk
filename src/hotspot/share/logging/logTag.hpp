@@ -112,6 +112,7 @@
   LOG_TAG(perf) \
   LOG_TAG(phases) \
   LOG_TAG(plab) \
+  LOG_TAG(preview)   /* Trace loading of preview feature types */ \
   LOG_TAG(promotion) \
   LOG_TAG(preorder) /* Trace all classes loaded in order referenced (not loaded) */ \
   LOG_TAG(protectiondomain) /* "Trace protection domain verification" */ \
@@ -124,7 +125,6 @@
   LOG_TAG(resolve) \
   LOG_TAG(safepoint) \
   LOG_TAG(scavenge) \
-  LOG_TAG(scrub) \
   LOG_TAG(smr) \
   LOG_TAG(stacktrace) \
   LOG_TAG(stackwalk) \
@@ -145,6 +145,7 @@
   LOG_TAG(tlab) \
   LOG_TAG(time) \
   LOG_TAG(timer) \
+  LOG_TAG(tracking) \
   LOG_TAG(update) \
   LOG_TAG(unload) /* Trace unloading of classes */ \
   LOG_TAG(unshareable) \

@@ -27,12 +27,14 @@
 #include "gc/g1/g1AllocRegion.inline.hpp"
 #include "gc/g1/g1EvacStats.inline.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
+#include "gc/g1/g1Policy.hpp"
 #include "gc/g1/heapRegion.inline.hpp"
 #include "gc/g1/heapRegionSet.inline.hpp"
+#include "gc/g1/heapRegionType.hpp"
 #include "utilities/align.hpp"
 
-G1DefaultAllocator::G1DefaultAllocator(G1CollectedHeap* heap) :
-  G1Allocator(heap),
+G1Allocator::G1Allocator(G1CollectedHeap* heap) :
+  _g1h(heap),
   _survivor_is_full(false),
   _old_is_full(false),
   _retained_old_gc_alloc_region(NULL),
@@ -40,14 +42,18 @@ G1DefaultAllocator::G1DefaultAllocator(G1CollectedHeap* heap) :
   _old_gc_alloc_region(heap->alloc_buffer_stats(InCSetState::Old)) {
 }
 
-void G1DefaultAllocator::init_mutator_alloc_region() {
+void G1Allocator::init_mutator_alloc_region() {
   assert(_mutator_alloc_region.get() == NULL, "pre-condition");
   _mutator_alloc_region.init();
 }
 
-void G1DefaultAllocator::release_mutator_alloc_region() {
+void G1Allocator::release_mutator_alloc_region() {
   _mutator_alloc_region.release();
   assert(_mutator_alloc_region.get() == NULL, "post-condition");
+}
+
+bool G1Allocator::is_retained_old_region(HeapRegion* hr) {
+  return _retained_old_gc_alloc_region == hr;
 }
 
 void G1Allocator::reuse_retained_old_region(EvacuationInfo& evacuation_info,
@@ -72,13 +78,12 @@ void G1Allocator::reuse_retained_old_region(EvacuationInfo& evacuation_info,
       !(retained_region->top() == retained_region->end()) &&
       !retained_region->is_empty() &&
       !retained_region->is_humongous()) {
-    retained_region->record_timestamp();
     // The retained region was added to the old region set when it was
     // retired. We have to remove it now, since we don't allow regions
     // we allocate to in the region sets. We'll re-add it later, when
     // it's retired again.
     _g1h->old_set_remove(retained_region);
-    bool during_im = _g1h->collector_state()->during_initial_mark_pause();
+    bool during_im = _g1h->collector_state()->in_initial_mark_gc();
     retained_region->note_start_of_copying(during_im);
     old->set(retained_region);
     _g1h->hr_printer()->reuse(retained_region);
@@ -86,7 +91,7 @@ void G1Allocator::reuse_retained_old_region(EvacuationInfo& evacuation_info,
   }
 }
 
-void G1DefaultAllocator::init_gc_alloc_regions(EvacuationInfo& evacuation_info) {
+void G1Allocator::init_gc_alloc_regions(EvacuationInfo& evacuation_info) {
   assert_at_safepoint_on_vm_thread();
 
   _survivor_is_full = false;
@@ -99,7 +104,7 @@ void G1DefaultAllocator::init_gc_alloc_regions(EvacuationInfo& evacuation_info) 
                             &_retained_old_gc_alloc_region);
 }
 
-void G1DefaultAllocator::release_gc_alloc_regions(EvacuationInfo& evacuation_info) {
+void G1Allocator::release_gc_alloc_regions(EvacuationInfo& evacuation_info) {
   evacuation_info.set_allocation_regions(survivor_gc_alloc_region()->count() +
                                          old_gc_alloc_region()->count());
   survivor_gc_alloc_region()->release();
@@ -111,25 +116,25 @@ void G1DefaultAllocator::release_gc_alloc_regions(EvacuationInfo& evacuation_inf
   _retained_old_gc_alloc_region = old_gc_alloc_region()->release();
 }
 
-void G1DefaultAllocator::abandon_gc_alloc_regions() {
+void G1Allocator::abandon_gc_alloc_regions() {
   assert(survivor_gc_alloc_region()->get() == NULL, "pre-condition");
   assert(old_gc_alloc_region()->get() == NULL, "pre-condition");
   _retained_old_gc_alloc_region = NULL;
 }
 
-bool G1DefaultAllocator::survivor_is_full() const {
+bool G1Allocator::survivor_is_full() const {
   return _survivor_is_full;
 }
 
-bool G1DefaultAllocator::old_is_full() const {
+bool G1Allocator::old_is_full() const {
   return _old_is_full;
 }
 
-void G1DefaultAllocator::set_survivor_full() {
+void G1Allocator::set_survivor_full() {
   _survivor_is_full = true;
 }
 
-void G1DefaultAllocator::set_old_full() {
+void G1Allocator::set_old_full() {
   _old_is_full = true;
 }
 
@@ -149,6 +154,19 @@ size_t G1Allocator::unsafe_max_tlab_alloc() {
     return MIN2(MAX2(hr->free(), (size_t) MinTLABSize), max_tlab);
   }
 }
+
+size_t G1Allocator::used_in_alloc_regions() {
+  assert(Heap_lock->owner() != NULL, "Should be owned on this thread's behalf.");
+  size_t result = 0;
+
+  // Read only once in case it is set to NULL concurrently
+  HeapRegion* hr = mutator_alloc_region()->get();
+  if (hr != NULL) {
+    result += hr->used();
+  }
+  return result;
+}
+
 
 HeapWord* G1Allocator::par_allocate_during_gc(InCSetState dest,
                                               size_t word_size) {
@@ -220,13 +238,30 @@ HeapWord* G1Allocator::old_attempt_allocation(size_t min_word_size,
   return result;
 }
 
+uint G1PLABAllocator::calc_survivor_alignment_bytes() {
+  assert(SurvivorAlignmentInBytes >= ObjectAlignmentInBytes, "sanity");
+  if (SurvivorAlignmentInBytes == ObjectAlignmentInBytes) {
+    // No need to align objects in the survivors differently, return 0
+    // which means "survivor alignment is not used".
+    return 0;
+  } else {
+    assert(SurvivorAlignmentInBytes > 0, "sanity");
+    return SurvivorAlignmentInBytes;
+  }
+}
+
 G1PLABAllocator::G1PLABAllocator(G1Allocator* allocator) :
   _g1h(G1CollectedHeap::heap()),
   _allocator(allocator),
+  _surviving_alloc_buffer(_g1h->desired_plab_sz(InCSetState::Young)),
+  _tenured_alloc_buffer(_g1h->desired_plab_sz(InCSetState::Old)),
   _survivor_alignment_bytes(calc_survivor_alignment_bytes()) {
-  for (size_t i = 0; i < ARRAY_SIZE(_direct_allocated); i++) {
-    _direct_allocated[i] = 0;
+  for (uint state = 0; state < InCSetState::Num; state++) {
+    _direct_allocated[state] = 0;
+    _alloc_buffers[state] = NULL;
   }
+  _alloc_buffers[InCSetState::Young] = &_surviving_alloc_buffer;
+  _alloc_buffers[InCSetState::Old]  = &_tenured_alloc_buffer;
 }
 
 bool G1PLABAllocator::may_throw_away_buffer(size_t const allocation_word_sz, size_t const buffer_size) const {
@@ -281,18 +316,7 @@ void G1PLABAllocator::undo_allocation(InCSetState dest, HeapWord* obj, size_t wo
   alloc_buffer(dest)->undo_allocation(obj, word_sz);
 }
 
-G1DefaultPLABAllocator::G1DefaultPLABAllocator(G1Allocator* allocator) :
-  G1PLABAllocator(allocator),
-  _surviving_alloc_buffer(_g1h->desired_plab_sz(InCSetState::Young)),
-  _tenured_alloc_buffer(_g1h->desired_plab_sz(InCSetState::Old)) {
-  for (uint state = 0; state < InCSetState::Num; state++) {
-    _alloc_buffers[state] = NULL;
-  }
-  _alloc_buffers[InCSetState::Young] = &_surviving_alloc_buffer;
-  _alloc_buffers[InCSetState::Old]  = &_tenured_alloc_buffer;
-}
-
-void G1DefaultPLABAllocator::flush_and_retire_stats() {
+void G1PLABAllocator::flush_and_retire_stats() {
   for (uint state = 0; state < InCSetState::Num; state++) {
     PLAB* const buf = _alloc_buffers[state];
     if (buf != NULL) {
@@ -304,7 +328,7 @@ void G1DefaultPLABAllocator::flush_and_retire_stats() {
   }
 }
 
-void G1DefaultPLABAllocator::waste(size_t& wasted, size_t& undo_wasted) {
+void G1PLABAllocator::waste(size_t& wasted, size_t& undo_wasted) {
   wasted = 0;
   undo_wasted = 0;
   for (uint state = 0; state < InCSetState::Num; state++) {
@@ -342,6 +366,7 @@ bool G1ArchiveAllocator::alloc_new_region() {
   } else {
     hr->set_closed_archive();
   }
+  _g1h->g1_policy()->remset_tracker()->update_at_allocate(hr);
   _g1h->old_set_add(hr);
   _g1h->hr_printer()->alloc(hr);
   _allocated_regions.append(hr);
