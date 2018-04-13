@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,25 +19,22 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#ifndef OS_SOLARIS_DTRACE_GENERATEJVMOFFSETS_H
-#define OS_SOLARIS_DTRACE_GENERATEJVMOFFSETS_H
+/*
+ * @test
+ * @bug 8200792
+ * @summary PKCS12Attribute#hashCode is always constant -1
+ */
 
-#include <stdio.h>
-#include <strings.h>
+import java.security.PKCS12Attribute;
 
-typedef enum GEN_variant {
-        GEN_OFFSET = 0,
-        GEN_INDEX  = 1,
-        GEN_TABLE  = 2
-} GEN_variant;
-
-extern "C" {
-        int generateJvmOffsets(GEN_variant gen_var);
-        void gen_prologue(GEN_variant gen_var);
-        void gen_epilogue(GEN_variant gen_var);
+public class HashCode {
+    public static void main(String[] args) throws Exception {
+        int h1 = new PKCS12Attribute("1.2.3.4", "AA").hashCode();
+        int h2 = new PKCS12Attribute("2.3.4.5", "BB,CC").hashCode();
+        if (h1 == -1 || h2 == -1 || h1 == h2) {
+            throw new Exception("I see " + h1 + " and " + h2);
+        }
+    }
 }
-
-#endif // OS_SOLARIS_DTRACE_GENERATEJVMOFFSETS_H
