@@ -262,8 +262,7 @@ AWT_NS_WINDOW_IMPLEMENTATION
         } else {
             [self.nsWindow setCollectionBehavior:NSWindowCollectionBehaviorDefault];
         }
-    }
-
+    } 
 }
 
 - (id) initWithPlatformWindow:(JNFWeakJObjectWrapper *)platformWindow
