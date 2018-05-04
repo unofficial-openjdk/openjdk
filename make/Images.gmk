@@ -134,7 +134,6 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
 
   JDK_MAN_PAGES += \
       $(JRE_MAN_PAGES) \
-      appletviewer.1 \
       idlj.1 \
       jar.1 \
       jarsigner.1 \
