@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,8 @@ package org.netbeans.jemmy.operators;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.beans.PropertyVetoException;
 import java.util.Hashtable;
@@ -31,10 +33,11 @@ import java.util.Hashtable;
 import javax.swing.Icon;
 import javax.swing.JDesktopPane;
 import javax.swing.JInternalFrame;
+import javax.swing.JInternalFrame.JDesktopIcon;
 import javax.swing.JLayeredPane;
 import javax.swing.JMenuBar;
 import javax.swing.JScrollPane;
-import javax.swing.JInternalFrame.JDesktopIcon;
+import javax.swing.UIManager;
 import javax.swing.event.InternalFrameListener;
 import javax.swing.plaf.InternalFrameUI;
 
@@ -130,6 +133,24 @@ public class JInternalFrameOperator extends JComponentOperator
      * @see #getDump
      */
     public static final String IS_SELECTED_DPROP = "Selected";
+
+    /**
+     * Maximize button tool tip key
+     */
+    public static final String MAXIMIZE_BUTTON_TOOLTIP =
+            UIManager.getString("InternalFrame.maxButtonToolTip");
+
+    /**
+     * Close button tool tip key
+     */
+    public static final String CLOSE_BUTTON_TOOLTIP =
+            UIManager.getString("InternalFrame.closeButtonToolTip");
+
+    /**
+     * Minimize button tool tip key
+     */
+    public static final String MINIMIZE_BUTTON_TOOLTIP =
+            UIManager.getString("InternalFrame.iconButtonToolTip");
 
     /**
      * A minimizing button.
@@ -505,6 +526,9 @@ public class JInternalFrameOperator extends JComponentOperator
                 + " position");
         checkIconified(false);
         wDriver.move(this, x, y);
+        if (getVerification()) {
+            waitComponentLocation(new Point(x, y));
+        }
     }
 
     /**
@@ -526,6 +550,9 @@ public class JInternalFrameOperator extends JComponentOperator
                 + " size");
         checkIconified(false);
         wDriver.resize(this, width, height);
+        if (getVerification()) {
+            waitComponentSize(new Dimension(width, height));
+        }
     }
 
     /**
@@ -536,6 +563,9 @@ public class JInternalFrameOperator extends JComponentOperator
     public void activate() {
         checkIconified(false);
         wDriver.activate(this);
+        if (getVerification()) {
+            waitActivate(true);
+        }
     }
 
     /**
@@ -544,6 +574,9 @@ public class JInternalFrameOperator extends JComponentOperator
     public void close() {
         checkIconified(false);
         wDriver.requestClose(this);
+        if (getVerification()) {
+            waitClosed();
+        }
     }
 
     /**
@@ -654,18 +687,18 @@ public class JInternalFrameOperator extends JComponentOperator
     /**
      * Waits for the frame to be iconified or deiconified.
      *
-     * @param icon whether the frame needs to be iconified.
+     * @param isIconified whether the frame needs to be iconified or deiconified.
      */
-    public void waitIcon(final boolean icon) {
-        waitState(new ComponentChooser() {
+    public void waitIcon(final boolean isIconified) {
+        waitStateOnQueue(new ComponentChooser() {
             @Override
             public boolean checkComponent(Component comp) {
-                return ((JInternalFrame) comp).isIcon() == icon;
+                return isIcon() == isIconified;
             }
 
             @Override
             public String getDescription() {
-                return "Iconified JInternalFrame";
+                return "Internal Frame is " + (isIconified ? "iconified" : "deiconified");
             }
 
             @Override
@@ -676,20 +709,66 @@ public class JInternalFrameOperator extends JComponentOperator
     }
 
     /**
-     * Waits for the frame to be maximized or demaximized.
+     * Waits for the frame to be activated or deactivated.
      *
-     * @param maximum whether the frame needs to be maximized.
+     * @param isActivate whether the frame needs to be activated or deactivated.
      */
-    public void waitMaximum(final boolean maximum) {
-        waitState(new ComponentChooser() {
+    public void waitActivate(final boolean isActivate) {
+        waitStateOnQueue(new ComponentChooser() {
             @Override
             public boolean checkComponent(Component comp) {
-                return ((JInternalFrame) comp).isMaximum() == maximum;
+                return isSelected() == isActivate;
             }
 
             @Override
             public String getDescription() {
-                return "Maximizied JInternalFrame";
+                return "Internal Frame is " + (isActivate ? "activated" : "deactivated");
+            }
+
+            @Override
+            public String toString() {
+                return "JInternalFrameOperator.waitActivate.ComponentChooser{description = " + getDescription() + '}';
+            }
+        });
+    }
+
+    /**
+     * Waits for the frame to be closed.
+     */
+    public void waitClosed() {
+        waitStateOnQueue(new ComponentChooser() {
+            @Override
+            public boolean checkComponent(Component comp) {
+                return isClosed();
+            }
+
+            @Override
+            public String getDescription() {
+                return "Internal Frame is closed";
+            }
+
+            @Override
+            public String toString() {
+                return "JInternalFrameOperator.waitClosed.ComponentChooser{description = " + getDescription() + '}';
+            }
+        });
+    }
+
+    /**
+     * Waits for the frame to be maximized or demaximized.
+     *
+     * @param isMaximum whether the frame needs to be maximized or demaximized.
+     */
+    public void waitMaximum(final boolean isMaximum) {
+        waitStateOnQueue(new ComponentChooser() {
+            @Override
+            public boolean checkComponent(Component comp) {
+                return isMaximum() == isMaximum;
+            }
+
+            @Override
+            public String getDescription() {
+                return "Internal Frame is " + (isMaximum ? "maximizied" : "demaximizied");
             }
 
             @Override
@@ -1299,7 +1378,6 @@ public class JInternalFrameOperator extends JComponentOperator
         if (!isIcon() && titlePane != null) {
             if (titleOperator == null) {
                 titleOperator = new ContainerOperator<>(titlePane);
-                int bttCount = 0;
                 if (getContainer(new ComponentChooser() {
                     @Override
                     public boolean checkComponent(Component comp) {
@@ -1308,7 +1386,7 @@ public class JInternalFrameOperator extends JComponentOperator
 
                     @Override
                     public String getDescription() {
-                        return "Desctop pane";
+                        return "Desktop pane";
                     }
 
                     @Override
@@ -1316,11 +1394,11 @@ public class JInternalFrameOperator extends JComponentOperator
                         return "JInternalFrameOperator.initOperators.ComponentChooser{description = " + getDescription() + '}';
                     }
                 }) != null) {
-                    minOper = new JButtonOperator(titleOperator, bttCount);
-                    bttCount++;
+                    minOper = new JButtonOperator(titleOperator,
+                            new JComponentByTipFinder(MINIMIZE_BUTTON_TOOLTIP));
                     if (((JInternalFrame) getSource()).isMaximizable()) {
-                        maxOper = new JButtonOperator(titleOperator, bttCount);
-                        bttCount++;
+                        maxOper = new JButtonOperator(titleOperator,
+                                new JComponentByTipFinder(MAXIMIZE_BUTTON_TOOLTIP));
                     } else {
                         maxOper = null;
                     }
@@ -1329,7 +1407,8 @@ public class JInternalFrameOperator extends JComponentOperator
                     maxOper = null;
                 }
                 if (isClosable()) {
-                    closeOper = new JButtonOperator(titleOperator, bttCount);
+                    closeOper = new JButtonOperator(titleOperator,
+                            new JComponentByTipFinder(CLOSE_BUTTON_TOOLTIP));
                 } else {
                     closeOper = null;
                 }
