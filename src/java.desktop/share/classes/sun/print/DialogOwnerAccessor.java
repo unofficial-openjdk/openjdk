@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,44 +23,25 @@
  * questions.
  */
 
-package sun.applet;
+package sun.print;
 
-/**
- * An applet security exception.
- *
- * @author      Arthur van Hoff
- */
-@SuppressWarnings("serial") // JDK-implementation class
-public
-class AppletSecurityException extends SecurityException {
-    private String key = null;
-    private Object msgobj[] = null;
+import javax.print.attribute.standard.DialogOwner;
 
-    public AppletSecurityException(String name) {
-        super(name);
-        this.key = name;
+public abstract class DialogOwnerAccessor {
+
+    public abstract long getOwnerID(DialogOwner owner);
+
+    public static DialogOwnerAccessor accessor = null;
+
+    public static void setAccessor(DialogOwnerAccessor acc) {
+        accessor = acc;
     }
 
-    public AppletSecurityException(String name, String arg) {
-        this(name);
-        msgobj = new Object[1];
-        msgobj[0] = (Object)arg;
+    public static long getID(DialogOwner owner) {
+        if (accessor == null || owner == null) {
+            return 0;
+        } else {
+            return accessor.getOwnerID(owner);
+        }
     }
-
-    public AppletSecurityException(String name, String arg1, String arg2) {
-        this(name);
-        msgobj = new Object[2];
-        msgobj[0] = (Object)arg1;
-        msgobj[1] = (Object)arg2;
-    }
-
-    public String getLocalizedMessage() {
-        if( msgobj != null)
-            return amh.getMessage(key, msgobj);
-        else
-            return amh.getMessage(key);
-    }
-
-    private static AppletMessageHandler amh = new AppletMessageHandler("appletsecurityexception");
-
 }
