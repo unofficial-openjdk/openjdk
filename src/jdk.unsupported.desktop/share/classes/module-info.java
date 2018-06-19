@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,22 +22,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
-package sun.awt.www.content.audio;
-
-import java.io.IOException;
-import java.net.ContentHandler;
-import java.net.URLConnection;
-
-import com.sun.media.sound.JavaSoundAudioClip;
-
 /**
- * Basic .aiff audio handler returns an JavaSoundAudioClip object.
+ * This module is intended for use only by the javafx.swing module
+ * for the purpose of FX/Swing interop
  *
- * @author Jeff Nisewanger
+ * @since 11
  */
-public class x_aiff extends ContentHandler {
-    public Object getContent(URLConnection uc) throws IOException {
-        return JavaSoundAudioClip.create(uc);
-    }
+module jdk.unsupported.desktop {
+
+    requires transitive java.desktop;
+
+    exports jdk.swing.interop;
+
+    provides sun.swing.InteropProvider
+        with jdk.swing.interop.internal.InteropProviderImpl;
+
 }
+

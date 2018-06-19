@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,21 +23,7 @@
  * questions.
  */
 
-package sun.awt.www.content.audio;
+package sun.swing;
 
-import java.io.IOException;
-import java.net.ContentHandler;
-import java.net.URLConnection;
-
-import com.sun.media.sound.JavaSoundAudioClip;
-
-/**
- * Basic .aiff audio handler returns an JavaSoundAudioClip object.
- *
- * @author Jeff Nisewanger
- */
-public class x_aiff extends ContentHandler {
-    public Object getContent(URLConnection uc) throws IOException {
-        return JavaSoundAudioClip.create(uc);
-    }
+public interface InteropProvider {
 }
