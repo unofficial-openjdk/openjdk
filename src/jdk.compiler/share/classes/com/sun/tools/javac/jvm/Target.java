@@ -161,6 +161,13 @@ public enum Target {
         return Integer.toString(this.ordinal() - Target.JDK1_1.ordinal() + 1);
     }
 
+    /** All modules that export an API are roots when compiling code in the unnamed
+     *  module and targeting 11 or newer.
+     */
+    public boolean allApiModulesAreRoots() {
+        return compareTo(JDK1_11) >= 0;
+    }
+
     /** Does the target VM support nestmate access?
      */
     public boolean hasNestmateAccess() {
