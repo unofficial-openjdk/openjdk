@@ -280,12 +280,12 @@ java/awt/Modal/FileDialog/FileDialogModal4Test.java 8198664 macosx-all
 java/awt/Modal/FileDialog/FileDialogModal5Test.java 8198664 macosx-all
 java/awt/Modal/FileDialog/FileDialogModal6Test.java 8198664 macosx-all
 java/awt/Modal/FileDialog/FileDialogNonModal1Test.java 8198664 macosx-all
-java/awt/Modal/FileDialog/FileDialogNonModal2Test.java 8198664,8203003 macosx-all,linux-all
+java/awt/Modal/FileDialog/FileDialogNonModal2Test.java 8198664 macosx-all,linux-all
 java/awt/Modal/FileDialog/FileDialogNonModal3Test.java 8198664 macosx-all
 java/awt/Modal/FileDialog/FileDialogNonModal4Test.java 8198664 macosx-all
 java/awt/Modal/FileDialog/FileDialogNonModal5Test.java 8198664 macosx-all
-java/awt/Modal/FileDialog/FileDialogNonModal6Test.java 8198664,8203003 macosx-all,linux-all
-java/awt/Modal/FileDialog/FileDialogNonModal7Test.java 8198664,8203003 macosx-all,linux-all
+java/awt/Modal/FileDialog/FileDialogNonModal6Test.java 8198664 macosx-all,linux-all
+java/awt/Modal/FileDialog/FileDialogNonModal7Test.java 8198664 macosx-all,linux-all
 java/awt/Modal/FileDialog/FileDialogTKModal1Test.java 8196430 generic-all
 java/awt/Modal/FileDialog/FileDialogTKModal2Test.java 8196430 generic-all
 java/awt/Modal/FileDialog/FileDialogTKModal3Test.java 8196430 generic-all
@@ -485,8 +485,6 @@ java/awt/Choice/ChoicePopupLocation/ChoicePopupLocation.java 8202931 macosx-all,
 java/awt/Focus/NonFocusableBlockedOwnerTest/NonFocusableBlockedOwnerTest.html 7124275 macosx-all
 java/awt/Focus/TranserFocusToWindow/TranserFocusToWindow.java 6848810 macosx-all
 java/awt/Component/NativeInLightShow/NativeInLightShow.java 8202932 linux-all
-java/awt/grab/GrabOnUnfocusableToplevel/GrabOnUnfocusableToplevel.java 8202933 linux-all
-java/awt/grab/MenuDragEvents/MenuDragEvents.html 8202934 linux-all
 java/awt/FileDialog/ModalFocus/FileDialogModalFocusTest.java 8194751 linux-all
 java/awt/image/VolatileImage/BitmaskVolatileImage.java 8133102 linux-all
 java/awt/SplashScreen/MultiResolutionSplash/unix/UnixMultiResolutionSplashTest.java 8203004 linux-all
