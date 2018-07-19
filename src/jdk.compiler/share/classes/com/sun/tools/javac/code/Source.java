@@ -81,8 +81,11 @@ public enum Source {
     /** 1.10 local-variable type inference (var). */
     JDK10("10"),
 
-    /** 1.11 covers the to be determined language features that will be added in JDK 11. */
-    JDK11("11");
+    /** 1.11 local-variable syntax for lambda parameters */
+    JDK11("11"),
+
+    /** 12 covers the to be determined language features that will be added in JDK 12. */
+    JDK12("12");
 
     private static final Context.Key<Source> sourceKey = new Context.Key<>();
 
@@ -118,7 +121,7 @@ public enum Source {
         this.name = name;
     }
 
-    public static final Source MIN = Source.JDK6;
+    public static final Source MIN = Source.JDK7;
 
     private static final Source MAX = values()[values().length - 1];
 
@@ -128,7 +131,12 @@ public enum Source {
         return tab.get(name);
     }
 
+    public boolean isSupported() {
+        return this.compareTo(MIN) >= 0;
+    }
+
     public Target requiredTarget() {
+        if (this.compareTo(JDK12) >= 0) return Target.JDK1_12;
         if (this.compareTo(JDK11) >= 0) return Target.JDK1_11;
         if (this.compareTo(JDK10) >= 0) return Target.JDK1_10;
         if (this.compareTo(JDK9) >= 0) return Target.JDK1_9;
@@ -148,19 +156,9 @@ public enum Source {
     public enum Feature {
 
         DIAMOND(JDK7, Fragments.FeatureDiamond, DiagKind.NORMAL),
-        MULTICATCH(JDK7, Fragments.FeatureMulticatch, DiagKind.PLURAL),
-        IMPROVED_RETHROW_ANALYSIS(JDK7),
-        IMPROVED_CATCH_ANALYSIS(JDK7),
         MODULES(JDK9, Fragments.FeatureModules, DiagKind.PLURAL),
-        TRY_WITH_RESOURCES(JDK7, Fragments.FeatureTryWithResources, DiagKind.NORMAL),
         EFFECTIVELY_FINAL_VARIABLES_IN_TRY_WITH_RESOURCES(JDK9, Fragments.FeatureVarInTryWithResources, DiagKind.PLURAL),
-        BINARY_LITERALS(JDK7, Fragments.FeatureBinaryLit, DiagKind.PLURAL),
-        UNDERSCORES_IN_LITERALS(JDK7, Fragments.FeatureUnderscoreLit, DiagKind.PLURAL),
-        STRINGS_IN_SWITCH(JDK7, Fragments.FeatureStringSwitch, DiagKind.PLURAL),
         DEPRECATION_ON_IMPORT(MIN, JDK8),
-        SIMPLIFIED_VARARGS(JDK7),
-        OBJECT_TO_PRIMITIVE_CAST(JDK7),
-        ENFORCE_THIS_DOT_INIT(JDK7),
         POLY(JDK8),
         LAMBDA(JDK8, Fragments.FeatureLambda, DiagKind.PLURAL),
         METHOD_REFERENCES(JDK8, Fragments.FeatureMethodReferences, DiagKind.PLURAL),
@@ -265,6 +263,8 @@ public enum Source {
             return RELEASE_10;
         case JDK11:
             return RELEASE_11;
+        case JDK12:
+            return RELEASE_12;
         default:
             return null;
         }

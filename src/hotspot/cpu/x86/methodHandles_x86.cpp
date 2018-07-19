@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "jvm.h"
 #include "asm/macroAssembler.hpp"
+#include "compiler/disassembler.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/interpreterRuntime.hpp"
@@ -35,7 +36,7 @@
 #include "runtime/frame.inline.hpp"
 #include "utilities/preserveException.hpp"
 
-#define __ _masm->
+#define __ Disassembler::hook<MacroAssembler>(__FILE__, __LINE__, _masm)->
 
 #ifdef PRODUCT
 #define BLOCK_COMMENT(str) /* nothing */
@@ -439,8 +440,6 @@ void MethodHandles::generate_method_handle_dispatch(MacroAssembler* _masm,
       if (VerifyMethodHandles) {
         verify_ref_kind(_masm, JVM_REF_invokeInterface, member_reg, temp3);
       }
-
-      BarrierSetAssembler* bs = BarrierSet::barrier_set()->barrier_set_assembler();
 
       Register temp3_intf = temp3;
       __ load_heap_oop(temp3_intf, member_clazz);

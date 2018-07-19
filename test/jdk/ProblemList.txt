@@ -535,9 +535,6 @@ java/io/pathNames/GeneralWin32.java                             8180264 windows-
 com/sun/management/OperatingSystemMXBean/GetProcessCpuLoad.java 8030957 aix-all
 com/sun/management/OperatingSystemMXBean/GetSystemCpuLoad.java  8030957 aix-all
 
-sun/management/jmxremote/bootstrap/RmiSslBootstrapTest.sh       8205653 generic-all
-sun/management/jmxremote/bootstrap/RmiRegistrySslTest.java      8205653 generic-all
-
 ############################################################################
 
 # jdk_jmx
@@ -882,4 +879,3 @@ com/sun/jdi/RedefineCrossEvent.java                             8194308    gener
 
 jdk/jfr/event/io/TestInstrumentation.java                       8202142    generic-all
 jdk/jfr/event/sampling/TestNative.java                          8202142    generic-all
-jdk/jfr/event/os/TestSystemProcess.java                         8202835    linux-all

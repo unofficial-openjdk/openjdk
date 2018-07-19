@@ -1310,12 +1310,6 @@ class java_lang_ClassLoader : AllStatic {
   // Debugging
   friend class JavaClasses;
   friend class ClassFileParser; // access to number_of_fake_fields
-
-  // Describe ClassLoader for exceptions, tracing ...
-  // Prints "<name>" (instance of <classname>, child of "<name>" <classname>).
-  // If a classloader has no name, it prints <unnamed> instead. The output
-  // for well known loaders (system/platform) is abbreviated.
-  static const char* describe_external(const oop loader);
 };
 
 
@@ -1488,6 +1482,19 @@ class java_util_concurrent_locks_AbstractOwnableSynchronizer : AllStatic {
  public:
   static void compute_offsets();
   static oop  get_owner_threadObj(oop obj);
+  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+};
+
+class jdk_internal_module_ArchivedModuleGraph: AllStatic {
+ private:
+  static int _archivedSystemModules_offset;
+  static int _archivedModuleFinder_offset;
+  static int _archivedMainModule_offset;
+ public:
+  static int  archivedSystemModules_offset()      { return _archivedSystemModules_offset; }
+  static int  archivedModuleFinder_offset()       { return _archivedModuleFinder_offset; }
+  static int  archivedMainModule_offset()         { return _archivedMainModule_offset; }
+  static void compute_offsets();
   static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
 };
 
