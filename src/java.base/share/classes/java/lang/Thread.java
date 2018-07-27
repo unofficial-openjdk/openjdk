@@ -202,6 +202,11 @@ class Thread implements Runnable {
      */
     private final long tid;
 
+    /*
+     * Current inner-most continuation
+     */
+    private Continuation cont;
+
     /* For generating thread ID */
     private static long threadSeqNumber;
 
@@ -1492,6 +1497,20 @@ class Thread implements Runnable {
                                                    Reflection.getCallerClass());
         }
         return contextClassLoader;
+    }
+
+    /**
+     * TBD
+     */
+    Continuation getContinuation() {
+        return cont;
+    }
+
+    /**
+     * TBD
+     */
+    void setContinuation(Continuation cont) {
+        this.cont = cont;
     }
 
     /**

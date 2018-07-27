@@ -373,6 +373,9 @@ bool vmIntrinsics::preserves_state(vmIntrinsics::ID id) {
   case vmIntrinsics::_dpow:
   case vmIntrinsics::_checkIndex:
   case vmIntrinsics::_Reference_get:
+  case vmIntrinsics::_Continuation_doContinue:
+  case vmIntrinsics::_Continuation_doYield:
+  case vmIntrinsics::_Continuation_jump:
   case vmIntrinsics::_updateCRC32:
   case vmIntrinsics::_updateBytesCRC32:
   case vmIntrinsics::_updateByteBufferCRC32:
@@ -533,6 +536,9 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
     case vmIntrinsics::_fullFence:
     case vmIntrinsics::_hasNegatives:
     case vmIntrinsics::_Reference_get:
+    case vmIntrinsics::_Continuation_doContinue:
+    case vmIntrinsics::_Continuation_doYield:
+    case vmIntrinsics::_Continuation_jump:
       break;
     default:
       return true;

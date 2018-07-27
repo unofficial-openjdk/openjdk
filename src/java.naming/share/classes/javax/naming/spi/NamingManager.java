@@ -412,7 +412,7 @@ public class NamingManager {
     /**
      * Retrieves a context identified by {@code obj}, using the specified
      * environment.
-     * Used by ContinuationContext.
+     * Used by ContinuationScope.
      *
      * @param obj       The object identifying the context.
      * @param name      The name of the context being returned, relative to
@@ -454,7 +454,7 @@ public class NamingManager {
             : null;
     }
 
-    // Used by ContinuationContext
+    // Used by ContinuationScope
     static Resolver getResolver(Object obj, Name name, Context nameCtx,
                                 Hashtable<?,?> environment) throws NamingException {
         Object answer;

@@ -55,6 +55,7 @@ void CompiledMethod::init_defaults() {
   _lazy_critical_native       = 0;
   _has_wide_vectors           = 0;
   _unloading_clock            = 0;
+  _on_continuation_stack      = 0;
 }
 
 bool CompiledMethod::is_method_handle_return(address return_pc) {
@@ -447,6 +448,10 @@ void CompiledMethod::do_unloading(BoolObjectClosure* is_alive) {
   assert(!is_zombie() && !is_unloaded(),
          "should not call follow on zombie or unloaded nmethod");
 
+  if (_on_continuation_stack > 0) {
+    return;
+  }
+
   address low_boundary = oops_reloc_begin();
 
   if (do_unloading_oops(low_boundary, is_alive)) {
@@ -502,6 +507,10 @@ bool CompiledMethod::do_unloading_parallel(BoolObjectClosure* is_alive, bool unl
   // Make sure the oop's ready to receive visitors
   assert(!is_zombie() && !is_unloaded(),
          "should not call follow on zombie or unloaded nmethod");
+
+  if (_on_continuation_stack > 0) {
+    return false;
+  }
 
   address low_boundary = oops_reloc_begin();
 

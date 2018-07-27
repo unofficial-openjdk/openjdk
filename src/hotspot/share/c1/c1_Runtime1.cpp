@@ -334,6 +334,10 @@ const char* Runtime1::name_for_address(address entry) {
   FUNCTION_CASE(entry, StubRoutines::dsin());
   FUNCTION_CASE(entry, StubRoutines::dcos());
   FUNCTION_CASE(entry, StubRoutines::dtan());
+  FUNCTION_CASE(entry, StubRoutines::cont_getPC());
+  FUNCTION_CASE(entry, StubRoutines::cont_thaw());
+  FUNCTION_CASE(entry, StubRoutines::cont_doYield());
+  FUNCTION_CASE(entry, StubRoutines::cont_jump());
 
 #undef FUNCTION_CASE
 

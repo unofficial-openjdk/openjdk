@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import com.sun.jndi.toolkit.ctx.*;
+import com.sun.jndi.toolkit.ctx.Continuation;
 import com.sun.jndi.toolkit.dir.HierMemDirCtx;
 import com.sun.jndi.toolkit.dir.SearchFilter;
 import com.sun.jndi.ldap.ext.StartTlsResponseImpl;
