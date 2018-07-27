@@ -746,3 +746,10 @@ address NativeGeneralJump::jump_destination() const {
   else
     return addr_at(0) + length + sbyte_at(offset);
 }
+
+void NativePostCallNop::patch(jint diff) {
+  assert(diff > 0, "must be");
+  int32_t *code_pos = (int32_t *) addr_at(displacement_offset);
+  *((int32_t *)(code_pos)) = (int32_t) diff;
+}
+

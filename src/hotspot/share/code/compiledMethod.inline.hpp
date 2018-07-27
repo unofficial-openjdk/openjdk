@@ -27,6 +27,7 @@
 
 #include "code/compiledMethod.hpp"
 #include "code/nativeInst.hpp"
+#include "runtime/atomic.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/orderAccess.hpp"
 
@@ -62,6 +63,14 @@ inline address CompiledMethod::get_deopt_original_pc(const frame* fr) {
   return NULL;
 }
 
+inline void CompiledMethod::dec_on_continuation_stack() {
+  Atomic::dec(&_on_continuation_stack);
+  assert (_on_continuation_stack >= 0, "");
+}
+
+inline void CompiledMethod::inc_on_continuation_stack() {
+  Atomic::inc(&_on_continuation_stack);
+}
 
 // class ExceptionCache methods
 
@@ -79,6 +88,24 @@ address ExceptionCache::handler_at(int index) {
 
 // increment_count is only called under lock, but there may be concurrent readers.
 inline void ExceptionCache::increment_count() { OrderAccess::release_store(&_count, _count + 1); }
+
+inline bool ContinuationProfiling::is_frequent_freeze_at(address pc, const CompiledMethod* cm) {
+  if (_pc == pc && _count > 100) {
+    return true;
+  }
+
+  if (_pc == NULL) {
+    if (Atomic::cmpxchg(pc, &_pc, (address) NULL) == NULL) {
+      ++_count;
+      _oopmap = (ImmutableOopMap*) cm->oop_map_for_return_address(pc);
+      _oopmap->set_exploded(new ExplodedOopMap(_oopmap));
+
+    }
+  } else if (_pc == pc) {
+    return ++_count > 100;
+  }
+  return false;
+}
 
 
 #endif //SHARE_VM_CODE_COMPILEDMETHOD_INLINE_HPP

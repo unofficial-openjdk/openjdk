@@ -2635,6 +2635,17 @@ void TemplateTable::fast_binaryswitch() {
 void TemplateTable::_return(TosState state) {
   transition(state, state);
 
+  // {
+  //   Label not_rb;
+  //   Register aa = rcx, bb = rdi;
+  //   __ movptr(aa, Address(rsp, 0));
+  //   __ lea(bb, ExternalAddress(StubRoutines::cont_returnBarrier()));
+  //   __ cmpq(aa, bb);
+  //   // __ cmpq(ExternalAddress(StubRoutines::cont_returnBarrier()).addr(), aa);
+  //   __ jcc(Assembler::notZero, not_rb);
+  //   __ stop("WQWWQWQW");
+  //   __ bind(not_rb);
+  // }
   assert(_desc->calls_vm(),
          "inconsistent calls_vm information"); // call in remove_activation
 

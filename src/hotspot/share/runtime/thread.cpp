@@ -1498,6 +1498,7 @@ void JavaThread::initialize() {
   _in_deopt_handler = 0;
   _doing_unsafe_access = false;
   _stack_guard_state = stack_guard_unused;
+  DEBUG_ONLY(_continuation = NULL;)
 #if INCLUDE_JVMCI
   _pending_monitorenter = false;
   _pending_deoptimization = -1;
@@ -2882,6 +2883,9 @@ void JavaThread::print_thread_state_on(outputStream *st) const {
 };
 void JavaThread::print_thread_state() const {
   print_thread_state_on(tty);
+}
+const char* JavaThread::thread_state_name() const {
+  return _get_thread_state_name(_thread_state);
 }
 #endif // PRODUCT
 

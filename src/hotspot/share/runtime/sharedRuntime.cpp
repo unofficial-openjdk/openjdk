@@ -506,6 +506,7 @@ address SharedRuntime::raw_exception_handler_for_return_address(JavaThread* thre
 #ifndef PRODUCT
   { ResourceMark rm;
     tty->print_cr("No exception handler found for exception at " INTPTR_FORMAT " - potential problems:", p2i(return_address));
+    os::print_location(tty, (intptr_t)return_address);
     tty->print_cr("a) exception happened in (new?) code stubs/buffers that is not handled here");
     tty->print_cr("b) other problem");
   }
@@ -531,7 +532,7 @@ address SharedRuntime::get_poll_stub(address pc) {
 
   // Look up the relocation information
   assert(((CompiledMethod*)cb)->is_at_poll_or_poll_return(pc),
-    "safepoint polling: type must be poll");
+      "safepoint polling: type must be poll at pc %p", pc);
 
 #ifdef ASSERT
   if (!((NativeInstruction*)pc)->is_safepoint_poll()) {
@@ -2953,6 +2954,15 @@ VMRegPair *SharedRuntime::find_callee_arguments(Symbol* sig, bool has_receiver, 
   *arg_size = cnt;
   return regs;
 }
+
+JRT_LEAF(jlong, SharedRuntime::continuation_getFP(JavaThread* thread) )
+  RegisterMap reg_map2(thread);
+  assert(false, "");
+  frame stubFrame   = thread->last_frame();
+    // Caller-frame is a compiled frame
+  frame callerFrame = stubFrame.sender(&reg_map2);
+  return (jlong) callerFrame.real_fp();
+JRT_END
 
 // OSR Migration Code
 //

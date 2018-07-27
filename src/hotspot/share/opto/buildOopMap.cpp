@@ -388,6 +388,11 @@ OopMap *OopFlow::build_oop_map( Node *n, int max_reg, PhaseRegAlloc *regalloc, i
     }
     assert( found, "derived with no base in oopmap" );
   }
+
+  int num_oops = 0;
+  for (OopMapStream oms2(omap, OopMapValue::oop_value | OopMapValue::narrowoop_value); !oms2.is_done(); oms2.next())
+    num_oops++;
+  assert (num_oops == omap->num_oops(), "num_oops: %d omap->num_oops(): %d", num_oops, omap->num_oops());
 #endif
 
   return omap;

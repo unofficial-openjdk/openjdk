@@ -623,7 +623,7 @@ NMethodSweeper::MethodStateChange NMethodSweeper::process_compiled_method(Compil
   SWEEP(cm);
 
   // Skip methods that are currently referenced by the VM
-  if (cm->is_locked_by_vm()) {
+  if (cm->is_locked_by_vm() || cm->is_on_continuation_stack()) {
     // But still remember to clean-up inline caches for alive nmethods
     if (cm->is_alive()) {
       // Clean inline caches that point to zombie/non-entrant/unloaded nmethods

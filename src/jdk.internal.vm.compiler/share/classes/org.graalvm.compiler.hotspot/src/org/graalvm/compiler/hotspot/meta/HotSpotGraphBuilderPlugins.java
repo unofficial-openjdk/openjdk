@@ -55,6 +55,7 @@ import org.graalvm.compiler.hotspot.replacements.CRC32Substitutions;
 import org.graalvm.compiler.hotspot.replacements.CallSiteTargetNode;
 import org.graalvm.compiler.hotspot.replacements.CipherBlockChainingSubstitutions;
 import org.graalvm.compiler.hotspot.replacements.ClassGetHubNode;
+import org.graalvm.compiler.hotspot.replacements.ContinuationSubstitutions;
 import org.graalvm.compiler.hotspot.replacements.HotSpotArraySubstitutions;
 import org.graalvm.compiler.hotspot.replacements.HotSpotClassSubstitutions;
 import org.graalvm.compiler.hotspot.replacements.IdentityHashCodeNode;
@@ -165,6 +166,7 @@ public class HotSpotGraphBuilderPlugins {
                 registerClassPlugins(plugins, config, replacementBytecodeProvider);
                 registerSystemPlugins(invocationPlugins, foreignCalls);
                 registerThreadPlugins(invocationPlugins, metaAccess, wordTypes, config, replacementBytecodeProvider);
+                registerContinuationPlugins(invocationPlugins, foreignCalls, replacementBytecodeProvider);
                 if (!GeneratePIC.getValue(options)) {
                     registerCallSitePlugins(invocationPlugins);
                 }
@@ -422,7 +424,7 @@ public class HotSpotGraphBuilderPlugins {
 
     private static void registerThreadPlugins(InvocationPlugins plugins, MetaAccessProvider metaAccess, WordTypes wordTypes, GraalHotSpotVMConfig config, BytecodeProvider bytecodeProvider) {
         Registration r = new Registration(plugins, Thread.class, bytecodeProvider);
-        r.register0("currentThread", new InvocationPlugin() {
+        r.register0("currentThread0", new InvocationPlugin() {
             @Override
             public boolean apply(GraphBuilderContext b, ResolvedJavaMethod targetMethod, Receiver receiver) {
                 CurrentJavaThreadNode thread = b.add(new CurrentJavaThreadNode(wordTypes.getWordKind()));
@@ -436,6 +438,15 @@ public class HotSpotGraphBuilderPlugins {
         });
 
         r.registerMethodSubstitution(ThreadSubstitutions.class, "isInterrupted", Receiver.class, boolean.class);
+    }
+
+    private static void registerContinuationPlugins(InvocationPlugins plugins,  ForeignCallsProvider foreignCalls, BytecodeProvider bytecodeProvider) {
+        Registration r1 = new Registration(plugins, Continuation.class, bytecodeProvider);
+        Registration r2 = new Registration(plugins, Continuation.class);
+        r1.registerMethodSubstitution(ContinuationSubstitutions.class, "getSP");
+        r2.register1("doContinue", Receiver.class, new ForeignCallPlugin(foreignCalls, ContinuationSubstitutions.CONTINUATION_DO_CONTINUE));
+        r2.register1("doYield", int.class, new ForeignCallPlugin(foreignCalls, ContinuationSubstitutions.CONTINUATION_YIELD));
+        r1.registerMethodSubstitution(ContinuationSubstitutions.class, "runLevel");
     }
 
     public static final String cbcEncryptName;

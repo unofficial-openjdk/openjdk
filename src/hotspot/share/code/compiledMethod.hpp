@@ -130,6 +130,16 @@ public:
   }
 };
 
+class ContinuationProfiling {
+private:
+  volatile address _pc;
+  int _count;
+  ImmutableOopMap* _oopmap;
+public:
+  ContinuationProfiling() : _pc(0), _count(0) {}
+  bool is_frequent_freeze_at(address pc, const CompiledMethod* cm);
+  const ImmutableOopMap* oop_map() const { return _oopmap; }
+};
 
 class CompiledMethod : public CodeBlob {
   friend class VMStructs;
@@ -153,6 +163,7 @@ protected:
   unsigned int _lazy_critical_native:1;      // Lazy JNI critical native
   unsigned int _has_wide_vectors:1;          // Preserve wide vectors at safepoints
 
+  ContinuationProfiling _continuationProfiling;
   Method*   _method;
   address _scopes_data_begin;
   // All deoptee's will resume execution at this location described by
@@ -214,6 +225,9 @@ public:
   virtual void print_pcs() = 0;
   bool is_native_method() const { return _method != NULL && _method->is_native(); }
   bool is_java_method() const { return _method != NULL && !_method->is_native(); }
+
+  bool is_frequent_freeze_at(address pc) { return _continuationProfiling.is_frequent_freeze_at(pc, this); }
+  const ImmutableOopMap* freezed_oop_map() { return _continuationProfiling.oop_map(); }
 
   // ScopeDesc retrieval operation
   PcDesc* pc_desc_at(address pc)   { return find_pc_desc(pc, false); }
@@ -394,6 +408,10 @@ public:
   void set_unloading_clock(unsigned char unloading_clock);
   unsigned char unloading_clock();
 
+  void inc_on_continuation_stack();
+  void dec_on_continuation_stack();
+  bool is_on_continuation_stack() const { return _on_continuation_stack > 0; }
+
 protected:
   virtual bool do_unloading_oops(address low_boundary, BoolObjectClosure* is_alive) = 0;
 #if INCLUDE_JVMCI
@@ -406,6 +424,7 @@ private:
   static unsigned char _global_unloading_clock;
 
   volatile unsigned char _unloading_clock;   // Incremented after GC unloaded/cleaned the nmethod
+  volatile int _on_continuation_stack; // Counter that tells on how many unmounted continuation stacks this method are
 
   PcDesc* find_pc_desc(address pc, bool approximate) {
     return _pc_desc_container.find_pc_desc(pc, approximate, PcDescSearch(code_begin(), scopes_pcs_begin(), scopes_pcs_end()));

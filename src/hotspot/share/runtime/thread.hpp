@@ -990,6 +990,9 @@ class JavaThread: public Thread {
   volatile JNIAttachStates _jni_attach_state;
 
  public:
+
+  DEBUG_ONLY(oopDesc* _continuation;)
+
   // State of the stack guard pages for this thread.
   enum StackGuardState {
     stack_guard_unused,         // not needed
@@ -1664,6 +1667,7 @@ class JavaThread: public Thread {
   static ByteSize thread_state_offset()          { return byte_offset_of(JavaThread, _thread_state); }
   static ByteSize saved_exception_pc_offset()    { return byte_offset_of(JavaThread, _saved_exception_pc); }
   static ByteSize osthread_offset()              { return byte_offset_of(JavaThread, _osthread); }
+  DEBUG_ONLY(static ByteSize continuation_offset()          { return byte_offset_of(JavaThread, _continuation); })
 #if INCLUDE_JVMCI
   static ByteSize pending_deoptimization_offset() { return byte_offset_of(JavaThread, _pending_deoptimization); }
   static ByteSize pending_monitorenter_offset()  { return byte_offset_of(JavaThread, _pending_monitorenter); }
@@ -1771,6 +1775,7 @@ class JavaThread: public Thread {
   void print_value();
   void print_thread_state_on(outputStream*) const      PRODUCT_RETURN;
   void print_thread_state() const                      PRODUCT_RETURN;
+  DEBUG_ONLY(const char* thread_state_name() const;)
   void print_on_error(outputStream* st, char* buf, int buflen) const;
   void print_name_on_error(outputStream* st, char* buf, int buflen) const;
   void verify();

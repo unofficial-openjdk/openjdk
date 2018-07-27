@@ -45,7 +45,7 @@ class RegisterMap;
 class DerivedPointerEntry;
 class OopClosure;
 
-class OopMapValue: public StackObj {
+class OopMapValue {
   friend class VMStructs;
 private:
   short _value;
@@ -78,6 +78,11 @@ public:
   OopMapValue (VMReg reg, oop_types t) { set_reg_type(reg, t); set_content_reg(VMRegImpl::Bad()); }
   OopMapValue (VMReg reg, oop_types t, VMReg reg2) { set_reg_type(reg, t); set_content_reg(reg2); }
   OopMapValue (CompressedReadStream* stream) { read_from(stream); }
+  OopMapValue (const OopMapValue& o) : _value(o._value), _content_reg(o._content_reg) {}
+
+  bool equals(const OopMapValue& o) {
+    return _value == o._value && _content_reg == o._content_reg;
+  }
 
   // Archiving
   void write_on(CompressedWriteStream* stream) {
@@ -140,9 +145,12 @@ public:
 class OopMap: public ResourceObj {
   friend class OopMapStream;
   friend class VMStructs;
+  friend class OopMapSet;
  private:
   int  _pc_offset; // offset in the code that this OopMap corresponds to
   int  _omv_count; // number of OopMapValues in the stream
+  int  _num_oops;  // number of oops
+  int  _index;     // index in OopMapSet
   CompressedWriteStream* _write_stream;
 
   debug_only( OopMapValue::oop_types* _locs_used; int _locs_length;)
@@ -151,6 +159,7 @@ class OopMap: public ResourceObj {
   int omv_count() const                       { return _omv_count; }
   void set_omv_count(int value)               { _omv_count = value; }
   void increment_count()                      { _omv_count++; }
+  void increment_num_oops()                   { _num_oops++; }
   CompressedWriteStream* write_stream() const { return _write_stream; }
   void set_write_stream(CompressedWriteStream* value) { _write_stream = value; }
 
@@ -167,6 +176,8 @@ class OopMap: public ResourceObj {
   int count() const { return _omv_count; }
   int data_size() const  { return write_stream()->position(); }
   address data() const { return write_stream()->buffer(); }
+  int num_oops() const { return _num_oops; }
+  int index() const { return _index; }
 
   // Check to avoid double insertion
   debug_only(OopMapValue::oop_types locs_used( int indx ) { return _locs_used[indx]; })
@@ -198,6 +209,7 @@ class OopMap: public ResourceObj {
   bool equals(const OopMap* other) const;
 };
 
+class ImmutableOopMap;
 
 class OopMapSet : public ResourceObj {
   friend class VMStructs;
@@ -225,7 +237,7 @@ class OopMapSet : public ResourceObj {
   OopMap* at(int index) const { assert((index >= 0) && (index <= om_count()),"bad index"); return _om_data[index]; }
 
   // Collect OopMaps.
-  void add_gc_map(int pc, OopMap* map);
+  int add_gc_map(int pc, OopMap* map);
 
   // Returns the only oop map. Used for reconstructing
   // Adapter frames during deoptimization
@@ -240,16 +252,20 @@ class OopMapSet : public ResourceObj {
   // oop == Universe::narrow_oop_base() before passing oops
   // to closures.
 
+  static const ImmutableOopMap* find_map(const frame *fr);
+
   // Iterates through frame for a compiled method
+  static void oops_do            (const frame* fr, const RegisterMap* reg_map,
+                                  OopClosure* f, DerivedOopClosure* df);
   static void oops_do            (const frame* fr,
-                                  const RegisterMap* reg_map, OopClosure* f);
+                                  const RegisterMap* reg_map, OopClosure* f) { oops_do(fr, reg_map, f, NULL); }
   static void update_register_map(const frame* fr, RegisterMap *reg_map);
 
-  // Iterates through frame for a compiled method for dead ones and values, too
-  static void all_do(const frame* fr, const RegisterMap* reg_map,
-                     OopClosure* oop_fn,
-                     void derived_oop_fn(oop* base, oop* derived),
-                     OopClosure* value_fn);
+  // // Iterates through frame for a compiled method for dead ones and values, too
+  // static void all_do(const frame* fr, const RegisterMap* reg_map,
+  //                    OopClosure* oop_fn,
+  //                    DerivedOopClosure* derived_oop_fn,
+  //                    OopClosure* value_fn);
 
   // Printing
   void print_on(outputStream* st) const;
@@ -258,24 +274,54 @@ class OopMapSet : public ResourceObj {
 
 class ImmutableOopMapBuilder;
 
+class ExplodedOopMap : public CHeapObj<mtCode> {
+private:
+  OopMapValue* _oopValues;
+  OopMapValue* _calleeSavedValues;
+  OopMapValue* _derivedValues;
+
+  int _nrOopValues;
+  int _nrCalleeSavedValuesCount;
+  int _nrDerivedValues;
+
+  OopMapValue* copyOopMapValues(const ImmutableOopMap* oopMap, int mask, int* nr);
+public:
+  ExplodedOopMap(const ImmutableOopMap* oopMap);
+  OopMapValue* values(int mask);
+  int count(int mask);
+};
+
+class ExplodedOopMapStream;
+
 class ImmutableOopMap {
   friend class OopMapStream;
   friend class VMStructs;
+  friend class ExplodedOopMapStream;
 #ifdef ASSERT
   friend class ImmutableOopMapBuilder;
 #endif
 private:
+  const CodeBlob* _cb;
+  ExplodedOopMap* _exploded;
   int _count; // contains the number of entries in this OopMap
+  int _num_oops;
 
   address data_addr() const { return (address) this + sizeof(ImmutableOopMap); }
 public:
-  ImmutableOopMap(const OopMap* oopmap);
+  ImmutableOopMap(const OopMap* oopmap, const CodeBlob* cb);
 
+  void set_exploded(ExplodedOopMap* exploded) { _exploded = exploded; }
+  bool has_exploded() const { return _exploded != NULL; }
   bool has_derived_pointer() const PRODUCT_RETURN0;
   int count() const { return _count; }
+  int num_oops() const { return _num_oops; }
+  const CodeBlob* cb() const { return _cb; }
 #ifdef ASSERT
   int nr_of_bytes() const; // this is an expensive operation, only used in debug builds
 #endif
+
+  void oops_do(const frame* fr, const RegisterMap* reg_map, OopClosure* f, DerivedOopClosure* df) const;
+  void update_register_map(const frame* fr, RegisterMap *reg_map) const;
 
   // Printing
   void print_on(outputStream* st) const;
@@ -320,7 +366,7 @@ public:
 
   ImmutableOopMapPair* get_pairs() const { return (ImmutableOopMapPair*) ((address) this + sizeof(*this)); }
 
-  static ImmutableOopMapSet* build_from(const OopMapSet* oopmap_set);
+  static ImmutableOopMapSet* build_from(const OopMapSet* oopmap_set, const CodeBlob* cb);
 
   const ImmutableOopMap* find_map_at_offset(int pc_offset) const;
 
@@ -335,7 +381,7 @@ public:
 
 class OopMapStream : public StackObj {
  private:
-  CompressedReadStream* _stream;
+  CompressedReadStream _stream;
   int _mask;
   int _size;
   int _position;
@@ -350,7 +396,7 @@ class OopMapStream : public StackObj {
   void next()                           { find_next(); }
   OopMapValue current()                 { return _omv; }
 #ifdef ASSERT
-  int stream_position() const           { return _stream->position(); }
+  int stream_position() const           { return _stream.position(); }
 #endif
 };
 
@@ -360,6 +406,7 @@ private:
 
 private:
   const OopMapSet* _set;
+  const CodeBlob* _cb;
   const OopMap* _empty;
   const OopMap* _last;
   int _empty_offset;
@@ -392,7 +439,8 @@ private:
   };
 
 public:
-  ImmutableOopMapBuilder(const OopMapSet* set);
+  ImmutableOopMapBuilder(const OopMapSet* set); // TODO: used by jvmciCompilerToVM.cpp. What to do about this?
+  ImmutableOopMapBuilder(const OopMapSet* set, const CodeBlob* cb);
 
   int heap_size();
   ImmutableOopMapSet* build();

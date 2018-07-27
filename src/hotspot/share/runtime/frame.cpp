@@ -30,6 +30,7 @@
 #include "gc/shared/collectedHeap.inline.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/oopMapCache.hpp"
+#include "logging/log.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
 #include "oops/markOop.hpp"
@@ -38,6 +39,7 @@
 #include "oops/oop.inline.hpp"
 #include "oops/verifyOopClosure.hpp"
 #include "prims/methodHandles.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/javaCalls.hpp"
@@ -52,11 +54,12 @@
 #include "utilities/decoder.hpp"
 #include "utilities/formatBuffer.hpp"
 
-RegisterMap::RegisterMap(JavaThread *thread, bool update_map) {
+RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool validate_oops) {
   _thread         = thread;
   _update_map     = update_map;
   clear();
   debug_only(_update_for_id = NULL;)
+  _validate_oops = validate_oops;
 #ifndef PRODUCT
   for (int i = 0; i < reg_count ; i++ ) _location[i] = NULL;
 #endif /* PRODUCT */
@@ -69,6 +72,7 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
   _update_map            = map->update_map();
   _include_argument_oops = map->include_argument_oops();
   debug_only(_update_for_id = map->_update_for_id;)
+  _validate_oops = map->_validate_oops;
   pd_initialize_from(map);
   if (update_map()) {
     for(int i = 0; i < location_valid_size; i++) {
@@ -133,6 +137,9 @@ void RegisterMap::print() const {
 // is deoptimization. It likely no one else should ever use it.
 
 address frame::raw_pc() const {
+  // if (Continuation::is_continuation_entry_frame(*this)) {
+  //   return StubRoutines::cont_returnBarrier();
+  // }
   if (is_deoptimized_frame()) {
     CompiledMethod* cm = cb()->as_compiled_method_or_null();
     if (cm->is_method_handle_return(pc()))
@@ -159,6 +166,17 @@ void frame::set_pc(address   newpc ) {
   _pc = newpc;
   _cb = CodeCache::find_blob_unsafe(_pc);
 
+}
+
+void frame::set_pc_preserve_deopt(address   newpc) {
+#ifdef ASSERT
+  if (_cb != NULL && _cb->is_nmethod()) {
+    assert(!((nmethod*)_cb)->is_deopt_pc(_pc), "invariant violation");
+  }
+#endif // ASSERT
+
+  _pc = newpc;
+  _cb = CodeCache::find_blob_unsafe(_pc);
 }
 
 // type testers
@@ -266,6 +284,15 @@ bool frame::can_be_deoptimized() const {
   if( !nm->can_be_deoptimized() )
     return false;
 
+  address* pc_addr = &(((address*) sp())[-1]); // TODO: PLATFORM
+  if (Continuation::is_return_barrier_entry(*pc_addr)) {
+    log_trace(jvmcont)("Can't deopt entry:");
+    if (log_is_enabled(Trace, jvmcont)) {
+      print_value_on(tty, NULL);
+    }
+    return false;
+  }
+
   return !nm->is_at_poll_return(pc());
 }
 
@@ -336,17 +363,34 @@ void frame::deoptimize(JavaThread* thread) {
                         cm->deopt_handler_begin();
 
   // Save the original pc before we patch in the new one
+  // address xpc = pc();
   cm->set_original_pc(this, pc());
   patch_pc(thread, deopt);
 
 #ifdef ASSERT
   {
-    RegisterMap map(thread, false);
     frame check = thread->last_frame();
-    while (id() != check.id()) {
-      check = check.sender(&map);
+    if (is_older(check.id())) {
+      RegisterMap map(thread, false);
+      while (id() != check.id()) {
+        check = check.sender(&map);
+      }
+      // if (!check.is_deoptimized_frame()) {
+      //   tty->print_cr("Deopt failure:");
+      //   tty->print_cr("deopt: %p pc: %p", deopt, xpc);
+      //   tty->print_cr("me:");
+      //   print_on(tty);
+      //   tty->print_cr("---- %d", is_younger(check.id()));
+      //   check = thread->last_frame();
+      //   check.print_on(tty);
+      //   while (id() != check.id()) {
+      //     check = check.sender(&map);
+      //     tty->print_cr("---- %d", is_younger(check.id()));
+      //     check.print_on(tty);
+      //   }
+      // }
+      assert(check.is_deoptimized_frame(), "missed deopt");
     }
-    assert(check.is_deoptimized_frame(), "missed deopt");
   }
 #endif // ASSERT
 }
@@ -953,6 +997,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
   } else {
     OopMapCache::compute_one_oop_map(m, bci, &mask);
   }
+  // mask.print();
   mask.iterate_oop(&blk);
 }
 
@@ -962,10 +1007,11 @@ void frame::oops_interpreted_arguments_do(Symbol* signature, bool has_receiver, 
   finder.oops_do();
 }
 
-void frame::oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, const RegisterMap* reg_map) {
+void frame::oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, const RegisterMap* reg_map) {
   assert(_cb != NULL, "sanity check");
-  if (_cb->oop_maps() != NULL) {
-    OopMapSet::oops_do(this, reg_map, f);
+  assert ((oop_map() == NULL) == (_cb->oop_maps() == NULL), "");
+  if (oop_map() != NULL) {
+    _oop_map->oops_do(this, reg_map, f, df);
 
     // Preserve potential arguments for a callee. We handle this by dispatching
     // on the codeblob. For c2i, we do
@@ -1003,6 +1049,13 @@ class CompiledArgumentOopFinder: public SignatureInfo {
     // In LP64-land, the high-order bits are valid but unhelpful.
     VMReg reg = _regs[_offset].first();
     oop *loc = _fr.oopmapreg_to_location(reg, _reg_map);
+  #ifdef ASSERT
+    if (loc == NULL) {
+      tty->print_cr("Error walking frame oops:");
+      _fr.print_on(tty);
+      assert (loc != NULL, "reg: %ld %s loc: %p", reg->value(), reg->name(), loc);
+    }
+  #endif
     _f->do_oop(loc);
   }
 
@@ -1101,7 +1154,7 @@ void frame::oops_entry_do(OopClosure* f, const RegisterMap* map) {
 }
 
 
-void frame::oops_do_internal(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map, bool use_interpreter_oop_map_cache) {
+void frame::oops_do_internal(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, RegisterMap* map, bool use_interpreter_oop_map_cache) {
 #ifndef PRODUCT
 #if defined(__SUNPRO_CC) && __SUNPRO_CC >= 0x5140
 #pragma error_messages(off, SEC_NULL_PTR_DEREF)
@@ -1117,7 +1170,7 @@ void frame::oops_do_internal(OopClosure* f, CodeBlobClosure* cf, RegisterMap* ma
   } else if (is_entry_frame()) {
     oops_entry_do(f, map);
   } else if (CodeCache::contains(pc())) {
-    oops_code_blob_do(f, cf, map);
+    oops_code_blob_do(f, cf, df, map);
   } else {
     ShouldNotReachHere();
   }
@@ -1141,6 +1194,13 @@ void frame::metadata_do(void f(Metadata*)) {
 }
 
 void frame::verify(const RegisterMap* map) {
+#ifndef PRODUCT
+  if (TraceCodeBlobStacks) {
+    tty->print_cr("*** verify");
+    print_on(tty);
+  }
+#endif
+
   // for now make sure receiver type is correct
   if (is_interpreted_frame()) {
     Method* method = interpreter_frame_method();
@@ -1154,7 +1214,7 @@ void frame::verify(const RegisterMap* map) {
 #if COMPILER2_OR_JVMCI
   assert(DerivedPointerTable::is_empty(), "must be empty before verify");
 #endif
-  oops_do_internal(&VerifyOopClosure::verify_oop, NULL, (RegisterMap*)map, false);
+  oops_do_internal(&VerifyOopClosure::verify_oop, NULL, NULL, (RegisterMap*)map, false);
 }
 
 

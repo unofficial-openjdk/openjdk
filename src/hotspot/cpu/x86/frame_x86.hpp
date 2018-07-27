@@ -128,6 +128,8 @@
   static void verify_deopt_original_pc(CompiledMethod* nm, intptr_t* unextended_sp);
 #endif
 
+  const ImmutableOopMap* get_oop_map() const;
+
  public:
   // Constructors
 
@@ -135,13 +137,17 @@
 
   frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc);
 
+  frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc, CodeBlob* cb);
+
   frame(intptr_t* sp, intptr_t* fp);
 
   void init(intptr_t* sp, intptr_t* fp, address pc);
+  void setup(address pc);
 
   // accessors for the instance variables
   // Note: not necessarily the real 'frame pointer' (see real_fp)
   intptr_t*   fp() const { return _fp; }
+  void set_fp(intptr_t* newfp) { _fp = newfp; }
 
   inline address* sender_pc_addr() const;
 
@@ -150,6 +156,7 @@
 
   // helper to update a map with callee-saved RBP
   static void update_map_with_saved_link(RegisterMap* map, intptr_t** link_addr);
+  static intptr_t** saved_link_address(RegisterMap* map);
 
   // deoptimization support
   void interpreter_frame_set_last_sp(intptr_t* sp);

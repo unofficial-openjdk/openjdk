@@ -191,6 +191,7 @@ class MacroAssembler: public Assembler {
   void align(int modulus);
   void align(int modulus, int target);
 
+  void post_call_nop();
   // A 5 byte nop that is safe for patching (see patch_verified_entry)
   void fat_nop();
 
@@ -292,6 +293,8 @@ class MacroAssembler: public Assembler {
 
   // thread in the default location (r15_thread on 64bit)
   void reset_last_Java_frame(bool clear_fp);
+
+  void oopmap_metadata(int index);
 
   // jobjects
   void clear_jweak_tag(Register possibly_jweak);
@@ -494,6 +497,8 @@ class MacroAssembler: public Assembler {
 
   void push_CPU_state();
   void pop_CPU_state();
+
+  DEBUG_ONLY(void stop_if_in_cont(Register cont_reg, const char* name);)
 
   // Round up to a power of two
   void round_to(Register reg, int modulus);
@@ -869,6 +874,11 @@ class MacroAssembler: public Assembler {
   void jump(ArrayAddress entry);
 
   // Floating
+
+  void push_f(XMMRegister r);
+  void pop_f(XMMRegister r);
+  void push_d(XMMRegister r);
+  void pop_d(XMMRegister r);
 
   void andpd(XMMRegister dst, Address src) { Assembler::andpd(dst, src); }
   void andpd(XMMRegister dst, AddressLiteral src);

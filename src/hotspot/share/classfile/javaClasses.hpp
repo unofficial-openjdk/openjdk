@@ -310,6 +310,7 @@ class java_lang_Thread : AllStatic {
   static int _stillborn_offset;
   static int _stackSize_offset;
   static int _tid_offset;
+  static int _continuation_offset;
   static int _thread_status_offset;
   static int _park_blocker_offset;
   static int _park_event_offset ;
@@ -350,6 +351,9 @@ class java_lang_Thread : AllStatic {
   static jlong stackSize(oop java_thread);
   // Thread ID
   static jlong thread_id(oop java_thread);
+  // Continuation
+  static oop  continuation(oop java_thread);
+  static void set_continuation(oop java_thread, oop continuation);
 
   // Blocker object responsible for thread parking
   static oop park_blocker(oop java_thread);
@@ -945,6 +949,71 @@ class java_lang_ref_SoftReference: public java_lang_ref_Reference {
 
   static void compute_offsets();
   static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+};
+
+// Interface to java.lang.Continuation objects
+class java_lang_Continuation: AllStatic {
+  friend class JavaClasses;
+ private:
+  static void compute_offsets();
+public:
+ enum {
+  hc_fp_offset   = 0,
+  hc_sp_offset   = 11,
+  hc_entrySP_offset = 1,
+  hc_entryFP_offset = 3,
+  hc_target_offset   = 13,
+  hc_parent_offset   = 14,
+  hc_stack_offset    = 15,
+ };
+ static int scope_offset;
+ static int target_offset;
+ static int parent_offset;
+ static int entrySP_offset;
+ static int entryFP_offset;
+ static int entryPC_offset;
+ static int stack_offset;
+ static int maxSize_offset;
+ static int numFrames_offset;
+ static int numInterpretedFrames_offset;
+ static int refStack_offset;
+ static int fp_offset;
+ static int sp_offset;
+ static int pc_offset;
+ static int refSP_offset;
+ static int flags_offset;
+ // Accessors
+ static inline oop scope(oop ref);
+ static inline oop target(oop ref);
+ static inline oop parent(oop ref);
+ static inline typeArrayOop stack(oop ref);
+ static inline objArrayOop refStack(oop ref);
+ static inline jlong fp(oop ref);
+ static inline void set_fp(oop ref, const jlong i);
+ static inline jint sp(oop ref);
+ static inline void set_sp(oop ref, const jint i);
+ static inline void* pc(oop ref);
+ static inline void  set_pc(oop ref, const void* pc);
+ static inline jint refSP(oop ref);
+ static inline void set_refSP(oop ref, jint i);
+ static inline intptr_t* entrySP(oop ref);
+ static inline void set_entrySP(oop ref, intptr_t* sp);
+ static inline intptr_t* entryFP(oop ref);
+ static inline void set_entryFP(oop ref, intptr_t* fp);
+ static inline address entryPC(oop ref);
+ static inline void set_entryPC(oop ref, address pc);
+ static inline jint maxSize(oop ref);
+ static inline void set_maxSize(oop ref, jint i);
+ static inline jshort numFrames(oop ref);
+ static inline void set_numFrames(oop ref, jshort i);
+ static inline jshort numInterpretedFrames(oop ref);
+ static inline void set_numInterpretedFrames(oop ref, jshort i);
+ static unsigned char flags(oop ref);
+ static void set_flags(oop ref, unsigned char flags);
+ static inline int stack_size(oop ref);
+ static inline void* stack_base(oop ref);
+ static inline HeapWord* refStack_base(oop ref);
+ static bool on_local_stack(oop ref, address adr);
 };
 
 // Interface to java.lang.invoke.MethodHandle objects

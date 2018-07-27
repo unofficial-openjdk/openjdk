@@ -1068,7 +1068,7 @@ void os::print_location(outputStream* st, intptr_t x, bool verbose) {
   }
 
   if (Universe::heap()->is_in(addr)) {
-    HeapWord* p = Universe::heap()->block_start(addr);
+    HeapWord* p = NULL; // Universe::heap()->block_start(addr);
     bool print = false;
     // If we couldn't find it it just may mean that heap wasn't parsable
     // See if we were just given an oop directly
@@ -1084,7 +1084,13 @@ void os::print_location(outputStream* st, intptr_t x, bool verbose) {
       } else {
         st->print_cr(INTPTR_FORMAT " is pointing into object: " INTPTR_FORMAT, p2i(addr), p2i(p));
       }
-      oop(p)->print_on(st);
+      if (*((juint*)p) == badHeapWordVal) {
+        st->print_cr(" Bad word");
+      } else if (*((juint*)p) == badMetaWordVal) {
+        st->print_cr(" Bad meta word");
+      } else {
+        oop(p)->print_on(st);
+      }
       return;
     }
   } else {

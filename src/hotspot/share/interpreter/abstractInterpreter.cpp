@@ -185,6 +185,20 @@ AbstractInterpreter::MethodKind AbstractInterpreter::method_kind(const methodHan
 
     case vmIntrinsics::_Reference_get
                               : return java_lang_ref_reference_get;
+    case vmIntrinsics::_Continuation_getSP
+                              : return java_lang_continuation_getSP;
+    case vmIntrinsics::_Continuation_getFP
+                              : return java_lang_continuation_getFP;
+    case vmIntrinsics::_Continuation_getPC
+                              : return java_lang_continuation_getPC;
+    case vmIntrinsics::_Continuation_doContinue
+                              : return java_lang_continuation_doContinue;
+    case vmIntrinsics::_Continuation_doYield
+                              : return java_lang_continuation_doYield;
+    case vmIntrinsics::_Continuation_jump
+                              : return java_lang_continuation_jump;
+    case vmIntrinsics::_Continuation_runLevel
+                              : return java_lang_continuation_runLevel;
     default                   : break;
   }
 
@@ -196,6 +210,14 @@ AbstractInterpreter::MethodKind AbstractInterpreter::method_kind(const methodHan
     assert(m->size_of_parameters() == 1, "fast code for accessors assumes parameter size = 1");
     return accessor;
   }
+
+  // Symbol* kname = m->klass_name();
+  // Symbol* name = m->name();
+  // if (kname == vmSymbols::java_lang_Continuation()) {
+  //   if (name == vmSymbols::enter_name()) {
+  //     return java_lang_continuation_enter;
+  //   }
+  // }
 
   // Note: for now: zero locals for all non-empty methods
   return zerolocals;

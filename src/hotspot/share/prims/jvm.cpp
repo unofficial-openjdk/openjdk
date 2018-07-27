@@ -75,6 +75,7 @@
 #include "runtime/vframe.inline.hpp"
 #include "runtime/vm_operations.hpp"
 #include "runtime/vm_version.hpp"
+#include "runtime/continuation.hpp"
 #include "services/attachListener.hpp"
 #include "services/management.hpp"
 #include "services/threadService.hpp"
@@ -681,6 +682,12 @@ JVM_ENTRY(jobject, JVM_Clone(JNIEnv* env, jobject handle))
   }
 
   return JNIHandles::make_local(env, new_obj());
+JVM_END
+
+// java.lang.Continuation /////////////////////////////////////////////////////
+
+JVM_ENTRY(void, JVM_RegisterContinuationMethods(JNIEnv *env, jclass cls))
+  CONT_RegisterNativeMethods(env, cls);
 JVM_END
 
 // java.io.File ///////////////////////////////////////////////////////////////
