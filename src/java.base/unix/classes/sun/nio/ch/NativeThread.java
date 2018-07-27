@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,18 +38,64 @@ package sun.nio.ch;
 
 
 public class NativeThread {
+    private static final long FIBER_ID = -1L;
+
+    /**
+     * Returns a token representing the current thread or -1 if called in the
+     * context of a Fiber.
+     */
+    public static long current() {
+        Strand s = Strand.currentStrand();
+        if (s instanceof Fiber) {
+            return FIBER_ID;
+        } else {
+            return current0();
+        }
+    }
+
+    /**
+     * Returns a token representing the current kernel thread
+     */
+    public static long currentKernelThread() {
+        return current0();
+    }
+
+    /**
+     * Signals the given thread.
+     *
+     * @throws IllegalArgumentException if tid is not a token to a kernel thread
+     */
+    public static void signal(long tid) {
+        if (tid == 0 || tid == FIBER_ID)
+            throw new IllegalArgumentException();
+        signal0(tid);
+    }
+
+    /**
+     * Returns true if the token presents a fiber rather than a thread
+     */
+    static boolean isFiber(long tid) {
+        return (tid == FIBER_ID);
+    }
+
+    /**
+     * Returns true if the token presents a kernel thread
+     */
+    static boolean isKernelThread(long tid) {
+        return (tid != 0 && tid != FIBER_ID);
+    }
 
     // Returns an opaque token representing the native thread underlying the
     // invoking Java thread.  On systems that do not require signalling, this
-    // method always returns -1.
+    // method always returns 0.
     //
-    public static native long current();
+    private static native long current0();
 
     // Signals the given native thread so as to release it from a blocking I/O
     // operation.  On systems that do not require signalling, this method has
     // no effect.
     //
-    public static native void signal(long nt);
+    private static native void signal0(long tid);
 
     private static native void init();
 

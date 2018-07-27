@@ -181,18 +181,23 @@ class InheritedChannel {
         assert provider instanceof sun.nio.ch.SelectorProviderImpl;
 
         Channel c;
-        if (st == SOCK_STREAM) {
-            InetAddress ia = peerAddress0(fdVal);
-            if (ia == null) {
-               c = new InheritedServerSocketChannelImpl(provider, fd);
+        try {
+            if (st == SOCK_STREAM) {
+                InetAddress ia = peerAddress0(fdVal);
+                if (ia == null) {
+                    c = new InheritedServerSocketChannelImpl(provider, fd);
+                } else {
+                    int port = peerPort0(fdVal);
+                    assert port > 0;
+                    InetSocketAddress isa = new InetSocketAddress(ia, port);
+                    c = new InheritedSocketChannelImpl(provider, fd, isa);
+                }
             } else {
-               int port = peerPort0(fdVal);
-               assert port > 0;
-               InetSocketAddress isa = new InetSocketAddress(ia, port);
-               c = new InheritedSocketChannelImpl(provider, fd, isa);
+                c = new InheritedDatagramChannelImpl(provider, fd);
             }
-        } else {
-            c = new InheritedDatagramChannelImpl(provider, fd);
+        } catch (Exception e) {
+            close0(fdVal);
+            throw e;
         }
         return c;
     }

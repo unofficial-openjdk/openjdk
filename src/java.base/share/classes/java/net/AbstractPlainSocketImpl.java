@@ -38,6 +38,7 @@ import sun.net.ConnectionResetException;
 import sun.net.NetHooks;
 import sun.net.ResourceManager;
 import sun.net.util.SocketExceptions;
+import sun.nio.ch.SocketStreams;
 
 /**
  * Default Socket Implementation. This implementation does
@@ -55,8 +56,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
     private boolean shut_rd = false;
     private boolean shut_wr = false;
 
-    private SocketInputStream socketInputStream = null;
-    private SocketOutputStream socketOutputStream = null;
+    private SocketStreams socketStreams;
 
     /* number of threads using the FileDescriptor */
     protected int fdUseCount = 0;
@@ -267,7 +267,12 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
             int tmp = ((Integer) val).intValue();
             if (tmp < 0)
                 throw new IllegalArgumentException("timeout < 0");
-            timeout = tmp;
+            synchronized (fdLock) {
+                timeout = tmp;
+                if (socketStreams != null) {
+                    socketStreams.readTimeout(tmp);
+                }
+            }
             break;
         case IP_TOS:
              if (val == null || !(val instanceof Integer)) {
@@ -470,14 +475,14 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
                 throw new IOException("Socket Closed");
             if (shut_rd)
                 throw new IOException("Socket input is shutdown");
-            if (socketInputStream == null)
-                socketInputStream = new SocketInputStream(this);
+            if (socketStreams == null)
+                socketStreams = new SocketStreams(socket, fd).readTimeout(timeout);
+            return socketStreams.inputStream();
         }
-        return socketInputStream;
     }
 
     void setInputStream(SocketInputStream in) {
-        socketInputStream = in;
+        throw new UnsupportedOperationException();
     }
 
     /**
@@ -489,10 +494,10 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
                 throw new IOException("Socket Closed");
             if (shut_wr)
                 throw new IOException("Socket output is shutdown");
-            if (socketOutputStream == null)
-                socketOutputStream = new SocketOutputStream(this);
+            if (socketStreams == null)
+                socketStreams = new SocketStreams(socket, fd).readTimeout(timeout);
+            return socketStreams.outputStream();
         }
-        return socketOutputStream;
     }
 
     void setFileDescriptor(FileDescriptor fd) {
@@ -549,6 +554,25 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
     protected void close() throws IOException {
         synchronized(fdLock) {
             if (fd != null) {
+                if (socketStreams != null) {
+                    try {
+                        SocketCleanable.unregister(fd);
+                        closePending = true;
+                        socketStreams.close();
+                    } finally {
+                        fd = null;
+                    }
+                } else {
+                    // closing not delegate to SocketStreams
+                    localClose();
+                }
+            }
+        }
+    }
+
+    private void localClose() throws IOException {
+        synchronized(fdLock) {
+            if (fd != null) {
                 if (!stream) {
                     ResourceManager.afterUdpClose();
                 }
@@ -602,23 +626,33 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
      * Shutdown read-half of the socket connection;
      */
     protected void shutdownInput() throws IOException {
-      if (fd != null) {
-          socketShutdown(SHUT_RD);
-          if (socketInputStream != null) {
-              socketInputStream.setEOF(true);
-          }
-          shut_rd = true;
-      }
+        synchronized (fdLock) {
+            if (fd != null) {
+                if (socketStreams != null) {
+                    socketStreams.shutdownInput();
+                } else {
+                    socketShutdown(SHUT_RD);
+                }
+                shut_rd = true;
+            }
+
+        }
     }
 
     /**
      * Shutdown write-half of the socket connection;
      */
     protected void shutdownOutput() throws IOException {
-      if (fd != null) {
-          socketShutdown(SHUT_WR);
-          shut_wr = true;
-      }
+        synchronized (fdLock) {
+            if (fd != null) {
+                if (socketStreams != null) {
+                    socketStreams.shutdownOutput();
+                } else {
+                    socketShutdown(SHUT_WR);
+                }
+                shut_wr = true;
+            }
+        }
     }
 
     protected boolean supportsUrgentData () {

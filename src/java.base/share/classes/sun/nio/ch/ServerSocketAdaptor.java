@@ -39,6 +39,9 @@ import java.nio.channels.NotYetBoundException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 
 // Make a server-socket channel look like a server socket.
 //
@@ -119,15 +122,16 @@ class ServerSocketAdaptor                        // package-private
 
                 if (!ssc.isBlocking())
                     throw new IllegalBlockingModeException();
+                long nanos = NANOSECONDS.convert(to, MILLISECONDS);
                 for (;;) {
-                    long st = System.currentTimeMillis();
-                    if (ssc.pollAccept(to))
+                    long startTime = System.nanoTime();
+                    if (ssc.pollAccept(nanos)) {
                         return ssc.accept().socket();
-                    to -= System.currentTimeMillis() - st;
-                    if (to <= 0)
+                    }
+                    nanos -= System.nanoTime() - startTime;
+                    if (nanos <= 0)
                         throw new SocketTimeoutException();
                 }
-
             } catch (Exception x) {
                 Net.translateException(x);
                 assert false;

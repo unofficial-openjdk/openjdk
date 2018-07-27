@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,33 +22,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+package java.lang;
 
-package sun.nio.ch;
+/**
+ * A holder for context that is inherited when creating a Thread.
+ */
 
+class InheritableThreadContext {
+    private final ClassLoader contextClassLoader;
+    private final ThreadLocal.ThreadLocalMap inheritableThreadLocals;
 
-// Signalling operations on native threads
-
-
-class NativeThread {
-
-    static long current() {
-        return 0;
+    InheritableThreadContext(Thread parent) {
+        this.contextClassLoader = parent.getContextClassLoader();
+        ThreadLocal.ThreadLocalMap map = parent.inheritableThreadLocals;
+        if (map != null) {
+            this.inheritableThreadLocals = ThreadLocal.createInheritedMap(map);
+        } else {
+            this.inheritableThreadLocals = null;
+        }
     }
 
-    static long currentKernelThread() {
-        return 0;
+    ClassLoader contextClassLoader() {
+        return contextClassLoader;
     }
 
-    static boolean isLightweight(long tid) {
-        return false;
+    ThreadLocal.ThreadLocalMap inheritableThreadLocals() {
+        return inheritableThreadLocals;
     }
-
-    static boolean isKernelThread(long tid) {
-        return false;
-    }
-
-    static void signal(long tid) {
-        throw new UnsupportedOperationException();
-    }
-
 }

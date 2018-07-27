@@ -56,6 +56,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.PropertyPermission;
 import java.util.ResourceBundle;
+import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -2105,6 +2106,32 @@ public final class System {
             }
             public void blockedOn(Interruptible b) {
                 Thread.blockedOn(b);
+            }
+            public Thread currentCarrierThread() {
+                return Thread.currentCarrierThread();
+            }
+            public <R> R executeOnCarrierThread(Callable<R> task) throws Exception {
+                Thread t = Thread.currentCarrierThread();
+                Fiber f = t.getFiber();
+                if (f != null) t.setFiber(null);
+                try {
+                    return task.call();
+                } finally {
+                    if (f != null) t.setFiber(f);
+                }
+            }
+            public <T> T getCarrierThreadLocal(ThreadLocal<T> local) {
+                return local.getCarrierThreadLocal();
+            }
+            public Fiber getFiber(Thread t) {
+                if (t instanceof ShadowThread) {
+                    return ((ShadowThread) t).fiber();
+                } else {
+                    return null;
+                }
+            }
+            public Thread getShadowThread(Fiber f) {
+                return f.shadowThreadOrNull();
             }
             public void registerShutdownHook(int slot, boolean registerShutdownInProgress, Runnable hook) {
                 Shutdown.add(slot, registerShutdownInProgress, hook);
