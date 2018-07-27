@@ -981,6 +981,9 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
           "JVM aborts, producing an error log and core/mini dump, on the "  \
           "first occurrence of an out-of-memory error")                     \
                                                                             \
+  product(bool, DetectLocksInCompiledFrames, true,                          \
+          "Detect monitors in continuation compiled frames")                \
+                                                                            \
   /* tracing */                                                             \
                                                                             \
   develop(bool, StressRewriter, false,                                      \

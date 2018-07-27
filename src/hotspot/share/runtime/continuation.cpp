@@ -53,7 +53,6 @@
 // #undef assert
 // #define assert(p, ...)
 
-#define TEST_MONITORS false
 #define USE_GROWABLE_ARRAY false
 
 // TODO
@@ -1228,7 +1227,8 @@ static bool is_interpreted_frame_owning_locks(frame& f) {
 }
 
 static bool is_compiled_frame_owning_locks(JavaThread* thread, RegisterMap* map, frame& f) {
-#if TEST_MONITORS
+  if (!DetectLocksInCompiledFrames)
+    return false;
   // ResourceMark rm(thread); // vframes/scopes are allocated in the resource area
   nmethod* nm = f.cb()->as_nmethod();
   assert (!nm->is_compiled() || !nm->as_compiled_method()->is_native_method(), ""); // ??? See compiledVFrame::compiledVFrame(...) in vframe_hp.cpp
@@ -1253,7 +1253,6 @@ static bool is_compiled_frame_owning_locks(JavaThread* thread, RegisterMap* map,
       }
     }
   }
-#endif
   return false;
 }
 
