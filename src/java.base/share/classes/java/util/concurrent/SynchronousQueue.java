@@ -47,6 +47,8 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
+import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
 
 /**
  * A {@linkplain BlockingQueue blocking queue} in which each insert
@@ -90,6 +92,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class SynchronousQueue<E> extends AbstractQueue<E>
     implements BlockingQueue<E>, java.io.Serializable {
     private static final long serialVersionUID = -3223113410248163686L;
+    private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
     /*
      * This class implements extensions of the dual stack and dual
@@ -236,7 +239,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
         static final class SNode {
             volatile SNode next;        // next node in stack
             volatile SNode match;       // the node matched to this
-            volatile Thread waiter;     // to control park/unpark
+            volatile Strand waiter;     // to control park/unpark
             Object item;                // data; or null for REQUESTs
             int mode;
             // Note: item and mode fields don't need to be volatile
@@ -263,7 +266,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             boolean tryMatch(SNode s) {
                 if (match == null &&
                     SMATCH.compareAndSet(this, null, s)) {
-                    Thread w = waiter;
+                    Strand w = waiter;
                     if (w != null) {    // waiters need at most one unpark
                         waiter = null;
                         LockSupport.unpark(w);
@@ -433,12 +436,18 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
              * method rather than calling awaitFulfill.
              */
             final long deadline = timed ? System.nanoTime() + nanos : 0L;
-            Thread w = Thread.currentThread();
+            Strand w = Strand.currentStrand();
+            Thread t;
+            if (w instanceof Thread) {
+                t = (Thread) w;
+            } else {
+                t = JLA.getShadowThread((Fiber)w);
+            }
             int spins = shouldSpin(s)
                 ? (timed ? MAX_TIMED_SPINS : MAX_UNTIMED_SPINS)
                 : 0;
             for (;;) {
-                if (w.isInterrupted())
+                if (t != null && t.isInterrupted())
                     s.tryCancel();
                 SNode m = s.match;
                 if (m != null)
@@ -536,7 +545,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
         static final class QNode {
             volatile QNode next;          // next node in queue
             volatile Object item;         // CAS'ed to or from null
-            volatile Thread waiter;       // to control park/unpark
+            volatile Strand waiter;       // to control park/unpark
             final boolean isData;
 
             QNode(Object item, boolean isData) {
@@ -732,12 +741,18 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
         Object awaitFulfill(QNode s, E e, boolean timed, long nanos) {
             /* Same idea as TransferStack.awaitFulfill */
             final long deadline = timed ? System.nanoTime() + nanos : 0L;
-            Thread w = Thread.currentThread();
+            Strand w = Strand.currentStrand();
+            Thread t;
+            if (w instanceof Thread) {
+                t = (Thread) w;
+            } else {
+                t = JLA.getShadowThread((Fiber)w);
+            }
             int spins = (head.next == s)
                 ? (timed ? MAX_TIMED_SPINS : MAX_UNTIMED_SPINS)
                 : 0;
             for (;;) {
-                if (w.isInterrupted())
+                if (t != null && t.isInterrupted())
                     s.tryCancel(e);
                 Object x = s.item;
                 if (x != e)

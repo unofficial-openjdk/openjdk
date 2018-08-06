@@ -79,16 +79,28 @@ public class ForkJoinWorkerThread extends Thread {
     final ForkJoinPool.WorkQueue workQueue; // work-stealing mechanics
 
     /**
+     * Creates a ForkJoinWorkerThread operating in the given thread group and
+     * pool.
+     *
+     * @param group thread group, can be null
+     * @param pool the pool this thread works in
+     * @throws NullPointerException if pool is null
+     */
+    protected ForkJoinWorkerThread(ThreadGroup group, ForkJoinPool pool) {
+        // Use a placeholder until a useful name can be set in registerWorker
+        super(group, "aForkJoinWorkerThread");
+        this.pool = pool;
+        this.workQueue = pool.registerWorker(this);
+    }
+
+    /**
      * Creates a ForkJoinWorkerThread operating in the given pool.
      *
      * @param pool the pool this thread works in
      * @throws NullPointerException if pool is null
      */
     protected ForkJoinWorkerThread(ForkJoinPool pool) {
-        // Use a placeholder until a useful name can be set in registerWorker
-        super("aForkJoinWorkerThread");
-        this.pool = pool;
-        this.workQueue = pool.registerWorker(this);
+        this(null, pool);
     }
 
     /**

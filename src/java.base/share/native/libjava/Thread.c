@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1994, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,13 +43,13 @@
 static JNINativeMethod methods[] = {
     {"start0",           "()V",        (void *)&JVM_StartThread},
     {"stop0",            "(" OBJ ")V", (void *)&JVM_StopThread},
-    {"isAlive",          "()Z",        (void *)&JVM_IsThreadAlive},
+    {"isAlive0",         "()Z",        (void *)&JVM_IsThreadAlive},
     {"suspend0",         "()V",        (void *)&JVM_SuspendThread},
     {"resume0",          "()V",        (void *)&JVM_ResumeThread},
     {"setPriority0",     "(I)V",       (void *)&JVM_SetThreadPriority},
     {"yield",            "()V",        (void *)&JVM_Yield},
-    {"sleep",            "(J)V",       (void *)&JVM_Sleep},
-    {"currentThread",    "()" THD,     (void *)&JVM_CurrentThread},
+    {"sleep0",           "(J)V",       (void *)&JVM_Sleep},
+    {"currentThread0",   "()" THD,     (void *)&JVM_CurrentThread},
     {"countStackFrames", "()I",        (void *)&JVM_CountStackFrames},
     {"interrupt0",       "()V",        (void *)&JVM_Interrupt},
     {"isInterrupted",    "(Z)Z",       (void *)&JVM_IsInterrupted},

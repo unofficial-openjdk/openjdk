@@ -118,7 +118,16 @@ class SocketChannelImpl
     //
     SocketChannelImpl(SelectorProvider sp) throws IOException {
         super(sp);
-        this.fd = Net.socket(true);
+
+        FileDescriptor fd = Net.socket(true);
+        try {
+            IOUtil.configureBlocking(fd, false);
+        } catch (IOException ioe) {
+            nd.close(fd);
+            throw ioe;
+        }
+
+        this.fd = fd;
         this.fdVal = IOUtil.fdVal(fd);
     }
 
@@ -126,6 +135,8 @@ class SocketChannelImpl
         throws IOException
     {
         super(sp);
+        IOUtil.configureBlocking(fd, false);
+
         this.fd = fd;
         this.fdVal = IOUtil.fdVal(fd);
         if (bound) {
@@ -141,6 +152,14 @@ class SocketChannelImpl
         throws IOException
     {
         super(sp);
+
+        try {
+            IOUtil.configureBlocking(fd, false);
+        } catch (IOException ioe) {
+            nd.close(fd);
+            throw ioe;
+        }
+
         this.fd = fd;
         this.fdVal = IOUtil.fdVal(fd);
         synchronized (stateLock) {
@@ -350,13 +369,14 @@ class SocketChannelImpl
                 if (isInputClosed)
                     return IOStatus.EOF;
 
-                if (blocking) {
+                n = IOUtil.read(fd, buf, -1, nd);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
                     do {
+                        park(Net.POLLIN);
                         n = IOUtil.read(fd, buf, -1, nd);
-                    } while (n == IOStatus.INTERRUPTED && isOpen());
-                } else {
-                    n = IOUtil.read(fd, buf, -1, nd);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
                 }
+
             } finally {
                 endRead(blocking, n > 0);
                 if (n <= 0 && isInputClosed)
@@ -385,13 +405,14 @@ class SocketChannelImpl
                 if (isInputClosed)
                     return IOStatus.EOF;
 
-                if (blocking) {
+                n = IOUtil.read(fd, dsts, offset, length, nd);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
                     do {
+                        park(Net.POLLIN);
                         n = IOUtil.read(fd, dsts, offset, length, nd);
-                    } while (n == IOStatus.INTERRUPTED && isOpen());
-                } else {
-                    n = IOUtil.read(fd, dsts, offset, length, nd);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
                 }
+
             } finally {
                 endRead(blocking, n > 0);
                 if (n <= 0 && isInputClosed)
@@ -458,13 +479,15 @@ class SocketChannelImpl
             int n = 0;
             try {
                 beginWrite(blocking);
-                if (blocking) {
+
+                n = IOUtil.write(fd, buf, -1, nd);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
                     do {
+                        park(Net.POLLOUT);
                         n = IOUtil.write(fd, buf, -1, nd);
-                    } while (n == IOStatus.INTERRUPTED && isOpen());
-                } else {
-                    n = IOUtil.write(fd, buf, -1, nd);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
                 }
+
             } finally {
                 endWrite(blocking, n > 0);
                 if (n <= 0 && isOutputClosed)
@@ -488,13 +511,15 @@ class SocketChannelImpl
             long n = 0;
             try {
                 beginWrite(blocking);
-                if (blocking) {
+
+                n = IOUtil.write(fd, srcs, offset, length, nd);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
                     do {
+                        park(Net.POLLOUT);
                         n = IOUtil.write(fd, srcs, offset, length, nd);
-                    } while (n == IOStatus.INTERRUPTED && isOpen());
-                } else {
-                    n = IOUtil.write(fd, srcs, offset, length, nd);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
                 }
+
             } finally {
                 endWrite(blocking, n > 0);
                 if (n <= 0 && isOutputClosed)
@@ -516,13 +541,12 @@ class SocketChannelImpl
             int n = 0;
             try {
                 beginWrite(blocking);
-                if (blocking) {
-                    do {
-                        n = sendOutOfBandData(fd, b);
-                    } while (n == IOStatus.INTERRUPTED && isOpen());
-                } else {
-                    n = sendOutOfBandData(fd, b);
+
+                n = sendOutOfBandData(fd, b);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
+                    throw new RuntimeException("not implemented");
                 }
+
             } finally {
                 endWrite(blocking, n > 0);
                 if (n <= 0 && isOutputClosed)
@@ -542,7 +566,7 @@ class SocketChannelImpl
             try {
                 synchronized (stateLock) {
                     ensureOpen();
-                    IOUtil.configureBlocking(fd, block);
+                    // do nothing
                 }
             } finally {
                 writeLock.unlock();
@@ -686,18 +710,22 @@ class SocketChannelImpl
             try {
                 writeLock.lock();
                 try {
-                    int n = 0;
                     boolean blocking = isBlocking();
+                    boolean connected = false;
                     try {
                         beginConnect(blocking, isa);
-                        do {
-                            n = Net.connect(fd, ia, isa.getPort());
-                        } while (n == IOStatus.INTERRUPTED && isOpen());
+                        int n = Net.connect(fd, ia, isa.getPort());
+                        if (n == IOStatus.UNAVAILABLE && blocking) {
+                            do {
+                                park(Net.POLLOUT);
+                                n = checkConnect(fd, false);
+                            } while (n == IOStatus.UNAVAILABLE && isOpen());
+                        }
+                        connected = (n > 0) && isOpen();
                     } finally {
-                        endConnect(blocking, (n > 0));
+                        endConnect(blocking, connected);
                     }
-                    assert IOStatus.check(n);
-                    return n > 0;
+                    return connected;
                 } finally {
                     writeLock.unlock();
                 }
@@ -770,15 +798,14 @@ class SocketChannelImpl
                     boolean connected = false;
                     try {
                         beginFinishConnect(blocking);
-                        int n = 0;
-                        if (blocking) {
+                        int n = checkConnect(fd, false);
+                        if (n == IOStatus.UNAVAILABLE && blocking) {
                             do {
-                                n = checkConnect(fd, true);
-                            } while ((n == 0 || n == IOStatus.INTERRUPTED) && isOpen());
-                        } else {
-                            n = checkConnect(fd, false);
+                                park(Net.POLLOUT);
+                                n = checkConnect(fd, false);
+                            } while (n == IOStatus.UNAVAILABLE && isOpen());
                         }
-                        connected = (n > 0);
+                        connected = (n > 0) && isOpen();
                     } finally {
                         endFinishConnect(blocking, connected);
                     }
@@ -834,19 +861,38 @@ class SocketChannelImpl
         if (blocking) {
             synchronized (stateLock) {
                 assert state == ST_CLOSING;
+
+                // unpark and wait for fibers to complete I/O operations
+                if (NativeThread.isFiber(readerThread) ||
+                        NativeThread.isFiber(writerThread)) {
+                    Poller.stopPoll(fdVal);
+
+                    while (NativeThread.isFiber(readerThread) ||
+                            NativeThread.isFiber(writerThread)) {
+                        try {
+                            stateLock.wait();
+                        } catch (InterruptedException e) {
+                            interrupted = true;
+                        }
+                    }
+                }
+
+                // interrupt and wait for kernel threads to complete I/O operations
                 long reader = readerThread;
                 long writer = writerThread;
-                if (reader != 0 || writer != 0) {
+                if (NativeThread.isKernelThread(reader) ||
+                        NativeThread.isKernelThread(writer)) {
                     nd.preClose(fd);
                     connected = false; // fd is no longer connected socket
 
-                    if (reader != 0)
+                    if (NativeThread.isKernelThread(reader))
                         NativeThread.signal(reader);
-                    if (writer != 0)
+                    if (NativeThread.isKernelThread(writer))
                         NativeThread.signal(writer);
 
                     // wait for blocking I/O operations to end
-                    while (readerThread != 0 || writerThread != 0) {
+                    while (NativeThread.isKernelThread(readerThread) ||
+                            NativeThread.isKernelThread(writerThread)) {
                         try {
                             stateLock.wait();
                         } catch (InterruptedException e) {
@@ -917,9 +963,12 @@ class SocketChannelImpl
                 throw new NotYetConnectedException();
             if (!isInputClosed) {
                 Net.shutdown(fd, Net.SHUT_RD);
-                long thread = readerThread;
-                if (thread != 0)
-                    NativeThread.signal(thread);
+                long reader = readerThread;
+                if (NativeThread.isFiber(reader)) {
+                    Poller.stopPoll(fdVal, Net.POLLIN);
+                } else if (NativeThread.isKernelThread(reader)) {
+                    NativeThread.signal(reader);
+                }
                 isInputClosed = true;
             }
             return this;
@@ -934,9 +983,12 @@ class SocketChannelImpl
                 throw new NotYetConnectedException();
             if (!isOutputClosed) {
                 Net.shutdown(fd, Net.SHUT_WR);
-                long thread = writerThread;
-                if (thread != 0)
-                    NativeThread.signal(thread);
+                long writer = writerThread;
+                if (NativeThread.isFiber(writer)) {
+                    Poller.stopPoll(fdVal, Net.POLLOUT);
+                } else if (NativeThread.isKernelThread(writer)) {
+                    NativeThread.signal(writer);
+                }
                 isOutputClosed = true;
             }
             return this;
@@ -955,7 +1007,7 @@ class SocketChannelImpl
      * Poll this channel's socket for reading up to the given timeout.
      * @return {@code true} if the socket is polled
      */
-    boolean pollRead(long timeout) throws IOException {
+    boolean pollRead(long nanos) throws IOException {
         boolean blocking = isBlocking();
         assert Thread.holdsLock(blockingLock()) && blocking;
 
@@ -964,7 +1016,11 @@ class SocketChannelImpl
             boolean polled = false;
             try {
                 beginRead(blocking);
-                int events = Net.poll(fd, Net.POLLIN, timeout);
+                int events = Net.pollNow(fd, Net.POLLIN);
+                if (events == 0) {
+                    park(Net.POLLIN, nanos);
+                    events = Net.pollNow(fd, Net.POLLIN);
+                }
                 polled = (events != 0);
             } finally {
                 endRead(blocking, polled);
@@ -979,7 +1035,7 @@ class SocketChannelImpl
      * Poll this channel's socket for a connection, up to the given timeout.
      * @return {@code true} if the socket is polled
      */
-    boolean pollConnected(long timeout) throws IOException {
+    boolean pollConnected(long nanos) throws IOException {
         boolean blocking = isBlocking();
         assert Thread.holdsLock(blockingLock()) && blocking;
 
@@ -990,7 +1046,11 @@ class SocketChannelImpl
                 boolean polled = false;
                 try {
                     beginFinishConnect(blocking);
-                    int events = Net.poll(fd, Net.POLLCONN, timeout);
+                    int events = Net.pollNow(fd, Net.POLLCONN);
+                    if (events == 0) {
+                        park(Net.POLLCONN, nanos);
+                        events = Net.pollNow(fd, Net.POLLCONN);
+                    }
                     polled = (events != 0);
                 } finally {
                     // invoke endFinishConnect with completed = false so that

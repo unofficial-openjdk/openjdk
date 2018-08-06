@@ -78,8 +78,9 @@ class SinkChannelImpl
         return fdVal;
     }
 
-    SinkChannelImpl(SelectorProvider sp, FileDescriptor fd) {
+    SinkChannelImpl(SelectorProvider sp, FileDescriptor fd) throws IOException {
         super(sp);
+        IOUtil.configureBlocking(fd, false);
         this.fd = fd;
         this.fdVal = IOUtil.fdVal(fd);
     }
@@ -107,8 +108,12 @@ class SinkChannelImpl
                 assert state == ST_CLOSING;
                 long th = thread;
                 if (th != 0) {
-                    nd.preClose(fd);
-                    NativeThread.signal(th);
+                    if (NativeThread.isFiber(th)) {
+                        Poller.stopPoll(fdVal);
+                    } else {
+                        nd.preClose(fd);
+                        NativeThread.signal(th);
+                    }
 
                     // wait for write operation to end
                     while (thread != 0) {
@@ -252,9 +257,13 @@ class SinkChannelImpl
             int n = 0;
             try {
                 beginWrite(blocking);
-                do {
-                    n = IOUtil.write(fd, src, -1, nd);
-                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                n = IOUtil.write(fd, src, -1, nd);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
+                    do {
+                        park(Net.POLLOUT);
+                        n = IOUtil.write(fd, src, -1, nd);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                }
             } finally {
                 endWrite(blocking, n > 0);
                 assert IOStatus.check(n);
@@ -275,9 +284,13 @@ class SinkChannelImpl
             long n = 0;
             try {
                 beginWrite(blocking);
-                do {
-                    n = IOUtil.write(fd, srcs, offset, length, nd);
-                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                n = IOUtil.write(fd, srcs, offset, length, nd);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
+                    do {
+                        park(Net.POLLOUT);
+                        n = IOUtil.write(fd, srcs, offset, length, nd);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                }
             } finally {
                 endWrite(blocking, n > 0);
                 assert IOStatus.check(n);

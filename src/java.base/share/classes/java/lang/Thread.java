@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 import jdk.internal.misc.TerminatingThreadLocal;
@@ -140,7 +141,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
  * @since   1.0
  */
 public
-class Thread implements Runnable {
+class Thread extends Strand implements Runnable {
     /* Make sure registerNatives is the first thing <clinit> does. */
     private static native void registerNatives();
     static {
@@ -174,10 +175,6 @@ class Thread implements Runnable {
     private static synchronized int nextThreadNum() {
         return threadInitNumber++;
     }
-
-    /* ThreadLocal values pertaining to this thread. This map is maintained
-     * by the ThreadLocal class. */
-    ThreadLocal.ThreadLocalMap threadLocals = null;
 
     /*
      * InheritableThreadLocal values pertaining to this thread. This map is
@@ -260,12 +257,52 @@ class Thread implements Runnable {
     public static final int MAX_PRIORITY = 10;
 
     /**
-     * Returns a reference to the currently executing thread object.
+     * Returns the Thread object for the current thread.
      *
-     * @return  the currently executing thread.
+     * <p> When executed in the context of a fiber, the returned Thread object
+     * does not support all features of Thread. In particular, the Thread
+     * is not an <i>active thread</i> in its thread group and so is not
+     * enumerated or acted on by thread group operations. In addition, the
+     * Thread does does support setting an uncaught exception handler or the
+     * stop, suspend or resume methods.
+     *
+     * @return  the current thread
      */
+    public static Thread currentThread() {
+        Thread t = currentThread0();
+        Fiber fiber = t.fiber;
+        if (fiber != null) {
+            return fiber.shadowThread();
+        } else {
+            return t;
+        }
+    }
+
+    static Thread currentCarrierThread() {
+        return currentThread0();
+    }
+
     @HotSpotIntrinsicCandidate
-    public static native Thread currentThread();
+    private static native Thread currentThread0();
+
+    /**
+     * Binds this thread to given Fiber. Once set, Thread.currentThread() will
+     * return the Fiber rather than the Thread object for the carrier thread.
+     */
+    void setFiber(Fiber fiber) {
+        //assert this == currentThread0();
+        this.fiber = fiber;
+    }
+
+    /**
+     * Returns the Fiber that is currently bound to this thread.
+     */
+    Fiber getFiber() {
+        //assert this == currentThread0();
+        return fiber;
+    }
+
+    private Fiber fiber;
 
     /**
      * A hint to the scheduler that the current thread is willing to yield
@@ -302,7 +339,29 @@ class Thread implements Runnable {
      *          <i>interrupted status</i> of the current thread is
      *          cleared when this exception is thrown.
      */
-    public static native void sleep(long millis) throws InterruptedException;
+    public static void sleep(long millis) throws InterruptedException {
+        if (millis < 0) {
+            throw new IllegalArgumentException("timeout value is negative");
+        }
+        Fiber f = currentCarrierThread().getFiber();
+        if (f != null) {
+            long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
+            do {
+                long startTime = System.nanoTime();
+                Fiber.parkNanos(nanos);
+                // check if park interrupted by Thread.interrupt
+                Thread t = f.shadowThreadOrNull();
+                if (t != null && t.getAndClearInterrupt())
+                    throw new InterruptedException();
+                nanos -= System.nanoTime() - startTime;
+            } while (nanos > 0);
+        } else {
+            // regular thread
+            sleep0(millis);
+        }
+    }
+
+    private static native void sleep0(long millis) throws InterruptedException;
 
     /**
      * Causes the currently executing thread to sleep (temporarily cease
@@ -457,6 +516,30 @@ class Thread implements Runnable {
         this.stackSize = stackSize;
 
         /* Set thread ID */
+        this.tid = nextThreadID();
+    }
+
+    /**
+     * Initializes a Thread to be used as a shadow thread for Fibers.
+     */
+    Thread(ThreadGroup group,
+           String name,
+           ClassLoader contextClassLoader,
+           ThreadLocal.ThreadLocalMap inheritedLocals,
+           AccessControlContext inheritedAccessControlContext)
+    {
+        this.group = group;
+        this.name = name;
+        this.daemon = false;
+        this.priority = NORM_PRIORITY;
+        this.contextClassLoader = contextClassLoader;
+        if (inheritedLocals != null) {
+            this.inheritableThreadLocals = ThreadLocal.createInheritedMap(inheritedLocals);
+        } else {
+            this.inheritableThreadLocals = null;
+        }
+        this.inheritedAccessControlContext = inheritedAccessControlContext;
+        this.stackSize = 0;
         this.tid = nextThreadID();
     }
 
@@ -845,7 +928,7 @@ class Thread implements Runnable {
      * a chance to clean up before it actually exits.
      */
     private void exit() {
-        if (threadLocals != null && TerminatingThreadLocal.REGISTRY.isPresent()) {
+        if (locals != null && TerminatingThreadLocal.REGISTRY.isPresent()) {
             TerminatingThreadLocal.threadTerminated();
         }
         if (group != null) {
@@ -855,7 +938,7 @@ class Thread implements Runnable {
         /* Aggressively null out all reference fields: see bug 4006245 */
         target = null;
         /* Speed the release of some of these resources */
-        threadLocals = null;
+        locals = null;
         inheritableThreadLocals = null;
         inheritedAccessControlContext = null;
         blocker = null;
@@ -901,6 +984,8 @@ class Thread implements Runnable {
      *
      * @throws     SecurityException  if the current thread cannot
      *             modify this thread.
+     * @throws     UnsupportedOperationException if invoked on the Thread object
+     *             for a Fiber
      * @see        #interrupt()
      * @see        #checkAccess()
      * @see        #run()
@@ -937,6 +1022,10 @@ class Thread implements Runnable {
                 security.checkPermission(SecurityConstants.STOP_THREAD_PERMISSION);
             }
         }
+
+        if (this instanceof ShadowThread)
+            throw new UnsupportedOperationException();
+
         // A zero status value corresponds to "NEW", it can't change to
         // not-NEW because we hold the lock.
         if (threadStatus != 0) {
@@ -994,15 +1083,14 @@ class Thread implements Runnable {
             synchronized (blockerLock) {
                 Interruptible b = blocker;
                 if (b != null) {
-                    interrupt0();  // set interrupt status
+                    doInterrupt();
                     b.interrupt(this);
                     return;
                 }
             }
         }
 
-        // set interrupt status
-        interrupt0();
+        doInterrupt();
     }
 
     /**
@@ -1023,7 +1111,14 @@ class Thread implements Runnable {
      * @revised 6.0
      */
     public static boolean interrupted() {
-        return currentThread().isInterrupted(true);
+        Thread thread = Thread.currentCarrierThread();
+        Fiber fiber = thread.getFiber();
+        if (fiber == null) {
+            return thread.getAndClearInterrupt();
+        } else {
+            Thread st = fiber.shadowThreadOrNull();
+            return (st != null) ? st.getAndClearInterrupt() : false;
+        }
     }
 
     /**
@@ -1044,12 +1139,26 @@ class Thread implements Runnable {
     }
 
     /**
+     * Invoked by interrupt to set the interrupt status and unpark the thread.
+     */
+    void doInterrupt() {
+        interrupt0();
+    }
+
+    /**
+     * Clears the interrupt status and returns the old value.
+     */
+    boolean getAndClearInterrupt() {
+        return isInterrupted(true);
+    }
+
+    /**
      * Tests if some Thread has been interrupted.  The interrupted state
-     * is reset or not based on the value of ClearInterrupted that is
+     * is reset or not based on the value of clearInterrupted that is
      * passed.
      */
     @HotSpotIntrinsicCandidate
-    private native boolean isInterrupted(boolean ClearInterrupted);
+    private native boolean isInterrupted(boolean clearInterrupted);
 
     /**
      * Tests if this thread is alive. A thread is alive if it has
@@ -1058,7 +1167,16 @@ class Thread implements Runnable {
      * @return  {@code true} if this thread is alive;
      *          {@code false} otherwise.
      */
-    public final native boolean isAlive();
+    public final boolean isAlive() {
+        if (this instanceof ShadowThread) {
+            State state = getState();
+            assert state != State.NEW;
+            return (state != State.TERMINATED);
+        } else {
+            return isAlive0();
+        }
+    }
+    private native boolean isAlive0();
 
     /**
      * Suspends this thread.
@@ -1072,6 +1190,8 @@ class Thread implements Runnable {
      *
      * @throws     SecurityException  if the current thread cannot modify
      *             this thread.
+     * @throws     UnsupportedOperationException if invoked on the Thread object
+     *             for a Fiber
      * @see #checkAccess
      * @deprecated   This method has been deprecated, as it is
      *   inherently deadlock-prone.  If the target thread holds a lock on the
@@ -1087,6 +1207,8 @@ class Thread implements Runnable {
     @Deprecated(since="1.2")
     public final void suspend() {
         checkAccess();
+        if (this instanceof ShadowThread)
+            throw new UnsupportedOperationException();
         suspend0();
     }
 
@@ -1102,6 +1224,8 @@ class Thread implements Runnable {
      *
      * @throws     SecurityException  if the current thread cannot modify this
      *             thread.
+     * @throws     UnsupportedOperationException if invoked on the Thread object
+     *             for a Fiber
      * @see        #checkAccess
      * @see        #suspend()
      * @deprecated This method exists solely for use with {@link #suspend},
@@ -1113,6 +1237,8 @@ class Thread implements Runnable {
     @Deprecated(since="1.2")
     public final void resume() {
         checkAccess();
+        if (this instanceof ShadowThread)
+            throw new UnsupportedOperationException();
         resume0();
     }
 
@@ -1183,7 +1309,7 @@ class Thread implements Runnable {
         }
 
         this.name = name;
-        if (threadStatus != 0) {
+        if (!(this instanceof ShadowThread) && threadStatus != 0) {
             setNativeName(name);
         }
     }
@@ -1296,27 +1422,35 @@ class Thread implements Runnable {
      *          <i>interrupted status</i> of the current thread is
      *          cleared when this exception is thrown.
      */
-    public final synchronized void join(long millis)
-    throws InterruptedException {
-        long base = System.currentTimeMillis();
-        long now = 0;
-
-        if (millis < 0) {
-            throw new IllegalArgumentException("timeout value is negative");
+    public final void join(long millis) throws InterruptedException {
+        if (this instanceof ShadowThread) {
+            Fiber f = ((ShadowThread) this).fiber();
+            long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
+            f.awaitNanosInterruptibly(nanos);
+            return;
         }
 
-        if (millis == 0) {
-            while (isAlive()) {
-                wait(0);
+        synchronized (this) {
+            long base = System.currentTimeMillis();
+            long now = 0;
+
+            if (millis < 0) {
+                throw new IllegalArgumentException("timeout value is negative");
             }
-        } else {
-            while (isAlive()) {
-                long delay = millis - now;
-                if (delay <= 0) {
-                    break;
+
+            if (millis == 0) {
+                while (isAlive()) {
+                    wait(0);
                 }
-                wait(delay);
-                now = System.currentTimeMillis() - base;
+            } else {
+                while (isAlive()) {
+                    long delay = millis - now;
+                    if (delay <= 0) {
+                        break;
+                    }
+                    wait(delay);
+                    now = System.currentTimeMillis() - base;
+                }
             }
         }
     }
@@ -1346,9 +1480,7 @@ class Thread implements Runnable {
      *          <i>interrupted status</i> of the current thread is
      *          cleared when this exception is thrown.
      */
-    public final synchronized void join(long millis, int nanos)
-    throws InterruptedException {
-
+    public final void join(long millis, int nanos) throws InterruptedException {
         if (millis < 0) {
             throw new IllegalArgumentException("timeout value is negative");
         }
@@ -1395,7 +1527,9 @@ class Thread implements Runnable {
     /**
      * Marks this thread as either a {@linkplain #isDaemon daemon} thread
      * or a user thread. The Java Virtual Machine exits when the only
-     * threads running are all daemon threads.
+     * threads running are all daemon threads. The daemon status of {@code
+     * Thread} objects associated with {@link Fiber}s is meaningless and does
+     * not determine if the Java Virtual Machine exits or not.
      *
      * <p> This method must be invoked before the thread is started.
      *
@@ -1995,12 +2129,15 @@ class Thread implements Runnable {
     /**
      * Set the handler invoked when this thread abruptly terminates
      * due to an uncaught exception.
+     *
      * <p>A thread can take full control of how it responds to uncaught
      * exceptions by having its uncaught exception handler explicitly set.
      * If no such handler is set then the thread's {@code ThreadGroup}
      * object acts as its handler.
      * @param eh the object to use as this thread's uncaught exception
      * handler. If {@code null} then this thread has no explicit handler.
+     * @throws     UnsupportedOperationException if invoked on the Thread object
+     *             for a Fiber
      * @throws  SecurityException  if the current thread is not allowed to
      *          modify this thread.
      * @see #setDefaultUncaughtExceptionHandler
@@ -2009,6 +2146,8 @@ class Thread implements Runnable {
      */
     public void setUncaughtExceptionHandler(UncaughtExceptionHandler eh) {
         checkAccess();
+        if (this instanceof ShadowThread)
+            throw new UnsupportedOperationException();
         uncaughtExceptionHandler = eh;
     }
 

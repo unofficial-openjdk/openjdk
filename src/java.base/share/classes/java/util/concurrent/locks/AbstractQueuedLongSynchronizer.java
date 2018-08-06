@@ -193,7 +193,7 @@ public abstract class AbstractQueuedLongSynchronizer
      */
     private void setHead(Node node) {
         head = node;
-        node.thread = null;
+        node.strand = null;
         node.prev = null;
     }
 
@@ -226,7 +226,7 @@ public abstract class AbstractQueuedLongSynchronizer
                     s = p;
         }
         if (s != null)
-            LockSupport.unpark(s.thread);
+            LockSupport.unpark(s.strand);
     }
 
     /**
@@ -311,7 +311,7 @@ public abstract class AbstractQueuedLongSynchronizer
         if (node == null)
             return;
 
-        node.thread = null;
+        node.strand = null;
 
         // Skip cancelled predecessors
         Node pred = node.prev;
@@ -340,7 +340,7 @@ public abstract class AbstractQueuedLongSynchronizer
             if (pred != head &&
                 ((ws = pred.waitStatus) == Node.SIGNAL ||
                  (ws <= 0 && pred.compareAndSetWaitStatus(ws, Node.SIGNAL))) &&
-                pred.thread != null) {
+                pred.strand != null) {
                 Node next = node.next;
                 if (next != null && next.waitStatus <= 0)
                     pred.compareAndSetNext(predNext, next);
@@ -949,13 +949,13 @@ public abstract class AbstractQueuedLongSynchronizer
      */
     public final Thread getFirstQueuedThread() {
         // handle only fast path, else relay
-        return (head == tail) ? null : fullGetFirstQueuedThread();
+        return (head == tail) ? null : (Thread) fullGetFirstQueuedStrand();
     }
 
     /**
-     * Version of getFirstQueuedThread called when fastpath fails.
+     * Version of getFirstQueuedStrand called when fastpath fails.
      */
-    private Thread fullGetFirstQueuedThread() {
+    private Strand fullGetFirstQueuedStrand() {
         /*
          * The first node is normally head.next. Try to get its
          * thread field, ensuring consistent reads: If thread
@@ -965,11 +965,11 @@ public abstract class AbstractQueuedLongSynchronizer
          * resorting to traversal.
          */
         Node h, s;
-        Thread st;
+        Strand st;
         if (((h = head) != null && (s = h.next) != null &&
-             s.prev == head && (st = s.thread) != null) ||
+             s.prev == head && (st = s.strand) != null) ||
             ((h = head) != null && (s = h.next) != null &&
-             s.prev == head && (st = s.thread) != null))
+             s.prev == head && (st = s.strand) != null))
             return st;
 
         /*
@@ -980,13 +980,13 @@ public abstract class AbstractQueuedLongSynchronizer
          * guaranteeing termination.
          */
 
-        Thread firstThread = null;
+        Strand firstStrand = null;
         for (Node p = tail; p != null && p != head; p = p.prev) {
-            Thread t = p.thread;
-            if (t != null)
-                firstThread = t;
+            Strand strand = p.strand;
+            if (strand != null)
+                firstStrand = strand;
         }
-        return firstThread;
+        return firstStrand;
     }
 
     /**
@@ -1003,7 +1003,7 @@ public abstract class AbstractQueuedLongSynchronizer
         if (thread == null)
             throw new NullPointerException();
         for (Node p = tail; p != null; p = p.prev)
-            if (p.thread == thread)
+            if (p.strand == thread)
                 return true;
         return false;
     }
@@ -1022,7 +1022,7 @@ public abstract class AbstractQueuedLongSynchronizer
         return (h = head) != null &&
             (s = h.next)  != null &&
             !s.isShared()         &&
-            s.thread != null;
+            s.strand != null;
     }
 
     /**
@@ -1078,7 +1078,7 @@ public abstract class AbstractQueuedLongSynchronizer
                         s = p;
                 }
             }
-            if (s != null && s.thread != Thread.currentThread())
+            if (s != null && s.strand != Strand.currentStrand())
                 return true;
         }
         return false;
@@ -1098,7 +1098,7 @@ public abstract class AbstractQueuedLongSynchronizer
     public final int getQueueLength() {
         int n = 0;
         for (Node p = tail; p != null; p = p.prev) {
-            if (p.thread != null)
+            if (p.strand != null)
                 ++n;
         }
         return n;
@@ -1118,9 +1118,9 @@ public abstract class AbstractQueuedLongSynchronizer
     public final Collection<Thread> getQueuedThreads() {
         ArrayList<Thread> list = new ArrayList<>();
         for (Node p = tail; p != null; p = p.prev) {
-            Thread t = p.thread;
-            if (t != null)
-                list.add(t);
+            Strand s = p.strand;
+            if (s instanceof Thread)
+                list.add((Thread)s);
         }
         return list;
     }
@@ -1137,9 +1137,9 @@ public abstract class AbstractQueuedLongSynchronizer
         ArrayList<Thread> list = new ArrayList<>();
         for (Node p = tail; p != null; p = p.prev) {
             if (!p.isShared()) {
-                Thread t = p.thread;
-                if (t != null)
-                    list.add(t);
+                Strand s = p.strand;
+                if (s instanceof Thread)
+                    list.add((Thread)s);
             }
         }
         return list;
@@ -1157,9 +1157,9 @@ public abstract class AbstractQueuedLongSynchronizer
         ArrayList<Thread> list = new ArrayList<>();
         for (Node p = tail; p != null; p = p.prev) {
             if (p.isShared()) {
-                Thread t = p.thread;
-                if (t != null)
-                    list.add(t);
+                Strand s = p.strand;
+                if (s instanceof Thread)
+                    list.add((Thread)s);
             }
         }
         return list;
@@ -1246,7 +1246,7 @@ public abstract class AbstractQueuedLongSynchronizer
         Node p = enq(node);
         int ws = p.waitStatus;
         if (ws > 0 || !p.compareAndSetWaitStatus(ws, Node.SIGNAL))
-            LockSupport.unpark(node.thread);
+            LockSupport.unpark(node.strand);
         return true;
     }
 
@@ -1809,9 +1809,9 @@ public abstract class AbstractQueuedLongSynchronizer
             ArrayList<Thread> list = new ArrayList<>();
             for (Node w = firstWaiter; w != null; w = w.nextWaiter) {
                 if (w.waitStatus == Node.CONDITION) {
-                    Thread t = w.thread;
-                    if (t != null)
-                        list.add(t);
+                    Strand s = w.strand;
+                    if (s instanceof Thread)
+                        list.add((Thread)s);
                 }
             }
             return list;

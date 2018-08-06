@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,33 +22,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-
 package sun.nio.ch;
 
+import java.io.IOException;
 
-// Signalling operations on native threads
+public class PollerProvider {
 
+    private static final short POLLIN       = 0x0001;
+    private static final short POLLOUT      = 0x0004;
 
-class NativeThread {
+    private PollerProvider() { }
 
-    static long current() {
-        return 0;
+    public static boolean available() {
+        return true;
     }
 
-    static long currentKernelThread() {
-        return 0;
+    static Poller readPoller() throws IOException {
+        return new PortPoller(POLLIN);
     }
 
-    static boolean isLightweight(long tid) {
-        return false;
+    static Poller writePoller() throws IOException {
+        return new PortPoller(POLLOUT);
     }
-
-    static boolean isKernelThread(long tid) {
-        return false;
-    }
-
-    static void signal(long tid) {
-        throw new UnsupportedOperationException();
-    }
-
 }

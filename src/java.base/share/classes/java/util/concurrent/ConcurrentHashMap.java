@@ -2764,7 +2764,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     static final class TreeBin<K,V> extends Node<K,V> {
         TreeNode<K,V> root;
         volatile TreeNode<K,V> first;
-        volatile Thread waiter;
+        volatile Strand waiter;
         volatile int lockState;
         // values for lockState
         static final int WRITER = 1; // set while holding write lock
@@ -2866,7 +2866,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 else if ((s & WAITER) == 0) {
                     if (U.compareAndSetInt(this, LOCKSTATE, s, s | WAITER)) {
                         waiting = true;
-                        waiter = Thread.currentThread();
+                        waiter = Strand.currentStrand();
                     }
                 }
                 else if (waiting)
@@ -2896,7 +2896,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                             p = ((r = root) == null ? null :
                                  r.findTreeNode(h, k, null));
                         } finally {
-                            Thread w;
+                            Strand w;
                             if (U.getAndAddInt(this, LOCKSTATE, -READER) ==
                                 (READER|WAITER) && (w = waiter) != null)
                                 LockSupport.unpark(w);

@@ -53,7 +53,7 @@ public class Continuation {
 
 
     private static Thread currentCarrierThread() {
-        return Thread.currentThread();
+        return Thread.currentCarrierThread();
     }
 
     static {
