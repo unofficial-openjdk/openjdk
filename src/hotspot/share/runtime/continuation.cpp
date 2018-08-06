@@ -1152,8 +1152,9 @@ static inline int interpreter_frame_expression_stack_size(frame &f, InterpreterO
     InterpreterOopMap mask0;
     mask = &mask0;
     interpreter_oop_mask(f, mask);
-  }
-  return mask->expression_stack_size();
+    return mask->expression_stack_size();
+  } else
+    return mask->expression_stack_size();
 }
 
 static inline intptr_t* interpreted_frame_top(frame& f, InterpreterOopMap* mask = NULL) { // inclusive; this will be copied with the frame
