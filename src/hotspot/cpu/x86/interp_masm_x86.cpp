@@ -795,6 +795,64 @@ void InterpreterMacroAssembler::jump_from_interpreted(Register method, Register 
   jmp(Address(method, Method::from_interpreted_offset()));
 }
 
+// void InterpreterMacroAssembler::resolve_special(Register rmethod, LinkInfo link_info) {
+//   CallInfo callinfo;
+//   LinkResolver::resolve_special_call(callinfo, Handle(), link_info, Thread::current());
+//   methodHandle methodh = callinfo.selected_method();
+//   assert(methodh.not_null(), "should have thrown exception");
+//   Method* method = methodh();
+//   tty->print_cr("call_Java_final method: %p name: %s", method, method->name()->as_C_string());
+//   // tty->print_cr("call_Java_final const: %p, params: %d locals %d", method->constMethod(), method->constMethod()->_size_of_parameters, method->constMethod()->_max_locals);
+
+//   movptr(rmethod, AddressLiteral((address)method, RelocationHolder::none).addr());
+// }
+
+// void InterpreterMacroAssembler::get_entry(Register entry, Register method) {
+//   // TODO: see InterpreterMacroAssembler::jump_from_interpreted for special cases
+//   Label done;
+//   // if (JvmtiExport::can_post_interpreter_events()) {
+//   //   Register temp;
+//   //   Label run_compiled_code;
+//   //   // JVMTI events, such as single-stepping, are implemented partly by avoiding running
+//   //   // compiled code in threads for which the event is enabled.  Check here for
+//   //   // interp_only_mode if these events CAN be enabled.
+//   //   // interp_only is an int, on little endian it is sufficient to test the byte only
+//   //   // Is a cmpl faster?
+//   //   LP64_ONLY(temp = r15_thread;)
+//   //   NOT_LP64(get_thread(temp);)
+//   //   cmpb(Address(temp, JavaThread::interp_only_mode_offset()), 0);
+//   //   jccb(Assembler::zero, run_compiled_code);
+//   //   movptr(entry, Address(method, Method::interpreter_entry_offset()));
+//   //   bind(run_compiled_code);
+//   // }
+//   movptr(entry, Address(method, Method::from_interpreted_offset()));
+//   bind(done);
+// }
+
+// // loads method into rbx
+// void InterpreterMacroAssembler::get_entry(Register entry, LinkInfo link_info) {
+//   resolve_special(rbx, link_info);
+//   get_entry(entry, rbx);
+// }
+
+// void InterpreterMacroAssembler::call_Java_final(LinkInfo link_info) {
+//   Register rentry = rax;
+//   get_entry(rentry, link_info);
+
+//   // profile_call(rax); // ?? rax
+//   // profile_arguments_type(rax, rbx, rbcp, false);
+//   call(rentry);
+// }
+
+// void InterpreterMacroAssembler::jump_Java_final(LinkInfo link_info) {
+//   Register rentry = rax;
+//   get_entry(rentry, link_info);
+
+//   // profile_call(rax); // ?? rax
+//   // profile_arguments_type(rax, rbx, rbcp, false);
+//   jmp(rentry);
+// }
+
 // The following two routines provide a hook so that an implementation
 // can schedule the dispatch in two parts.  x86 does not do this.
 void InterpreterMacroAssembler::dispatch_prolog(TosState state, int step) {

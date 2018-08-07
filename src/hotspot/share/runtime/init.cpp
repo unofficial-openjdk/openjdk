@@ -59,6 +59,7 @@ void codeCache_init();
 void VM_Version_init();
 void os_init_globals();        // depends on VM_Version_init, before universe_init
 void stubRoutines_init1();
+void stubRoutines_initContinuationStubs();
 jint universe_init();          // depends on codeCache_init and stubRoutines_init
 // depends on universe_init, must be before interpreter_init (currently only on SPARC)
 void gc_barrier_stubs_init();
@@ -116,6 +117,7 @@ jint init_globals() {
     return status;
 
   gc_barrier_stubs_init();   // depends on universe_init, must be before interpreter_init
+  stubRoutines_initContinuationStubs();
   interpreter_init();        // before any methods loaded
   invocationCounter_init();  // before any methods loaded
   accessFlags_init();

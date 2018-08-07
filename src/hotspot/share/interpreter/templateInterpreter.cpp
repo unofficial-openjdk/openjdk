@@ -193,12 +193,14 @@ address    TemplateInterpreter::_throw_exception_entry                      = NU
 EntryPoint TemplateInterpreter::_trace_code;
 #endif // !PRODUCT
 EntryPoint TemplateInterpreter::_return_entry[TemplateInterpreter::number_of_return_entries];
+EntryPoint TemplateInterpreter::_return_entryX[TemplateInterpreter::number_of_return_entries];
 EntryPoint TemplateInterpreter::_earlyret_entry;
 EntryPoint TemplateInterpreter::_deopt_entry [TemplateInterpreter::number_of_deopt_entries ];
 address    TemplateInterpreter::_deopt_reexecute_return_entry;
 EntryPoint TemplateInterpreter::_safept_entry;
 
 address TemplateInterpreter::_invoke_return_entry[TemplateInterpreter::number_of_return_addrs];
+address TemplateInterpreter::_invoke_return_entryX[TemplateInterpreter::number_of_return_addrs];
 address TemplateInterpreter::_invokeinterface_return_entry[TemplateInterpreter::number_of_return_addrs];
 address TemplateInterpreter::_invokedynamic_return_entry[TemplateInterpreter::number_of_return_addrs];
 
@@ -235,6 +237,10 @@ address* TemplateInterpreter::invoke_return_entry_table_for(Bytecodes::Code code
  * Returns the return entry address for the given top-of-stack state and bytecode.
  */
 address TemplateInterpreter::return_entry(TosState state, int length, Bytecodes::Code code) {
+  return return_entry(state, length, code, false);
+}
+
+address TemplateInterpreter::return_entry(TosState state, int length, Bytecodes::Code code, bool X) {
   guarantee(0 <= length && length < Interpreter::number_of_return_entries, "illegal length");
   const int index = TosState_as_index(state);
   switch (code) {
@@ -242,14 +248,14 @@ address TemplateInterpreter::return_entry(TosState state, int length, Bytecodes:
   case Bytecodes::_invokespecial:
   case Bytecodes::_invokevirtual:
   case Bytecodes::_invokehandle:
-    return _invoke_return_entry[index];
+    return X ? _invoke_return_entryX[index] : _invoke_return_entry[index];
   case Bytecodes::_invokeinterface:
     return _invokeinterface_return_entry[index];
   case Bytecodes::_invokedynamic:
     return _invokedynamic_return_entry[index];
   default:
     assert(!Bytecodes::is_invoke(code), "invoke instructions should be handled separately: %s", Bytecodes::name(code));
-    address entry = _return_entry[length].entry(state);
+    address entry = (X ? _return_entryX[length] : _return_entry[length]).entry(state);
     vmassert(entry != NULL, "unsupported return entry requested, length=%d state=%d", length, index);
     return entry;
   }

@@ -55,6 +55,7 @@
 #include "runtime/arguments.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/compilationPolicy.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/flags/flagSetting.hpp"
 #include "runtime/init.hpp"
@@ -369,6 +370,10 @@ void print_statistics() {
 #else // PRODUCT MODE STATISTICS
 
 void print_statistics() {
+
+  if (UseNewCode2) {
+    Continuations::print_statistics();
+  }
 
   if (PrintMethodData) {
     print_method_profiling_data();

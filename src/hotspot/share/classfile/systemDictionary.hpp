@@ -146,6 +146,10 @@ class OopStorage;
   do_klass(reflect_Method_klass,                        java_lang_reflect_Method,                  Pre                 ) \
   do_klass(reflect_Constructor_klass,                   java_lang_reflect_Constructor,             Pre                 ) \
                                                                                                                          \
+  do_klass(Runnable_klass,                              java_lang_Runnable,                        Pre                 ) \
+  do_klass(ContinuationScope_klass,                     java_lang_ContinuationScope,               Pre                 ) \
+  do_klass(Continuation_klass,                          java_lang_Continuation,                    Pre                 ) \
+                                                                                                                         \
   /* NOTE: needed too early in bootstrapping process to have checks based on JDK version */                              \
   /* It's okay if this turns out to be NULL in non-1.4 JDKs. */                                                          \
   do_klass(reflect_MagicAccessorImpl_klass,             reflect_MagicAccessorImpl,                 Opt                 ) \

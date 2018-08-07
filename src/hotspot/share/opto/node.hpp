@@ -72,6 +72,7 @@ class EncodePNode;
 class EncodePKlassNode;
 class FastLockNode;
 class FastUnlockNode;
+class GetFPNode;
 class IfNode;
 class IfProjNode;
 class IfFalseNode;
@@ -714,6 +715,7 @@ public:
     DEFINE_CLASS_ID(Mul,      Node, 12)
     DEFINE_CLASS_ID(Vector,   Node, 13)
     DEFINE_CLASS_ID(ClearArray, Node, 14)
+    DEFINE_CLASS_ID(GetFP,    Node, 15)
 
     _max_classes  = ClassMask_ClearArray
   };

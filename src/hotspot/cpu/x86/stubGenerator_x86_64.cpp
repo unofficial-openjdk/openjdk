@@ -35,6 +35,7 @@
 #include "oops/objArrayKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/methodHandles.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -5508,6 +5509,244 @@ address generate_cipherBlockChaining_decryptVectorAESCrypt() {
 
   }
 
+void push_FrameInfo(MacroAssembler* _masm, Register fi, Register sp, Register fp, address pc) {
+  if(!sp->is_valid()) __ push(0); else {
+    if (sp == rsp) {
+      __ movptr(fi, rsp);
+      __ push(fi);
+    } else {
+      __ push(sp);
+    }
+  }
+
+  if(!fp->is_valid()) __ push(0); else __ push(fp);
+
+  __ lea(fi, ExternalAddress(pc));
+  __ push(fi);
+
+  __ movptr(fi, rsp); // make fi point to the beginning of FramInfo
+}
+
+void push_FrameInfo(MacroAssembler* _masm, Register fi, Register sp, Register fp, Register pc) {
+  if(!sp->is_valid()) __ push(0); else {
+    if (sp == rsp) {
+      __ movptr(fi, rsp);
+      __ push(fi);
+    } else {
+      __ push(sp);
+    }
+  }
+
+  if(!fp->is_valid()) __ push(0); else __ push(fp);
+
+  if(!pc->is_valid()) __ push(0); else __ push(pc);
+
+  __ movptr(fi, rsp); // make fi point to the beginning of FramInfo
+}
+
+void pop_FrameInfo(MacroAssembler* _masm, Register sp, Register fp, Register pc) {
+  if(!pc->is_valid()) __ lea(rsp, Address(rsp, wordSize)); else __ pop(pc);
+  if(!fp->is_valid()) __ lea(rsp, Address(rsp, wordSize)); else __ pop(fp);
+  if(!sp->is_valid()) __ lea(rsp, Address(rsp, wordSize)); else __ pop(sp);
+}
+
+  // c_rarg1 ContinuationScope
+address generate_cont_doYield() {
+    const char *name = "cont_doYield";
+
+    enum layout {
+      frameinfo_11  = frame::arg_reg_save_area_bytes/BytesPerInt,
+      frameinfo_12,
+      frameinfo_21,
+      frameinfo_22,
+      frameinfo_31,
+      frameinfo_32,
+      rbp_off,
+      rbpH_off,
+      return_off,
+      return_off2,
+      framesize // inclusive of return address
+    };
+    // assert(is_even(framesize/2), "sp not 16-byte aligned");
+    int insts_size = 512;
+    int locs_size  = 64;
+    CodeBuffer code(name, insts_size, locs_size);
+    OopMapSet* oop_maps  = new OopMapSet();
+    MacroAssembler* masm = new MacroAssembler(&code);
+    MacroAssembler* _masm = masm;
+
+    // MacroAssembler* masm = _masm;
+    // StubCodeMark mark(this, "StubRoutines", name);
+
+    address start = __ pc();
+
+    Register fi = c_rarg1;
+
+    // __ movq(c_rarg2, c_rarg1);          // scopes argument
+    __ movptr(rax, Address(rsp, 0));    // use return address as the frame pc // __ lea(rax, InternalAddress(pcxxxx));
+    __ lea(fi, Address(rsp, wordSize)); // skip return address
+    __ movptr(c_rarg3, rbp);
+
+    __ enter();
+
+    // // return address and rbp are already in place
+    // __ subptr(rsp, (framesize-4) << LogBytesPerInt); // prolog
+
+    push_FrameInfo(masm, fi, fi, c_rarg3, rax);
+
+    int frame_complete = __ pc() - start;
+    address the_pc = __ pc();
+
+    __ set_last_Java_frame(rsp, rbp, the_pc); // may be unnecessary. also, consider MacroAssembler::call_VM_leaf_base
+
+    __ call_VM(noreg, CAST_FROM_FN_PTR(address, Continuation::freeze), fi, false); // do NOT check exceptions; they'll get forwarded to the caller
+    Label pinned;
+    __ pop(rdx); // read the pc from the FrameInfo
+    __ testq(rdx, rdx);
+    __ jcc(Assembler::zero, pinned);
+
+    __ pop(rbp); // not pinned -- jump to Continuation.run (the entry frame)
+    __ movptr(rbp, Address(rbp, 0)); // frame_info->fp has an indirection here. See Continuation::freeze for an explanation.
+    __ pop(fi);
+    __ movptr(rsp, fi);
+    __ jmp(rdx);
+
+    __ bind(pinned); // pinned -- return to caller
+    __ lea(rsp, Address(rsp, wordSize*2)); // "pop" the rest of the FrameInfo struct
+
+    __ leave();
+    __ ret(0);
+
+    // return start;
+
+    OopMap* map = new OopMap(framesize, 1);
+    // map->set_callee_saved(VMRegImpl::stack2reg(rbp_off), rbp->as_VMReg());
+    oop_maps->add_gc_map(the_pc - start, map);
+
+    RuntimeStub* stub = // codeBlob framesize is in words (not VMRegImpl::slot_size)
+      RuntimeStub::new_runtime_stub(name,
+                                    &code,
+                                    frame_complete,
+                                    (framesize >> (LogBytesPerWord - LogBytesPerInt)),
+                                    oop_maps, false);
+    return stub->entry_point();
+  }
+
+  // c_rarg1 - sp
+  // c_rarg2 - fp
+  // c_rarg3 - pc
+  address generate_cont_jump() {
+    StubCodeMark mark(this, "StubRoutines","Continuation Jump");
+    address start = __ pc();
+
+    __ movptr(rbp, c_rarg2);
+    __ movptr(rbp, Address(rbp, 0)); // rbp is indirect. See Continuation::freeze for an explanation.
+    __ movptr(rsp, c_rarg1);
+    __ jmp(c_rarg3);
+
+    return start;
+  }
+
+  address generate_cont_thaw(bool return_barrier) {
+    address start = __ pc();
+
+    // TODO: Handle Valhalla return types. May require generating different return barriers.
+
+    Register fi = r11;
+
+    if (!return_barrier) {
+      __ pop(c_rarg3); // pop return address. if we don't do this, we get a drift, where the bottom-most frozen frame continuously grows
+      // __ lea(rsp, Address(rsp, wordSize)); // pop return address. if we don't do this, we get a drift, where the bottom-most frozen frame continuously grows
+    }
+
+    Label thaw_fail;
+    __ movptr(fi, rsp);
+    if (return_barrier) {
+      __ push(rax); __ push_d(xmm0); // preserve possible return value from a method returning to the return barrier
+    }
+    __ movl(c_rarg2, return_barrier);
+    push_FrameInfo(_masm, fi, fi, rbp, c_rarg3);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::prepare_thaw), fi, c_rarg2);
+    __ testq(rax, rax);           // rax contains the size of the frames to thaw, 0 if overflow or no more frames
+    __ jcc(Assembler::zero, thaw_fail);
+
+    pop_FrameInfo(_masm, fi, rbp, c_rarg3); // c_rarg3 would still be our return address
+    if (return_barrier) {
+      __ pop_d(xmm0); __ pop(rdx);   // TEMPORARILY restore return value (we're going to push it again, but rsp is about to move)
+    }
+
+    __ subq(rsp, rax);             // make room for the thawed frames
+    if (return_barrier) {
+      __ push(rdx); __ push_d(xmm0); // save original return value -- again
+    }
+    __ movl(c_rarg2, return_barrier);
+    push_FrameInfo(_masm, fi, fi, rbp, c_rarg3);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::thaw), fi, c_rarg2);
+    if (!return_barrier) {
+      __ movl(rax, 0); // return 0 (success) from doYield
+    }
+    __ bind(thaw_fail);
+    pop_FrameInfo(_masm, fi, rbp, rdx);
+    if (return_barrier) {
+      __ pop_d(xmm0); __ pop(rax); // restore return value (no safepoint in the call to thaw, so even an oop return value should be OK)
+    }
+    __ movptr(rsp, fi); // we're now on the yield frame (which is above us b/c rsp has been pushed down)
+    __ jmp(rdx);
+
+    return start;
+  }
+
+  address generate_cont_thaw() {
+    StubCodeMark mark(this, "StubRoutines", "Cont thaw");
+    address start = __ pc();
+    generate_cont_thaw(false);
+    return start;
+  }
+
+  address generate_cont_returnBarrier() {
+    // TODO: will probably need multiple return barriers depending on return type
+    StubCodeMark mark(this, "StubRoutines", "cont return barrier");
+    address start = __ pc();
+
+    if (CONT_FULL_STACK)
+      __ stop("RETURN BARRIER -- UNREACHABLE 0");
+
+    generate_cont_thaw(true);
+
+    return start;
+  }
+
+  address generate_cont_getPC() {
+    StubCodeMark mark(this, "StubRoutines", "GetPC");
+    address start = __ pc();
+
+    __ movptr(rax, Address(rsp, 0));
+    __ ret(0);
+
+    return start;
+  }
+
+  address generate_cont_getSP() {
+    StubCodeMark mark(this, "StubRoutines", "getSP");
+    address start = __ pc();
+
+    __ lea(rax, Address(rsp, wordSize));
+    __ ret(0);
+
+    return start;
+  }
+
+  address generate_cont_getFP() {
+    StubCodeMark mark(this, "StubRoutines", "GetFP");
+    address start = __ pc();
+
+    __ stop("WHAT?");
+    __ lea(rax, Address(rsp, wordSize));
+    __ ret(0);
+
+    return start;
+  }
+
 #undef __
 #define __ masm->
 
@@ -5739,6 +5978,16 @@ address generate_cipherBlockChaining_decryptVectorAESCrypt() {
     }
   }
 
+  void generate_phase1() {
+    // Continuation stubs:
+    StubRoutines::_cont_thaw          = generate_cont_thaw();
+    StubRoutines::_cont_returnBarrier = generate_cont_returnBarrier();
+    StubRoutines::_cont_doYield    = generate_cont_doYield();
+    StubRoutines::_cont_jump       = generate_cont_jump();
+    StubRoutines::_cont_getSP      = generate_cont_getSP();
+    StubRoutines::_cont_getPC      = generate_cont_getPC();
+  }
+
   void generate_all() {
     // Generates all stubs and initializes the entry points
 
@@ -5876,15 +6125,17 @@ address generate_cipherBlockChaining_decryptVectorAESCrypt() {
   }
 
  public:
-  StubGenerator(CodeBuffer* code, bool all) : StubCodeGenerator(code) {
-    if (all) {
-      generate_all();
-    } else {
+  StubGenerator(CodeBuffer* code, int phase) : StubCodeGenerator(code) {
+    if (phase == 0) {
       generate_initial();
+    } else if (phase == 1) {
+      generate_phase1();
+    } else {
+      generate_all();
     }
   }
 }; // end class declaration
 
-void StubGenerator_generate(CodeBuffer* code, bool all) {
-  StubGenerator g(code, all);
+void StubGenerator_generate(CodeBuffer* code, int phase) {
+  StubGenerator g(code, phase);
 }

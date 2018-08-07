@@ -114,6 +114,11 @@ public:
   virtual void do_cld(ClassLoaderData* cld) { ShouldNotReachHere(); }
 };
 
+class DerivedOopClosure : public Closure {
+ public:
+  virtual void do_derived_oop(oop* base, oop* derived) = 0;
+};
+
 class KlassClosure : public Closure {
  public:
   virtual void do_klass(Klass* k) = 0;

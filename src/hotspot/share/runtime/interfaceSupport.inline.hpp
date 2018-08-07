@@ -149,13 +149,13 @@ class ThreadStateTransition : public StackObj {
   // never block on entry to the VM. This will break the code, since e.g. preserve arguments
   // have not been setup.
   static inline void transition_from_java(JavaThread *thread, JavaThreadState to) {
-    assert(thread->thread_state() == _thread_in_Java, "coming from wrong thread state");
+    assert(thread->thread_state() == _thread_in_Java, "coming from wrong thread state: %s", thread->thread_state_name());
     thread->set_thread_state(to);
   }
 
   static inline void transition_from_native(JavaThread *thread, JavaThreadState to) {
     assert((to & 1) == 0, "odd numbers are transitions states");
-    assert(thread->thread_state() == _thread_in_native, "coming from wrong thread state");
+    assert(thread->thread_state() == _thread_in_native, "coming from wrong thread state: %s", thread->thread_state_name());
     // Change to transition state
     thread->set_thread_state(_thread_in_native_trans);
 

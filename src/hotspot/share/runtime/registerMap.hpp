@@ -75,6 +75,7 @@ class RegisterMap : public StackObj {
   JavaThread* _thread;                  // Reference to current thread
   bool        _update_map;              // Tells if the register map need to be
                                         // updated when traversing the stack
+  bool _validate_oops;                 // whether to perform valid oop checks in asserts
 
 #ifdef ASSERT
   void check_location_valid();
@@ -83,8 +84,8 @@ class RegisterMap : public StackObj {
 #endif
 
  public:
-  debug_only(intptr_t* _update_for_id;) // Assert that RegisterMap is not updated twice for same frame
-  RegisterMap(JavaThread *thread, bool update_map = true);
+  DEBUG_ONLY(intptr_t* _update_for_id;) // Assert that RegisterMap is not updated twice for same frame
+  RegisterMap(JavaThread *thread, bool update_map = true, bool validate_oops = true);
   RegisterMap(const RegisterMap* map);
 
   address location(VMReg reg) const {
@@ -116,6 +117,7 @@ class RegisterMap : public StackObj {
 
   JavaThread *thread() const { return _thread; }
   bool update_map()    const { return _update_map; }
+  bool validate_oops() const { return _validate_oops; }
 
   void print_on(outputStream* st) const;
   void print() const;

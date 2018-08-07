@@ -27,6 +27,7 @@
 #include "memory/resourceArea.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/oop.inline.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/timerTrace.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -46,6 +47,7 @@
 
 BufferBlob* StubRoutines::_code1                                = NULL;
 BufferBlob* StubRoutines::_code2                                = NULL;
+BufferBlob* StubRoutines::_code3                                = NULL;
 
 address StubRoutines::_call_stub_return_address                 = NULL;
 address StubRoutines::_call_stub_entry                          = NULL;
@@ -175,13 +177,20 @@ address StubRoutines::_safefetchN_entry                  = NULL;
 address StubRoutines::_safefetchN_fault_pc               = NULL;
 address StubRoutines::_safefetchN_continuation_pc        = NULL;
 
+address StubRoutines::_cont_doYield       = NULL;
+address StubRoutines::_cont_jump          = NULL;
+address StubRoutines::_cont_thaw          = NULL;
+address StubRoutines::_cont_returnBarrier = NULL;
+address StubRoutines::_cont_getSP         = NULL;
+address StubRoutines::_cont_getPC         = NULL;
+
 // Initialization
 //
 // Note: to break cycle with universe initialization, stubs are generated in two phases.
 // The first one generates stubs needed during universe init (e.g., _handle_must_compile_first_entry).
 // The second phase includes all other stubs (which may depend on universe being initialized.)
 
-extern void StubGenerator_generate(CodeBuffer* code, bool all); // only interface to generators
+extern void StubGenerator_generate(CodeBuffer* code, int phase); // only interface to generators
 
 void StubRoutines::initialize1() {
   if (_code1 == NULL) {
@@ -192,13 +201,12 @@ void StubRoutines::initialize1() {
       vm_exit_out_of_memory(code_size1, OOM_MALLOC_ERROR, "CodeCache: no room for StubRoutines (1)");
     }
     CodeBuffer buffer(_code1);
-    StubGenerator_generate(&buffer, false);
+    StubGenerator_generate(&buffer, 0);
     // When new stubs added we need to make sure there is some space left
     // to catch situation when we should increase size again.
     assert(code_size1 == 0 || buffer.insts_remaining() > 200, "increase code_size1");
   }
 }
-
 
 #ifdef ASSERT
 typedef void (*arraycopy_fn)(address src, address dst, int count);
@@ -270,6 +278,22 @@ static void test_safefetchN() {
 }
 #endif
 
+void StubRoutines::initializeContinuationStubs() {
+  if (_code3 == NULL) {
+    ResourceMark rm;
+    TraceTime timer("StubRoutines generation 3", TRACETIME_LOG(Info, startuptime));
+    _code3 = BufferBlob::create("StubRoutines (3)", code_size2);
+    if (_code3 == NULL) {
+      vm_exit_out_of_memory(code_size2, OOM_MALLOC_ERROR, "CodeCache: no room for StubRoutines (3)");
+    }
+    CodeBuffer buffer(_code3);
+    StubGenerator_generate(&buffer, 1);
+    // When new stubs added we need to make sure there is some space left
+    // to catch situation when we should increase size again.
+    assert(code_size2 == 0 || buffer.insts_remaining() > 200, "increase code_size3");
+  }
+}
+
 void StubRoutines::initialize2() {
   if (_code2 == NULL) {
     ResourceMark rm;
@@ -279,7 +303,7 @@ void StubRoutines::initialize2() {
       vm_exit_out_of_memory(code_size2, OOM_MALLOC_ERROR, "CodeCache: no room for StubRoutines (2)");
     }
     CodeBuffer buffer(_code2);
-    StubGenerator_generate(&buffer, true);
+    StubGenerator_generate(&buffer, 2);
     // When new stubs added we need to make sure there is some space left
     // to catch situation when we should increase size again.
     assert(code_size2 == 0 || buffer.insts_remaining() > 200, "increase code_size2");
@@ -373,6 +397,7 @@ void StubRoutines::initialize2() {
 
 void stubRoutines_init1() { StubRoutines::initialize1(); }
 void stubRoutines_init2() { StubRoutines::initialize2(); }
+void stubRoutines_initContinuationStubs() { StubRoutines::initializeContinuationStubs(); }
 
 //
 // Default versions of arraycopy functions

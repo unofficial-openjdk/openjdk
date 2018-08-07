@@ -25,6 +25,7 @@
 package org.graalvm.compiler.hotspot.meta;
 
 import static jdk.vm.ci.hotspot.HotSpotCallingConventionType.NativeCall;
+import static jdk.vm.ci.hotspot.HotSpotCallingConventionType.JavaCall;
 import static org.graalvm.compiler.core.common.GraalOptions.GeneratePIC;
 import static org.graalvm.compiler.core.target.Backend.ARITHMETIC_DREM;
 import static org.graalvm.compiler.core.target.Backend.ARITHMETIC_FREM;
@@ -70,6 +71,8 @@ import static org.graalvm.compiler.hotspot.HotSpotHostBackend.ENABLE_STACK_RESER
 import static org.graalvm.compiler.hotspot.HotSpotHostBackend.THROW_DELAYED_STACKOVERFLOW_ERROR;
 import static org.graalvm.compiler.hotspot.HotSpotHostBackend.UNCOMMON_TRAP_HANDLER;
 import static org.graalvm.compiler.hotspot.replacements.AssertionSnippets.ASSERTION_VM_MESSAGE_C;
+import static org.graalvm.compiler.hotspot.replacements.ContinuationSubstitutions.CONTINUATION_DO_CONTINUE;
+import static org.graalvm.compiler.hotspot.replacements.ContinuationSubstitutions.CONTINUATION_YIELD;
 import static org.graalvm.compiler.hotspot.replacements.HotSpotReplacementsUtil.MARK_WORD_LOCATION;
 import static org.graalvm.compiler.hotspot.replacements.HotSpotReplacementsUtil.TLAB_END_LOCATION;
 import static org.graalvm.compiler.hotspot.replacements.HotSpotReplacementsUtil.TLAB_TOP_LOCATION;
@@ -376,6 +379,12 @@ public abstract class HotSpotHostForeignCallsProvider extends HotSpotForeignCall
         if (c.useSquareToLenIntrinsic()) {
             registerForeignCall(SQUARE_TO_LEN, c.squareToLen, NativeCall, DESTROYS_REGISTERS, LEAF_NOFP, NOT_REEXECUTABLE, NamedLocationIdentity.getArrayLocation(JavaKind.Int));
         }
+
+        if (c.continuationThaw != 0) {
+            registerForeignCall(CONTINUATION_DO_CONTINUE, c.continuationThaw, JavaCall, DESTROYS_REGISTERS, SAFEPOINT, NOT_REEXECUTABLE, any());
+            registerForeignCall(CONTINUATION_YIELD, c.continuationDoYield, JavaCall, DESTROYS_REGISTERS, SAFEPOINT, NOT_REEXECUTABLE, any());
+        }
+
 
         if (c.useAESIntrinsics) {
             /*

@@ -2002,7 +2002,7 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_toplevel_type(vframeArray)                                      \
   declare_toplevel_type(vframeArrayElement)                               \
   declare_toplevel_type(Annotations*)                                     \
-  declare_type(OopMapValue, StackObj)                                     \
+  declare_toplevel_type(OopMapValue)                                      \
   declare_type(FileMapInfo, CHeapObj<mtInternal>)                         \
   declare_type(FileMapInfo::FileMapHeaderBase, CHeapObj<mtClass>)         \
   declare_type(FileMapInfo::FileMapHeader, FileMapInfo::FileMapHeaderBase)\

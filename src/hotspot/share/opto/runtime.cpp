@@ -103,6 +103,7 @@ address OptoRuntime::_rethrow_Java                                = NULL;
 
 address OptoRuntime::_slow_arraycopy_Java                         = NULL;
 address OptoRuntime::_register_finalizer_Java                     = NULL;
+address OptoRuntime::_continuation_getFP_Java                     = NULL;
 
 ExceptionBlob* OptoRuntime::_exception_blob;
 
@@ -146,6 +147,7 @@ bool OptoRuntime::generate(ciEnv* env) {
 
   gen(env, _slow_arraycopy_Java            , slow_arraycopy_Type          , SharedRuntime::slow_arraycopy_C ,    0 , false, false, false);
   gen(env, _register_finalizer_Java        , register_finalizer_Type      , register_finalizer              ,    0 , false, false, false);
+  gen(env, _continuation_getFP_Java        , void_long_Type               , SharedRuntime::continuation_getFP,    0 , false, false, false);
 
   return true;
 }
@@ -691,6 +693,46 @@ const TypeFunc* OptoRuntime::void_long_Type() {
 
   return TypeFunc::make(domain, range);
 }
+
+const TypeFunc* OptoRuntime::void_void_Type() {
+   // create input type (domain)
+   const Type **fields = TypeTuple::fields(0);
+   const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms+0, fields);
+
+   // create result type (range)
+   fields = TypeTuple::fields(0);
+   const TypeTuple *range = TypeTuple::make(TypeFunc::Parms+0, fields);
+   return TypeFunc::make(domain, range);
+ }
+
+ const TypeFunc* OptoRuntime::continuation_doYield_Type() {
+   const Type**fields = TypeTuple::fields(1);
+   fields[TypeFunc::Parms+0] = TypeInt::INT;
+   const TypeTuple *args = TypeTuple::make(TypeFunc::Parms+1, fields);
+
+   fields = TypeTuple::fields(1);
+   fields[TypeFunc::Parms+0] = TypeInt::INT;
+   const TypeTuple *result = TypeTuple::make(TypeFunc::Parms+1, fields);
+
+   return TypeFunc::make(args, result);
+ }
+
+ const TypeFunc* OptoRuntime::continuation_jump_Type() {
+  // create input type (domain)
+  const Type **fields = TypeTuple::fields(6);
+  fields[TypeFunc::Parms+0] = TypeLong::LONG;
+  fields[TypeFunc::Parms+1] = Type::HALF;
+  fields[TypeFunc::Parms+2] = TypeLong::LONG;
+  fields[TypeFunc::Parms+3] = Type::HALF;
+  fields[TypeFunc::Parms+4] = TypeLong::LONG;
+  fields[TypeFunc::Parms+5] = Type::HALF;
+  const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms+6, fields);
+
+  // create result type (range)
+  fields = TypeTuple::fields(0);
+  const TypeTuple *range = TypeTuple::make(TypeFunc::Parms+0, fields);
+  return TypeFunc::make(domain, range);
+ }
 
 // arraycopy stub variations:
 enum ArrayCopyType {

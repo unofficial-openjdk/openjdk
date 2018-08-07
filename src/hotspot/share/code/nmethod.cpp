@@ -1001,7 +1001,7 @@ bool nmethod::can_convert_to_zombie() {
   // Since the nmethod sweeper only does partial sweep the sweeper's traversal
   // count can be greater than the stack traversal count before it hits the
   // nmethod for the second time.
-  return stack_traversal_mark()+1 < NMethodSweeper::traversal_count() &&
+  return stack_traversal_mark()+1 < NMethodSweeper::traversal_count() && !is_on_continuation_stack() &&
          !is_locked_by_vm();
 }
 
@@ -1017,6 +1017,7 @@ void nmethod::inc_decompile_count() {
 }
 
 void nmethod::make_unloaded(oop cause) {
+  assert(!is_on_continuation_stack(), "can't be on continuation stack");
 
   post_compiled_method_unload();
 
