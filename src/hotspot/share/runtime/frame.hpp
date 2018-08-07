@@ -99,8 +99,9 @@ class frame {
 
   CodeBlob* cb() const           { return _cb; }
   const ImmutableOopMap* oop_map() const {
-    if (_oop_map == NULL)
+    if (_oop_map == NULL) {
       _oop_map = get_oop_map();
+    }
     return _oop_map;
   }
 

@@ -90,7 +90,7 @@ void AbstractInterpreter::layout_activation(Method* method,
     if (locals >= caller->fp() + frame::interpreter_frame_initial_sp_offset) {
       tty->print("method: "); method->print_on(tty);
       tty->print("caller: "); caller->print_on(tty);
-      tty->print_cr("locals: %p max_locals: %d caller.fp: %p caller.initial_sp: %p", locals, max_locals, caller->fp(), caller->fp() + frame::interpreter_frame_initial_sp_offset);
+      tty->print_cr("locals: " INTPTR_FORMAT " max_locals: %d caller.fp: " INTPTR_FORMAT " caller.initial_sp: " INTPTR_FORMAT, p2i(locals), max_locals, p2i(caller->fp()), p2i(caller->fp() + frame::interpreter_frame_initial_sp_offset));
     }
     assert(locals < caller->fp() + frame::interpreter_frame_initial_sp_offset, "bad placement");
   }

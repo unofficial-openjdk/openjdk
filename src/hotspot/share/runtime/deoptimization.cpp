@@ -418,7 +418,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   }
 
   // If the caller is a continuation entry and the callee has a return barrier
-  // then we cannot use the parameters in the caller
+  // then we cannot use the parameters in the caller.
   bool caller_was_continuation_entry = Continuation::is_cont_bottom_frame(deopt_sender);
 
   //

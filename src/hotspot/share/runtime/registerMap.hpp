@@ -75,7 +75,7 @@ class RegisterMap : public StackObj {
   JavaThread* _thread;                  // Reference to current thread
   bool        _update_map;              // Tells if the register map need to be
                                         // updated when traversing the stack
-  bool _validate_oops;                 // whether to perform valid oop checks in asserts
+  bool        _validate_oops;           // whether to perform valid oop checks in asserts
 
 #ifdef ASSERT
   void check_location_valid();

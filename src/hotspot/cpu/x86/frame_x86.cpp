@@ -280,20 +280,20 @@ void frame::patch_pc(Thread* thread, address pc) {
 // #ifdef ASSERT
 //   bool good = (_pc == *pc_addr || pc == *pc_addr);
 //   if (!good) {
-//     tty->print_cr("pc: %p", pc); os::print_location(tty, *(intptr_t*)&pc);
-//     tty->print_cr("_pc: %p", _pc); os::print_location(tty, *(intptr_t*)&_pc);
-//     tty->print_cr("*pc_addr: %p", *pc_addr); os::print_location(tty, *(intptr_t*)pc_addr);
+//     tty->print_cr("pc: " INTPTR_FORMAT, p2i(pc)); os::print_location(tty, *(intptr_t*)&pc);
+//     tty->print_cr("_pc: " INTPTR_FORMAT, p2i(_pc)); os::print_location(tty, *(intptr_t*)&_pc);
+//     tty->print_cr("*pc_addr: " INTPTR_FORMAT, p2i(*pc_addr)); os::print_location(tty, *(intptr_t*)pc_addr);
 //   }
 // #endif
-  assert(_pc == *pc_addr || pc == *pc_addr, "must be (pc: %p _pc: %p *pc_addr: %p)", pc, _pc, *pc_addr);
+  assert(_pc == *pc_addr || pc == *pc_addr, "must be (pc: " INTPTR_FORMAT " _pc: " INTPTR_FORMAT " *pc_addr: " INTPTR_FORMAT ")", p2i(pc), p2i(_pc), p2i(*pc_addr));
   *pc_addr = pc;
   _cb = CodeCache::find_blob(pc);
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
 // #ifdef ASSERT
 //   if (!good) {
-//     tty->print_cr("_pc: %p original_pc: %p", _pc, original_pc);
+//     tty->print_cr("_pc: " INTPTR_FORMAT " original_pc: " INTPTR_FORMAT, p2i(_pc), p2i(original_pc));
 //     CompiledMethod* cm = _cb->as_compiled_method_or_null();
-//     tty->print_cr("_pc: %p is_deopt _pc: %d is_deopt pc: %d", _pc, cm->is_deopt_pc(_pc), cm->is_deopt_pc(pc));
+//     tty->print_cr("_pc: " INTPTR_FORMAT " is_deopt _pc: %d is_deopt pc: %d", p2i(_pc), cm->is_deopt_pc(_pc), cm->is_deopt_pc(pc));
 //   }
 // #endif
   if (original_pc != NULL) {
@@ -345,7 +345,7 @@ BasicObjectLock* frame::interpreter_frame_monitor_end() const {
   BasicObjectLock* result = (BasicObjectLock*) *addr_at(interpreter_frame_monitor_block_top_offset);
   // make sure the pointer points inside the frame
   assert(sp() <= (intptr_t*) result, "monitor end should be above the stack pointer");
-  assert((intptr_t*) result < fp(),  "monitor end should be strictly below the frame pointer: result: %p fp: %p", result, fp());
+  assert((intptr_t*) result < fp(),  "monitor end should be strictly below the frame pointer: result: " INTPTR_FORMAT " fp: " INTPTR_FORMAT, p2i(result), p2i(fp()));
   return result;
 }
 
@@ -394,7 +394,7 @@ void frame::verify_deopt_original_pc(CompiledMethod* nm, intptr_t* unextended_sp
 
   address original_pc = nm->get_original_pc(&fr);
   assert(nm->insts_contains_inclusive(original_pc),
-         "original PC must be in the main code section of the the compiled method (or must be immediately following it) original_pc: %p unextended_sp: %p name: %s", original_pc, unextended_sp, nm->name());
+         "original PC must be in the main code section of the the compiled method (or must be immediately following it) original_pc: " INTPTR_FORMAT " unextended_sp: " INTPTR_FORMAT " name: %s", p2i(original_pc), p2i(unextended_sp), nm->name());
 }
 #endif
 
@@ -474,7 +474,7 @@ frame frame::sender_for_compiled_frame(RegisterMap* map, CodeBlobLookup* lookup)
   intptr_t* sender_sp = unextended_sp() + _cb->frame_size();
   intptr_t* unextended_sp = sender_sp;
 
-  assert (!is_compiled_frame() || sender_sp == real_fp(), "sender_sp: %p real_fp: %p", sender_sp, real_fp());
+  assert (!is_compiled_frame() || sender_sp == real_fp(), "sender_sp: " INTPTR_FORMAT " real_fp: " INTPTR_FORMAT, p2i(sender_sp), p2i(real_fp()));
 
   // On Intel the return_address is always the word on the stack
   address sender_pc = (address) *(sender_sp-1);
@@ -499,7 +499,7 @@ frame frame::sender_for_compiled_frame(RegisterMap* map, CodeBlobLookup* lookup)
   }
 
   if (sender_sp == sp()) {
-    tty->print_cr("sender_sp: %p sp: %p", sender_sp, sp());
+    tty->print_cr("sender_sp: " INTPTR_FORMAT " sp: " INTPTR_FORMAT, p2i(sender_sp), p2i(sp()));
     print_on(tty);
   }
   assert(sender_sp != sp(), "must have changed");
@@ -595,7 +595,7 @@ const ImmutableOopMap* frame::get_oop_map() const {
   if (_cb == NULL) return NULL;
   if (_cb->oop_maps() != NULL) {
     const ImmutableOopMap* oop_map = OopMapSet::find_map(this);
-    assert (oop_map->cb() == _cb, "");
+    assert(oop_map->cb() == _cb, "cb should match");
     return oop_map;
   }
   return NULL;
@@ -604,17 +604,17 @@ const ImmutableOopMap* frame::get_oop_map() const {
   //   if (*oopmap_metadata_header != 0x49) {
   //     tty->print_cr("wrong oopmap_metadata_header");
   //     print_on(tty);
-  //     for (int i=0; i<10; i++) tty->print_cr("$$ %p: %x", oopmap_metadata_header + i, *(oopmap_metadata_header+i));
+  //     for (int i=0; i<10; i++) tty->print_cr("$$ " INTPTR_FORMAT ": %x", p2i(oopmap_metadata_header + i), *(oopmap_metadata_header+i));
   //   }
-  //   assert (*oopmap_metadata_header == 0x49, "oopmap_metadata_header: %x pc: %p (%p)", *oopmap_metadata_header, pc(), raw_pc());
+  //   assert (*oopmap_metadata_header == 0x49, "oopmap_metadata_header: %x pc: " INTPTR_FORMAT " (" INTPTR_FORMAT ")", *oopmap_metadata_header, p2i(pc()), p2i(raw_pc()));
 
   //   long oopmap_metadata = *((long*)(oopmap_metadata_header + 2));
   //   if (oopmap_metadata != 1234) {
   //     tty->print_cr("wrong oopmap_metadata");
   //     print_on(tty);
-  //     for (int i=0; i<10; i++) tty->print_cr("$$ %p: %x", oopmap_metadata_header + i, *(oopmap_metadata_header+i));
+  //     for (int i=0; i<10; i++) tty->print_cr("$$ " INTPTR_FORMAT ": %x", p2i(oopmap_metadata_header + i), *(oopmap_metadata_header+i));
   //   }
-  //   assert (oopmap_metadata == 1234, "oopmap_metadata: %ld pc: %p (%p)", oopmap_metadata, pc(), raw_pc());
+  //   assert (oopmap_metadata == 1234, "oopmap_metadata: %ld pc: " INTPTR_FORMAT " (" INTPTR_FORMAT ")", oopmap_metadata, p2i(pc()), p2i(raw_pc()));
   // }
 }
 

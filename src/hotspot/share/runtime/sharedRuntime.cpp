@@ -532,7 +532,7 @@ address SharedRuntime::get_poll_stub(address pc) {
 
   // Look up the relocation information
   assert(((CompiledMethod*)cb)->is_at_poll_or_poll_return(pc),
-      "safepoint polling: type must be poll at pc %p", pc);
+      "safepoint polling: type must be poll at pc " INTPTR_FORMAT, p2i(pc));
 
 #ifdef ASSERT
   if (!((NativeInstruction*)pc)->is_safepoint_poll()) {
@@ -2680,7 +2680,7 @@ AdapterHandlerEntry* AdapterHandlerLibrary::get_adapter0(const methodHandle& met
       tty->print_cr("i2c argument handler #%d for: %s %s %s (%d bytes generated)",
                     _adapters->number_of_entries(), (method->is_static() ? "static" : "receiver"),
                     method->signature()->as_C_string(), fingerprint->as_string(), insts_size);
-      tty->print_cr("c2i argument handler starts at %p", entry->get_c2i_entry());
+      tty->print_cr("c2i argument handler starts at " INTPTR_FORMAT, p2i(entry->get_c2i_entry()));
       if (Verbose || PrintStubCode) {
         address first_pc = entry->base_address();
         if (first_pc != NULL) {

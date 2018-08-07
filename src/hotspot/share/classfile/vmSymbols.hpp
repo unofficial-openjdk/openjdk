@@ -1106,7 +1106,7 @@
   do_intrinsic(_Continuation_runLevel,    java_lang_Continuation,  runLevel_name,    continuationrunLevel_signature, F_S)      \
     do_alias(continuationrunLevel_signature,                         void_int_signature)                                       \
                                                                                                                         \
-/* support for Unsafe */                                                                                                \
+  /* support for Unsafe */                                                                                              \
   do_class(jdk_internal_misc_Unsafe,               "jdk/internal/misc/Unsafe")                                          \
                                                                                                                         \
   do_intrinsic(_allocateInstance,         jdk_internal_misc_Unsafe,     allocateInstance_name, allocateInstance_signature, F_RN) \
@@ -1409,7 +1409,7 @@
    do_name(     getAndSetObject_name,                                   "getAndSetObject")                                    \
    do_signature(getAndSetObject_signature,                              "(Ljava/lang/Object;JLjava/lang/Object;)Ljava/lang/Object;" ) \
                                                                                                                                \
- /* (2) Bytecode intrinsics                                                                        */                        \
+   /* (2) Bytecode intrinsics                                                                        */                        \
                                                                                                                                \
   do_intrinsic(_park,                     jdk_internal_misc_Unsafe,     park_name, park_signature,                     F_R)    \
    do_name(     park_name,                                              "park")                                                \

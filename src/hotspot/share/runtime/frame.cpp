@@ -377,7 +377,7 @@ void frame::deoptimize(JavaThread* thread) {
       }
       // if (!check.is_deoptimized_frame()) {
       //   tty->print_cr("Deopt failure:");
-      //   tty->print_cr("deopt: %p pc: %p", deopt, xpc);
+      //   tty->print_cr("deopt: " INTPTR_FORMAT " pc: " INTPTR_FORMAT, p2i(deopt), p2i(xpc));
       //   tty->print_cr("me:");
       //   print_on(tty);
       //   tty->print_cr("---- %d", is_younger(check.id()));
@@ -1009,7 +1009,7 @@ void frame::oops_interpreted_arguments_do(Symbol* signature, bool has_receiver, 
 
 void frame::oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, const RegisterMap* reg_map) {
   assert(_cb != NULL, "sanity check");
-  assert ((oop_map() == NULL) == (_cb->oop_maps() == NULL), "");
+  assert((oop_map() == NULL) == (_cb->oop_maps() == NULL), "frame and _cb must agree that oopmap is set or not");
   if (oop_map() != NULL) {
     _oop_map->oops_do(this, reg_map, f, df);
 
@@ -1053,7 +1053,7 @@ class CompiledArgumentOopFinder: public SignatureInfo {
     if (loc == NULL) {
       tty->print_cr("Error walking frame oops:");
       _fr.print_on(tty);
-      assert (loc != NULL, "reg: %ld %s loc: %p", reg->value(), reg->name(), loc);
+      assert(loc != NULL, "reg: %ld %s loc: " INTPTR_FORMAT, reg->value(), reg->name(), p2i(loc));
     }
   #endif
     _f->do_oop(loc);

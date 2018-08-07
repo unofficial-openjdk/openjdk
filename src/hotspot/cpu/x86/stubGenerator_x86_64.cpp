@@ -5510,7 +5510,7 @@ address generate_cipherBlockChaining_decryptVectorAESCrypt() {
   }
 
 void push_FrameInfo(MacroAssembler* _masm, Register fi, Register sp, Register fp, address pc) {
-  if(!sp->is_valid()) __ push(0); else {
+  if (!sp->is_valid()) { __ push(0); } else {
     if (sp == rsp) {
       __ movptr(fi, rsp);
       __ push(fi);
@@ -5519,7 +5519,7 @@ void push_FrameInfo(MacroAssembler* _masm, Register fi, Register sp, Register fp
     }
   }
 
-  if(!fp->is_valid()) __ push(0); else __ push(fp);
+  if (!fp->is_valid()) __ push(0); else __ push(fp);
 
   __ lea(fi, ExternalAddress(pc));
   __ push(fi);
@@ -5528,7 +5528,7 @@ void push_FrameInfo(MacroAssembler* _masm, Register fi, Register sp, Register fp
 }
 
 void push_FrameInfo(MacroAssembler* _masm, Register fi, Register sp, Register fp, Register pc) {
-  if(!sp->is_valid()) __ push(0); else {
+  if (!sp->is_valid()) { __ push(0); } else {
     if (sp == rsp) {
       __ movptr(fi, rsp);
       __ push(fi);
@@ -5537,17 +5537,17 @@ void push_FrameInfo(MacroAssembler* _masm, Register fi, Register sp, Register fp
     }
   }
 
-  if(!fp->is_valid()) __ push(0); else __ push(fp);
+  if (!fp->is_valid()) __ push(0); else __ push(fp);
 
-  if(!pc->is_valid()) __ push(0); else __ push(pc);
+  if (!pc->is_valid()) __ push(0); else __ push(pc);
 
   __ movptr(fi, rsp); // make fi point to the beginning of FramInfo
 }
 
 void pop_FrameInfo(MacroAssembler* _masm, Register sp, Register fp, Register pc) {
-  if(!pc->is_valid()) __ lea(rsp, Address(rsp, wordSize)); else __ pop(pc);
-  if(!fp->is_valid()) __ lea(rsp, Address(rsp, wordSize)); else __ pop(fp);
-  if(!sp->is_valid()) __ lea(rsp, Address(rsp, wordSize)); else __ pop(sp);
+  if (!pc->is_valid()) __ lea(rsp, Address(rsp, wordSize)); else __ pop(pc);
+  if (!fp->is_valid()) __ lea(rsp, Address(rsp, wordSize)); else __ pop(fp);
+  if (!sp->is_valid()) __ lea(rsp, Address(rsp, wordSize)); else __ pop(sp);
 }
 
   // c_rarg1 ContinuationScope
@@ -5624,11 +5624,11 @@ address generate_cont_doYield() {
     oop_maps->add_gc_map(the_pc - start, map);
 
     RuntimeStub* stub = // codeBlob framesize is in words (not VMRegImpl::slot_size)
-      RuntimeStub::new_runtime_stub(name,
-                                    &code,
-                                    frame_complete,
-                                    (framesize >> (LogBytesPerWord - LogBytesPerInt)),
-                                    oop_maps, false);
+    RuntimeStub::new_runtime_stub(name,
+                                  &code,
+                                  frame_complete,
+                                  (framesize >> (LogBytesPerWord - LogBytesPerInt)),
+                                  oop_maps, false);
     return stub->entry_point();
   }
 

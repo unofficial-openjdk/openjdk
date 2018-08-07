@@ -801,8 +801,8 @@ void InterpreterMacroAssembler::jump_from_interpreted(Register method, Register 
 //   methodHandle methodh = callinfo.selected_method();
 //   assert(methodh.not_null(), "should have thrown exception");
 //   Method* method = methodh();
-//   tty->print_cr("call_Java_final method: %p name: %s", method, method->name()->as_C_string());
-//   // tty->print_cr("call_Java_final const: %p, params: %d locals %d", method->constMethod(), method->constMethod()->_size_of_parameters, method->constMethod()->_max_locals);
+//   tty->print_cr("call_Java_final method: " INTPTR_FORMAT " name: %s", p2i(method), method->name()->as_C_string());
+//   // tty->print_cr("call_Java_final const: " INTPTR_FORMAT ", params: %d locals %d", p2i(method->constMethod()), method->constMethod()->_size_of_parameters, method->constMethod()->_max_locals);
 
 //   movptr(rmethod, AddressLiteral((address)method, RelocationHolder::none).addr());
 // }
