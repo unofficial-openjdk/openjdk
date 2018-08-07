@@ -140,7 +140,8 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
      */
     @Override
     public Content getSignature(ExecutableElement method) {
-        Content pre = new HtmlTree(HtmlTag.PRE);
+        HtmlTree pre = new HtmlTree(HtmlTag.PRE);
+        pre.setStyle(HtmlStyle.methodSignature);
         writer.addAnnotationInfo(method, pre);
         int annotationLength = pre.charCount();
         addModifiers(method, pre);
@@ -266,9 +267,7 @@ public class MethodWriterImpl extends AbstractExecutableMemberWriter
                 .addTab(resources.getText("doclet.Default_Methods"), utils::isDefault)
                 .addTab(resources.getText("doclet.Deprecated_Methods"),
                         e -> utils.isDeprecated(e) || utils.isDeprecated(typeElement))
-                .setTabScript(i -> "show(" + i + ");")
-                .setUseTBody(false)
-                .setPutIdFirst(true);
+                .setTabScript(i -> "show(" + i + ");");
     }
 
     /**
