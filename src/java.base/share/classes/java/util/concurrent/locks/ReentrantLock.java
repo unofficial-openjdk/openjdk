@@ -124,15 +124,15 @@ public class ReentrantLock implements Lock, java.io.Serializable {
          */
         @ReservedStackAccess
         final boolean nonfairTryAcquire(int acquires) {
-            final Thread current = Thread.currentThread();
+            final Strand current = Strand.currentStrand();
             int c = getState();
             if (c == 0) {
                 if (compareAndSetState(0, acquires)) {
-                    setExclusiveOwnerThread(current);
+                    setExclusiveOwnerStrand(current);
                     return true;
                 }
             }
-            else if (current == getExclusiveOwnerThread()) {
+            else if (current == getExclusiveOwnerStrand()) {
                 int nextc = c + acquires;
                 if (nextc < 0) // overflow
                     throw new Error("Maximum lock count exceeded");
@@ -145,12 +145,12 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         @ReservedStackAccess
         protected final boolean tryRelease(int releases) {
             int c = getState() - releases;
-            if (Thread.currentThread() != getExclusiveOwnerThread())
+            if (Strand.currentStrand() != getExclusiveOwnerStrand())
                 throw new IllegalMonitorStateException();
             boolean free = false;
             if (c == 0) {
                 free = true;
-                setExclusiveOwnerThread(null);
+                setExclusiveOwnerStrand(null);
             }
             setState(c);
             return free;
@@ -159,7 +159,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         protected final boolean isHeldExclusively() {
             // While we must in general read state before owner,
             // we don't need to do so to check if current thread is owner
-            return getExclusiveOwnerThread() == Thread.currentThread();
+            return getExclusiveOwnerStrand() == Strand.currentStrand();
         }
 
         final ConditionObject newCondition() {
@@ -168,8 +168,8 @@ public class ReentrantLock implements Lock, java.io.Serializable {
 
         // Methods relayed from outer class
 
-        final Thread getOwner() {
-            return getState() == 0 ? null : getExclusiveOwnerThread();
+        final Strand getOwner() {
+            return getState() == 0 ? null : getExclusiveOwnerStrand();
         }
 
         final int getHoldCount() {
@@ -211,16 +211,16 @@ public class ReentrantLock implements Lock, java.io.Serializable {
          */
         @ReservedStackAccess
         protected final boolean tryAcquire(int acquires) {
-            final Thread current = Thread.currentThread();
+            final Strand current = Strand.currentStrand();
             int c = getState();
             if (c == 0) {
                 if (!hasQueuedPredecessors() &&
                     compareAndSetState(0, acquires)) {
-                    setExclusiveOwnerThread(current);
+                    setExclusiveOwnerStrand(current);
                     return true;
                 }
             }
-            else if (current == getExclusiveOwnerThread()) {
+            else if (current == getExclusiveOwnerStrand()) {
                 int nextc = c + acquires;
                 if (nextc < 0)
                     throw new Error("Maximum lock count exceeded");
@@ -593,9 +593,10 @@ public class ReentrantLock implements Lock, java.io.Serializable {
      * facilities.
      *
      * @return the owner, or {@code null} if not owned
+     * @throws ClassCastException if owned by a fiber
      */
     protected Thread getOwner() {
-        return sync.getOwner();
+        return (Thread) sync.getOwner();
     }
 
     /**
@@ -735,9 +736,15 @@ public class ReentrantLock implements Lock, java.io.Serializable {
      * @return a string identifying this lock, as well as its lock state
      */
     public String toString() {
-        Thread o = sync.getOwner();
+        Strand o = sync.getOwner();
+        String name = "";
+        if (o instanceof Thread) {
+            name = "thread " + ((Thread) o).getName();
+        } else if (o instanceof Fiber) {
+            name = "Fiber";
+        }
         return super.toString() + ((o == null) ?
                                    "[Unlocked]" :
-                                   "[Locked by thread " + o.getName() + "]");
+                                   "[Locked by " + name + "]");
     }
 }

@@ -147,7 +147,7 @@ public final class InnocuousThread extends Thread {
             Class<?> tk = Thread.class;
             Class<?> gk = ThreadGroup.class;
 
-            THREAD_LOCALS = UNSAFE.objectFieldOffset(tk, "threadLocals");
+            THREAD_LOCALS = UNSAFE.objectFieldOffset(Strand.class, "locals");
             INHERITABLE_THREAD_LOCALS = UNSAFE.objectFieldOffset
                     (tk, "inheritableThreadLocals");
             INHERITEDACCESSCONTROLCONTEXT = UNSAFE.objectFieldOffset

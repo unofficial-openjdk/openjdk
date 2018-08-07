@@ -35,6 +35,10 @@
 
 package java.util.concurrent.locks;
 
+import java.util.concurrent.TimeUnit;
+
+import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 
 /**
@@ -137,11 +141,18 @@ import jdk.internal.misc.Unsafe;
  * @since 1.5
  */
 public class LockSupport {
+    private static JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+
     private LockSupport() {} // Cannot be instantiated.
 
     private static void setBlocker(Thread t, Object arg) {
         // Even though volatile, hotspot doesn't need a write barrier here.
-        U.putObject(t, PARKBLOCKER, arg);
+        U.putObject(t, THREAD_PARKBLOCKER, arg);
+    }
+
+    private static void setBlocker(Fiber f, Object arg) {
+        // Even though volatile, hotspot doesn't need a write barrier here.
+        U.putObject(f, FIBER_PARKBLOCKER, arg);
     }
 
     /**
@@ -156,8 +167,35 @@ public class LockSupport {
      *        this operation has no effect
      */
     public static void unpark(Thread thread) {
-        if (thread != null)
-            U.unpark(thread);
+        if (thread != null) {
+            Fiber f = JLA.getFiber(thread);
+            if (f != null) {
+                f.unpark();
+            } else {
+                U.unpark(thread);
+            }
+        }
+    }
+
+    /**
+     * Makes available the permit for the given strand, if it
+     * was not already available.  If the strand was blocked on
+     * {@code park} then it will unblock.  Otherwise, its next call
+     * to {@code park} is guaranteed not to block. This operation
+     * is not guaranteed to have any effect at all if the given
+     * strand is a Thread has not been started.
+     *
+     * @param strand the strand to unpark, or {@code null}, in which case
+     *        this operation has no effect
+     */
+    public static void unpark(Strand strand) {
+        if (strand != null) {
+            if (strand instanceof Fiber) {
+                ((Fiber)strand).unpark();
+            } else {
+                U.unpark(strand);
+            }
+        }
     }
 
     /**
@@ -189,10 +227,18 @@ public class LockSupport {
      * @since 1.6
      */
     public static void park(Object blocker) {
-        Thread t = Thread.currentThread();
-        setBlocker(t, blocker);
-        U.park(false, 0L);
-        setBlocker(t, null);
+        Strand s = Strand.currentStrand();
+        if (s instanceof Fiber) {
+            Fiber f = (Fiber) s;
+            setBlocker(f, blocker);
+            Fiber.park();
+            setBlocker(f, null);
+        } else {
+            Thread t = (Thread) s;
+            setBlocker(t, blocker);
+            U.park(false, 0L);
+            setBlocker(t, null);
+        }
     }
 
     /**
@@ -229,10 +275,18 @@ public class LockSupport {
      */
     public static void parkNanos(Object blocker, long nanos) {
         if (nanos > 0) {
-            Thread t = Thread.currentThread();
-            setBlocker(t, blocker);
-            U.park(false, nanos);
-            setBlocker(t, null);
+            Strand s = Strand.currentStrand();
+            if (s instanceof Fiber) {
+                Fiber f = (Fiber) s;
+                setBlocker(f, blocker);
+                Fiber.parkNanos(nanos);
+                setBlocker(f, null);
+            } else {
+                Thread t = (Thread) s;
+                setBlocker(t, blocker);
+                U.park(false, nanos);
+                setBlocker(t, null);
+            }
         }
     }
 
@@ -270,10 +324,20 @@ public class LockSupport {
      * @since 1.6
      */
     public static void parkUntil(Object blocker, long deadline) {
-        Thread t = Thread.currentThread();
-        setBlocker(t, blocker);
-        U.park(true, deadline);
-        setBlocker(t, null);
+        Strand s = Strand.currentStrand();
+        if (s instanceof Fiber) {
+            Fiber f = (Fiber) s;
+            setBlocker(f, blocker);
+            long millis = deadline - System.currentTimeMillis();
+            long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
+            Fiber.parkNanos(nanos);
+            setBlocker(f, null);
+        } else {
+            Thread t = (Thread) s;
+            setBlocker(t, blocker);
+            U.park(true, deadline);
+            setBlocker(t, null);
+        }
     }
 
     /**
@@ -291,7 +355,7 @@ public class LockSupport {
     public static Object getBlocker(Thread t) {
         if (t == null)
             throw new NullPointerException();
-        return U.getObjectVolatile(t, PARKBLOCKER);
+        return U.getObjectVolatile(t, THREAD_PARKBLOCKER);
     }
 
     /**
@@ -320,7 +384,12 @@ public class LockSupport {
      * for example, the interrupt status of the thread upon return.
      */
     public static void park() {
-        U.park(false, 0L);
+        Strand t = Strand.currentStrand();
+        if (t instanceof Fiber) {
+            Fiber.park();
+        } else {
+            U.park(false, 0L);
+        }
     }
 
     /**
@@ -353,8 +422,14 @@ public class LockSupport {
      * @param nanos the maximum number of nanoseconds to wait
      */
     public static void parkNanos(long nanos) {
-        if (nanos > 0)
-            U.park(false, nanos);
+        if (nanos > 0) {
+            Strand s = Strand.currentStrand();
+            if (s instanceof Fiber) {
+                Fiber.parkNanos(nanos);
+            } else {
+                U.park(false, nanos);
+            }
+        }
     }
 
     /**
@@ -388,7 +463,14 @@ public class LockSupport {
      *        to wait until
      */
     public static void parkUntil(long deadline) {
-        U.park(true, deadline);
+        Strand s = Strand.currentStrand();
+        if (s instanceof Fiber) {
+            long millis = deadline - System.currentTimeMillis();
+            long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
+            Fiber.parkNanos(nanos);
+        } else {
+            U.park(true, deadline);
+        }
     }
 
     /**
@@ -421,8 +503,10 @@ public class LockSupport {
 
     // Hotspot implementation via intrinsics API
     private static final Unsafe U = Unsafe.getUnsafe();
-    private static final long PARKBLOCKER = U.objectFieldOffset
+    private static final long THREAD_PARKBLOCKER = U.objectFieldOffset
             (Thread.class, "parkBlocker");
+    private static final long FIBER_PARKBLOCKER = U.objectFieldOffset
+            (Fiber.class, "parkBlocker");
     private static final long SECONDARY = U.objectFieldOffset
             (Thread.class, "threadLocalRandomSecondarySeed");
     private static final long TID = U.objectFieldOffset

@@ -43,6 +43,9 @@ import java.nio.channels.DatagramChannel;
 import java.nio.channels.IllegalBlockingModeException;
 import java.util.Objects;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 
 // Make a datagram-socket channel look like a datagram socket.
 //
@@ -184,15 +187,14 @@ public class DatagramSocketAdaptor
         if (to == 0) {
             return dc.receive(bb);
         } else {
+            long nanos = NANOSECONDS.convert(to, MILLISECONDS);
             for (;;) {
-                if (!dc.isOpen())
-                    throw new ClosedChannelException();
-                long st = System.currentTimeMillis();
-                if (dc.pollRead(to)) {
+                long startTime = System.nanoTime();
+                if (dc.pollRead(nanos)) {
                     return dc.receive(bb);
                 }
-                to -= System.currentTimeMillis() - st;
-                if (to <= 0)
+                nanos -= System.nanoTime() - startTime;
+                if (nanos <= 0)
                     throw new SocketTimeoutException();
             }
         }
