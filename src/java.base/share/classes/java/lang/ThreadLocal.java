@@ -260,6 +260,10 @@ public class ThreadLocal<T> {
      * @return the map
      */
     ThreadLocalMap getMap(Strand s) {
+        if (s instanceof Fiber && !Fiber.emulateCurrentThread()) {
+            throw new UnsupportedOperationException(
+                "ThreadLocals cannot be used in the context of a fiber");
+        }
         return s.locals;
     }
 

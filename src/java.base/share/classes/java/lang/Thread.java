@@ -278,6 +278,9 @@ class Thread extends Strand implements Runnable {
         }
     }
 
+    /**
+     * Returns the current carrier thread.
+     */
     static Thread currentCarrierThread() {
         return currentThread0();
     }
@@ -345,6 +348,10 @@ class Thread extends Strand implements Runnable {
         }
         Fiber f = currentCarrierThread().getFiber();
         if (f != null) {
+            if (!Fiber.emulateCurrentThread()) {
+                throw new UnsupportedOperationException(
+                    "Thread.sleep cannot be used in the context of a fiber");
+            }
             long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
             do {
                 long startTime = System.nanoTime();

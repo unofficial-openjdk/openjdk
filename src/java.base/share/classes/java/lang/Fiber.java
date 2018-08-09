@@ -43,6 +43,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import jdk.internal.misc.Unsafe;
+import sun.security.action.GetPropertyAction;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -55,6 +56,7 @@ public final class Fiber extends Strand {
     private static final ContinuationScope FIBER_SCOPE = new ContinuationScope() { };
     private static final Executor DEFAULT_SCHEDULER = defaultScheduler();
     private static final ScheduledExecutorService UNPARKER = delayedTaskScheduler();
+    private static final boolean EMULATE_CURRENT_THREAD = emulateCurrentThreadValue();
 
     private static final VarHandle STATE;
     private static final VarHandle PARK_PERMIT;
@@ -593,15 +595,17 @@ public final class Fiber extends Strand {
      * exist.
      */
     Thread shadowThread() {
+        assert Thread.currentCarrierThread() == carrierThread;
+        if (!emulateCurrentThread()) {
+            throw new UnsupportedOperationException(
+                "currentThread() cannot be used in the context of a fiber");
+        }
         ShadowThread t = shadowThread;
         if (t == null) {
-            synchronized (this) {
-                if (t == null) {
-                    shadowThread = t = new ShadowThread(this, inheritableThreadContext);
-                    // allow context to be GC'ed.
-                    inheritableThreadContext = null;
-                }
-            }
+            shadowThread = t = new ShadowThread(this, inheritableThreadContext);
+
+            // allow context to be GC'ed.
+            inheritableThreadContext = null;
         }
         return t;
     }
@@ -815,5 +819,22 @@ public final class Fiber extends Strand {
                     }}));
         stpe.setRemoveOnCancelPolicy(true);
         return stpe;
+    }
+
+
+    /**
+     * Returns true if the Thread API is emulated when running in a fiber
+     */
+    static boolean emulateCurrentThread() {
+        return EMULATE_CURRENT_THREAD;
+    }
+
+    /**
+     * Reads the value of the jdk.emulateCurrentThread property to determine
+     * if the Thread API is emulated when running in a fiber.
+     */
+    private static boolean emulateCurrentThreadValue() {
+        String value = GetPropertyAction.privilegedGetProperty("jdk.emulateCurrentThread");
+        return (value == null) || !value.equalsIgnoreCase("false");
     }
 }
