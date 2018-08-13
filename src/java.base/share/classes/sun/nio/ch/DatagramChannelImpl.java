@@ -124,6 +124,18 @@ class DatagramChannelImpl
 
     // -- End of fields protected by stateLock
 
+    private static FileDescriptor newSocket(ProtocolFamily family) throws IOException {
+        FileDescriptor fd = Net.socket(family, false);
+        try {
+            IOUtil.configureBlocking(fd, false);
+        } catch (IOException ioe) {
+            nd.close(fd);
+            throw ioe;
+        }
+        return fd;
+    }
+
+
     public DatagramChannelImpl(SelectorProvider sp)
         throws IOException
     {
@@ -133,7 +145,7 @@ class DatagramChannelImpl
             this.family = Net.isIPv6Available()
                     ? StandardProtocolFamily.INET6
                     : StandardProtocolFamily.INET;
-            this.fd = Net.socket(family, false);
+            this.fd = newSocket(family);
             this.fdVal = IOUtil.fdVal(fd);
         } catch (IOException ioe) {
             ResourceManager.afterUdpClose();
@@ -159,7 +171,7 @@ class DatagramChannelImpl
         ResourceManager.beforeUdpCreate();
         try {
             this.family = family;
-            this.fd = Net.socket(family, false);
+            this.fd = newSocket(family);
             this.fdVal = IOUtil.fdVal(fd);
         } catch (IOException ioe) {
             ResourceManager.afterUdpClose();
@@ -171,6 +183,7 @@ class DatagramChannelImpl
         throws IOException
     {
         super(sp);
+        IOUtil.configureBlocking(fd, false);
 
         // increment UDP count to match decrement when closing
         ResourceManager.beforeUdpCreate();
@@ -415,21 +428,33 @@ class DatagramChannelImpl
                 SecurityManager sm = System.getSecurityManager();
                 if (connected || (sm == null)) {
                     // connected or no security manager
-                    do {
-                        n = receive(fd, dst, connected);
-                    } while ((n == IOStatus.INTERRUPTED) && isOpen());
-                    if (n == IOStatus.UNAVAILABLE)
-                        return null;
+                    n = receive(fd, dst, connected);
+                    if (n == IOStatus.UNAVAILABLE) {
+                        if (blocking) {
+                            do {
+                                park(Net.POLLIN);
+                                n = receive(fd, dst, connected);
+                            } while (n == IOStatus.UNAVAILABLE && isOpen());
+                        } else {
+                            return null;
+                        }
+                    }
                 } else {
                     // Cannot receive into user's buffer when running with a
                     // security manager and not connected
                     bb = Util.getTemporaryDirectBuffer(dst.remaining());
                     for (;;) {
-                        do {
-                            n = receive(fd, bb, connected);
-                        } while ((n == IOStatus.INTERRUPTED) && isOpen());
-                        if (n == IOStatus.UNAVAILABLE)
-                            return null;
+                        n = receive(fd, bb, connected);
+                        if (n == IOStatus.UNAVAILABLE) {
+                            if (blocking) {
+                                do {
+                                    park(Net.POLLIN);
+                                    n = receive(fd, bb, connected);
+                                } while (n == IOStatus.UNAVAILABLE && isOpen());
+                            } else {
+                                return null;
+                            }
+                        }
                         InetSocketAddress isa = (InetSocketAddress)sender;
                         try {
                             sm.checkAccept(isa.getAddress().getHostAddress(),
@@ -494,6 +519,7 @@ class DatagramChannelImpl
         return n;
     }
 
+    @Override
     public int send(ByteBuffer src, SocketAddress target)
         throws IOException
     {
@@ -511,9 +537,13 @@ class DatagramChannelImpl
                     if (!target.equals(remote)) {
                         throw new AlreadyConnectedException();
                     }
-                    do {
-                        n = IOUtil.write(fd, src, -1, nd);
-                    } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                    n = IOUtil.write(fd, src, -1, nd);
+                    if (n == IOStatus.UNAVAILABLE && blocking) {
+                        do {
+                            park(Net.POLLOUT);
+                            n = IOUtil.write(fd, src, -1, nd);
+                        } while (n == IOStatus.UNAVAILABLE && isOpen());
+                    }
                 } else {
                     // not connected
                     SecurityManager sm = System.getSecurityManager();
@@ -525,9 +555,13 @@ class DatagramChannelImpl
                             sm.checkConnect(ia.getHostAddress(), isa.getPort());
                         }
                     }
-                    do {
-                        n = send(fd, src, isa);
-                    } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                    n = send(fd, src, isa);
+                    if (n == IOStatus.UNAVAILABLE && blocking) {
+                        do {
+                            park(Net.POLLOUT);
+                            n = send(fd, src, isa);
+                        } while (n == IOStatus.UNAVAILABLE && isOpen());
+                    }
                 }
             } finally {
                 endWrite(blocking, n > 0);
@@ -603,10 +637,13 @@ class DatagramChannelImpl
             int n = 0;
             try {
                 beginRead(blocking, true);
-                do {
-                    n = IOUtil.read(fd, buf, -1, nd);
-                } while ((n == IOStatus.INTERRUPTED) && isOpen());
-
+                n = IOUtil.read(fd, buf, -1, nd);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
+                    do {
+                        park(Net.POLLIN);
+                        n = IOUtil.read(fd, buf, -1, nd);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                }
             } finally {
                 endRead(blocking, n > 0);
                 assert IOStatus.check(n);
@@ -629,10 +666,13 @@ class DatagramChannelImpl
             long n = 0;
             try {
                 beginRead(blocking, true);
-                do {
-                    n = IOUtil.read(fd, dsts, offset, length, nd);
-                } while ((n == IOStatus.INTERRUPTED) && isOpen());
-
+                n = IOUtil.read(fd, dsts, offset, length, nd);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
+                    do {
+                        park(Net.POLLIN);
+                        n = IOUtil.read(fd, dsts, offset, length, nd);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                }
             } finally {
                 endRead(blocking, n > 0);
                 assert IOStatus.check(n);
@@ -704,9 +744,13 @@ class DatagramChannelImpl
             int n = 0;
             try {
                 beginWrite(blocking, true);
-                do {
-                    n = IOUtil.write(fd, buf, -1, nd);
-                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                n = IOUtil.write(fd, buf, -1, nd);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
+                    do {
+                        park(Net.POLLOUT);
+                        n = IOUtil.write(fd, buf, -1, nd);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                }
             } finally {
                 endWrite(blocking, n > 0);
                 assert IOStatus.check(n);
@@ -729,9 +773,13 @@ class DatagramChannelImpl
             long n = 0;
             try {
                 beginWrite(blocking, true);
-                do {
-                    n = IOUtil.write(fd, srcs, offset, length, nd);
-                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                n = IOUtil.write(fd, srcs, offset, length, nd);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
+                    do {
+                        park(Net.POLLOUT);
+                        n = IOUtil.write(fd, srcs, offset, length, nd);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                }
             } finally {
                 endWrite(blocking, n > 0);
                 assert IOStatus.check(n);
@@ -750,7 +798,7 @@ class DatagramChannelImpl
             try {
                 synchronized (stateLock) {
                     ensureOpen();
-                    IOUtil.configureBlocking(fd, block);
+                    // nothing to do
                 }
             } finally {
                 writeLock.unlock();
@@ -860,20 +908,10 @@ class DatagramChannelImpl
                     localAddress = Net.localAddress(fd);
 
                     // flush any packets already received.
-                    boolean blocking = isBlocking();
-                    if (blocking) {
-                        IOUtil.configureBlocking(fd, false);
-                    }
-                    try {
-                        ByteBuffer buf = ByteBuffer.allocate(100);
-                        while (receive(buf) != null) {
-                            buf.clear();
-                        }
-                    } finally {
-                        if (blocking) {
-                            IOUtil.configureBlocking(fd, true);
-                        }
-                    }
+                    ByteBuffer buf = ByteBuffer.allocate(100);
+                    do {
+                        n = receive(fd, buf, true);
+                    } while (n != IOStatus.UNAVAILABLE && isOpen());
                 }
             } finally {
                 writeLock.unlock();
@@ -1159,18 +1197,37 @@ class DatagramChannelImpl
         if (blocking) {
             synchronized (stateLock) {
                 assert state == ST_CLOSING;
+
+                // unpark and wait for fibers to complete I/O operations
+                if (NativeThread.isFiber(readerThread) ||
+                        NativeThread.isFiber(writerThread)) {
+                    Poller.stopPoll(fdVal);
+
+                    while (NativeThread.isFiber(readerThread) ||
+                            NativeThread.isFiber(writerThread)) {
+                        try {
+                            stateLock.wait();
+                        } catch (InterruptedException e) {
+                            interrupted = true;
+                        }
+                    }
+                }
+
+                // interrupt and wait for kernel threads to complete I/O operations
                 long reader = readerThread;
                 long writer = writerThread;
-                if (reader != 0 || writer != 0) {
+                if (NativeThread.isKernelThread(reader) ||
+                        NativeThread.isKernelThread(writer)) {
                     nd.preClose(fd);
 
-                    if (reader != 0)
+                    if (NativeThread.isKernelThread(reader))
                         NativeThread.signal(reader);
-                    if (writer != 0)
+                    if (NativeThread.isKernelThread(writer))
                         NativeThread.signal(writer);
 
                     // wait for blocking I/O operations to end
-                    while (readerThread != 0 || writerThread != 0) {
+                    while (NativeThread.isKernelThread(readerThread) ||
+                            NativeThread.isKernelThread(writerThread)) {
                         try {
                             stateLock.wait();
                         } catch (InterruptedException e) {
@@ -1272,7 +1329,7 @@ class DatagramChannelImpl
      * Poll this channel's socket for reading up to the given timeout.
      * @return {@code true} if the socket is polled
      */
-    boolean pollRead(long timeout) throws IOException {
+    boolean pollRead(long nanos) throws IOException {
         boolean blocking = isBlocking();
         assert Thread.holdsLock(blockingLock()) && blocking;
 
@@ -1281,7 +1338,11 @@ class DatagramChannelImpl
             boolean polled = false;
             try {
                 beginRead(blocking, false);
-                int events = Net.poll(fd, Net.POLLIN, timeout);
+                int events = Net.pollNow(fd, Net.POLLIN);
+                if (events == 0) {
+                    park(Net.POLLIN, nanos);
+                    events = Net.pollNow(fd, Net.POLLIN);
+                }
                 polled = (events != 0);
             } finally {
                 endRead(blocking, polled);

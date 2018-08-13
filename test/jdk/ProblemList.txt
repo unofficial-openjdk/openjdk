@@ -559,6 +559,12 @@ java/net/MulticastSocket/SetGetNetworkInterfaceTest.java        8207404 aix-all
 
 java/net/DatagramSocket/SendDatagramToBadAddress.java           7143960 macosx-all
 
+# SOCKS support not integrated yet
+java/net/Socks/SocksProxyVersion.java                           0000000 generic-all
+java/net/Socks/SocksV4Test.java                                 0000000 generic-all
+java/net/Socks/SocksIPv6Test.java                               0000000 generic-all
+java/net/Socket/SocksConnectTimeout.java                        0000000 generic-all
+
 ############################################################################
 
 # jdk_nio

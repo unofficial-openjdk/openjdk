@@ -43,7 +43,7 @@ class NativeThreadSet {
     // it can efficiently be removed later.
     //
     int add() {
-        long th = NativeThread.current();
+        long th = NativeThread.currentKernelThread();
         // 0 and -1 are treated as placeholders, not real thread handles
         if (th == 0)
             th = -1;

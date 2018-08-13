@@ -684,6 +684,18 @@ Java_sun_nio_ch_Net_shutdown(JNIEnv *env, jclass cl, jobject fdo, jint jhow)
 }
 
 JNIEXPORT jint JNICALL
+Java_sun_nio_ch_Net_available(JNIEnv *env, jclass cl, jobject fdo)
+{
+    jint count = 0;
+    int n = NET_SocketAvailable(fdval(env, fdo), &count);
+    if (n == 0) {
+        handleSocketError(env, errno);
+        return -1;
+    }
+    return count;
+}
+
+JNIEXPORT jint JNICALL
 Java_sun_nio_ch_Net_poll(JNIEnv* env, jclass this, jobject fdo, jint events, jlong timeout)
 {
     struct pollfd pfd;

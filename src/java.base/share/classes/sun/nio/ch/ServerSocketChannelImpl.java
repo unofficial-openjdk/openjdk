@@ -100,7 +100,16 @@ class ServerSocketChannelImpl
 
     ServerSocketChannelImpl(SelectorProvider sp) throws IOException {
         super(sp);
-        this.fd =  Net.serverSocket(true);
+
+        FileDescriptor fd = Net.socket(true);
+        try {
+            IOUtil.configureBlocking(fd, false);
+        } catch (IOException ioe) {
+            nd.close(fd);
+            throw ioe;
+        }
+
+        this.fd =  fd;
         this.fdVal = IOUtil.fdVal(fd);
     }
 
@@ -108,6 +117,8 @@ class ServerSocketChannelImpl
         throws IOException
     {
         super(sp);
+        IOUtil.configureBlocking(fd, false);
+
         this.fd =  fd;
         this.fdVal = IOUtil.fdVal(fd);
         if (bound) {
@@ -281,9 +292,15 @@ class ServerSocketChannelImpl
             boolean blocking = isBlocking();
             try {
                 begin(blocking);
-                do {
-                    n = accept(this.fd, newfd, isaa);
-                } while (n == IOStatus.INTERRUPTED && isOpen());
+
+                n = accept(this.fd, newfd, isaa);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
+                    do {
+                        park(Net.POLLIN);
+                        n = accept(this.fd, newfd, isaa);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                }
+
             } finally {
                 end(blocking, n > 0);
                 assert IOStatus.check(n);
@@ -321,7 +338,7 @@ class ServerSocketChannelImpl
         try {
             synchronized (stateLock) {
                 ensureOpen();
-                IOUtil.configureBlocking(fd, block);
+                // do nothing
             }
         } finally {
             acceptLock.unlock();
@@ -361,8 +378,12 @@ class ServerSocketChannelImpl
                 assert state == ST_CLOSING;
                 long th = thread;
                 if (th != 0) {
-                    nd.preClose(fd);
-                    NativeThread.signal(th);
+                    if (NativeThread.isFiber(th)) {
+                        Poller.stopPoll(fdVal);
+                    } else {
+                        nd.preClose(fd);
+                        NativeThread.signal(th);
+                    }
 
                     // wait for accept operation to end
                     while (thread != 0) {
@@ -427,14 +448,18 @@ class ServerSocketChannelImpl
      * Poll this channel's socket for a new connection up to the given timeout.
      * @return {@code true} if there is a connection to accept
      */
-    boolean pollAccept(long timeout) throws IOException {
+    boolean pollAccept(long nanos) throws IOException {
         assert Thread.holdsLock(blockingLock()) && isBlocking();
         acceptLock.lock();
         try {
             boolean polled = false;
             try {
                 begin(true);
-                int events = Net.poll(fd, Net.POLLIN, timeout);
+                int events = Net.pollNow(fd, Net.POLLIN);
+                if (events == 0) {
+                    park(Net.POLLIN, nanos);
+                    events = Net.pollNow(fd, Net.POLLIN);
+                }
                 polled = (events != 0);
             } finally {
                 end(true, polled);
