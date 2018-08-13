@@ -25,12 +25,31 @@
 
 package java.lang;
 
+import java.util.Objects;
+
 /**
- * TBD
+ * A Continuation scope.
  */
-public abstract class ContinuationScope {
+public class ContinuationScope {
+    final String name;
+
+    /**
+     * Constructs a new scope.
+     * @param name The scope's name
+     */
+    public ContinuationScope(String name) {
+        this.name = Objects.requireNonNull(name);
+    }
+
+    /**
+     * A constructor providing no name is available to subclasses.
+     */
+    protected ContinuationScope() {
+        this.name = null;
+    }
+
     @Override
     public String toString() {
-        return getClass().getName();
+        return name != null ? name : getClass().getName();
     }
 }
