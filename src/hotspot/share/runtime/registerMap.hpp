@@ -73,7 +73,6 @@ class RegisterMap : public StackObj {
   LocationValidType _location_valid[location_valid_size];
   bool        _include_argument_oops;   // Should include argument_oop marked locations for compiler
   JavaThread* _thread;                  // Reference to current thread
-  Handle      _continuation;            // The continuation of the current frame, if there is one
   bool        _update_map;              // Tells if the register map need to be
                                         // updated when traversing the stack
   bool        _validate_oops;           // whether to perform valid oop checks in asserts
