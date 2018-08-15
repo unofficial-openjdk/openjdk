@@ -81,6 +81,7 @@ class Compilation: public StackObj {
   bool               _would_profile;
   bool               _has_method_handle_invokes;  // True if this method has MethodHandle invokes.
   bool               _has_reserved_stack_access;
+  bool               _has_monitors; // Fastpath monitors detection for Continuations
   const char*        _bailout_msg;
   ExceptionInfoList* _exception_info_list;
   ExceptionHandlerTable _exception_handler_table;
@@ -136,6 +137,7 @@ class Compilation: public StackObj {
   bool has_exception_handlers() const            { return _has_exception_handlers; }
   bool has_fpu_code() const                      { return _has_fpu_code; }
   bool has_unsafe_access() const                 { return _has_unsafe_access; }
+  bool has_monitors() const                      { return _has_monitors; }
   int max_vector_size() const                    { return 0; }
   ciMethod* method() const                       { return _method; }
   int osr_bci() const                            { return _osr_bci; }
@@ -163,6 +165,7 @@ class Compilation: public StackObj {
   void set_has_unsafe_access(bool f)             { _has_unsafe_access = f; }
   void set_would_profile(bool f)                 { _would_profile = f; }
   void set_has_access_indexed(bool f)            { _has_access_indexed = f; }
+  void set_has_monitors(bool f)                  { _has_monitors = f; }
   // Add a set of exception handlers covering the given PC offset
   void add_exception_handlers_for_pco(int pco, XHandlers* exception_handlers);
   // Statistics gathering

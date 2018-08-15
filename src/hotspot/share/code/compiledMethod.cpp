@@ -54,6 +54,7 @@ void CompiledMethod::init_defaults() {
   _has_method_handle_invokes  = 0;
   _lazy_critical_native       = 0;
   _has_wide_vectors           = 0;
+  _has_monitors               = 0;
   _unloading_clock            = 0;
   _on_continuation_stack      = 0;
 }

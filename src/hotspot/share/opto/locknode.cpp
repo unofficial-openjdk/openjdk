@@ -182,6 +182,8 @@ void FastLockNode::create_rtm_lock_counter(JVMState* state) {
 void Parse::do_monitor_enter() {
   kill_dead_locals();
 
+  C->set_has_monitors(true);
+
   // Null check; get casted pointer.
   Node* obj = null_check(peek());
   // Check for locking null object
