@@ -35,6 +35,7 @@
 #include "utilities/macros.hpp"
 #include "utilities/vmError.hpp"
 
+#include <dirent.h>
 #include <dlfcn.h>
 #include <pthread.h>
 #include <signal.h>
@@ -148,6 +149,19 @@ bool os::unsetenv(const char* name) {
 
 int os::get_last_error() {
   return errno;
+}
+
+size_t os::lasterror(char *buf, size_t len) {
+  if (errno == 0)  return 0;
+
+  const char *s = os::strerror(errno);
+  size_t n = ::strlen(s);
+  if (n >= len) {
+    n = len - 1;
+  }
+  ::strncpy(buf, s, n);
+  buf[n] = '\0';
+  return n;
 }
 
 bool os::is_debugger_attached() {
@@ -512,6 +526,21 @@ void os::flockfile(FILE* fp) {
 
 void os::funlockfile(FILE* fp) {
   ::funlockfile(fp);
+}
+
+DIR* os::opendir(const char* dirname) {
+  assert(dirname != NULL, "just checking");
+  return ::opendir(dirname);
+}
+
+struct dirent* os::readdir(DIR* dirp) {
+  assert(dirp != NULL, "just checking");
+  return ::readdir(dirp);
+}
+
+int os::closedir(DIR *dirp) {
+  assert(dirp != NULL, "just checking");
+  return ::closedir(dirp);
 }
 
 // Builds a platform dependent Agent_OnLoad_<lib_name> function name

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -335,6 +335,11 @@ public interface Attribute extends Cloneable, java.io.Serializable {
 
     /**
      * Use serialVersionUID from JNDI 1.1.1 for interoperability.
+     *
+     * @deprecated A {@code serialVersionUID} field in an interface is
+     * ineffectual. Do not use; no replacement.
      */
+    @Deprecated
+    @SuppressWarnings("serial")
     static final long serialVersionUID = 8707690322213556804L;
 }

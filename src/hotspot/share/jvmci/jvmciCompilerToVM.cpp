@@ -382,7 +382,12 @@ C2V_VMENTRY(jobject, getImplementor, (JNIEnv *, jobject, jobject jvmci_type))
         err_msg("Expected interface type, got %s", klass->external_name()));
   }
   InstanceKlass* iklass = InstanceKlass::cast(klass);
-  JVMCIKlassHandle handle(THREAD, iklass->implementor());
+  JVMCIKlassHandle handle(THREAD);
+  {
+    // Need Compile_lock around implementor()
+    MutexLocker locker(Compile_lock);
+    handle = iklass->implementor();
+  }
   oop implementor = CompilerToVM::get_jvmci_type(handle, CHECK_NULL);
   return JNIHandles::make_local(THREAD, implementor);
 C2V_END
@@ -1431,7 +1436,7 @@ C2V_END
 
 C2V_VMENTRY(jobject, getHostClass, (JNIEnv*, jobject, jobject jvmci_type))
   InstanceKlass* k = InstanceKlass::cast(CompilerToVM::asKlass(jvmci_type));
-  InstanceKlass* host = k->host_klass();
+  InstanceKlass* host = k->unsafe_anonymous_host();
   JVMCIKlassHandle handle(THREAD, host);
   oop result = CompilerToVM::get_jvmci_type(handle, CHECK_NULL);
   return JNIHandles::make_local(THREAD, result);

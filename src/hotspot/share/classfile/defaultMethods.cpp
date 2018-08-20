@@ -688,8 +688,8 @@ class FindMethodsByErasedSig : public HierarchyVisitor<FindMethodsByErasedSig> {
 
  public:
   FindMethodsByErasedSig(Symbol* name, Symbol* signature, bool is_interf) :
-      _method_name(name), _method_signature(signature), _cur_class_is_interface(is_interf),
-      _family(NULL) {}
+      _method_name(name), _method_signature(signature), _family(NULL),
+      _cur_class_is_interface(is_interf) {}
 
   void get_discovered_family(MethodFamily** family) {
       if (_family != NULL) {
@@ -885,7 +885,7 @@ static void switchover_constant_pool(BytecodeConstantPool* bpool,
     ConstantPool* cp = bpool->create_constant_pool(CHECK);
     if (cp != klass->constants()) {
       // Copy resolved anonymous class into new constant pool.
-      if (klass->is_anonymous()) {
+      if (klass->is_unsafe_anonymous()) {
         cp->klass_at_put(klass->this_class_index(), klass);
       }
       klass->class_loader_data()->add_to_deallocate_list(klass->constants());

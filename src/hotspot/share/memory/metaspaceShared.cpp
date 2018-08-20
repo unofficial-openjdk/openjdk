@@ -39,6 +39,7 @@
 #include "logging/log.hpp"
 #include "logging/logMessage.hpp"
 #include "memory/filemap.hpp"
+#include "memory/heapShared.hpp"
 #include "memory/metaspace.hpp"
 #include "memory/metaspaceClosure.hpp"
 #include "memory/metaspaceShared.hpp"
@@ -205,6 +206,10 @@ char* MetaspaceShared::misc_code_space_alloc(size_t num_bytes) {
 
 char* MetaspaceShared::read_only_space_alloc(size_t num_bytes) {
   return _ro_region.allocate(num_bytes);
+}
+
+char* MetaspaceShared::read_only_space_top() {
+  return _ro_region.top();
 }
 
 void MetaspaceShared::initialize_runtime_shared_and_meta_spaces() {
@@ -418,44 +423,10 @@ void MetaspaceShared::serialize(SerializeClosure* soc) {
   StringTable::serialize(soc);
   soc->do_tag(--tag);
 
-  serialize_well_known_classes(soc);
+  JavaClasses::serialize_offsets(soc);
   soc->do_tag(--tag);
 
   soc->do_tag(666);
-}
-
-void MetaspaceShared::serialize_well_known_classes(SerializeClosure* soc) {
-  java_lang_Class::serialize(soc);
-  java_lang_String::serialize(soc);
-  java_lang_System::serialize(soc);
-  java_lang_ClassLoader::serialize(soc);
-  java_lang_Throwable::serialize(soc);
-  java_lang_Thread::serialize(soc);
-  java_lang_ThreadGroup::serialize(soc);
-  java_lang_AssertionStatusDirectives::serialize(soc);
-  java_lang_ref_SoftReference::serialize(soc);
-  java_lang_invoke_MethodHandle::serialize(soc);
-  java_lang_invoke_DirectMethodHandle::serialize(soc);
-  java_lang_invoke_MemberName::serialize(soc);
-  java_lang_invoke_ResolvedMethodName::serialize(soc);
-  java_lang_invoke_LambdaForm::serialize(soc);
-  java_lang_invoke_MethodType::serialize(soc);
-  java_lang_invoke_CallSite::serialize(soc);
-  java_lang_invoke_MethodHandleNatives_CallSiteContext::serialize(soc);
-  java_security_AccessControlContext::serialize(soc);
-  java_lang_reflect_AccessibleObject::serialize(soc);
-  java_lang_reflect_Method::serialize(soc);
-  java_lang_reflect_Constructor::serialize(soc);
-  java_lang_reflect_Field::serialize(soc);
-  java_nio_Buffer::serialize(soc);
-  reflect_ConstantPool::serialize(soc);
-  reflect_UnsafeStaticFieldAccessorImpl::serialize(soc);
-  java_lang_reflect_Parameter::serialize(soc);
-  java_lang_Module::serialize(soc);
-  java_lang_StackTraceElement::serialize(soc);
-  java_lang_StackFrameInfo::serialize(soc);
-  java_lang_LiveStackFrameInfo::serialize(soc);
-  java_util_concurrent_locks_AbstractOwnableSynchronizer::serialize(soc);
 }
 
 address MetaspaceShared::cds_i2i_entry_code_buffers(size_t total_size) {
@@ -608,14 +579,13 @@ static void relocate_cached_class_file() {
 }
 
 NOT_PRODUCT(
-static void assert_not_anonymous_class(InstanceKlass* k) {
-  assert(!(k->is_anonymous()), "cannot archive anonymous classes");
+static void assert_not_unsafe_anonymous_class(InstanceKlass* k) {
+  assert(!(k->is_unsafe_anonymous()), "cannot archive unsafe anonymous classes");
 }
 
-// Anonymous classes are not stored inside any dictionaries. They are created by
-// SystemDictionary::parse_stream() with a non-null host_klass.
-static void assert_no_anonymoys_classes_in_dictionaries() {
-  ClassLoaderDataGraph::dictionary_classes_do(assert_not_anonymous_class);
+// Unsafe anonymous classes are not stored inside any dictionaries.
+static void assert_no_unsafe_anonymous_classes_in_dictionaries() {
+  ClassLoaderDataGraph::dictionary_classes_do(assert_not_unsafe_anonymous_class);
 })
 
 // Objects of the Metadata types (such as Klass and ConstantPool) have C++ vtables.
@@ -1350,6 +1320,11 @@ char* VM_PopulateDumpSharedSpace::dump_read_only_tables() {
   char* table_top = _ro_region.allocate(table_bytes, sizeof(intptr_t));
   SystemDictionary::copy_table(table_top, _ro_region.top());
 
+  // Write the archived object sub-graph infos. For each klass with sub-graphs,
+  // the info includes the static fields (sub-graph entry points) and Klasses
+  // of objects included in the sub-graph.
+  HeapShared::write_archived_subgraph_infos();
+
   // Write the other data to the output array.
   WriteClosure wc(&_ro_region);
   MetaspaceShared::serialize(&wc);
@@ -1420,9 +1395,9 @@ void VM_PopulateDumpSharedSpace::doit() {
   remove_unshareable_in_classes();
   tty->print_cr("done. ");
 
-  // We don't support archiving anonymous classes. Verify that they are not stored in
-  // the any dictionaries.
-  NOT_PRODUCT(assert_no_anonymoys_classes_in_dictionaries());
+  // We don't support archiving unsafe anonymous classes. Verify that they are not stored in
+  // any dictionaries.
+  NOT_PRODUCT(assert_no_unsafe_anonymous_classes_in_dictionaries());
 
   SystemDictionaryShared::finalize_verification_constraints();
 
@@ -1722,6 +1697,7 @@ void MetaspaceShared::preload_and_dump(TRAPS) {
     tty->print_cr("Rewriting and linking classes: done");
 
     SystemDictionary::clear_invoke_method_table();
+    HeapShared::init_archivable_static_fields(THREAD);
 
     VM_PopulateDumpSharedSpace op;
     VMThread::execute(&op);
@@ -1861,6 +1837,8 @@ void MetaspaceShared::dump_open_archive_heap_objects(
 
   MetaspaceShared::archive_klass_objects(THREAD);
 
+  HeapShared::archive_module_graph_objects(THREAD);
+
   G1CollectedHeap::heap()->end_archive_alloc_range(open_archive,
                                                    os::vm_allocation_granularity());
 }
@@ -1895,6 +1873,8 @@ oop MetaspaceShared::archive_heap_object(oop obj, Thread* THREAD) {
 
   int len = obj->size();
   if (G1CollectedHeap::heap()->is_archive_alloc_too_large(len)) {
+    log_debug(cds, heap)("Cannot archive, object (" PTR_FORMAT ") is too large: " SIZE_FORMAT,
+                         p2i(obj), (size_t)obj->size());
     return NULL;
   }
 
@@ -1905,15 +1885,22 @@ oop MetaspaceShared::archive_heap_object(oop obj, Thread* THREAD) {
     relocate_klass_ptr(archived_oop);
     ArchivedObjectCache* cache = MetaspaceShared::archive_object_cache();
     cache->put(obj, archived_oop);
+    log_debug(cds, heap)("Archived heap object " PTR_FORMAT " ==> " PTR_FORMAT,
+                         p2i(obj), p2i(archived_oop));
+  } else {
+    log_error(cds, heap)(
+      "Cannot allocate space for object " PTR_FORMAT " in archived heap region",
+      p2i(obj));
+    vm_exit(1);
   }
-  log_debug(cds)("Archived heap object " PTR_FORMAT " ==> " PTR_FORMAT,
-                 p2i(obj), p2i(archived_oop));
   return archived_oop;
 }
 
 oop MetaspaceShared::materialize_archived_object(oop obj) {
-  assert(obj != NULL, "sanity");
-  return G1CollectedHeap::heap()->materialize_archived_object(obj);
+  if (obj != NULL) {
+    return G1CollectedHeap::heap()->materialize_archived_object(obj);
+  }
+  return NULL;
 }
 
 void MetaspaceShared::archive_klass_objects(Thread* THREAD) {
@@ -2120,6 +2107,9 @@ void MetaspaceShared::initialize_shared_spaces() {
   int len = *(intptr_t*)buffer;     // skip over shared dictionary entries
   buffer += sizeof(intptr_t);
   buffer += len;
+
+  // The table of archived java heap object sub-graph infos
+  buffer = HeapShared::read_archived_subgraph_infos(buffer);
 
   // Verify various attributes of the archive, plus initialize the
   // shared string/symbol tables

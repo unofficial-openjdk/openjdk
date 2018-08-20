@@ -1540,6 +1540,7 @@ void nmethod::metadata_do(void f(Metadata*)) {
         }
       } else if (iter.type() == relocInfo::virtual_call_type) {
         // Check compiledIC holders associated with this nmethod
+        ResourceMark rm;
         CompiledIC *ic = CompiledIC_at(&iter);
         if (ic->is_icholder_call()) {
           CompiledICHolder* cichk = ic->cached_icholder();
@@ -2332,7 +2333,11 @@ void nmethod::print_recorded_oops() {
     if (o == (oop)Universe::non_oop_word()) {
       tty->print("non-oop word");
     } else {
-      o->print_value();
+      if (o != NULL) {
+        o->print_value();
+      } else {
+        tty->print_cr("NULL");
+      }
     }
     tty->cr();
   }
@@ -2346,7 +2351,7 @@ void nmethod::print_recorded_metadata() {
     if (m == (Metadata*)Universe::non_oop_word()) {
       tty->print("non-metadata word");
     } else {
-      m->print_value_on_maybe_null(tty);
+      Metadata::print_value_on_maybe_null(tty, m);
     }
     tty->cr();
   }

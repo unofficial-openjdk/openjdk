@@ -32,6 +32,7 @@
 #include "services/memReporter.hpp"
 #include "services/mallocTracker.inline.hpp"
 #include "services/memTracker.hpp"
+#include "utilities/debug.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/vmError.hpp"
 
@@ -55,6 +56,10 @@ bool MemTracker::_is_nmt_env_valid = true;
 static const size_t buffer_size = 64;
 
 NMT_TrackingLevel MemTracker::init_tracking_level() {
+  // Memory type is encoded into tracking header as a byte field,
+  // make sure that we don't overflow it.
+  STATIC_ASSERT(mt_number_of_types <= max_jubyte);
+
   char nmt_env_variable[buffer_size];
   jio_snprintf(nmt_env_variable, sizeof(nmt_env_variable), "NMT_LEVEL_%d", os::current_process_id());
   const char* nmt_env_value;
@@ -78,10 +83,6 @@ NMT_TrackingLevel MemTracker::init_tracking_level() {
     // Remove the environment variable to avoid leaking to child processes
     os::unsetenv(nmt_env_variable);
   }
-
-  // Construct NativeCallStack::EMPTY_STACK. It may get constructed twice,
-  // but it is benign, the results are the same.
-  ::new ((void*)&NativeCallStack::EMPTY_STACK) NativeCallStack(0, false);
 
   if (!MallocTracker::initialize(level) ||
       !VirtualMemoryTracker::initialize(level)) {

@@ -40,7 +40,7 @@
 
 // Note: When new VM_XXX comes up, add 'XXX' to the template table.
 #define VM_OPS_DO(template)                       \
-  template(Dummy)                                 \
+  template(None)                                  \
   template(ThreadStop)                            \
   template(ThreadDump)                            \
   template(PrintThreads)                          \
@@ -52,7 +52,6 @@
   template(DeoptimizeFrame)                       \
   template(DeoptimizeAll)                         \
   template(ZombieAll)                             \
-  template(UnlinkSymbols)                         \
   template(Verify)                                \
   template(PrintJNI)                              \
   template(HeapDumper)                            \
@@ -353,14 +352,6 @@ class VM_ZombieAll: public VM_Operation {
 };
 #endif // PRODUCT
 
-class VM_UnlinkSymbols: public VM_Operation {
- public:
-  VM_UnlinkSymbols() {}
-  VMOp_Type type() const                         { return VMOp_UnlinkSymbols; }
-  void doit();
-  bool allow_nested_vm_operations() const        { return true; }
-};
-
 class VM_Verify: public VM_Operation {
  public:
   VMOp_Type type() const { return VMOp_Verify; }
@@ -423,8 +414,8 @@ class VM_FindDeadlocks: public VM_Operation {
                               // which protects the JavaThreads in _deadlocks.
 
  public:
-  VM_FindDeadlocks(bool concurrent_locks) :  _concurrent_locks(concurrent_locks), _out(NULL), _deadlocks(NULL), _setter() {};
-  VM_FindDeadlocks(outputStream* st) : _concurrent_locks(true), _out(st), _deadlocks(NULL) {};
+  VM_FindDeadlocks(bool concurrent_locks) :  _concurrent_locks(concurrent_locks), _deadlocks(NULL), _out(NULL), _setter() {};
+  VM_FindDeadlocks(outputStream* st) : _concurrent_locks(true), _deadlocks(NULL), _out(st) {};
   ~VM_FindDeadlocks();
 
   DeadlockCycle* result()      { return _deadlocks; };

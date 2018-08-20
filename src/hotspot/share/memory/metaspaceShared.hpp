@@ -204,7 +204,6 @@ class MetaspaceShared : AllStatic {
   static void patch_cpp_vtable_pointers();
   static bool is_valid_shared_method(const Method* m) NOT_CDS_RETURN_(false);
   static void serialize(SerializeClosure* sc) NOT_CDS_RETURN;
-  static void serialize_well_known_classes(SerializeClosure* soc) NOT_CDS_RETURN;
 
   static MetaspaceSharedStats* stats() {
     return &_stats;
@@ -231,6 +230,8 @@ class MetaspaceShared : AllStatic {
   // Allocate a block of memory from the "mc", "ro", or "rw" regions.
   static char* misc_code_space_alloc(size_t num_bytes);
   static char* read_only_space_alloc(size_t num_bytes);
+
+  static char* read_only_space_top();
 
   template <typename T>
   static Array<T>* new_ro_array(int length) {

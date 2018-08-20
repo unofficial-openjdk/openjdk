@@ -117,6 +117,8 @@
 
 #define JAVA_11_VERSION                   55
 
+#define JAVA_12_VERSION                   56
+
 void ClassFileParser::set_class_bad_constant_seen(short bad_constant) {
   assert((bad_constant == 19 || bad_constant == 20) && _major_version >= JAVA_9_VERSION,
          "Unexpected bad constant pool entry");
@@ -920,10 +922,10 @@ void ClassFileParser::parse_interfaces(const ClassFileStream* const stream,
   assert(has_nonstatic_concrete_methods != NULL, "invariant");
 
   if (itfs_len == 0) {
-    _local_interfaces = Universe::the_empty_klass_array();
+    _local_interfaces = Universe::the_empty_instance_klass_array();
   } else {
     assert(itfs_len > 0, "only called for len>0");
-    _local_interfaces = MetadataFactory::new_array<Klass*>(_loader_data, itfs_len, NULL, CHECK);
+    _local_interfaces = MetadataFactory::new_array<InstanceKlass*>(_loader_data, itfs_len, NULL, CHECK);
 
     int index;
     for (index = 0; index < itfs_len; index++) {
@@ -964,7 +966,7 @@ void ClassFileParser::parse_interfaces(const ClassFileStream* const stream,
       if (InstanceKlass::cast(interf)->has_nonstatic_concrete_methods()) {
         *has_nonstatic_concrete_methods = true;
       }
-      _local_interfaces->at_put(index, interf);
+      _local_interfaces->at_put(index, InstanceKlass::cast(interf));
     }
 
     if (!_need_verify || itfs_len <= 1) {
@@ -982,8 +984,8 @@ void ClassFileParser::parse_interfaces(const ClassFileStream* const stream,
     {
       debug_only(NoSafepointVerifier nsv;)
       for (index = 0; index < itfs_len; index++) {
-        const Klass* const k = _local_interfaces->at(index);
-        name = InstanceKlass::cast(k)->name();
+        const InstanceKlass* const k = _local_interfaces->at(index);
+        name = k->name();
         // If no duplicates, add (name, NULL) in hashtable interface_names.
         if (!put_after_lookup(name, NULL, interface_names)) {
           dup = true;
@@ -2089,7 +2091,7 @@ AnnotationCollector::annotation_index(const ClassLoaderData* loader_data,
   // Privileged code can use all annotations.  Other code silently drops some.
   const bool privileged = loader_data->is_the_null_class_loader_data() ||
                           loader_data->is_platform_class_loader_data() ||
-                          loader_data->is_anonymous();
+                          loader_data->is_unsafe_anonymous();
   switch (sid) {
     case vmSymbols::VM_SYMBOL_ENUM_NAME(reflect_CallerSensitive_signature): {
       if (_location != _in_method)  break;  // only allow for methods
@@ -4494,7 +4496,7 @@ static void record_defined_class_dependencies(const InstanceKlass* defined_klass
     }
 
     // add super interface dependencies
-    const Array<Klass*>* const local_interfaces = defined_klass->local_interfaces();
+    const Array<InstanceKlass*>* const local_interfaces = defined_klass->local_interfaces();
     if (local_interfaces != NULL) {
       const int length = local_interfaces->length();
       for (int i = 0; i < length; i++) {
@@ -4506,21 +4508,21 @@ static void record_defined_class_dependencies(const InstanceKlass* defined_klass
 
 // utility methods for appending an array with check for duplicates
 
-static void append_interfaces(GrowableArray<Klass*>* result,
-                              const Array<Klass*>* const ifs) {
+static void append_interfaces(GrowableArray<InstanceKlass*>* result,
+                              const Array<InstanceKlass*>* const ifs) {
   // iterate over new interfaces
   for (int i = 0; i < ifs->length(); i++) {
-    Klass* const e = ifs->at(i);
-    assert(e->is_klass() && InstanceKlass::cast(e)->is_interface(), "just checking");
+    InstanceKlass* const e = ifs->at(i);
+    assert(e->is_klass() && e->is_interface(), "just checking");
     // add new interface
     result->append_if_missing(e);
   }
 }
 
-static Array<Klass*>* compute_transitive_interfaces(const InstanceKlass* super,
-                                                    Array<Klass*>* local_ifs,
-                                                    ClassLoaderData* loader_data,
-                                                    TRAPS) {
+static Array<InstanceKlass*>* compute_transitive_interfaces(const InstanceKlass* super,
+                                                            Array<InstanceKlass*>* local_ifs,
+                                                            ClassLoaderData* loader_data,
+                                                            TRAPS) {
   assert(local_ifs != NULL, "invariant");
   assert(loader_data != NULL, "invariant");
 
@@ -4535,15 +4537,15 @@ static Array<Klass*>* compute_transitive_interfaces(const InstanceKlass* super,
   // Add local interfaces' super interfaces
   const int local_size = local_ifs->length();
   for (int i = 0; i < local_size; i++) {
-    Klass* const l = local_ifs->at(i);
-    max_transitive_size += InstanceKlass::cast(l)->transitive_interfaces()->length();
+    InstanceKlass* const l = local_ifs->at(i);
+    max_transitive_size += l->transitive_interfaces()->length();
   }
   // Finally add local interfaces
   max_transitive_size += local_size;
   // Construct array
   if (max_transitive_size == 0) {
     // no interfaces, use canonicalized array
-    return Universe::the_empty_klass_array();
+    return Universe::the_empty_instance_klass_array();
   } else if (max_transitive_size == super_size) {
     // no new local interfaces added, share superklass' transitive interface array
     return super->transitive_interfaces();
@@ -4552,7 +4554,7 @@ static Array<Klass*>* compute_transitive_interfaces(const InstanceKlass* super,
     return local_ifs;
   } else {
     ResourceMark rm;
-    GrowableArray<Klass*>* const result = new GrowableArray<Klass*>(max_transitive_size);
+    GrowableArray<InstanceKlass*>* const result = new GrowableArray<InstanceKlass*>(max_transitive_size);
 
     // Copy down from superclass
     if (super != NULL) {
@@ -4561,8 +4563,8 @@ static Array<Klass*>* compute_transitive_interfaces(const InstanceKlass* super,
 
     // Copy down from local interfaces' superinterfaces
     for (int i = 0; i < local_size; i++) {
-      Klass* const l = local_ifs->at(i);
-      append_interfaces(result, InstanceKlass::cast(l)->transitive_interfaces());
+      InstanceKlass* const l = local_ifs->at(i);
+      append_interfaces(result, l->transitive_interfaces());
     }
     // Finally add local interfaces
     append_interfaces(result, local_ifs);
@@ -4570,10 +4572,10 @@ static Array<Klass*>* compute_transitive_interfaces(const InstanceKlass* super,
     // length will be less than the max_transitive_size if duplicates were removed
     const int length = result->length();
     assert(length <= max_transitive_size, "just checking");
-    Array<Klass*>* const new_result =
-      MetadataFactory::new_array<Klass*>(loader_data, length, CHECK_NULL);
+    Array<InstanceKlass*>* const new_result =
+      MetadataFactory::new_array<InstanceKlass*>(loader_data, length, CHECK_NULL);
     for (int i = 0; i < length; i++) {
-      Klass* const e = result->at(i);
+      InstanceKlass* const e = result->at(i);
       assert(e != NULL, "just checking");
       new_result->at_put(i, e);
     }
@@ -4641,17 +4643,17 @@ static void check_super_class_access(const InstanceKlass* this_klass, TRAPS) {
 
 static void check_super_interface_access(const InstanceKlass* this_klass, TRAPS) {
   assert(this_klass != NULL, "invariant");
-  const Array<Klass*>* const local_interfaces = this_klass->local_interfaces();
+  const Array<InstanceKlass*>* const local_interfaces = this_klass->local_interfaces();
   const int lng = local_interfaces->length();
   for (int i = lng - 1; i >= 0; i--) {
-    Klass* const k = local_interfaces->at(i);
+    InstanceKlass* const k = local_interfaces->at(i);
     assert (k != NULL && k->is_interface(), "invalid interface");
     Reflection::VerifyClassAccessResults vca_result =
-      Reflection::verify_class_access(this_klass, InstanceKlass::cast(k), false);
+      Reflection::verify_class_access(this_klass, k, false);
     if (vca_result != Reflection::ACCESS_OK) {
       ResourceMark rm(THREAD);
       char* msg = Reflection::verify_class_access_msg(this_klass,
-                                                      InstanceKlass::cast(k),
+                                                      k,
                                                       vca_result);
       if (msg == NULL) {
         bool same_module = (this_klass->module() == k->module());
@@ -5589,7 +5591,7 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
 
   ik->set_this_class_index(_this_class_index);
 
-  if (is_anonymous()) {
+  if (is_unsafe_anonymous()) {
     // _this_class_index is a CONSTANT_Class entry that refers to this
     // anonymous class itself. If this class needs to refer to its own methods or
     // fields, it would use a CONSTANT_MethodRef, etc, which would reference
@@ -5605,9 +5607,9 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
   ik->set_has_nonstatic_concrete_methods(_has_nonstatic_concrete_methods);
   ik->set_declares_nonstatic_concrete_methods(_declares_nonstatic_concrete_methods);
 
-  if (_host_klass != NULL) {
-    assert (ik->is_anonymous(), "should be the same");
-    ik->set_host_klass(_host_klass);
+  if (_unsafe_anonymous_host != NULL) {
+    assert (ik->is_unsafe_anonymous(), "should be the same");
+    ik->set_unsafe_anonymous_host(_unsafe_anonymous_host);
   }
 
   // Set PackageEntry for this_klass
@@ -5733,11 +5735,11 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
                    ik->java_super()->external_name());
       }
       // print out each of the interface classes referred to by this class.
-      const Array<Klass*>* const local_interfaces = ik->local_interfaces();
+      const Array<InstanceKlass*>* const local_interfaces = ik->local_interfaces();
       if (local_interfaces != NULL) {
         const int length = local_interfaces->length();
         for (int i = 0; i < length; i++) {
-          const Klass* const k = local_interfaces->at(i);
+          const InstanceKlass* const k = local_interfaces->at(i);
           const char * to = k->external_name();
           log_debug(class, resolve)("%s %s (interface)", from, to);
         }
@@ -5758,15 +5760,15 @@ void ClassFileParser::fill_instance_klass(InstanceKlass* ik, bool changed_by_loa
   debug_only(ik->verify();)
 }
 
-// For an anonymous class that is in the unnamed package, move it to its host class's
+// For an unsafe anonymous class that is in the unnamed package, move it to its host class's
 // package by prepending its host class's package name to its class name and setting
 // its _class_name field.
-void ClassFileParser::prepend_host_package_name(const InstanceKlass* host_klass, TRAPS) {
+void ClassFileParser::prepend_host_package_name(const InstanceKlass* unsafe_anonymous_host, TRAPS) {
   ResourceMark rm(THREAD);
   assert(strrchr(_class_name->as_C_string(), '/') == NULL,
-         "Anonymous class should not be in a package");
+         "Unsafe anonymous class should not be in a package");
   const char* host_pkg_name =
-    ClassLoader::package_from_name(host_klass->name()->as_C_string(), NULL);
+    ClassLoader::package_from_name(unsafe_anonymous_host->name()->as_C_string(), NULL);
 
   if (host_pkg_name != NULL) {
     size_t host_pkg_len = strlen(host_pkg_name);
@@ -5776,7 +5778,7 @@ void ClassFileParser::prepend_host_package_name(const InstanceKlass* host_klass,
     // Copy host package name and trailing /.
     strncpy(new_anon_name, host_pkg_name, host_pkg_len);
     new_anon_name[host_pkg_len] = '/';
-    // Append anonymous class name. The anonymous class name can contain odd
+    // Append unsafe anonymous class name. The unsafe anonymous class name can contain odd
     // characters.  So, do a strncpy instead of using sprintf("%s...").
     strncpy(new_anon_name + host_pkg_len + 1, (char *)_class_name->base(), class_name_len);
 
@@ -5791,19 +5793,19 @@ void ClassFileParser::prepend_host_package_name(const InstanceKlass* host_klass,
 // nothing.  If the anonymous class is in the unnamed package then move it to its
 // host's package.  If the classes are in different packages then throw an IAE
 // exception.
-void ClassFileParser::fix_anonymous_class_name(TRAPS) {
-  assert(_host_klass != NULL, "Expected an anonymous class");
+void ClassFileParser::fix_unsafe_anonymous_class_name(TRAPS) {
+  assert(_unsafe_anonymous_host != NULL, "Expected an unsafe anonymous class");
 
   const jbyte* anon_last_slash = UTF8::strrchr(_class_name->base(),
                                                _class_name->utf8_length(), '/');
   if (anon_last_slash == NULL) {  // Unnamed package
-    prepend_host_package_name(_host_klass, CHECK);
+    prepend_host_package_name(_unsafe_anonymous_host, CHECK);
   } else {
-    if (!_host_klass->is_same_class_package(_host_klass->class_loader(), _class_name)) {
+    if (!_unsafe_anonymous_host->is_same_class_package(_unsafe_anonymous_host->class_loader(), _class_name)) {
       ResourceMark rm(THREAD);
       THROW_MSG(vmSymbols::java_lang_IllegalArgumentException(),
         err_msg("Host class %s and anonymous class %s are in different packages",
-        _host_klass->name()->as_C_string(), _class_name->as_C_string()));
+        _unsafe_anonymous_host->name()->as_C_string(), _class_name->as_C_string()));
     }
   }
 }
@@ -5823,14 +5825,14 @@ ClassFileParser::ClassFileParser(ClassFileStream* stream,
                                  Symbol* name,
                                  ClassLoaderData* loader_data,
                                  Handle protection_domain,
-                                 const InstanceKlass* host_klass,
+                                 const InstanceKlass* unsafe_anonymous_host,
                                  GrowableArray<Handle>* cp_patches,
                                  Publicity pub_level,
                                  TRAPS) :
   _stream(stream),
   _requested_name(name),
   _loader_data(loader_data),
-  _host_klass(host_klass),
+  _unsafe_anonymous_host(unsafe_anonymous_host),
   _cp_patches(cp_patches),
   _num_patched_klasses(0),
   _max_num_patched_klasses(0),
@@ -6138,8 +6140,8 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
   // if this is an anonymous class fix up its name if it's in the unnamed
   // package.  Otherwise, throw IAE if it is in a different package than
   // its host class.
-  if (_host_klass != NULL) {
-    fix_anonymous_class_name(CHECK);
+  if (_unsafe_anonymous_host != NULL) {
+    fix_unsafe_anonymous_class_name(CHECK);
   }
 
   // Verification prevents us from creating names with dots in them, this
@@ -6164,9 +6166,9 @@ void ClassFileParser::parse_stream(const ClassFileStream* const stream,
         warning("DumpLoadedClassList and CDS are not supported in exploded build");
         DumpLoadedClassList = NULL;
       } else if (SystemDictionaryShared::is_sharing_possible(_loader_data) &&
-          _host_klass == NULL) {
+                 _unsafe_anonymous_host == NULL) {
         // Only dump the classes that can be stored into CDS archive.
-        // Anonymous classes such as generated LambdaForm classes are also not included.
+        // Unsafe anonymous classes such as generated LambdaForm classes are also not included.
         oop class_loader = _loader_data->class_loader();
         ResourceMark rm(THREAD);
         bool skip = false;
@@ -6270,7 +6272,7 @@ void ClassFileParser::post_process_parsed_stream(const ClassFileStream* const st
   assert(_loader_data != NULL, "invariant");
 
   if (_class_name == vmSymbols::java_lang_Object()) {
-    check_property(_local_interfaces == Universe::the_empty_klass_array(),
+    check_property(_local_interfaces == Universe::the_empty_instance_klass_array(),
                    "java.lang.Object cannot implement an interface in class file %s",
                    CHECK);
   }

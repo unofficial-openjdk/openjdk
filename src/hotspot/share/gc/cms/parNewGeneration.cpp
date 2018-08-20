@@ -75,27 +75,28 @@ ParScanThreadState::ParScanThreadState(Space* to_space_,
                                        PreservedMarks* preserved_marks_,
                                        size_t desired_plab_sz_,
                                        ParallelTaskTerminator& term_) :
-  _to_space(to_space_),
-  _old_gen(old_gen_),
-  _young_gen(young_gen_),
-  _thread_num(thread_num_),
   _work_queue(work_queue_set_->queue(thread_num_)),
-  _to_space_full(false),
   _overflow_stack(overflow_stacks_ ? overflow_stacks_ + thread_num_ : NULL),
   _preserved_marks(preserved_marks_),
-  _ageTable(false), // false ==> not the global age table, no perf data.
   _to_space_alloc_buffer(desired_plab_sz_),
   _to_space_closure(young_gen_, this),
   _old_gen_closure(young_gen_, this),
   _to_space_root_closure(young_gen_, this),
-  _old_gen_root_closure(young_gen_, this),
   _older_gen_closure(young_gen_, this),
+  _old_gen_root_closure(young_gen_, this),
   _evacuate_followers(this, &_to_space_closure, &_old_gen_closure,
                       &_to_space_root_closure, young_gen_, &_old_gen_root_closure,
                       work_queue_set_, &term_),
   _is_alive_closure(young_gen_),
   _scan_weak_ref_closure(young_gen_, this),
   _keep_alive_closure(&_scan_weak_ref_closure),
+  _to_space(to_space_),
+  _young_gen(young_gen_),
+  _old_gen(old_gen_),
+  _young_old_boundary(NULL),
+  _thread_num(thread_num_),
+  _ageTable(false), // false ==> not the global age table, no perf data.
+  _to_space_full(false),
   _strong_roots_time(0.0),
   _term_time(0.0)
 {
@@ -106,7 +107,6 @@ ParScanThreadState::ParScanThreadState(Space* to_space_,
   #endif // TASKQUEUE_STATS
 
   _survivor_chunk_array = (ChunkArray*) old_gen()->get_data_recorder(thread_num());
-  _hash_seed = 17;  // Might want to take time-based random value.
   _start = os::elapsedTime();
   _old_gen_closure.set_generation(old_gen_);
   _old_gen_root_closure.set_generation(old_gen_);
@@ -345,9 +345,9 @@ ParScanThreadStateSet::ParScanThreadStateSet(int num_threads,
                                              PreservedMarksSet& preserved_marks_set,
                                              size_t desired_plab_sz,
                                              ParallelTaskTerminator& term)
-  : _young_gen(young_gen),
+  : _term(term),
+    _young_gen(young_gen),
     _old_gen(old_gen),
-    _term(term),
     _per_thread_states(NEW_RESOURCE_ARRAY(ParScanThreadState, num_threads)),
     _num_threads(num_threads)
 {
@@ -438,7 +438,7 @@ void ParScanThreadStateSet::print_taskqueue_stats_hdr(outputStream* const st) {
 }
 
 void ParScanThreadStateSet::print_taskqueue_stats() {
-  if (!log_develop_is_enabled(Trace, gc, task, stats)) {
+  if (!log_is_enabled(Trace, gc, task, stats)) {
     return;
   }
   Log(gc, task, stats) log;
@@ -530,8 +530,8 @@ ParEvacuateFollowersClosure::ParEvacuateFollowersClosure(
 
     _par_scan_state(par_scan_state_),
     _to_space_closure(to_space_closure_),
-    _old_gen_closure(old_gen_closure_),
     _to_space_root_closure(to_space_root_closure_),
+    _old_gen_closure(old_gen_closure_),
     _old_gen_root_closure(old_gen_root_closure_),
     _par_gen(par_gen_),
     _task_queues(task_queues_),
@@ -550,7 +550,6 @@ void ParEvacuateFollowersClosure::do_void() {
 
     // Attempt to steal work from promoted.
     if (task_queues()->steal(par_scan_state()->thread_num(),
-                             par_scan_state()->hash_seed(),
                              obj_to_scan)) {
       bool res = work_q->push(obj_to_scan);
       assert(res, "Empty queue should have room for a push.");
@@ -627,9 +626,9 @@ void ParNewGenTask::work(uint worker_id) {
 
 ParNewGeneration::ParNewGeneration(ReservedSpace rs, size_t initial_byte_size)
   : DefNewGeneration(rs, initial_byte_size, "PCopy"),
+  _plab_stats("Young", YoungPLABSize, PLABWeight),
   _overflow_list(NULL),
-  _is_alive_closure(this),
-  _plab_stats("Young", YoungPLABSize, PLABWeight)
+  _is_alive_closure(this)
 {
   NOT_PRODUCT(_overflow_counter = ParGCWorkQueueOverflowInterval;)
   NOT_PRODUCT(_num_par_pushes = 0;)

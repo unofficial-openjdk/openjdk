@@ -435,6 +435,7 @@ IRT_END
 
 
 IRT_ENTRY(void, InterpreterRuntime::create_klass_exception(JavaThread* thread, char* name, oopDesc* obj))
+  // Produce the error message first because note_trap can safepoint
   ResourceMark rm(thread);
   const char* klass_name = obj->klass()->external_name();
   // lookup exception klass
@@ -448,13 +449,14 @@ IRT_ENTRY(void, InterpreterRuntime::create_klass_exception(JavaThread* thread, c
 IRT_END
 
 IRT_ENTRY(void, InterpreterRuntime::throw_ArrayIndexOutOfBoundsException(JavaThread* thread, arrayOopDesc* a, jint index))
-  if (ProfileTraps) {
-    note_trap(thread, Deoptimization::Reason_range_check, CHECK);
-  }
-
+  // Produce the error message first because note_trap can safepoint
   ResourceMark rm(thread);
   stringStream ss;
   ss.print("Index %d out of bounds for length %d", index, a->length());
+
+  if (ProfileTraps) {
+    note_trap(thread, Deoptimization::Reason_range_check, CHECK);
+  }
 
   THROW_MSG(vmSymbols::java_lang_ArrayIndexOutOfBoundsException(), ss.as_string());
 IRT_END
@@ -462,6 +464,7 @@ IRT_END
 IRT_ENTRY(void, InterpreterRuntime::throw_ClassCastException(
   JavaThread* thread, oopDesc* obj))
 
+  // Produce the error message first because note_trap can safepoint
   ResourceMark rm(thread);
   char* message = SharedRuntime::generate_class_cast_message(
     thread, obj->klass());
@@ -921,11 +924,11 @@ void InterpreterRuntime::resolve_invoke(JavaThread* thread, Bytecodes::Code byte
            info.call_kind() == CallInfo::vtable_call, "");
   }
 #endif
-  // Get sender or sender's host_klass, and only set cpCache entry to resolved if
+  // Get sender or sender's unsafe_anonymous_host, and only set cpCache entry to resolved if
   // it is not an interface.  The receiver for invokespecial calls within interface
   // methods must be checked for every call.
   InstanceKlass* sender = pool->pool_holder();
-  sender = sender->has_host_klass() ? sender->host_klass() : sender;
+  sender = sender->is_unsafe_anonymous() ? sender->unsafe_anonymous_host() : sender;
 
   switch (info.call_kind()) {
   case CallInfo::direct_call:

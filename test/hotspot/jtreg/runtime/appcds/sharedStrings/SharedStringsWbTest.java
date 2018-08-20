@@ -33,6 +33,8 @@
  * @build sun.hotspot.WhiteBox SharedStringsWb
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  * @run main SharedStringsWbTest
+ * @run main/othervm -XX:+UseStringDeduplication SharedStringsWbTest
+ * @run main/othervm -XX:-CompactStrings SharedStringsWbTest
  */
 
 import java.io.*;
@@ -43,7 +45,7 @@ public class SharedStringsWbTest {
         SharedStringsUtils.buildJarAndWhiteBox("SharedStringsWb");
 
         SharedStringsUtils.dumpWithWhiteBox(TestCommon.list("SharedStringsWb"),
-            "SharedStringsBasic.txt");
+            "SharedStringsBasic.txt", "-Xlog:cds,cds+hashtables");
 
         SharedStringsUtils.runWithArchiveAndWhiteBox("SharedStringsWb");
     }

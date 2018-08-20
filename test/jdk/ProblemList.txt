@@ -538,9 +538,6 @@ java/io/pathNames/GeneralWin32.java                             8180264 windows-
 com/sun/management/OperatingSystemMXBean/GetProcessCpuLoad.java 8030957 aix-all
 com/sun/management/OperatingSystemMXBean/GetSystemCpuLoad.java  8030957 aix-all
 
-sun/management/jmxremote/bootstrap/RmiSslBootstrapTest.sh       8205653 generic-all
-sun/management/jmxremote/bootstrap/RmiRegistrySslTest.java      8205653 generic-all
-
 ############################################################################
 
 # jdk_jmx
@@ -561,6 +558,9 @@ java/net/MulticastSocket/JoinLeave.java                         8207404 aix-all
 java/net/MulticastSocket/SetGetNetworkInterfaceTest.java        8207404 aix-all
 
 java/net/DatagramSocket/SendDatagramToBadAddress.java           7143960 macosx-all
+
+java/net/Socket/LingerTest.java                                 8208690 generic-all
+sun/net/www/http/HttpClient/MultiThreadTest.java                8208690 generic-all
 
 ############################################################################
 
@@ -836,6 +836,8 @@ tools/pack200/CommandLineTests.java                             8059906 generic-
 
 com/sun/jdi/BasicJDWPConnectionTest.java                        8195703 generic-all
 
+com/sun/jdi/BreakpointWithFullGC.java                           8209605 generic-all
+
 com/sun/jdi/RedefineImplementor.sh                              8004127 generic-all
 
 com/sun/jdi/JdbExprTest.sh                                      8203393 solaris-all
@@ -867,6 +869,8 @@ com/sun/jdi/NashornPopFrameTest.java                            8187143 generic-
 # svc_tools
 
 sun/tools/jstat/jstatClassloadOutput1.sh                        8173942 generic-all
+sun/tools/jhsdb/BasicLauncherTest.java                          8193639 solaris-all
+sun/tools/jhsdb/HeapDumpTest.java                               8193639 solaris-all
 
 
 ############################################################################
@@ -893,4 +897,3 @@ com/sun/jdi/RedefineCrossEvent.java                             8194308    gener
 
 jdk/jfr/event/io/TestInstrumentation.java                       8202142    generic-all
 jdk/jfr/event/sampling/TestNative.java                          8202142    generic-all
-jdk/jfr/event/os/TestSystemProcess.java                         8202835    linux-all

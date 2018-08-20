@@ -123,7 +123,8 @@ TARGETS += $(GENSRC_DIR)/_gensrc_proc_done
 $(GENSRC_DIR)/module-info.java.extra: $(GENSRC_DIR)/_gensrc_proc_done
 	($(CD) $(GENSRC_DIR)/META-INF/providers && \
 	    p=""; \
-	    for i in $$($(LS) | $(SORT)); do \
+	    impl=""; \
+	    for i in $$($(GREP) '^' * | $(SORT) -t ':' -k 2 | $(SED) 's/:.*//'); do \
 	      c=$$($(CAT) $$i | $(TR) -d '\n\r'); \
 	      if test x$$p != x$$c; then \
                 if test x$$p != x; then \
@@ -131,15 +132,27 @@ $(GENSRC_DIR)/module-info.java.extra: $(GENSRC_DIR)/_gensrc_proc_done
 	        fi; \
 	        $(ECHO) "provides $$c with" >> $@; \
                 p=$$c; \
+	        impl=""; \
 	      fi; \
-	      $(ECHO) "    $$i," >> $@; \
+              if test x$$impl != x; then \
+	        $(ECHO) "  , $$i" >> $@; \
+              else \
+	        $(ECHO) "    $$i" >> $@; \
+              fi; \
+              impl=$$i; \
 	    done); \
             $(ECHO) "    ;" >> $@; \
 	$(ECHO) "uses org.graalvm.compiler.options.OptionDescriptors;" >> $@; \
 	$(ECHO) "provides org.graalvm.compiler.options.OptionDescriptors with" >> $@; \
+        impl=""; \
 	for i in $$($(FIND) $(GENSRC_DIR) -name '*_OptionDescriptors.java' | $(SORT)); do \
 	    c=$$($(ECHO) $$i | $(SED) 's:.*/jdk\.internal\.vm\.compiler/\(.*\)\.java:\1:' | $(TR) '/' '.'); \
-	    $(ECHO) "    $$c," >> $@; \
+            if test x$$impl != x; then \
+	      $(ECHO) "  , $$c" >> $@; \
+            else \
+	      $(ECHO) "    $$c" >> $@; \
+            fi; \
+            impl=$$c; \
 	done; \
 	$(ECHO) "    ;" >> $@;
 

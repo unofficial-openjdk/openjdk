@@ -271,7 +271,7 @@ class ConstantPool : public Metadata {
     *int_at_addr(which) = name_index;
   }
 
-  // Anonymous class support:
+  // Unsafe anonymous class support:
   void klass_at_put(int class_index, int name_index, int resolved_klass_index, Klass* k, Symbol* name);
   void klass_at_put(int class_index, Klass* k);
 
@@ -455,7 +455,7 @@ class ConstantPool : public Metadata {
   // A "pseudo-string" is an non-string oop that has found its way into
   // a String entry.
   // This can happen if the user patches a live
-  // object into a CONSTANT_String entry of an anonymous class.
+  // object into a CONSTANT_String entry of an unsafe anonymous class.
   // Method oops internally created for method handles may also
   // use pseudo-strings to link themselves to related metaobjects.
 
@@ -966,7 +966,7 @@ class SymbolHashMapEntry : public CHeapObj<mtSymbol> {
   void       set_value(u2 value)          { _value = value; }
 
   SymbolHashMapEntry(unsigned int hash, Symbol* symbol, u2 value)
-    : _hash(hash), _symbol(symbol), _value(value), _next(NULL) {}
+    : _hash(hash), _next(NULL), _symbol(symbol), _value(value) {}
 
 }; // End SymbolHashMapEntry class
 

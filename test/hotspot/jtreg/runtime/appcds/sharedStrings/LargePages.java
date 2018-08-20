@@ -32,17 +32,20 @@
  *          jdk.jartool/sun.tools.jar
  * @build HelloString
  * @run main LargePages
+ * @run main/othervm -XX:+UseStringDeduplication LargePages
+ * @run main/othervm -XX:-CompactStrings LargePages
  */
 public class LargePages {
+    static final String CDS_LOGGING = "-Xlog:cds,cds+hashtables";
     public static void main(String[] args) throws Exception {
         SharedStringsUtils.buildJar("HelloString");
 
         SharedStringsUtils.dump(TestCommon.list("HelloString"),
-            "SharedStringsBasic.txt", "-XX:+UseLargePages");
+            "SharedStringsBasic.txt", "-XX:+UseLargePages", CDS_LOGGING);
         SharedStringsUtils.runWithArchive("HelloString", "-XX:+UseLargePages");
 
         SharedStringsUtils.dump(TestCommon.list("HelloString"),
-            "SharedStringsBasic.txt",
+            "SharedStringsBasic.txt", CDS_LOGGING,
             "-XX:+UseLargePages", "-XX:+UseLargePagesInMetaspace");
         SharedStringsUtils.runWithArchive("HelloString",
             "-XX:+UseLargePages", "-XX:+UseLargePagesInMetaspace");

@@ -2135,17 +2135,21 @@ class MethodArityHistogram {
   static int _max_size;                       // max. arg size seen
 
   static void add_method_to_histogram(nmethod* nm) {
-    Method* m = nm->method();
-    ArgumentCount args(m->signature());
-    int arity   = args.size() + (m->is_static() ? 0 : 1);
-    int argsize = m->size_of_parameters();
-    arity   = MIN2(arity, MAX_ARITY-1);
-    argsize = MIN2(argsize, MAX_ARITY-1);
-    int count = nm->method()->compiled_invocation_count();
-    _arity_histogram[arity]  += count;
-    _size_histogram[argsize] += count;
-    _max_arity = MAX2(_max_arity, arity);
-    _max_size  = MAX2(_max_size, argsize);
+    // These checks are taken from CodeHeapState::print_names()
+    Method* m = (nm == NULL) ? NULL : nm->method();  // nm->method() may be uninitialized, i.e. != NULL, but invalid
+    if ((nm != NULL) && (m != NULL) && !nm->is_zombie() && !nm->is_not_installed() &&
+        os::is_readable_pointer(m) && os::is_readable_pointer(m->constants())) {
+      ArgumentCount args(m->signature());
+      int arity   = args.size() + (m->is_static() ? 0 : 1);
+      int argsize = m->size_of_parameters();
+      arity   = MIN2(arity, MAX_ARITY-1);
+      argsize = MIN2(argsize, MAX_ARITY-1);
+      int count = nm->method()->compiled_invocation_count();
+      _arity_histogram[arity]  += count;
+      _size_histogram[argsize] += count;
+      _max_arity = MAX2(_max_arity, arity);
+      _max_size  = MAX2(_max_size, argsize);
+    }
   }
 
   void print_histogram_helper(int n, int* histo, const char* name) {
@@ -2861,6 +2865,22 @@ JRT_ENTRY_NO_ASYNC(void, SharedRuntime::block_for_jni_critical(JavaThread* threa
   // Lock and unlock a critical section to give the system a chance to block
   GCLocker::lock_critical(thread);
   GCLocker::unlock_critical(thread);
+JRT_END
+
+JRT_LEAF(oopDesc*, SharedRuntime::pin_object(JavaThread* thread, oopDesc* obj))
+  assert(Universe::heap()->supports_object_pinning(), "Why we are here?");
+  assert(obj != NULL, "Should not be null");
+  oop o(obj);
+  o = Universe::heap()->pin_object(thread, o);
+  assert(o != NULL, "Should not be null");
+  return o;
+JRT_END
+
+JRT_LEAF(void, SharedRuntime::unpin_object(JavaThread* thread, oopDesc* obj))
+  assert(Universe::heap()->supports_object_pinning(), "Why we are here?");
+  assert(obj != NULL, "Should not be null");
+  oop o(obj);
+  Universe::heap()->unpin_object(thread, o);
 JRT_END
 
 // -------------------------------------------------------------------------

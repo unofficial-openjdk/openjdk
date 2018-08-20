@@ -226,7 +226,9 @@ void ThreadLocalAllocBuffer::startup_initialization() {
   // Assuming each thread's active tlab is, on average,
   // 1/2 full at a GC
   _target_refills = 100 / (2 * TLABWasteTargetPercent);
-  _target_refills = MAX2(_target_refills, (unsigned)1U);
+  // We need to set initial target refills to 2 to avoid a GC which causes VM
+  // abort during VM initialization.
+  _target_refills = MAX2(_target_refills, 2U);
 
   _global_stats = new GlobalTLABStats();
 
@@ -311,7 +313,7 @@ void ThreadLocalAllocBuffer::verify() {
   HeapWord* t = top();
   HeapWord* prev_p = NULL;
   while (p < t) {
-    oop(p)->verify();
+    oopDesc::verify(oop(p));
     prev_p = p;
     p += oop(p)->size();
   }

@@ -95,7 +95,7 @@ void ClassLoaderData::init_null_class_loader_data() {
   ClassLoaderDataGraph::_head = _the_null_class_loader_data;
   assert(_the_null_class_loader_data->is_the_null_class_loader_data(), "Must be");
 
-  LogTarget(Debug, class, loader, data) lt;
+  LogTarget(Trace, class, loader, data) lt;
   if (lt.is_enabled()) {
     ResourceMark rm;
     LogStream ls(lt);
@@ -141,34 +141,37 @@ void ClassLoaderData::initialize_name(Handle class_loader) {
   _name_and_id = SymbolTable::new_symbol(cl_instance_name_and_id, CATCH);
 }
 
-ClassLoaderData::ClassLoaderData(Handle h_class_loader, bool is_anonymous) :
-  _is_anonymous(is_anonymous),
-  // An anonymous class loader data doesn't have anything to keep
-  // it from being unloaded during parsing of the anonymous class.
-  // The null-class-loader should always be kept alive.
-  _keep_alive((is_anonymous || h_class_loader.is_null()) ? 1 : 0),
-  _metaspace(NULL), _unloading(false), _klasses(NULL),
-  _modules(NULL), _packages(NULL), _unnamed_module(NULL), _dictionary(NULL),
-  _claimed(0), _modified_oops(true), _accumulated_modified_oops(false),
-  _jmethod_ids(NULL), _handles(), _deallocate_list(NULL),
-  _next(NULL),
-  _class_loader_klass(NULL), _name(NULL), _name_and_id(NULL),
+ClassLoaderData::ClassLoaderData(Handle h_class_loader, bool is_unsafe_anonymous) :
+  _metaspace(NULL),
   _metaspace_lock(new Mutex(Monitor::leaf+1, "Metaspace allocation lock", true,
-                            Monitor::_safepoint_check_never)) {
+                            Monitor::_safepoint_check_never)),
+  _unloading(false), _is_unsafe_anonymous(is_unsafe_anonymous),
+  _modified_oops(true), _accumulated_modified_oops(false),
+  // An unsafe anonymous class loader data doesn't have anything to keep
+  // it from being unloaded during parsing of the unsafe anonymous class.
+  // The null-class-loader should always be kept alive.
+  _keep_alive((is_unsafe_anonymous || h_class_loader.is_null()) ? 1 : 0),
+  _claimed(0),
+  _handles(),
+  _klasses(NULL), _packages(NULL), _modules(NULL), _unnamed_module(NULL), _dictionary(NULL),
+  _jmethod_ids(NULL),
+  _deallocate_list(NULL),
+  _next(NULL),
+  _class_loader_klass(NULL), _name(NULL), _name_and_id(NULL) {
 
   if (!h_class_loader.is_null()) {
     _class_loader = _handles.add(h_class_loader());
     _class_loader_klass = h_class_loader->klass();
   }
 
-  if (!is_anonymous) {
-    // The holder is initialized later for anonymous classes, and before calling anything
+  if (!is_unsafe_anonymous) {
+    // The holder is initialized later for unsafe anonymous classes, and before calling anything
     // that call class_loader().
     initialize_holder(h_class_loader);
 
-    // A ClassLoaderData created solely for an anonymous class should never have a
+    // A ClassLoaderData created solely for an unsafe anonymous class should never have a
     // ModuleEntryTable or PackageEntryTable created for it. The defining package
-    // and module for an anonymous class will be found in its host class.
+    // and module for an unsafe anonymous class will be found in its host class.
     _packages = new PackageEntryTable(PackageEntryTable::_packagetable_entry_size);
     if (h_class_loader.is_null()) {
       // Create unnamed module for boot loader
@@ -284,20 +287,20 @@ bool ClassLoaderData::claim() {
   return (int) Atomic::cmpxchg(1, &_claimed, 0) == 0;
 }
 
-// Anonymous classes have their own ClassLoaderData that is marked to keep alive
+// Unsafe anonymous classes have their own ClassLoaderData that is marked to keep alive
 // while the class is being parsed, and if the class appears on the module fixup list.
-// Due to the uniqueness that no other class shares the anonymous class' name or
-// ClassLoaderData, no other non-GC thread has knowledge of the anonymous class while
+// Due to the uniqueness that no other class shares the unsafe anonymous class' name or
+// ClassLoaderData, no other non-GC thread has knowledge of the unsafe anonymous class while
 // it is being defined, therefore _keep_alive is not volatile or atomic.
 void ClassLoaderData::inc_keep_alive() {
-  if (is_anonymous()) {
+  if (is_unsafe_anonymous()) {
     assert(_keep_alive >= 0, "Invalid keep alive increment count");
     _keep_alive++;
   }
 }
 
 void ClassLoaderData::dec_keep_alive() {
-  if (is_anonymous()) {
+  if (is_unsafe_anonymous()) {
     assert(_keep_alive > 0, "Invalid keep alive decrement count");
     _keep_alive--;
   }
@@ -399,20 +402,20 @@ void ClassLoaderData::record_dependency(const Klass* k) {
   // Do not need to record dependency if the dependency is to a class whose
   // class loader data is never freed.  (i.e. the dependency's class loader
   // is one of the three builtin class loaders and the dependency is not
-  // anonymous.)
+  // unsafe anonymous.)
   if (to_cld->is_permanent_class_loader_data()) {
     return;
   }
 
   oop to;
-  if (to_cld->is_anonymous()) {
-    // Just return if an anonymous class is attempting to record a dependency
-    // to itself.  (Note that every anonymous class has its own unique class
+  if (to_cld->is_unsafe_anonymous()) {
+    // Just return if an unsafe anonymous class is attempting to record a dependency
+    // to itself.  (Note that every unsafe anonymous class has its own unique class
     // loader data.)
     if (to_cld == from_cld) {
       return;
     }
-    // Anonymous class dependencies are through the mirror.
+    // Unsafe anonymous class dependencies are through the mirror.
     to = k->java_mirror();
   } else {
     to = to_cld->class_loader();
@@ -592,7 +595,7 @@ void ClassLoaderData::remove_class(Klass* scratch_class) {
 void ClassLoaderData::unload() {
   _unloading = true;
 
-  LogTarget(Debug, class, loader, data) lt;
+  LogTarget(Trace, class, loader, data) lt;
   if (lt.is_enabled()) {
     ResourceMark rm;
     LogStream ls(lt);
@@ -603,7 +606,7 @@ void ClassLoaderData::unload() {
 
   // Some items on the _deallocate_list need to free their C heap structures
   // if they are not already on the _klasses list.
-  unload_deallocate_list();
+  free_deallocate_list_C_heap_structures();
 
   // Tell serviceability tools these classes are unloading
   // after erroneous classes are released.
@@ -637,7 +640,7 @@ const int _boot_loader_dictionary_size    = 1009;
 const int _default_loader_dictionary_size = 107;
 
 Dictionary* ClassLoaderData::create_dictionary() {
-  assert(!is_anonymous(), "anonymous class loader data do not have a dictionary");
+  assert(!is_unsafe_anonymous(), "unsafe anonymous class loader data do not have a dictionary");
   int size;
   bool resizable = false;
   if (_the_null_class_loader_data == NULL) {
@@ -674,7 +677,7 @@ oop ClassLoaderData::holder_phantom() const {
 
 // Unloading support
 bool ClassLoaderData::is_alive() const {
-  bool alive = keep_alive()         // null class loader and incomplete anonymous klasses.
+  bool alive = keep_alive()         // null class loader and incomplete unsafe anonymous klasses.
       || (_holder.peek() != NULL);  // and not cleaned by the GC weak handle processing.
 
   return alive;
@@ -764,13 +767,13 @@ ClassLoaderData::~ClassLoaderData() {
 
 // Returns true if this class loader data is for the app class loader
 // or a user defined system class loader.  (Note that the class loader
-// data may be anonymous.)
+// data may be unsafe anonymous.)
 bool ClassLoaderData::is_system_class_loader_data() const {
   return SystemDictionary::is_system_class_loader(class_loader());
 }
 
 // Returns true if this class loader data is for the platform class loader.
-// (Note that the class loader data may be anonymous.)
+// (Note that the class loader data may be unsafe anonymous.)
 bool ClassLoaderData::is_platform_class_loader_data() const {
   return SystemDictionary::is_platform_class_loader(class_loader());
 }
@@ -778,7 +781,7 @@ bool ClassLoaderData::is_platform_class_loader_data() const {
 // Returns true if the class loader for this class loader data is one of
 // the 3 builtin (boot application/system or platform) class loaders,
 // including a user-defined system class loader.  Note that if the class
-// loader data is for an anonymous class then it may get freed by a GC
+// loader data is for an unsafe anonymous class then it may get freed by a GC
 // even if its class loader is one of these loaders.
 bool ClassLoaderData::is_builtin_class_loader_data() const {
   return (is_boot_class_loader_data() ||
@@ -787,10 +790,10 @@ bool ClassLoaderData::is_builtin_class_loader_data() const {
 }
 
 // Returns true if this class loader data is a class loader data
-// that is not ever freed by a GC.  It must be one of the builtin
-// class loaders and not anonymous.
+// that is not ever freed by a GC.  It must be the CLD for one of the builtin
+// class loaders and not the CLD for an unsafe anonymous class.
 bool ClassLoaderData::is_permanent_class_loader_data() const {
-  return is_builtin_class_loader_data() && !is_anonymous();
+  return is_builtin_class_loader_data() && !is_unsafe_anonymous();
 }
 
 ClassLoaderMetaspace* ClassLoaderData::metaspace_non_null() {
@@ -807,8 +810,8 @@ ClassLoaderMetaspace* ClassLoaderData::metaspace_non_null() {
       if (this == the_null_class_loader_data()) {
         assert (class_loader() == NULL, "Must be");
         metaspace = new ClassLoaderMetaspace(_metaspace_lock, Metaspace::BootMetaspaceType);
-      } else if (is_anonymous()) {
-        metaspace = new ClassLoaderMetaspace(_metaspace_lock, Metaspace::AnonymousMetaspaceType);
+      } else if (is_unsafe_anonymous()) {
+        metaspace = new ClassLoaderMetaspace(_metaspace_lock, Metaspace::UnsafeAnonymousMetaspaceType);
       } else if (class_loader()->is_a(SystemDictionary::reflect_DelegatingClassLoader_klass())) {
         metaspace = new ClassLoaderMetaspace(_metaspace_lock, Metaspace::ReflectionMetaspaceType);
       } else {
@@ -846,7 +849,7 @@ void ClassLoaderData::init_handle_locked(OopHandle& dest, Handle h) {
 }
 
 // Add this metadata pointer to be freed when it's safe.  This is only during
-// class unloading because Handles might point to this metadata field.
+// a safepoint which checks if handles point to this metadata field.
 void ClassLoaderData::add_to_deallocate_list(Metadata* m) {
   // Metadata in shared region isn't deleted.
   if (!m->is_shared()) {
@@ -855,6 +858,8 @@ void ClassLoaderData::add_to_deallocate_list(Metadata* m) {
       _deallocate_list = new (ResourceObj::C_HEAP, mtClass) GrowableArray<Metadata*>(100, true);
     }
     _deallocate_list->append_if_missing(m);
+    log_debug(class, loader, data)("deallocate added for %s", m->print_value_string());
+    ClassLoaderDataGraph::set_should_clean_deallocate_lists();
   }
 }
 
@@ -888,8 +893,44 @@ void ClassLoaderData::free_deallocate_list() {
       assert(!m->is_klass() || !((InstanceKlass*)m)->is_scratch_class(),
              "scratch classes on this list should be dead");
       // Also should assert that other metadata on the list was found in handles.
+      // Some cleaning remains.
+      ClassLoaderDataGraph::set_should_clean_deallocate_lists();
     }
   }
+}
+
+void ClassLoaderDataGraph::clean_deallocate_lists(bool walk_previous_versions) {
+  uint loaders_processed = 0;
+  for (ClassLoaderData* cld = _head; cld != NULL; cld = cld->next()) {
+    // is_alive check will be necessary for concurrent class unloading.
+    if (cld->is_alive()) {
+      // clean metaspace
+      if (walk_previous_versions) {
+        cld->classes_do(InstanceKlass::purge_previous_versions);
+      }
+      cld->free_deallocate_list();
+      loaders_processed++;
+    }
+  }
+  log_debug(class, loader, data)("clean_deallocate_lists: loaders processed %u %s",
+                                 loaders_processed, walk_previous_versions ? "walk_previous_versions" : "");
+}
+
+void ClassLoaderDataGraph::walk_metadata_and_clean_metaspaces() {
+  assert(SafepointSynchronize::is_at_safepoint(), "must only be called at safepoint");
+
+  _should_clean_deallocate_lists = false; // assume everything gets cleaned
+
+  // Mark metadata seen on the stack so we can delete unreferenced entries.
+  // Walk all metadata, including the expensive code cache walk, only for class redefinition.
+  // The MetadataOnStackMark walk during redefinition saves previous versions if it finds old methods
+  // on the stack or in the code cache, so we only have to repeat the full walk if
+  // they were found at that time.
+  // TODO: have redefinition clean old methods out of the code cache.  They still exist in some places.
+  bool walk_all_metadata = InstanceKlass::has_previous_versions_and_reset();
+
+  MetadataOnStackMark md_on_stack(walk_all_metadata);
+  clean_deallocate_lists(walk_all_metadata);
 }
 
 // This is distinct from free_deallocate_list.  For class loader data that are
@@ -897,7 +938,7 @@ void ClassLoaderData::free_deallocate_list() {
 // scratch or error classes so that unloading events aren't triggered for these
 // classes. The metadata is removed with the unloading metaspace.
 // There isn't C heap memory allocated for methods, so nothing is done for them.
-void ClassLoaderData::unload_deallocate_list() {
+void ClassLoaderData::free_deallocate_list_C_heap_structures() {
   // Don't need lock, at safepoint
   assert(SafepointSynchronize::is_at_safepoint(), "only called at safepoint");
   assert(is_unloading(), "only called for ClassLoaderData that are unloading");
@@ -907,7 +948,6 @@ void ClassLoaderData::unload_deallocate_list() {
   // Go backwards because this removes entries that are freed.
   for (int i = _deallocate_list->length() - 1; i >= 0; i--) {
     Metadata* m = _deallocate_list->at(i);
-    assert (!m->on_stack(), "wouldn't be unloading if this were so");
     _deallocate_list->remove_at(i);
     if (m->is_constantPool()) {
       ((ConstantPool*)m)->release_C_heap_structures();
@@ -922,8 +962,8 @@ void ClassLoaderData::unload_deallocate_list() {
   }
 }
 
-// These anonymous class loaders are to contain classes used for JSR292
-ClassLoaderData* ClassLoaderData::anonymous_class_loader_data(Handle loader) {
+// These CLDs are to contain unsafe anonymous classes used for JSR292
+ClassLoaderData* ClassLoaderData::unsafe_anonymous_class_loader_data(Handle loader) {
   // Add a new class loader data to the graph.
   return ClassLoaderDataGraph::add(loader, true);
 }
@@ -965,8 +1005,8 @@ void ClassLoaderData::print_value_on(outputStream* out) const {
     // loader data: 0xsomeaddr of 'bootstrap'
     out->print("loader data: " INTPTR_FORMAT " of %s", p2i(this), loader_name_and_id());
   }
-  if (is_anonymous()) {
-    out->print(" anonymous");
+  if (is_unsafe_anonymous()) {
+    out->print(" unsafe anonymous");
   }
 }
 
@@ -974,7 +1014,7 @@ void ClassLoaderData::print_value_on(outputStream* out) const {
 void ClassLoaderData::print_on(outputStream* out) const {
   out->print("ClassLoaderData CLD: " PTR_FORMAT ", loader: " PTR_FORMAT ", loader_klass: %s {",
               p2i(this), p2i(_class_loader.ptr_raw()), loader_name_and_id());
-  if (is_anonymous()) out->print(" anonymous");
+  if (is_unsafe_anonymous()) out->print(" unsafe anonymous");
   if (claimed()) out->print(" claimed");
   if (is_unloading()) out->print(" unloading");
   out->print(" metaspace: " INTPTR_FORMAT, p2i(metaspace_or_null()));
@@ -992,8 +1032,8 @@ void ClassLoaderData::verify() {
   assert_locked_or_safepoint(_metaspace_lock);
   oop cl = class_loader();
 
-  guarantee(this == class_loader_data(cl) || is_anonymous(), "Must be the same");
-  guarantee(cl != NULL || this == ClassLoaderData::the_null_class_loader_data() || is_anonymous(), "must be");
+  guarantee(this == class_loader_data(cl) || is_unsafe_anonymous(), "Must be the same");
+  guarantee(cl != NULL || this == ClassLoaderData::the_null_class_loader_data() || is_unsafe_anonymous(), "must be");
 
   // Verify the integrity of the allocated space.
   if (metaspace_or_null() != NULL) {
@@ -1023,18 +1063,20 @@ ClassLoaderData* ClassLoaderDataGraph::_saved_unloading = NULL;
 ClassLoaderData* ClassLoaderDataGraph::_saved_head = NULL;
 
 bool ClassLoaderDataGraph::_should_purge = false;
+bool ClassLoaderDataGraph::_should_clean_deallocate_lists = false;
+bool ClassLoaderDataGraph::_safepoint_cleanup_needed = false;
 bool ClassLoaderDataGraph::_metaspace_oom = false;
 
 // Add a new class loader data node to the list.  Assign the newly created
 // ClassLoaderData into the java/lang/ClassLoader object as a hidden field
-ClassLoaderData* ClassLoaderDataGraph::add_to_graph(Handle loader, bool is_anonymous) {
+ClassLoaderData* ClassLoaderDataGraph::add_to_graph(Handle loader, bool is_unsafe_anonymous) {
   NoSafepointVerifier no_safepoints; // we mustn't GC until we've installed the
                                      // ClassLoaderData in the graph since the CLD
                                      // contains oops in _handles that must be walked.
 
-  ClassLoaderData* cld = new ClassLoaderData(loader, is_anonymous);
+  ClassLoaderData* cld = new ClassLoaderData(loader, is_unsafe_anonymous);
 
-  if (!is_anonymous) {
+  if (!is_unsafe_anonymous) {
     // First, Atomically set it
     ClassLoaderData* old = java_lang_ClassLoader::cmpxchg_loader_data(cld, loader(), NULL);
     if (old != NULL) {
@@ -1053,7 +1095,7 @@ ClassLoaderData* ClassLoaderDataGraph::add_to_graph(Handle loader, bool is_anony
     cld->set_next(next);
     ClassLoaderData* exchanged = Atomic::cmpxchg(cld, list_head, next);
     if (exchanged == next) {
-      LogTarget(Debug, class, loader, data) lt;
+      LogTarget(Trace, class, loader, data) lt;
       if (lt.is_enabled()) {
         ResourceMark rm;
         LogStream ls(lt);
@@ -1067,8 +1109,8 @@ ClassLoaderData* ClassLoaderDataGraph::add_to_graph(Handle loader, bool is_anony
   } while (true);
 }
 
-ClassLoaderData* ClassLoaderDataGraph::add(Handle loader, bool is_anonymous) {
-  ClassLoaderData* loader_data = add_to_graph(loader, is_anonymous);
+ClassLoaderData* ClassLoaderDataGraph::add(Handle loader, bool is_unsafe_anonymous) {
+  ClassLoaderData* loader_data = add_to_graph(loader, is_unsafe_anonymous);
   // Initialize _name and _name_and_id after the loader data is added to the
   // CLDG because adding the Symbol for _name and _name_and_id might safepoint.
   if (loader.not_null()) {
@@ -1334,22 +1376,16 @@ static void post_class_unload_events() {
 
 // Move class loader data from main list to the unloaded list for unloading
 // and deallocation later.
-bool ClassLoaderDataGraph::do_unloading(bool clean_previous_versions) {
+bool ClassLoaderDataGraph::do_unloading(bool do_cleaning) {
+
+  // Indicate whether safepoint cleanup is needed.
+  _safepoint_cleanup_needed |= do_cleaning;
 
   ClassLoaderData* data = _head;
   ClassLoaderData* prev = NULL;
   bool seen_dead_loader = false;
   uint loaders_processed = 0;
   uint loaders_removed = 0;
-
-  // Mark metadata seen on the stack only so we can delete unneeded entries.
-  // Only walk all metadata, including the expensive code cache walk, for Full GC
-  // and only if class redefinition and if there's previous versions of
-  // Klasses to delete.
-  bool walk_all_metadata = clean_previous_versions &&
-                           JvmtiExport::has_redefined_a_class() &&
-                           InstanceKlass::has_previous_versions_and_reset();
-  MetadataOnStackMark md_on_stack(walk_all_metadata);
 
   // Save previous _unloading pointer for CMS which may add to unloading list before
   // purging and we don't want to rewalk the previously unloaded class loader data.
@@ -1358,11 +1394,6 @@ bool ClassLoaderDataGraph::do_unloading(bool clean_previous_versions) {
   data = _head;
   while (data != NULL) {
     if (data->is_alive()) {
-      // clean metaspace
-      if (walk_all_metadata) {
-        data->classes_do(InstanceKlass::purge_previous_versions);
-      }
-      data->free_deallocate_list();
       prev = data;
       data = data->next();
       loaders_processed++;
@@ -1387,33 +1418,38 @@ bool ClassLoaderDataGraph::do_unloading(bool clean_previous_versions) {
   }
 
   if (seen_dead_loader) {
-    data = _head;
-    while (data != NULL) {
-      // Remove entries in the dictionary of live class loader that have
-      // initiated loading classes in a dead class loader.
-      if (data->dictionary() != NULL) {
-        data->dictionary()->do_unloading();
-      }
-      // Walk a ModuleEntry's reads, and a PackageEntry's exports
-      // lists to determine if there are modules on those lists that are now
-      // dead and should be removed.  A module's life cycle is equivalent
-      // to its defining class loader's life cycle.  Since a module is
-      // considered dead if its class loader is dead, these walks must
-      // occur after each class loader's aliveness is determined.
-      if (data->packages() != NULL) {
-        data->packages()->purge_all_package_exports();
-      }
-      if (data->modules_defined()) {
-        data->modules()->purge_all_module_reads();
-      }
-      data = data->next();
-    }
     JFR_ONLY(post_class_unload_events();)
   }
 
   log_debug(class, loader, data)("do_unloading: loaders processed %u, loaders removed %u", loaders_processed, loaders_removed);
 
   return seen_dead_loader;
+}
+
+// There's at least one dead class loader.  Purge refererences of healthy module
+// reads lists and package export lists to modules belonging to dead loaders.
+void ClassLoaderDataGraph::clean_module_and_package_info() {
+  ClassLoaderData* data = _head;
+  while (data != NULL) {
+    // Remove entries in the dictionary of live class loader that have
+    // initiated loading classes in a dead class loader.
+    if (data->dictionary() != NULL) {
+      data->dictionary()->do_unloading();
+    }
+    // Walk a ModuleEntry's reads, and a PackageEntry's exports
+    // lists to determine if there are modules on those lists that are now
+    // dead and should be removed.  A module's life cycle is equivalent
+    // to its defining class loader's life cycle.  Since a module is
+    // considered dead if its class loader is dead, these walks must
+    // occur after each class loader's aliveness is determined.
+    if (data->packages() != NULL) {
+      data->packages()->purge_all_package_exports();
+    }
+    if (data->modules_defined()) {
+      data->modules()->purge_all_module_reads();
+    }
+    data = data->next();
+  }
 }
 
 void ClassLoaderDataGraph::purge() {

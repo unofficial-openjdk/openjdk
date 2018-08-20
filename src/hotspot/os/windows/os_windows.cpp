@@ -230,7 +230,7 @@ void os::init_system_properties_values() {
     FREE_C_HEAP_ARRAY(char, dll_path);
 
     if (!set_boot_path('\\', ';')) {
-      return;
+      vm_exit_during_initialization("Failed setting boot class path.", NULL);
     }
   }
 
@@ -1170,11 +1170,10 @@ DIR * os::opendir(const char *dirname) {
   return dirp;
 }
 
-// parameter dbuf unused on Windows
-struct dirent * os::readdir(DIR *dirp, dirent *dbuf) {
+struct dirent * os::readdir(DIR *dirp) {
   assert(dirp != NULL, "just checking");      // hotspot change
   if (dirp->handle == INVALID_HANDLE_VALUE) {
-    return 0;
+    return NULL;
   }
 
   strcpy(dirp->dirent.d_name, dirp->find_data.cFileName);
@@ -1182,7 +1181,7 @@ struct dirent * os::readdir(DIR *dirp, dirent *dbuf) {
   if (!FindNextFile(dirp->handle, &dirp->find_data)) {
     if (GetLastError() == ERROR_INVALID_HANDLE) {
       errno = EBADF;
-      return 0;
+      return NULL;
     }
     FindClose(dirp->handle);
     dirp->handle = INVALID_HANDLE_VALUE;
@@ -3609,11 +3608,6 @@ OSReturn os::get_native_priority(const Thread* const thread,
   *priority_ptr = os_prio;
   return OS_OK;
 }
-
-
-// Hint to the underlying OS that a task switch would not be good.
-// Void return because it's a hint and can fail.
-void os::hint_no_preempt() {}
 
 void os::interrupt(Thread* thread) {
   debug_only(Thread::check_for_dangling_thread_pointer(thread);)

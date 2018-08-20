@@ -39,6 +39,9 @@
  * @comment generate HumongousTemplateClass and compile it to test.classes
  * @run driver gc.g1.unloading.bytecode.GenClassesBuilder
  *
+ * @requires vm.gc.G1
+ * @requires vm.opt.ClassUnloading != false
+ * @requires vm.opt.ClassUnloadingWithConcurrentMark != false
  * @build sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
@@ -48,13 +51,6 @@
  *      -XX:+WhiteBoxAPI
  *      -XX:+UseG1GC
  *      -XX:+ExplicitGCInvokesConcurrent
- *      -Xbootclasspath/a:.
- *      -XX:+UnlockDiagnosticVMOptions
- *      -XX:+WhiteBoxAPI
- *      -XX:+UseG1GC
- *      -XX:+ExplicitGCInvokesConcurrent
- *      -Xlog:gc:gc.log
- *      -XX:-UseGCOverheadLimit
  *      -Xlog:gc:gc.log
  *      -XX:-UseGCOverheadLimit
  *      gc.g1.unloading.UnloadingTest

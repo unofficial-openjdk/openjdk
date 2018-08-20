@@ -136,7 +136,7 @@ bool VM_RedefineClasses::doit_prologue() {
     }
 
     oop mirror = JNIHandles::resolve_non_null(_class_defs[i].klass);
-    // classes for primitives and arrays and vm anonymous classes cannot be redefined
+    // classes for primitives and arrays and vm unsafe anonymous classes cannot be redefined
     // check here so following code can assume these classes are InstanceKlass
     if (!is_modifiable_class(mirror)) {
       _res = JVMTI_ERROR_UNMODIFIABLE_CLASS;
@@ -237,6 +237,9 @@ void VM_RedefineClasses::doit() {
 #ifdef PRODUCT
   }
 #endif
+
+  // Clean up any metadata now unreferenced while MetadataOnStackMark is set.
+  ClassLoaderDataGraph::clean_deallocate_lists(false);
 }
 
 void VM_RedefineClasses::doit_epilogue() {
@@ -275,8 +278,8 @@ bool VM_RedefineClasses::is_modifiable_class(oop klass_mirror) {
     return false;
   }
 
-  // Cannot redefine or retransform an anonymous class.
-  if (InstanceKlass::cast(k)->is_anonymous()) {
+  // Cannot redefine or retransform an unsafe anonymous class.
+  if (InstanceKlass::cast(k)->is_unsafe_anonymous()) {
     return false;
   }
   return true;
@@ -795,8 +798,8 @@ jvmtiError VM_RedefineClasses::compare_and_normalize_class_versions(
   // technically a bit more difficult, and, more importantly, I am not sure at present that the
   // order of interfaces does not matter on the implementation level, i.e. that the VM does not
   // rely on it somewhere.
-  Array<Klass*>* k_interfaces = the_class->local_interfaces();
-  Array<Klass*>* k_new_interfaces = scratch_class->local_interfaces();
+  Array<InstanceKlass*>* k_interfaces = the_class->local_interfaces();
+  Array<InstanceKlass*>* k_new_interfaces = scratch_class->local_interfaces();
   int n_intfs = k_interfaces->length();
   if (n_intfs != k_new_interfaces->length()) {
     return JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED;
@@ -2647,7 +2650,7 @@ bool VM_RedefineClasses::skip_type_annotation_target(
 
     case 0x10:
     // kind: type in extends clause of class or interface declaration
-    //       (including the direct superclass of an anonymous class declaration),
+    //       (including the direct superclass of an unsafe anonymous class declaration),
     //       or in implements clause of interface declaration
     // location: ClassFile
 
@@ -4098,17 +4101,14 @@ void VM_RedefineClasses::redefine_single_class(jclass the_jclass,
 
   // Initialize the vtable and interface table after
   // methods have been rewritten
-  {
-    ResourceMark rm(THREAD);
-    // no exception should happen here since we explicitly
-    // do not check loader constraints.
-    // compare_and_normalize_class_versions has already checked:
-    //  - classloaders unchanged, signatures unchanged
-    //  - all instanceKlasses for redefined classes reused & contents updated
-    the_class->vtable().initialize_vtable(false, THREAD);
-    the_class->itable().initialize_itable(false, THREAD);
-    assert(!HAS_PENDING_EXCEPTION || (THREAD->pending_exception()->is_a(SystemDictionary::ThreadDeath_klass())), "redefine exception");
-  }
+  // no exception should happen here since we explicitly
+  // do not check loader constraints.
+  // compare_and_normalize_class_versions has already checked:
+  //  - classloaders unchanged, signatures unchanged
+  //  - all instanceKlasses for redefined classes reused & contents updated
+  the_class->vtable().initialize_vtable(false, THREAD);
+  the_class->itable().initialize_itable(false, THREAD);
+  assert(!HAS_PENDING_EXCEPTION || (THREAD->pending_exception()->is_a(SystemDictionary::ThreadDeath_klass())), "redefine exception");
 
   // Leave arrays of jmethodIDs and itable index cache unchanged
 

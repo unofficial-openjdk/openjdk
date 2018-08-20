@@ -165,9 +165,6 @@ pathToNTPath(JNIEnv *env, jstring path, jboolean throwFNFE) {
                      pathbuf = (WCHAR*)malloc((pathlen + 6) * sizeof(WCHAR));
                      if (pathbuf != 0) {
                          wcscpy(pathbuf, ps);
-                     } else {
-                         JNU_ThrowOutOfMemoryError(env, "native memory allocation failed");
-                         return NULL;
                      }
                  }
             } else {
@@ -191,9 +188,6 @@ pathToNTPath(JNIEnv *env, jstring path, jboolean throwFNFE) {
                     pathbuf = (WCHAR*)malloc((pathlen + 6) * sizeof(WCHAR));
                     if (pathbuf != 0) {
                         wcscpy(pathbuf, ps);
-                    } else {
-                        JNU_ThrowOutOfMemoryError(env, "native memory allocation failed");
-                        return NULL;
                     }
                 }
             }
@@ -210,15 +204,11 @@ pathToNTPath(JNIEnv *env, jstring path, jboolean throwFNFE) {
             pathbuf = (WCHAR*)malloc(sizeof(WCHAR));
             if (pathbuf != NULL) {
                 pathbuf[0] = L'\0';
-            } else {
-                JNU_ThrowOutOfMemoryError(env, 0);
-                return NULL;
             }
         }
     }
     if (pathbuf == 0) {
-        JNU_ThrowOutOfMemoryError(env, 0);
-        return NULL;
+        JNU_ThrowOutOfMemoryError(env, "native memory allocation failed");
     }
     return pathbuf;
 }
@@ -458,19 +448,20 @@ handleSync(FD fd) {
     return 0;
 }
 
-
-int
+jint
 handleSetLength(FD fd, jlong length) {
     HANDLE h = (HANDLE)fd;
-    long high = (long)(length >> 32);
-    DWORD ret;
+    FILE_END_OF_FILE_INFO eofInfo;
 
-    if (h == (HANDLE)(-1)) return -1;
-    ret = SetFilePointer(h, (long)(length), &high, FILE_BEGIN);
-    if (ret == 0xFFFFFFFF && GetLastError() != NO_ERROR) {
+    eofInfo.EndOfFile.QuadPart = length;
+
+    if (h == INVALID_HANDLE_VALUE) {
         return -1;
     }
-    if (SetEndOfFile(h) == FALSE) return -1;
+    if (!SetFileInformationByHandle(h, FileEndOfFileInfo, &eofInfo,
+            sizeof(FILE_END_OF_FILE_INFO))) {
+        return -1;
+    }
     return 0;
 }
 

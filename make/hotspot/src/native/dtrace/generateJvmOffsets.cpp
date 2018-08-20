@@ -40,6 +40,7 @@
 
 #include <proc_service.h>
 #include "gc/shared/collectedHeap.hpp"
+#include "memory/heap.hpp"
 #include "runtime/vmStructs.hpp"
 
 typedef enum GEN_variant {
@@ -212,7 +213,7 @@ int generateJvmOffsets(GEN_variant gen_variant) {
   GEN_VALUE(AccessFlags_NATIVE, JVM_ACC_NATIVE);
   GEN_VALUE(ConstMethod_has_linenumber_table, ConstMethod::_has_linenumber_table);
   GEN_OFFS(AccessFlags, _flags);
-  GEN_OFFS(Symbol, _length);
+  GEN_OFFS(Symbol, _length_and_refcount);
   GEN_OFFS(Symbol, _body);
   printf("\n");
 

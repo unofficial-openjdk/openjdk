@@ -583,8 +583,7 @@ class os: AllStatic {
 
   // Reading directories.
   static DIR*           opendir(const char* dirname);
-  static int            readdir_buf_size(const char *path);
-  static struct dirent* readdir(DIR* dirp, dirent* dbuf);
+  static struct dirent* readdir(DIR* dirp);
   static int            closedir(DIR* dirp);
 
   // Dynamic library extension
@@ -898,7 +897,6 @@ class os: AllStatic {
   static int java_to_os_priority[CriticalPriority + 1];
   // Hint to the underlying OS that a task switch would not be good.
   // Void return because it's a hint and can fail.
-  static void hint_no_preempt();
   static const char* native_thread_creation_failed_msg() {
     return OS_NATIVE_THREAD_CREATION_FAILED_MSG;
   }

@@ -36,6 +36,8 @@
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox sun.hotspot.WhiteBox$WhiteBoxPermission
  * @build HelloString
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:. IncompatibleOptions
+ * @run main/othervm -XX:+UseStringDeduplication -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:. IncompatibleOptions
+ * @run main/othervm -XX:-CompactStrings -XX:+UnlockDiagnosticVMOptions -XX:+WhiteBoxAPI -Xbootclasspath/a:. IncompatibleOptions
  */
 
 import jdk.test.lib.Asserts;
@@ -117,6 +119,7 @@ public class IncompatibleOptions {
             "-XX:+UseCompressedOops",
             collectorOption,
             "-XX:SharedArchiveConfigFile=" + TestCommon.getSourceFile("SharedStringsBasic.txt"),
+            "-Xlog:cds,cds+hashtables",
             extraOption);
 
         if (expectedWarning != null)

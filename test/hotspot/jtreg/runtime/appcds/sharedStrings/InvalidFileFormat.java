@@ -32,10 +32,13 @@
  *          jdk.jartool/sun.tools.jar
  * @build HelloString
  * @run main InvalidFileFormat
+ * @run main/othervm -XX:+UseStringDeduplication InvalidFileFormat
+ * @run main/othervm -XX:-CompactStrings InvalidFileFormat
  */
 
-import jdk.test.lib.process.OutputAnalyzer;
 import java.io.File;
+import jdk.test.lib.cds.CDSTestUtils;
+import jdk.test.lib.process.OutputAnalyzer;
 
 // Checking most common error use cases
 // This file is not an exhastive test of various shared data file corruption
@@ -63,8 +66,8 @@ public class InvalidFileFormat {
         OutputAnalyzer out = SharedStringsUtils.dumpWithoutChecks(TestCommon.list("HelloString"),
                                  "invalidFormat" + File.separator + dataFileName);
 
-        if (!TestCommon.isUnableToMap(out))
-            out.shouldContain(expectedWarning).shouldHaveExitValue(1);
+        CDSTestUtils.checkMappingFailure(out);
+        out.shouldContain(expectedWarning).shouldHaveExitValue(1);
     }
 
 }

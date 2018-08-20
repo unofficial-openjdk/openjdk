@@ -29,7 +29,7 @@
 #include "runtime/vm_operations.hpp"
 #include "utilities/concurrentHashTable.inline.hpp"
 #include "utilities/concurrentHashTableTasks.inline.hpp"
-#include "utilitiesHelper.inline.hpp"
+#include "threadHelper.inline.hpp"
 #include "unittest.hpp"
 
 // NOTE: On win32 gtest asserts are not mt-safe.
@@ -85,7 +85,7 @@ struct ValVerify {
   uintptr_t _val;
   bool called_get;
   bool called_insert;
-  ValVerify(uintptr_t val) : called_get(false), called_insert(false), _val(val) {}
+  ValVerify(uintptr_t val) : _val(val), called_get(false), called_insert(false) {}
   void operator()(bool inserted, uintptr_t* val) {
     EXPECT_EQ(_val, *val) << "The value inserted is not correct.";
     if (inserted) {

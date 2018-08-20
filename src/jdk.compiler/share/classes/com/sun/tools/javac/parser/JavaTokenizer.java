@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -206,8 +206,6 @@ public class JavaTokenizer {
         do {
             if (reader.ch != '_') {
                 reader.putChar(false);
-            } else {
-                checkSourceLevel(pos, Feature.UNDERSCORES_IN_LITERALS);
             }
             saveCh = reader.ch;
             savePos = reader.bp;
@@ -518,7 +516,6 @@ public class JavaTokenizer {
                         skipIllegalUnderscores();
                         scanNumber(pos, 16);
                     } else if (reader.ch == 'b' || reader.ch == 'B') {
-                        checkSourceLevel(pos, Feature.BINARY_LITERALS);
                         reader.scanChar();
                         skipIllegalUnderscores();
                         scanNumber(pos, 2);
@@ -674,7 +671,7 @@ public class JavaTokenizer {
                             scanNumber(pos, 10);
                         } else if (reader.bp == reader.buflen || reader.ch == EOI && reader.bp + 1 == reader.buflen) { // JLS 3.5
                             tk = TokenKind.EOF;
-                            pos = reader.buflen;
+                            pos = reader.realLength;
                         } else {
                             String arg;
 

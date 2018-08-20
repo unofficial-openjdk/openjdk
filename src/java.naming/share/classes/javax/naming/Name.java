@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2004, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,7 +63,12 @@ public interface Name
     * The class fingerprint that is set to indicate
     * serialization compatibility with a previous
     * version of the class.
+    *
+    * @deprecated A {@code serialVersionUID} field in an interface is
+    * ineffectual. Do not use; no replacement.
     */
+    @Deprecated
+    @SuppressWarnings("serial")
     static final long serialVersionUID = -3617482732056931635L;
 
     /**

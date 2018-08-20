@@ -100,7 +100,6 @@ public class Resolve {
     ModuleFinder moduleFinder;
     Types types;
     JCDiagnostic.Factory diags;
-    public final boolean allowMethodHandles;
     public final boolean allowFunctionalInterfaceMostSpecific;
     public final boolean allowModules;
     public final boolean checkVarargsAccessAfterResolution;
@@ -135,7 +134,6 @@ public class Resolve {
                 options.isUnset(Option.XDIAGS) && options.isUnset("rawDiagnostics");
         verboseResolutionMode = VerboseResolutionMode.getVerboseResolutionMode(options);
         Target target = Target.instance(context);
-        allowMethodHandles = target.hasMethodHandles();
         allowFunctionalInterfaceMostSpecific = Feature.FUNCTIONAL_INTERFACE_MOST_SPECIFIC.allowedInSource(source);
         allowLocalVariableTypeInference = Feature.LOCAL_VARIABLE_TYPE_INFERENCE.allowedInSource(source);
         checkVarargsAccessAfterResolution =
@@ -2560,8 +2558,8 @@ public class Resolve {
         }
 
         @Override
-        protected Type typeOf(DeferredType dt) {
-            Type res = super.typeOf(dt);
+        protected Type typeOf(DeferredType dt, Type pt) {
+            Type res = super.typeOf(dt, pt);
             if (!res.isErroneous()) {
                 switch (TreeInfo.skipParens(dt.tree).getTag()) {
                     case LAMBDA:
@@ -2659,7 +2657,7 @@ public class Resolve {
             Symbol access(Env<AttrContext> env, DiagnosticPosition pos, Symbol location, Symbol sym) {
                 if (sym.kind.isResolutionError()) {
                     sym = super.access(env, pos, location, sym);
-                } else if (allowMethodHandles) {
+                } else {
                     MethodSymbol msym = (MethodSymbol)sym;
                     if ((msym.flags() & SIGNATURE_POLYMORPHIC) != 0) {
                         env.info.pendingResolutionPhase = BASIC;
@@ -3992,7 +3990,12 @@ public class Resolve {
 
         @Override
         public Symbol access(Name name, TypeSymbol location) {
-            return types.createErrorType(name, location, syms.errSymbol.type).tsym;
+            Symbol sym = bestCandidate();
+            return types.createErrorType(name, location, sym != null ? sym.type : syms.errSymbol.type).tsym;
+        }
+
+        protected Symbol bestCandidate() {
+            return errCandidate().fst;
         }
 
         protected Pair<Symbol, JCDiagnostic> errCandidate() {
@@ -4123,6 +4126,16 @@ public class Resolve {
                 //conform to source order
                 return details;
             }
+
+        @Override
+        protected Symbol bestCandidate() {
+            Map<Symbol, JCDiagnostic> candidatesMap = mapCandidates();
+            Map<Symbol, JCDiagnostic> filteredCandidates = filterCandidates(candidatesMap);
+            if (filteredCandidates.size() == 1) {
+                return filteredCandidates.keySet().iterator().next();
+            }
+            return null;
+        }
     }
 
     /**

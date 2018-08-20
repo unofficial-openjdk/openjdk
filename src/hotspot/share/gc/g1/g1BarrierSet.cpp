@@ -27,9 +27,10 @@
 #include "gc/g1/g1BarrierSetAssembler.hpp"
 #include "gc/g1/g1CardTable.inline.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
+#include "gc/g1/g1SATBMarkQueueSet.hpp"
 #include "gc/g1/g1ThreadLocalData.hpp"
 #include "gc/g1/heapRegion.hpp"
-#include "gc/g1/satbMarkQueue.hpp"
+#include "gc/shared/satbMarkQueue.hpp"
 #include "logging/log.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/compressedOops.inline.hpp"
@@ -48,27 +49,30 @@
 class G1BarrierSetC1;
 class G1BarrierSetC2;
 
-SATBMarkQueueSet G1BarrierSet::_satb_mark_queue_set;
-DirtyCardQueueSet G1BarrierSet::_dirty_card_queue_set;
-
 G1BarrierSet::G1BarrierSet(G1CardTable* card_table) :
   CardTableBarrierSet(make_barrier_set_assembler<G1BarrierSetAssembler>(),
                       make_barrier_set_c1<G1BarrierSetC1>(),
                       make_barrier_set_c2<G1BarrierSetC2>(),
                       card_table,
-                      BarrierSet::FakeRtti(BarrierSet::G1BarrierSet)) {}
+                      BarrierSet::FakeRtti(BarrierSet::G1BarrierSet)),
+  _satb_mark_queue_set(),
+  _dirty_card_queue_set()
+{}
 
 void G1BarrierSet::enqueue(oop pre_val) {
   // Nulls should have been already filtered.
   assert(oopDesc::is_oop(pre_val, true), "Error");
 
-  if (!_satb_mark_queue_set.is_active()) return;
+  G1SATBMarkQueueSet& queue_set = satb_mark_queue_set();
+  if (!queue_set.is_active()) {
+    return;
+  }
   Thread* thr = Thread::current();
   if (thr->is_Java_thread()) {
     G1ThreadLocalData::satb_mark_queue(thr).enqueue(pre_val);
   } else {
     MutexLockerEx x(Shared_SATB_Q_lock, Mutex::_no_safepoint_check_flag);
-    _satb_mark_queue_set.shared_satb_queue()->enqueue(pre_val);
+    queue_set.shared_satb_queue()->enqueue(pre_val);
   }
 }
 

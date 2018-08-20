@@ -540,6 +540,8 @@ template <typename LOOKUP_FUNC>
 inline void ConcurrentHashTable<VALUE, CONFIG, F>::
   delete_in_bucket(Thread* thread, Bucket* bucket, LOOKUP_FUNC& lookup_f)
 {
+  assert(bucket->is_locked(), "Must be locked.");
+
   size_t dels = 0;
   Node* ndel[BULK_DELETE_LIMIT];
   Node* const volatile * rem_n_prev = bucket->first_ptr();
@@ -874,7 +876,7 @@ template <typename VALUE, typename CONFIG, MEMFLAGS F>
 template <typename LOOKUP_FUNC, typename VALUE_FUNC, typename CALLBACK_FUNC>
 inline bool ConcurrentHashTable<VALUE, CONFIG, F>::
   internal_insert(Thread* thread, LOOKUP_FUNC& lookup_f, VALUE_FUNC& value_f,
-                  CALLBACK_FUNC& callback, bool* grow_hint)
+                  CALLBACK_FUNC& callback, bool* grow_hint, bool* clean_hint)
 {
   bool ret = false;
   bool clean = false;
@@ -925,13 +927,18 @@ inline bool ConcurrentHashTable<VALUE, CONFIG, F>::
   } else if (i == 0 && clean) {
     // We only do cleaning on fast inserts.
     Bucket* bucket = get_bucket_locked(thread, lookup_f.get_hash());
-    assert(bucket->is_locked(), "Must be locked.");
     delete_in_bucket(thread, bucket, lookup_f);
     bucket->unlock();
+
+    clean = false;
   }
 
   if (grow_hint != NULL) {
     *grow_hint = loops > _grow_hint;
+  }
+
+  if (clean_hint != NULL) {
+    *clean_hint = clean;
   }
 
   return ret;
@@ -999,8 +1006,8 @@ inline size_t ConcurrentHashTable<VALUE, CONFIG, F>::
 template <typename VALUE, typename CONFIG, MEMFLAGS F>
 inline ConcurrentHashTable<VALUE, CONFIG, F>::
   ConcurrentHashTable(size_t log2size, size_t log2size_limit, size_t grow_hint)
-    : _new_table(NULL), _log2_start_size(log2size),
-       _log2_size_limit(log2size_limit), _grow_hint(grow_hint),
+    : _new_table(NULL), _log2_size_limit(log2size_limit),
+       _log2_start_size(log2size), _grow_hint(grow_hint),
        _size_limit_reached(false), _resize_lock_owner(NULL),
        _invisible_epoch(0)
 {
