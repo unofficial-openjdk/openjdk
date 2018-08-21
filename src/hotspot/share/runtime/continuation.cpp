@@ -2446,6 +2446,10 @@ frame Continuation::fix_continuation_bottom_sender(const frame& callee, frame f,
   return f;
 }
 
+bool Continuation::is_frame_in_continuation(JavaThread* thread, const frame& f) {
+  return find_continuation_for_frame(thread, f.sp()) != NULL;
+}
+
 ///// DEBUGGING
 
 static void print_oop(void *p, oop obj, outputStream* st) {

@@ -34,6 +34,7 @@
 #include "oops/instanceKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/basicLock.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/monitorChunk.hpp"
@@ -103,6 +104,7 @@ void compiledVFrame::update_monitor(int index, MonitorInfo* val) {
 
 void compiledVFrame::update_deferred_value(BasicType type, int index, jvalue value) {
   assert(fr().is_deoptimized_frame(), "frame must be scheduled for deoptimization");
+  assert(Continuation::is_frame_in_continuation(thread(), fr()), "No support for deferred values in continuations");
   GrowableArray<jvmtiDeferredLocalVariableSet*>* deferred = thread()->deferred_locals();
   jvmtiDeferredLocalVariableSet* locals = NULL;
   if (deferred != NULL ) {
