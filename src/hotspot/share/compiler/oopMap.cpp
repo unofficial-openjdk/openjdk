@@ -770,12 +770,12 @@ int ImmutableOopMap::nr_of_bytes() const {
 #endif
 
 ImmutableOopMapBuilder::ImmutableOopMapBuilder(const OopMapSet* set, const CodeBlob* cb)
-  : _set(set), _cb(cb), _new_set(NULL), _empty(NULL), _last(NULL), _empty_offset(-1), _last_offset(-1), _offset(0), _required(-1), _new_set(NULL) {
+  : _set(set), _cb(cb), _empty(NULL), _last(NULL), _empty_offset(-1), _last_offset(-1), _offset(0), _required(-1), _new_set(NULL) {
   _mapping = NEW_RESOURCE_ARRAY(Mapping, _set->size());
 }
 
 ImmutableOopMapBuilder::ImmutableOopMapBuilder(const OopMapSet* set)
-  : _set(set), _cb(NULL), _new_set(NULL), _empty(NULL), _last(NULL), _empty_offset(-1), _last_offset(-1), _offset(0), _required(-1), _new_set(NULL) {
+  : _set(set), _cb(NULL), _empty(NULL), _last(NULL), _empty_offset(-1), _last_offset(-1), _offset(0), _required(-1), _new_set(NULL) {
   _mapping = NEW_RESOURCE_ARRAY(Mapping, _set->size());
 }
 

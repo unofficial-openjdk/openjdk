@@ -996,33 +996,35 @@ class java_lang_ref_SoftReference: public java_lang_ref_Reference {
 class java_lang_Continuation: AllStatic {
   friend class JavaClasses;
  private:
+  //  enum {
+  //   hc_fp_offset      = 0,
+  //   hc_sp_offset      = 11,
+  //   hc_entrySP_offset = 1,
+  //   hc_entryFP_offset = 3,
+  //   hc_target_offset  = 13,
+  //   hc_parent_offset  = 14,
+  //   hc_stack_offset   = 15,
+  // };
+  static int _scope_offset;
+  static int _target_offset;
+  static int _parent_offset;
+  static int _entrySP_offset;
+  static int _entryFP_offset;
+  static int _entryPC_offset;
+  static int _stack_offset;
+  static int _maxSize_offset;
+  static int _numFrames_offset;
+  static int _numInterpretedFrames_offset;
+  static int _refStack_offset;
+  static int _fp_offset;
+  static int _sp_offset;
+  static int _pc_offset;
+  static int _refSP_offset;
+  static int _flags_offset;
+
   static void compute_offsets();
  public:
-  enum {
-    hc_fp_offset      = 0,
-    hc_sp_offset      = 11,
-    hc_entrySP_offset = 1,
-    hc_entryFP_offset = 3,
-    hc_target_offset  = 13,
-    hc_parent_offset  = 14,
-    hc_stack_offset   = 15,
-  };
-  static int scope_offset;
-  static int target_offset;
-  static int parent_offset;
-  static int entrySP_offset;
-  static int entryFP_offset;
-  static int entryPC_offset;
-  static int stack_offset;
-  static int maxSize_offset;
-  static int numFrames_offset;
-  static int numInterpretedFrames_offset;
-  static int refStack_offset;
-  static int fp_offset;
-  static int sp_offset;
-  static int pc_offset;
-  static int refSP_offset;
-  static int flags_offset;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
   // Accessors
   static inline oop scope(oop ref);
   static inline oop target(oop ref);
