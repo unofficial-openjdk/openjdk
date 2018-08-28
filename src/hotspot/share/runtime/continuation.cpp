@@ -171,12 +171,12 @@ class ContMirror;
 // Represents a stack frame on the horizontal stack, analogous to the frame class, for vertical-stack frames.
 class hframe {
 private:
-  bool _write;
   int _sp;
   long _fp;
   address _pc;
-  bool _is_interpreted;
   CodeBlob* _cb;
+  bool _is_interpreted;
+  bool _write;
   int _length;
 
   friend class ContMirror;
@@ -188,23 +188,23 @@ private:
   inline address* return_pc_address(ContMirror& cont);
 
 public:
-  hframe() : _write(false), _length(0), _sp(-1), _fp(0), _pc(NULL), _is_interpreted(true), _cb(NULL) {}
-  hframe(const hframe& hf) : _write(hf._write), _length(hf._length),
-                             _sp(hf._sp), _fp(hf._fp), _pc(hf._pc), _is_interpreted(hf._is_interpreted), _cb(hf._cb) {}
+  hframe() : _sp(-1), _fp(0), _pc(NULL), _cb(NULL), _is_interpreted(true), _write(false), _length(0) {}
+  hframe(const hframe& hf) : _sp(hf._sp), _fp(hf._fp), _pc(hf._pc), _cb(hf._cb), _is_interpreted(hf._is_interpreted),
+                             _write(hf._write), _length(hf._length) {}
 
   hframe(int sp, long fp, address pc, bool write, int length)
-    : _write(write), _length(length), _sp(sp), _fp(fp), _pc(pc), _is_interpreted(Interpreter::contains(pc)) {
+    : _sp(sp), _fp(fp), _pc(pc), _is_interpreted(Interpreter::contains(pc)), _write(write), _length(length) {
       _cb = NULL;
       assert (write  || length > 0, "");
       assert (!write || length == 0, "");
     }
   hframe(int sp, long fp, address pc, CodeBlob* cb, bool is_interpreted, bool write, int length)
-    : _write(write), _length(length), _sp(sp), _fp(fp), _pc(pc), _cb(cb), _is_interpreted(is_interpreted) {
+    : _sp(sp), _fp(fp), _pc(pc), _cb(cb), _is_interpreted(is_interpreted), _write(write), _length(length) {
       assert (write  || length > 0, "");
       assert (!write || length == 0, "");
     }
   hframe(int sp, long fp, address pc, bool is_interpreted, bool write, int length)
-    : _write(write), _length(length), _sp(sp), _fp(fp), _pc(pc), _is_interpreted(is_interpreted) {
+    : _sp(sp), _fp(fp), _pc(pc), _is_interpreted(is_interpreted), _write(write), _length(length) {
       _cb = NULL;
       assert (write  || length > 0, "");
       assert (!write || length == 0, "");
@@ -1268,8 +1268,8 @@ static inline void derelativize(intptr_t* const fp, int offset) {
 class ContOopClosure : public OopClosure, public DerivedOopClosure {
 protected:
   ContMirror* const _cont;
-  void* const _vsp;
   frame* _fr;
+  void* const _vsp;
   int _count;
 #ifdef ASSERT
   RegisterMap* _map;

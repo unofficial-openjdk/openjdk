@@ -4229,22 +4229,22 @@ int java_lang_ref_Reference::next_offset;
 int java_lang_ref_Reference::discovered_offset;
 int java_lang_ref_SoftReference::timestamp_offset;
 int java_lang_ref_SoftReference::static_clock_offset;
-int java_lang_Continuation::scope_offset;
-int java_lang_Continuation::target_offset;
-int java_lang_Continuation::stack_offset;
-int java_lang_Continuation::maxSize_offset;
-int java_lang_Continuation::numFrames_offset;
-int java_lang_Continuation::numInterpretedFrames_offset;
-int java_lang_Continuation::refStack_offset;
-int java_lang_Continuation::parent_offset;
-int java_lang_Continuation::entrySP_offset;
-int java_lang_Continuation::entryFP_offset;
-int java_lang_Continuation::entryPC_offset;
-int java_lang_Continuation::fp_offset;
-int java_lang_Continuation::sp_offset;
-int java_lang_Continuation::pc_offset;
-int java_lang_Continuation::refSP_offset;
-int java_lang_Continuation::flags_offset;
+int java_lang_Continuation::_scope_offset;
+int java_lang_Continuation::_target_offset;
+int java_lang_Continuation::_stack_offset;
+int java_lang_Continuation::_maxSize_offset;
+int java_lang_Continuation::_numFrames_offset;
+int java_lang_Continuation::_numInterpretedFrames_offset;
+int java_lang_Continuation::_refStack_offset;
+int java_lang_Continuation::_parent_offset;
+int java_lang_Continuation::_entrySP_offset;
+int java_lang_Continuation::_entryFP_offset;
+int java_lang_Continuation::_entryPC_offset;
+int java_lang_Continuation::_fp_offset;
+int java_lang_Continuation::_sp_offset;
+int java_lang_Continuation::_pc_offset;
+int java_lang_Continuation::_refSP_offset;
+int java_lang_Continuation::_flags_offset;
 int java_lang_ClassLoader::parent_offset;
 int java_lang_System::static_in_offset;
 int java_lang_System::static_out_offset;
@@ -4395,25 +4395,34 @@ void java_lang_AssertionStatusDirectives::set_deflt(oop o, bool val) {
 
 // Support for java.lang.Continuation
 
+#define CONTINUATION_FIELDS_DO(macro) \
+  macro(_scope_offset,     k, vmSymbols::scope_name(),     continuationscope_signature, false); \
+  macro(_target_offset,    k, vmSymbols::target_name(),    runnable_signature,          false); \
+  macro(_parent_offset,    k, vmSymbols::parent_name(),    continuation_signature,      false); \
+  macro(_stack_offset,     k, vmSymbols::stack_name(),     int_array_signature,         false); \
+  macro(_maxSize_offset,   k, vmSymbols::maxSize_name(),   int_signature,               false); \
+  macro(_refStack_offset,  k, vmSymbols::refStack_name(),  object_array_signature,      false); \
+  macro(_entrySP_offset,   k, vmSymbols::entrySP_name(),   long_signature,              false); \
+  macro(_entryFP_offset,   k, vmSymbols::entryFP_name(),   long_signature,              false); \
+  macro(_entryPC_offset,   k, vmSymbols::entryPC_name(),   long_signature,              false); \
+  macro(_fp_offset,        k, vmSymbols::fp_name(),        long_signature,              false); \
+  macro(_sp_offset,        k, vmSymbols::sp_name(),        int_signature,               false); \
+  macro(_pc_offset,        k, vmSymbols::pc_name(),        long_signature,              false); \
+  macro(_refSP_offset,     k, vmSymbols::refSP_name(),     int_signature,               false); \
+  macro(_flags_offset,     k, vmSymbols::flags_name(),     byte_signature,              false); \
+  macro(_numFrames_offset, k, vmSymbols::numFrames_name(), short_signature,             false); \
+  macro(_numInterpretedFrames_offset, k, vmSymbols::numInterpretedFrames_name(), short_signature, false);
+
 void java_lang_Continuation::compute_offsets() {
   InstanceKlass* k = SystemDictionary::Continuation_klass();
-  compute_offset(scope_offset,     k, vmSymbols::scope_name(),     vmSymbols::continuationscope_signature());
-  compute_offset(target_offset,    k, vmSymbols::target_name(),    vmSymbols::runnable_signature());
-  compute_offset(parent_offset,    k, vmSymbols::parent_name(),    vmSymbols::continuation_signature());
-  compute_offset(stack_offset,     k, vmSymbols::stack_name(),     vmSymbols::int_array_signature());
-  compute_offset(maxSize_offset,   k, vmSymbols::maxSize_name(),   vmSymbols::int_signature());
-  compute_offset(refStack_offset,  k, vmSymbols::refStack_name(),  vmSymbols::object_array_signature());
-  compute_offset(entrySP_offset,   k, vmSymbols::entrySP_name(),   vmSymbols::long_signature());
-  compute_offset(entryFP_offset,   k, vmSymbols::entryFP_name(),   vmSymbols::long_signature());
-  compute_offset(entryPC_offset,   k, vmSymbols::entryPC_name(),   vmSymbols::long_signature());
-  compute_offset(fp_offset,        k, vmSymbols::fp_name(),        vmSymbols::long_signature());
-  compute_offset(sp_offset,        k, vmSymbols::sp_name(),        vmSymbols::int_signature());
-  compute_offset(pc_offset,        k, vmSymbols::pc_name(),        vmSymbols::long_signature());
-  compute_offset(refSP_offset,     k, vmSymbols::refSP_name(),     vmSymbols::int_signature());
-  compute_offset(flags_offset,     k, vmSymbols::flags_name(),     vmSymbols::byte_signature());
-  compute_offset(numFrames_offset, k, vmSymbols::numFrames_name(), vmSymbols::short_signature());
-  compute_offset(numInterpretedFrames_offset, k, vmSymbols::numInterpretedFrames_name(), vmSymbols::short_signature());
+  CONTINUATION_FIELDS_DO(FIELD_COMPUTE_OFFSET);
 }
+
+#if INCLUDE_CDS
+void java_lang_Continuation::serialize_offsets(SerializeClosure* f) {
+  CONTINUATION_FIELDS_DO(FIELD_SERIALIZE_OFFSET);
+}
+#endif
 
 bool java_lang_Continuation::on_local_stack(oop ref, address adr) {
   arrayOop s = stack(ref);

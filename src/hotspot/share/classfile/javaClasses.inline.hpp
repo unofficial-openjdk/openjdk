@@ -133,87 +133,87 @@ bool java_lang_ref_Reference::is_phantom(oop ref) {
 }
 
 inline oop java_lang_Continuation::scope(oop ref) {
-  return ref->obj_field(scope_offset);
+  return ref->obj_field(_scope_offset);
 }
 inline oop java_lang_Continuation::target(oop ref) {
-  return ref->obj_field(target_offset);
+  return ref->obj_field(_target_offset);
 }
 inline oop java_lang_Continuation::parent(oop ref) {
-  return ref->obj_field(parent_offset);
+  return ref->obj_field(_parent_offset);
 }
 inline typeArrayOop java_lang_Continuation::stack(oop ref) {
-  oop a = ref->obj_field(stack_offset);
+  oop a = ref->obj_field(_stack_offset);
   return (typeArrayOop)a;
 }
 inline objArrayOop java_lang_Continuation::refStack(oop ref) {
-  oop a = ref->obj_field(refStack_offset);
+  oop a = ref->obj_field(_refStack_offset);
   return (objArrayOop)a;
 }
 inline jlong java_lang_Continuation::fp(oop ref) {
-  return ref->long_field(fp_offset);
+  return ref->long_field(_fp_offset);
 }
 inline void java_lang_Continuation::set_fp(oop ref, const jlong i) {
-  ref->long_field_put(fp_offset, i);
+  ref->long_field_put(_fp_offset, i);
 }
 inline jint java_lang_Continuation::sp(oop ref) {
-  return ref->int_field(sp_offset);
+  return ref->int_field(_sp_offset);
 }
 inline void java_lang_Continuation::set_sp(oop ref, const jint i) {
-  ref->int_field_put(sp_offset, i);
+  ref->int_field_put(_sp_offset, i);
 }
 inline void* java_lang_Continuation::pc(oop ref) {
-  return (void*)ref->long_field(pc_offset);
+  return (void*)ref->long_field(_pc_offset);
 }
 inline void java_lang_Continuation::set_pc(oop ref, const void* pc) {
-  ref->long_field_put(pc_offset, (long)pc);
+  ref->long_field_put(_pc_offset, (long)pc);
 }
 inline jint java_lang_Continuation::refSP(oop ref) {
-  return ref->int_field(refSP_offset);
+  return ref->int_field(_refSP_offset);
 }
 inline void java_lang_Continuation::set_refSP(oop ref, jint i) {
-  ref->int_field_put(refSP_offset, i);
+  ref->int_field_put(_refSP_offset, i);
 }
 inline intptr_t* java_lang_Continuation::entrySP(oop ref) {
-  return (intptr_t*)ref->long_field(entrySP_offset);
+  return (intptr_t*)ref->long_field(_entrySP_offset);
 }
 inline void java_lang_Continuation::set_entrySP(oop ref, intptr_t* sp) {
-  ref->long_field_put(entrySP_offset, (long)sp);
+  ref->long_field_put(_entrySP_offset, (long)sp);
 }
 inline intptr_t* java_lang_Continuation::entryFP(oop ref) {
-  return (intptr_t*)ref->long_field(entryFP_offset);
+  return (intptr_t*)ref->long_field(_entryFP_offset);
 }
 inline void java_lang_Continuation::set_entryFP(oop ref, intptr_t* fp) {
-  ref->long_field_put(entryFP_offset, (long)fp);
+  ref->long_field_put(_entryFP_offset, (long)fp);
 }
 inline address java_lang_Continuation::entryPC(oop ref) {
-  return (address)ref->long_field(entryPC_offset);
+  return (address)ref->long_field(_entryPC_offset);
 }
 inline void java_lang_Continuation::set_entryPC(oop ref, address pc) {
-  ref->long_field_put(entryPC_offset, (long)pc);
+  ref->long_field_put(_entryPC_offset, (long)pc);
 }
 inline jint java_lang_Continuation::maxSize(oop ref) {
-  return ref->int_field(maxSize_offset);
+  return ref->int_field(_maxSize_offset);
 }
 inline void java_lang_Continuation::set_maxSize(oop ref, jint i) {
-  ref->int_field_put(maxSize_offset, i);
+  ref->int_field_put(_maxSize_offset, i);
 }
 inline unsigned char java_lang_Continuation::flags(oop ref) {
-  return (unsigned char)ref->byte_field(flags_offset);
+  return (unsigned char)ref->byte_field(_flags_offset);
 }
 inline void java_lang_Continuation::set_flags(oop ref, unsigned char flags) {
-  ref->byte_field_put(flags_offset, (jbyte)flags);
+  ref->byte_field_put(_flags_offset, (jbyte)flags);
 }
 inline jshort java_lang_Continuation::numFrames(oop ref) {
-  return ref->short_field(numFrames_offset);
+  return ref->short_field(_numFrames_offset);
 }
 inline void java_lang_Continuation::set_numFrames(oop ref, jshort i) {
-  ref->short_field_put(numFrames_offset, i);
+  ref->short_field_put(_numFrames_offset, i);
 }
 inline jshort java_lang_Continuation::numInterpretedFrames(oop ref) {
-  return ref->short_field(numInterpretedFrames_offset);
+  return ref->short_field(_numInterpretedFrames_offset);
 }
 inline void java_lang_Continuation::set_numInterpretedFrames(oop ref, jshort i) {
-  ref->short_field_put(numInterpretedFrames_offset, i);
+  ref->short_field_put(_numInterpretedFrames_offset, i);
 }
 inline int java_lang_Continuation::stack_size(oop ref) {
   return stack(ref)->length() * 4;
