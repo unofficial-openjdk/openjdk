@@ -45,16 +45,18 @@
 
 // OopMapStream
 
-OopMapStream::OopMapStream(OopMap* oop_map, int oop_types_mask) {
-  _stream = new CompressedReadStream(oop_map->write_stream()->buffer());
+OopMapStream::OopMapStream(OopMap* oop_map, int oop_types_mask)
+  : _stream(oop_map->write_stream()->buffer()) {
+  // _stream = new CompressedReadStream();
   _mask = oop_types_mask;
   _size = oop_map->omv_count();
   _position = 0;
   _valid_omv = false;
 }
 
-OopMapStream::OopMapStream(const ImmutableOopMap* oop_map, int oop_types_mask) {
-  _stream = new CompressedReadStream(oop_map->data_addr());
+OopMapStream::OopMapStream(const ImmutableOopMap* oop_map, int oop_types_mask)
+  : _stream(oop_map->data_addr()) {
+  // _stream = new CompressedReadStream(oop_map->data_addr());
   _mask = oop_types_mask;
   _size = oop_map->count();
   _position = 0;
@@ -63,7 +65,7 @@ OopMapStream::OopMapStream(const ImmutableOopMap* oop_map, int oop_types_mask) {
 
 void OopMapStream::find_next() {
   while(_position++ < _size) {
-    _omv.read_from(_stream);
+    _omv.read_from(&_stream);
     if(((int)_omv.type() & _mask) > 0) {
       _valid_omv = true;
       return;
@@ -81,6 +83,8 @@ OopMap::OopMap(int frame_size, int arg_count) {
   // OopMaps are usually quite so small, so pick a small initial size
   set_write_stream(new CompressedWriteStream(32));
   set_omv_count(0);
+  _num_oops = 0;
+  _index = -1;
 
 #ifdef ASSERT
   _locs_length = VMRegImpl::stack2reg(0)->value() + frame_size + arg_count;
@@ -96,6 +100,8 @@ OopMap::OopMap(OopMap::DeepCopyToken, OopMap* source) {
   set_write_stream(new CompressedWriteStream(source->omv_count() * 2));
   set_omv_count(0);
   set_offset(source->offset());
+  _num_oops = source->num_oops();
+  _index = -1;
 
 #ifdef ASSERT
   _locs_length = source->_locs_length;
@@ -149,6 +155,8 @@ void OopMap::set_xxx(VMReg reg, OopMapValue::oop_types x, VMReg optional) {
 
   o.write_on(write_stream());
   increment_count();
+  if (x == OopMapValue::oop_value || x == OopMapValue::narrowoop_value)
+    increment_num_oops();
 }
 
 
@@ -199,7 +207,7 @@ void OopMapSet::grow_om_data() {
   set_om_data(new_data);
 }
 
-void OopMapSet::add_gc_map(int pc_offset, OopMap *map ) {
+int OopMapSet::add_gc_map(int pc_offset, OopMap *map ) {
   assert(om_size() != -1,"Cannot grow a fixed OopMapSet");
 
   if(om_count() >= om_size()) {
@@ -220,8 +228,11 @@ void OopMapSet::add_gc_map(int pc_offset, OopMap *map ) {
   }
 #endif // ASSERT
 
-  set(om_count(),map);
+  int index = om_count();
+  set(index,map);
+  map->_index = index;
   increment_count();
+  return index;
 }
 
 
@@ -265,14 +276,16 @@ OopMap* OopMapSet::find_map_at_offset(int pc_offset) const {
   return m;
 }
 
-static void add_derived_oop(oop* base, oop* derived) {
+class AddDerivedOop : public DerivedOopClosure {
+  virtual void do_derived_oop(oop* base, oop* derived) {
 #if !defined(TIERED) && !INCLUDE_JVMCI
   COMPILER1_PRESENT(ShouldNotReachHere();)
 #endif // !defined(TIERED) && !INCLUDE_JVMCI
 #if COMPILER2_OR_JVMCI
   DerivedPointerTable::add(derived, base);
 #endif // COMPILER2_OR_JVMCI
-}
+  }
+} add_derived_oop;
 
 
 #ifndef PRODUCT
@@ -303,75 +316,175 @@ static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map) {
 }
 #endif // PRODUCT
 
-void OopMapSet::oops_do(const frame *fr, const RegisterMap* reg_map, OopClosure* f) {
-  // add derived oops to a table
-  all_do(fr, reg_map, f, add_derived_oop, &do_nothing_cl);
+void OopMapSet::oops_do(const frame *fr, const RegisterMap* reg_map, OopClosure* f, DerivedOopClosure* df) {
+  // add_derived_oop: add derived oops to a table
+  find_map(fr)->oops_do(fr, reg_map, f, df);
+  // all_do(fr, reg_map, f, df != NULL ? df : &add_derived_oop, &do_nothing_cl);
 }
 
+// void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
+//                        OopClosure* oop_fn, DerivedOopClosure* derived_oop_fn,
+//                        OopClosure* value_fn) {
+//   find_map(fr)->oops_do(fr, reg_map, oop_fn, derived_oop_fn, value_fn);
+// }
 
-void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
-                       OopClosure* oop_fn, void derived_oop_fn(oop*, oop*),
-                       OopClosure* value_fn) {
-  CodeBlob* cb = fr->cb();
-  assert(cb != NULL, "no codeblob");
-
-  NOT_PRODUCT(if (TraceCodeBlobStacks) trace_codeblob_maps(fr, reg_map);)
-
-  const ImmutableOopMapSet* maps = cb->oop_maps();
-  const ImmutableOopMap* map = cb->oop_map_for_return_address(fr->pc());
-  assert(map != NULL, "no ptr map found");
-
-  // handle derived pointers first (otherwise base pointer may be
-  // changed before derived pointer offset has been collected)
+template <typename T>
+static void walk_derived_pointers1(T& oms, const frame *fr, const RegisterMap *reg_map, DerivedOopClosure* derived_oop_fn) {
+  assert (fr != NULL, "");
+  assert (derived_oop_fn != NULL, "");
   OopMapValue omv;
-  {
-    OopMapStream oms(map,OopMapValue::derived_oop_value);
-    if (!oms.is_done()) {
+  do {
+    omv = oms.current();
+    oop* loc = fr->oopmapreg_to_location(omv.reg(),reg_map);
+    guarantee(loc != NULL, "missing saved register");
+    oop *derived_loc = loc;
+    oop *base_loc    = fr->oopmapreg_to_location(omv.content_reg(), reg_map);
+    // Ignore NULL oops and decoded NULL narrow oops which
+    // equal to Universe::narrow_oop_base when a narrow oop
+    // implicit null check is used in compiled code.
+    // The narrow_oop_base could be NULL or be the address
+    // of the page below heap depending on compressed oops mode.
+    if (base_loc != NULL && *base_loc != (oop)NULL && !Universe::is_narrow_oop_base(*base_loc)) {
+      derived_oop_fn->do_derived_oop(base_loc, derived_loc);
+    }
+    oms.next();
+  } while (!oms.is_done());
+}
+
+template <typename T>
+static void walk_derived_pointers(const frame *fr, const ImmutableOopMap* map, const RegisterMap *reg_map,
+                                  DerivedOopClosure* derived_oop_fn) {
+  T oms(map,OopMapValue::derived_oop_value);
+  if (!oms.is_done()) {
 #ifndef TIERED
-      COMPILER1_PRESENT(ShouldNotReachHere();)
+    COMPILER1_PRESENT(ShouldNotReachHere();)
 #if INCLUDE_JVMCI
-      if (UseJVMCICompiler) {
-        ShouldNotReachHere();
-      }
+    if (UseJVMCICompiler) {
+      ShouldNotReachHere();
+    }
 #endif
 #endif // !TIERED
+
+    if (derived_oop_fn == &add_derived_oop) { // TODO: UGLY (basically used to decide if we're freezing/thawing continuation)
+      assert (reg_map->validate_oops(), "");
       // Protect the operation on the derived pointers.  This
       // protects the addition of derived pointers to the shared
       // derived pointer table in DerivedPointerTable::add().
       MutexLockerEx x(DerivedPointerTableGC_lock, Mutex::_no_safepoint_check_flag);
-      do {
-        omv = oms.current();
-        oop* loc = fr->oopmapreg_to_location(omv.reg(),reg_map);
-        guarantee(loc != NULL, "missing saved register");
-        oop *derived_loc = loc;
-        oop *base_loc    = fr->oopmapreg_to_location(omv.content_reg(), reg_map);
-        // Ignore NULL oops and decoded NULL narrow oops which
-        // equal to Universe::narrow_oop_base when a narrow oop
-        // implicit null check is used in compiled code.
-        // The narrow_oop_base could be NULL or be the address
-        // of the page below heap depending on compressed oops mode.
-        if (base_loc != NULL && *base_loc != (oop)NULL && !Universe::is_narrow_oop_base(*base_loc)) {
-          derived_oop_fn(base_loc, derived_loc);
-        }
-        oms.next();
-      }  while (!oms.is_done());
+      walk_derived_pointers1<T>(oms, fr, reg_map, derived_oop_fn);
+    } else {
+      walk_derived_pointers1<T>(oms, fr, reg_map, derived_oop_fn);
     }
   }
+}
 
+ExplodedOopMap::ExplodedOopMap(const ImmutableOopMap* oopMap) {
+  _oopValues = copyOopMapValues(oopMap, OopMapValue::oop_value | OopMapValue::narrowoop_value, &_nrOopValues);
+  _calleeSavedValues = copyOopMapValues(oopMap, OopMapValue::callee_saved_value, &_nrCalleeSavedValuesCount);
+  _derivedValues = copyOopMapValues(oopMap, OopMapValue::derived_oop_value, &_nrDerivedValues);
+}
+
+OopMapValue* ExplodedOopMap::values(int mask) {
+  if (mask == (OopMapValue::oop_value | OopMapValue::narrowoop_value)) {
+    return _oopValues;
+  } else if (mask == OopMapValue::callee_saved_value) {
+    return _calleeSavedValues;
+  } else if (mask == OopMapValue::derived_oop_value) {
+    return _derivedValues;
+  } else {
+    guarantee(false, "new type?");
+    return NULL;
+  }
+}
+
+int ExplodedOopMap::count(int mask) {
+  if (mask == (OopMapValue::oop_value | OopMapValue::narrowoop_value)) {
+    return _nrOopValues;
+  } else if (mask == OopMapValue::callee_saved_value) {
+    return _nrCalleeSavedValuesCount;
+  } else if (mask == OopMapValue::derived_oop_value) {
+    return _nrDerivedValues;
+  } else {
+    guarantee(false, "new type?");
+    return 0;
+  }
+}
+
+OopMapValue* ExplodedOopMap::copyOopMapValues(const ImmutableOopMap* oopMap, int mask, int* nr) {
+  OopMapValue omv;
+  int count = 0;
+  // We want coop and oop oop_types
+  for (OopMapStream oms(oopMap,mask); !oms.is_done(); oms.next()) {
+    ++count;
+  }
+  *nr = count;
+
+  OopMapValue* values = (OopMapValue*) NEW_C_HEAP_ARRAY(unsigned char, sizeof(OopMapValue) * count, mtCode);
+
+  int i = 0;
+  for (OopMapStream oms(oopMap,mask); !oms.is_done(); oms.next()) {
+    assert(i < count, "overflow");
+    values[i] = oms.current();
+    i++;
+  }
+
+  i = 0;
+  for (OopMapStream oms(oopMap,mask); !oms.is_done(); oms.next()) {
+    assert(i < count, "overflow");
+    assert(values[i].equals(oms.current()), "must");
+    i++;
+  }
+
+  return values;
+}
+
+class ExplodedOopMapStream {
+private:
+  int _current;
+  int _max;
+  OopMapValue* _values;
+public:
+  ExplodedOopMapStream(const ImmutableOopMap* oopMap, int mask) : _current(0), _max(oopMap->_exploded->count(mask)), _values(oopMap->_exploded->values(mask)) {}
+  bool is_done() const { return _current >= _max; }
+  void next() { ++_current; }
+  OopMapValue current() { return _values[_current]; }
+};
+
+template<typename T>
+static void iterate_oops_do(const frame *fr, const RegisterMap *reg_map,
+                              OopClosure* oop_fn, DerivedOopClosure* derived_oop_fn, const ImmutableOopMap* oopmap) {
+  NOT_PRODUCT(if (TraceCodeBlobStacks) trace_codeblob_maps(fr, reg_map);)
+
+  if (derived_oop_fn == NULL)
+    derived_oop_fn = &add_derived_oop;
+
+  // handle derived pointers first (otherwise base pointer may be
+  // changed before derived pointer offset has been collected)
+  if (reg_map->validate_oops())
+    walk_derived_pointers<T>(fr, oopmap, reg_map, derived_oop_fn);
+
+  OopMapValue omv;
   // We want coop and oop oop_types
   int mask = OopMapValue::oop_value | OopMapValue::narrowoop_value;
   {
-    for (OopMapStream oms(map,mask); !oms.is_done(); oms.next()) {
+    for (T oms(oopmap,mask); !oms.is_done(); oms.next()) {
       omv = oms.current();
       oop* loc = fr->oopmapreg_to_location(omv.reg(),reg_map);
       // It should be an error if no location can be found for a
       // register mentioned as contained an oop of some kind.  Maybe
       // this was allowed previously because value_value items might
       // be missing?
+#ifdef ASSERT
+    if (loc == NULL) {
+      VMReg reg = omv.reg();
+      tty->print_cr("missing saved register: reg: %ld %s loc: %p", reg->value(), reg->name(), loc);
+      fr->print_on(tty);
+    }
+#endif
       guarantee(loc != NULL, "missing saved register");
       if ( omv.type() == OopMapValue::oop_value ) {
         oop val = *loc;
-        if (val == (oop)NULL || Universe::is_narrow_oop_base(val)) {
+        if (derived_oop_fn == &add_derived_oop && (val == (oop)NULL || Universe::is_narrow_oop_base(val))) { // TODO: UGLY (basically used to decide if we're freezing/thawing continuation)
           // Ignore NULL oops and decoded NULL narrow oops which
           // equal to Universe::narrow_oop_base when a narrow oop
           // implicit null check is used in compiled code.
@@ -383,7 +496,7 @@ void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
         // We can not verify the oop here if we are using ZGC, the oop
         // will be bad in case we had a safepoint between a load and a
         // load barrier.
-        if (!UseZGC &&
+        if (!UseZGC && reg_map->validate_oops() &&
             ((((uintptr_t)loc & (sizeof(*loc)-1)) != 0) ||
              !Universe::heap()->is_in_or_null(*loc))) {
           tty->print_cr("# Found non oop pointer.  Dumping state at failure");
@@ -393,6 +506,9 @@ void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
           tty->print_cr("register r");
           omv.reg()->print();
           tty->print_cr("loc = %p *loc = %p\n", loc, (address)*loc);
+          // os::print_location(tty, (intptr_t)*loc);
+          tty->print("pc: "); os::print_location(tty, (intptr_t)fr->pc());
+          fr->print_value_on(tty, NULL);
           // do the real assert.
           assert(Universe::heap()->is_in_or_null(*loc), "found non oop pointer");
         }
@@ -414,47 +530,91 @@ void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
       }
     }
   }
+
+  // When thawing continuation frames, we want to walk derived pointers
+  // after walking oops
+  if (!reg_map->validate_oops())
+    walk_derived_pointers<T>(fr, oopmap, reg_map, derived_oop_fn);
+}
+
+void ImmutableOopMap::oops_do(const frame *fr, const RegisterMap *reg_map,
+                              OopClosure* oop_fn, DerivedOopClosure* derived_oop_fn) const {
+  if (_exploded != NULL) {
+    iterate_oops_do<ExplodedOopMapStream>(fr, reg_map, oop_fn, derived_oop_fn, this);
+  } else {
+    iterate_oops_do<OopMapStream>(fr, reg_map, oop_fn, derived_oop_fn, this);
+  }
+
+}
+
+template <typename T>
+static void update_register_map1(const ImmutableOopMap* oopmap, const frame* fr, RegisterMap* reg_map) {
+  for (T oms(oopmap, OopMapValue::callee_saved_value); !oms.is_done(); oms.next()) {
+    OopMapValue omv = oms.current();
+    VMReg reg = omv.content_reg();
+    oop* loc = fr->oopmapreg_to_location(omv.reg(), reg_map);
+    reg_map->set_location(reg, (address) loc);
+    //DEBUG_ONLY(nof_callee++;)
+  }
 }
 
 
-// Update callee-saved register info for the following frame
-void OopMapSet::update_register_map(const frame *fr, RegisterMap *reg_map) {
-  ResourceMark rm;
-  CodeBlob* cb = fr->cb();
-  assert(cb != NULL, "no codeblob");
-
+void ImmutableOopMap::update_register_map(const frame *fr, RegisterMap *reg_map) const {
+  // ResourceMark rm;
   // Any reg might be saved by a safepoint handler (see generate_handler_blob).
   assert( reg_map->_update_for_id == NULL || fr->is_older(reg_map->_update_for_id),
          "already updated this map; do not 'update' it twice!" );
   debug_only(reg_map->_update_for_id = fr->id());
 
+
   // Check if caller must update oop argument
   assert((reg_map->include_argument_oops() ||
-          !cb->caller_must_gc_arguments(reg_map->thread())),
+          !_cb->caller_must_gc_arguments(reg_map->thread())),
          "include_argument_oops should already be set");
 
   // Scan through oopmap and find location of all callee-saved registers
   // (we do not do update in place, since info could be overwritten)
 
-  address pc = fr->pc();
-  const ImmutableOopMap* map  = cb->oop_map_for_return_address(pc);
-  assert(map != NULL, "no ptr map found");
   DEBUG_ONLY(int nof_callee = 0;)
+  if (_exploded != NULL) {
+    update_register_map1<ExplodedOopMapStream>(this, fr, reg_map);
+  } else {
+    update_register_map1<OopMapStream>(this, fr, reg_map);
+  }
 
-  for (OopMapStream oms(map, OopMapValue::callee_saved_value); !oms.is_done(); oms.next()) {
+  /*
+  for (OopMapStream oms(this, OopMapValue::callee_saved_value); !oms.is_done(); oms.next()) {
     OopMapValue omv = oms.current();
     VMReg reg = omv.content_reg();
     oop* loc = fr->oopmapreg_to_location(omv.reg(), reg_map);
     reg_map->set_location(reg, (address) loc);
     DEBUG_ONLY(nof_callee++;)
   }
+  */
 
   // Check that runtime stubs save all callee-saved registers
 #ifdef COMPILER2
-  assert(cb->is_compiled_by_c1() || cb->is_compiled_by_jvmci() || !cb->is_runtime_stub() ||
+  assert(_cb == NULL || _cb->is_compiled_by_c1() || _cb->is_compiled_by_jvmci() || !_cb->is_runtime_stub() ||
          (nof_callee >= SAVED_ON_ENTRY_REG_COUNT || nof_callee >= C_SAVED_ON_ENTRY_REG_COUNT),
          "must save all");
 #endif // COMPILER2
+}
+
+const ImmutableOopMap* OopMapSet::find_map(const frame *fr) {
+  CodeBlob* cb = fr->cb();
+  assert(cb != NULL, "no codeblob");
+
+  const ImmutableOopMap* map = cb->oop_map_for_return_address(fr->pc());
+
+  assert(map != NULL, "no ptr map found");
+  assert (fr->cb() != NULL && fr->cb() == map->cb(), "");
+
+  return map;
+}
+
+// Update callee-saved register info for the following frame
+void OopMapSet::update_register_map(const frame *fr, RegisterMap *reg_map) {
+  find_map(fr)->update_register_map(fr, reg_map);
 }
 
 //=============================================================================
@@ -588,9 +748,14 @@ const ImmutableOopMap* ImmutableOopMapPair::get_from(const ImmutableOopMapSet* s
   return set->oopmap_at_offset(_oopmap_offset);
 }
 
-ImmutableOopMap::ImmutableOopMap(const OopMap* oopmap) : _count(oopmap->count()) {
+ImmutableOopMap::ImmutableOopMap(const OopMap* oopmap, const CodeBlob* cb) : _exploded(NULL), _count(oopmap->count()), _num_oops(oopmap->num_oops()) {
+  _cb = cb;
+  _num_oops = oopmap->num_oops();
   address addr = data_addr();
   oopmap->copy_data_to(addr);
+  if (UseNewCode2) {
+    _exploded = new ExplodedOopMap(this); // leaking memory atm
+  }
 }
 
 #ifdef ASSERT
@@ -604,7 +769,13 @@ int ImmutableOopMap::nr_of_bytes() const {
 }
 #endif
 
-ImmutableOopMapBuilder::ImmutableOopMapBuilder(const OopMapSet* set) : _set(set), _empty(NULL), _last(NULL), _empty_offset(-1), _last_offset(-1), _offset(0), _required(-1), _new_set(NULL) {
+ImmutableOopMapBuilder::ImmutableOopMapBuilder(const OopMapSet* set, const CodeBlob* cb)
+  : _set(set), _cb(cb), _new_set(NULL), _empty(NULL), _last(NULL), _empty_offset(-1), _last_offset(-1), _offset(0), _required(-1), _new_set(NULL) {
+  _mapping = NEW_RESOURCE_ARRAY(Mapping, _set->size());
+}
+
+ImmutableOopMapBuilder::ImmutableOopMapBuilder(const OopMapSet* set)
+  : _set(set), _cb(NULL), _new_set(NULL), _empty(NULL), _last(NULL), _empty_offset(-1), _last_offset(-1), _offset(0), _required(-1), _new_set(NULL) {
   _mapping = NEW_RESOURCE_ARRAY(Mapping, _set->size());
 }
 
@@ -664,7 +835,7 @@ int ImmutableOopMapBuilder::fill_map(ImmutableOopMapPair* pair, const OopMap* ma
   fill_pair(pair, map, offset, set);
   address addr = (address) pair->get_from(_new_set); // location of the ImmutableOopMap
 
-  new (addr) ImmutableOopMap(map);
+  new (addr) ImmutableOopMap(map, _cb);
   return size_for(map);
 }
 
@@ -722,9 +893,9 @@ ImmutableOopMapSet* ImmutableOopMapBuilder::build() {
   return generate_into(buffer);
 }
 
-ImmutableOopMapSet* ImmutableOopMapSet::build_from(const OopMapSet* oopmap_set) {
+ImmutableOopMapSet* ImmutableOopMapSet::build_from(const OopMapSet* oopmap_set, const CodeBlob* cb) {
   ResourceMark mark;
-  ImmutableOopMapBuilder builder(oopmap_set);
+  ImmutableOopMapBuilder builder(oopmap_set, cb);
   return builder.build();
 }
 

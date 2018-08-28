@@ -549,6 +549,7 @@ void MacroAssembler::call_VM_leaf_base(address entry_point, int num_args) {
   subq(rsp, 8);
   {
     call(RuntimeAddress(entry_point));
+    oopmap_metadata(-1);
   }
   addq(rsp, 8);
   jmp(E);
@@ -556,6 +557,7 @@ void MacroAssembler::call_VM_leaf_base(address entry_point, int num_args) {
   bind(L);
   {
     call(RuntimeAddress(entry_point));
+    oopmap_metadata(-1);
   }
 
   bind(E);
@@ -803,6 +805,11 @@ void MacroAssembler::set_last_Java_frame(Register last_java_sp,
   movptr(Address(r15_thread, JavaThread::last_Java_sp_offset()), last_java_sp);
 }
 
+void MacroAssembler::oopmap_metadata(int index) {
+  // if (index != -1) tty->print_cr("oopmap_metadata %d", index);
+  // mov64(r10, 1234); // TODO: Add a new relocInfo with external semantics. see relocInfo::metadata_type
+}
+
 static void pass_arg0(MacroAssembler* masm, Register arg) {
   if (c_rarg0 != arg ) {
     masm->mov(c_rarg0, arg);
@@ -1001,6 +1008,26 @@ void MacroAssembler::align(int modulus, int target) {
   if (target % modulus != 0) {
     nop(modulus - (target % modulus));
   }
+}
+
+void MacroAssembler::push_f(XMMRegister r) {
+  subptr(rsp, wordSize);
+  movflt(Address(rsp, 0), r);
+}
+
+void MacroAssembler::pop_f(XMMRegister r) {
+  movflt(r, Address(rsp, 0));
+  addptr(rsp, wordSize);
+}
+
+void MacroAssembler::push_d(XMMRegister r) {
+  subptr(rsp, 2 * wordSize);
+  movdbl(Address(rsp, 0), r);
+}
+
+void MacroAssembler::pop_d(XMMRegister r) {
+  movdbl(r, Address(rsp, 0));
+  addptr(rsp, 2 * Interpreter::stackElementSize);
 }
 
 void MacroAssembler::andpd(XMMRegister dst, AddressLiteral src) {
@@ -2964,6 +2991,14 @@ void MacroAssembler::enter() {
   mov(rbp, rsp);
 }
 
+void MacroAssembler::post_call_nop() {
+  emit_int8(0x0f);
+  emit_int8(0x1f);
+  emit_int8(0x84);
+  emit_int8(0x00);
+  emit_int32(0x00);
+}
+
 // A 5 byte nop that is safe for patching (see patch_verified_entry)
 void MacroAssembler::fat_nop() {
   if (UseAddressNop) {
@@ -3683,6 +3718,17 @@ void MacroAssembler::pop_FPU_state() {
 #endif
   addptr(rsp, FPUStateSizeInWords * wordSize);
 }
+
+#ifdef ASSERT
+void MacroAssembler::stop_if_in_cont(Register cont, const char* name) {
+  Label no_cont;
+  movptr(cont, Address(r15_thread, in_bytes(JavaThread::continuation_offset())));
+  testl(cont, cont);
+  jcc(Assembler::zero, no_cont);
+  stop(name);
+  bind(no_cont);
+}
+#endif
 
 void MacroAssembler::pop_IU_state() {
   popa();

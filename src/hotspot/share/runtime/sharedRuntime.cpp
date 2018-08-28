@@ -506,6 +506,7 @@ address SharedRuntime::raw_exception_handler_for_return_address(JavaThread* thre
 #ifndef PRODUCT
   { ResourceMark rm;
     tty->print_cr("No exception handler found for exception at " INTPTR_FORMAT " - potential problems:", p2i(return_address));
+    os::print_location(tty, (intptr_t)return_address);
     tty->print_cr("a) exception happened in (new?) code stubs/buffers that is not handled here");
     tty->print_cr("b) other problem");
   }
@@ -531,7 +532,7 @@ address SharedRuntime::get_poll_stub(address pc) {
 
   // Look up the relocation information
   assert(((CompiledMethod*)cb)->is_at_poll_or_poll_return(pc),
-    "safepoint polling: type must be poll");
+      "safepoint polling: type must be poll at pc " INTPTR_FORMAT, p2i(pc));
 
 #ifdef ASSERT
   if (!((NativeInstruction*)pc)->is_safepoint_poll()) {
@@ -2683,7 +2684,7 @@ AdapterHandlerEntry* AdapterHandlerLibrary::get_adapter0(const methodHandle& met
       tty->print_cr("i2c argument handler #%d for: %s %s %s (%d bytes generated)",
                     _adapters->number_of_entries(), (method->is_static() ? "static" : "receiver"),
                     method->signature()->as_C_string(), fingerprint->as_string(), insts_size);
-      tty->print_cr("c2i argument handler starts at %p", entry->get_c2i_entry());
+      tty->print_cr("c2i argument handler starts at " INTPTR_FORMAT, p2i(entry->get_c2i_entry()));
       if (Verbose || PrintStubCode) {
         address first_pc = entry->base_address();
         if (first_pc != NULL) {
@@ -2973,6 +2974,15 @@ VMRegPair *SharedRuntime::find_callee_arguments(Symbol* sig, bool has_receiver, 
   *arg_size = cnt;
   return regs;
 }
+
+JRT_LEAF(jlong, SharedRuntime::continuation_getFP(JavaThread* thread) )
+  RegisterMap reg_map2(thread);
+  assert(false, "");
+  frame stubFrame   = thread->last_frame();
+    // Caller-frame is a compiled frame
+  frame callerFrame = stubFrame.sender(&reg_map2);
+  return (jlong) callerFrame.real_fp();
+JRT_END
 
 // OSR Migration Code
 //

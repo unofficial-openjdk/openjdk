@@ -163,7 +163,7 @@ void CodeBlob::set_oop_maps(OopMapSet* p) {
   // Danger Will Robinson! This method allocates a big
   // chunk of memory, its your job to free it.
   if (p != NULL) {
-    _oop_maps = ImmutableOopMapSet::build_from(p);
+    _oop_maps = ImmutableOopMapSet::build_from(p, this);
   } else {
     _oop_maps = NULL;
   }
@@ -197,7 +197,7 @@ void RuntimeBlob::trace_new_stub(RuntimeBlob* stub, const char* name1, const cha
   MemoryService::track_code_cache_memory_usage();
 }
 
-const ImmutableOopMap* CodeBlob::oop_map_for_return_address(address return_address) {
+const ImmutableOopMap* CodeBlob::oop_map_for_return_address(address return_address) const {
   assert(_oop_maps != NULL, "nope");
   return _oop_maps->find_map_at_offset((intptr_t) return_address - (intptr_t) code_begin());
 }

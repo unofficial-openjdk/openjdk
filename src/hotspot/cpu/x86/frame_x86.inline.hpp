@@ -39,6 +39,7 @@ inline frame::frame() {
   _fp = NULL;
   _cb = NULL;
   _deopt_state = unknown;
+  _oop_map = NULL;
 }
 
 inline void frame::init(intptr_t* sp, intptr_t* fp, address pc) {
@@ -57,10 +58,22 @@ inline void frame::init(intptr_t* sp, intptr_t* fp, address pc) {
   } else {
     _deopt_state = not_deoptimized;
   }
+
+  _oop_map = NULL;
 }
 
 inline frame::frame(intptr_t* sp, intptr_t* fp, address pc) {
   init(sp, fp, pc);
+}
+
+inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc, CodeBlob* cb) {
+  _sp = sp;
+  _unextended_sp = unextended_sp;
+  _fp = fp;
+  _pc = pc;
+  assert(pc != NULL, "no pc?");
+  _cb = cb;
+  setup(pc);
 }
 
 inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc) {
@@ -70,21 +83,28 @@ inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address
   _pc = pc;
   assert(pc != NULL, "no pc?");
   _cb = CodeCache::find_blob(pc);
+  setup(pc);
+}
+
+inline void frame::setup(address pc) {
   adjust_unextended_sp();
 
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
   if (original_pc != NULL) {
+    assert(_cb != NULL, "no cb 1 pc: " INTPTR_FORMAT " orig_pc: " INTPTR_FORMAT, p2i(pc), p2i(original_pc));
     _pc = original_pc;
     assert(_cb->as_compiled_method()->insts_contains_inclusive(_pc),
            "original PC must be in the main code section of the the compiled method (or must be immediately following it)");
     _deopt_state = is_deoptimized;
   } else {
+    assert(_cb != NULL, "no cb 2  sp: " INTPTR_FORMAT " usp: " INTPTR_FORMAT " fp: " INTPTR_FORMAT " pc: " INTPTR_FORMAT " orig_pc: " INTPTR_FORMAT, p2i(_sp), p2i(_unextended_sp), p2i(_fp), p2i(pc), p2i(original_pc));
     if (_cb->is_deoptimization_stub()) {
       _deopt_state = is_deoptimized;
     } else {
       _deopt_state = not_deoptimized;
     }
   }
+  _oop_map = NULL;
 }
 
 inline frame::frame(intptr_t* sp, intptr_t* fp) {

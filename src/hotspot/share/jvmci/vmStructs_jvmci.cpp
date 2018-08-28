@@ -318,6 +318,9 @@
   static_field(StubRoutines,                _montgomeryMultiply,                              address)                               \
   static_field(StubRoutines,                _montgomerySquare,                                address)                               \
   static_field(StubRoutines,                _vectorizedMismatch,                              address)                               \
+  static_field(StubRoutines,                _cont_doYield,                                    address)                               \
+  static_field(StubRoutines,                _cont_getSP,                                      address)                               \
+  static_field(StubRoutines,                _cont_thaw,                                       address)                               \
                                                                                                                                      \
   nonstatic_field(Thread,                   _tlab,                                            ThreadLocalAllocBuffer)                \
   nonstatic_field(Thread,                   _allocated_bytes,                                 jlong)                                 \

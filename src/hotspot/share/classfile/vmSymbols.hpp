@@ -68,6 +68,9 @@
   template(java_lang_ClassLoader,                     "java/lang/ClassLoader")                    \
   template(java_lang_ClassLoader_NativeLibrary,       "java/lang/ClassLoader\x024NativeLibrary")  \
   template(java_lang_ThreadDeath,                     "java/lang/ThreadDeath")                    \
+  template(java_lang_Runnable,                        "java/lang/Runnable")                       \
+  /*template(java_lang_Continuation,                    "java/lang/Continuation")                 */\
+  template(java_lang_ContinuationScope,               "java/lang/ContinuationScope")              \
   template(java_lang_Boolean,                         "java/lang/Boolean")                        \
   template(java_lang_Character,                       "java/lang/Character")                      \
   template(java_lang_Character_CharacterCache,        "java/lang/Character$CharacterCache")       \
@@ -364,6 +367,30 @@
   template(run_finalization_name,                     "runFinalization")                          \
   template(dispatchUncaughtException_name,            "dispatchUncaughtException")                \
   template(loadClass_name,                            "loadClass")                                \
+  template(doYield_name,                              "doYield")                                  \
+  template(jump_name,                                 "jump")                                     \
+  template(doContinue_name,                           "doContinue")                               \
+  template(getSP_name,                                "getSP")                                    \
+  template(getFP_name,                                "getFP")                                    \
+  template(runLevel_name,                             "runLevel")                                 \
+  template(getPC_name,                                "getPC")                                    \
+  template(enter_name,                                "enter")                                    \
+  template(onContinue_name,                           "onContinue0")                              \
+  template(getStacks_name,                            "getStacks")                                \
+  template(onPinned_name,                             "onPinned0")                                \
+  template(scope_name,                                "scope")                                    \
+  template(entrySP_name,                              "entrySP")                                  \
+  template(entryFP_name,                              "entryFP")                                  \
+  template(entryPC_name,                              "entryPC")                                  \
+  template(stack_name,                                "stack")                                    \
+  template(maxSize_name,                              "maxSize")                                  \
+  template(numFrames_name,                            "numFrames")                                \
+  template(numInterpretedFrames_name,                 "numInterpretedFrames")                     \
+  template(fp_name,                                   "fp")                                       \
+  template(sp_name,                                   "sp")                                       \
+  template(pc_name,                                   "pc")                                       \
+  template(refStack_name,                             "refStack")                                 \
+  template(refSP_name,                                "refSP")                                    \
   template(get_name,                                  "get")                                      \
   template(put_name,                                  "put")                                      \
   template(type_name,                                 "type")                                     \
@@ -482,6 +509,9 @@
   template(byte_array_signature,                      "[B")                                       \
   template(char_array_signature,                      "[C")                                       \
   template(int_array_signature,                       "[I")                                       \
+  template(runnable_signature,                        "Ljava/lang/Runnable;")                     \
+  template(continuation_signature,                    "Ljava/lang/Continuation;")                 \
+  template(continuationscope_signature,               "Ljava/lang/ContinuationScope;")            \
   template(object_void_signature,                     "(Ljava/lang/Object;)V")                    \
   template(object_int_signature,                      "(Ljava/lang/Object;)I")                    \
   template(object_boolean_signature,                  "(Ljava/lang/Object;)Z")                    \
@@ -1052,6 +1082,26 @@
   do_intrinsic(_updateBytesAdler32,       java_util_zip_Adler32,  updateBytes_C_name,  updateBytes_signature,  F_SN)    \
   do_intrinsic(_updateByteBufferAdler32,  java_util_zip_Adler32,  updateByteBuffer_A_name,  updateByteBuffer_signature,  F_SN) \
    do_name(     updateByteBuffer_A_name,                          "updateByteBuffer")                                   \
+                                                                                                                        \
+  /* java/lang/Continuation */                                                                                                 \
+  do_class(java_lang_Continuation,                      "java/lang/Continuation")                                              \
+  do_alias(continuationEnter_signature,                           void_method_signature)                                       \
+  do_signature(continuationGetStacks_signature,                   "(III)V")                                                    \
+  do_alias(continuationOnPinned_signature,                        int_void_signature)                                          \
+  do_intrinsic(_Continuation_getSP,  java_lang_Continuation,       getSP_name,    continuationGetSP_signature, F_S)            \
+    do_alias(continuationGetSP_signature,                            void_long_signature)                                      \
+  do_intrinsic(_Continuation_getFP,  java_lang_Continuation,       getFP_name,    continuationGetFP_signature, F_S)            \
+    do_alias(continuationGetFP_signature,                            void_long_signature)                                      \
+  do_intrinsic(_Continuation_getPC,  java_lang_Continuation,       getPC_name,    continuationGetPC_signature, F_S)            \
+    do_alias(continuationGetPC_signature,                            void_long_signature)                                      \
+  do_intrinsic(_Continuation_doContinue,  java_lang_Continuation,  doContinue_name,    continuationDoContinue_signature, F_R)  \
+    do_alias(continuationDoContinue_signature,                     void_method_signature)                                      \
+  do_intrinsic(_Continuation_doYield,     java_lang_Continuation,  doYield_name,       continuationDoYield_signature, F_S)     \
+    do_alias(continuationDoYield_signature,                          int_int_signature)                                        \
+  do_intrinsic(_Continuation_jump,     java_lang_Continuation,     jump_name,       continuationJump_signature, F_S)           \
+    do_signature(continuationJump_signature,                         "(JJJ)V")                                                 \
+  do_intrinsic(_Continuation_runLevel,    java_lang_Continuation,  runLevel_name,    continuationrunLevel_signature, F_S)      \
+    do_alias(continuationrunLevel_signature,                         void_int_signature)                                       \
                                                                                                                         \
   /* support for Unsafe */                                                                                              \
   do_class(jdk_internal_misc_Unsafe,               "jdk/internal/misc/Unsafe")                                          \

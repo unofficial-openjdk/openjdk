@@ -117,6 +117,9 @@ class LIR_Assembler: public CompilationResourceObj {
   void push(LIR_Opr opr);
   void pop(LIR_Opr opr);
 
+  void getsp(LIR_Opr opr);
+  void getfp(LIR_Opr opr);
+
   // patching
   void append_patching_stub(PatchingStub* stub);
   void patching_epilog(PatchingStub* patch, LIR_PatchCode patch_code, Register obj, CodeEmitInfo* info);

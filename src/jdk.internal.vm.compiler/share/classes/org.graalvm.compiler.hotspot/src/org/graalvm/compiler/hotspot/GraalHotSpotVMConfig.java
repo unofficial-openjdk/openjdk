@@ -96,6 +96,10 @@ public class GraalHotSpotVMConfig extends GraalHotSpotVMConfigBase {
     public final boolean useCRC32CIntrinsics = versioned.useCRC32CIntrinsics;
     public final boolean threadLocalHandshakes = getFlag("ThreadLocalHandshakes", Boolean.class, false);
 
+    public final long continuationDoYield = versioned.continuationDoYield;
+    public final long continuationThaw = versioned.continuationThaw;
+    public final long continuationGetSP = versioned.continuationGetSP;
+
     private final boolean useMultiplyToLenIntrinsic = getFlag("UseMultiplyToLenIntrinsic", Boolean.class);
     private final boolean useSHA1Intrinsics = getFlag("UseSHA1Intrinsics", Boolean.class);
     private final boolean useSHA256Intrinsics = getFlag("UseSHA256Intrinsics", Boolean.class);

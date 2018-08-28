@@ -53,6 +53,7 @@ class TemplateInterpreterGenerator: public AbstractInterpreterGenerator {
   address generate_ClassCastException_handler();
   address generate_ArrayIndexOutOfBounds_handler();
   address generate_return_entry_for(TosState state, int step, size_t index_size);
+  address generate_return_entry_for(TosState state, int step, size_t index_size, bool X);
   address generate_earlyret_entry_for(TosState state);
   address generate_deopt_entry_for(TosState state, int step, address continuation = NULL);
   address generate_safept_entry_for(TosState state, address runtime_entry);
@@ -91,9 +92,17 @@ class TemplateInterpreterGenerator: public AbstractInterpreterGenerator {
   address generate_abstract_entry(void);
   address generate_math_entry(AbstractInterpreter::MethodKind kind);
   address generate_Reference_get_entry();
+  address generate_Continuation_doYield_entry();
+  address generate_Continuation_jump_entry();
+  address generate_Continuation_doContinue_entry();
+  address generate_Continuation_getSP_entry();
+  address generate_Continuation_getFP_entry();
+  address generate_Continuation_getPC_entry();
+  address generate_Continuation_runLevel_entry();
   address generate_CRC32_update_entry();
   address generate_CRC32_updateBytes_entry(AbstractInterpreter::MethodKind kind);
   address generate_CRC32C_updateBytes_entry(AbstractInterpreter::MethodKind kind);
+
 #ifdef IA32
   address generate_Float_intBitsToFloat_entry();
   address generate_Float_floatToRawIntBits_entry();

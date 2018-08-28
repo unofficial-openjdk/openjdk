@@ -45,6 +45,7 @@
 #include "prims/jvmtiThreadState.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/compilationPolicy.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
@@ -416,6 +417,10 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
     }
   }
 
+  // If the caller is a continuation entry and the callee has a return barrier
+  // then we cannot use the parameters in the caller.
+  bool caller_was_continuation_entry = Continuation::is_cont_bottom_frame(deopt_sender);
+
   //
   // frame_sizes/frame_pcs[0] oldest frame (int or c2i)
   // frame_sizes/frame_pcs[1] next oldest frame (int)
@@ -474,20 +479,23 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   // QQQ I'd rather see this pushed down into last_frame_adjust
   // and have it take the sender (aka caller).
 
-  if (deopt_sender.is_compiled_frame() || caller_was_method_handle) {
-    caller_adjustment = last_frame_adjust(0, callee_locals);
-  } else if (callee_locals > callee_parameters) {
-    // The caller frame may need extending to accommodate
-    // non-parameter locals of the first unpacked interpreted frame.
-    // Compute that adjustment.
-    caller_adjustment = last_frame_adjust(callee_parameters, callee_locals);
-  }
+  // TODO LOOM: consider *always* adjusting instead of the conditionals below. What's the harm?
+  caller_adjustment = last_frame_adjust(0, callee_locals);
+  // if (deopt_sender.is_compiled_frame() || caller_was_method_handle || caller_was_continuation_entry) {
+  //   caller_adjustment = last_frame_adjust(0, callee_locals);
+  // } else if (callee_locals > callee_parameters) {
+  //   // The caller frame may need extending to accommodate
+  //   // non-parameter locals of the first unpacked interpreted frame.
+  //   // Compute that adjustment.
+  //   caller_adjustment = last_frame_adjust(callee_parameters, callee_locals);
+  // }
 
   // If the sender is deoptimized the we must retrieve the address of the handler
   // since the frame will "magically" show the original pc before the deopt
   // and we'd undo the deopt.
 
-  frame_pcs[0] = deopt_sender.raw_pc();
+  frame_pcs[0] = Continuation::is_cont_bottom_frame(deoptee) ? StubRoutines::cont_returnBarrier() : deopt_sender.raw_pc();
+  // if (Continuation::is_cont_bottom_frame(deoptee)) tty->print_cr("WOWEE Continuation::is_cont_bottom_frame(deoptee)");
 
   assert(CodeCache::find_blob_unsafe(frame_pcs[0]) != NULL, "bad pc");
 

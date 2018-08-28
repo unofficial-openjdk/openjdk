@@ -752,4 +752,26 @@ inline bool NativeInstruction::is_mov_literal64() {
 #endif // AMD64
 }
 
+class NativePostCallNop: public NativeInstruction {
+public:
+  enum Intel_specific_constants {
+    instruction_code = 0x0f,
+    instruction_size = 8,
+    instruction_offset = 0,
+    displacement_offset = 4
+  };
+
+  bool check() const { return int_at(0) == 0x841f0f; }
+  int displacement() const { return (jint) int_at(displacement_offset); }
+  void patch(jint diff);
+};
+
+inline NativePostCallNop* nativePostCallNop_at(address address) {
+  NativePostCallNop* nop = (NativePostCallNop*) address;
+  if (nop->check()) {
+    return nop;
+  }
+  return NULL;
+}
+
 #endif // CPU_X86_VM_NATIVEINST_X86_HPP

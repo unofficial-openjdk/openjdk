@@ -42,6 +42,8 @@ class C1_MacroAssembler: public MacroAssembler {
   void build_frame(int frame_size_in_bytes, int bang_size_in_bytes);
   void remove_frame(int frame_size_in_bytes);
 
+  void oopmap_metadata(CodeEmitInfo* info);
+
   void verified_entry();
   void verify_stack_oop(int offset) PRODUCT_RETURN;
   void verify_not_null_oop(Register r)  PRODUCT_RETURN;

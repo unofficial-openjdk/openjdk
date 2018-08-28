@@ -3085,8 +3085,35 @@ void LIRGenerator::do_Intrinsic(Intrinsic* x) {
     do_vectorizedMismatch(x);
     break;
 
+  case vmIntrinsics::_Continuation_getFP:
+    do_continuation_getFP(x);
+    break;
+  case vmIntrinsics::_Continuation_getSP:
+    do_continuation_getSP(x);
+    break;
+  case vmIntrinsics::_Continuation_getPC:
+    do_continuation_getPC(x);
+    break;
+  case vmIntrinsics::_Continuation_doContinue:
+    do_continuation_doContinue(x);
+    break;
+  case vmIntrinsics::_Continuation_doYield:
+    do_continuation_doYield(x);
+    break;
+  case vmIntrinsics::_Continuation_jump:
+    do_continuation_jump(x);
+    break;
+  case vmIntrinsics::_Continuation_runLevel:
+    do_continuation_runLevel(x);
+    break;
+
   default: ShouldNotReachHere(); break;
   }
+}
+
+void LIRGenerator::do_continuation_runLevel(Intrinsic* x) {
+  LIR_Opr result = rlock_result(x);
+  __ move(LIR_OprFact::intConst(1), result);
 }
 
 void LIRGenerator::profile_arguments(ProfileCall* x) {

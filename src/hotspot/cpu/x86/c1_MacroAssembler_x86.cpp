@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "c1/c1_IR.hpp"
 #include "c1/c1_MacroAssembler.hpp"
 #include "c1/c1_Runtime1.hpp"
 #include "classfile/systemDictionary.hpp"
@@ -363,6 +364,10 @@ void C1_MacroAssembler::load_parameter(int offset_in_words, Register reg) {
   //     + 4: ...
 
   movptr(reg, Address(rbp, (offset_in_words + 2) * BytesPerWord));
+}
+
+void C1_MacroAssembler::oopmap_metadata(CodeEmitInfo* info) {
+  MacroAssembler::oopmap_metadata(info != NULL ? info->oop_map()->index() : -1);
 }
 
 #ifndef PRODUCT

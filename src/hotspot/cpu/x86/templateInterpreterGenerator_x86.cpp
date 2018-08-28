@@ -39,6 +39,7 @@
 #include "prims/jvmtiExport.hpp"
 #include "prims/jvmtiThreadState.hpp"
 #include "runtime/arguments.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -174,8 +175,13 @@ address TemplateInterpreterGenerator::generate_exception_handler_common(
 }
 
 address TemplateInterpreterGenerator::generate_return_entry_for(TosState state, int step, size_t index_size) {
+  return generate_return_entry_for(state, step, index_size, false);
+}
+
+address TemplateInterpreterGenerator::generate_return_entry_for(TosState state, int step, size_t index_size, bool X) {
   address entry = __ pc();
 
+// if(X) __ stop("XXXXXXXX 000");
 #ifndef _LP64
 #ifdef COMPILER2
   // The FPU stack is clean if UseSSE >= 2 but must be cleaned in other cases
@@ -200,13 +206,19 @@ address TemplateInterpreterGenerator::generate_return_entry_for(TosState state, 
   }
 #endif // _LP64
 
+  // if(X) __ stop("XXXXXXXX 111");
+
   // Restore stack bottom in case i2c adjusted stack
   __ movptr(rsp, Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize));
   // and NULL it as marker that esp is now tos until next java call
   __ movptr(Address(rbp, frame::interpreter_frame_last_sp_offset * wordSize), (int32_t)NULL_WORD);
 
+  // if(X) __ stop("XXXXXXXX 222");
+
   __ restore_bcp();
   __ restore_locals();
+
+  // if(X) __ stop("XXXXXXXX 333"); // rbcp = r13 locals = r14
 
   if (state == atos) {
     Register mdp = rbx;
@@ -232,6 +244,8 @@ address TemplateInterpreterGenerator::generate_return_entry_for(TosState state, 
      NOT_LP64(__ get_thread(java_thread));
      __ check_and_handle_earlyret(java_thread);
    }
+
+  if(X) __ stop("XXXXXXXX 444");
 
   __ dispatch_next(state, step);
 
@@ -696,6 +710,77 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call) {
 }
 
 // End of helpers
+
+address TemplateInterpreterGenerator::generate_Continuation_runLevel_entry(void) {
+  address entry = __ pc();
+
+  __ movl(rax, 0);
+  __ ret(0);
+
+  return entry;
+}
+
+// return current sp
+address TemplateInterpreterGenerator::generate_Continuation_getSP_entry(void) {
+  address entry = __ pc();
+
+  __ lea(rax, Address(rsp, wordSize)); // skip return address
+  __ ret(0);
+
+  return entry;
+}
+
+// return current fp
+address TemplateInterpreterGenerator::generate_Continuation_getFP_entry(void) {
+  address entry = __ pc();
+
+  __ movptr(rax, rbp);
+  __ ret(0);
+
+  return entry;
+}
+
+// return current pc
+address TemplateInterpreterGenerator::generate_Continuation_getPC_entry(void) {
+  address entry = __ pc();
+
+  __ movptr(rax, Address(rsp, 0));
+  __ ret(0);
+
+  return entry;
+}
+
+address TemplateInterpreterGenerator::generate_Continuation_doYield_entry(void) {
+  address entry = __ pc();
+  assert(StubRoutines::cont_doYield() != NULL, "stub not yet generated");
+
+  __ movl(c_rarg1, Address(rsp, wordSize)); // scopes
+  __ jump(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::cont_doYield())));
+  // return value is in rax
+
+  return entry;
+}
+
+address TemplateInterpreterGenerator::generate_Continuation_jump_entry(void) {
+  address entry = __ pc();
+  assert(StubRoutines::cont_jump() != NULL, "stub not yet generated");
+
+  __ movl(c_rarg1, Address(rsp, wordSize*3)); // sp
+  __ movl(c_rarg2, Address(rsp, wordSize*2)); // fp
+  __ movl(c_rarg3, Address(rsp, wordSize*1)); // pc
+  __ jump(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::cont_jump())));
+
+  return entry;
+}
+
+address TemplateInterpreterGenerator::generate_Continuation_doContinue_entry(void) {
+  address entry = __ pc();
+  assert(StubRoutines::cont_thaw() != NULL, "stub not yet generated");
+
+  __ jump(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::cont_thaw())));
+
+  return entry;
+}
 
 // Method entry for java.lang.ref.Reference.get.
 address TemplateInterpreterGenerator::generate_Reference_get_entry(void) {
@@ -1339,7 +1424,7 @@ address TemplateInterpreterGenerator::generate_normal_entry(bool synchronized) {
   bool inc_counter  = UseCompiler || CountCompiledCalls || LogTouchedMethods;
 
   // ebx: Method*
-  // rbcp: sender sp
+  // rbcp: sender sp (set in InterpreterMacroAssembler::prepare_to_jump_from_interpreted / generate_call_stub)
   address entry_point = __ pc();
 
   const Address constMethod(rbx, Method::const_offset());

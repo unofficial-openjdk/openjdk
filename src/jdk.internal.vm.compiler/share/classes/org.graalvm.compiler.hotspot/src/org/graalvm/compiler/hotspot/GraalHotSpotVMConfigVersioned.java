@@ -86,4 +86,8 @@ final class GraalHotSpotVMConfigVersioned extends HotSpotVMConfigAccess {
     // JDK-8015774
     long codeCacheLowBound = getFieldValue("CodeCache::_low_bound", Long.class, "address");
     long codeCacheHighBound = getFieldValue("CodeCache::_high_bound", Long.class, "address");
+
+    public final long continuationThaw = getFieldValue("StubRoutines::_cont_thaw", Long.class, "address");
+    public final long continuationGetSP = getFieldValue("StubRoutines::_cont_getSP", Long.class, "address");
+    public final long continuationDoYield = getFieldValue("StubRoutines::_cont_doYield", Long.class, "address");
 }

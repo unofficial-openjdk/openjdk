@@ -59,6 +59,7 @@
 #include "prims/stackwalk.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/atomic.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/init.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
@@ -681,6 +682,12 @@ JVM_ENTRY(jobject, JVM_Clone(JNIEnv* env, jobject handle))
   }
 
   return JNIHandles::make_local(env, new_obj());
+JVM_END
+
+// java.lang.Continuation /////////////////////////////////////////////////////
+
+JVM_ENTRY(void, JVM_RegisterContinuationMethods(JNIEnv *env, jclass cls))
+  CONT_RegisterNativeMethods(env, cls);
 JVM_END
 
 // java.io.File ///////////////////////////////////////////////////////////////

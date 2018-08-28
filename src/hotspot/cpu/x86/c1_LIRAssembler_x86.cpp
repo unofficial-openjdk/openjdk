@@ -221,6 +221,23 @@ void LIR_Assembler::pop(LIR_Opr opr) {
   }
 }
 
+void LIR_Assembler::getfp(LIR_Opr opr) {
+  __ lea(opr->as_register_lo(), Address(rsp, initial_frame_size_in_bytes() + wordSize)); // + wordSize seems to be required to handle the push rbp before the sub of rsp
+}
+
+void LIR_Assembler::getsp(LIR_Opr opr) {
+  __ movptr(opr->as_register_lo(), rsp);
+}
+
+#if 0
+void LIR_Assembler::getpc(LIR_Opr opr) {
+  const char *name + "cont_getPC";
+  address entry = StubRoutines::cont_getPC();
+  __ call_VM_leaf(entry, 0);
+  __ movptr(opr->as_register_lo(), rax);
+}
+#endif
+
 bool LIR_Assembler::is_literal_address(LIR_Address* addr) {
   return addr->base()->is_illegal() && addr->index()->is_illegal();
 }
@@ -2823,15 +2840,19 @@ void LIR_Assembler::call(LIR_OpJavaCall* op, relocInfo::relocType rtype) {
          "must be aligned");
   __ call(AddressLiteral(op->addr(), rtype));
   add_call_info(code_offset(), op->info());
+  __ oopmap_metadata(op->info());
+  __ post_call_nop();
 }
 
 
 void LIR_Assembler::ic_call(LIR_OpJavaCall* op) {
   __ ic_call(op->addr());
   add_call_info(code_offset(), op->info());
+  __ oopmap_metadata(op->info());
   assert(!os::is_MP() ||
          (__ offset() - NativeCall::instruction_size + NativeCall::displacement_offset) % BytesPerWord == 0,
          "must be aligned");
+  __ post_call_nop();
 }
 
 
@@ -3819,7 +3840,9 @@ void LIR_Assembler::rt_call(LIR_Opr result, address dest, const LIR_OprList* arg
   __ call(RuntimeAddress(dest));
   if (info != NULL) {
     add_call_info_here(info);
+    __ oopmap_metadata(info);
   }
+  __ post_call_nop();
 }
 
 

@@ -1582,6 +1582,7 @@ int java_lang_Thread::_daemon_offset = 0;
 int java_lang_Thread::_stillborn_offset = 0;
 int java_lang_Thread::_stackSize_offset = 0;
 int java_lang_Thread::_tid_offset = 0;
+int java_lang_Thread::_continuation_offset = 0;
 int java_lang_Thread::_thread_status_offset = 0;
 int java_lang_Thread::_park_blocker_offset = 0;
 int java_lang_Thread::_park_event_offset = 0 ;
@@ -1599,7 +1600,8 @@ int java_lang_Thread::_park_event_offset = 0 ;
   macro(_tid_offset,           k, "tid", long_signature, false); \
   macro(_thread_status_offset, k, "threadStatus", int_signature, false); \
   macro(_park_blocker_offset,  k, "parkBlocker", object_signature, false); \
-  macro(_park_event_offset,    k, "nativeParkEventPointer", long_signature, false)
+  macro(_park_event_offset,    k, "nativeParkEventPointer", long_signature, false); \
+  macro(_continuation_offset,  k, "cont", continuation_signature, false)
 
 void java_lang_Thread::compute_offsets() {
   assert(_group_offset == 0, "offsets should be initialized only once");
@@ -1733,6 +1735,14 @@ jlong java_lang_Thread::thread_id(oop java_thread) {
   } else {
     return 0;
   }
+}
+
+oop java_lang_Thread::continuation(oop java_thread) {
+  return java_thread->obj_field(_continuation_offset);
+}
+
+void java_lang_Thread::set_continuation(oop java_thread, oop continuation) {
+  return java_thread->obj_field_put(_continuation_offset, continuation);
 }
 
 oop java_lang_Thread::park_blocker(oop java_thread) {
@@ -4219,6 +4229,22 @@ int java_lang_ref_Reference::next_offset;
 int java_lang_ref_Reference::discovered_offset;
 int java_lang_ref_SoftReference::timestamp_offset;
 int java_lang_ref_SoftReference::static_clock_offset;
+int java_lang_Continuation::scope_offset;
+int java_lang_Continuation::target_offset;
+int java_lang_Continuation::stack_offset;
+int java_lang_Continuation::maxSize_offset;
+int java_lang_Continuation::numFrames_offset;
+int java_lang_Continuation::numInterpretedFrames_offset;
+int java_lang_Continuation::refStack_offset;
+int java_lang_Continuation::parent_offset;
+int java_lang_Continuation::entrySP_offset;
+int java_lang_Continuation::entryFP_offset;
+int java_lang_Continuation::entryPC_offset;
+int java_lang_Continuation::fp_offset;
+int java_lang_Continuation::sp_offset;
+int java_lang_Continuation::pc_offset;
+int java_lang_Continuation::refSP_offset;
+int java_lang_Continuation::flags_offset;
 int java_lang_ClassLoader::parent_offset;
 int java_lang_System::static_in_offset;
 int java_lang_System::static_out_offset;
@@ -4367,6 +4393,34 @@ void java_lang_AssertionStatusDirectives::set_deflt(oop o, bool val) {
   o->bool_field_put(deflt_offset, val);
 }
 
+// Support for java.lang.Continuation
+
+void java_lang_Continuation::compute_offsets() {
+  InstanceKlass* k = SystemDictionary::Continuation_klass();
+  compute_offset(scope_offset,     k, vmSymbols::scope_name(),     vmSymbols::continuationscope_signature());
+  compute_offset(target_offset,    k, vmSymbols::target_name(),    vmSymbols::runnable_signature());
+  compute_offset(parent_offset,    k, vmSymbols::parent_name(),    vmSymbols::continuation_signature());
+  compute_offset(stack_offset,     k, vmSymbols::stack_name(),     vmSymbols::int_array_signature());
+  compute_offset(maxSize_offset,   k, vmSymbols::maxSize_name(),   vmSymbols::int_signature());
+  compute_offset(refStack_offset,  k, vmSymbols::refStack_name(),  vmSymbols::object_array_signature());
+  compute_offset(entrySP_offset,   k, vmSymbols::entrySP_name(),   vmSymbols::long_signature());
+  compute_offset(entryFP_offset,   k, vmSymbols::entryFP_name(),   vmSymbols::long_signature());
+  compute_offset(entryPC_offset,   k, vmSymbols::entryPC_name(),   vmSymbols::long_signature());
+  compute_offset(fp_offset,        k, vmSymbols::fp_name(),        vmSymbols::long_signature());
+  compute_offset(sp_offset,        k, vmSymbols::sp_name(),        vmSymbols::int_signature());
+  compute_offset(pc_offset,        k, vmSymbols::pc_name(),        vmSymbols::long_signature());
+  compute_offset(refSP_offset,     k, vmSymbols::refSP_name(),     vmSymbols::int_signature());
+  compute_offset(flags_offset,     k, vmSymbols::flags_name(),     vmSymbols::byte_signature());
+  compute_offset(numFrames_offset, k, vmSymbols::numFrames_name(), vmSymbols::short_signature());
+  compute_offset(numInterpretedFrames_offset, k, vmSymbols::numInterpretedFrames_name(), vmSymbols::short_signature());
+}
+
+bool java_lang_Continuation::on_local_stack(oop ref, address adr) {
+  arrayOop s = stack(ref);
+  void* base = s->base(T_INT);
+  return adr >= base && (char*)adr < ((char*)base + (s->length() * 4));
+}
+
 
 // Support for intrinsification of java.nio.Buffer.checkIndex
 int java_nio_Buffer::limit_offset() {
@@ -4425,6 +4479,16 @@ void JavaClasses::compute_hard_coded_offsets() {
   java_lang_ref_Reference::queue_offset       = member_offset(java_lang_ref_Reference::hc_queue_offset);
   java_lang_ref_Reference::next_offset        = member_offset(java_lang_ref_Reference::hc_next_offset);
   java_lang_ref_Reference::discovered_offset  = member_offset(java_lang_ref_Reference::hc_discovered_offset);
+
+  // // java_lang_Continuation Class
+  // java_lang_Continuation::target_offset       = member_offset(java_lang_Continuation::hc_target_offset);
+  // java_lang_Continuation::parent_offset       = member_offset(java_lang_Continuation::hc_parent_offset);
+  // java_lang_Continuation::entrySP_offset      = member_offset(java_lang_Continuation::hc_entrySP_offset);
+  // java_lang_Continuation::entryFP_offset      = member_offset(java_lang_Continuation::hc_entryFP_offset);
+  // java_lang_Continuation::entryPC_offset      = member_offset(java_lang_Continuation::hc_entryPC_offset);
+  // java_lang_Continuation::stack_offset        = member_offset(java_lang_Continuation::hc_stack_offset);
+  // java_lang_Continuation::lastFP_offset       = member_offset(java_lang_Continuation::hc_lastFP_offset);
+  // java_lang_Continuation::lastSP_offset       = member_offset(java_lang_Continuation::hc_lastSP_offset);
 }
 
 #define DO_COMPUTE_OFFSETS(k) k::compute_offsets();
@@ -4512,6 +4576,17 @@ void JavaClasses::check_offsets() {
   CHECK_OFFSET("java/lang/ref/Reference", java_lang_ref_Reference, next, "Ljava/lang/ref/Reference;");
   // Fake field
   //CHECK_OFFSET("java/lang/ref/Reference", java_lang_ref_Reference, discovered, "Ljava/lang/ref/Reference;");
+
+  // java.lang.Continuation
+
+  // CHECK_OFFSET("java/lang/Continuation", java_lang_Continuation, target,   "Ljava/lang/Runnable;");
+  // CHECK_OFFSET("java/lang/Continuation", java_lang_Continuation, stack,    "[I");
+  // CHECK_OFFSET("java/lang/Continuation", java_lang_Continuation, parent,   "Ljava/lang/Continuation;");
+  // CHECK_OFFSET("java/lang/Continuation", java_lang_Continuation, entrySP,  "J");
+  // CHECK_OFFSET("java/lang/Continuation", java_lang_Continuation, entryFP,  "J");
+  // CHECK_OFFSET("java/lang/Continuation", java_lang_Continuation, entryPC,  "J");
+  // CHECK_OFFSET("java/lang/Continuation", java_lang_Continuation, lastFP,   "I");
+  // CHECK_OFFSET("java/lang/Continuation", java_lang_Continuation, lastSP,   "I");
 
   if (!valid) vm_exit_during_initialization("Hard-coded field offset verification failed");
 }

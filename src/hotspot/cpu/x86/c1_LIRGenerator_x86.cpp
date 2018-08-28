@@ -325,6 +325,77 @@ void LIRGenerator::do_NegateOp(NegateOp* x) {
   set_result(x, round_item(reg));
 }
 
+void LIRGenerator::do_continuation_getFP(Intrinsic* x) {
+  LIR_Opr result_reg = rlock_result(x);
+  __ getfp(result_reg);
+}
+
+void LIRGenerator::do_continuation_getSP(Intrinsic* x) {
+  LIR_Opr result_reg = rlock_result(x);
+  __ getsp(result_reg);
+}
+
+void LIRGenerator::do_continuation_getPC(Intrinsic* x) {
+  BasicTypeList signature(0);
+  //signature.append(T_LONG);
+  CallingConvention* cc = frame_map()->c_calling_convention(&signature);
+
+  const LIR_Opr result_reg = result_register_for(x->type());
+  address entry = StubRoutines::cont_getPC();
+  LIR_Opr result = rlock_result(x);
+  __ call_runtime_leaf(entry, getThreadTemp(), result_reg, cc->args());
+  __ move(result_reg, result);
+}
+
+void LIRGenerator::do_continuation_doContinue(Intrinsic* x) {
+  BasicTypeList signature(0);
+  CallingConvention* cc = frame_map()->c_calling_convention(&signature);
+
+  //const LIR_Opr result_reg = result_register_for(x->type());
+  address entry = StubRoutines::cont_thaw();
+  CodeEmitInfo* info = state_for(x, x->state());
+  __ call_runtime(entry, getThreadTemp(), getThreadTemp(), cc->args(), info);
+}
+
+void LIRGenerator::do_continuation_doYield(Intrinsic* x) {
+  BasicTypeList signature(1);
+  signature.append(T_INT);
+  CallingConvention* cc = frame_map()->java_calling_convention(&signature, true);
+
+  LIRItem value(x->argument_at(0), this);
+  value.load_item();
+  __ move(value.result(), cc->at(0));
+
+  const LIR_Opr result_reg = result_register_for(x->type());
+  address entry = StubRoutines::cont_doYield();
+  LIR_Opr result = rlock_result(x);
+  CodeEmitInfo* info = state_for(x, x->state());
+  __ call_runtime(entry, LIR_OprFact::illegalOpr, result_reg, cc->args(), info);
+  __ move(result_reg, result);
+}
+
+void LIRGenerator::do_continuation_jump(Intrinsic* x) {
+  BasicTypeList signature(3);
+  signature.append(T_LONG);
+  signature.append(T_LONG);
+  signature.append(T_LONG);
+  CallingConvention* cc = frame_map()->java_calling_convention(&signature, true);
+
+  LIRItem sp(x->argument_at(0), this);
+  LIRItem fp(x->argument_at(1), this);
+  LIRItem pc(x->argument_at(2), this);
+
+  sp.load_item();
+  __ move(sp.result(), cc->at(0));
+  fp.load_item();
+  __ move(fp.result(), cc->at(1));
+  pc.load_item();
+  __ move(pc.result(), cc->at(2));
+
+  address entry = StubRoutines::cont_jump();
+  __ call_runtime_leaf(entry, LIR_OprFact::illegalOpr, LIR_OprFact::illegalOpr, cc->args());
+  // set_no_result(x);
+}
 
 // for  _fadd, _fmul, _fsub, _fdiv, _frem
 //      _dadd, _dmul, _dsub, _ddiv, _drem

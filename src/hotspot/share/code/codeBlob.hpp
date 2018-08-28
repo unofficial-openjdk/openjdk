@@ -202,7 +202,7 @@ public:
   // OopMap for frame
   ImmutableOopMapSet* oop_maps() const           { return _oop_maps; }
   void set_oop_maps(OopMapSet* p);
-  const ImmutableOopMap* oop_map_for_return_address(address return_address);
+  const ImmutableOopMap* oop_map_for_return_address(address return_address) const;
   virtual void preserve_callee_argument_oops(frame fr, const RegisterMap* reg_map, OopClosure* f) = 0;
 
   // Frame support
@@ -242,6 +242,11 @@ public:
   static ByteSize oop_maps_field_offset() {
     return byte_offset_of(CodeBlob, _oop_maps);
   }
+};
+
+class CodeBlobLookup {
+public:
+  virtual CodeBlob* find_blob(address addr) const { return NULL; }
 };
 
 class CodeBlobLayout : public StackObj {

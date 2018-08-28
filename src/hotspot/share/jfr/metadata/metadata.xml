@@ -83,6 +83,24 @@
     <Field type="int" name="safepointId" label="Safepoint Identifier" relation="SafepointId" />
   </Event>
 
+  <Event name="ContinuationFreeze" category="Java Application" label="Continuation Yield" description="Invocation of Continuation.yield()"
+    thread="true" stackTrace="true">
+    <Field type="Class" name="contClass" label="Continuation class" description="Class of the continuation" />
+    <Field type="ushort" name="numFrames" label="Number of frames" />
+    <Field type="ushort" name="numIFrames" label="Number of interpreted frames" />
+    <Field type="ushort" name="numRefs" label="Number of references" />
+    <Field type="ushort" name="size" label="Stack size in bytes" />
+  </Event>
+
+  <Event name="ContinuationThaw" category="Java Application" label="Continuation Continue" description="Invocation of Continuation.run() on a started continuation"
+    thread="true" stackTrace="true">
+    <Field type="Class" name="contClass" label="Continuation class" description="Class of the continuation" />
+    <Field type="ushort" name="numFrames" label="Number of frames" />
+    <Field type="ushort" name="numIFrames" label="Number of interpreted frames" />
+    <Field type="ushort" name="numRefs" label="Number of references" />
+    <Field type="ushort" name="size" label="Stack size in bytes" />
+  </Event>
+
   <Event name="ReservedStackActivation" category="Java Virtual Machine, Runtime" label="Reserved Stack Activation"
     description="Activation of Reserved Stack Area caused by stack overflow with ReservedStackAccess annotated method in call stack" thread="true" stackTrace="true"
     startTime="false">

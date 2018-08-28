@@ -1582,7 +1582,7 @@ bool Method::has_unloaded_classes_in_signature(const methodHandle& m, TRAPS) {
 }
 
 // Exposed so field engineers can debug VM
-void Method::print_short_name(outputStream* st) {
+void Method::print_short_name(outputStream* st) const {
   ResourceMark rm;
 #ifdef PRODUCT
   st->print(" %s::", method_holder()->external_name());
@@ -1647,7 +1647,7 @@ class SignatureTypePrinter : public SignatureTypeNames {
 };
 
 
-void Method::print_name(outputStream* st) {
+void Method::print_name(outputStream* st) const {
   Thread *thread = Thread::current();
   ResourceMark rm(thread);
   st->print("%s ", is_static() ? "static" : "virtual");

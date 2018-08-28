@@ -36,7 +36,15 @@
 bool always_do_update_barrier = false;
 
 void oopDesc::print_on(outputStream* st) const {
-  klass()->oop_print_on(oop(this), st);
+  if (this == NULL) {
+    st->print_cr("NULL");
+  } else if (*((juint*)this) == badHeapWordVal) {
+    st->print("BAD WORD");
+  } else if (*((juint*)this) == badMetaWordVal) {
+    st->print("BAD META WORD");
+  } else {
+    klass()->oop_print_on(oop(this), st);
+  }
 }
 
 void oopDesc::print_address_on(outputStream* st) const {

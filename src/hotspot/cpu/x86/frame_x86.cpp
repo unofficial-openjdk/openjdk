@@ -29,6 +29,7 @@
 #include "oops/method.hpp"
 #include "oops/oop.inline.hpp"
 #include "prims/methodHandles.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/javaCalls.hpp"
@@ -275,10 +276,26 @@ void frame::patch_pc(Thread* thread, address pc) {
   }
   // Either the return address is the original one or we are going to
   // patch in the same address that's already there.
-  assert(_pc == *pc_addr || pc == *pc_addr, "must be");
+  assert(!Continuation::is_return_barrier_entry(*pc_addr), "return barrier");
+// #ifdef ASSERT
+//   bool good = (_pc == *pc_addr || pc == *pc_addr);
+//   if (!good) {
+//     tty->print_cr("pc: " INTPTR_FORMAT, p2i(pc)); os::print_location(tty, *(intptr_t*)&pc);
+//     tty->print_cr("_pc: " INTPTR_FORMAT, p2i(_pc)); os::print_location(tty, *(intptr_t*)&_pc);
+//     tty->print_cr("*pc_addr: " INTPTR_FORMAT, p2i(*pc_addr)); os::print_location(tty, *(intptr_t*)pc_addr);
+//   }
+// #endif
+  assert(_pc == *pc_addr || pc == *pc_addr, "must be (pc: " INTPTR_FORMAT " _pc: " INTPTR_FORMAT " *pc_addr: " INTPTR_FORMAT ")", p2i(pc), p2i(_pc), p2i(*pc_addr));
   *pc_addr = pc;
   _cb = CodeCache::find_blob(pc);
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
+// #ifdef ASSERT
+//   if (!good) {
+//     tty->print_cr("_pc: " INTPTR_FORMAT " original_pc: " INTPTR_FORMAT, p2i(_pc), p2i(original_pc));
+//     CompiledMethod* cm = _cb->as_compiled_method_or_null();
+//     tty->print_cr("_pc: " INTPTR_FORMAT " is_deopt _pc: %d is_deopt pc: %d", p2i(_pc), cm->is_deopt_pc(_pc), cm->is_deopt_pc(pc));
+//   }
+// #endif
   if (original_pc != NULL) {
     assert(original_pc == _pc, "expected original PC to be stored before patching");
     _deopt_state = is_deoptimized;
@@ -328,7 +345,7 @@ BasicObjectLock* frame::interpreter_frame_monitor_end() const {
   BasicObjectLock* result = (BasicObjectLock*) *addr_at(interpreter_frame_monitor_block_top_offset);
   // make sure the pointer points inside the frame
   assert(sp() <= (intptr_t*) result, "monitor end should be above the stack pointer");
-  assert((intptr_t*) result < fp(),  "monitor end should be strictly below the frame pointer");
+  assert((intptr_t*) result < fp(),  "monitor end should be strictly below the frame pointer: result: " INTPTR_FORMAT " fp: " INTPTR_FORMAT, p2i(result), p2i(fp()));
   return result;
 }
 
@@ -377,7 +394,7 @@ void frame::verify_deopt_original_pc(CompiledMethod* nm, intptr_t* unextended_sp
 
   address original_pc = nm->get_original_pc(&fr);
   assert(nm->insts_contains_inclusive(original_pc),
-         "original PC must be in the main code section of the the compiled method (or must be immediately following it)");
+         "original PC must be in the main code section of the the compiled method (or must be immediately following it) original_pc: " INTPTR_FORMAT " unextended_sp: " INTPTR_FORMAT " name: %s", p2i(original_pc), p2i(unextended_sp), nm->name());
 }
 #endif
 
@@ -425,6 +442,9 @@ void frame::update_map_with_saved_link(RegisterMap* map, intptr_t** link_addr) {
 #endif // AMD64
 }
 
+intptr_t** frame::saved_link_address(RegisterMap* map) {
+  return (intptr_t**)map->location(rbp->as_VMReg());
+}
 
 //------------------------------------------------------------------------------
 // frame::sender_for_interpreter_frame
@@ -441,20 +461,20 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
     update_map_with_saved_link(map, (intptr_t**) addr_at(link_offset));
   }
 #endif // COMPILER2_OR_JVMCI
-
-  return frame(sender_sp, unextended_sp, link(), sender_pc());
+  return frame(sender_sp, unextended_sp, link(), Continuation::fix_continuation_bottom_sender(this, map, sender_pc()));
 }
-
 
 //------------------------------------------------------------------------------
 // frame::sender_for_compiled_frame
-frame frame::sender_for_compiled_frame(RegisterMap* map) const {
+frame frame::sender_for_compiled_frame(RegisterMap* map, CodeBlobLookup* lookup) const {
   assert(map != NULL, "map must be set");
 
   // frame owned by optimizing compiler
   assert(_cb->frame_size() >= 0, "must have non-zero frame size");
   intptr_t* sender_sp = unextended_sp() + _cb->frame_size();
   intptr_t* unextended_sp = sender_sp;
+
+  assert (!is_compiled_frame() || sender_sp == real_fp(), "sender_sp: " INTPTR_FORMAT " real_fp: " INTPTR_FORMAT, p2i(sender_sp), p2i(real_fp()));
 
   // On Intel the return_address is always the word on the stack
   address sender_pc = (address) *(sender_sp-1);
@@ -468,8 +488,8 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
     // For C1, the runtime stub might not have oop maps, so set this flag
     // outside of update_register_map.
     map->set_include_argument_oops(_cb->caller_must_gc_arguments(map->thread()));
-    if (_cb->oop_maps() != NULL) {
-      OopMapSet::update_register_map(this, map);
+    if (oop_map() != NULL) {
+      _oop_map->update_register_map(this, map);
     }
 
     // Since the prolog does the save and restore of EBP there is no oopmap
@@ -478,24 +498,37 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
     update_map_with_saved_link(map, saved_fp_addr);
   }
 
+  if (sender_sp == sp()) {
+    tty->print_cr("sender_sp: " INTPTR_FORMAT " sp: " INTPTR_FORMAT, p2i(sender_sp), p2i(sp()));
+    print_on(tty);
+  }
   assert(sender_sp != sp(), "must have changed");
-  return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc);
+  address fixed_pc = Continuation::fix_continuation_bottom_sender(this, map, sender_pc);
+  if (lookup != NULL) {
+    CodeBlob* sender_cb = lookup->find_blob(fixed_pc);
+    if (sender_cb != NULL) {
+      return frame(sender_sp, unextended_sp, *saved_fp_addr, fixed_pc, sender_cb);
+    }
+  }
+
+  return frame(sender_sp, unextended_sp, *saved_fp_addr, fixed_pc);
 }
 
 
 //------------------------------------------------------------------------------
 // frame::sender
-frame frame::sender(RegisterMap* map) const {
+frame frame::sender(RegisterMap* map, CodeBlobLookup* lookup) const {
   // Default is we done have to follow them. The sender_for_xxx will
   // update it accordingly
   map->set_include_argument_oops(false);
 
   if (is_entry_frame())       return sender_for_entry_frame(map);
   if (is_interpreted_frame()) return sender_for_interpreter_frame(map);
-  assert(_cb == CodeCache::find_blob(pc()),"Must be the same");
+
+  assert(_cb == CodeCache::find_blob(pc()), "Must be the same");
 
   if (_cb != NULL) {
-    return sender_for_compiled_frame(map);
+    return sender_for_compiled_frame(map, lookup);
   }
   // Must be native-compiled frame, i.e. the marshaling code for native
   // methods that exists in the core system.
@@ -556,6 +589,33 @@ bool frame::is_interpreted_frame_valid(JavaThread* thread) const {
 
   // We'd have to be pretty unlucky to be mislead at this point
   return true;
+}
+
+const ImmutableOopMap* frame::get_oop_map() const {
+  if (_cb == NULL) return NULL;
+  if (_cb->oop_maps() != NULL) {
+    const ImmutableOopMap* oop_map = OopMapSet::find_map(this);
+    assert(oop_map->cb() == _cb, "cb should match");
+    return oop_map;
+  }
+  return NULL;
+  // if (CodeCache::contains(pc()) && is_compiled_frame()) {
+  //   unsigned char *oopmap_metadata_header = (unsigned char *)pc();
+  //   if (*oopmap_metadata_header != 0x49) {
+  //     tty->print_cr("wrong oopmap_metadata_header");
+  //     print_on(tty);
+  //     for (int i=0; i<10; i++) tty->print_cr("$$ " INTPTR_FORMAT ": %x", p2i(oopmap_metadata_header + i), *(oopmap_metadata_header+i));
+  //   }
+  //   assert (*oopmap_metadata_header == 0x49, "oopmap_metadata_header: %x pc: " INTPTR_FORMAT " (" INTPTR_FORMAT ")", *oopmap_metadata_header, p2i(pc()), p2i(raw_pc()));
+
+  //   long oopmap_metadata = *((long*)(oopmap_metadata_header + 2));
+  //   if (oopmap_metadata != 1234) {
+  //     tty->print_cr("wrong oopmap_metadata");
+  //     print_on(tty);
+  //     for (int i=0; i<10; i++) tty->print_cr("$$ " INTPTR_FORMAT ": %x", p2i(oopmap_metadata_header + i), *(oopmap_metadata_header+i));
+  //   }
+  //   assert (oopmap_metadata == 1234, "oopmap_metadata: %ld pc: " INTPTR_FORMAT " (" INTPTR_FORMAT ")", oopmap_metadata, p2i(pc()), p2i(raw_pc()));
+  // }
 }
 
 BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result) {

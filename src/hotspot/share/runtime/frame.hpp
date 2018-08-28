@@ -37,6 +37,7 @@
 typedef class BytecodeInterpreter* interpreterState;
 
 class CodeBlob;
+class CodeBlobLookup;
 class FrameValues;
 class vframeArray;
 
@@ -54,6 +55,7 @@ class frame {
   address   _pc; // program counter (the next instruction after the call)
 
   CodeBlob* _cb; // CodeBlob that "owns" pc
+  mutable const ImmutableOopMap* _oop_map; // oop map, for compiled/stubs frames only
   enum deopt_state {
     not_deoptimized,
     is_deoptimized,
@@ -89,12 +91,19 @@ class frame {
   address raw_pc() const;
 
   void set_pc( address   newpc );
+  void set_pc_preserve_deopt( address   newpc );
 
   intptr_t* sp() const           { return _sp; }
   void set_sp( intptr_t* newsp ) { _sp = newsp; }
 
 
   CodeBlob* cb() const           { return _cb; }
+  const ImmutableOopMap* oop_map() const {
+    if (_oop_map == NULL) {
+      _oop_map = get_oop_map();
+    }
+    return _oop_map;
+  }
 
   // patching operations
   void   patch_pc(Thread* thread, address pc);
@@ -145,7 +154,7 @@ class frame {
   int frame_size(RegisterMap* map) const;
 
   // returns the sending frame
-  frame sender(RegisterMap* map) const;
+  frame sender(RegisterMap* map, CodeBlobLookup* lookup = NULL) const;
 
   // for Profiling - acting on another frame. walks sender frames
   // if valid.
@@ -161,7 +170,7 @@ class frame {
 
  private:
   // Helper methods for better factored code in frame::sender
-  frame sender_for_compiled_frame(RegisterMap* map) const;
+  frame sender_for_compiled_frame(RegisterMap* map, CodeBlobLookup* lookup) const;
   frame sender_for_entry_frame(RegisterMap* map) const;
   frame sender_for_interpreter_frame(RegisterMap* map) const;
   frame sender_for_native_frame(RegisterMap* map) const;
@@ -370,13 +379,14 @@ class frame {
   void oops_interpreted_arguments_do(Symbol* signature, bool has_receiver, OopClosure* f);
 
   // Iteration of oops
-  void oops_do_internal(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map, bool use_interpreter_oop_map_cache);
+  void oops_do_internal(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, RegisterMap* map, bool use_interpreter_oop_map_cache);
   void oops_entry_do(OopClosure* f, const RegisterMap* map);
-  void oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, const RegisterMap* map);
+  void oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, const RegisterMap* map);
   int adjust_offset(Method* method, int index); // helper for above fn
  public:
   // Memory management
-  void oops_do(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map) { oops_do_internal(f, cf, map, true); }
+  void oops_do(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map) { oops_do_internal(f, cf, NULL, map, true); }
+  void oops_do(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, RegisterMap* map) { oops_do_internal(f, cf, df, map, true); }
   void nmethods_do(CodeBlobClosure* cf);
 
   // RedefineClasses support for finding live interpreted methods on the stack
