@@ -75,9 +75,8 @@ import java.util.function.Supplier;
  */
 public class ThreadLocal<T> {
     /**
-     * ThreadLocals rely on per-thread linear-probe hash maps attached
-     * to each thread (Thread.threadLocals and
-     * inheritableThreadLocals).  The ThreadLocal objects act as keys,
+     * ThreadLocals rely on per-strand linear-probe hash maps attached
+     * to each thread or fiber. The ThreadLocal objects act as keys,
      * searched via threadLocalHashCode.  This is a custom hash code
      * (useful only within ThreadLocalMaps) that eliminates collisions
      * in the common case where consecutively constructed ThreadLocals
@@ -159,8 +158,19 @@ public class ThreadLocal<T> {
      * @return the current thread's value of this thread-local
      */
     public T get() {
-        Thread t = Thread.currentThread();
-        ThreadLocalMap map = getMap(t);
+        return get(Strand.currentStrand());
+    }
+
+    /**
+     * Returns the value in the current kernel thread's copy of this
+     * thread-local variable.
+     */
+    T getCarrierThreadLocal() {
+        return get(Thread.currentCarrierThread());
+    }
+
+    private T get(Strand s) {
+        ThreadLocalMap map = getMap(s);
         if (map != null) {
             ThreadLocalMap.Entry e = map.getEntry(this);
             if (e != null) {
@@ -169,19 +179,19 @@ public class ThreadLocal<T> {
                 return result;
             }
         }
-        return setInitialValue();
+        return setInitialValue(s);
     }
 
     /**
-     * Returns {@code true} if there is a value in the current thread's copy of
+     * Returns {@code true} if there is a value in the current strand's copy of
      * this thread-local variable, even if that values is {@code null}.
      *
      * @return {@code true} if current thread has associated value in this
      *         thread-local variable; {@code false} if not
      */
     boolean isPresent() {
-        Thread t = Thread.currentThread();
-        ThreadLocalMap map = getMap(t);
+        Strand s = Strand.currentStrand();
+        ThreadLocalMap map = getMap(s);
         return map != null && map.getEntry(this) != null;
     }
 
@@ -191,14 +201,13 @@ public class ThreadLocal<T> {
      *
      * @return the initial value
      */
-    private T setInitialValue() {
+    private T setInitialValue(Strand s) {
         T value = initialValue();
-        Thread t = Thread.currentThread();
-        ThreadLocalMap map = getMap(t);
+        ThreadLocalMap map = getMap(s);
         if (map != null) {
             map.set(this, value);
         } else {
-            createMap(t, value);
+            createMap(s, value);
         }
         if (this instanceof TerminatingThreadLocal) {
             TerminatingThreadLocal.register((TerminatingThreadLocal<?>) this);
@@ -216,12 +225,12 @@ public class ThreadLocal<T> {
      *        this thread-local.
      */
     public void set(T value) {
-        Thread t = Thread.currentThread();
-        ThreadLocalMap map = getMap(t);
+        Strand s = Strand.currentStrand();
+        ThreadLocalMap map = getMap(s);
         if (map != null) {
             map.set(this, value);
         } else {
-            createMap(t, value);
+            createMap(s, value);
         }
     }
 
@@ -237,7 +246,7 @@ public class ThreadLocal<T> {
      * @since 1.5
      */
      public void remove() {
-         ThreadLocalMap m = getMap(Thread.currentThread());
+         ThreadLocalMap m = getMap(Strand.currentStrand());
          if (m != null) {
              m.remove(this);
          }
@@ -247,22 +256,26 @@ public class ThreadLocal<T> {
      * Get the map associated with a ThreadLocal. Overridden in
      * InheritableThreadLocal.
      *
-     * @param  t the current thread
+     * @param  s the current strand
      * @return the map
      */
-    ThreadLocalMap getMap(Thread t) {
-        return t.threadLocals;
+    ThreadLocalMap getMap(Strand s) {
+        if (s instanceof Fiber && !Fiber.emulateCurrentThread()) {
+            throw new UnsupportedOperationException(
+                "ThreadLocals cannot be used in the context of a fiber");
+        }
+        return s.locals;
     }
 
     /**
      * Create the map associated with a ThreadLocal. Overridden in
      * InheritableThreadLocal.
      *
-     * @param t the current thread
+     * @param s the current strand
      * @param firstValue value for the initial entry of the map
      */
-    void createMap(Thread t, T firstValue) {
-        t.threadLocals = new ThreadLocalMap(this, firstValue);
+    void createMap(Strand s, T firstValue) {
+        s.locals = new ThreadLocalMap(this, firstValue);
     }
 
     /**

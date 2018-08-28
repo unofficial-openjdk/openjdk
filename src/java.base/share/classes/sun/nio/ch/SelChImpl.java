@@ -28,6 +28,8 @@ package sun.nio.ch;
 import java.nio.channels.Channel;
 import java.io.FileDescriptor;
 import java.io.IOException;
+import java.util.concurrent.locks.LockSupport;
+import static java.util.concurrent.TimeUnit.*;
 
 /**
  * An interface that allows translation (and more!).
@@ -67,5 +69,40 @@ public interface SelChImpl extends Channel {
     int translateInterestOps(int ops);
 
     void kill() throws IOException;
+
+    /**
+     * Disables the current thread or fiber for scheduling purposes until this
+     * channel is ready for I/O, or asynchronously closed, for up to the
+     * specified waiting time, unless the permit is available.
+     *
+     * <p> This method does <em>not</em> report which of these caused the
+     * method to return. Callers should re-check the conditions which caused
+     * the thread or fiber to park.
+     */
+    default void park(int event, long nanos) throws IOException {
+        Strand s = Strand.currentStrand();
+        if (PollerProvider.available() && (s instanceof Fiber)) {
+            Poller.startPoll(getFDVal(), event);
+            if (isOpen()) {
+                if (nanos == 0) {
+                    Fiber.park();
+                } else {
+                    Fiber.parkNanos(nanos);
+                }
+            }
+        } else {
+            long millis;
+            if (nanos == 0) {
+                millis = -1;
+            } else {
+                millis = MILLISECONDS.convert(nanos, NANOSECONDS);
+            }
+            Net.poll(getFD(), event, millis);
+        }
+    }
+
+    default void park(int event) throws IOException {
+        park(event, 0L);
+    }
 
 }

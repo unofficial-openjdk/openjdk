@@ -37,6 +37,7 @@ import java.security.ProtectionDomain;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
@@ -105,6 +106,35 @@ public interface JavaLangAccess {
      * Set current thread's blocker field.
      */
     void blockedOn(Interruptible b);
+
+    /**
+     * Returns a reference to the Thread object for the currently executing
+     * carrier thread.
+     */
+    Thread currentCarrierThread();
+
+    /**
+     * Executes the given value returning task on the current carrier thread.
+     */
+    <R> R executeOnCarrierThread(Callable<R> task) throws Exception;
+
+    /**
+     * Returns the value in the current carrier thread's copy of a
+     * thread-local variable.
+     */
+    <T> T getCarrierThreadLocal(ThreadLocal<T> local);
+
+    /**
+     * Returns the Fiber for the given shadow Thread object. Returns null if
+     * the thread is not a shadow thread.
+     */
+    Fiber getFiber(Thread t);
+
+    /**
+     * Returns the shadow thread for the given fiber or null if it does not
+     * have a shadow thread.
+     */
+    Thread getShadowThread(Fiber f);
 
     /**
      * Registers a shutdown hook.

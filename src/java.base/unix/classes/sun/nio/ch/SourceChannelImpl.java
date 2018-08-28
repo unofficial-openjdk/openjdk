@@ -78,8 +78,9 @@ class SourceChannelImpl
         return fdVal;
     }
 
-    SourceChannelImpl(SelectorProvider sp, FileDescriptor fd) {
+    SourceChannelImpl(SelectorProvider sp, FileDescriptor fd) throws IOException {
         super(sp);
+        IOUtil.configureBlocking(fd, false);
         this.fd = fd;
         this.fdVal = IOUtil.fdVal(fd);
     }
@@ -107,8 +108,12 @@ class SourceChannelImpl
                 assert state == ST_CLOSING;
                 long th = thread;
                 if (th != 0) {
-                    nd.preClose(fd);
-                    NativeThread.signal(th);
+                    if (NativeThread.isFiber(th)) {
+                        Poller.stopPoll(fdVal);
+                    } else {
+                        nd.preClose(fd);
+                        NativeThread.signal(th);
+                    }
 
                     // wait for read operation to end
                     while (thread != 0) {
@@ -252,9 +257,13 @@ class SourceChannelImpl
             int n = 0;
             try {
                 beginRead(blocking);
-                do {
-                    n = IOUtil.read(fd, dst, -1, nd);
-                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                n = IOUtil.read(fd, dst, -1, nd);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
+                    do {
+                        park(Net.POLLIN);
+                        n = IOUtil.read(fd, dst, -1, nd);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                }
             } finally {
                 endRead(blocking, n > 0);
                 assert IOStatus.check(n);
@@ -275,9 +284,13 @@ class SourceChannelImpl
             long n = 0;
             try {
                 beginRead(blocking);
-                do {
-                    n = IOUtil.read(fd, dsts, offset, length, nd);
-                } while ((n == IOStatus.INTERRUPTED) && isOpen());
+                n = IOUtil.read(fd, dsts, offset, length, nd);
+                if (n == IOStatus.UNAVAILABLE && blocking) {
+                    do {
+                        park(Net.POLLIN);
+                        n = IOUtil.read(fd, dsts, offset, length, nd);
+                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                }
             } finally {
                 endRead(blocking, n > 0);
                 assert IOStatus.check(n);
