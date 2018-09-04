@@ -103,15 +103,16 @@ public class TestHttpServer {
 
     public TestHttpServer (HttpCallback cb, int threads, int cperthread, int port)
         throws IOException {
-        schan = ServerSocketChannel.open ();
-        InetSocketAddress addr = new InetSocketAddress (port);
-        schan.socket().bind (addr);
+        schan = ServerSocketChannel.open();
+        InetSocketAddress addr = new InetSocketAddress(port);
+        schan.socket().setReuseAddress(true);
+        schan.socket().bind(addr);
         this.threads = threads;
         this.cb = cb;
         this.cperthread = cperthread;
-        servers = new Server [threads];
+        servers = new Server[threads];
         for (int i=0; i<threads; i++) {
-            servers[i] = new Server (cb, schan, cperthread);
+            servers[i] = new Server(cb, schan, cperthread);
             servers[i].start();
         }
     }

@@ -37,11 +37,14 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
 import jdk.internal.misc.TerminatingThreadLocal;
 import jdk.internal.misc.Unsafe;
 import sun.security.action.GetPropertyAction;
 
 public class Util {
+    private static JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
     // -- Caches --
 
@@ -227,7 +230,7 @@ public class Util {
             return ByteBuffer.allocateDirect(size);
         }
 
-        BufferCache cache = bufferCache.get();
+        BufferCache cache = JLA.getCarrierThreadLocal(bufferCache);
         ByteBuffer buf = cache.get(size);
         if (buf != null) {
             return buf;
@@ -254,7 +257,7 @@ public class Util {
                     .alignedSlice(alignment);
         }
 
-        BufferCache cache = bufferCache.get();
+        BufferCache cache = JLA.getCarrierThreadLocal(bufferCache);
         ByteBuffer buf = cache.get(size);
         if (buf != null) {
             if (buf.alignmentOffset(0, alignment) == 0) {
@@ -291,7 +294,7 @@ public class Util {
         }
 
         assert buf != null;
-        BufferCache cache = bufferCache.get();
+        BufferCache cache = JLA.getCarrierThreadLocal(bufferCache);
         if (!cache.offerFirst(buf)) {
             // cache is full
             free(buf);
@@ -313,7 +316,7 @@ public class Util {
         }
 
         assert buf != null;
-        BufferCache cache = bufferCache.get();
+        BufferCache cache = JLA.getCarrierThreadLocal(bufferCache);
         if (!cache.offerLast(buf)) {
             // cache is full
             free(buf);

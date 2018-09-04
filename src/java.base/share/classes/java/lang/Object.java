@@ -349,7 +349,21 @@ public class Object {
      * @see    #wait()
      * @see    #wait(long, int)
      */
-    public final native void wait(long timeoutMillis) throws InterruptedException;
+    public final void wait(long timeoutMillis) throws InterruptedException {
+        try {
+            wait0(timeoutMillis);
+        } catch (InterruptedException e) {
+            Strand s = Strand.currentStrand();
+            if (s instanceof Fiber) {
+                // clear shadow thread's interrupt status
+                ((Fiber)s).shadowThread().getAndClearInterrupt();
+            }
+            throw e;
+        }
+    }
+
+    // final modifier so method not in vtable
+    private final native void wait0(long timeoutMillis) throws InterruptedException;
 
     /**
      * Causes the current thread to wait until it is awakened, typically

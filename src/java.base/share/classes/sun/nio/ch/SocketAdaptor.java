@@ -44,7 +44,9 @@ import java.nio.channels.IllegalBlockingModeException;
 import java.nio.channels.SocketChannel;
 import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
-import static java.util.concurrent.TimeUnit.*;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 // Make a socket channel look like a socket.
 //
@@ -112,23 +114,21 @@ class SocketAdaptor
                     } catch (ClosedChannelException e) { }
                 }
 
-                long timeoutNanos = NANOSECONDS.convert(timeout, MILLISECONDS);
-                long to = timeout;
+                long nanos = NANOSECONDS.convert(timeout, MILLISECONDS);
                 for (;;) {
                     long startTime = System.nanoTime();
-                    if (sc.pollConnected(to)) {
+                    if (sc.pollConnected(nanos)) {
                         boolean connected = sc.finishConnect();
                         assert connected;
                         break;
                     }
-                    timeoutNanos -= System.nanoTime() - startTime;
-                    if (timeoutNanos <= 0) {
+                    nanos -= System.nanoTime() - startTime;
+                    if (nanos <= 0) {
                         try {
                             sc.close();
                         } catch (IOException x) { }
                         throw new SocketTimeoutException();
                     }
-                    to = MILLISECONDS.convert(timeoutNanos, NANOSECONDS);
                 }
 
             } catch (Exception x) {
@@ -206,13 +206,12 @@ class SocketAdaptor
                 long timeoutNanos = NANOSECONDS.convert(to, MILLISECONDS);
                 for (;;) {
                     long startTime = System.nanoTime();
-                    if (sc.pollRead(to)) {
+                    if (sc.pollRead(timeoutNanos)) {
                         return sc.read(bb);
                     }
                     timeoutNanos -= System.nanoTime() - startTime;
                     if (timeoutNanos <= 0)
                         throw new SocketTimeoutException();
-                    to = MILLISECONDS.convert(timeoutNanos, NANOSECONDS);
                 }
             }
         }

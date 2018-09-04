@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,32 +23,36 @@
  * questions.
  */
 
-package sun.nio.ch;
+package java.lang;
 
+import jdk.internal.vm.annotation.ForceInline;
 
-// Signalling operations on native threads
+/**
+ * A sequence of computer instructions executed sequentially, either a {@code
+ * Thread} or a light weight {@code Fiber}.
+ *
+ * @apiNote This is a class rather than an interface for now. The constructor is
+ * not public (or protected) so that it can't be extended outside of the java.lang
+ * package.
+ */
 
+public class Strand {
+    Strand() { }
 
-class NativeThread {
+    // thread or fiber locals, maintained by ThreadLocal
+    ThreadLocal.ThreadLocalMap locals;
 
-    static long current() {
-        return 0;
+    /**
+     * Returns the currently executing strand. If executed from a running fiber
+     * then the {@link Fiber} object will be returned, otherwise the {@code
+     * Thread} object.
+     *
+     * @return  the currently executing strand
+     */
+    @ForceInline
+    public static Strand currentStrand() {
+        Thread thread = Thread.currentCarrierThread();
+        Fiber fiber = thread.getFiber();
+        return (fiber != null) ? fiber : thread;
     }
-
-    static long currentKernelThread() {
-        return 0;
-    }
-
-    static boolean isLightweight(long tid) {
-        return false;
-    }
-
-    static boolean isKernelThread(long tid) {
-        return false;
-    }
-
-    static void signal(long tid) {
-        throw new UnsupportedOperationException();
-    }
-
 }

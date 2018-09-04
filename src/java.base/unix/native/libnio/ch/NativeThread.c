@@ -77,7 +77,7 @@ Java_sun_nio_ch_NativeThread_init(JNIEnv *env, jclass cl)
 }
 
 JNIEXPORT jlong JNICALL
-Java_sun_nio_ch_NativeThread_current(JNIEnv *env, jclass cl)
+Java_sun_nio_ch_NativeThread_current0(JNIEnv *env, jclass cl)
 {
 #ifdef __solaris__
     return (jlong)thr_self();
@@ -87,7 +87,7 @@ Java_sun_nio_ch_NativeThread_current(JNIEnv *env, jclass cl)
 }
 
 JNIEXPORT void JNICALL
-Java_sun_nio_ch_NativeThread_signal(JNIEnv *env, jclass cl, jlong thread)
+Java_sun_nio_ch_NativeThread_signal0(JNIEnv *env, jclass cl, jlong thread)
 {
     int ret;
 #ifdef __solaris__
