@@ -76,11 +76,6 @@
 #include "utilities/growableArray.hpp"
 #include "utilities/macros.hpp"
 #include "utilities/ostream.hpp"
-#include "utilities/ticks.hpp"
-#if INCLUDE_JFR
-#include "jfr/jfr.hpp"
-#include "jfr/jfrEvents.hpp"
-#endif
 
 volatile size_t ClassLoaderDataGraph::_num_array_classes = 0;
 volatile size_t ClassLoaderDataGraph::_num_instance_classes = 0;
@@ -655,7 +650,7 @@ Dictionary* ClassLoaderData::create_dictionary() {
     size = _default_loader_dictionary_size;
     resizable = true;
   }
-  if (!DynamicallyResizeSystemDictionaries || DumpSharedSpaces || UseSharedSpaces) {
+  if (!DynamicallyResizeSystemDictionaries || DumpSharedSpaces) {
     resizable = false;
   }
   return new Dictionary(this, size, resizable);
@@ -1254,15 +1249,6 @@ void ClassLoaderDataGraph::dictionary_classes_do(void f(InstanceKlass*, TRAPS), 
   }
 }
 
-// Walks all entries in the dictionary including entries initiated by this class loader.
-void ClassLoaderDataGraph::dictionary_all_entries_do(void f(InstanceKlass*, ClassLoaderData*)) {
-  Thread* thread = Thread::current();
-  FOR_ALL_DICTIONARY(cld) {
-    Handle holder(thread, cld->holder_phantom());
-    cld->dictionary()->all_entries_do(f);
-  }
-}
-
 void ClassLoaderDataGraph::verify_dictionary() {
   FOR_ALL_DICTIONARY(cld) {
     cld->dictionary()->verify();
@@ -1325,29 +1311,6 @@ bool ClassLoaderDataGraph::contains_loader_data(ClassLoaderData* loader_data) {
 }
 #endif // PRODUCT
 
-#if INCLUDE_JFR
-static Ticks class_unload_time;
-static void post_class_unload_event(Klass* const k) {
-  assert(k != NULL, "invariant");
-  EventClassUnload event(UNTIMED);
-  event.set_endtime(class_unload_time);
-  event.set_unloadedClass(k);
-  event.set_definingClassLoader(k->class_loader_data());
-  event.commit();
-}
-
-static void post_class_unload_events() {
-  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint!");
-  if (Jfr::is_enabled()) {
-    if (EventClassUnload::is_enabled()) {
-      class_unload_time = Ticks::now();
-      ClassLoaderDataGraph::classes_unloading_do(&post_class_unload_event);
-    }
-    Jfr::on_unloading_classes();
-  }
-}
-#endif // INCLUDE_JFR
-
 // Move class loader data from main list to the unloaded list for unloading
 // and deallocation later.
 bool ClassLoaderDataGraph::do_unloading(bool do_cleaning) {
@@ -1389,10 +1352,6 @@ bool ClassLoaderDataGraph::do_unloading(bool do_cleaning) {
     }
     dead->set_next(_unloading);
     _unloading = dead;
-  }
-
-  if (seen_dead_loader) {
-    JFR_ONLY(post_class_unload_events();)
   }
 
   log_debug(class, loader, data)("do_unloading: loaders processed %u, loaders removed %u", loaders_processed, loaders_removed);

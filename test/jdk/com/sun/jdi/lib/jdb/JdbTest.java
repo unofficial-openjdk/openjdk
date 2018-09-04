@@ -23,6 +23,8 @@
 
 package lib.jdb;
 
+import jdk.test.lib.process.OutputAnalyzer;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -63,7 +65,9 @@ public abstract class JdbTest {
     protected abstract void runCases();
 
     protected void shutdown() {
-        jdb.shutdown();
+        if (jdb != null) {
+            jdb.shutdown();
+        }
     }
 
     protected static final String lineSeparator = System.getProperty("line.separator");
@@ -109,4 +113,8 @@ public abstract class JdbTest {
         return setBreakpoints(jdb, debuggeeClass, debuggeeSourcePath, id);
     }
 
+    protected OutputAnalyzer execCommand(JdbCommand cmd) {
+        List<String> reply = jdb.command(cmd);
+        return new OutputAnalyzer(reply.stream().collect(Collectors.joining(lineSeparator)));
+    }
 }

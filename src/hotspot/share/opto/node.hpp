@@ -108,6 +108,7 @@ class MachSafePointNode;
 class MachSpillCopyNode;
 class MachTempNode;
 class MachMergeNode;
+class MachMemBarNode;
 class Matcher;
 class MemBarNode;
 class MemBarStoreStoreNode;
@@ -660,6 +661,7 @@ public:
       DEFINE_CLASS_ID(MachConstant,     Mach, 5)
         DEFINE_CLASS_ID(MachJump,       MachConstant, 0)
       DEFINE_CLASS_ID(MachMerge,        Mach, 6)
+      DEFINE_CLASS_ID(MachMemBar,       Mach, 7)
 
     DEFINE_CLASS_ID(Type,  Node, 2)
       DEFINE_CLASS_ID(Phi,   Type, 0)
@@ -854,6 +856,7 @@ public:
   DEFINE_CLASS_QUERY(MachSafePoint)
   DEFINE_CLASS_QUERY(MachSpillCopy)
   DEFINE_CLASS_QUERY(MachTemp)
+  DEFINE_CLASS_QUERY(MachMemBar)
   DEFINE_CLASS_QUERY(MachMerge)
   DEFINE_CLASS_QUERY(Mem)
   DEFINE_CLASS_QUERY(MemBar)
