@@ -2150,6 +2150,7 @@ class Threads: AllStatic {
   static int         _thread_claim_parity;
 #ifdef ASSERT
   static bool        _vm_complete;
+  static size_t      _threads_before_barrier_set;
 #endif
 
   static void initialize_java_lang_classes(JavaThread* main_thread, TRAPS);
@@ -2219,7 +2220,15 @@ class Threads: AllStatic {
 
 #ifdef ASSERT
   static bool is_vm_complete() { return _vm_complete; }
-#endif
+
+  static size_t threads_before_barrier_set() {
+    return _threads_before_barrier_set;
+  }
+
+  static void inc_threads_before_barrier_set() {
+    ++_threads_before_barrier_set;
+  }
+#endif // ASSERT
 
   // Verification
   static void verify();

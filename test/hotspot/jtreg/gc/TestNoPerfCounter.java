@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,14 +19,18 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#include "precompiled.hpp"
-#include "utilities/errorReporter.hpp"
+/* @test TestNoPerfCounter
+ * @bug 8210265
+ * @requires vm.gc=="null"
+ * @library /test/lib /
+ * @summary Tests that disabling perf counters does not crash the VM
+ * @run main/othervm -XX:-UsePerfData TestNoPerfCounter
+ */
 
-ErrorReporter::ErrorReporter() {}
-
-void ErrorReporter::call(FILE* fd, char* buffer, int length) {
+public class TestNoPerfCounter {
+    public static void main(String[] args) throws Exception {
+        // Nothing to do
+    }
 }
-
