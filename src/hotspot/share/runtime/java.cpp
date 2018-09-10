@@ -334,7 +334,7 @@ void print_statistics() {
     klassVtable::print_statistics();
     klassItable::print_statistics();
   }
-  if (VerifyOops) {
+  if (VerifyOops && Verbose) {
     tty->print_cr("+VerifyOops count: %d", StubRoutines::verify_oop_count());
   }
 
@@ -347,6 +347,7 @@ void print_statistics() {
 
   if (PrintSystemDictionaryAtExit) {
     ResourceMark rm;
+    MutexLocker mcld(ClassLoaderDataGraph_lock);
     SystemDictionary::print();
     ClassLoaderDataGraph::print();
   }
@@ -499,6 +500,7 @@ void before_exit(JavaThread* thread) {
     Universe::print_on(&ls_info);
     if (log.is_trace()) {
       LogStream ls_trace(log.trace());
+      MutexLocker mcld(ClassLoaderDataGraph_lock);
       ClassLoaderDataGraph::print_on(&ls_trace);
     }
   }
