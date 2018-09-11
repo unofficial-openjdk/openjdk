@@ -1225,6 +1225,15 @@ JVM_GetTemporaryDirectory(JNIEnv *env);
 JNIEXPORT jobjectArray JNICALL
 JVM_GetEnclosingMethodInfo(JNIEnv* env, jclass ofClass);
 
+/* Fiber support.
+ */
+JNIEXPORT void JNICALL
+JVM_FiberMount(JNIEnv* env, jclass fiberClass, jobject carrierThread, jobject fiber);
+
+JNIEXPORT void JNICALL
+JVM_FiberUnmount(JNIEnv* env, jclass fiberClass, jobject carrierThread, jobject fiber);
+
+
 /* =========================================================================
  * The following defines a private JVM interface that the JDK can query
  * for the JVM version and capabilities.  sun.misc.Version defines

@@ -3785,3 +3785,11 @@ JVM_END
 JVM_ENTRY_NO_ENV(jint, JVM_FindSignal(const char *name))
   return os::get_signal_number(name);
 JVM_END
+
+JVM_ENTRY(void, JVM_FiberMount(JNIEnv* env, jclass fiberClass, jobject carrierThread, jobject fiber))
+  JVMWrapper("JVM_FiberMount");
+JVM_END
+
+JVM_ENTRY(void, JVM_FiberUnmount(JNIEnv* env, jclass fiberClass, jobject carrierThread, jobject fiber))
+  JVMWrapper("JVM_FiberUnmount");
+JVM_END

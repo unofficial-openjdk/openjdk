@@ -1897,6 +1897,34 @@ void java_lang_ThreadGroup::serialize_offsets(SerializeClosure* f) {
 }
 #endif
 
+
+// java_lang_Fiber
+
+int java_lang_Fiber::static_notify_mount_events_offset = 0;
+
+int java_lang_Fiber::notify_mount_events_offset_in_bytes() { return static_notify_mount_events_offset; }
+
+#define FIBER_FIELDS_DO(macro) \
+  macro(static_notify_mount_events_offset,  k, "notifyMountEvents",  bool_signature, true)
+
+void java_lang_Fiber::compute_offsets() {
+  InstanceKlass* k = SystemDictionary::Fiber_klass();
+  FIBER_FIELDS_DO(FIELD_COMPUTE_OFFSET);
+}
+
+#if INCLUDE_CDS
+void java_lang_Fiber::serialize_offsets(SerializeClosure* f) {
+   FIBER_FIELDS_DO(FIELD_SERIALIZE_OFFSET);
+}
+#endif
+
+void java_lang_Fiber::set_notify_mount_events(jboolean enable) {
+  InstanceKlass* ik = SystemDictionary::Fiber_klass();
+  oop base = ik->static_field_base_raw();
+  base->release_bool_field_put(static_notify_mount_events_offset, enable);
+}
+
+
 #define THROWABLE_FIELDS_DO(macro) \
   macro(backtrace_offset,     k, "backtrace",     object_signature,                  false); \
   macro(detailMessage_offset, k, "detailMessage", string_signature,                  false); \

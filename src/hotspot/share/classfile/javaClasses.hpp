@@ -58,6 +58,7 @@
   f(java_lang_Throwable) \
   f(java_lang_Thread) \
   f(java_lang_ThreadGroup) \
+  f(java_lang_Fiber) \
   f(java_lang_AssertionStatusDirectives) \
   f(java_lang_ref_SoftReference) \
   f(java_lang_invoke_MethodHandle) \
@@ -492,6 +493,19 @@ class java_lang_ThreadGroup : AllStatic {
   friend class JavaClasses;
 };
 
+
+// Interface to java.lang.Fiber objects
+
+class java_lang_Fiber : AllStatic {
+ private:
+  static int static_notify_mount_events_offset;
+ public:
+  static void compute_offsets();
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
+
+  static int notify_mount_events_offset_in_bytes();
+  static void set_notify_mount_events(jboolean enable);
+};
 
 
 // Interface to java.lang.Throwable objects

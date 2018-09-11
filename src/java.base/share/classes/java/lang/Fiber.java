@@ -232,6 +232,10 @@ public final class Fiber extends Strand {
 
         // set the fiber so that Thread.currentThread() returns the Fiber object
         t.setFiber(this);
+
+        if (notifyMountEvents) {
+            notifyMount(t, this);
+        }
     }
 
     /**
@@ -248,6 +252,10 @@ public final class Fiber extends Strand {
         // notify shadow thread so that interrupt status is cleared
         ShadowThread st = this.shadowThread;
         if (st != null) st.onUnmount(t);
+
+        if (notifyMountEvents) {
+            notifyUnmount(t, this);
+        }
     }
 
     /**
@@ -718,6 +726,16 @@ public final class Fiber extends Strand {
 
     private boolean parkPermitGetAndSet(boolean newValue) {
         return (boolean) PARK_PERMIT.getAndSet(this, newValue);
+    }
+
+    // -- JVM TI support --
+
+    private static volatile boolean notifyMountEvents;  // set by VM
+    private static native void notifyMount(Thread t, Fiber f);
+    private static native void notifyUnmount(Thread t, Fiber f);
+    private static native void registerNatives();
+    static {
+        registerNatives();
     }
 
     /**

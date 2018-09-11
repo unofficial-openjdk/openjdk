@@ -193,3 +193,7 @@ JVM_AddModuleExportsToAllUnnamed
 JVM_AddReadsModule
 JVM_DefineModule
 JVM_SetBootLoaderUnnamedModule
+
+# Fiber support
+JVM_FiberMount
+JVM_FiberUnmount
