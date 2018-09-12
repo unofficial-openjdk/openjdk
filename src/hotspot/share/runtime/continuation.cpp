@@ -2620,8 +2620,8 @@ void Continuations::nmethod_hit() {
 }
 
 void Continuations::print_statistics() {
-  tty->print_cr("Continuations hit/miss %ld / %ld", _exploded_hit, _exploded_miss);
-  tty->print_cr("Continuations nmethod hit/miss %ld / %ld", _nmethod_hit, _nmethod_miss);
+  //tty->print_cr("Continuations hit/miss %ld / %ld", _exploded_hit, _exploded_miss);
+  //tty->print_cr("Continuations nmethod hit/miss %ld / %ld", _nmethod_hit, _nmethod_miss);
 }
 
 JVM_ENTRY(void, CONT_Clean(JNIEnv* env, jobject jcont)) {
