@@ -197,6 +197,7 @@ public class Continuation {
     /**
      * TBD
      */
+    @HotSpotIntrinsicCandidate
     @DontInline
     private void enter() {
         // This method runs in the "entry frame".
