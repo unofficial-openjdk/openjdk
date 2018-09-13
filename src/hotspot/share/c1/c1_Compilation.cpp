@@ -421,6 +421,7 @@ void Compilation::install_code(int frame_size) {
     implicit_exception_table(),
     compiler(),
     has_unsafe_access(),
+    has_monitors(),
     SharedRuntime::is_wide_vector(max_vector_size())
   );
 }
@@ -558,6 +559,7 @@ Compilation::Compilation(AbstractCompiler* compiler, ciEnv* env, ciMethod* metho
 , _would_profile(false)
 , _has_method_handle_invokes(false)
 , _has_reserved_stack_access(method->has_reserved_stack_access())
+, _has_monitors(false)
 , _bailout_msg(NULL)
 , _exception_info_list(NULL)
 , _allocator(NULL)

@@ -1842,9 +1842,6 @@ JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
 
   HandleMark hm(thread);
 
-  // call here, when we know we can handle safepoints, to initialize Continuation::_entry_method
-  // potentially racy, but benign
-  Continuation::entry_method(thread);
   if (thread->has_pending_exception()) {
     fi->fp = NULL; fi->sp = NULL; fi->pc = NULL;
     log_trace(jvmcont)("=== end of freeze (fail 0)");
@@ -2381,28 +2378,13 @@ JRT_LEAF(void, Continuation::thaw(FrameInfo* fi, bool return_barrier))
   thaw1(JavaThread::current(), fi, return_barrier);
 JRT_END
 
-Method* Continuation::_entry_method = NULL;
-
-Method* Continuation::entry_method(Thread* THREAD) {
-  if (_entry_method == NULL) {
-    CallInfo callinfo;
-    Klass* recvrKlass = SystemDictionary::resolve_or_null(vmSymbols::java_lang_Continuation(), THREAD); // SystemDictionary::Continuation_klass();
-    LinkInfo link_info(recvrKlass, vmSymbols::enter_name(), vmSymbols::continuationEnter_signature());
-    LinkResolver::resolve_special_call(callinfo, Handle(), link_info, THREAD);
-    methodHandle method = callinfo.selected_method();
-    assert(method.not_null(), "should have thrown exception");
-    _entry_method = method();
-  }
-  return _entry_method;
-}
-
 bool Continuation::is_continuation_entry_frame(const frame& f) {
   Method* m = frame_method(f);
   if (m == NULL)
     return false;
 
   // we can do this because the entry frame is never inlined
-  return m == _entry_method;
+  return m->intrinsic_id() == vmIntrinsics::_Continuation_enter;
 }
 // When walking the virtual stack, this method returns true
 // iff the frame is a thawed continuation frame whose
@@ -2620,8 +2602,8 @@ void Continuations::nmethod_hit() {
 }
 
 void Continuations::print_statistics() {
-  tty->print_cr("Continuations hit/miss %ld / %ld", _exploded_hit, _exploded_miss);
-  tty->print_cr("Continuations nmethod hit/miss %ld / %ld", _nmethod_hit, _nmethod_miss);
+  //tty->print_cr("Continuations hit/miss %ld / %ld", _exploded_hit, _exploded_miss);
+  //tty->print_cr("Continuations nmethod hit/miss %ld / %ld", _nmethod_hit, _nmethod_miss);
 }
 
 JVM_ENTRY(void, CONT_Clean(JNIEnv* env, jobject jcont)) {

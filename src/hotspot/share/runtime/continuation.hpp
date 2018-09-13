@@ -52,10 +52,6 @@ public:
 };
 
 class Continuation : AllStatic {
-private:
-  static Method* _entry_method;
-  static Method* entry_method(Thread*);
-
 public:
   static int freeze(JavaThread* thread, FrameInfo* fi);
   static int prepare_thaw(FrameInfo* fi, bool return_barrier);

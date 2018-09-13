@@ -370,6 +370,7 @@ public:
                        AbstractCompiler*         compiler,
                        bool                      has_unsafe_access,
                        bool                      has_wide_vectors,
+                       bool                      has_monitors,
                        RTMState                  rtm_state = NoRTM);
 
 

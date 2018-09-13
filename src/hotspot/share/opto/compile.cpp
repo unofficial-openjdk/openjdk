@@ -946,6 +946,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                            compiler,
                            has_unsafe_access(),
                            SharedRuntime::is_wide_vector(max_vector_size()),
+                           has_monitors(),
                            rtm_state()
                            );
 
@@ -1133,6 +1134,7 @@ void Compile::Init(int aliaslevel) {
   set_do_method_data_update(false);
 
   set_do_vector_loop(false);
+  set_has_monitors(false);
 
   if (AllowVectorizeOnDemand) {
     if (has_method() && (_directive->VectorizeOption || _directive->VectorizeDebugOption)) {

@@ -162,6 +162,7 @@ protected:
   unsigned int _has_method_handle_invokes:1; // Has this method MethodHandle invokes?
   unsigned int _lazy_critical_native:1;      // Lazy JNI critical native
   unsigned int _has_wide_vectors:1;          // Preserve wide vectors at safepoints
+  unsigned int _has_monitors:1;              // Fastpath monitor detection for continuations
 
   ContinuationProfiling _continuationProfiling;
   Method*   _method;
@@ -195,6 +196,9 @@ public:
 
   bool  has_wide_vectors() const                  { return _has_wide_vectors; }
   void  set_has_wide_vectors(bool z)              { _has_wide_vectors = z; }
+
+  bool  has_monitors() const                      { return _has_monitors; }
+  void  set_has_monitors(bool z)                  { _has_monitors = z; }
 
   enum { not_installed = -1, // in construction, only the owner doing the construction is
                              // allowed to advance state
