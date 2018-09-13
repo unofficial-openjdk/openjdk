@@ -1048,6 +1048,8 @@ class java_lang_Continuation: AllStatic {
   static inline oop parent(oop ref);
   static inline typeArrayOop stack(oop ref);
   static inline objArrayOop refStack(oop ref);
+  static inline void set_stack(oop obj, oop value);
+  static inline void set_refStack(oop obj, oop value);
   static inline jlong fp(oop ref);
   static inline void set_fp(oop ref, const jlong i);
   static inline jint sp(oop ref);

@@ -149,6 +149,12 @@ inline objArrayOop java_lang_Continuation::refStack(oop ref) {
   oop a = ref->obj_field(_refStack_offset);
   return (objArrayOop)a;
 }
+inline void java_lang_Continuation::set_stack(oop ref, oop value) {
+  ref->obj_field_put(_stack_offset, value);
+}
+inline void java_lang_Continuation::set_refStack(oop ref, oop value) {
+  ref->obj_field_put(_refStack_offset, value);
+}
 inline jlong java_lang_Continuation::fp(oop ref) {
   return ref->long_field(_fp_offset);
 }
