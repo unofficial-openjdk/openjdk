@@ -359,8 +359,8 @@ HeapWord* MemAllocator::allocate_inside_tlab_slow(Allocation& allocation) const 
   return mem;
 }
 
-HeapWord* MemAllocator::mem_allocate(Allocation& allocation) const {
-  if (UseTLAB) {
+HeapWord* MemAllocator::mem_allocate(Allocation& allocation, bool try_tlab) const {
+  if (UseTLAB && try_tlab) {
     HeapWord* result = allocate_inside_tlab(allocation);
     if (result != NULL) {
       return result;
@@ -370,11 +370,11 @@ HeapWord* MemAllocator::mem_allocate(Allocation& allocation) const {
   return allocate_outside_tlab(allocation);
 }
 
-oop MemAllocator::allocate() const {
+oop MemAllocator::allocate(bool try_tlab) const {
   oop obj = NULL;
   {
     Allocation allocation(*this, &obj);
-    HeapWord* mem = mem_allocate(allocation);
+    HeapWord* mem = mem_allocate(allocation, try_tlab);
     if (mem != NULL) {
       obj = initialize(mem);
     }

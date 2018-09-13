@@ -29,6 +29,8 @@
 #include "code/scopeDesc.hpp"
 #include "code/vmreg.inline.hpp"
 #include "jfr/jfrEvents.hpp"
+#include "gc/shared/memAllocator.hpp"
+#include "gc/shared/threadLocalAllocBuffer.inline.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/linkResolver.hpp"
 #include "interpreter/oopMapCache.hpp"
@@ -100,6 +102,8 @@ struct HFrameMetadata {
 #define ELEM_SIZE sizeof(jint) // stack is int[]
 static inline int to_index(size_t x) { return x >> 2; } // stack is int[]
 static inline int to_bytes(int x)    { return x << 2; } // stack is int[]
+
+#define METADATA_ELEMENTS (METADATA_SIZE / ELEM_SIZE)
 
 static const unsigned char FLAG_LAST_FRAME_INTERPRETED = 1;
 
@@ -331,6 +335,19 @@ private:
   inline int fix_write_index_after_write(int index);
   inline int fix_index_after_write(int index, int old_length, int new_length);
 
+  int ensure_capacity(int old, int min);
+
+  oop raw_allocate(Klass* klass, const size_t words, const size_t elements, bool zero);
+  oop allocate_stack_array(const size_t elements);
+  oop allocate_refstack_array(const size_t nr_oops);
+
+  bool allocate_stack(int size);
+  bool allocate_ref_stack(int nr_oops);
+  bool allocate_stacks_in_native(int size, int oops, bool needs_stack, bool needs_refstack);
+  void allocate_stacks_in_java(int size, int oops, int frames);
+  int fix_decreasing_index(int index, int old_length, int new_length) const;
+  bool grow_stack(int new_size);
+  bool grow_ref_stack(int nr_oops);
 public:
   ContMirror(JavaThread* thread, oop cont);
 
@@ -785,6 +802,181 @@ void ContMirror::init_write_arrays(int size, int noops, int nframes) {
 // #endif
 }
 
+/* try to allocate an array from the tlab, if it doesn't work allocate one using the allocate
+ * method. In the later case we might have done a safepoint and need to reload our oops */
+oop ContMirror::raw_allocate(Klass* klass, const size_t size_in_words, const size_t elements, bool zero) {
+  ThreadLocalAllocBuffer& tlab = _thread->tlab();
+  HeapWord* start = tlab.allocate(size_in_words);
+
+  ObjArrayAllocator allocator(klass, size_in_words, elements, /* do_zero */ zero);
+  if (start == NULL) {
+    HandleMark hm(_thread);
+    Handle conth(_thread, _cont);
+    oop result = allocator.allocate(/* use_tlab */ false);
+    _cont = conth();  // reload oop after java call
+    _stack = java_lang_Continuation::stack(_cont);
+    _ref_stack = java_lang_Continuation::refStack(_cont);
+    return result;
+  }
+
+  return allocator.initialize(start);
+}
+
+oop ContMirror::allocate_stack_array(size_t elements) {
+  assert(elements > 0, "");
+
+  TypeArrayKlass* klass = TypeArrayKlass::cast(Universe::intArrayKlassObj());
+  const size_t size_in_words = typeArrayOopDesc::object_size(klass, elements);
+  return raw_allocate(klass, size_in_words, elements, false);
+}
+
+oop ContMirror::allocate_refstack_array(const size_t nr_oops) {
+  assert(nr_oops > 0, "");
+
+  ArrayKlass* klass = ArrayKlass::cast(Universe::objectArrayKlassObj());
+  const size_t size_in_words = objArrayOopDesc::object_size(nr_oops);
+  return raw_allocate(klass, size_in_words, nr_oops, true);
+}
+
+int ContMirror::fix_decreasing_index(int index, int old_length, int new_length) const {
+  return new_length - (old_length - index);
+}
+
+bool ContMirror::grow_stack(int new_size) {
+  new_size = new_size >> 2; // convert to number of elements 
+
+  int old_length = _stack_length;
+  int offset = _sp > 0 ? _sp - METADATA_ELEMENTS : old_length;
+  int min_length = (old_length - offset) + new_size;
+
+  if (min_length <= old_length) {
+    return false;
+  }
+
+  int new_length = ensure_capacity(old_length, min_length);
+  if (new_length == -1) {
+    return false;
+  }
+
+  oop new_stack = allocate_stack_array(new_length);
+  if (new_stack == NULL) {
+    return false;
+  }
+
+  int n = old_length - offset;
+  assert(new_length > n, "");
+  if (n > 0) {
+    ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(_stack, offset * 4, arrayOop(new_stack), (new_length - n) * 4, n);
+  }
+
+  _stack = typeArrayOop(new_stack);
+  _sp = fix_decreasing_index(_sp, old_length, new_length);
+  _stack_length = new_length;
+  return true;
+}
+
+int ContMirror::ensure_capacity(int old, int min) {
+  int newsize = old + (old >> 1);
+  if (newsize - min <= 0) {
+    if (min < 0) { // overflow
+      return -1;
+    }
+    return min;
+  }
+  return newsize;
+}
+
+bool ContMirror::grow_ref_stack(int nr_oops) {
+  int old_length = _ref_stack->length();
+  assert(old_length == _ref_sp, "check"); // this assert is just a check to see if this ever happens and not to enforce behaviour
+
+  int min_length = (old_length - _ref_sp) + nr_oops;
+  int new_length = ensure_capacity(old_length, min_length);
+  if (new_length == -1) {
+    return false;
+  }
+  oop new_ref_stack = allocate_refstack_array(new_length);
+
+  if (new_ref_stack == NULL) {
+    return false;
+  }
+
+  int n = old_length - _ref_sp;
+  if (n > 0) {
+    assert(false, "");
+    ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(_ref_stack, _ref_sp * heapOopSize, arrayOop(new_ref_stack), (new_length - n) * heapOopSize, n);
+  }
+
+  _ref_stack = objArrayOop(new_ref_stack);
+  _ref_sp = fix_decreasing_index(_ref_sp, old_length, new_length);
+  return true;
+}
+
+bool ContMirror::allocate_stack(int size) {
+  int elements = size >> 2;
+  oop result = allocate_stack_array(elements);
+  if (result == NULL) {
+    return false;
+  }
+
+  _stack = typeArrayOop(result);
+  _sp = elements + METADATA_ELEMENTS;
+  _stack_length = elements;
+
+  return true;
+}
+
+bool ContMirror::allocate_ref_stack(int nr_oops) {
+  oop result = allocate_refstack_array(nr_oops);
+  if (result == NULL) {
+    return false;
+  }
+  _ref_stack = objArrayOop(result);
+  _ref_sp = nr_oops;
+
+  return true;
+}
+
+bool ContMirror::allocate_stacks_in_native(int size, int oops, bool needs_stack, bool needs_refstack) {
+ /* if (!UseNewCode3) {
+    return false;
+  } */
+
+  if (needs_stack) {
+
+    if (_stack == NULL) {
+      if (!allocate_stack(size)) {
+        return false;
+      } 
+    } else {
+      if (!grow_stack(size)) {
+        return false;
+      }
+    }
+
+    java_lang_Continuation::set_stack(_cont, _stack);
+    java_lang_Continuation::set_sp(_cont, _sp);
+
+  }
+
+  if (needs_refstack) {
+    if (_ref_stack == NULL) {
+      if (!allocate_ref_stack(oops)) {
+        return false;
+      }
+    } else {
+      if (!grow_ref_stack(oops)) {
+        return false;
+      }
+    }
+    java_lang_Continuation::set_refStack(_cont, _ref_stack);
+    java_lang_Continuation::set_refSP(_cont, _ref_sp);
+  }
+
+  return true;
+}
+
+
 void ContMirror::allocate_stacks(int size, int oops, int frames) {
   bool needs_stack_allocation = (_stack == NULL || to_index(size) > (_sp >= 0 ? _sp - to_index(METADATA_SIZE) : _stack_length));
   log_trace(jvmcont)("stack size: %d (int): %d sp: %d stack_length: %d needs alloc: %d", size, to_index(size), _sp, _stack_length, needs_stack_allocation);
@@ -799,8 +991,36 @@ void ContMirror::allocate_stacks(int size, int oops, int frames) {
   if (!(needs_stack_allocation | needs_refStack_allocation))
     return;
 
-  log_trace(jvmcont)("allocating stacks");
+  int old_stack_length = _stack_length;
+  int old_sp = _sp;
 
+  if (!allocate_stacks_in_native(size, oops, needs_stack_allocation, needs_refStack_allocation)) {
+    allocate_stacks_in_java(size, oops, frames);
+  }
+
+  /* Update some stack based values */
+  _stack_length = _stack->length();
+  _sp = (old_stack_length <= 0 || _sp < 0) ? _stack_length + to_index(METADATA_SIZE) : _stack_length - (old_stack_length - old_sp);
+  _hstack = (int*)_stack->base(T_INT);
+
+  if (Interpreter::contains(_pc)) {// only interpreter frames use relative (index) fp
+    _fp = _stack_length - (old_stack_length - _fp);
+    java_lang_Continuation::set_fp(_cont, _fp);
+  }
+
+  // These assertions aren't important, as we'll overwrite the Java-computed ones, but they're just to test that the Java computation is OK.
+  assert(_pc == java_lang_Continuation::pc(_cont), "_pc: " INTPTR_FORMAT "  this.pc: " INTPTR_FORMAT "",  p2i(_pc), p2i(java_lang_Continuation::pc(_cont)));
+  assert(_sp == java_lang_Continuation::sp(_cont), "_sp: %d  this.sp: %d",  _sp, java_lang_Continuation::sp(_cont));
+  assert(_fp == java_lang_Continuation::fp(_cont), "_fp: %ld this.fp: %ld %d %d", _fp, java_lang_Continuation::fp(_cont), Interpreter::contains(_pc), is_flag(FLAG_LAST_FRAME_INTERPRETED));
+
+  if (!thread()->has_pending_exception()) return;
+
+  assert (to_bytes(_stack_length) >= size, "sanity check: stack_size: %d size: %d", to_bytes(_stack_length), size);
+  assert (to_bytes(_sp) - (int)METADATA_SIZE >= size, "sanity check");
+  assert (to_bytes(_ref_sp) >= oops, "oops: %d ref_sp: %d refStack length: %d", oops, _ref_sp, _ref_stack->length());
+}
+
+void ContMirror::allocate_stacks_in_java(int size, int oops, int frames) {
   int old_stack_length = _stack_length;
 
   HandleMark hm(_thread);
@@ -815,30 +1035,9 @@ void ContMirror::allocate_stacks(int size, int oops, int frames) {
   _cont = conth();  // reload oop after java call
 
   _stack = java_lang_Continuation::stack(_cont);
-  _stack_length = _stack->length();
-  _hstack = (int*)_stack->base(T_INT);
-
-  _sp = (old_stack_length <= 0 || _sp < 0) ? _stack_length + to_index(METADATA_SIZE) : _stack_length - (old_stack_length - _sp);
-  if (Interpreter::contains(_pc)) // only interpreter frames use relative (index) fp
-    _fp = _stack_length - (old_stack_length - _fp);
-
-  // These assertions aren't important, as we'll overwrite the Java-computed ones, but they're just to test that the Java computation is OK.
-  assert(_pc == java_lang_Continuation::pc(_cont), "_pc: " INTPTR_FORMAT "  this.pc: " INTPTR_FORMAT "",  p2i(_pc), p2i(java_lang_Continuation::pc(_cont)));
-  assert(_sp == java_lang_Continuation::sp(_cont), "_sp: %d  this.sp: %d",  _sp, java_lang_Continuation::sp(_cont));
-  assert(_fp == java_lang_Continuation::fp(_cont), "_fp: %ld this.fp: %ld %d %d", _fp, java_lang_Continuation::fp(_cont), Interpreter::contains(_pc), is_flag(FLAG_LAST_FRAME_INTERPRETED));
-
-  log_trace(jvmcont)("sp: %d stack_length: %d", _sp, _stack_length);
-
   _ref_stack = java_lang_Continuation::refStack(_cont);
   _ref_sp    = java_lang_Continuation::refSP(_cont);
-
-  log_trace(jvmcont)("ref_sp: %d refStack length: %d", _ref_sp, _ref_stack->length());
-
-  if (!thread()->has_pending_exception()) return;
-
-  assert (to_bytes(_stack_length) >= size, "sanity check: stack_size: %d size: %d", to_bytes(_stack_length), size);
-  assert (to_bytes(_sp) - (int)METADATA_SIZE >= size, "sanity check");
-  assert (to_bytes(_ref_sp) >= oops, "oops: %d ref_sp: %d refStack length: %d", oops, _ref_sp, _ref_stack->length());
+  /* We probably should handle OOM? */
 }
 
 void ContMirror::commit_stacks() {
