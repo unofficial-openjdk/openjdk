@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,5 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package nsk.share.test.timeoutwatchdog;
-
-/**
- * TimeoutHandler - interface to define reaction on timeout.
- * @see TimeoutWatchdoc
- */
-public interface TimeoutHandler {
-
-        /**
-         * Invoked when watchdog detects timeout. Subclasses must implement this method to define how timeout should be handled.
-         */
-        void handleTimeout();
-
+module foo {
 }

@@ -1124,6 +1124,9 @@ bool LibraryCallKit::inline_string_compareTo(StrIntrinsicNode::ArgEnc ae) {
   arg1 = must_be_not_null(arg1, true);
   arg2 = must_be_not_null(arg2, true);
 
+  arg1 = access_resolve(arg1, ACCESS_READ);
+  arg2 = access_resolve(arg2, ACCESS_READ);
+
   // Get start addr and length of first argument
   Node* arg1_start  = array_element_address(arg1, intcon(0), T_BYTE);
   Node* arg1_cnt    = load_array_length(arg1);
@@ -1150,6 +1153,9 @@ bool LibraryCallKit::inline_string_equals(StrIntrinsicNode::ArgEnc ae) {
 
     arg1 = must_be_not_null(arg1, true);
     arg2 = must_be_not_null(arg2, true);
+
+    arg1 = access_resolve(arg1, ACCESS_READ);
+    arg2 = access_resolve(arg2, ACCESS_READ);
 
     // Get start addr and length of first argument
     Node* arg1_start  = array_element_address(arg1, intcon(0), T_BYTE);
@@ -1191,6 +1197,9 @@ bool LibraryCallKit::inline_array_equals(StrIntrinsicNode::ArgEnc ae) {
   Node* arg1 = argument(0);
   Node* arg2 = argument(1);
 
+  arg1 = access_resolve(arg1, ACCESS_READ);
+  arg2 = access_resolve(arg2, ACCESS_READ);
+
   const TypeAryPtr* mtype = (ae == StrIntrinsicNode::UU) ? TypeAryPtr::CHARS : TypeAryPtr::BYTES;
   set_result(_gvn.transform(new AryEqNode(control(), memory(mtype), arg1, arg2, ae)));
   clear_upper_avx();
@@ -1217,6 +1226,7 @@ bool LibraryCallKit::inline_hasNegatives() {
   if (stopped()) {
     return true;
   }
+  ba = access_resolve(ba, ACCESS_READ);
   Node* ba_start = array_element_address(ba, offset, T_BYTE);
   Node* result = new HasNegativesNode(control(), memory(TypeAryPtr::BYTES), ba_start, len);
   set_result(_gvn.transform(result));
@@ -1287,6 +1297,9 @@ bool LibraryCallKit::inline_string_indexOf(StrIntrinsicNode::ArgEnc ae) {
   src = must_be_not_null(src, true);
   tgt = must_be_not_null(tgt, true);
 
+  src = access_resolve(src, ACCESS_READ);
+  tgt = access_resolve(tgt, ACCESS_READ);
+
   // Get start addr and length of source string
   Node* src_start = array_element_address(src, intcon(0), T_BYTE);
   Node* src_count = load_array_length(src);
@@ -1333,6 +1346,9 @@ bool LibraryCallKit::inline_string_indexOfI(StrIntrinsicNode::ArgEnc ae) {
 
   src = must_be_not_null(src, true);
   tgt = must_be_not_null(tgt, true);
+
+  src = access_resolve(src, ACCESS_READ);
+  tgt = access_resolve(tgt, ACCESS_READ);
 
   // Multiply byte array index by 2 if String is UTF16 encoded
   Node* src_offset = (ae == StrIntrinsicNode::LL) ? from_index : _gvn.transform(new LShiftINode(from_index, intcon(1)));
@@ -1420,6 +1436,7 @@ bool LibraryCallKit::inline_string_indexOfChar() {
   Node* max         = argument(3);
 
   src = must_be_not_null(src, true);
+  src = access_resolve(src, ACCESS_READ);
 
   Node* src_offset = _gvn.transform(new LShiftINode(from_index, intcon(1)));
   Node* src_start = array_element_address(src, src_offset, T_BYTE);
@@ -1509,6 +1526,9 @@ bool LibraryCallKit::inline_string_copy(bool compress) {
   if (stopped()) {
     return true;
   }
+
+  src = access_resolve(src, ACCESS_READ);
+  dst = access_resolve(dst, ACCESS_WRITE);
 
   Node* src_start = array_element_address(src, src_offset, src_elem);
   Node* dst_start = array_element_address(dst, dst_offset, dst_elem);
@@ -1600,6 +1620,7 @@ bool LibraryCallKit::inline_string_toBytesU() {
     AllocateArrayNode* alloc = tightly_coupled_allocation(newcopy, NULL);
 
     // Calculate starting addresses.
+    value = access_resolve(value, ACCESS_READ);
     Node* src_start = array_element_address(value, offset, T_CHAR);
     Node* dst_start = basic_plus_adr(newcopy, arrayOopDesc::base_offset_in_bytes(T_BYTE));
 
@@ -1683,6 +1704,9 @@ bool LibraryCallKit::inline_string_getCharsU() {
   }
 
   if (!stopped()) {
+    src = access_resolve(src, ACCESS_READ);
+    dst = access_resolve(dst, ACCESS_READ);
+
     // Calculate starting addresses.
     Node* src_start = array_element_address(src, src_begin, T_BYTE);
     Node* dst_start = array_element_address(dst, dst_begin, T_CHAR);
@@ -1751,6 +1775,7 @@ bool LibraryCallKit::inline_string_char_access(bool is_store) {
   }
 
   value = must_be_not_null(value, true);
+  value = access_resolve(value, is_store ? ACCESS_WRITE : ACCESS_READ);
 
   Node* adr = array_element_address(value, index, T_CHAR);
   if (adr->is_top()) {
@@ -3682,6 +3707,8 @@ bool LibraryCallKit::inline_array_copyOf(bool is_copyOfRange) {
       Node* orig_tail = _gvn.transform(new SubINode(orig_length, start));
       Node* moved = generate_min_max(vmIntrinsics::_min, orig_tail, length);
 
+      original = access_resolve(original, ACCESS_READ);
+
       // Generate a direct call to the right arraycopy function(s).
       // We know the copy is disjoint but we might not know if the
       // oop stores need checking.
@@ -4324,6 +4351,7 @@ bool LibraryCallKit::inline_native_clone(bool is_virtual) {
         if (is_obja != NULL) {
           PreserveJVMState pjvms2(this);
           set_control(is_obja);
+          obj = access_resolve(obj, ACCESS_READ);
           // Generate a direct call to the right arraycopy function(s).
           Node* alloc = tightly_coupled_allocation(alloc_obj, NULL);
           ArrayCopyNode* ac = ArrayCopyNode::make(this, true, obj, intcon(0), alloc_obj, intcon(0), obj_length, alloc != NULL, false);
@@ -4800,7 +4828,10 @@ bool LibraryCallKit::inline_arraycopy() {
     return true;
   }
 
-  ArrayCopyNode* ac = ArrayCopyNode::make(this, true, src, src_offset, dest, dest_offset, length, alloc != NULL, negative_length_guard_generated,
+  Node* new_src = access_resolve(src, ACCESS_READ);
+  Node* new_dest = access_resolve(dest, ACCESS_WRITE);
+
+  ArrayCopyNode* ac = ArrayCopyNode::make(this, true, new_src, src_offset, new_dest, dest_offset, length, alloc != NULL, negative_length_guard_generated,
                                           // Create LoadRange and LoadKlass nodes for use during macro expansion here
                                           // so the compiler has a chance to eliminate them: during macro expansion,
                                           // we have to set their control (CastPP nodes are eliminated).
@@ -4913,6 +4944,9 @@ bool LibraryCallKit::inline_encodeISOArray() {
   src = must_be_not_null(src, true);
   dst = must_be_not_null(dst, true);
 
+  src = access_resolve(src, ACCESS_READ);
+  dst = access_resolve(dst, ACCESS_WRITE);
+
   const Type* src_type = src->Value(&_gvn);
   const Type* dst_type = dst->Value(&_gvn);
   const TypeAryPtr* top_src = src_type->isa_aryptr();
@@ -4967,6 +5001,10 @@ bool LibraryCallKit::inline_multiplyToLen() {
 
   x = must_be_not_null(x, true);
   y = must_be_not_null(y, true);
+
+  x = access_resolve(x, ACCESS_READ);
+  y = access_resolve(y, ACCESS_READ);
+  z = access_resolve(z, ACCESS_WRITE);
 
   const Type* x_type = x->Value(&_gvn);
   const Type* y_type = y->Value(&_gvn);
@@ -5076,6 +5114,9 @@ bool LibraryCallKit::inline_squareToLen() {
   x = must_be_not_null(x, true);
   z = must_be_not_null(z, true);
 
+  x = access_resolve(x, ACCESS_READ);
+  z = access_resolve(z, ACCESS_WRITE);
+
   const Type* x_type = x->Value(&_gvn);
   const Type* z_type = z->Value(&_gvn);
   const TypeAryPtr* top_x = x_type->isa_aryptr();
@@ -5125,6 +5166,9 @@ bool LibraryCallKit::inline_mulAdd() {
 
   out = must_be_not_null(out, true);
 
+  in = access_resolve(in, ACCESS_READ);
+  out = access_resolve(out, ACCESS_WRITE);
+
   const Type* out_type = out->Value(&_gvn);
   const Type* in_type = in->Value(&_gvn);
   const TypeAryPtr* top_out = out_type->isa_aryptr();
@@ -5173,6 +5217,11 @@ bool LibraryCallKit::inline_montgomeryMultiply() {
   Node* len  = argument(3);
   Node* inv  = argument(4);
   Node* m    = argument(6);
+
+  a = access_resolve(a, ACCESS_READ);
+  b = access_resolve(b, ACCESS_READ);
+  n = access_resolve(n, ACCESS_READ);
+  m = access_resolve(m, ACCESS_WRITE);
 
   const Type* a_type = a->Value(&_gvn);
   const TypeAryPtr* top_a = a_type->isa_aryptr();
@@ -5232,6 +5281,10 @@ bool LibraryCallKit::inline_montgomerySquare() {
   Node* len  = argument(2);
   Node* inv  = argument(3);
   Node* m    = argument(5);
+
+  a = access_resolve(a, ACCESS_READ);
+  n = access_resolve(n, ACCESS_READ);
+  m = access_resolve(m, ACCESS_WRITE);
 
   const Type* a_type = a->Value(&_gvn);
   const TypeAryPtr* top_a = a_type->isa_aryptr();
@@ -5378,6 +5431,7 @@ bool LibraryCallKit::inline_updateBytesCRC32() {
 
   // 'src_start' points to src array + scaled offset
   src = must_be_not_null(src, true);
+  src = access_resolve(src, ACCESS_READ);
   Node* src_start = array_element_address(src, offset, src_elem);
 
   // We assume that range check is done by caller.
@@ -5467,11 +5521,13 @@ bool LibraryCallKit::inline_updateBytesCRC32C() {
 
   // 'src_start' points to src array + scaled offset
   src = must_be_not_null(src, true);
+  src = access_resolve(src, ACCESS_READ);
   Node* src_start = array_element_address(src, offset, src_elem);
 
   // static final int[] byteTable in class CRC32C
   Node* table = get_table_from_crc32c_class(callee()->holder());
   table = must_be_not_null(table, true);
+  table = access_resolve(table, ACCESS_READ);
   Node* table_start = array_element_address(table, intcon(0), T_INT);
 
   // We assume that range check is done by caller.
@@ -5516,6 +5572,7 @@ bool LibraryCallKit::inline_updateDirectByteBufferCRC32C() {
   // static final int[] byteTable in class CRC32C
   Node* table = get_table_from_crc32c_class(callee()->holder());
   table = must_be_not_null(table, true);
+  table = access_resolve(table, ACCESS_READ);
   Node* table_start = array_element_address(table, intcon(0), T_INT);
 
   // Call the stub.
@@ -5559,6 +5616,7 @@ bool LibraryCallKit::inline_updateBytesAdler32() {
   }
 
   // 'src_start' points to src array + scaled offset
+  src = access_resolve(src, ACCESS_READ);
   Node* src_start = array_element_address(src, offset, src_elem);
 
   // We assume that range check is done by caller.
@@ -5762,6 +5820,9 @@ bool LibraryCallKit::inline_aescrypt_Block(vmIntrinsics::ID id) {
   src = must_be_not_null(src, true);
   dest = must_be_not_null(dest, true);
 
+  src = access_resolve(src, ACCESS_READ);
+  dest = access_resolve(dest, ACCESS_WRITE);
+
   // (1) src and dest are arrays.
   const Type* src_type = src->Value(&_gvn);
   const Type* dest_type = dest->Value(&_gvn);
@@ -5835,6 +5896,9 @@ bool LibraryCallKit::inline_cipherBlockChaining_AESCrypt(vmIntrinsics::ID id) {
   src = must_be_not_null(src, false);
   dest = must_be_not_null(dest, false);
 
+  src = access_resolve(src, ACCESS_READ);
+  dest = access_resolve(dest, ACCESS_WRITE);
+
   // (1) src and dest are arrays.
   const Type* src_type = src->Value(&_gvn);
   const Type* dest_type = dest->Value(&_gvn);
@@ -5880,6 +5944,7 @@ bool LibraryCallKit::inline_cipherBlockChaining_AESCrypt(vmIntrinsics::ID id) {
   // similarly, get the start address of the r vector
   Node* objRvec = load_field_from_object(cipherBlockChaining_object, "r", "[B", /*is_exact*/ false);
   if (objRvec == NULL) return false;
+  objRvec = access_resolve(objRvec, ACCESS_WRITE);
   Node* r_start = array_element_address(objRvec, intcon(0), T_BYTE);
 
   Node* cbcCrypt;
@@ -5928,6 +5993,10 @@ bool LibraryCallKit::inline_counterMode_AESCrypt(vmIntrinsics::ID id) {
   Node* dest = argument(4);
   Node* dest_offset = argument(5);
 
+  src = access_resolve(src, ACCESS_READ);
+  dest = access_resolve(dest, ACCESS_WRITE);
+  counterMode_object = access_resolve(counterMode_object, ACCESS_WRITE);
+
   // (1) src and dest are arrays.
   const Type* src_type = src->Value(&_gvn);
   const Type* dest_type = dest->Value(&_gvn);
@@ -5968,10 +6037,12 @@ bool LibraryCallKit::inline_counterMode_AESCrypt(vmIntrinsics::ID id) {
   // similarly, get the start address of the r vector
   Node* obj_counter = load_field_from_object(counterMode_object, "counter", "[B", /*is_exact*/ false);
   if (obj_counter == NULL) return false;
+  obj_counter = access_resolve(obj_counter, ACCESS_WRITE);
   Node* cnt_start = array_element_address(obj_counter, intcon(0), T_BYTE);
 
   Node* saved_encCounter = load_field_from_object(counterMode_object, "encryptedCounter", "[B", /*is_exact*/ false);
   if (saved_encCounter == NULL) return false;
+  saved_encCounter = access_resolve(saved_encCounter, ACCESS_WRITE);
   Node* saved_encCounter_start = array_element_address(saved_encCounter, intcon(0), T_BYTE);
   Node* used = field_address_from_object(counterMode_object, "used", "I", /*is_exact*/ false);
 
@@ -6012,6 +6083,7 @@ Node * LibraryCallKit::get_key_start_from_aescrypt_object(Node *aescrypt_object)
   if (objAESCryptKey == NULL) return (Node *) NULL;
 
   // now have the array, need to get the start address of the K array
+  objAESCryptKey = access_resolve(objAESCryptKey, ACCESS_READ);
   Node* k_start = array_element_address(objAESCryptKey, intcon(0), T_INT);
   return k_start;
 }
@@ -6023,6 +6095,7 @@ Node * LibraryCallKit::get_original_key_start_from_aescrypt_object(Node *aescryp
   if (objAESCryptKey == NULL) return (Node *) NULL;
 
   // now have the array, need to get the start address of the lastKey array
+  objAESCryptKey = access_resolve(objAESCryptKey, ACCESS_READ);
   Node* original_k_start = array_element_address(objAESCryptKey, intcon(0), T_BYTE);
   return original_k_start;
 }
@@ -6153,6 +6226,10 @@ bool LibraryCallKit::inline_ghash_processBlocks() {
   subkeyH = must_be_not_null(subkeyH, true);
   data = must_be_not_null(data, true);
 
+  state = access_resolve(state, ACCESS_WRITE);
+  subkeyH = access_resolve(subkeyH, ACCESS_READ);
+  data = access_resolve(data, ACCESS_READ);
+
   Node* state_start  = array_element_address(state, intcon(0), T_LONG);
   assert(state_start, "state is NULL");
   Node* subkeyH_start  = array_element_address(subkeyH, intcon(0), T_LONG);
@@ -6227,6 +6304,7 @@ bool LibraryCallKit::inline_sha_implCompress(vmIntrinsics::ID id) {
   }
   // 'src_start' points to src array + offset
   src = must_be_not_null(src, true);
+  src = access_resolve(src, ACCESS_READ);
   Node* src_start = array_element_address(src, ofs, src_elem);
   Node* state = NULL;
   address stubAddr;
@@ -6294,6 +6372,7 @@ bool LibraryCallKit::inline_digestBase_implCompressMB(int predicate) {
   }
   // 'src_start' points to src array + offset
   src = must_be_not_null(src, false);
+  src = access_resolve(src, ACCESS_READ);
   Node* src_start = array_element_address(src, ofs, src_elem);
 
   const char* klass_SHA_name = NULL;
@@ -6376,6 +6455,7 @@ Node * LibraryCallKit::get_state_from_sha_object(Node *sha_object) {
   if (sha_state == NULL) return (Node *) NULL;
 
   // now have the array, need to get the start address of the state array
+  sha_state = access_resolve(sha_state, ACCESS_WRITE);
   Node* state = array_element_address(sha_state, intcon(0), T_INT);
   return state;
 }
@@ -6387,6 +6467,7 @@ Node * LibraryCallKit::get_state_from_sha5_object(Node *sha_object) {
   if (sha_state == NULL) return (Node *) NULL;
 
   // now have the array, need to get the start address of the state array
+  sha_state = access_resolve(sha_state, ACCESS_WRITE);
   Node* state = array_element_address(sha_state, intcon(0), T_LONG);
   return state;
 }
