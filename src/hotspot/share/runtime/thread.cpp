@@ -4740,7 +4740,6 @@ void Thread::SpinAcquire(volatile int * adr, const char * LockName) {
   }
 
   // Slow-path : We've encountered contention -- Spin/Yield/Block strategy.
-  TEVENT(SpinAcquire - ctx);
   int ctr = 0;
   int Yields = 0;
   for (;;) {
@@ -4835,7 +4834,6 @@ void Thread::muxAcquire(volatile intptr_t * Lock, const char * LockName) {
     return;
   }
 
-  TEVENT(muxAcquire - Contention);
   ParkEvent * const Self = Thread::current()->_MuxEvent;
   assert((intptr_t(Self) & LOCKBIT) == 0, "invariant");
   for (;;) {
@@ -4881,7 +4879,6 @@ void Thread::muxAcquireW(volatile intptr_t * Lock, ParkEvent * ev) {
     return;
   }
 
-  TEVENT(muxAcquire - Contention);
   ParkEvent * ReleaseAfter = NULL;
   if (ev == NULL) {
     ev = ReleaseAfter = ParkEvent::Allocate(NULL);
