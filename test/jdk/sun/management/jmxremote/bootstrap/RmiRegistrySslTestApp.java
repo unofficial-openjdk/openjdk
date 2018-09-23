@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import javax.rmi.ssl.SslRMIClientSocketFactory;
-import jdk.testlibrary.Utils;
+import jdk.test.lib.Utils;
 
 
 public class RmiRegistrySslTestApp {

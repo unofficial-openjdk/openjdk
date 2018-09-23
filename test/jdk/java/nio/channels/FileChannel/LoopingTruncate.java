@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,8 @@
  * @test
  * @bug 8137121 8137230
  * @summary (fc) Infinite loop FileChannel.truncate
- * @library /lib/testlibrary
- * @build jdk.testlibrary.Utils
+ * @library /test/lib
+ * @build jdk.test.lib.Utils
  * @run main/othervm/timeout=300 LoopingTruncate
  */
 
@@ -37,7 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import static java.nio.file.StandardOpenOption.*;
 import java.util.concurrent.TimeUnit;
-import static jdk.testlibrary.Utils.adjustTimeout;
+import static jdk.test.lib.Utils.adjustTimeout;
 
 public class LoopingTruncate {
 

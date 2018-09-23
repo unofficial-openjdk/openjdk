@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
  * @test
  * @bug 6233235 6268386
  * @summary Test allowsCoreThreadTimeOut
- * @library /lib/testlibrary/
+ * @library /test/lib
  * @author Martin Buchholz
  */
 
@@ -37,7 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import jdk.testlibrary.Utils;
+import jdk.test.lib.Utils;
 
 public class CoreThreadTimeOut {
     static final long LONG_DELAY_MS = Utils.adjustTimeout(10_000);

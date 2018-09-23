@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 
 package test.java.lang.invoke.lib;
 
-import jdk.testlibrary.Utils;
+import jdk.test.lib.Utils;
 
 /**
  * Helper class used to catch and process VirtualMachineError with message "Out
@@ -36,7 +36,7 @@ public class CodeCacheOverflowProcessor {
     /**
      * Checks if an instance of Throwable is caused by VirtualMachineError with
      * message "Out of space in CodeCache". May be used as filter in method
-     * {@code jdk.testlibrary.Utils.filterException}.
+     * {@code jdk.test.lib.Utils.filterException}.
      *
      * @param t - Throwable to check.
      * @return true if Throwable is caused by VME, false otherwise.

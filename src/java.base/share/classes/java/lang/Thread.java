@@ -403,7 +403,7 @@ class Thread extends Strand implements Runnable {
                                 "nanosecond timeout value out of range");
         }
 
-        if (nanos >= 500000 || (nanos != 0 && millis == 0)) {
+        if (nanos > 0 && millis < Long.MAX_VALUE) {
             millis++;
         }
 
@@ -1438,26 +1438,21 @@ class Thread extends Strand implements Runnable {
         }
 
         synchronized (this) {
-            long base = System.currentTimeMillis();
-            long now = 0;
-
-            if (millis < 0) {
-                throw new IllegalArgumentException("timeout value is negative");
-            }
-
-            if (millis == 0) {
+            if (millis > 0) {
+                if (isAlive()) {
+                    final long startTime = System.nanoTime();
+                    long delay = millis;
+                    do {
+                        wait(delay);
+                    } while (isAlive() && (delay = millis -
+                            TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime)) > 0);
+                }
+            } else if (millis == 0) {
                 while (isAlive()) {
                     wait(0);
                 }
             } else {
-                while (isAlive()) {
-                    long delay = millis - now;
-                    if (delay <= 0) {
-                        break;
-                    }
-                    wait(delay);
-                    now = System.currentTimeMillis() - base;
-                }
+                throw new IllegalArgumentException("timeout value is negative");
             }
         }
     }
@@ -1497,7 +1492,7 @@ class Thread extends Strand implements Runnable {
                                 "nanosecond timeout value out of range");
         }
 
-        if (nanos >= 500000 || (nanos != 0 && millis == 0)) {
+        if (nanos > 0 && millis < Long.MAX_VALUE) {
             millis++;
         }
 
