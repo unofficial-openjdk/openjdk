@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2008, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
  * @test
  * @bug 6207928 6328220 6378321 6625723
  * @summary Recursive lock invariant sanity checks
- * @library /lib/testlibrary/
+ * @library /test/lib
  * @author Martin Buchholz
  */
 
@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import jdk.testlibrary.Utils;
+import jdk.test.lib.Utils;
 
 // I am the Cownt, and I lahve to cownt.
 public class Count {

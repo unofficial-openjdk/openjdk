@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,9 +28,8 @@
  *          monitors are started and stopped in a loop.
  * @author Luis-Miguel Alventosa
  *
- * @library /lib/testlibrary
+ * @library /test/lib
  *
- * @build jdk.testlibrary.*
  * @run clean StartStopTest
  * @run build StartStopTest
  * @run main/othervm/timeout=300 StartStopTest 1
@@ -56,7 +55,7 @@ import javax.management.monitor.Monitor;
 import javax.management.monitor.MonitorNotification;
 import javax.management.monitor.StringMonitor;
 
-import jdk.testlibrary.Utils;
+import jdk.test.lib.Utils;
 
 public class StartStopTest {
     static int maxPoolSize;

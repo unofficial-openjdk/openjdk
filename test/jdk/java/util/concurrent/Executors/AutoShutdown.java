@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2006, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
  * @test
  * @bug 6399443
  * @summary Check for auto-shutdown and gc of singleThreadExecutors
- * @library /lib/testlibrary/
+ * @library /test/lib
  * @run main/othervm/timeout=1000 AutoShutdown
  * @author Martin Buchholz
  */
@@ -41,7 +41,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import jdk.testlibrary.Utils;
+import jdk.test.lib.Utils;
 
 public class AutoShutdown {
     static final long LONG_DELAY_MS = Utils.adjustTimeout(10_000);

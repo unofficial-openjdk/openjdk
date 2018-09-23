@@ -92,16 +92,13 @@ private:
   // Make parsable and release it.
   void reset();
 
-  // Resize based on amount of allocation, etc.
-  void resize();
-
   void invariants() const { assert(top() >= start() && top() <= end(), "invalid tlab"); }
 
   void initialize(HeapWord* start, HeapWord* top, HeapWord* end);
 
   void print_stats(const char* tag);
 
-  Thread* myThread();
+  Thread* thread();
 
   // statistics
 
@@ -168,11 +165,11 @@ public:
   // Retire in-use tlab before allocation of a new tlab
   void clear_before_allocation();
 
+  // Resize based on amount of allocation, etc.
+  void resize();
+
   // Accumulate statistics across all tlabs before gc
   static void accumulate_statistics_before_gc();
-
-  // Resize tlabs for all threads
-  static void resize_all_tlabs();
 
   void fill(HeapWord* start, HeapWord* top, size_t new_size);
   void initialize();
@@ -192,15 +189,9 @@ public:
 
   // Code generation support
   static ByteSize start_offset()                 { return byte_offset_of(ThreadLocalAllocBuffer, _start); }
-  static ByteSize end_offset()                   { return byte_offset_of(ThreadLocalAllocBuffer, _end  ); }
-  static ByteSize top_offset()                   { return byte_offset_of(ThreadLocalAllocBuffer, _top  ); }
-  static ByteSize pf_top_offset()                { return byte_offset_of(ThreadLocalAllocBuffer, _pf_top  ); }
-  static ByteSize size_offset()                  { return byte_offset_of(ThreadLocalAllocBuffer, _desired_size ); }
-  static ByteSize refill_waste_limit_offset()    { return byte_offset_of(ThreadLocalAllocBuffer, _refill_waste_limit ); }
-
-  static ByteSize number_of_refills_offset()     { return byte_offset_of(ThreadLocalAllocBuffer, _number_of_refills ); }
-  static ByteSize fast_refill_waste_offset()     { return byte_offset_of(ThreadLocalAllocBuffer, _fast_refill_waste ); }
-  static ByteSize slow_allocations_offset()      { return byte_offset_of(ThreadLocalAllocBuffer, _slow_allocations ); }
+  static ByteSize end_offset()                   { return byte_offset_of(ThreadLocalAllocBuffer, _end); }
+  static ByteSize top_offset()                   { return byte_offset_of(ThreadLocalAllocBuffer, _top); }
+  static ByteSize pf_top_offset()                { return byte_offset_of(ThreadLocalAllocBuffer, _pf_top); }
 
   void verify();
 };

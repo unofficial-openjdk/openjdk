@@ -65,7 +65,6 @@
 #include "utilities/defaultStream.hpp"
 #include "utilities/hashtable.inline.hpp"
 #if INCLUDE_G1GC
-#include "gc/g1/g1Allocator.inline.hpp"
 #include "gc/g1/g1CollectedHeap.hpp"
 #endif
 
@@ -1944,7 +1943,7 @@ oop MetaspaceShared::materialize_archived_object(narrowOop v) {
   assert(archive_heap_region_fixed(),
          "must be called after archive heap regions are fixed");
   if (!CompressedOops::is_null(v)) {
-    oop obj = HeapShared::decode_with_archived_oop_encoding_mode(v);
+    oop obj = HeapShared::decode_from_archive(v);
     return G1CollectedHeap::heap()->materialize_archived_object(obj);
   }
   return NULL;
@@ -1964,10 +1963,6 @@ void MetaspaceShared::archive_klass_objects(Thread* THREAD) {
       ik->constants()->archive_resolved_references(THREAD);
     }
   }
-}
-
-bool MetaspaceShared::is_archive_object(oop p) {
-  return (p == NULL) ? false : G1ArchiveAllocator::is_archive_object(p);
 }
 
 void MetaspaceShared::fixup_mapped_heap_regions() {
@@ -2021,7 +2016,7 @@ public:
              "Archived heap object is not allowed");
       assert(MetaspaceShared::open_archive_heap_region_mapped(),
              "Open archive heap region is not mapped");
-      *p = HeapShared::decode_with_archived_oop_encoding_mode(o);
+      *p = HeapShared::decode_from_archive(o);
     }
   }
 

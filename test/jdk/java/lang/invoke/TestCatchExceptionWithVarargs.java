@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 8019184
- * @library /lib/testlibrary /java/lang/invoke/common
+ * @library /test/lib /java/lang/invoke/common
  * @summary MethodHandles.catchException() fails when methods have 8 args + varargs
  * @run main TestCatchExceptionWithVarargs
  */

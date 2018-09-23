@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,7 @@
  * @test
  * @bug 6458662
  * @summary poolSize might shrink below corePoolSize after timeout
- * @library /lib/testlibrary/
+ * @library /test/lib
  * @author Martin Buchholz
  */
 
@@ -34,7 +34,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import jdk.testlibrary.Utils;
+import jdk.test.lib.Utils;
 
 public class TimeOutShrink {
     static final long LONG_DELAY_MS = Utils.adjustTimeout(10_000);
