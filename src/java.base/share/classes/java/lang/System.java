@@ -2231,6 +2231,18 @@ public final class System {
             public void setCause(Throwable t, Throwable cause) {
                 t.setCause(cause);
             }
+
+            public void parkFiber() {
+                Fiber.park();
+            }
+
+            public void parkFiber(long nanos) {
+                Fiber.parkNanos(nanos);
+            }
+
+            public void unparkFiber(Fiber fiber) {
+                fiber.unpark();
+            }
         });
     }
 }

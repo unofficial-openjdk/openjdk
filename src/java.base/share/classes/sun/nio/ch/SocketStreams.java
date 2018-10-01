@@ -36,6 +36,9 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
+import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -46,6 +49,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class SocketStreams implements Closeable {
     private static final NativeDispatcher nd = new SocketDispatcher();
+    private static JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
     private final Closeable parent;
     private final FileDescriptor fd;
@@ -109,9 +113,9 @@ public class SocketStreams implements Closeable {
             Poller.startPoll(fdVal, event);
             if (isOpen()) {
                 if (nanos == 0) {
-                    Fiber.park();
+                    JLA.parkFiber();
                 } else {
-                    Fiber.parkNanos(nanos);
+                    JLA.parkFiber(nanos);
                 }
             }
         } else {

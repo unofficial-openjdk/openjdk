@@ -41,7 +41,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.WritableByteChannel;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
@@ -57,16 +56,7 @@ public class NioChannels {
     }
 
     private void test(TestCase test) {
-        var completed = new AtomicBoolean();
-        Fiber.execute(() -> {
-            try {
-                test.run();
-                completed.set(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).await();
-        assertTrue(completed.get());
+        Fiber.schedule(() -> { test.run(); return null; }).join();
     }
 
     /**

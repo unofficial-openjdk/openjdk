@@ -170,7 +170,7 @@ public class LockSupport {
         if (thread != null) {
             Fiber f = JLA.getFiber(thread);
             if (f != null) {
-                f.unpark();
+                JLA.unparkFiber(f);
             } else {
                 U.unpark(thread);
             }
@@ -183,7 +183,7 @@ public class LockSupport {
      * {@code park} then it will unblock.  Otherwise, its next call
      * to {@code park} is guaranteed not to block. This operation
      * is not guaranteed to have any effect at all if the given
-     * strand is a Thread has not been started.
+     * strand is a Thread that has not been started.
      *
      * @param strand the strand to unpark, or {@code null}, in which case
      *        this operation has no effect
@@ -191,7 +191,7 @@ public class LockSupport {
     public static void unpark(Strand strand) {
         if (strand != null) {
             if (strand instanceof Fiber) {
-                ((Fiber)strand).unpark();
+                JLA.unparkFiber((Fiber) strand);
             } else {
                 U.unpark(strand);
             }
@@ -231,7 +231,7 @@ public class LockSupport {
         if (s instanceof Fiber) {
             Fiber f = (Fiber) s;
             setBlocker(f, blocker);
-            Fiber.park();
+            JLA.parkFiber();
             setBlocker(f, null);
         } else {
             Thread t = (Thread) s;
@@ -279,7 +279,7 @@ public class LockSupport {
             if (s instanceof Fiber) {
                 Fiber f = (Fiber) s;
                 setBlocker(f, blocker);
-                Fiber.parkNanos(nanos);
+                JLA.parkFiber(nanos);
                 setBlocker(f, null);
             } else {
                 Thread t = (Thread) s;
@@ -330,7 +330,7 @@ public class LockSupport {
             setBlocker(f, blocker);
             long millis = deadline - System.currentTimeMillis();
             long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
-            Fiber.parkNanos(nanos);
+            JLA.parkFiber(nanos);
             setBlocker(f, null);
         } else {
             Thread t = (Thread) s;
@@ -386,7 +386,7 @@ public class LockSupport {
     public static void park() {
         Strand t = Strand.currentStrand();
         if (t instanceof Fiber) {
-            Fiber.park();
+            JLA.parkFiber();
         } else {
             U.park(false, 0L);
         }
@@ -425,7 +425,7 @@ public class LockSupport {
         if (nanos > 0) {
             Strand s = Strand.currentStrand();
             if (s instanceof Fiber) {
-                Fiber.parkNanos(nanos);
+                JLA.parkFiber(nanos);
             } else {
                 U.park(false, nanos);
             }
@@ -467,7 +467,7 @@ public class LockSupport {
         if (s instanceof Fiber) {
             long millis = deadline - System.currentTimeMillis();
             long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
-            Fiber.parkNanos(nanos);
+            JLA.parkFiber(nanos);
         } else {
             U.park(true, deadline);
         }

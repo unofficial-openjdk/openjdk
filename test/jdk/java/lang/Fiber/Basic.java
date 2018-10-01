@@ -27,12 +27,12 @@
  * @summary Basic tests for java.lang.Fiber
  */
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
+import java.time.Duration;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
+import java.util.concurrent.locks.*;
 import java.util.stream.Stream;
 
 import org.testng.annotations.Test;
@@ -49,45 +49,70 @@ public class Basic {
 
     public void testExecute1() {
         var executed = new AtomicBoolean();
-        var f = Fiber.execute(() -> executed.set(true));
-        f.await();
+        new Fiber(() -> executed.set(true)).schedule().await();
         assertTrue(executed.get());
+    }
+
+    public void testExecute2() {
+        String s = Fiber.schedule(() -> "foo").join();
+        assertTrue("foo".endsWith(s));
     }
 
     // throw uncaught exception
     public void testUncaughtException1() {
         var executed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        var fiber = new Fiber(() -> {
             executed.set(true);
             throw new RuntimeException();
-        });
-        f.await();
+        }).schedule();
+        fiber.await();
         assertTrue(executed.get());
+    }
+
+    public void testUncaughtException2() {
+        try {
+            Fiber.schedule(() -> { throw new RuntimeException(); }).join();
+        } catch (CompletionException e) {
+            assertTrue(e.getCause() instanceof RuntimeException);
+        }
     }
 
     // throw uncaught error
-    public void testUncaughtException2() {
+    public void testUncaughtError1() {
         var executed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        var fiber = new Fiber(() -> {
             executed.set(true);
             throw new Error();
-        });
-        f.await();
+        }).schedule();
+        fiber.await();
         assertTrue(executed.get());
     }
 
+    public void testUncaughtError2() {
+        try {
+            Fiber.schedule(() -> { throw new Error(); }).join();
+        } catch (CompletionException e) {
+            assertTrue(e.getCause() instanceof Error);
+        }
+    }
 
-    // -- park/parkNanos/unpark --
+    @Test(expectedExceptions = { IllegalStateException.class })
+    public void testSchedule() {
+        new Fiber(DO_NOTHING).schedule().schedule();
+    }
+
+
+    // -- parking --
 
     // fiber parks, unparked by thread
     public void testPark1() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            Fiber.park();
+        Fiber f = new Fiber(() -> {
+            LockSupport.park();
             completed.set(true);
-        });
+        }).schedule();
         Thread.sleep(1000); // give time for fiber to park
-        f.unpark();
+        LockSupport.unpark(f);
         f.await();
         assertTrue(completed.get());
     }
@@ -95,15 +120,15 @@ public class Basic {
     // fiber parks, unparked by another fiber
     public void testPark2() throws Exception {
         var completed = new AtomicInteger();
-        Fiber f1 = Fiber.execute(() -> {
-            Fiber.park();
+        Fiber f1 = new Fiber(() -> {
+            LockSupport.park();
             completed.incrementAndGet();
-        });
+        }).schedule();
         Thread.sleep(1000); // give time for fiber to park
-        Fiber f2 = Fiber.execute(() -> {
-            f1.unpark();
+        Fiber f2 = new Fiber(() -> {
+            LockSupport.unpark(f1);
             completed.incrementAndGet();
-        });
+        }).schedule();
         f1.await();
         f2.await();
         assertTrue(completed.get() == 2);
@@ -112,15 +137,15 @@ public class Basic {
     // park while holding monitor
     public void testPark3() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             var lock = new Object();
             synchronized (lock) {
-                Fiber.park();
+                LockSupport.park();
             }
             completed.set(true);
-        });
+        }).schedule();
         Thread.sleep(1000); // give time for fiber to park
-        f.unpark();
+        LockSupport.unpark(f);
         f.await();
         assertTrue(completed.get());
     }
@@ -128,7 +153,7 @@ public class Basic {
     // park with native thread on the stack
     public void testPark4() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             try {
                 Method m = Basic.class.getDeclaredMethod("doPark");
                 m.invoke(null);
@@ -136,25 +161,24 @@ public class Basic {
             } catch (Exception e) {
                 assertTrue(false);
             }
-        });
+        }).schedule();
         Thread.sleep(1000); // give time for fiber to park
-        f.unpark();
+        LockSupport.unpark(f);
         f.await();
         assertTrue(completed.get());
     }
     static void doPark() {
-        Fiber.park();
+        LockSupport.park();
     }
 
     // unpark before park
     public void testPark5() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            Strand s = Strand.currentStrand();
-            ((Fiber) s).unpark();
-            Fiber.park();
+        Fiber f = new Fiber(() -> {
+            LockSupport.unpark(Fiber.current().orElseThrow());
+            LockSupport.park();
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -162,16 +186,16 @@ public class Basic {
     // 2 x unpark before park
     public void testPark6() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            Strand s = Strand.currentStrand();
-            ((Fiber) s).unpark();
-            ((Fiber) s).unpark();
-            Fiber.park();
-            Fiber.park();  // should park
+        Fiber f = new Fiber(() -> {
+            Fiber me = Fiber.current().orElseThrow();
+            LockSupport.unpark(me);
+            LockSupport.unpark(me);
+            LockSupport.park();
+            LockSupport.park();  // should park
             completed.set(true);
-        });
+        }).schedule();
         Thread.sleep(1000); // give time for fiber to park
-        f.unpark();
+        LockSupport.unpark(f);
         f.await();
         assertTrue(completed.get());
     }
@@ -179,20 +203,20 @@ public class Basic {
     // 2 x park
     public void testPark7() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            Fiber.park();
-            Fiber.park();
+        Fiber f = new Fiber(() -> {
+            LockSupport.park();
+            LockSupport.park();
             completed.set(true);
-        });
+        }).schedule();
 
         Thread.sleep(1000); // give time for fiber to park
 
         // unpark, fiber should park again
-        f.unpark();
+        LockSupport.unpark(f);
         Thread.sleep(1000);
 
         // let it terminate
-        f.unpark();
+        LockSupport.unpark(f);
         f.await();
         assertTrue(completed.get());
     }
@@ -200,13 +224,13 @@ public class Basic {
     // interrupt before park
     public void testPark8() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             t.interrupt();
-            Fiber.park();
+            LockSupport.park();
             assertTrue(t.isInterrupted());
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -214,13 +238,13 @@ public class Basic {
     // interrupt while parked
     public void testPark9() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             Interrupter.schedule(t, 1000);
-            Fiber.park();
+            LockSupport.park();
             assertTrue(t.isInterrupted());
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -228,16 +252,16 @@ public class Basic {
     // interrupt before park (pinned park)
     public void testPark10() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             t.interrupt();
             Object lock = new Object();
             synchronized (lock) {
-                Fiber.park();
+                LockSupport.park();
             }
             assertTrue(t.isInterrupted());
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -245,17 +269,16 @@ public class Basic {
     // interrupt while parked (pinned park)
     public void testPark11() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             Interrupter.schedule(t, 1000);
             Object lock = new Object();
             synchronized (lock) {
-                Fiber.park();
+                LockSupport.park();
             }
             assertTrue(t.isInterrupted());
             completed.set(true);
-        });
-
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -263,10 +286,10 @@ public class Basic {
     // parkNanos(-1) completes immediately
     public void testParkNanos1() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            Fiber.parkNanos(-1);
+        Fiber f = new Fiber(() -> {
+            LockSupport.parkNanos(-1);
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -274,10 +297,10 @@ public class Basic {
     // parkNanos(0) completes immediately
     public void testParkNanos2() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            Fiber.parkNanos(0);
+        Fiber f = new Fiber(() -> {
+            LockSupport.parkNanos(0);
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -285,18 +308,18 @@ public class Basic {
     // parkNanos(1000ms) completes quickly
     public void testParkNanos3() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             // park for 1000ms
             long nanos = TimeUnit.NANOSECONDS.convert(1000, TimeUnit.MILLISECONDS);
             long start = System.nanoTime();
-            Fiber.parkNanos(nanos);
+            LockSupport.parkNanos(nanos);
 
             // check that fiber parks for >= 900ms
             long elapsed = TimeUnit.MILLISECONDS.convert(System.nanoTime() - start,
                                                          TimeUnit.NANOSECONDS);
             assertTrue(elapsed >= 900);
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -304,13 +327,13 @@ public class Basic {
     // fiber parks, unparked by thread
     public void testParkNanos4() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             long nanos = TimeUnit.NANOSECONDS.convert(30, TimeUnit.SECONDS);
-            Fiber.parkNanos(nanos);
+            LockSupport.parkNanos(nanos);
             completed.set(true);
-        });
+        }).schedule();
         Thread.sleep(1000); // give time for fiber to park
-        f.unpark();
+        LockSupport.unpark(f);
         f.await();
         assertTrue(completed.get());
     }
@@ -318,16 +341,16 @@ public class Basic {
     // fiber parks, unparked by another fiber
     public void testParkNanos5() throws Exception {
         var completed = new AtomicInteger();
-        Fiber f1 = Fiber.execute(() -> {
+        Fiber f1 = new Fiber(() -> {
             long nanos = TimeUnit.NANOSECONDS.convert(30, TimeUnit.SECONDS);
-            Fiber.parkNanos(nanos);
+            LockSupport.parkNanos(nanos);
             completed.incrementAndGet();
-        });
+        }).schedule();
         Thread.sleep(1000);  // give time for fiber to park
-        Fiber f2 = Fiber.execute(() -> {
-            f1.unpark();
+        Fiber f2 = new Fiber(() -> {
+            LockSupport.unpark(f1);
             completed.incrementAndGet();
-        });
+        }).schedule();
         f1.await();
         f2.await();
         assertTrue(completed.get() == 2);
@@ -336,12 +359,12 @@ public class Basic {
     // unpark before parkNanos
     public void testParkNanos6() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            ((Fiber) Strand.currentStrand()).unpark();
+        Fiber f = new Fiber(() -> {
+            LockSupport.unpark(Fiber.current().orElseThrow());
             long nanos = TimeUnit.NANOSECONDS.convert(30, TimeUnit.SECONDS);
-            Fiber.parkNanos(nanos);
+            LockSupport.parkNanos(nanos);
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -349,16 +372,14 @@ public class Basic {
     // unpark before parkNanos(0), should consume permit
     public void testParkNanos7() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            ((Fiber) Strand.currentStrand()).unpark();
-            Fiber.parkNanos(0);
-            Fiber.park(); // should block
+        Fiber f = new Fiber(() -> {
+            LockSupport.unpark(Fiber.current().orElseThrow());
+            LockSupport.parkNanos(0);
+            LockSupport.park(); // should block
             completed.set(true);
-        });
-
-        long nanos = TimeUnit.NANOSECONDS.convert(3, TimeUnit.SECONDS);
-        f.awaitNanos(nanos);
-        f.unpark();
+        }).schedule();
+        f.await(Duration.ofSeconds(3));
+        LockSupport.unpark(f);
         f.await();
         assertTrue(completed.get());
     }
@@ -368,161 +389,219 @@ public class Basic {
 
     // await short lived fiber
     public void testAwait1() {
-        Fiber f = Fiber.execute(DO_NOTHING);
-        Fiber result = f.await();
-        assertTrue(result == f);
+        var fiber = new Fiber(DO_NOTHING).schedule();
+        fiber.await();
     }
 
     // await long lived fiber
     public void testAwait2() {
-        Fiber f = Fiber.execute(() -> {
+        var fiber = new Fiber(() -> {
             try {
                 Thread.sleep(2*1000);
             } catch (InterruptedException e) { }
-        });
-        Fiber result = f.await();
-        assertTrue(result == f);
+        }).schedule();
+        fiber.await();
     }
 
     // await after terminated
     public void testAwait3() throws Exception {
-        Fiber f = Fiber.execute(DO_NOTHING);
-        f.await();
-        Fiber result = f.await();
-        assertTrue(result == f);
+        var fiber = new Fiber(DO_NOTHING).schedule();
+        fiber.await();
+        fiber.await();
     }
 
     // thread interrupted while await-ing
     public void testAwait4() {
         long nanos = TimeUnit.NANOSECONDS.convert(5, TimeUnit.SECONDS);
-        Fiber f = Fiber.execute(() -> Fiber.parkNanos(nanos));
+        var fiber = new Fiber(() -> LockSupport.parkNanos(nanos)).schedule();
         Interrupter.schedule(Thread.currentThread(), 500);
         try {
-            Fiber result = f.await();
-            assertTrue(result == f);
+            fiber.await();
             assertTrue(Thread.interrupted());
         } finally {
             Thread.interrupted(); // make sure interrupt status is cleared
-            f.unpark();
+            LockSupport.unpark(fiber);
         }
     }
 
     // fiber interrupted while await-ing
     public void testAwait5() {
-        Fiber f1 = Fiber.execute(() -> {
+        Fiber f1 = new Fiber(() -> {
             long nanos = TimeUnit.NANOSECONDS.convert(5, TimeUnit.SECONDS);
-            Fiber.parkNanos(nanos);
-        });
+            LockSupport.parkNanos(nanos);
+        }).schedule();
         var completed = new AtomicBoolean();
-        Fiber f2 = Fiber.execute(() -> {
+        Fiber f2 = new Fiber(() -> {
             Interrupter.schedule(Thread.currentThread(), 500);
             f1.await();
             completed.set(true);
-        });
+        }).schedule();
         try {
             f2.await();
             assertTrue(completed.get());
         } finally {
-            f1.unpark();
+            LockSupport.unpark(f1);
         }
     }
 
     // awaitNanos short lived fiber
-    public void testAwaitNanos1() {
-        Fiber f = Fiber.execute(DO_NOTHING);
-        long nanos = TimeUnit.NANOSECONDS.convert(2, TimeUnit.SECONDS);
-        Fiber result = f.awaitNanos(nanos);
-        assertTrue(result == f);
+    public void testAwait6() {
+        Fiber f = new Fiber(DO_NOTHING).schedule();
+        boolean terminated = f.await(Duration.ofSeconds(5));
+        assertTrue(terminated);
     }
 
     // awaitNanos long lived fiber
-    public void testAwaitNanos2() {
-        Fiber f = Fiber.execute(Fiber::park);
+    public void testAwait7() {
+        Fiber f = new Fiber(LockSupport::park).schedule();
         try {
-            long nanos = TimeUnit.NANOSECONDS.convert(2, TimeUnit.SECONDS);
-            Fiber result = f.awaitNanos(nanos);
-            assertTrue(result == f);
+            boolean terminated = f.await(Duration.ofSeconds(2));
+            assertFalse(terminated);
         } finally {
-            f.unpark();
+            LockSupport.unpark(f);
         }
     }
 
-
     // thread interrupted while await-ing, fiber terminates
-    public void testAwaitNanos3() {
-        Fiber f = Fiber.execute(() -> {
+    public void testAwait8() {
+        Fiber f = new Fiber(() -> {
             long nanos = TimeUnit.NANOSECONDS.convert(5, TimeUnit.SECONDS);
-            Fiber.parkNanos(nanos);
-        });
+            LockSupport.parkNanos(nanos);
+        }).schedule();
         Interrupter.schedule(Thread.currentThread(), 1000);
         try {
-            long nanos = TimeUnit.NANOSECONDS.convert(60, TimeUnit.SECONDS);
-            Fiber result = f.awaitNanos(nanos);
-            assertTrue(result == f);
+            boolean terminated = f.await(Duration.ofSeconds(60));
+            assertTrue(terminated);
             assertTrue(Thread.interrupted());
         } finally {
             Thread.interrupted(); // make sure interrupt status is cleared
-            f.unpark();
+            LockSupport.unpark(f);
         }
     }
 
     // thread interrupted while await-ing, fiber does not terminate
-    public void testAwaitNanos4() {
-        Fiber f = Fiber.execute(Fiber::park);
+    public void testAwait9() {
+        Fiber f = new Fiber(LockSupport::park).schedule();
         Interrupter.schedule(Thread.currentThread(), 1000);
         try {
-            long nanos = TimeUnit.NANOSECONDS.convert(3, TimeUnit.SECONDS);
-            Fiber result = f.awaitNanos(nanos);
-            assertTrue(result == f);
+            boolean terminated = f.await(Duration.ofSeconds(3));
+            assertFalse(terminated);
             assertTrue(Thread.interrupted());
         } finally {
             Thread.interrupted(); // make sure interrupt status is cleared
-            f.unpark();
+            LockSupport.unpark(f);
         }
     }
 
     // fiber interrupted while await-ing, other fiber terminates
-    public void testAwaitNanos5() {
-        Fiber f1 = Fiber.execute(() -> {
+    public void testAwait10() {
+        Fiber f1 = new Fiber(() -> {
             long nanos = TimeUnit.NANOSECONDS.convert(5, TimeUnit.SECONDS);
-            Fiber.parkNanos(nanos);
-        });
+            LockSupport.parkNanos(nanos);
+        }).schedule();
         var completed = new AtomicBoolean();
-        Fiber f2 = Fiber.execute(() -> {
+        Fiber f2 = new Fiber(() -> {
             Interrupter.schedule(Thread.currentThread(), 1000);
-            long nanos = TimeUnit.NANOSECONDS.convert(60, TimeUnit.SECONDS);
-            Fiber result = f1.awaitNanos(nanos);
-            assertTrue(result == f1);
+            boolean terminated = f1.await(Duration.ofSeconds(60));
+            assertTrue(terminated);
             assertTrue(Thread.interrupted());
             completed.set(true);
-        });
+        }).schedule();
         try {
             f2.await();
             assertTrue(completed.get());
         } finally {
-            f1.unpark();
+            LockSupport.unpark(f1);
         }
     }
 
     // fiber interrupted while await-ing, other fiber does not terminate
-    public void testAwaitNanos6() {
-        Fiber f1 = Fiber.execute(Fiber::park);
+    public void testAwait11() {
+        Fiber f1 = new Fiber(LockSupport::park).schedule();
         var completed = new AtomicBoolean();
-        Fiber f2 = Fiber.execute(() -> {
+        Fiber f2 = new Fiber(() -> {
             Interrupter.schedule(Thread.currentThread(), 1000);
-            long nanos = TimeUnit.NANOSECONDS.convert(3, TimeUnit.SECONDS);
-            Fiber result = f1.awaitNanos(nanos);
-            assertTrue(result == f1);
+            boolean terminated = f1.await(Duration.ofSeconds(3));
+            assertFalse(terminated);
             assertTrue(Thread.interrupted());
             completed.set(true);
-        });
-
+        }).schedule();
         try {
             f2.await();
             assertTrue(completed.get());
         } finally {
-            f1.unpark();
+            LockSupport.unpark(f1);
         }
+    }
+
+    // await zero duration
+    public void testAwait14() {
+        var fiber = new Fiber(LockSupport::park).schedule();
+        fiber.await(Duration.ofSeconds(0));
+        LockSupport.unpark(fiber);
+        fiber.await();
+    }
+
+    // await negative duration
+    public void testAwait15() {
+        var fiber = new Fiber(LockSupport::park).schedule();
+        fiber.await(Duration.ofSeconds(-1));
+        LockSupport.unpark(fiber);
+        fiber.await();
+    }
+
+    @Test(expectedExceptions = { IllegalStateException.class })
+    public void testAwait12() {
+        new Fiber(DO_NOTHING).await();
+    }
+
+    @Test(expectedExceptions = { IllegalStateException.class })
+    public void testAwait13() {
+        new Fiber(DO_NOTHING).await(Duration.ofSeconds(1));
+    }
+
+
+    // -- current --
+
+    public void testCurrent() {
+        var ref = new AtomicReference<Fiber>();
+        var fiber = new Fiber(() -> ref.set(Fiber.current().orElse(null))).schedule();
+        fiber.await();
+        assertTrue(ref.get() == fiber);
+    }
+
+
+    // -- cancellation --
+
+    public void testCancel1() {
+        var fiber  = new Fiber(LockSupport::park);
+        assertFalse(fiber.isCancelled());
+        fiber.cancel();
+        assertTrue(fiber.isCancelled());
+        fiber.schedule();
+        fiber.await();
+        assertTrue(fiber.isCancelled());
+    }
+
+    public void testCancel2() {
+        var fiber  = new Fiber(LockSupport::park).schedule();
+        assertFalse(fiber.isCancelled());
+        fiber.cancel();
+        assertTrue(fiber.isCancelled());
+        fiber.await();
+        assertTrue(fiber.isCancelled());
+    }
+
+    // -- isAlive --
+
+    public void testIsAlive() {
+        var fiber = new Fiber(LockSupport::park);
+        assertFalse(fiber.isAlive());
+        fiber.schedule();
+        assertTrue(fiber.isAlive());
+        LockSupport.unpark(fiber);
+        fiber.await();
+        assertFalse(fiber.isAlive());
     }
 
 
@@ -530,22 +609,48 @@ public class Basic {
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNull1() {
-        Fiber.execute(null);
+        new Fiber(null);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNull2() {
-        Fiber.execute(null, () -> { });
+        new Fiber(null, () -> { });
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNull3() {
         ExecutorService scheduler = Executors.newCachedThreadPool();
         try {
-            Fiber.execute(scheduler, null);
+            new Fiber(scheduler, null);
         } finally {
             scheduler.shutdown();
         }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull4() {
+        Fiber.schedule(null);
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull5() {
+        Fiber.schedule(null, () -> null);
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull6() {
+        ExecutorService scheduler = Executors.newCachedThreadPool();
+        try {
+            Fiber.schedule(scheduler, null);
+        } finally {
+            scheduler.shutdown();
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull7() {
+        var fiber = new Fiber(() -> { }).schedule();
+        fiber.await(null);
     }
 
 
@@ -554,14 +659,14 @@ public class Basic {
     //  Thread.currentThread before/after park
     public void testCurrentThread1() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();  // before park
-            Fiber.park();
+            LockSupport.park();
             assertTrue(Thread.currentThread() == t);  // after park
             completed.set(true);
-        });
+        }).schedule();
         Thread.sleep(1000); // give time for fiber to park
-        f.unpark();
+        LockSupport.unpark(f);
         f.await();
         assertTrue(completed.get());
     }
@@ -572,12 +677,12 @@ public class Basic {
         var lock = new Object();
         Fiber f;
         synchronized (lock) {
-            f = Fiber.execute(() -> {
+            f = new Fiber(() -> {
                 Thread t = Thread.currentThread();  // before synchronized
                 synchronized (lock) { }
                 assertTrue(Thread.currentThread() == t);  // after synchronized
                 completed.set(true);
-            });
+            }).schedule();
             Thread.sleep(200); // give time for fiber to block
         }
         f.await();
@@ -591,13 +696,13 @@ public class Basic {
         Fiber f;
         lock.lock();
         try {
-            f = Fiber.execute(() -> {
+            f = new Fiber(() -> {
                 Thread t = Thread.currentThread();  // before lock
                 lock.lock();
                 lock.unlock();
                 assertTrue(Thread.currentThread() == t);  // after lock
                 completed.set(true);
-            });
+            }).schedule();
             Thread.sleep(200); // give time for fiber to block
         } finally {
             lock.unlock();
@@ -611,7 +716,7 @@ public class Basic {
 
     public void testStart() {
         var completed = new AtomicBoolean();
-        Fiber.execute(() -> {
+        new Fiber(() -> {
             Thread t = Thread.currentThread();
             try {
                 t.start();
@@ -619,13 +724,13 @@ public class Basic {
             } catch (IllegalStateException expected) {
                 completed.set(true);
             }
-        }).await();
+        }).schedule().await();
         assertTrue(completed.get());
     }
 
     public void testStop() {
         var completed = new AtomicBoolean();
-        Fiber.execute(() -> {
+        new Fiber(() -> {
             Thread t = Thread.currentThread();
             try {
                 t.stop();
@@ -633,13 +738,13 @@ public class Basic {
             } catch (UnsupportedOperationException expected) {
                 completed.set(true);
             }
-        }).await();
+        }).schedule().await();
         assertTrue(completed.get());
     }
 
     public void testSuspend() {
         var completed = new AtomicBoolean();
-        Fiber.execute(() -> {
+        new Fiber(() -> {
             Thread t = Thread.currentThread();
             try {
                 t.suspend();
@@ -647,13 +752,13 @@ public class Basic {
             } catch (UnsupportedOperationException expected) {
                 completed.set(true);
             }
-        }).await();
+        }).schedule().await();
         assertTrue(completed.get());
     }
 
     public void testResume() {
         var completed = new AtomicBoolean();
-        Fiber.execute(() -> {
+        new Fiber(() -> {
             Thread t = Thread.currentThread();
             try {
                 t.resume();
@@ -661,7 +766,7 @@ public class Basic {
             } catch (UnsupportedOperationException expected) {
                 completed.set(true);
             }
-        }).await();
+        }).schedule().await();
         assertTrue(completed.get());
     }
 
@@ -671,7 +776,7 @@ public class Basic {
     // thread invokes join to wait for fiber to terminate
     public void testJoin1() throws Exception {
         var ref = new AtomicReference<Thread>();
-        Fiber.execute(() -> ref.set(Thread.currentThread()));
+        new Fiber(() -> ref.set(Thread.currentThread())).schedule();
         Thread t = waitForValue(ref);
         t.join();
     }
@@ -679,14 +784,14 @@ public class Basic {
     // fiber invokes join to wait for another fiber to terminate
     public void testJoin2() {
         var ref = new AtomicReference<Thread>();
-        Fiber.execute(() -> ref.set(Thread.currentThread()));
+        new Fiber(() -> ref.set(Thread.currentThread())).schedule();
         var completed = new AtomicBoolean();
-        Fiber f2 = Fiber.execute(() -> {
+        Fiber f2 = new Fiber(() -> {
             try {
                 waitForValue(ref).join();
                 completed.set(true);
             } catch (InterruptedException e) { }
-        });
+        }).schedule();
         f2.await();
         assertTrue(completed.get());
     }
@@ -694,7 +799,7 @@ public class Basic {
     // thread invokes join(millis) to wait for fiber to terminate
     public void testJoin3() throws Exception {
         var ref = new AtomicReference<Thread>();
-        Fiber.execute(() -> ref.set(Thread.currentThread()));
+        new Fiber(() -> ref.set(Thread.currentThread())).schedule();
         Thread t = waitForValue(ref);
         t.join(10*1000);
     }
@@ -702,15 +807,15 @@ public class Basic {
     // fiber invokes join(millis) to wait for another fiber to terminate
     public void testJoin4() {
         var ref = new AtomicReference<Thread>();
-        Fiber.execute(() -> ref.set(Thread.currentThread()));
+        new Fiber(() -> ref.set(Thread.currentThread())).schedule();
         var completed = new AtomicBoolean();
-        Fiber f2 = Fiber.execute(() -> {
+        Fiber f2 = new Fiber(() -> {
             try {
                 Thread t = waitForValue(ref);
                 t.join(10*1000);
                 completed.set(true);
             } catch (InterruptedException e) { }
-        });
+        }).schedule();
         f2.await();
         assertTrue(completed.get());
     }
@@ -718,38 +823,38 @@ public class Basic {
     // thread invokes join(millis), fiber does not terminate
     public void testJoin5() throws Exception {
         var ref = new AtomicReference<Thread>();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             ref.set(Thread.currentThread());
-            Fiber.park();
-        });
+            LockSupport.park();
+        }).schedule();
         Thread t = waitForValue(ref);
         try {
             t.join(2*1000);
         } finally {
-            f.unpark();
+            LockSupport.unpark(f);
         }
     }
 
     // fiber invokes join(millis) to wait for other fiber that does not terminate
     public void testJoin6() {
         var ref = new AtomicReference<Thread>();
-        Fiber f1 = Fiber.execute(() -> {
+        Fiber f1 = new Fiber(() -> {
             ref.set(Thread.currentThread());
-            Fiber.park();
-        });
+            LockSupport.park();
+        }).schedule();
         var completed = new AtomicBoolean();
-        Fiber f2 = Fiber.execute(() -> {
+        Fiber f2 = new Fiber(() -> {
             try {
                 Thread t = waitForValue(ref);
                 t.join(2*1000);
                 completed.set(true);
             } catch (InterruptedException e) { }
-        });
+        }).schedule();
         try {
             f2.await();
             assertTrue(completed.get());
         } finally {
-            f1.unpark();
+            LockSupport.unpark(f1);
         }
     }
 
@@ -757,7 +862,7 @@ public class Basic {
     public void testJoin7() {
         Thread mainThread = Thread.currentThread();
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             t.interrupt();
             try {
@@ -768,7 +873,7 @@ public class Basic {
                 assertFalse(t.isInterrupted());
                 completed.set(true);
             }
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -776,7 +881,7 @@ public class Basic {
     // interrupt before Thread.join current thread
     public void testJoin8() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             t.interrupt();
             try {
@@ -787,7 +892,7 @@ public class Basic {
                 assertFalse(t.isInterrupted());
                 completed.set(true);
             }
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -796,7 +901,7 @@ public class Basic {
     public void testJoin9() throws Exception {
         Thread mainThread = Thread.currentThread();
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             Interrupter.schedule(t, 1000);
             try {
@@ -807,8 +912,7 @@ public class Basic {
                 assertFalse(t.isInterrupted());
                 completed.set(true);
             }
-        });
-
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -816,7 +920,7 @@ public class Basic {
     // interrupt while in Thread.join current thread
     public void testJoin10() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             try {
                 Interrupter.schedule(t, 1000);
@@ -827,8 +931,7 @@ public class Basic {
                 assertFalse(Thread.currentThread().isInterrupted());
                 completed.set(true);
             }
-        });
-
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -837,7 +940,7 @@ public class Basic {
     @Test(expectedExceptions = { IllegalArgumentException.class })
     public void testJoin11() throws Exception {
         var ref = new AtomicReference<Thread>();
-        Fiber.execute(() -> ref.set(Thread.currentThread()));
+        new Fiber(() -> ref.set(Thread.currentThread())).schedule();
         Thread t = waitForValue(ref);
         t.join(-1);
     }
@@ -848,7 +951,7 @@ public class Basic {
     // Thread.sleep(-1)
     public void testSleep1() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             try {
                 Thread.sleep(-1);
                 assertTrue(false);
@@ -857,7 +960,7 @@ public class Basic {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -865,14 +968,14 @@ public class Basic {
     // Thread.sleep(0)
     public void testSleep2() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             try {
                 Thread.sleep(0);
                 completed.set(true);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -880,7 +983,7 @@ public class Basic {
     // Thread.sleep(2000)
     public void testSleep3() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             try {
                 long start = System.currentTimeMillis();
                 Thread.sleep(2000);
@@ -890,7 +993,7 @@ public class Basic {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -898,7 +1001,7 @@ public class Basic {
     // Thread.sleep with interrupt status set
     public void testSleep4() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             try {
                 Thread.currentThread().interrupt();
                 Thread.sleep(1000);
@@ -906,7 +1009,7 @@ public class Basic {
             } catch (InterruptedException e) {
                 completed.set(true);
             }
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -914,7 +1017,7 @@ public class Basic {
     // Thread.sleep interrupted while sleeping
     public void testSleep5() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             try {
                 Interrupter.schedule(t, 2000);
@@ -925,7 +1028,7 @@ public class Basic {
                 assertFalse(t.isInterrupted());
                 completed.set(true);
             }
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -933,7 +1036,7 @@ public class Basic {
     // Thread.sleep should not be disrupted by unparking fiber
     public void testSleep6() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             try {
                 long start = System.currentTimeMillis();
                 Thread.sleep(2000);
@@ -943,11 +1046,11 @@ public class Basic {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-        });
+        }).schedule();
         // attempt to disrupt sleep
         for (int i=0; i<5; i++) {
             Thread.sleep(20);
-            f.unpark();
+            LockSupport.unpark(f);
         }
         f.await();
         assertTrue(completed.get());
@@ -956,7 +1059,7 @@ public class Basic {
     // interrupt before Thread.sleep
     public void testSleep7() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             t.interrupt();
             try {
@@ -967,7 +1070,7 @@ public class Basic {
                 assertFalse(t.isInterrupted());
                 completed.set(true);
             }
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -975,7 +1078,7 @@ public class Basic {
     // interrupt during Thread.sleep
     public void testSleep8() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             Interrupter.schedule(t, 1000);
             try {
@@ -986,8 +1089,7 @@ public class Basic {
                 assertFalse(t.isInterrupted());
                 completed.set(true);
             }
-        });
-
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -1001,27 +1103,27 @@ public class Basic {
     public void testThreadLocal1() {
         for (int i = 0; i < 10; i++) {
             var completed = new AtomicBoolean();
-            Fiber.execute(() -> {
+            new Fiber(() -> {
                 assertTrue(LOCAL.get() == null);
                 Object obj = new Object();
                 LOCAL.set(obj);
                 assertTrue(LOCAL.get() == obj);
                 completed.set(true);
-            }).await();
+            }).schedule().await();
             assertTrue(completed.get());
         }
     }
 
     public void testThreadLocal2() {
         var completed = new AtomicBoolean();
-        Fiber.execute(() -> {
+        new Fiber(() -> {
             assertTrue(LOCAL.get() == null);
             Object obj = new Object();
             LOCAL.set(obj);
             try { Thread.sleep(100); } catch (InterruptedException e) { }
             assertTrue(LOCAL.get() == obj);
             completed.set(true);
-        }).await();
+        }).schedule().await();
         assertTrue(completed.get());
     }
 
@@ -1030,13 +1132,13 @@ public class Basic {
 
         for (int i = 0; i < 10; i++) {
             var completed = new AtomicBoolean();
-            Fiber.execute(() -> {
+            new Fiber(() -> {
                 assertTrue(INHERITED_LOCAL.get() == null);
                 Object obj = new Object();
                 INHERITED_LOCAL.set(obj);
                 assertTrue(INHERITED_LOCAL.get() == obj);
                 completed.set(true);
-            }).await();
+            }).schedule().await();
             assertTrue(completed.get());
         }
 
@@ -1052,7 +1154,7 @@ public class Basic {
 
         INHERITED_LOCAL.set(obj);
         try {
-            Fiber.execute(() -> ref.set(INHERITED_LOCAL.get())).await();
+            new Fiber(() -> ref.set(INHERITED_LOCAL.get())).schedule().await();
         } finally {
             INHERITED_LOCAL.remove();
         }
@@ -1067,10 +1169,10 @@ public class Basic {
         var obj = new Object();
         var ref = new AtomicReference<Object>();
 
-        Fiber.execute(() -> {
+        new Fiber(() -> {
             INHERITED_LOCAL.set(obj);
-            Fiber.execute(() -> ref.set(INHERITED_LOCAL.get())).await();
-        }).await();
+            new Fiber(() -> ref.set(INHERITED_LOCAL.get())).schedule().await();
+        }).schedule().await();
 
         assertTrue(ref.get() == obj);
         assertTrue(INHERITED_LOCAL.get() == null);
@@ -1085,9 +1187,9 @@ public class Basic {
 
         INHERITED_LOCAL.set(obj);
         try {
-            Fiber.execute(() -> {
-                Fiber.execute(() -> ref.set(INHERITED_LOCAL.get())).await();
-            }).await();
+            new Fiber(() -> {
+                new Fiber(() -> ref.set(INHERITED_LOCAL.get())).schedule().await();
+            }).schedule().await();
         } finally {
             INHERITED_LOCAL.remove();
         }
@@ -1102,11 +1204,11 @@ public class Basic {
         ClassLoader loader = new ClassLoader() { };
         var ref = new AtomicReference<ClassLoader>();
 
-        Fiber.execute(() -> {
+        new Fiber(() -> {
             Thread t = Thread.currentThread();
             t.setContextClassLoader(loader);
             ref.set(t.getContextClassLoader());
-        }).await();
+        }).schedule().await();
 
         assertTrue(ref.get() == loader);
         assertTrue(Thread.currentThread().getContextClassLoader() != loader);
@@ -1121,9 +1223,9 @@ public class Basic {
         ClassLoader savedLoader = t.getContextClassLoader();
         t.setContextClassLoader(loader);
         try {
-            Fiber.execute(() -> {
+            new Fiber(() -> {
                 ref.set(Thread.currentThread().getContextClassLoader());
-            }).await();
+            }).schedule().await();
         } finally {
             t.setContextClassLoader(savedLoader);
         }
@@ -1136,12 +1238,12 @@ public class Basic {
         ClassLoader loader = new ClassLoader() { };
         var ref = new AtomicReference<ClassLoader>();
 
-        Fiber.execute(() -> {
+        new Fiber(() -> {
             Thread.currentThread().setContextClassLoader(loader);
-            Fiber.execute(() -> {
+            new Fiber(() -> {
                 ref.set(Thread.currentThread().getContextClassLoader());
-            }).await();
-        }).await();
+            }).schedule().await();
+        }).schedule().await();
 
         assertTrue(ref.get() == loader);
     }
@@ -1155,11 +1257,11 @@ public class Basic {
         ClassLoader savedLoader = t.getContextClassLoader();
         t.setContextClassLoader(loader);
         try {
-            Fiber.execute(() -> {
-                Fiber.execute(() -> {
+            new Fiber(() -> {
+                new Fiber(() -> {
                     ref.set(Thread.currentThread().getContextClassLoader());
-                }).await();
-            }).await();
+                }).schedule().await();
+            }).schedule().await();
         } finally {
             t.setContextClassLoader(savedLoader);
         }
@@ -1172,21 +1274,21 @@ public class Basic {
 
     public void testThreadUncaughtExceptionHandler1() {
         var completed = new AtomicBoolean();
-        Fiber.execute(() -> {
+        new Fiber(() -> {
             try {
                 Thread t = Thread.currentThread();
                 t.setUncaughtExceptionHandler((_t, _e) -> { });
             } catch (UnsupportedOperationException e) {
                 completed.set(true);
             }
-        }).await();
+        }).schedule().await();
         assertTrue(completed.get());
     }
 
     @Test(expectedExceptions = { UnsupportedOperationException.class })
     public void testThreadUncaughtExceptionHandler2() {
         var ref = new AtomicReference<Thread>();
-        Fiber.execute(() -> ref.set(Thread.currentThread())).await();
+        new Fiber(() -> ref.set(Thread.currentThread())).schedule().await();
         Thread t = ref.get();
         t.setUncaughtExceptionHandler((_t, _e) -> { });
     }
@@ -1197,8 +1299,8 @@ public class Basic {
     public void testGetId() throws Exception {
         var ref1 = new AtomicReference<Long>();
         var ref2 = new AtomicReference<Long>();
-        Fiber.execute(() -> ref1.set(Thread.currentThread().getId()));
-        Fiber.execute(() -> ref2.set(Thread.currentThread().getId()));
+        new Fiber(() -> ref1.set(Thread.currentThread().getId())).schedule();
+        new Fiber(() -> ref2.set(Thread.currentThread().getId())).schedule();
         long id1 = waitForValue(ref1);
         long id2 = waitForValue(ref2);
         long id3 = Thread.currentThread().getId();
@@ -1213,44 +1315,44 @@ public class Basic {
     // RUNNABLE
     public void testGetState1() {
         var completed = new AtomicBoolean();
-        Fiber.execute(() -> {
+        new Fiber(() -> {
             Thread.State state = Thread.currentThread().getState();
             assertTrue(state == Thread.State.RUNNABLE);
             completed.set(true);
-        }).await();
+        }).schedule().await();
         assertTrue(completed.get());
     }
 
     // WAITING when parked
     public void testGetState2() throws Exception {
         var ref = new AtomicReference<Thread>();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             ref.set(Thread.currentThread());
-            Fiber.park();
-        });
+            LockSupport.park();
+        }).schedule();
         Thread t = waitForValue(ref);
         while (t.getState() != Thread.State.WAITING) {
             Thread.sleep(20);
         }
-        f.unpark();
+        LockSupport.unpark(f);
         f.await();
     }
 
     // WAITING when parked and pinned
     public void testGetState3() throws Exception {
         var ref = new AtomicReference<Thread>();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             ref.set(Thread.currentThread());
             var lock = new Object();
             synchronized (lock) {
-                Fiber.park();
+                LockSupport.park();
             }
-        });
+        }).schedule();
         Thread t = waitForValue(ref);
         while (t.getState() != Thread.State.WAITING) {
             Thread.sleep(20);
         }
-        f.unpark();
+        LockSupport.unpark(f);
         f.await();
     }
 
@@ -1258,12 +1360,12 @@ public class Basic {
     public void testGetState4() throws Exception {
         var ref = new AtomicReference<Thread>();
         var lock = new Object();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             ref.set(Thread.currentThread());
             synchronized (lock) {
                 try { lock.wait(); } catch (InterruptedException e) { }
             }
-        });
+        }).schedule();
         Thread t = waitForValue(ref);
         while (t.getState() != Thread.State.WAITING) {
             Thread.sleep(20);
@@ -1275,8 +1377,7 @@ public class Basic {
     // TERMINATED
     public void testGetState5() {
         var ref = new AtomicReference<Thread>();
-        var f = Fiber.execute(() -> ref.set(Thread.currentThread()));
-        f.await();
+        new Fiber(() -> ref.set(Thread.currentThread())).schedule().await();
         Thread t = ref.get();
         assertTrue(t.getState() == Thread.State.TERMINATED);
     }
@@ -1287,10 +1388,10 @@ public class Basic {
     public void testHoldsLock1() {
         var completed = new AtomicBoolean();
         final var lock = new Object();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             assertFalse(Thread.holdsLock(lock));
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -1298,12 +1399,12 @@ public class Basic {
     public void testHoldsLock2() {
         var completed = new AtomicBoolean();
         final var lock = new Object();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             synchronized (lock) {
                 assertTrue(Thread.holdsLock(lock));
             }
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -1314,7 +1415,7 @@ public class Basic {
     // ThreadGroup.enumerate should not enumerate fiber Thread obects
     public void testThreadGroup1() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread current = Thread.currentThread();
 
             ThreadGroup g = Thread.currentThread().getThreadGroup();
@@ -1324,7 +1425,7 @@ public class Basic {
                     .filter(t -> t == current)
                     .forEach(t -> assertTrue(false));
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -1332,12 +1433,12 @@ public class Basic {
     // ThreadGroup.interrupt should not interrupt fiber Thread obects
     public void testThreadGroup2() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             t.getThreadGroup().interrupt();
             assertFalse(t.isInterrupted());
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -1349,20 +1450,20 @@ public class Basic {
     public void testWaitNotify1() throws Exception {
         var ref = new AtomicReference<Thread>();
         var lock = new Object();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             ref.set(Thread.currentThread());
             synchronized (lock) {
                 try {
                     lock.wait();
                 } catch (InterruptedException e) { }
             }
-        });
+        }).schedule();
 
         // spin until the fiber waiting
         Thread t = waitForValue(ref);
-        //while (t.getState() != Thread.State.WAITING) {
-        //    Thread.sleep(10);
-        //}
+        while (t.getState() != Thread.State.WAITING) {
+            Thread.sleep(10);
+        }
 
         // thread invokes notify
         synchronized (lock) {
@@ -1374,11 +1475,11 @@ public class Basic {
     // thread waits, notified by fiber
     public void testWaitNotify2() throws Exception {
         var lock = new Object();
-        Fiber.execute(() -> {
+        new Fiber(() -> {
             synchronized (lock) {
                 lock.notifyAll();
             }
-        });
+        }).schedule();
         synchronized (lock) {
             lock.wait();
         }
@@ -1387,18 +1488,18 @@ public class Basic {
     // fiber waits, notified by other fiber
     public void testWaitNotify3() throws Exception {
         var lock = new Object();
-        Fiber f1 = Fiber.execute(() -> {
+        Fiber f1 = new Fiber(() -> {
             synchronized (lock) {
                 try {
                     lock.wait();
                 } catch (InterruptedException e) { }
             }
-        });
-        Fiber f2 = Fiber.execute(() -> {
+        }).schedule();
+        Fiber f2 = new Fiber(() -> {
             synchronized (lock) {
                lock.notifyAll();
             }
-        });
+        }).schedule();
         f1.await();
         f2.await();
     }
@@ -1406,7 +1507,7 @@ public class Basic {
     // interrupt before Object.wait
     public void testWaitNotify4() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             t.interrupt();
             Object lock = new Object();
@@ -1420,7 +1521,7 @@ public class Basic {
                     completed.set(true);
                 }
             }
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -1428,7 +1529,7 @@ public class Basic {
     // interrupt while waiting in Object.wait
     public void testWaitNotify5() throws Exception {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             Thread t = Thread.currentThread();
             Interrupter.schedule(t, 1000);
             Object lock = new Object();
@@ -1442,188 +1543,7 @@ public class Basic {
                     completed.set(true);
                 }
             }
-        });
-        f.await();
-        assertTrue(completed.get());
-    }
-
-
-    // -- LockSupport --
-
-    // LockSupport.park, unparked by thread
-    public void testLockSupport1() throws Exception {
-        var completed = new AtomicBoolean();
-        var ref = new AtomicReference<Thread>();
-        Fiber f = Fiber.execute(() -> {
-            ref.set(Thread.currentThread());
-            LockSupport.park();
-            completed.set(true);
-        });
-        Thread t = waitForValue(ref);
-        Thread.sleep(100); // give time for fiber to park
-        assertTrue(t.isAlive());
-        LockSupport.unpark(f);
-        f.await();
-        assertTrue(completed.get());
-    }
-
-    // LockSupport.park, unparked by another fiber
-    public void testLockSupport2() throws Exception {
-        var completed = new AtomicInteger();
-        var ref = new AtomicReference<Thread>();
-        Fiber f1 = Fiber.execute(() -> {
-            ref.set(Thread.currentThread());
-            LockSupport.park();
-            completed.incrementAndGet();
-        });
-        Thread t1 = waitForValue(ref);
-        Thread.sleep(100); // give time for fiber to park
-        assertTrue(t1.isAlive());
-        Fiber f2 = Fiber.execute(() -> {
-            LockSupport.unpark(f1);
-            completed.incrementAndGet();
-        });
-        f1.await();
-        f2.await();
-        assertTrue(completed.get() == 2);
-    }
-
-    // LockSupport.park while holding monitor
-    public void testLockSupport3() throws Exception {
-        var completed = new AtomicBoolean();
-        var ref = new AtomicReference<Thread>();
-        Fiber f = Fiber.execute(() -> {
-            ref.set(Thread.currentThread());
-            var lock = new Object();
-            synchronized (lock) {
-                LockSupport.park();
-            }
-            completed.set(true);
-        });
-        Thread t = waitForValue(ref);
-        Thread.sleep(1000); // give time for fiber to park
-        assertTrue(t.isAlive());
-        LockSupport.unpark(f);
-        f.await();
-        assertTrue(completed.get());
-    }
-
-    // LockSupport.unpark before park
-    public void testLockSupport4() {
-        var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            LockSupport.unpark(Thread.currentThread());
-            LockSupport.park();
-            completed.set(true);
-        });
-        f.await();
-        assertTrue(completed.get());
-    }
-
-    // 2 x LockSupport.unpark before park
-    public void testLockSupport5() throws Exception {
-        var completed = new AtomicBoolean();
-        var ref = new AtomicReference<Thread>();
-        Fiber f = Fiber.execute(() -> {
-            ref.set(Thread.currentThread());
-            LockSupport.unpark(Strand.currentStrand());
-            LockSupport.unpark(Strand.currentStrand());
-            LockSupport.park();
-            LockSupport.park();  // should block
-            completed.set(true);
-        });
-        Thread t = waitForValue(ref);
-        Thread.sleep(1000); // give time for fiber to park
-        assertTrue(t.isAlive());
-        LockSupport.unpark(t);
-        f.await();
-        assertTrue(completed.get());
-    }
-
-    // 2 x LockSupport.park
-    public void testLockSupport6() throws Exception {
-        var completed = new AtomicBoolean();
-        var ref = new AtomicReference<Thread>();
-        Fiber f = Fiber.execute(() -> {
-            ref.set(Thread.currentThread());
-            LockSupport.park();
-            LockSupport.park();
-            completed.set(true);
-        });
-
-        Thread t = waitForValue(ref);
-        t.join(1000);  // give time for fiber to park
-        assertTrue(t.isAlive());
-
-        // unpark, fiber should park again
-        LockSupport.unpark(f);
-        t.join(2000);
-        assertTrue(t.isAlive());
-
-        // let it terminate
-        LockSupport.unpark(f);
-        f.await();
-        assertTrue(completed.get());
-    }
-
-    // interrupt before LockSupport.park
-    public void testLockSupport7() {
-        var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            Thread t = Thread.currentThread();
-            t.interrupt();
-            LockSupport.park();
-            assertTrue(t.isInterrupted());
-            completed.set(true);
-        });
-        f.await();
-        assertTrue(completed.get());
-    }
-
-    // interrupt while parked with LockSupport.park
-    public void testLockSupport8() throws Exception {
-        var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            Thread t = Thread.currentThread();
-            Interrupter.schedule(t, 1000);
-            LockSupport.park();
-            assertTrue(t.isInterrupted());
-            completed.set(true);
-        });
-        f.await();
-        assertTrue(completed.get());
-    }
-
-    // interrupt before LockSupport.park (pinned park)
-    public void testLockSupport9() {
-        var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            Thread t = Thread.currentThread();
-            t.interrupt();
-            Object lock = new Object();
-            synchronized (lock) {
-                LockSupport.park();
-            }
-            assertTrue(t.isInterrupted());
-            completed.set(true);
-        });
-        f.await();
-        assertTrue(completed.get());
-    }
-
-    // interrupt while parked (pinned park)
-    public void testLockSupport10() throws Exception {
-        var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            Thread t = Thread.currentThread();
-            Interrupter.schedule(t, 1000);
-            Object lock = new Object();
-            synchronized (lock) {
-                LockSupport.park();
-            }
-            assertTrue(t.isInterrupted());
-            completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -1634,7 +1554,7 @@ public class Basic {
     // lock/unlock
     public void testReentrantLock1() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             ReentrantLock lock = new ReentrantLock();
             assertFalse(lock.isHeldByCurrentThread());
             lock.lock();
@@ -1642,7 +1562,7 @@ public class Basic {
             lock.unlock();
             assertFalse(lock.isHeldByCurrentThread());
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -1650,7 +1570,7 @@ public class Basic {
     // tryLock/unlock
     public void testReentrantLock2() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             ReentrantLock lock = new ReentrantLock();
             assertFalse(lock.isHeldByCurrentThread());
             boolean acquired = lock.tryLock();
@@ -1659,7 +1579,7 @@ public class Basic {
             lock.unlock();
             assertFalse(lock.isHeldByCurrentThread());
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -1667,7 +1587,7 @@ public class Basic {
     // lock/lock/unlock/unlock
     public void testReentrantLock3() {
         var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             ReentrantLock lock = new ReentrantLock();
             assertFalse(lock.isHeldByCurrentThread());
             assertTrue(lock.getHoldCount() == 0);
@@ -1684,7 +1604,7 @@ public class Basic {
             assertFalse(lock.isHeldByCurrentThread());
             assertTrue(lock.getHoldCount() == 0);
             completed.set(true);
-        });
+        }).schedule();
         f.await();
         assertTrue(completed.get());
     }
@@ -1698,16 +1618,15 @@ public class Basic {
         // thread acquires lock
         lock.lock();
         try {
-            f = Fiber.execute(() -> {
+            f = new Fiber(() -> {
                 lock.lock();  // should block
                 holdsLock.set(true);
-                Fiber.park();
+                LockSupport.park();
                 lock.unlock();
                 holdsLock.set(false);
-            });
+            }).schedule();
             // give time for fiber to block
-            long nanos = TimeUnit.NANOSECONDS.convert(1000, TimeUnit.MILLISECONDS);
-            f.awaitNanos(nanos);
+            f.await(Duration.ofSeconds(1));
             assertFalse(holdsLock.get());
         } finally {
             lock.unlock();
@@ -1717,7 +1636,7 @@ public class Basic {
         while (!holdsLock.get()) {
             Thread.sleep(20);
         }
-        f.unpark();
+        LockSupport.unpark(f);
         while (holdsLock.get()) {
             Thread.sleep(20);
         }
@@ -1726,14 +1645,14 @@ public class Basic {
     // locked by fiber, thread tries to lock
     public void testReentrantLock5() throws Exception {
         ReentrantLock lock = new ReentrantLock();
-        Fiber f = Fiber.execute(() -> {
+        Fiber f = new Fiber(() -> {
             lock.lock();
             try {
-                Fiber.park();
+                LockSupport.park();
             } finally {
                 lock.unlock();
             }
-        });
+        }).schedule();
 
         // wat for fiber to acquire lock
         while (!lock.isLocked()) {
@@ -1745,7 +1664,7 @@ public class Basic {
             assertFalse(lock.tryLock());
         } finally {
             // fiber should unlock
-            f.unpark();
+            LockSupport.unpark(f);
 
             // thread should be able to acquire lock
             lock.lock();
@@ -1759,15 +1678,15 @@ public class Basic {
     public void testReentrantLock6() throws Exception {
         ReentrantLock lock = new ReentrantLock();
         var f1HoldsLock = new AtomicBoolean();
-        Fiber f1 = Fiber.execute(() -> {
+        Fiber f1 = new Fiber(() -> {
             lock.lock();
             try {
                 f1HoldsLock.set(true);
-                Fiber.park();
+                LockSupport.park();
             } finally {
                 lock.unlock();
             }
-        });
+        }).schedule();
 
         // wat for fiber to acquire lock
         while (!f1HoldsLock.get()) {
@@ -1775,27 +1694,26 @@ public class Basic {
         }
 
         var f2HoldsLock = new AtomicBoolean();
-        Fiber f2 = Fiber.execute(() -> {
+        Fiber f2 = new Fiber(() -> {
             lock.lock();
             f2HoldsLock.set(true);
-            Fiber.park();
+            LockSupport.park();
             lock.unlock();
             f2HoldsLock.set(false);
-        });
+        }).schedule();
 
         // f2 should block
-        long nanos = TimeUnit.NANOSECONDS.convert(1000, TimeUnit.MILLISECONDS);
-        f2.awaitNanos(nanos);
+        f2.await(Duration.ofSeconds(1));
         assertFalse(f2HoldsLock.get());
 
         // unpark f1, f2 should acquire lock
-        f1.unpark();
+        LockSupport.unpark(f1);
         while (!f2HoldsLock.get()) {
             Thread.sleep(20);
         }
 
         // unpark f2, f2 should release lock
-        f2.unpark();
+        LockSupport.unpark(f2);
         while (f2HoldsLock.get()) {
             Thread.sleep(20);
         }
@@ -1805,17 +1723,21 @@ public class Basic {
 
     // ensure that a Fiber can be GC"ed
     public void testGC1() {
-        waitUntilObjectGCed(Fiber.execute(DO_NOTHING));
+        waitUntilObjectGCed(new Fiber(DO_NOTHING));
     }
 
     // ensure that a parked Fiber can be GC'ed
     public void testGC2() {
-        waitUntilObjectGCed(Fiber.execute(Fiber::park));
+        waitUntilObjectGCed(new Fiber(LockSupport::park).schedule());
     }
 
     // ensure that a terminated Fiber can be GC'ed
     public void testGC3() {
-        waitUntilObjectGCed(Fiber.execute(DO_NOTHING).await());
+        Fiber f = new Fiber(DO_NOTHING).schedule();
+        f.await();
+        var ref = new WeakReference<Fiber>(f);
+        f = null;
+        waitUntilObjectGCed(ref.get());
     }
 
     // waits for the given objecty to be GC'ed
@@ -1827,8 +1749,6 @@ public class Basic {
             try { Thread.sleep(50); } catch (InterruptedException e) { }
         } while (ref.get() != null);
     }
-
-
 
     // -- supporting code --
 

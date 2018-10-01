@@ -28,8 +28,10 @@ package sun.nio.ch;
 import java.nio.channels.Channel;
 import java.io.FileDescriptor;
 import java.io.IOException;
-import java.util.concurrent.locks.LockSupport;
 import static java.util.concurrent.TimeUnit.*;
+
+import jdk.internal.misc.JavaLangAccess;
+import jdk.internal.misc.SharedSecrets;
 
 /**
  * An interface that allows translation (and more!).
@@ -84,10 +86,11 @@ public interface SelChImpl extends Channel {
         if (PollerProvider.available() && (s instanceof Fiber)) {
             Poller.startPoll(getFDVal(), event);
             if (isOpen()) {
+                JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
                 if (nanos == 0) {
-                    Fiber.park();
+                    jla.parkFiber();
                 } else {
-                    Fiber.parkNanos(nanos);
+                    jla.parkFiber(nanos);
                 }
             }
         } else {

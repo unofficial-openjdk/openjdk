@@ -341,4 +341,20 @@ public interface JavaLangAccess {
      * @param cause set t's cause to new value
      */
     void setCause(Throwable t, Throwable cause);
+
+    /**
+     * Disables the current fiber for scheduling purposes.
+     */
+    void parkFiber();
+
+    /**
+     * Disables the current fiber for scheduling purposes for up to the
+     * given waiting time.
+     */
+    void parkFiber(long nanos);
+
+    /**
+     * Re-enables this fiber for scheduling.
+     */
+    void unparkFiber(Fiber fiber);
 }

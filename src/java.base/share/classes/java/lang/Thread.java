@@ -1433,7 +1433,7 @@ class Thread extends Strand implements Runnable {
         if (this instanceof ShadowThread) {
             Fiber f = ((ShadowThread) this).fiber();
             long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
-            f.awaitNanosInterruptibly(nanos);
+            f.awaitInterruptibly(nanos);
             return;
         }
 

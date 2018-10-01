@@ -30,7 +30,11 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
+import java.time.Duration;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
@@ -40,6 +44,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import jdk.internal.misc.Unsafe;
@@ -53,7 +58,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  */
 
 public final class Fiber extends Strand {
-    private static final ContinuationScope FIBER_SCOPE = new ContinuationScope() { };
+    private static final ContinuationScope FIBER_SCOPE = new ContinuationScope("Fibers");
     private static final Executor DEFAULT_SCHEDULER = defaultScheduler();
     private static final ScheduledExecutorService UNPARKER = delayedTaskScheduler();
     private static final boolean EMULATE_CURRENT_THREAD = emulateCurrentThreadValue();
@@ -80,10 +85,11 @@ public final class Fiber extends Strand {
 
     // fiber state
     private static final short ST_NEW      = 0;
-    private static final short ST_RUNNABLE = 1;
-    private static final short ST_PARKING  = 2;
-    private static final short ST_PARKED   = 3;
-    private static final short ST_PINNED   = 4;
+    private static final short ST_STARTED  = 1;
+    private static final short ST_RUNNABLE = 2;
+    private static final short ST_PARKING  = 3;
+    private static final short ST_PARKED   = 4;
+    private static final short ST_PINNED   = 5;
     private static final short ST_TERMINATED = 99;
     private volatile short state;
 
@@ -94,6 +100,9 @@ public final class Fiber extends Strand {
     private volatile boolean parkPermit;
     private volatile Object parkBlocker;  // used by LockSupport
 
+    // cancellation
+    private volatile boolean cancelled;
+
     // java.lang.Thread integration
     private volatile ShadowThread shadowThread;  // created lazily
     private volatile InheritableThreadContext inheritableThreadContext;
@@ -103,18 +112,11 @@ public final class Fiber extends Strand {
      *
      * @param scheduler the scheduler
      * @param task the task to execute
-     * @throws SecurityManager if a security manager is set and it denies
-     *         {@link RuntimePermission}{@code ("fiberScheduler")}
      * @throws NullPointerException if the scheduler or task is {@code null}
      */
-    private Fiber(Executor scheduler, Runnable task) {
+    public Fiber(Executor scheduler, Runnable task) {
         Objects.requireNonNull(scheduler);
         Objects.requireNonNull(task);
-
-        SecurityManager sm;
-        if (scheduler != DEFAULT_SCHEDULER && (sm = System.getSecurityManager()) != null) {
-            sm.checkPermission(new RuntimePermission("fiberScheduler"));
-        }
 
         this.scheduler = scheduler;
         this.cont = new Continuation(FIBER_SCOPE, task) {
@@ -123,55 +125,101 @@ public final class Fiber extends Strand {
         };
         this.runContinuation = this::runContinuation;
 
-        // Inheritable context from creating thread or fiber
-        InheritableThreadContext ctxt = null;
-        Thread parentThread = Thread.currentCarrierThread();
-        Fiber parentFiber = parentThread.getFiber();
-        if (parentFiber != null) {
-            parentThread = parentFiber.shadowThreadOrNull();
-            if (parentThread == null) {
-                ctxt = parentFiber.inheritableThreadContext;
-                if (ctxt == null) {
-                    // context has been cleared by creating the shadow thread
-                    parentThread = parentFiber.shadowThreadOrNull();
-                    assert parentThread != null;
+        if (EMULATE_CURRENT_THREAD) {
+            // Inheritable context from creating thread or fiber
+            InheritableThreadContext ctxt = null;
+            Thread parentThread = Thread.currentCarrierThread();
+            Fiber parentFiber = parentThread.getFiber();
+            if (parentFiber != null) {
+                parentThread = parentFiber.shadowThreadOrNull();
+                if (parentThread == null) {
+                    ctxt = parentFiber.inheritableThreadContext;
+                    if (ctxt == null) {
+                        // context has been cleared by creating the shadow thread
+                        parentThread = parentFiber.shadowThreadOrNull();
+                        assert parentThread != null;
+                    }
                 }
             }
-        }
-        if (parentThread != null) {
-            this.inheritableThreadContext = new InheritableThreadContext(parentThread);
-        } else {
-            assert ctxt != null;
-            this.inheritableThreadContext = ctxt;
+            if (parentThread != null) {
+                this.inheritableThreadContext = new InheritableThreadContext(parentThread);
+            } else {
+                assert ctxt != null;
+                this.inheritableThreadContext = ctxt;
+            }
         }
     }
 
     /**
      * Creates a new {@code Fiber} to run the given task with the default
-     * scheduler and starts its execution.
+     * scheduler.
      *
      * @param task the task to execute
      * @return the fiber
      * @throws NullPointerException if task is {@code null}
      */
-    public static Fiber execute(Runnable task) {
-        return execute(DEFAULT_SCHEDULER, task);
+    public Fiber(Runnable task) {
+        this(DEFAULT_SCHEDULER, task);
     }
 
     /**
-     * Creates a new {@code Fiber} to run the given task with the given
-     * scheduler and starts its execution.
+     * Creates and schedules a new {@code Fiber} to run the given value-returning
+     * task. The {@code Fiber} is scheduled with the given scheduler.
      *
      * @param scheduler the scheduler
      * @param task the task to execute
-     * @return the fiber
+     * @param <V> the task's result type
+     * @return a CompletableFuture representing pending completion of the task
      * @throws RejectedExecutionException if the scheduler cannot accept a task
-     * @throws SecurityManager if a security manager is set and it denies
-     *         {@link RuntimePermission}{@code ("fiberScheduler")}
      * @throws NullPointerException if the scheduler or task is {@code null}
      */
-    public static Fiber execute(Executor scheduler, Runnable task) {
-        Fiber f = new Fiber(scheduler, task);
+    public static <V> CompletableFuture<V> schedule(Executor scheduler, Callable<V> task) {
+        Objects.requireNonNull(task);
+        CompletableFuture<V> result = new CompletableFuture<>();
+        new Fiber(scheduler, () -> {
+            try {
+                V value = task.call();
+                result.complete(value);
+            } catch (Throwable e) {
+                result.completeExceptionally(e);
+            }
+        }).schedule();
+        return result;
+    }
+
+    /**
+     * Creates and schedules a new {@code Fiber} to run the given value-returning
+     * task. The {@code Fiber} is scheduled with the default scheduler.
+     *
+     * @param task the task to execute
+     * @param <V> the task's result type
+     * @return a CompletableFuture representing pending completion of the task
+     * @throws NullPointerException if the task is {@code null}
+     */
+    public static <V> CompletableFuture<V> schedule(Callable<V> task) {
+        return schedule(DEFAULT_SCHEDULER, task);
+    }
+
+    /**
+     * Returns the current {@code Fiber}.
+     *
+     * @return Returns the current fiber or an empty {@code Optional} if not
+     *        called from a fiber
+     */
+    public static Optional<Fiber> current() {
+        return Optional.of(Thread.currentCarrierThread().getFiber());
+    }
+
+    /**
+     * Schedules this {@code Fiber} to execute.
+     *
+     * @return this fiber
+     * @throws RejectedExecutionException if the scheduler cannot accept a task
+     * @throws IllegalStateException if the fiber has already been scheduled
+     */
+    public Fiber schedule() {
+        if (!stateCompareAndSet(ST_NEW, ST_STARTED))
+            throw new IllegalStateException("Fiber already scheduled");
 
         // switch to carrier thread when submitting task. Revisit this when
         // ForkJoinPool is updated to reduce use of Thread.currentThread.
@@ -179,12 +227,11 @@ public final class Fiber extends Strand {
         Fiber fiber = t.getFiber();
         if (fiber != null) t.setFiber(null);
         try {
-            scheduler.execute(f.runContinuation);
+            scheduler.execute(runContinuation);
         } finally {
             if (fiber != null) t.setFiber(fiber);
         }
-
-        return f;
+        return this;
     }
 
     /**
@@ -194,7 +241,7 @@ public final class Fiber extends Strand {
         assert Thread.currentCarrierThread().getFiber() == null;
 
         // set state to ST_RUNNING
-        if (!stateCompareAndSet(ST_NEW, ST_RUNNABLE)) {
+        if (!stateCompareAndSet(ST_STARTED, ST_RUNNABLE)) {
             // continue on this carrier thread if fiber was parked
             if (stateCompareAndSet(ST_PARKED, ST_RUNNABLE)) {
                 parkPermitGetAndSet(false);  // consume parking permit
@@ -346,16 +393,16 @@ public final class Fiber extends Strand {
      *
      * @throws IllegalCallerException if not called from a fiber
      */
-    public static void park() {
+    static void park() {
         Fiber fiber = Thread.currentCarrierThread().getFiber();
         if (fiber == null)
-            throw new IllegalCallerException();
+            throw new IllegalCallerException("not a fiber");
         fiber.maybePark();
     }
 
     /**
      * Disables the current fiber for scheduling purposes for up to the
-     * specified waiting time.
+     * given waiting time.
      *
      * <p> If this fiber has already been {@link #unpark() unparked} then the
      * parking permit is consumed and this method completes immediately;
@@ -368,7 +415,7 @@ public final class Fiber extends Strand {
      *
      * @throws IllegalCallerException if not called from a fiber
      */
-    public static void parkNanos(long nanos) {
+    static void parkNanos(long nanos) {
         Thread t = Thread.currentCarrierThread();
         Fiber fiber = t.getFiber();
         if (fiber == null)
@@ -434,7 +481,7 @@ public final class Fiber extends Strand {
      *         accept a task
      * @return this fiber
      */
-    public Fiber unpark() {
+    Fiber unpark() {
         Thread t = Thread.currentCarrierThread();
         Fiber fiber = t.getFiber();
         if (!parkPermitGetAndSet(true) && fiber != this) {
@@ -501,74 +548,85 @@ public final class Fiber extends Strand {
      * continue to wait. When the thread does return from this method then its
      * interrupt status will be set.
      *
-     * @return this fiber
+     * @throws IllegalStateException if the fiber has not been scheduled
      */
-    public Fiber await() {
+    public void await() {
         boolean joinInterrupted = false;
         boolean terminated = false;
         while (!terminated) {
             try {
-                terminated = awaitNanosInterruptibly(0);
+                terminated = awaitInterruptibly(0);
             } catch (InterruptedException e) {
                 joinInterrupted = true;
             }
         }
         if (joinInterrupted)
             Thread.currentThread().interrupt();
-        return this;
     }
 
     /**
-     * Waits for this fiber to terminate. This method does not wait if the time
-     * to wait is less than or equal to zero.
+     * Waits for this fiber to terminate for up to the given waiting duration.
+     * This method does not wait if the duration to wait is less than or equal
+     * to zero.
      *
      * <p> If the current thread is interrupted while waiting then it will
      * continue to wait. When the thread does return from this method then its
      * interrupt status will be set.
      *
-     * @param nanos the maximum time to wait, in nanoseconds
-     * @return this fiber
+     * @param duration the maximum duration to wait
+     * @return {@code true}  if the fiber terminated
+     * @throws IllegalStateException if the fiber has not been scheduled
+     * @throws NullPointerException if duration {@code null}
      */
-    public Fiber awaitNanos(long nanos) {
+    public boolean await(Duration duration) {
+        long nanos = TimeUnit.NANOSECONDS.convert(duration);
+        boolean terminated = false;
         if (nanos > 0) {
-            boolean joinInterrupted = false;
-            boolean terminated = false;
+            boolean interrupted = false;
 
             // wait until the fiber terminates or timeout elapses
             while (!terminated && nanos > 0) {
                 long startTime = System.nanoTime();
                 try {
-                    terminated = awaitNanosInterruptibly(nanos);
+                    terminated = awaitInterruptibly(nanos);
                 } catch (InterruptedException e) {
-                    joinInterrupted = true;
+                    interrupted = true;
                 }
                 nanos -= (System.nanoTime() - startTime);
             }
 
             // restore interrupt status
-            if (joinInterrupted) {
+            if (interrupted) {
                 Thread.currentThread().interrupt();
             }
         }
-        return this;
+
+        if (terminated) {
+            return true;
+        } else {
+            return stateGet() == ST_TERMINATED;
+        }
     }
 
     /**
      * Waits up to {@code nanos} nanoseconds for this fiber to terminate.
      * A timeout of {@code 0} means to wait forever.
      *
-     * @throws InterruptedException if the shadow thread is interrupted while waiting
      * @throws IllegalArgumentException if nanos is negative
+     * @throws InterruptedException if the shadow thread is interrupted while waiting
+     * @throws IllegalStateException if the fiber has not been scheduled
      * @return true if the fiber has terminated
      */
-    boolean awaitNanosInterruptibly(long nanos) throws InterruptedException {
+    boolean awaitInterruptibly(long nanos) throws InterruptedException {
         if (nanos < 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("timeout is negative");
         }
         lock.lock();
         try {
-            // check if already terminated
-            if (stateGet() == ST_TERMINATED)
+            short s = stateGet();
+            if (s == ST_NEW)
+                throw new IllegalStateException("fiber not scheduled");
+            if (s == ST_TERMINATED)
                 return true;
 
             // wait
@@ -582,6 +640,40 @@ public final class Fiber extends Strand {
             lock.unlock();
         }
         return (stateGet() == ST_TERMINATED);
+    }
+
+    /**
+     * Tests if this {@code Fiber} is alive. A thread is alive if it has
+     * been scheduled and has not yet terminated.
+     *
+     * @return {@code true} if this fiber is alive; {@code false} otherwise.
+     */
+    public boolean isAlive() {
+        short s = stateGet();
+        return (s != ST_NEW) && (s != ST_TERMINATED);
+    }
+
+    /**
+     * Sets this fiber's cancel status. If the fiber hasn't terminated then it
+     * is also {@link java.util.concurrent.locks.LockSupport#unpark(Strand)
+     * unparked}.
+     *
+     * @return this fiber
+     */
+    public Fiber cancel() {
+        cancelled = true;
+        if (stateGet() != ST_TERMINATED)
+            unpark();
+        return this;
+    }
+
+    /**
+     * Returns the fiber's cancel status.
+     *
+     * @return {@code true} if the fiber has been cancelled
+     */
+    public boolean isCancelled() {
+        return cancelled;
     }
 
     /**
@@ -604,7 +696,7 @@ public final class Fiber extends Strand {
      */
     Thread shadowThread() {
         assert Thread.currentCarrierThread() == carrierThread;
-        if (!emulateCurrentThread()) {
+        if (!EMULATE_CURRENT_THREAD) {
             throw new UnsupportedOperationException(
                 "currentThread() cannot be used in the context of a fiber");
         }
@@ -625,6 +717,7 @@ public final class Fiber extends Strand {
         switch (stateGet()) {
             case ST_NEW:
                 return Thread.State.NEW;
+            case ST_STARTED:
             case ST_RUNNABLE:
                 Thread t = carrierThread;
                 if (t != null) {
@@ -651,7 +744,8 @@ public final class Fiber extends Strand {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder("Fiber[");
+        String prefix = "Fiber@" + Integer.toHexString(hashCode()) + "[";
+        StringBuilder sb = new StringBuilder(prefix);
         Thread t = carrierThread;
         if (t != null) {
             sb.append(t.getName());
