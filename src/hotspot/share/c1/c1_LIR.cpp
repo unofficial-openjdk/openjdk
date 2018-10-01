@@ -483,7 +483,6 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
     case lir_pop:            // input always valid, result and info always invalid
     case lir_return:         // input always valid, result and info always invalid
     case lir_leal:           // input and result always valid, info always invalid
-    case lir_neg:            // input and result always valid, info always invalid
     case lir_monaddr:        // input and result always valid, info always invalid
     case lir_null_check:     // input and info always valid, result always invalid
     case lir_move:           // input and result always valid, may have info
@@ -591,6 +590,7 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
     case lir_rem:
     case lir_sqrt:
     case lir_abs:
+    case lir_neg:
     case lir_logic_and:
     case lir_logic_or:
     case lir_logic_xor:
@@ -1673,7 +1673,6 @@ const char * LIR_Op::name() const {
      case lir_null_check:            s = "null_check";    break;
      case lir_return:                s = "return";        break;
      case lir_safepoint:             s = "safepoint";     break;
-     case lir_neg:                   s = "neg";           break;
      case lir_leal:                  s = "leal";          break;
      case lir_branch:                s = "branch";        break;
      case lir_cond_float_branch:     s = "flt_cond_br";   break;
@@ -1703,6 +1702,7 @@ const char * LIR_Op::name() const {
      case lir_div_strictfp:          s = "div_strictfp";  break;
      case lir_rem:                   s = "rem";           break;
      case lir_abs:                   s = "abs";           break;
+     case lir_neg:                   s = "neg";           break;
      case lir_sqrt:                  s = "sqrt";          break;
      case lir_logic_and:             s = "logic_and";     break;
      case lir_logic_or:              s = "logic_or";      break;
