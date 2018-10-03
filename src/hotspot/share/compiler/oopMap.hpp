@@ -293,6 +293,11 @@ public:
 
 class ExplodedOopMapStream;
 
+class OopMapClosure : public Closure {
+ public:
+  virtual void do_value(VMReg reg, OopMapValue::oop_types type) = 0;
+};
+
 class ImmutableOopMap {
   friend class OopMapStream;
   friend class VMStructs;
@@ -321,6 +326,7 @@ public:
 #endif
 
   void oops_do(const frame* fr, const RegisterMap* reg_map, OopClosure* f, DerivedOopClosure* df) const;
+  void all_do(const frame *fr, int mask, OopMapClosure* fn) const;
   void update_register_map(const frame* fr, RegisterMap *reg_map) const;
 
   // Printing

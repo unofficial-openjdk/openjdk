@@ -54,12 +54,13 @@
 #include "utilities/decoder.hpp"
 #include "utilities/formatBuffer.hpp"
 
-RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool validate_oops) {
+RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool walk_cont, bool validate_oops) {
   _thread         = thread;
   _update_map     = update_map;
   clear();
   debug_only(_update_for_id = NULL;)
   _validate_oops = validate_oops;
+  _walk_cont     = walk_cont;
 #ifndef PRODUCT
   for (int i = 0; i < reg_count ; i++ ) _location[i] = NULL;
 #endif /* PRODUCT */
@@ -73,6 +74,9 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
   _include_argument_oops = map->include_argument_oops();
   debug_only(_update_for_id = map->_update_for_id;)
   _validate_oops = map->_validate_oops;
+  _walk_cont     = map->_walk_cont;
+
+  _cont = map->_cont;
   pd_initialize_from(map);
   if (update_map()) {
     for(int i = 0; i < location_valid_size; i++) {
@@ -90,6 +94,11 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
       }
     }
   }
+}
+
+void RegisterMap::set_cont(Thread* thread, oop cont) {
+  // tty->print_cr("set_cont: %d", cont != NULL);
+  _cont = cont != NULL ? Handle(thread, cont) : Handle();
 }
 
 void RegisterMap::clear() {

@@ -53,7 +53,6 @@ class frame {
   // Instance variables:
   intptr_t* _sp; // stack pointer (from Thread::last_Java_sp)
   address   _pc; // program counter (the next instruction after the call)
-
   CodeBlob* _cb; // CodeBlob that "owns" pc
   mutable const ImmutableOopMap* _oop_map; // oop map, for compiled/stubs frames only
   enum deopt_state {
@@ -95,7 +94,6 @@ class frame {
 
   intptr_t* sp() const           { return _sp; }
   void set_sp( intptr_t* newsp ) { _sp = newsp; }
-
 
   CodeBlob* cb() const           { return _cb; }
   const ImmutableOopMap* oop_map() const {
@@ -170,8 +168,8 @@ class frame {
 
  private:
   // Helper methods for better factored code in frame::sender
-  frame sender_for_compiled_frame(RegisterMap* map, CodeBlobLookup* lookup) const;
   frame sender_for_entry_frame(RegisterMap* map) const;
+  frame sender_for_compiled_frame(RegisterMap* map, CodeBlobLookup* lookup = NULL) const;
   frame sender_for_interpreter_frame(RegisterMap* map) const;
   frame sender_for_native_frame(RegisterMap* map) const;
 

@@ -81,7 +81,7 @@
 #define RUN_SIG    "java.lang.Continuation.run()V"
 
 static void print_oop(void *p, oop obj, outputStream* st = tty);
-static void print_vframe(frame f, RegisterMap* map = NULL, outputStream* st = tty);
+static void print_vframe(frame f, const RegisterMap* map = NULL, outputStream* st = tty);
 static void print_frames(JavaThread* thread, outputStream* st = tty);
 #ifdef ASSERT
 static VMReg find_register_spilled_here(void* p, RegisterMap* map);
@@ -182,6 +182,7 @@ private:
   bool _is_interpreted;
   bool _write;
   int _length;
+  // int _ref_length;
 
   friend class ContMirror;
 private:
@@ -192,35 +193,41 @@ private:
   inline address* return_pc_address(ContMirror& cont);
 
 public:
-  hframe() : _sp(-1), _fp(0), _pc(NULL), _cb(NULL), _is_interpreted(true), _write(false), _length(0) {}
-  hframe(const hframe& hf) : _sp(hf._sp), _fp(hf._fp), _pc(hf._pc), _cb(hf._cb), _is_interpreted(hf._is_interpreted),
-                             _write(hf._write), _length(hf._length) {}
+  hframe() : _sp(-1), _fp(0), _pc(NULL), _cb(NULL), _is_interpreted(true), _write(false), _length(0) /*, _ref_length(0)*/ {}
+  hframe(const hframe& hf) : _sp(hf._sp), _fp(hf._fp), _pc(hf._pc), _cb(hf._cb), 
+                             _is_interpreted(hf._is_interpreted), _write(hf._write), _length(hf._length)/*, _ref_length(hf._ref_length)*/  {}
 
-  hframe(int sp, long fp, address pc, bool write, int length)
-    : _sp(sp), _fp(fp), _pc(pc), _is_interpreted(Interpreter::contains(pc)), _write(write), _length(length) {
+  hframe(int sp, long fp, address pc, bool write, int length/*, int ref_length*/)
+    : _sp(sp), _fp(fp), _pc(pc), 
+      _is_interpreted(Interpreter::contains(pc)), _write(write), _length(length)/*, _ref_length(ref_length)*/ {
       _cb = NULL;
       assert (write  || length > 0, "");
       assert (!write || length == 0, "");
     }
-  hframe(int sp, long fp, address pc, CodeBlob* cb, bool is_interpreted, bool write, int length)
-    : _sp(sp), _fp(fp), _pc(pc), _cb(cb), _is_interpreted(is_interpreted), _write(write), _length(length) {
+  hframe(int sp, long fp, address pc, CodeBlob* cb, bool is_interpreted, bool write, int length/*, int ref_length*/)
+    : _sp(sp), _fp(fp), _pc(pc), _cb(cb), 
+      _is_interpreted(is_interpreted), _write(write), _length(length)/*, _ref_length(ref_length)*/ {
       assert (write  || length > 0, "");
       assert (!write || length == 0, "");
     }
-  hframe(int sp, long fp, address pc, bool is_interpreted, bool write, int length)
-    : _sp(sp), _fp(fp), _pc(pc), _is_interpreted(is_interpreted), _write(write), _length(length) {
+  hframe(int sp, long fp, address pc, bool is_interpreted, bool write, int length/*, int ref_length*/)
+    : _sp(sp), _fp(fp), _pc(pc), 
+      _is_interpreted(is_interpreted), _write(write), _length(length)/*, _ref_length(ref_length)*/ {
       _cb = NULL;
       assert (write  || length > 0, "");
       assert (!write || length == 0, "");
     }
 
-  bool operator==(const hframe& other) { return _write == other._write && _sp == other._sp && _fp == other._fp && _pc == other._pc; }
+  bool operator==(const hframe& other) { 
+    return _write == other._write && 
+          _sp == other._sp && _fp == other._fp && _pc == other._pc; 
+  }
   bool is_empty() { return _pc == NULL && _sp < 0; }
 
   inline bool is_interpreted_frame() { return _is_interpreted; }
-  inline int       sp() { return _sp; }
-  inline long      fp() { return _fp; }
-  inline address   pc() { return _pc; }
+  inline int       sp()     { return _sp; }
+  inline long      fp()     { return _fp; }
+  inline address   pc()     { return _pc; }
   CodeBlob* cb();
 
   inline void set_fp(long fp) { _fp = fp; }
@@ -247,6 +254,10 @@ public:
   inline void patch_link_relative(ContMirror& cont, intptr_t* fp);
   inline void patch_callee(ContMirror& cont, hframe& sender);
 
+  intptr_t* interpreter_frame_metadata_at(ContMirror& cont, int offset) const;
+  intptr_t* interpreter_frame_local_at(ContMirror& cont, int index) const;
+  intptr_t* interpreter_frame_expression_stack_at(ContMirror& cont, int offset) const;
+
   inline void patch_return_pc(ContMirror& cont, address value) { *return_pc_address(cont) = value; }
   inline void patch_real_fp_offset(ContMirror& cont, int offset, intptr_t value) { *(link_address(cont) + offset) = value; }
   inline intptr_t* get_real_fp_offset(ContMirror& cont, int offset) { return (intptr_t*)*(link_address(cont) + offset); }
@@ -254,15 +265,55 @@ public:
 
   bool is_bottom(ContMirror& cont);
 
-  inline intptr_t* index_address(ContMirror& cont, int i);
+  inline intptr_t* index_address(ContMirror& cont, int i) const;
 
   Method* method(ContMirror& cont);
+
+  inline frame to_frame();
 
   void print_on(ContMirror& cont, outputStream* st);
   void print(ContMirror& cont) { print_on(cont, tty); }
   void print_on(outputStream* st);
   void print() { print_on(tty); }
 };
+
+intptr_t* hframe::interpreter_frame_metadata_at(ContMirror& cont, int offset) const {
+  intptr_t* fp = index_address(cont, _fp);
+  return fp + offset;
+}
+
+intptr_t* hframe::interpreter_frame_local_at(ContMirror& cont, int index) const {
+  intptr_t* fp = index_address(cont, _fp);
+  const int n = Interpreter::local_offset_in_bytes(index)/wordSize;
+  intptr_t* locals = (intptr_t*)((address)fp + to_bytes(*(long*)(fp + frame::interpreter_frame_locals_offset)));
+  intptr_t* loc = &(locals[n]); // derelativize
+
+  // tty->print_cr("interpreter_frame_local_at: %d (%p, %ld, %ld) fp: %ld sp: %d, n: %d fp: %p", index, loc, loc - index_address(cont, _sp), loc - fp, _fp, _sp, n, fp);  
+  return loc;
+}
+
+// static bool is_in_expression_stack(const frame& fr, const intptr_t* const addr) {
+//   assert(addr != NULL, "invariant");
+
+//   // Ensure to be 'inside' the expresion stack (i.e., addr >= sp for Intel).
+//   // In case of exceptions, the expression stack is invalid and the sp
+//   // will be reset to express this condition.
+//   if (frame::interpreter_frame_expression_stack_direction() > 0) {
+//     return addr <= fr.interpreter_frame_tos_address();
+//   }
+
+//   return addr >= fr.interpreter_frame_tos_address();
+// }
+
+intptr_t* hframe::interpreter_frame_expression_stack_at(ContMirror& cont, int offset) const {
+  intptr_t* fp = index_address(cont, _fp);
+  intptr_t* monitor_end = (intptr_t*)((address)fp + to_bytes(*(long*)(fp + frame::interpreter_frame_monitor_block_top_offset))); // derelativize
+  intptr_t* expression_stack = monitor_end-1;
+
+  const int i = offset * frame::interpreter_frame_expression_stack_direction();
+  const int n = i * Interpreter::stackElementWords;
+  return &(expression_stack[n]);
+}
 
 // freeze result
 enum res_freeze {
@@ -305,7 +356,7 @@ private:
   int _ref_sp;
   objArrayOop  _ref_stack;
   int _wref_start;
-  int _num_oops;
+  int _num_oops; // Number of oops written so far during a freeze
 
 // #if USE_GROWABLE_ARRAY
 //   GrowableArray<oopLoc>* _oops;
@@ -390,7 +441,7 @@ public:
   void copy_to_stack(void* from, void* to, int size);
   void copy_from_stack(void* from, void* to, int size);
 
-  objArrayOop  refStack(int size);
+  objArrayOop refStack(int size);
   objArrayOop refStack() { return _ref_stack; }
   int refSP() { return _ref_sp; }
   void set_refSP(int refSP) { log_trace(jvmcont)("set_refSP: %d", refSP); _ref_sp = refSP; }
@@ -400,6 +451,8 @@ public:
   inline int stack_index(void* p);
   inline intptr_t* stack_address(int i);
   inline intptr_t* stack_address(int i, bool write);
+
+  int written_oops() { return _num_oops; }
 
   // void call_pinned(res_freeze res, frame& f);
 
@@ -411,13 +464,15 @@ public:
   hframe last_frame();
   inline void set_last_frame(hframe& f);
 
+  hframe from_frame(const frame& f);
+
   void init_write_arrays(int size, int noops, int nframes);
   address freeze_target();
   inline hframe fix_hframe_afer_write(hframe& hf);
   void commit_stacks();
   void revert(hframe& new_top);
 
-  inline void add_oop(oop obj);
+  inline int add_oop(oop obj);
   // inline void add_oop_location(oop* p);
   // inline void add_oop_location(narrowOop* p);
 
@@ -444,6 +499,11 @@ public:
   inline void e_inc_refs() { _e_num_refs++; }
   template<typename Event> void post_jfr_event(Event *e);
 };
+
+inline frame hframe::to_frame() {
+  return frame(reinterpret_cast<intptr_t*>(_sp), reinterpret_cast<intptr_t*>(_sp), reinterpret_cast<intptr_t*>(_fp), _pc, 
+              _cb != NULL ? _cb : (_cb = CodeCache::find_blob(_pc)));
+}
 
 void hframe::print_on(outputStream* st) {
   if (is_empty()) {
@@ -500,7 +560,7 @@ void hframe::print_on(ContMirror& cont, outputStream* st) {
   }
 }
 
-inline intptr_t* hframe::index_address(ContMirror& cont, int i) {
+inline intptr_t* hframe::index_address(ContMirror& cont, int i) const {
   assert (_length == (_write ? 0 : cont.stack_length()), "write: %d length: %d cont.stack_length: %d", _write, _length, cont.stack_length());
   return (intptr_t*)cont.stack_address(i, _write);
 }
@@ -603,6 +663,7 @@ Method* hframe::method(ContMirror& cont) {
 
 ContMirror::ContMirror(JavaThread* thread, oop cont)
  : _thread(thread) {
+   assert (cont != NULL, "");
   _cont = cont;
   _stack     = NULL;
   _hstack    = NULL;
@@ -631,10 +692,9 @@ ContMirror::ContMirror(JavaThread* thread, oop cont)
 void ContMirror::read() {
   log_trace(jvmcont)("Reading continuation object:");
 
-  _entrySP = (intptr_t*) java_lang_Continuation::entrySP(_cont);
-  _entryFP = NULL;
-  _entryPC = (address) java_lang_Continuation::entryPC(_cont);
-  log_trace(jvmcont)("set_entryPC Z " INTPTR_FORMAT, p2i(_entryPC));
+  _entrySP = java_lang_Continuation::entrySP(_cont);
+  _entryFP = java_lang_Continuation::entryFP(_cont);
+  _entryPC = java_lang_Continuation::entryPC(_cont);
   log_trace(jvmcont)("\tentrySP: " INTPTR_FORMAT " entryFP: " INTPTR_FORMAT " entryPC: " INTPTR_FORMAT, p2i(_entrySP), p2i(_entryFP), p2i(_entryPC));
 
   _sp = java_lang_Continuation::sp(_cont);
@@ -675,9 +735,9 @@ void ContMirror::write() {
   java_lang_Continuation::set_fp(_cont, _fp);
   java_lang_Continuation::set_pc(_cont, _pc);
 
-  log_trace(jvmcont)("WRITE set_entryPC: " INTPTR_FORMAT, p2i(_entryPC));
+  log_trace(jvmcont)("\tentrySP: " INTPTR_FORMAT " entryFP: " INTPTR_FORMAT " entryPC: " INTPTR_FORMAT, p2i(_entrySP), p2i(_entryFP), p2i(_entryPC));
   java_lang_Continuation::set_entrySP(_cont, _entrySP);
-  // java_lang_Continuation::set_entryFP(_cont, _entryFP);
+  java_lang_Continuation::set_entryFP(_cont, _entryFP);
   java_lang_Continuation::set_entryPC(_cont, _entryPC);
 
   commit_stacks();
@@ -711,14 +771,18 @@ hframe ContMirror::last_frame() {
 inline void ContMirror::set_last_frame(hframe& f) {
   assert (f._length = _stack_length, "");
   set_sp(f.sp()); set_fp(f.fp()); set_pc(f.pc());
-  log_trace(jvmcont)("set_last_frame cont sp: %d fp: 0x%lx pc: " INTPTR_FORMAT " interpreted: %d flag: %d", sp(), fp(), p2i(pc()), f.is_interpreted_frame(), is_flag(FLAG_LAST_FRAME_INTERPRETED));
-  if (log_is_enabled(Trace, jvmcont)) f.print_on(*this, tty);
+  // if (f.ref_sp() != -1) // frames' ref_sp is invalid during freeze
+  //   set_refSP(f.ref_sp());
   if (is_empty()) {
-    if (_stack_length > 0)
+    if (_stack_length > 0) {
       set_sp(_stack_length + to_index(METADATA_SIZE));
+      // set_refSP(_ref_stack->length());
+    }
     set_fp(0);
     set_pc(NULL);
   }
+  log_trace(jvmcont)("set_last_frame cont sp: %d fp: 0x%lx pc: " INTPTR_FORMAT " interpreted: %d flag: %d", sp(), fp(), p2i(pc()), f.is_interpreted_frame(), is_flag(FLAG_LAST_FRAME_INTERPRETED));
+  if (log_is_enabled(Trace, jvmcont)) f.print_on(*this, tty);
 }
 
 inline int ContMirror::stack_index(void* p) {
@@ -888,7 +952,7 @@ int ContMirror::ensure_capacity(int old, int min) {
 
 bool ContMirror::grow_ref_stack(int nr_oops) {
   int old_length = _ref_stack->length();
-  assert(old_length == _ref_sp, "check"); // this assert is just a check to see if this ever happens and not to enforce behaviour
+  assert(old_length == _ref_sp, "check"); // this assert is just a check to see if this ever happens and not to enforce behaviour -- it does happen with lazy-copy
 
   int min_length = (old_length - _ref_sp) + nr_oops;
   int new_length = ensure_capacity(old_length, min_length);
@@ -1132,6 +1196,11 @@ hframe ContMirror::new_hframe(intptr_t* hsp, intptr_t* hfp, address pc, CodeBlob
   return hframe(sp, fp, pc, cb, is_interpreted, write, write ? 0 : _stack_length);
 }
 
+hframe ContMirror::from_frame(const frame& f) {
+  return hframe(static_cast<int>(reinterpret_cast<intptr_t>(f.sp())), reinterpret_cast<long>(f.fp()), f.pc(), f.cb(), 
+          f.is_interpreted_frame(), false, _stack_length);
+}
+
 inline int ContMirror::fix_write_index_after_write(int index) {
   return _sp - to_index(METADATA_SIZE) - _wsp + index;
 }
@@ -1171,12 +1240,13 @@ void ContMirror::null_ref_stack(int start, int num) {
   }
 }
 
-inline void ContMirror::add_oop(oop obj) {
+inline int ContMirror::add_oop(oop obj) {
   int index = _wref_start + _num_oops;
   assert (index < _ref_sp, "");
   log_trace(jvmcont)("i: %d ", index);
   _ref_stack->obj_at_put(index, obj);
   _num_oops++;
+  return index;
 }
 
 // inline void ContMirror::add_oop_location(oop* p) {
@@ -1515,13 +1585,14 @@ class FreezeOopClosure: public ContOopClosure {
  private:
   void* const _hsp;
   intptr_t** _h_saved_link_address;
+  int _refStack_length;
 
  protected:
   template <class T> inline void do_oop_work(T* p) {
     if (!process(p)) return;
 
     oop obj = NativeAccess<>::oop_load(p);
-    _cont->add_oop(obj);
+    int index = _cont->add_oop(obj);
     // _cont->add_oop_location(p);
 
   #ifdef ASSERT
@@ -1531,10 +1602,9 @@ class FreezeOopClosure: public ContOopClosure {
     log_trace(jvmcont)("narrow: %d", sizeof(T) < wordSize);
   #endif
 
-  #ifndef PRODUCT
     int offset = verify(p);
-    address hloc;
-    if (offset >= 0) { // rbp could be stored in the callee frame. because frames are stored differently on the h-stack, we don't mark if outside frame
+    address hloc; // address of oop in the (raw) h-stack
+    if (offset >= 0) { // rbp could be stored in the callee frame.
       hloc = (address)_hsp + offset;
       assert (_cont->in_writestack(hloc), "");
     } else {
@@ -1542,13 +1612,25 @@ class FreezeOopClosure: public ContOopClosure {
       hloc = (address) _h_saved_link_address;
       assert (_h_saved_link_address != NULL, "");
     }
+  #ifndef PRODUCT
     log_trace(jvmcont)("Marking oop at " INTPTR_FORMAT " (offset: %d)", p2i(hloc), offset);
     memset(hloc, 0xba, sizeof(T)); // mark oop locations
   #endif
+    int oop_reverse_index = _refStack_length - index;
+    log_trace(jvmcont)("Setting reverse oop index at " INTPTR_FORMAT " (offset: %d) : %d (length: %d)", p2i(hloc), offset, oop_reverse_index, _refStack_length);
+    assert (oop_reverse_index > 0, "oop_reverse_index: %d", oop_reverse_index);
+    
+    // tty->print_cr("freeze oop_reverse_index: %d (%p, %d)", oop_reverse_index, hloc, offset/8);
+
+    *(int*)hloc = oop_reverse_index;
   }
+
  public:
   FreezeOopClosure(ContMirror* cont, frame* fr, void* vsp, void* hsp, intptr_t** h_saved_link_address, RegisterMap* map)
-   : ContOopClosure(cont, fr, map, vsp), _hsp(hsp), _h_saved_link_address(h_saved_link_address) { assert (cont->in_stack(hsp), ""); }
+   : ContOopClosure(cont, fr, map, vsp), _hsp(hsp), _h_saved_link_address(h_saved_link_address) { 
+     assert (cont->in_stack(hsp), "");
+     _refStack_length = cont->refStack()->length();
+  }
   virtual void do_oop(oop* p)       { do_oop_work(p); }
   virtual void do_oop(narrowOop* p) { do_oop_work(p); }
 
@@ -2281,7 +2363,7 @@ static frame thaw_frame(ContMirror& cont, hframe& hf, int oop_index, frame& send
   //   deoptimized = false;
   // }
 
-  RegisterMap map(cont.thread(), true, false);
+  RegisterMap map(cont.thread(), true, false, false);
   map.set_include_argument_oops(false);
 
   frame f = hf.is_interpreted_frame() ? thaw_interpreted_frame(cont, hf, vsp, sender)
@@ -2298,6 +2380,7 @@ static frame thaw_frame(ContMirror& cont, hframe& hf, int oop_index, frame& send
 
   assert (!is_entry_frame(cont, sender) || sender.fp() == cont.entryFP(), "sender.fp: " INTPTR_FORMAT " entryFP: " INTPTR_FORMAT, p2i(sender.fp()), p2i(cont.entryFP()));
 
+  // assert (oop_index == hf.ref_sp(), "");
   thaw_oops(cont, f, oop_index, hf.num_oops(cont), f.sp(), map);
 
 #ifndef PRODUCT
@@ -2327,6 +2410,7 @@ static frame thaw_frames(ContMirror& cont, hframe hf, int oop_index, int num_fra
     return entry;
   }
 
+  // assert (oop_index == hf.ref_sp(), "oop_index: %d hf.ref_sp(): %d", oop_index, hf.ref_sp());
   hframe hsender = hf.sender(cont);
   frame sender = thaw_frames(cont, hsender, oop_index + hf.num_oops(cont), num_frames - 1, count, last_oop_index, last_frame, deoptimized);
   frame f = thaw_frame(cont, hf, oop_index, sender, deoptimized);
@@ -2417,7 +2501,7 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
   log_trace(jvmcont)("top_hframe before (thaw):");
   if (log_is_enabled(Trace, jvmcont)) hf.print_on(cont, tty);
 
-  RegisterMap map(thread, true, false);
+  RegisterMap map(thread, true, false, false);
   map.set_include_argument_oops(false);
   assert (map.update_map(), "RegisterMap not set to update");
 
@@ -2428,7 +2512,10 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
   bool deoptimized = false;
   frame top = thaw_frames(cont, cont.last_frame(), cont.refSP(), num_frames, frame_count, last_oop_index, last_frame, deoptimized);
   cont.set_last_frame(last_frame);
+  // assert (last_oop_index == cont.refSP(), "");
   cont.set_refSP(last_oop_index);
+  // assert (last_oop_index == last_frame.ref_sp(), "last_oop_index: %d last_frame.ref_sp(): %d", last_oop_index, last_frame.ref_sp());
+  assert (last_oop_index == cont.refSP(), "");
 
   assert (!CONT_FULL_STACK || cont.is_empty(), "");
   assert (cont.is_empty() == cont.last_frame().is_empty(), "cont.is_empty: %d cont.last_frame().is_empty(): %d", cont.is_empty(), cont.last_frame().is_empty());
@@ -2600,11 +2687,11 @@ static oop find_continuation_for_frame(JavaThread* thread, intptr_t* const sp) {
   return cont;
 }
 
-address Continuation::get_entry_pc_past_barrier(JavaThread* thread, const frame& f) {
+static address get_entry_pc_past_barrier(JavaThread* thread, const frame& f) {
   oop cont = find_continuation_for_frame(thread, f.sp());
   assert (cont != NULL, "");
   address pc = java_lang_Continuation::entryPC(cont);
-  log_trace(jvmcont)("YEYEYEYEYEYEYEEYEY: " INTPTR_FORMAT, p2i(pc));
+  // log_trace(jvmcont)("YEYEYEYEYEYEYEEYEY: " INTPTR_FORMAT, p2i(pc));
   return pc;
 }
 
@@ -2612,23 +2699,182 @@ bool Continuation::is_return_barrier_entry(address pc) {
   return pc == StubRoutines::cont_returnBarrier();
 }
 
-address Continuation::sender_pc_past_barrier(JavaThread* thread, const frame& f) {
-  return is_return_barrier_entry(f.pc()) ? get_entry_pc_past_barrier(thread, f) : f.pc();
-}
-
 address Continuation::fix_continuation_bottom_sender(const frame* callee, RegisterMap* map, address pc) {
   return (map->thread() != NULL && is_return_barrier_entry(pc)) ? get_entry_pc_past_barrier(map->thread(), *callee) : pc;
 }
 
-frame Continuation::fix_continuation_bottom_sender(const frame& callee, frame f, RegisterMap* map) {
-  if (map->thread() != NULL && is_cont_bottom_frame(callee)) {
-    f.set_pc_preserve_deopt(get_entry_pc_past_barrier(map->thread(), f));
-  }
-  return f;
-}
+// frame Continuation::fix_continuation_bottom_sender(const frame& callee, frame f, RegisterMap* map) {
+//   if (map->thread() != NULL && is_cont_bottom_frame(callee)) {
+//     f.set_pc_preserve_deopt(get_entry_pc_past_barrier(map->thread(), f));
+//   }
+//   return f;
+// }
 
 bool Continuation::is_frame_in_continuation(JavaThread* thread, const frame& f) {
   return find_continuation_for_frame(thread, f.sp()) != NULL;
+}
+
+static frame continuation_top_frame(oop contOop, RegisterMap* map) {
+  ContMirror cont(NULL, contOop);
+  cont.read();
+
+  hframe hf = cont.last_frame();
+  assert (!hf.is_empty(), "");
+
+  // tty->print_cr("continuation_top_frame");
+  
+  map->set_cont(map->thread(), contOop);
+  return hf.to_frame();
+}
+
+static frame continuation_parent_frame(ContMirror& cont, RegisterMap* map) {
+  oop parentOop = java_lang_Continuation::parent(cont.mirror());
+  if (parentOop != NULL)
+    return continuation_top_frame(parentOop, map);
+  
+  frame sender(cont.entrySP(), cont.entryFP(), cont.entryPC());
+
+  // tty->print_cr("continuation_parent_frame");
+  // print_vframe(sender, map, NULL);
+
+  map->set_cont(map->thread(), NULL);
+  return sender;
+}
+
+frame Continuation::top_frame(const frame& callee, RegisterMap* map) {
+  oop contOop = find_continuation_for_frame(map->thread(), callee.sp());
+  return continuation_top_frame(contOop, map);
+}
+
+static frame sender_for_frame(const frame& callee, RegisterMap* map) {
+  ContMirror cont(map->thread(), map->cont());
+  cont.read();
+
+  hframe hfcallee = cont.from_frame(callee);
+  hframe sender = hfcallee.sender(cont);
+
+  if (!sender.is_empty())
+    return sender.to_frame();
+  return continuation_parent_frame(cont, map);
+}
+
+frame Continuation::sender_for_interpreter_frame(const frame& callee, RegisterMap* map) {
+  return sender_for_frame(callee, map);
+}
+
+frame Continuation::sender_for_compiled_frame(const frame& callee, RegisterMap* map, CodeBlobLookup* lookup) {
+  return sender_for_frame(callee, map);
+}
+
+class IsOopClosure : public OopMapClosure {
+public:
+  int _offset;
+  bool _is_oop;
+  IsOopClosure(int offset) : _offset(offset), _is_oop(false) {}
+  void do_value(VMReg reg, OopMapValue::oop_types type) {
+    assert (type == OopMapValue::oop_value || type == OopMapValue::narrowoop_value, "");
+    if (reg->is_reg())
+        return;
+    int sp_offset_in_bytes = reg->reg2stack() * VMRegImpl::stack_slot_size;
+    if (sp_offset_in_bytes == _offset)
+      _is_oop = true;
+  }
+};
+
+// *grossly* inefficient
+static bool is_oop_in_compiler_frame(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes) {
+  const ImmutableOopMap* oop_map = fr.oop_map();
+  IsOopClosure ioc(usp_offset_in_bytes);
+  oop_map->all_do(&fr, OopMapValue::oop_value | OopMapValue::narrowoop_value, &ioc);
+  return ioc._is_oop;
+}
+
+// given an address in the raw h-stack known to conain an oop, returns the address of the corresponding actual oop in the ref stack.
+address Continuation::oop_address(objArrayOop ref_stack, address stack_address) {
+  int oop_reverse_index = *(int*)stack_address;
+  assert (ref_stack != NULL, "");
+  int i = ref_stack->length() - oop_reverse_index;
+
+  // tty->print_cr("oop_reverse_index: %d index: %d", oop_reverse_index, i);
+  
+  oop obj = ref_stack->obj_at(i); // invoke barriers
+  address p = UseCompressedOops ? (address)ref_stack->obj_at_addr<narrowOop>(i)
+                                : (address)ref_stack->obj_at_addr<oop>(i);
+
+  // print_oop(p, obj);
+  assert (oopDesc::is_oop_or_null(obj), "invalid oop");
+
+  return p;
+}
+
+// if oop, it is narrow iff UseCompressedOops
+address Continuation::usp_offset_to_location(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes) {
+  assert (fr.is_compiled_frame(), "");
+  ContMirror cont(map->thread(), map->cont());
+  cont.read();
+
+  hframe hf = cont.from_frame(fr);
+  intptr_t* hsp = cont.stack_address(hf.sp());
+  address loc = (address)hsp + usp_offset_in_bytes;
+
+  return is_oop_in_compiler_frame(fr, map, usp_offset_in_bytes) ? oop_address(cont.refStack(), loc) : loc;
+}
+
+address Continuation::interpreter_frame_expression_stack_at(const frame& fr, const RegisterMap* map, const InterpreterOopMap& oop_mask, int index) {
+  assert (fr.is_interpreted_frame(), "");
+  ContMirror cont(map->thread(), map->cont());
+  cont.read();
+  hframe hf = cont.from_frame(fr);
+
+  Method* method = hf.method(cont);
+  int max_locals = method->max_locals();
+  address loc = (address)hf.interpreter_frame_expression_stack_at(cont, index);
+  if (loc == NULL)
+    return NULL;
+  return oop_mask.is_oop(max_locals + index) ? oop_address(cont.refStack(), loc) : loc; // see stack_expressions in vframe.cpp
+}
+
+address Continuation::interpreter_frame_local_at(const frame& fr, const RegisterMap* map, const InterpreterOopMap& oop_mask, int index) {
+  assert (fr.is_interpreted_frame(), "");
+  ContMirror cont(map->thread(), map->cont());
+  cont.read();
+  
+  hframe hf = cont.from_frame(fr);
+  address loc = (address)hf.interpreter_frame_local_at(cont, index);
+
+  // tty->print_cr("interpreter_frame_local_at2: %d oop: %d", index, oop_mask.is_oop(index));
+  // hf.print();
+
+  return oop_mask.is_oop(index) ? oop_address(cont.refStack(), loc) : loc;
+}
+
+// address Continuation::interpreter_frame_metadata(const frame& fr, const RegisterMap* map, int fp_index) {
+//   assert (fr.is_interpreted_frame(), "");
+//   ContMirror cont(map->thread(), map->cont());
+//   cont.read();
+//   hframe hf = cont.from_frame(fr);
+//   address loc = (address)hf.interpreter_frame_metadata_at(cont, fp_index);
+//   return (fp_index == frame::interpreter_frame_mirror_offset) ? oop_address(cont.refStack(), loc) : loc;
+// }
+
+Method* Continuation::interpreter_frame_method(const frame& fr, const RegisterMap* map) {
+  assert (fr.is_interpreted_frame(), "");
+  ContMirror cont(map->thread(), map->cont());
+  cont.read();
+  hframe hf = cont.from_frame(fr);
+
+  return hf.method(cont);
+}
+
+address Continuation::interpreter_frame_bcp(const frame& fr, const RegisterMap* map) {
+  assert (fr.is_interpreted_frame(), "");
+  ContMirror cont(map->thread(), map->cont());
+  cont.read();
+  hframe hf = cont.from_frame(fr);
+
+  Method* method = hf.method(cont);
+  address bcp = (address)*hf.interpreter_frame_metadata_at(cont, frame::interpreter_frame_bcp_offset);
+  return method->bcp_from(bcp);
 }
 
 ///// DEBUGGING
@@ -2654,8 +2900,8 @@ static void print_oop(void *p, oop obj, outputStream* st) {
   }
 }
 
-static void print_vframe(frame f, RegisterMap* map, outputStream* st) {
-  if (st != NULL && !log_is_enabled(Trace, jvmcont) ) return;
+static void print_vframe(frame f, const RegisterMap* map, outputStream* st) {
+  if (st != NULL && !log_is_enabled(Trace, jvmcont)) return;
   if (st == NULL) st = tty;
 
   st->print_cr("\tfp: " INTPTR_FORMAT " real_fp: " INTPTR_FORMAT ", sp: " INTPTR_FORMAT " pc: " INTPTR_FORMAT " usp: " INTPTR_FORMAT, p2i(f.fp()), p2i(f.real_fp()), p2i(f.sp()), p2i(f.pc()), p2i(f.unextended_sp()));

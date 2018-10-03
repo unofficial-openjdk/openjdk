@@ -449,6 +449,10 @@ intptr_t** frame::saved_link_address(RegisterMap* map) {
 //------------------------------------------------------------------------------
 // frame::sender_for_interpreter_frame
 frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
+  if (map->walk_cont() && map->cont() != NULL) { // already in an h-stack
+    return Continuation::sender_for_interpreter_frame(*this, map);
+  }
+
   // SP is the raw SP from the sender after adapter or interpreter
   // extension.
   intptr_t* sender_sp = this->sender_sp();
@@ -461,13 +465,26 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
     update_map_with_saved_link(map, (intptr_t**) addr_at(link_offset));
   }
 #endif // COMPILER2_OR_JVMCI
-  return frame(sender_sp, unextended_sp, link(), Continuation::fix_continuation_bottom_sender(this, map, sender_pc()));
+
+  address sender_pc = this->sender_pc();
+  if (Continuation::is_return_barrier_entry(sender_pc)) {
+    if (map->walk_cont()) // about to walk into an h-stack
+      return Continuation::top_frame(*this, map);
+    else
+      sender_pc = Continuation::fix_continuation_bottom_sender(this, map, sender_pc);
+  }
+
+  return frame(sender_sp, unextended_sp, link(), sender_pc);
 }
 
 //------------------------------------------------------------------------------
 // frame::sender_for_compiled_frame
 frame frame::sender_for_compiled_frame(RegisterMap* map, CodeBlobLookup* lookup) const {
   assert(map != NULL, "map must be set");
+
+  if (map->walk_cont() && map->cont() != NULL) { // already in an h-stack
+    return Continuation::sender_for_compiled_frame(*this, map, lookup);
+  }
 
   // frame owned by optimizing compiler
   assert(_cb->frame_size() >= 0, "must have non-zero frame size");
@@ -503,15 +520,22 @@ frame frame::sender_for_compiled_frame(RegisterMap* map, CodeBlobLookup* lookup)
     print_on(tty);
   }
   assert(sender_sp != sp(), "must have changed");
-  address fixed_pc = Continuation::fix_continuation_bottom_sender(this, map, sender_pc);
+
+  if (Continuation::is_return_barrier_entry(sender_pc)) {
+    if (map->walk_cont()) // about to walk into an h-stack
+      return Continuation::top_frame(*this, map);
+    else
+      sender_pc = Continuation::fix_continuation_bottom_sender(this, map, sender_pc);
+  }
+
   if (lookup != NULL) {
-    CodeBlob* sender_cb = lookup->find_blob(fixed_pc);
+    CodeBlob* sender_cb = lookup->find_blob(sender_pc);
     if (sender_cb != NULL) {
-      return frame(sender_sp, unextended_sp, *saved_fp_addr, fixed_pc, sender_cb);
+      return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc, sender_cb);
     }
   }
 
-  return frame(sender_sp, unextended_sp, *saved_fp_addr, fixed_pc);
+  return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc);
 }
 
 

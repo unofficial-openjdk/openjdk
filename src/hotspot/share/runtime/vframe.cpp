@@ -265,14 +265,16 @@ void javaVFrame::print_lock_info_on(outputStream* st, int frame_count) {
 // ------------- interpretedVFrame --------------
 
 u_char* interpretedVFrame::bcp() const {
-  return fr().interpreter_frame_bcp();
+    return (register_map()->cont() == NULL)  ? fr().interpreter_frame_bcp() : Continuation::interpreter_frame_bcp(fr(), register_map());
 }
 
 void interpretedVFrame::set_bcp(u_char* bcp) {
+  assert (register_map()->cont() == NULL, ""); // unsupported for now because seems to be unused
   fr().interpreter_frame_set_bcp(bcp);
 }
 
 intptr_t* interpretedVFrame::locals_addr_at(int offset) const {
+  assert (register_map()->cont() == NULL, ""); // unsupported for now because seems to be unused
   assert(fr().is_interpreted_frame(), "frame should be an interpreted frame");
   return fr().interpreter_frame_local_at(offset);
 }
@@ -280,10 +282,12 @@ intptr_t* interpretedVFrame::locals_addr_at(int offset) const {
 
 GrowableArray<MonitorInfo*>* interpretedVFrame::monitors() const {
   GrowableArray<MonitorInfo*>* result = new GrowableArray<MonitorInfo*>(5);
-  for (BasicObjectLock* current = (fr().previous_monitor_in_interpreter_frame(fr().interpreter_frame_monitor_begin()));
-       current >= fr().interpreter_frame_monitor_end();
-       current = fr().previous_monitor_in_interpreter_frame(current)) {
-    result->push(new MonitorInfo(current->obj(), current->lock(), false, false));
+  if (register_map()->cont() == NULL) { // no monitors in continuations
+    for (BasicObjectLock* current = (fr().previous_monitor_in_interpreter_frame(fr().interpreter_frame_monitor_begin()));
+        current >= fr().interpreter_frame_monitor_end();
+        current = fr().previous_monitor_in_interpreter_frame(current)) {
+      result->push(new MonitorInfo(current->obj(), current->lock(), false, false));
+    }
   }
   return result;
 }
@@ -293,10 +297,11 @@ int interpretedVFrame::bci() const {
 }
 
 Method* interpretedVFrame::method() const {
-  return fr().interpreter_frame_method();
+  return (register_map()->cont() == NULL) ? fr().interpreter_frame_method() : Continuation::interpreter_frame_method(fr(), register_map());
 }
 
-static StackValue* create_stack_value_from_oop_map(const InterpreterOopMap& oop_mask,
+static StackValue* create_stack_value_from_oop_map(const RegisterMap* reg_map,
+                                                   const InterpreterOopMap& oop_mask,
                                                    int index,
                                                    const intptr_t* const addr) {
 
@@ -305,8 +310,16 @@ static StackValue* create_stack_value_from_oop_map(const InterpreterOopMap& oop_
 
   // categorize using oop_mask
   if (oop_mask.is_oop(index)) {
+    oop obj = NULL;
+    if (addr != NULL) {
+      // obj = (UseCompressedOops && reg_map->cont() != NULL) ? HeapAccess<IS_ARRAY>::oop_load((narrowOop*)addr) : *(oop*)addr;
+      if (UseCompressedOops && reg_map->cont() != NULL)
+        obj = HeapAccess<IS_ARRAY>::oop_load((narrowOop*)addr);
+      else
+        obj = *(oop*)addr;
+    }
     // reference (oop) "r"
-    Handle h(Thread::current(), addr != NULL ? (*(oop*)addr) : (oop)NULL);
+    Handle h(Thread::current(), obj);
     return new StackValue(h);
   }
   // value (integer) "v"
@@ -329,16 +342,22 @@ static bool is_in_expression_stack(const frame& fr, const intptr_t* const addr) 
 static void stack_locals(StackValueCollection* result,
                          int length,
                          const InterpreterOopMap& oop_mask,
-                         const frame& fr) {
+                         const frame& fr,
+                         const RegisterMap* reg_map) {
 
   assert(result != NULL, "invariant");
 
   for (int i = 0; i < length; ++i) {
-    const intptr_t* const addr = fr.interpreter_frame_local_at(i);
+    const intptr_t* addr;
+    if (reg_map->cont() == NULL) {
+      addr = fr.interpreter_frame_local_at(i);
+      assert(addr >= fr.sp(), "must be inside the frame");
+    } else {
+      addr = (intptr_t*)Continuation::interpreter_frame_local_at(fr, reg_map, oop_mask, i);
+    }
     assert(addr != NULL, "invariant");
-    assert(addr >= fr.sp(), "must be inside the frame");
 
-    StackValue* const sv = create_stack_value_from_oop_map(oop_mask, i, addr);
+    StackValue* const sv = create_stack_value_from_oop_map(reg_map, oop_mask, i, addr);
     assert(sv != NULL, "sanity check");
 
     result->add(sv);
@@ -349,19 +368,26 @@ static void stack_expressions(StackValueCollection* result,
                               int length,
                               int max_locals,
                               const InterpreterOopMap& oop_mask,
-                              const frame& fr) {
+                              const frame& fr,
+                              const RegisterMap* reg_map) {
 
   assert(result != NULL, "invariant");
 
   for (int i = 0; i < length; ++i) {
-    const intptr_t* addr = fr.interpreter_frame_expression_stack_at(i);
-    assert(addr != NULL, "invariant");
-    if (!is_in_expression_stack(fr, addr)) {
-      // Need to ensure no bogus escapes.
-      addr = NULL;
+    const intptr_t* addr;
+    if (reg_map->cont() == NULL) {
+      addr = fr.interpreter_frame_expression_stack_at(i);
+      assert(addr != NULL, "invariant");
+      if (!is_in_expression_stack(fr, addr)) {
+        // Need to ensure no bogus escapes.
+        addr = NULL;
+      }
+    } else {
+      addr = (intptr_t*)Continuation::interpreter_frame_expression_stack_at(fr, reg_map, oop_mask, i);
     }
 
-    StackValue* const sv = create_stack_value_from_oop_map(oop_mask,
+    StackValue* const sv = create_stack_value_from_oop_map(reg_map,
+                                                           oop_mask,
                                                            i + max_locals,
                                                            addr);
     assert(sv != NULL, "sanity check");
@@ -412,9 +438,9 @@ StackValueCollection* interpretedVFrame::stack_data(bool expressions) const {
   }
 
   if (expressions) {
-    stack_expressions(result, length, max_locals, oop_mask, fr());
+    stack_expressions(result, length, max_locals, oop_mask, fr(), register_map());
   } else {
-    stack_locals(result, length, oop_mask, fr());
+    stack_locals(result, length, oop_mask, fr(), register_map());
   }
 
   assert(length == result->size(), "invariant");
@@ -465,7 +491,7 @@ void vframeStreamCommon::found_bad_method_frame() const {
 
 // top-frame will be skipped
 vframeStream::vframeStream(JavaThread* thread, frame top_frame,
-  bool stop_at_java_call_stub) : vframeStreamCommon(thread) {
+  bool stop_at_java_call_stub) : vframeStreamCommon(RegisterMap(thread, false, true)) {
   _stop_at_java_call_stub = stop_at_java_call_stub;
 
   // skip top frame, as it may not be at safepoint

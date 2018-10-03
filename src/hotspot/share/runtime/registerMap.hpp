@@ -26,6 +26,7 @@
 #define SHARE_VM_RUNTIME_REGISTERMAP_HPP
 
 #include "code/vmreg.hpp"
+#include "runtime/handles.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/macros.hpp"
 
@@ -73,9 +74,11 @@ class RegisterMap : public StackObj {
   LocationValidType _location_valid[location_valid_size];
   bool        _include_argument_oops;   // Should include argument_oop marked locations for compiler
   JavaThread* _thread;                  // Reference to current thread
+  Handle      _cont;                    // The current continuation, if any
   bool        _update_map;              // Tells if the register map need to be
                                         // updated when traversing the stack
   bool        _validate_oops;           // whether to perform valid oop checks in asserts
+  bool        _walk_cont;               // whether to walk frames on a continuation stack
 
 #ifdef ASSERT
   void check_location_valid();
@@ -85,7 +88,7 @@ class RegisterMap : public StackObj {
 
  public:
   DEBUG_ONLY(intptr_t* _update_for_id;) // Assert that RegisterMap is not updated twice for same frame
-  RegisterMap(JavaThread *thread, bool update_map = true, bool validate_oops = true);
+  RegisterMap(JavaThread *thread, bool update_map = true, bool walk_cont = false, bool validate_oops = true);
   RegisterMap(const RegisterMap* map);
 
   address location(VMReg reg) const {
@@ -116,7 +119,10 @@ class RegisterMap : public StackObj {
   void set_include_argument_oops(bool f)  { _include_argument_oops = f; }
 
   JavaThread *thread() const { return _thread; }
+  oop  cont()          const { return _cont(); }
+  void set_cont(Thread* thread, oop cont);
   bool update_map()    const { return _update_map; }
+  bool walk_cont()     const { return _walk_cont; }
   bool validate_oops() const { return _validate_oops; }
 
   void print_on(outputStream* st) const;

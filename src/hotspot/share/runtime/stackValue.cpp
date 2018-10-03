@@ -51,7 +51,9 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
       ? reg_map->location(VMRegImpl::as_VMReg(loc.register_number()))
       // Else value was directly saved on the stack. The frame's original stack pointer,
       // before any extension by its callee (due to Compiler1 linkage on SPARC), must be used.
+      : reg_map->cont() != NULL ? Continuation::usp_offset_to_location(*fr, reg_map, loc.stack_offset())
       : ((address)fr->unextended_sp()) + loc.stack_offset();
+    assert(reg_map->thread()->is_in_usable_stack(value_addr), INTPTR_FORMAT, p2i(value_addr)); 
 
     // Then package it right depending on type
     // Note: the transfer of the data is thru a union that contains
@@ -95,6 +97,7 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
       // Long   value in an aligned adjacent pair
       return new StackValue(*(intptr_t*)value_addr);
     case Location::narrowoop: {
+      assert (UseCompressedOops, "");
       union { intptr_t p; narrowOop noop;} value;
       value.p = (intptr_t) CONST64(0xDEADDEAFDEADDEAF);
       if (loc.is_register()) {
@@ -112,6 +115,12 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
     }
 #endif
     case Location::oop: {
+      if (reg_map->cont() != NULL && UseCompressedOops) {
+        narrowOop noop = *(narrowOop*) value_addr;
+        Handle h(Thread::current(), CompressedOops::decode(noop));
+        return new StackValue(h);
+      } 
+      
       oop val = *(oop *)value_addr;
 #ifdef _LP64
       if (Universe::is_narrow_oop_base(val)) {

@@ -155,8 +155,18 @@ int StackWalk::fill_in_frames(jlong mode, BaseFrameStream& stream,
     }
     // fill in StackFrameInfo and initialize MemberName
     stream.fill_frame(index, frames_array, method, CHECK_0);
+
+    if (lt.is_enabled()) {
+      ResourceMark rm(THREAD);
+      LogStream ls(lt);
+      ls.print("  %d: done frame method: ", index);
+      method->print_short_name(&ls);
+    }
+
     if (++frames_decoded >= max_nframes)  break;
   }
+  log_debug(stackwalk)("fill_in_frames done frames_decoded=%d", frames_decoded);
+
   return frames_decoded;
 }
 
@@ -342,7 +352,7 @@ oop StackWalk::walk(Handle stackStream, jlong mode,
   // Setup traversal onto my stack.
   if (live_frame_info(mode)) {
     assert (use_frames_array(mode), "Bad mode for get live frame");
-    RegisterMap regMap(jt, true);
+    RegisterMap regMap(jt, true, true);
     LiveFrameStream stream(jt, &regMap);
     return fetchFirstBatch(stream, stackStream, mode, skip_frames, frame_count,
                            start_index, frames_array, THREAD);
@@ -418,10 +428,16 @@ oop StackWalk::fetchFirstBatch(BaseFrameStream& stream, Handle stackStream,
   // Link the thread and vframe stream into the callee-visible object
   stream.setup_magic_on_entry(frames_array);
 
+  log_debug(stackwalk)("---111111");
+
   JavaCalls::call(&result, m_doStackWalk, &args, THREAD);
+
+  log_debug(stackwalk)("---222222");
 
   // Do this before anything else happens, to disable any lingering stream objects
   bool ok = stream.cleanup_magic_on_exit(frames_array);
+
+  log_debug(stackwalk)("---33333");
 
   // Throw pending exception if we must
   (void) (CHECK_NULL);

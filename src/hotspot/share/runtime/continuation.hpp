@@ -61,10 +61,23 @@ public:
   static bool is_cont_bottom_frame(const frame& f);
   static bool is_return_barrier_entry(const address pc);
   static bool is_frame_in_continuation(JavaThread* thread, const frame& f);
-  static address sender_pc_past_barrier(JavaThread* thread, const frame& f);
-  static address get_entry_pc_past_barrier(JavaThread* thread, const frame& f);
   static address fix_continuation_bottom_sender(const frame* callee, RegisterMap* map, address pc);
-  static frame fix_continuation_bottom_sender(const frame& callee, frame f, RegisterMap* map);
+
+  static frame top_frame(const frame& callee, RegisterMap* map);
+  static frame sender_for_interpreter_frame(const frame& callee, RegisterMap* map);
+  static frame sender_for_compiled_frame(const frame& callee, RegisterMap* map, CodeBlobLookup* lookup);
+
+  // access frame data
+  static address usp_offset_to_location(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes);
+  static address interpreter_frame_expression_stack_at(const frame& fr, const RegisterMap* map, const InterpreterOopMap& oop_mask, int index);
+  static address interpreter_frame_local_at(const frame& fr, const RegisterMap* map, const InterpreterOopMap& oop_mask, int index);
+
+  static Method* interpreter_frame_method(const frame& fr, const RegisterMap* map);
+  static address interpreter_frame_bcp(const frame& fr, const RegisterMap* map);
+  
+private:
+  // declared here as it's used in friend declarations
+  static address oop_address(objArrayOop ref_stack, address stack_address);
 };
 
 void CONT_RegisterNativeMethods(JNIEnv *env, jclass cls);
