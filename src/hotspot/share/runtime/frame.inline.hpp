@@ -30,6 +30,7 @@
 #include "interpreter/bytecodeInterpreter.inline.hpp"
 #include "interpreter/interpreter.hpp"
 #include "oops/method.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/signature.hpp"
 #include "utilities/macros.hpp"
@@ -54,12 +55,16 @@ inline bool frame::is_first_frame() const {
 }
 
 inline oop* frame::oopmapreg_to_location(VMReg reg, const RegisterMap* reg_map) const {
-  if(reg->is_reg()) {
+  if (reg->is_reg()) {
     // If it is passed in a register, it got spilled in the stub frame.
     return (oop *)reg_map->location(reg);
   } else {
     int sp_offset_in_bytes = reg->reg2stack() * VMRegImpl::stack_slot_size;
-    return (oop*)(((address)unextended_sp()) + sp_offset_in_bytes);
+    if (reg_map->cont() != NULL)
+      return (oop*)Continuation::usp_offset_to_location(*this, reg_map, sp_offset_in_bytes);
+    address usp = (address)unextended_sp();
+    assert(reg_map->thread()->is_in_usable_stack(usp), INTPTR_FORMAT, p2i(usp)); 
+    return (oop*)(usp + sp_offset_in_bytes);
   }
 }
 

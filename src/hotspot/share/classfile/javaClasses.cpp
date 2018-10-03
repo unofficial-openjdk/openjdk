@@ -2354,7 +2354,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, const methodHand
   methodHandle st_method(THREAD, st.method());
 #endif
   int total_count = 0;
-  RegisterMap map(thread, false);
+  RegisterMap map(thread, false, true);
   int decode_offset = 0;
   CompiledMethod* nm = NULL;
   bool skip_fillInStackTrace_check = false;
@@ -2375,8 +2375,14 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, const methodHand
       if (fr.is_first_frame()) break;
       address pc = fr.pc();
       if (fr.is_interpreted_frame()) {
-        address bcp = fr.interpreter_frame_bcp();
-        method = fr.interpreter_frame_method();
+        address bcp;
+        if (map.cont() == NULL) {
+          bcp = fr.interpreter_frame_bcp();
+          method = fr.interpreter_frame_method();
+        } else {
+          bcp = Continuation::interpreter_frame_bcp(fr, &map);
+          method = Continuation::interpreter_frame_method(fr, &map);
+        }
         bci =  method->bci_from(bcp);
         fr = fr.sender(&map);
       } else {

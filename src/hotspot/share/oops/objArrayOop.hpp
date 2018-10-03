@@ -39,6 +39,7 @@ class objArrayOopDesc : public arrayOopDesc {
   friend class psPromotionManager;
   friend class CSetMarkOopClosure;
   friend class G1ParScanPartialArrayClosure;
+  friend class Continuation;
 
   template <class T> T* obj_at_addr(int index) const;
   template <class T> T* obj_at_addr_raw(int index) const;

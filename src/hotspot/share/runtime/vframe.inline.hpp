@@ -32,6 +32,10 @@ inline vframeStreamCommon::vframeStreamCommon(JavaThread* thread) : _reg_map(thr
   _thread = thread;
 }
 
+inline vframeStreamCommon::vframeStreamCommon(RegisterMap reg_map) : _reg_map(reg_map) {
+  _thread = _reg_map.thread();
+}
+
 inline intptr_t* vframeStreamCommon::frame_id() const        { return _frame.id(); }
 
 inline bool vframeStreamCommon::is_interpreted_frame() const { return _frame.is_interpreted_frame(); }
@@ -49,7 +53,7 @@ inline void vframeStreamCommon::next() {
 }
 
 inline vframeStream::vframeStream(JavaThread* thread, bool stop_at_java_call_stub)
-  : vframeStreamCommon(thread) {
+  : vframeStreamCommon(RegisterMap(thread, false, true)) {
   _stop_at_java_call_stub = stop_at_java_call_stub;
 
   if (!thread->has_last_Java_frame()) {
@@ -202,9 +206,16 @@ inline bool vframeStreamCommon::fill_from_frame() {
 
 
 inline void vframeStreamCommon::fill_from_interpreter_frame() {
-  Method* method = _frame.interpreter_frame_method();
-  address   bcp    = _frame.interpreter_frame_bcp();
-  int       bci    = method->validate_bci_from_bcp(bcp);
+  Method* method;
+  address bcp;
+  if (_reg_map.cont() == NULL) {
+    method = _frame.interpreter_frame_method();
+    bcp    = _frame.interpreter_frame_bcp();
+  } else {
+    method = Continuation::interpreter_frame_method(_frame, &_reg_map);
+    bcp    = Continuation::interpreter_frame_bcp(_frame, &_reg_map);
+  }
+  int bci = method->validate_bci_from_bcp(bcp);
   // 6379830 AsyncGetCallTrace sometimes feeds us wild frames.
   // AsyncGetCallTrace interrupts the VM asynchronously. As a result
   // it is possible to access an interpreter frame for which

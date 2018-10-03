@@ -492,6 +492,7 @@ int vframeArrayElement::on_stack_size(int callee_parameters,
 
 
 intptr_t* vframeArray::unextended_sp() const {
+  assert(owner_thread()->is_in_usable_stack((address) _original.unextended_sp()), INTPTR_FORMAT, p2i(_original.unextended_sp())); 
   return _original.unextended_sp();
 }
 

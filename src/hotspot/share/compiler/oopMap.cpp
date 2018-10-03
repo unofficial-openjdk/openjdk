@@ -547,6 +547,22 @@ void ImmutableOopMap::oops_do(const frame *fr, const RegisterMap *reg_map,
 
 }
 
+template<typename T>
+static void iterate_all_do(const frame *fr, int mask, OopMapClosure* fn, const ImmutableOopMap* oopmap) {
+  OopMapValue omv;
+  for (T oms(oopmap,mask); !oms.is_done(); oms.next()) {
+      omv = oms.current();
+      fn->do_value(omv.reg(), omv.type());
+  }
+}
+
+void ImmutableOopMap::all_do(const frame *fr, int mask, OopMapClosure* fn) const {
+  if (_exploded != NULL)
+    iterate_all_do<ExplodedOopMapStream>(fr, mask, fn, this);
+  else
+    iterate_all_do<OopMapStream>(fr, mask, fn, this);
+}
+
 template <typename T>
 static void update_register_map1(const ImmutableOopMap* oopmap, const frame* fr, RegisterMap* reg_map) {
   for (T oms(oopmap, OopMapValue::callee_saved_value); !oms.is_done(); oms.next()) {
