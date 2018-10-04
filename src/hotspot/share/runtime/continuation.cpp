@@ -1503,6 +1503,10 @@ static bool is_compiled_frame_owning_locks(JavaThread* thread, RegisterMap* map,
   nmethod* nm = f.cb()->as_nmethod();
   assert (!nm->is_compiled() || !nm->as_compiled_method()->is_native_method(), ""); // ??? See compiledVFrame::compiledVFrame(...) in vframe_hp.cpp
 
+  if (!nm->has_monitors()) {
+    return false;
+  }
+
   for (ScopeDesc* scope = nm->scope_desc_at(f.pc()); scope != NULL; scope = scope->sender()) {
     // scope->print_on(tty);
     GrowableArray<MonitorValue*>* mons = scope->monitors();
