@@ -1779,11 +1779,9 @@ bool LibraryCallKit::inline_string_char_access(bool is_store) {
     return false;
   }
   if (is_store) {
-    (void) store_to_memory(control(), adr, ch, T_CHAR, TypeAryPtr::BYTES, MemNode::unordered,
-                           false, false, true /* mismatched */);
+    access_store_at(value, adr, TypeAryPtr::BYTES, ch, TypeInt::CHAR, T_CHAR, IN_HEAP | MO_UNORDERED | C2_MISMATCHED);
   } else {
-    ch = make_load(control(), adr, TypeInt::CHAR, T_CHAR, TypeAryPtr::BYTES, MemNode::unordered,
-                   LoadNode::DependsOnlyOnTest, false, false, true /* mismatched */);
+    ch = access_load_at(value, adr, TypeAryPtr::BYTES, TypeInt::CHAR, T_CHAR, IN_HEAP | MO_UNORDERED | C2_MISMATCHED | C2_CONTROL_DEPENDENT_LOAD);
     set_result(ch);
   }
   return true;
@@ -2533,7 +2531,7 @@ bool LibraryCallKit::inline_unsafe_access(bool is_store, const BasicType type, c
       val = ConvL2X(val);
       val = gvn().transform(new CastX2PNode(val));
     }
-    access_store_at(control(), heap_base_oop, adr, adr_type, val, value_type, type, decorators);
+    access_store_at(heap_base_oop, adr, adr_type, val, value_type, type, decorators);
   }
 
   return true;
@@ -2752,24 +2750,24 @@ bool LibraryCallKit::inline_unsafe_load_store(const BasicType type, const LoadSt
   Node* result = NULL;
   switch (kind) {
     case LS_cmp_exchange: {
-      result = access_atomic_cmpxchg_val_at(control(), base, adr, adr_type, alias_idx,
+      result = access_atomic_cmpxchg_val_at(base, adr, adr_type, alias_idx,
                                             oldval, newval, value_type, type, decorators);
       break;
     }
     case LS_cmp_swap_weak:
       decorators |= C2_WEAK_CMPXCHG;
     case LS_cmp_swap: {
-      result = access_atomic_cmpxchg_bool_at(control(), base, adr, adr_type, alias_idx,
+      result = access_atomic_cmpxchg_bool_at(base, adr, adr_type, alias_idx,
                                              oldval, newval, value_type, type, decorators);
       break;
     }
     case LS_get_set: {
-      result = access_atomic_xchg_at(control(), base, adr, adr_type, alias_idx,
+      result = access_atomic_xchg_at(base, adr, adr_type, alias_idx,
                                      newval, value_type, type, decorators);
       break;
     }
     case LS_get_add: {
-      result = access_atomic_add_at(control(), base, adr, adr_type, alias_idx,
+      result = access_atomic_add_at(base, adr, adr_type, alias_idx,
                                     newval, value_type, type, decorators);
       break;
     }
@@ -4253,7 +4251,7 @@ void LibraryCallKit::copy_to_clone(Node* obj, Node* alloc_obj, Node* obj_size, b
   // TODO: generate fields copies for small objects instead.
   Node* size = _gvn.transform(obj_size);
 
-  access_clone(control(), obj, alloc_obj, size, is_array);
+  access_clone(obj, alloc_obj, size, is_array);
 
   // Do not let reads from the cloned object float above the arraycopy.
   if (alloc != NULL) {
@@ -4353,7 +4351,7 @@ bool LibraryCallKit::inline_native_clone(bool is_virtual) {
       Node* alloc_obj = new_array(obj_klass, obj_length, 0, &obj_size);  // no arguments to push
 
       BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
-      if (bs->array_copy_requires_gc_barriers(T_OBJECT)) {
+      if (bs->array_copy_requires_gc_barriers(true, T_OBJECT, true, BarrierSetC2::Parsing)) {
         // If it is an oop array, it requires very special treatment,
         // because gc barriers are required when accessing the array.
         Node* is_obja = generate_objArray_guard(obj_klass, (RegionNode*)NULL);
