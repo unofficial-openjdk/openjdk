@@ -76,14 +76,12 @@ public:
 
 // This class wraps a node and a pointer type.
 class C2AccessValuePtr: public C2AccessValue {
-  int _alias_idx;
 
 public:
   C2AccessValuePtr(Node* node, const TypePtr* type) :
     C2AccessValue(node, reinterpret_cast<const Type*>(type)) {}
 
   const TypePtr* type() const { return reinterpret_cast<const TypePtr*>(_type); }
-  int alias_idx() const       { return _alias_idx; }
 };
 
 // This class wraps a bunch of context parameters thare are passed around in the
@@ -175,6 +173,7 @@ protected:
                                                 Node* new_val, const Type* value_type) const;
   virtual Node* atomic_xchg_at_resolved(C2AtomicAccess& access, Node* new_val, const Type* val_type) const;
   virtual Node* atomic_add_at_resolved(C2AtomicAccess& access, Node* new_val, const Type* val_type) const;
+  void pin_atomic_op(C2AtomicAccess& access) const;
 
 public:
   // This is the entry-point for the backend to perform accesses through the Access API.
@@ -198,7 +197,12 @@ public:
                              intx prefetch_lines) const;
 
   // These are general helper methods used by C2
-  virtual bool array_copy_requires_gc_barriers(BasicType type) const { return false; }
+  enum ArrayCopyPhase {
+    Parsing,
+    Optimization,
+    Expansion
+  };
+  virtual bool array_copy_requires_gc_barriers(bool tightly_coupled_alloc, BasicType type, bool is_clone, ArrayCopyPhase phase) const { return false; }
 
   // Support for GC barriers emitted during parsing
   virtual bool has_load_barriers() const { return false; }

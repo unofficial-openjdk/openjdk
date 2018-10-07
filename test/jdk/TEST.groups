@@ -259,11 +259,7 @@ jdk_jdi = \
 jdk_native_sanity = \
     native_sanity
 
-# java launcher specific tests, Note: do not include this group into any groups
-# that potentially could be included into a jprt test rule, as the complementary
-# closed  group includes awt SplashScreen and these tests may not run
-# satisfactorily on all platforms and  profiles thus this group must always
-# be a stand-alone group
+# java launcher specific tests.
 jdk_launcher = \
     tools/launcher \
     sun/tools
@@ -351,7 +347,6 @@ jdk_svc = \
 
 jdk_awt = \
     java/awt \
-    com/sun/awt \
     com/apple/eawt \
     com/apple/laf \
     sun/awt
@@ -408,9 +403,6 @@ jdk_desktop_core = \
 #
 # These groups specify a subset of Serviceability tests that are supposed to
 # guard against breakage of Serviceability features by other component teams.
-# They are added to the "hotspot" testset in JPRT so that they will run on all
-# full-forest pushes through JPRT.
-#
 
 jdk_svc_sanity = \
     :jdk_management_sanity \
@@ -489,8 +481,7 @@ jdk_stable = \
     :jdk_sound \
     :jdk_sctp \
     javax/accessibility \
-    com/sun/java/swing \
-    com/sun/awt
+    com/sun/java/swing
 
 needs_g1gc = \
   jdk/jfr/event/gc/refstat/TestRefStatEventWithG1ConcurrentMark.java \
