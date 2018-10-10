@@ -25,6 +25,8 @@
 #ifndef SHARE_VM_RUNTIME_CONTINUATION_HPP
 #define SHARE_VM_RUNTIME_CONTINUATION_HPP
 
+#include "classfile/javaClasses.hpp"
+#include "classfile/javaClasses.inline.hpp"
 #include "runtime/globals.hpp"
 
 #define CONT_FULL_STACK (!UseNewCode)
@@ -57,7 +59,7 @@ public:
   static int prepare_thaw(FrameInfo* fi, bool return_barrier);
   static void thaw(FrameInfo* fi, bool return_barrier);
 
-  static bool is_continuation_entry_frame(const frame& f);
+  static bool is_continuation_entry_frame(const frame& f, const RegisterMap* map);
   static bool is_cont_bottom_frame(const frame& f);
   static bool is_return_barrier_entry(const address pc);
   static bool is_frame_in_continuation(JavaThread* thread, const frame& f);
@@ -74,6 +76,9 @@ public:
 
   static Method* interpreter_frame_method(const frame& fr, const RegisterMap* map);
   static address interpreter_frame_bcp(const frame& fr, const RegisterMap* map);
+
+  static inline oop continuation_scope(oop cont) { return cont != NULL ? java_lang_Continuation::scope(cont) : NULL; }
+  static bool is_scope_bottom(oop cont_scope, const frame& fr, const RegisterMap* map);
   
 private:
   // declared here as it's used in friend declarations

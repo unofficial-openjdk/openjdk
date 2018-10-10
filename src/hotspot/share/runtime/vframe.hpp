@@ -291,6 +291,7 @@ class vframeStreamCommon : StackObj {
 
   // Should VM activations be ignored or not
   bool _stop_at_java_call_stub;
+  Handle _continuation_scope; // stop at bottom of continuation with this scope
 
   bool fill_in_compiled_inlined_sender();
   void fill_from_compiled_frame(int decode_offset);
@@ -344,6 +345,8 @@ class vframeStream : public vframeStreamCommon {
  public:
   // Constructors
   vframeStream(JavaThread* thread, bool stop_at_java_call_stub = false);
+
+  vframeStream(JavaThread* thread, Handle continuation_scope);
 
   // top_frame may not be at safepoint, start with sender
   vframeStream(JavaThread* thread, frame top_frame, bool stop_at_java_call_stub = false);

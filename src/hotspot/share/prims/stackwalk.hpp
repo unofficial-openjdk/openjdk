@@ -27,6 +27,7 @@
 #define SHARE_VM_PRIMS_STACKWALK_HPP
 
 #include "oops/oop.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/vframe.hpp"
 
 // BaseFrameStream is an abstract base class for encapsulating the VM-side
@@ -44,6 +45,7 @@ private:
 
   JavaThread*           _thread;
   jlong                 _anchor;
+
 protected:
   void fill_stackframe(Handle stackFrame, const methodHandle& method, TRAPS);
 public:
@@ -78,7 +80,7 @@ private:
   vframeStream          _vfst;
   bool                  _need_method_info;
 public:
-  JavaFrameStream(JavaThread* thread, int mode);
+  JavaFrameStream(JavaThread* thread, int mode, Handle cont_scope);
 
   void next();
   bool at_end()    { return _vfst.at_end(); }
@@ -98,6 +100,7 @@ private:
   };
 
   javaVFrame*           _jvf;
+  Handle                _cont_scope;
 
   void fill_live_stackframe(Handle stackFrame, const methodHandle& method, TRAPS);
   static oop create_primitive_slot_instance(StackValueCollection* values,
@@ -106,12 +109,13 @@ private:
                                                  TRAPS);
   static objArrayHandle values_to_object_array(StackValueCollection* values, TRAPS);
 public:
-  LiveFrameStream(JavaThread* thread, RegisterMap* rm) : BaseFrameStream(thread) {
+  LiveFrameStream(JavaThread* thread, RegisterMap* rm, Handle cont_scope)
+   : BaseFrameStream(thread), _cont_scope(cont_scope) {
     _jvf = thread->last_java_vframe(rm);
   }
 
   void next()      { _jvf = _jvf->java_sender(); }
-  bool at_end()    { return _jvf == NULL; }
+  bool at_end()    { return _jvf == NULL || Continuation::is_scope_bottom(_cont_scope(), _jvf->fr(), _jvf->register_map()); }
 
   Method* method() { return _jvf->method(); }
   int bci()        { return _jvf->bci(); }
@@ -144,9 +148,8 @@ public:
   static inline bool use_frames_array(int mode) {
     return (mode & JVM_STACKWALK_FILL_CLASS_REFS_ONLY) == 0;
   }
-  static oop walk(Handle stackStream, jlong mode,
-                  int skip_frames, int frame_count, int start_index,
-                  objArrayHandle frames_array,
+  static oop walk(Handle stackStream, jlong mode, int skip_frames, Handle cont_scope,
+                  int frame_count, int start_index, objArrayHandle frames_array,
                   TRAPS);
 
   static oop fetchFirstBatch(BaseFrameStream& stream, Handle stackStream,

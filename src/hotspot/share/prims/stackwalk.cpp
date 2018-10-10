@@ -59,8 +59,8 @@ bool BaseFrameStream::cleanup_magic_on_exit(objArrayHandle frames_array) {
   return ok;
 }
 
-JavaFrameStream::JavaFrameStream(JavaThread* thread, int mode)
-  : BaseFrameStream(thread), _vfst(thread) {
+JavaFrameStream::JavaFrameStream(JavaThread* thread, int mode, Handle cont_scope)
+  : BaseFrameStream(thread), _vfst(thread, cont_scope) {
   _need_method_info = StackWalk::need_method_info(mode);
 }
 
@@ -327,6 +327,7 @@ void LiveFrameStream::fill_live_stackframe(Handle stackFrame,
 //   stackStream    StackStream object
 //   mode           Stack walking mode.
 //   skip_frames    Number of frames to be skipped.
+//   cont_scope     Continuation scope to walk (if not in this scope, we'll walk all the way).
 //   frame_count    Number of frames to be traversed.
 //   start_index    Start index to the user-supplied buffers.
 //   frames_array   Buffer to store StackFrame in, starting at start_index.
@@ -336,9 +337,8 @@ void LiveFrameStream::fill_live_stackframe(Handle stackFrame,
 //
 // Returns Object returned from AbstractStackWalker::doStackWalk call.
 //
-oop StackWalk::walk(Handle stackStream, jlong mode,
-                    int skip_frames, int frame_count, int start_index,
-                    objArrayHandle frames_array,
+oop StackWalk::walk(Handle stackStream, jlong mode, int skip_frames, Handle cont_scope, 
+                    int frame_count, int start_index, objArrayHandle frames_array,
                     TRAPS) {
   ResourceMark rm(THREAD);
   JavaThread* jt = (JavaThread*)THREAD;
@@ -353,11 +353,11 @@ oop StackWalk::walk(Handle stackStream, jlong mode,
   if (live_frame_info(mode)) {
     assert (use_frames_array(mode), "Bad mode for get live frame");
     RegisterMap regMap(jt, true, true);
-    LiveFrameStream stream(jt, &regMap);
+    LiveFrameStream stream(jt, &regMap, cont_scope);
     return fetchFirstBatch(stream, stackStream, mode, skip_frames, frame_count,
                            start_index, frames_array, THREAD);
   } else {
-    JavaFrameStream stream(jt, mode);
+    JavaFrameStream stream(jt, mode, cont_scope);
     return fetchFirstBatch(stream, stackStream, mode, skip_frames, frame_count,
                            start_index, frames_array, THREAD);
   }
@@ -428,16 +428,10 @@ oop StackWalk::fetchFirstBatch(BaseFrameStream& stream, Handle stackStream,
   // Link the thread and vframe stream into the callee-visible object
   stream.setup_magic_on_entry(frames_array);
 
-  log_debug(stackwalk)("---111111");
-
   JavaCalls::call(&result, m_doStackWalk, &args, THREAD);
-
-  log_debug(stackwalk)("---222222");
 
   // Do this before anything else happens, to disable any lingering stream objects
   bool ok = stream.cleanup_magic_on_exit(frames_array);
-
-  log_debug(stackwalk)("---33333");
 
   // Throw pending exception if we must
   (void) (CHECK_NULL);
@@ -463,7 +457,7 @@ oop StackWalk::fetchFirstBatch(BaseFrameStream& stream, Handle stackStream,
 // Returns the end index of frame filled in the buffer.
 //
 jint StackWalk::fetchNextBatch(Handle stackStream, jlong mode, jlong magic,
-                               int frame_count, int start_index,
+                               int frame_count, int start_index, 
                                objArrayHandle frames_array,
                                TRAPS)
 {

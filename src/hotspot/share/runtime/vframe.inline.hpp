@@ -130,6 +130,10 @@ inline bool vframeStreamCommon::fill_from_frame() {
   // Interpreted frame
   if (_frame.is_interpreted_frame()) {
     fill_from_interpreter_frame();
+
+    if (Continuation::is_scope_bottom(_continuation_scope(), _frame, &_reg_map))
+      _mode = at_end_mode;
+    
     return true;
   }
 
@@ -191,6 +195,9 @@ inline bool vframeStreamCommon::fill_from_frame() {
         decode_offset = pc_desc->scope_decode_offset();
       }
       fill_from_compiled_frame(decode_offset);
+
+      if (Continuation::is_scope_bottom(_continuation_scope(), _frame, &_reg_map))
+        _mode = at_end_mode;
     }
     return true;
   }

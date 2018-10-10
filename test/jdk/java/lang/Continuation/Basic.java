@@ -26,11 +26,17 @@
 * @summary Basic tests for java.lang.Continuation
 * @run testng Basic
 * @run testng/othervm -Xint Basic
-* @run testng/othervm -Xcomp Basic
 * @run testng/othervm -Xint -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Basic
-* @run testng/othervm -Xcomp -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Basic
+*
+* @summary Basic tests for java.lang.Continuation
 */
 
+//run testng/othervm -Xcomp Basic
+//run testng/othervm -Xcomp -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Basic
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
 import static org.testng.Assert.*;
@@ -72,6 +78,26 @@ public class Basic {
         double x = 9.99;
         String s = "zzz";
         Continuation.yield(FOO);
+
+        StackWalker walker = StackWalker.getInstance();
+        List<String> frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
+
+        assertEquals(frames, Arrays.asList("bar", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
+
+        walker = StackWalker.getInstance(FOO);
+        frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
+
+        assertEquals(frames, Arrays.asList("bar", "foo", "lambda$test1$0", "enter0"));
+
+        long r = b+1;
+        return "" + r;
+    }
+
+    static String bar2(long b) {
+        double x = 9.99;
+        String s = "zzz";
+        Continuation.yield(FOO);
+
         long r = b+1;
         return "" + r;
     }
@@ -151,7 +177,7 @@ public class Basic {
         String s = "yyy";
         String r;
         synchronized(FOO) {
-            r = bar(a + 1);
+            r = bar2(a + 1);
         }
         return Integer.parseInt(r)+1;
     }
@@ -176,7 +202,7 @@ public class Basic {
         try {
             long x = 8;
             String s = "yyy";
-            String r = (String)Basic.class.getDeclaredMethod("bar", long.class).invoke(null, 1L);
+            String r = (String)Basic.class.getDeclaredMethod("bar2", long.class).invoke(null, 1L);
             return Integer.parseInt(r)+1;
         } catch (Exception e) {
             throw new AssertionError(e);
