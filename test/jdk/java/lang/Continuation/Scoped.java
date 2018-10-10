@@ -25,12 +25,18 @@
  * @test
  * @run testng Basic
  * @run testng/othervm -Xint Scoped
- * @run testng/othervm -Xcomp Scoped
  * @run testng/othervm -Xint -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
- * @run testng/othervm -Xcomp -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
- * @summary Basic tests for java.lang.Continuation
+ *  
+ * @summary Nested continuations test
  */
 
+//run testng/othervm -Xcomp Scoped
+//run testng/othervm -Xcomp -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
+
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
 import static org.testng.Assert.*;
@@ -79,6 +85,28 @@ public class Scoped {
                 // Thread.dumpStack();
                 Continuation cont = new Continuation(C, ()-> {
                         Continuation.yield(A);
+
+                        StackWalker walker = StackWalker.getInstance();
+                        List<String> frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
+                
+                        assertEquals(frames, Arrays.asList("lambda$bar$6", "enter0", "enter", "run", "bar", "lambda$foo$1", "enter0", "enter", "run", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
+                
+                        walker = StackWalker.getInstance(C);
+                        frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
+                
+                        assertEquals(frames, Arrays.asList("lambda$bar$6", "enter0"));
+
+                        walker = StackWalker.getInstance(B);
+                        frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
+                
+                        assertEquals(frames, Arrays.asList("lambda$bar$6", "enter0", "enter", "run", "bar", "lambda$foo$1", "enter0"));
+
+                        walker = StackWalker.getInstance(A);
+                        frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
+                
+                        assertEquals(frames, Arrays.asList("lambda$bar$6", "enter0", "enter", "run", "bar", "lambda$foo$1", "enter0", "enter", "run", "foo", "lambda$test1$0", "enter0"));
+
+
                         long r = b+1;
                 });
                 cont.run();

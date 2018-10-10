@@ -83,7 +83,7 @@ final class StackStreamFactory {
      */
     final static boolean isDebug =
             "true".equals(GetPropertyAction.privilegedGetProperty("stackwalk.debug"));
-
+    
     static <T> StackFrameTraverser<T>
         makeStackTraverser(StackWalker walker, Function<? super Stream<StackFrame>, ? extends T> function)
     {
@@ -126,6 +126,7 @@ final class StackStreamFactory {
         protected int depth;    // traversed stack depth
         protected FrameBuffer<? extends T> frameBuffer;
         protected long anchor;
+        protected final ContinuationScope contScope;
 
         // buffers to fill in stack frame information
         protected AbstractStackWalker(StackWalker walker, int mode) {
@@ -137,6 +138,7 @@ final class StackStreamFactory {
             this.walker = walker;
             this.maxDepth = maxDepth;
             this.depth = 0;
+            this.contScope = walker.getContScope();
         }
 
         private int toStackWalkMode(StackWalker walker, int mode) {
@@ -367,7 +369,7 @@ final class StackStreamFactory {
             // initialize buffers for VM to fill the stack frame info
             initFrameBuffer();
 
-            return callStackWalk(mode, 0,
+            return callStackWalk(mode, 0, contScope,
                                  frameBuffer.curBatchFrameCount(),
                                  frameBuffer.startIndex(),
                                  frameBuffer.frames());
@@ -411,7 +413,7 @@ final class StackStreamFactory {
          *                    or a {@link StackFrameInfo} (or derivative) array otherwise.
          * @return            Result of AbstractStackWalker::doStackWalk
          */
-        private native R callStackWalk(long mode, int skipframes,
+        private native R callStackWalk(long mode, int skipframes, ContinuationScope contScope,
                                        int batchSize, int startIndex,
                                        T[] frames);
 

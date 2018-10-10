@@ -501,6 +501,23 @@ vframeStream::vframeStream(JavaThread* thread, frame top_frame,
   }
 }
 
+vframeStream::vframeStream(JavaThread* thread, Handle continuation_scope) 
+ : vframeStreamCommon(RegisterMap(thread, false, true)) {
+
+  _stop_at_java_call_stub = true;
+  _continuation_scope = continuation_scope;
+  
+  if (!thread->has_last_Java_frame()) {
+    _mode = at_end_mode;
+    return;
+  }
+
+  _frame = _thread->last_frame();
+  while (!fill_from_frame()) {
+    _frame = _frame.sender(&_reg_map);
+  }
+}
+
 
 // Step back n frames, skip any pseudo frames in between.
 // This function is used in Class.forName, Class.newInstance, Method.Invoke,

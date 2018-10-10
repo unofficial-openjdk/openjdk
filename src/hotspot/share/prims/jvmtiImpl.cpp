@@ -569,7 +569,7 @@ vframe *VM_GetOrSetLocal::get_vframe() {
   if (!_thread->has_last_Java_frame()) {
     return NULL;
   }
-  RegisterMap reg_map(_thread);
+  RegisterMap reg_map(_thread, true, true);
   vframe *vf = _thread->last_java_vframe(&reg_map);
   int d = 0;
   while ((vf != NULL) && (d < _depth)) {
@@ -720,8 +720,8 @@ bool VM_GetOrSetLocal::doit_prologue() {
   _jvf = get_java_vframe();
   NULL_CHECK(_jvf, false);
 
-  if (Continuation::is_frame_in_continuation(_jvf->thread(), _jvf->fr())) {
-    _result = JVMTI_ERROR_OPAQUE_FRAME;
+  if (_set && Continuation::is_frame_in_continuation(_jvf->thread(), _jvf->fr())) {
+    _result = JVMTI_ERROR_OPAQUE_FRAME; // deferred locals currently unsupported in continuations
     return false;
   }
 

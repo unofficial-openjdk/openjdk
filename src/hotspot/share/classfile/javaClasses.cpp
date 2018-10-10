@@ -2378,7 +2378,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, const methodHand
   // The "ASSERT" here is to verify this method generates the exactly same stack
   // trace as utilizing vframe.
 #ifdef ASSERT
-  vframeStream st(thread);
+  vframeStream st(thread); // st(thread, FIBER_SCOPE); -- LOOM TODO
   methodHandle st_method(THREAD, st.method());
 #endif
   int total_count = 0;
@@ -2401,6 +2401,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, const methodHand
       bci = stream.read_bci();
     } else {
       if (fr.is_first_frame()) break;
+      // if (Continuation::is_scope_bottom(FIBER_SCOPE, fr, &map)) break;  -- LOOM TODO
       address pc = fr.pc();
       if (fr.is_interpreted_frame()) {
         address bcp;

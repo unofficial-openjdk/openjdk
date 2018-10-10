@@ -201,12 +201,12 @@ enum {
 
 JNIEXPORT jobject JNICALL
 JVM_CallStackWalk(JNIEnv *env, jobject stackStream, jlong mode,
-                  jint skip_frames, jint frame_count, jint start_index,
-                  jobjectArray frames);
+                  jint skip_frames, jobject contScope,
+                  jint frame_count, jint start_index, jobjectArray frames);
 
 JNIEXPORT jint JNICALL
-JVM_MoreStackWalk(JNIEnv *env, jobject stackStream, jlong mode, jlong anchor,
-                  jint frame_count, jint start_index,
+JVM_MoreStackWalk(JNIEnv *env, jobject stackStream, jlong mode, jlong anchor, 
+                  jint frame_count, jint start_index, 
                   jobjectArray frames);
 
 /*

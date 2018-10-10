@@ -2668,7 +2668,10 @@ JRT_LEAF(void, Continuation::thaw(FrameInfo* fi, bool return_barrier))
   thaw1(JavaThread::current(), fi, return_barrier);
 JRT_END
 
-bool Continuation::is_continuation_entry_frame(const frame& f) {
+bool Continuation::is_continuation_entry_frame(const frame& f, const RegisterMap* map) {
+  if (map->cont() != NULL) // A continuation's entry frame is always on the v-stack
+    return false;
+
   Method* m = frame_method(f);
   if (m == NULL)
     return false;
@@ -2676,6 +2679,7 @@ bool Continuation::is_continuation_entry_frame(const frame& f) {
   // we can do this because the entry frame is never inlined
   return m->intrinsic_id() == vmIntrinsics::_Continuation_enter;
 }
+
 // When walking the virtual stack, this method returns true
 // iff the frame is a thawed continuation frame whose
 // caller is still frozen on the h-stack.
@@ -2718,6 +2722,24 @@ bool Continuation::is_frame_in_continuation(JavaThread* thread, const frame& f) 
   return find_continuation_for_frame(thread, f.sp()) != NULL;
 }
 
+bool Continuation::is_scope_bottom(oop cont_scope, const frame& f, const RegisterMap* map) {
+  if (cont_scope == NULL || !is_continuation_entry_frame(f, map))
+    return false;
+
+  assert (map->cont() == NULL, "");
+  // if (map->cont() != NULL)
+  //   return false;
+
+  oop cont = find_continuation_for_frame(map->thread(), f.sp());
+  if (cont == NULL)
+    return false;
+
+  oop sc = continuation_scope(cont);
+  assert(sc != NULL, "");
+
+  return sc == cont_scope;
+}
+
 static frame continuation_top_frame(oop contOop, RegisterMap* map) {
   ContMirror cont(NULL, contOop);
   cont.read();
@@ -2732,9 +2754,10 @@ static frame continuation_top_frame(oop contOop, RegisterMap* map) {
 }
 
 static frame continuation_parent_frame(ContMirror& cont, RegisterMap* map) {
-  oop parentOop = java_lang_Continuation::parent(cont.mirror());
-  if (parentOop != NULL)
-    return continuation_top_frame(parentOop, map);
+  // The following is commented out because a continuation's entry frame is always on the v-stack
+  // oop parentOop = java_lang_Continuation::parent(cont.mirror());
+  // if (parentOop != NULL)
+  //   return continuation_top_frame(parentOop, map);
   
   frame sender(cont.entrySP(), cont.entryFP(), cont.entryPC());
 
