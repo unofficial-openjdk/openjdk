@@ -80,6 +80,7 @@ public:
   static inline oop continuation_scope(oop cont) { return cont != NULL ? java_lang_Continuation::scope(cont) : NULL; }
   static bool is_scope_bottom(oop cont_scope, const frame& fr, const RegisterMap* map);
   
+  static int PERFTEST_LEVEL;
 private:
   // declared here as it's used in friend declarations
   static address oop_address(objArrayOop ref_stack, address stack_address);

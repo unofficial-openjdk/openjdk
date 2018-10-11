@@ -57,6 +57,15 @@
 
 #define USE_GROWABLE_ARRAY false
 
+int Continuation::PERFTEST_LEVEL = ContPerfTest;
+// 5 - no call into C
+// 10 - immediate return from C
+// 15 - return after count_frames
+// 20 - no freeze_compiled/interpreted_frame
+// 25 - copy to stack
+// 30 - freeze oops
+// 100 - everything
+
 // TODO
 //
 // !!! Keep an eye out for deopt, and patch_pc
@@ -1055,6 +1064,12 @@ void ContMirror::allocate_stacks(int size, int oops, int frames) {
   if (!(needs_stack_allocation | needs_refStack_allocation))
     return;
 
+  if (Continuation::PERFTEST_LEVEL < 100) {
+    tty->print_cr("stack size: %d (int): %d sp: %d stack_length: %d needs alloc: %d", size, to_index(size), _sp, _stack_length, needs_stack_allocation);
+    tty->print_cr("num_oops: %d ref_sp: %d needs alloc: %d", oops, _ref_sp, needs_stack_allocation);
+  }
+  guarantee(Continuation::PERFTEST_LEVEL >= 100, "");
+
   int old_stack_length = _stack_length;
   int old_sp = _sp;
 
@@ -1724,6 +1739,8 @@ static inline void clear_anchor(JavaThread* thread) {
 #endif
 
 static int freeze_oops(ContMirror& cont, frame &f, hframe &hf, hframe& callee, void* vsp, void* hsp, RegisterMap& map, const ImmutableOopMap* oop_map) {
+  if (Continuation::PERFTEST_LEVEL < 30) return 0;
+
   log_trace(jvmcont)("Walking oops (freeze)");
 
   assert (!map.include_argument_oops(), "");
@@ -1785,6 +1802,7 @@ static inline size_t freeze_interpreted_frame(ContMirror& cont, frame& f, hframe
     }
   }
 
+  if (Continuation::PERFTEST_LEVEL >= 25)
   cont.copy_to_stack(vsp, hsp, fsize);
 
   hf = cont.new_hframe(hsp, hfp, f.pc(), NULL, true);
@@ -1834,6 +1852,7 @@ static inline size_t freeze_compiled_frame(ContMirror& cont, frame& f, hframe& h
     }
   }
 
+  if (Continuation::PERFTEST_LEVEL >= 25)
   cont.copy_to_stack(vsp, hsp, fsize);
 
   f.cb()->as_compiled_method()->inc_on_continuation_stack();
@@ -1865,6 +1884,7 @@ static res_freeze freeze_frame1(ContMirror& cont, address &target, frame &f, Reg
   if (f.is_deoptimized_frame()) log_trace(jvmcont)("freezing deoptimized");
 
   size_t nbytes = 0;
+  if (Continuation::PERFTEST_LEVEL > 20) { 
   if      (is_compiled)    nbytes = freeze_compiled_frame(cont, f, hf, target);
   else if (is_interpreted) nbytes = freeze_interpreted_frame(cont, f, hf, target);
   else {
@@ -1891,10 +1911,12 @@ static res_freeze freeze_frame1(ContMirror& cont, address &target, frame &f, Reg
     int num_oops = freeze_oops(cont, f, hf, callee, vsp, hsp, map, NULL);
     hf.set_num_oops(cont, num_oops);
   }
+  }
 
   ContinuationCodeBlobLookup lookup;
   frame sender = f.sender(&map, &lookup);
 
+  if (Continuation::PERFTEST_LEVEL > 20) { 
   // last condition is after fixing bottom-most frozen frame
   assert ((hf.return_pc(cont) != sender.pc()) <= (sender.is_deoptimized_frame() || hf.return_pc(cont) == cont.pc()), "hf.return_pc: " INTPTR_FORMAT " sender.pc: " INTPTR_FORMAT " sender.is_deoptimized_frame: %d", p2i(hf.return_pc(cont)), p2i(sender.pc()), sender.is_deoptimized_frame());
   if (false) { // TODO: try this instead of deoptimize parameter in thaw
@@ -1906,6 +1928,7 @@ static res_freeze freeze_frame1(ContMirror& cont, address &target, frame &f, Reg
 
   log_trace(jvmcont)("hframe:");
   if (log_is_enabled(Trace, jvmcont)) hf.print(cont);
+  }
 
   target += nbytes;
   f = sender;
@@ -1996,6 +2019,9 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 
   int size, num_oops, num_frames;
   res_freeze count_res = count_frames(thread, f, bottom, top, &num_frames, &size, &num_oops);
+  
+  if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
+  
   if (count_res != freeze_ok) {
     log_trace(jvmcont)("FREEZE FAILED (count) %d", count_res);
     return count_res;
@@ -2116,6 +2142,13 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 //      unless freezing has failed, in which case fi->pc = 0
 //      However, fi->fp points to the _address_ on the stack of the entry frame's link to its caller (so *(fi->fp) is the fp)
 JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
+  Continuation::PERFTEST_LEVEL = ContPerfTest;
+
+  if (PERFTEST_LEVEL <= 10) {
+    fi->fp = NULL; fi->sp = NULL; fi->pc = NULL;
+    return freeze_ok;
+  }
+
   log_debug(jvmcont)("~~~~~~~~~ freeze");
   log_trace(jvmcont)("fi->sp: " INTPTR_FORMAT " fi->fp: " INTPTR_FORMAT " fi->pc: " INTPTR_FORMAT, p2i(fi->sp), p2i(fi->fp), p2i(fi->pc));
   ContinuationCodeBlobLookup lookup;

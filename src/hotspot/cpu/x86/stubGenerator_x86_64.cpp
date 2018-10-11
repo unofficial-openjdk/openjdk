@@ -5580,11 +5580,14 @@ address generate_cont_doYield() {
     int frame_complete = __ pc() - start;
     address the_pc = __ pc();
 
+    if (ContPerfTest > 5) {
     __ set_last_Java_frame(rsp, rbp, the_pc); // may be unnecessary. also, consider MacroAssembler::call_VM_leaf_base
-
     __ call_VM(noreg, CAST_FROM_FN_PTR(address, Continuation::freeze), fi, false); // do NOT check exceptions; they'll get forwarded to the caller
+    }
+
     Label pinned;
     __ pop(rdx); // read the pc from the FrameInfo
+    if (ContPerfTest <= 5) { __ xorq(rdx, rdx); __ xorq(rax, rax); }
     __ testq(rdx, rdx);
     __ jcc(Assembler::zero, pinned);
 
