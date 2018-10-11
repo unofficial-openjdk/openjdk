@@ -31,118 +31,40 @@ package MyPackage;
  */
 
 import java.util.concurrent.*;
-import java.util.concurrent.atomic.*;
-import java.util.concurrent.locks.LockSupport;
-import java.util.concurrent.locks.ReentrantLock;
-import java.lang.ref.WeakReference;
-import java.lang.reflect.Method;
-import java.util.stream.Stream;
-
-/*
-    public static void main(String[] args) {
-        final Script script = createScript("sleep(1000);", new HashMap<String, Object>());
-        final AtomicInteger counter = new AtomicInteger(0);
-        Fiber fiber = new Fiber(scheduler, new SuspendableRunnable() {
-            @Override
-            public void run() throws SuspendExecution, InterruptedException {
-                counter.incrementAndGet();
-                script.run();
-                counter.incrementAndGet();
-            }
-        });
-        fiber.start();
-        fiber.join();
-        // Assert.assertEquals(counter.intValue(), 2);
-    }
-}
-*/
 
 public class FiberTest {
-
-    static final Runnable DO_NOTHING = () -> { };
     private static final String agentLib = "FiberTest";
 
-    // -- basic tests ---
+    static final int MSG_COUNT = 1000*1000;
+    static final SynchronousQueue<String> QUEUE = new SynchronousQueue<>();
 
-    public void testExecute1() {
-        var executed = new AtomicBoolean();
-        var f = Fiber.execute(() -> executed.set(true));
-        f.await();
-    }
+    static final Runnable PRODUCER = () -> {
+        try {
+            for (int i = 0; i < MSG_COUNT; i++) {
+                QUEUE.put("msg");
+            }
+        } catch (InterruptedException e) { }
+    };
 
-    // throw uncaught exception
-    public void testUncaughtException1() {
-        var executed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            executed.set(true);
-            throw new RuntimeException();
-        });
-        f.await();
-    }
+    static final Runnable CONSUMER = () -> {
+        try {
+            for (int i = 0; i < MSG_COUNT; i++) {
+                String s = QUEUE.take();
+            }
+        } catch (InterruptedException e) { }
+    };
 
-    // throw uncaught error
-    public void testUncaughtException2() {
-        var executed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            executed.set(true);
-            throw new Error();
-        });
-        f.await();
-    }
-
-
-    // -- park/parkNanos/unpark --
-
-    // fiber parks, unparked by thread
-    public void testPark1() throws Exception {
-        var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            Fiber.park();
-            completed.set(true);
-        });
-        Thread.sleep(1000); // give time for fiber to park
-        f.unpark();
-        f.await();
-    }
-
-    // fiber parks, unparked by another fiber
-    public void testPark2() throws Exception {
-        var completed = new AtomicInteger();
-        Fiber f1 = Fiber.execute(() -> {
-            Fiber.park();
-            completed.incrementAndGet();
-        });
-        Thread.sleep(1000); // give time for fiber to park
-        Fiber f2 = Fiber.execute(() -> {
-            f1.unpark();
-            completed.incrementAndGet();
-        });
+    public static void test1() throws Exception {
+        Fiber f1 = new Fiber(PRODUCER);
+        Fiber f2 = new Fiber(CONSUMER);
+        f1.schedule();
+        f2.schedule();
         f1.await();
         f2.await();
     }
 
-    // park while holding monitor
-    public void testPark3() throws Exception {
-        var completed = new AtomicBoolean();
-        Fiber f = Fiber.execute(() -> {
-            var lock = new Object();
-            synchronized (lock) {
-                Fiber.park();
-            }
-            completed.set(true);
-        });
-        Thread.sleep(1000); // give time for fiber to park
-        f.unpark();
-        f.await();
-    }
-
     void runTest() throws Exception {
-        testExecute1();
-        // testUncaughtException1();
-        // testUncaughtException2();
-        testPark1();
-        testPark2();
-        testPark3();
+        test1();
     }
 
     public static void main(String[] args) throws Exception {

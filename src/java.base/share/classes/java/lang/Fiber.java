@@ -227,10 +227,11 @@ public final class Fiber extends Strand {
         Fiber fiber = t.getFiber();
 
         if (notifyJvmtiEvents) {
-            notifyFiberStart(t, fiber);
+            notifyFiberStart(t, this);
         }
 
         if (fiber != null) t.setFiber(null);
+        // t.setFiber(this); // SERG_TMP
         try {
             scheduler.execute(runContinuation);
         } finally {
