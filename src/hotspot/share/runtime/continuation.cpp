@@ -61,7 +61,7 @@ int Continuation::PERFTEST_LEVEL = ContPerfTest;
 // 5 - no call into C
 // 10 - immediate return from C
 // 15 - return after count_frames
-// 20 - no freeze_compiled/interpreted_frame
+// 20 - all work, but no copying
 // 25 - copy to stack
 // 30 - freeze oops
 // 100 - everything
@@ -833,7 +833,9 @@ void ContMirror::copy_to_stack(void* from, void* to, int size) {
   // this assertion is just to check whether the copying happens as intended, but not otherwise required for this method.
   assert (write_stack_index(to) == _wsp + to_index(METADATA_SIZE), "to: %d wsp: %d", write_stack_index(to), _wsp);
 
+  if (Continuation::PERFTEST_LEVEL >= 25) {
   Copy::conjoint_memory_atomic(from, to, size);
+  }
   _wsp = to_index(_write_stack, (address)to + size);
 
   _e_size += size;
@@ -1802,7 +1804,6 @@ static inline size_t freeze_interpreted_frame(ContMirror& cont, frame& f, hframe
     }
   }
 
-  if (Continuation::PERFTEST_LEVEL >= 25)
   cont.copy_to_stack(vsp, hsp, fsize);
 
   hf = cont.new_hframe(hsp, hfp, f.pc(), NULL, true);
@@ -1852,7 +1853,6 @@ static inline size_t freeze_compiled_frame(ContMirror& cont, frame& f, hframe& h
     }
   }
 
-  if (Continuation::PERFTEST_LEVEL >= 25)
   cont.copy_to_stack(vsp, hsp, fsize);
 
   f.cb()->as_compiled_method()->inc_on_continuation_stack();
@@ -1884,7 +1884,7 @@ static res_freeze freeze_frame1(ContMirror& cont, address &target, frame &f, Reg
   if (f.is_deoptimized_frame()) log_trace(jvmcont)("freezing deoptimized");
 
   size_t nbytes = 0;
-  if (Continuation::PERFTEST_LEVEL > 20) { 
+  // if (Continuation::PERFTEST_LEVEL > 20) { 
   if      (is_compiled)    nbytes = freeze_compiled_frame(cont, f, hf, target);
   else if (is_interpreted) nbytes = freeze_interpreted_frame(cont, f, hf, target);
   else {
@@ -1911,12 +1911,11 @@ static res_freeze freeze_frame1(ContMirror& cont, address &target, frame &f, Reg
     int num_oops = freeze_oops(cont, f, hf, callee, vsp, hsp, map, NULL);
     hf.set_num_oops(cont, num_oops);
   }
-  }
+  // }
 
   ContinuationCodeBlobLookup lookup;
   frame sender = f.sender(&map, &lookup);
 
-  if (Continuation::PERFTEST_LEVEL > 20) { 
   // last condition is after fixing bottom-most frozen frame
   assert ((hf.return_pc(cont) != sender.pc()) <= (sender.is_deoptimized_frame() || hf.return_pc(cont) == cont.pc()), "hf.return_pc: " INTPTR_FORMAT " sender.pc: " INTPTR_FORMAT " sender.is_deoptimized_frame: %d", p2i(hf.return_pc(cont)), p2i(sender.pc()), sender.is_deoptimized_frame());
   if (false) { // TODO: try this instead of deoptimize parameter in thaw
@@ -1928,7 +1927,6 @@ static res_freeze freeze_frame1(ContMirror& cont, address &target, frame &f, Reg
 
   log_trace(jvmcont)("hframe:");
   if (log_is_enabled(Trace, jvmcont)) hf.print(cont);
-  }
 
   target += nbytes;
   f = sender;
