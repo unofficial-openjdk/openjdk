@@ -356,6 +356,7 @@ class java_lang_Thread : AllStatic {
   static int _stackSize_offset;
   static int _tid_offset;
   static int _continuation_offset;
+  static int _fiber_offset;
   static int _thread_status_offset;
   static int _park_blocker_offset;
   static int _park_event_offset ;
@@ -399,6 +400,8 @@ class java_lang_Thread : AllStatic {
   // Continuation
   static oop  continuation(oop java_thread);
   static void set_continuation(oop java_thread, oop continuation);
+  // Fiber
+  static oop  fiber(oop java_thread);
 
   // Blocker object responsible for thread parking
   static oop park_blocker(oop java_thread);
@@ -498,13 +501,18 @@ class java_lang_ThreadGroup : AllStatic {
 
 class java_lang_Fiber : AllStatic {
  private:
-  static int static_notify_mount_events_offset;
+  static int static_notify_jvmti_events_offset;
  public:
   static void compute_offsets();
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
-  static int notify_mount_events_offset_in_bytes();
-  static void set_notify_mount_events(jboolean enable);
+  // Testers
+  static bool is_subclass(Klass* klass) {
+    return klass->is_subclass_of(SystemDictionary::Fiber_klass());
+  }
+  static bool is_instance(oop obj);
+  static int notify_jvmti_events_offset_in_bytes();
+  static void set_notify_jvmti_events(jboolean enable);
 };
 
 

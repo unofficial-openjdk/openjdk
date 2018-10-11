@@ -3786,10 +3786,30 @@ JVM_ENTRY_NO_ENV(jint, JVM_FindSignal(const char *name))
   return os::get_signal_number(name);
 JVM_END
 
-JVM_ENTRY(void, JVM_FiberMount(JNIEnv* env, jclass fiberClass, jobject carrierThread, jobject fiber))
-  JVMWrapper("JVM_FiberMount");
+JVM_ENTRY(void, JVM_FiberStart(JNIEnv* env, jclass fiberClass, jthread carrierThread, jobject fiber))
+  JVMWrapper("JVM_FiberStart");
+  if (JvmtiExport::should_post_fiber_start()) {
+    JvmtiExport::post_fiber_start(carrierThread, fiber);
+  }
 JVM_END
 
-JVM_ENTRY(void, JVM_FiberUnmount(JNIEnv* env, jclass fiberClass, jobject carrierThread, jobject fiber))
+JVM_ENTRY(void, JVM_FiberEnd(JNIEnv* env, jclass fiberClass, jthread carrierThread, jobject fiber))
+  JVMWrapper("JVM_FiberEnd");
+  if (JvmtiExport::should_post_fiber_end()) {
+    JvmtiExport::post_fiber_end(carrierThread, fiber);
+  }
+JVM_END
+
+JVM_ENTRY(void, JVM_FiberMount(JNIEnv* env, jclass fiberClass, jthread carrierThread, jobject fiber))
+  JVMWrapper("JVM_FiberMount");
+  if (JvmtiExport::should_post_fiber_mount()) {
+    JvmtiExport::post_fiber_mount(carrierThread, fiber);
+  }
+JVM_END
+
+JVM_ENTRY(void, JVM_FiberUnmount(JNIEnv* env, jclass fiberClass, jthread carrierThread, jobject fiber))
   JVMWrapper("JVM_FiberUnmount");
+  if (JvmtiExport::should_post_fiber_unmount()) {
+    JvmtiExport::post_fiber_unmount(carrierThread, fiber);
+  }
 JVM_END

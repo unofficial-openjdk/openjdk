@@ -1589,6 +1589,7 @@ int java_lang_Thread::_stillborn_offset = 0;
 int java_lang_Thread::_stackSize_offset = 0;
 int java_lang_Thread::_tid_offset = 0;
 int java_lang_Thread::_continuation_offset = 0;
+int java_lang_Thread::_fiber_offset = 0 ;
 int java_lang_Thread::_thread_status_offset = 0;
 int java_lang_Thread::_park_blocker_offset = 0;
 int java_lang_Thread::_park_event_offset = 0 ;
@@ -1607,7 +1608,8 @@ int java_lang_Thread::_park_event_offset = 0 ;
   macro(_thread_status_offset, k, "threadStatus", int_signature, false); \
   macro(_park_blocker_offset,  k, "parkBlocker", object_signature, false); \
   macro(_park_event_offset,    k, "nativeParkEventPointer", long_signature, false); \
-  macro(_continuation_offset,  k, "cont", continuation_signature, false)
+  macro(_continuation_offset,  k, "cont", continuation_signature, false); \
+  macro(_fiber_offset,         k, "fiber", fiber_signature, false)
 
 void java_lang_Thread::compute_offsets() {
   assert(_group_offset == 0, "offsets should be initialized only once");
@@ -1751,6 +1753,10 @@ void java_lang_Thread::set_continuation(oop java_thread, oop continuation) {
   return java_thread->obj_field_put(_continuation_offset, continuation);
 }
 
+oop java_lang_Thread::fiber(oop java_thread) {
+  return java_thread->obj_field(_fiber_offset);
+}
+
 oop java_lang_Thread::park_blocker(oop java_thread) {
   assert(JDK_Version::current().supports_thread_park_blocker() &&
          _park_blocker_offset != 0, "Must support parkBlocker field");
@@ -1885,16 +1891,27 @@ void java_lang_ThreadGroup::serialize_offsets(SerializeClosure* f) {
 
 // java_lang_Fiber
 
-int java_lang_Fiber::static_notify_mount_events_offset = 0;
+int java_lang_Fiber::static_notify_jvmti_events_offset = 0;
 
-int java_lang_Fiber::notify_mount_events_offset_in_bytes() { return static_notify_mount_events_offset; }
+int java_lang_Fiber::notify_jvmti_events_offset_in_bytes() { return static_notify_jvmti_events_offset; }
 
 #define FIBER_FIELDS_DO(macro) \
-  macro(static_notify_mount_events_offset,  k, "notifyMountEvents",  bool_signature, true)
+  macro(static_notify_jvmti_events_offset,  k, "notifyJvmtiEvents",  bool_signature, true)
+
+static jboolean fiber_notify_jvmti_events = JNI_FALSE;
 
 void java_lang_Fiber::compute_offsets() {
   InstanceKlass* k = SystemDictionary::Fiber_klass();
   FIBER_FIELDS_DO(FIELD_COMPUTE_OFFSET);
+  if (fiber_notify_jvmti_events) {
+    InstanceKlass* ik = SystemDictionary::Fiber_klass();
+    oop base = ik->static_field_base_raw();
+    base->release_bool_field_put(static_notify_jvmti_events_offset, fiber_notify_jvmti_events);
+  }
+}
+
+bool java_lang_Fiber::is_instance(oop obj) {
+  return obj != NULL && is_subclass(obj->klass());
 }
 
 #if INCLUDE_CDS
@@ -1903,10 +1920,8 @@ void java_lang_Fiber::serialize_offsets(SerializeClosure* f) {
 }
 #endif
 
-void java_lang_Fiber::set_notify_mount_events(jboolean enable) {
-  InstanceKlass* ik = SystemDictionary::Fiber_klass();
-  oop base = ik->static_field_base_raw();
-  base->release_bool_field_put(static_notify_mount_events_offset, enable);
+void java_lang_Fiber::set_notify_jvmti_events(jboolean enable) {
+  fiber_notify_jvmti_events = enable;
 }
 
 

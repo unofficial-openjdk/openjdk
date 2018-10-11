@@ -838,6 +838,43 @@ JvmtiEnv::GetJLocationFormat(jvmtiJlocationFormat* format_ptr) {
 } /* end GetJLocationFormat */
 
   //
+  // Functions supporting Fibers
+  //
+
+// object - pre-checked for NULL
+// is_fiber_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::IsFiber(jobject object, jboolean* is_fiber_ptr) {
+  oop obj = JNIHandles::resolve_external_guard(object);
+
+  *is_fiber_ptr = java_lang_Fiber::is_instance(obj);
+  return JVMTI_ERROR_NONE;
+} /* end IsFiber */
+
+
+// java_thread - pre-checked
+// fiber_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetThreadFiber(JavaThread* java_thread, jthread* fiber_ptr) {
+  JavaThread* current_thread  = JavaThread::current();
+  oop fiber_oop = NULL;
+  uint32_t debug_bits = 0;
+  ResourceMark rm;
+
+  JvmtiThreadState *state = JvmtiThreadState::state_for(java_thread);
+  if (state == NULL) {
+    return JVMTI_ERROR_THREAD_NOT_ALIVE;
+  }
+  if (!java_thread->is_thread_fully_suspended(true, &debug_bits)) {
+    return JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+  }
+  fiber_oop = java_lang_Thread::fiber(java_thread->threadObj());
+  *fiber_ptr = (jthread)JNIHandles::make_local(current_thread, fiber_oop);
+  return JVMTI_ERROR_NONE;
+} /* end GetThreadFiber */
+
+
+  //
   // Thread functions
   //
 

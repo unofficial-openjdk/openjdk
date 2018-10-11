@@ -121,6 +121,7 @@ jvmtiCapabilities JvmtiManageCapabilities::init_onload_capabilities() {
   jc.can_get_current_contended_monitor = 1;
   jc.can_generate_early_vmstart = 1;
   jc.can_generate_early_class_hook_events = 1;
+  jc.can_support_fibers = 1;
   return jc;
 }
 
@@ -260,6 +261,11 @@ jvmtiError JvmtiManageCapabilities::add_capabilities(const jvmtiCapabilities *cu
 
   // return the result
   either(current, desired, result);
+
+  // special case for Fiber events
+  if (result->can_support_fibers == 1) {
+    java_lang_Fiber::set_notify_jvmti_events(true);
+  }
 
   update();
 
@@ -449,6 +455,8 @@ void JvmtiManageCapabilities:: print(const jvmtiCapabilities* cap) {
     log_trace(jvmti)("can_generate_early_vmstart");
   if (cap->can_generate_early_class_hook_events)
     log_trace(jvmti)("can_generate_early_class_hook_events");
+  if (cap->can_support_fibers)
+    log_trace(jvmti)("can_support_fibers");
 }
 
 #endif

@@ -2243,6 +2243,109 @@ jvmtiEnv *jvmti;
 
   </category>
 
+  <category id="fiberCategory" label="Fiber">
+    <intro>
+    </intro>
+
+    <function id="IsFiber" num="105" since="12">
+      <synopsis>Is Fiber</synopsis>
+      <description>
+        Determines whether a thread object reference represents a fiber.
+        The <code>jboolean</code> result is
+        <code>JNI_TRUE</code> if the "thread" is actually a fiber,
+        <code>JNI_FALSE</code> otherwise.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+        <required id="can_support_fibers">
+          Can support fibers.
+        </required>
+      </capabilities>
+      <parameters>
+        <param id="object">
+          <jobject/>
+            <description>
+              The object reference.
+            </description>
+        </param>
+        <param id="is_fiber_ptr">
+          <outptr><jboolean/></outptr>
+          <description>
+            On return, points to the boolean result of this function.
+          </description>
+        </param>
+      </parameters>
+      <errors>
+      </errors>
+    </function>
+
+    <function id="GetThreadFiber" num="113" since="12">
+      <synopsis>Get Thread Fiber</synopsis>
+      <description>
+        Get the fiber mounted to the specified thread.
+        If no fiber is mounted, <code>NULL</code> is returned.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+        <required id="can_support_fibers">
+            Can support fibers.
+        </required>
+      </capabilities>
+      <parameters>
+        <param id="thread">
+          <jthread null="current"/>
+            <description>
+              The thread to query.
+            </description>
+        </param>
+        <param id="fiber_ptr">
+          <outptr><jthread/></outptr>
+          <description>
+            On return, points to the fiber mounted to the specified thread, or <code>NULL</code>.
+          </description>
+        </param>
+      </parameters>
+      <errors>
+      </errors>
+    </function>
+
+    <!--
+    <function id="GetFiberThread" num="117" since="12">
+      <synopsis>Ge Fiber Thread</synopsis>
+      <description>
+        Get the thread the specified fiber is mounted to.
+        If the fiber is unmounted, <code>NULL</code> is returned.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+        <required id="can_support_fibers">
+            Can support fibers.
+        </required>
+      </capabilities>
+      <parameters>
+        <param id="fiber">
+          <jthread />
+            <description>
+              The fiber to query.
+            </description>
+        </param>
+        <param id="thread_ptr">
+          <outptr><jthread/></outptr>
+          <description>
+            On return, points to the thread the fiber is mounted to, or <code>NULL</code>.
+          </description>
+        </param>
+      </parameters>
+      <errors>
+        <error id="JVMTI_ERROR_INVALID_FIBER">
+          <paramlink id="fiber"></paramlink> is not a fiber.
+        </error>
+      </errors>
+    </function>
+    -->
+
+  </category>
+
   <category id="thread_groups" label="Thread Group">
     <intro>
     </intro>
@@ -10379,6 +10482,20 @@ myInit() {
 	  called and <eventlink id="SampledObjectAlloc"></eventlink> events can be generated.
         </description>
       </capabilityfield>
+      <capabilityfield id="can_support_fibers" since="12">
+        <description>
+          Can support Fibers.
+          If this capability is enabled then the following fiber aware functions can be called:
+          <functionlink id="IsFiber"></functionlink>, 
+          <functionlink id="GetThreadFiber"></functionlink>, 
+          <functionlink id="GetFiberThread"></functionlink>
+          and the following fiber aware events can be enabled:
+          <eventlink id="FiberStart"></eventlink>,
+          <eventlink id="FiberEnd"></eventlink>,
+          <eventlink id="FiberMount"></eventlink>,
+          <eventlink id="FiberUnmount"></eventlink>.
+        </description>
+      </capabilityfield>
     </capabilitiestypedef>
 
     <function id="GetPotentialCapabilities" jkernel="yes" phase="onload" num="140">
@@ -11731,6 +11848,9 @@ myInit() {
       An implementation is not required to detect these errors.
     </intro>
 
+    <errorid id="JVMTI_ERROR_INVALID_FIBER" num="9">
+      The passed fiber is not a valid fiber.
+    </errorid>
     <errorid id="JVMTI_ERROR_INVALID_THREAD" num="10">
       The passed thread is not a valid thread.
     </errorid>
@@ -12714,6 +12834,155 @@ myInit() {
       </param>
     </parameters>
   </event>
+
+ <event label="Fiber Start"
+         id="FiberStart" const="JVMTI_EVENT_FIBER_START" filtered="thread" num="87" phase="start">
+    <description>
+      Fiber start events are generated before its initial method executes.
+      <p/>
+      The event is sent on the <paramlink id="thread"></paramlink>.
+    </description>
+    <origin>new</origin>
+    <capabilities>
+      <required id="can_support_fibers">
+        Can support fibers.
+      </required>
+    </capabilities>
+    <parameters>
+      <param id="jni_env">
+        <outptr>
+          <struct>JNIEnv</struct>
+        </outptr>
+          <description>
+            The JNI environment of the event (current) thread.
+          </description>
+      </param>
+      <param id="thread">
+        <jthread/>
+          <description>
+            Thread starting this fiber.
+          </description>
+      </param>
+      <param id="fiber">
+        <jobject/>
+          <description>
+            Fiber starting.
+          </description>
+      </param>
+    </parameters>
+  </event>
+
+  <event label="Fiber End"
+         id="FiberEnd" const="JVMTI_EVENT_FIBER_END" filtered="thread" num="88" phase="start">
+    <description>
+      Fiber end events are generated after its initial method has finished execution.
+      <p/>
+      The event is sent on the <paramlink id="thread"></paramlink>.
+    </description>
+    <origin>new</origin>
+    <capabilities>
+      <required id="can_support_fibers">
+        Can support fibers.
+      </required>
+    </capabilities>
+    <parameters>
+      <param id="jni_env">
+        <outptr>
+          <struct>JNIEnv</struct>
+        </outptr>
+          <description>
+            The JNI environment of the event (current) thread.
+          </description>
+      </param>
+      <param id="thread">
+        <jthread/>
+          <description>
+            Thread ending this fiber.
+          </description>
+      </param>
+      <param id="fiber">
+        <jobject/>
+          <description>
+            Fiber ending.
+          </description>
+      </param>
+    </parameters>
+  </event>
+
+  <event label="Fiber Mount"
+         id="FiberMount" const="JVMTI_EVENT_FIBER_MOUNT" filtered="thread" num="89" phase="start">
+    <description>
+      Fiber mount events are generated before its method continue to execute on the mounted thread.
+      <p/>
+      The event is sent on the <paramlink id="thread"></paramlink> the fiber is mounted to.
+    </description>
+    <origin>new</origin>
+    <capabilities>
+      <required id="can_support_fibers">
+        Can support fibers.
+      </required>
+    </capabilities>
+    <parameters>
+      <param id="jni_env">
+        <outptr>
+          <struct>JNIEnv</struct>
+        </outptr>
+          <description>
+            The JNI environment of the event (current) thread.
+          </description>
+      </param>
+      <param id="thread">
+        <jthread/>
+          <description>
+            Thread mounting this fiber.
+          </description>
+      </param>
+      <param id="fiber">
+        <jobject/>
+          <description>
+            Fiber that is mounted.
+          </description>
+      </param>
+    </parameters>
+  </event>
+
+  <event label="Fiber Unmount"
+         id="FiberUnmount" const="JVMTI_EVENT_FIBER_UNMOUNT" filtered="thread" num="90" phase="start">
+    <description>
+      Fiber unmount events are generated when the fiber is about to be unmounted from the carrier thread.
+      <p/>
+      The event is sent on the <paramlink id="thread"></paramlink> the fiber is unmounted from.
+    </description>
+    <origin>new</origin>
+    <capabilities>
+      <required id="can_support_fibers">
+        Can support fibers.
+      </required>
+    </capabilities>
+    <parameters>
+      <param id="jni_env">
+        <outptr>
+          <struct>JNIEnv</struct>
+        </outptr>
+          <description>
+            The JNI environment of the event (current) thread.
+          </description>
+      </param>
+      <param id="thread">
+        <jthread/>
+          <description>
+            Thread the fiber is unmounted from.
+          </description>
+      </param>
+      <param id="fiber">
+        <jobject/>
+          <description>
+            Fiber that is unmounted.
+          </description>
+      </param>
+    </parameters>
+  </event>
+
 
   <event label="Class Load"
 	 id="ClassLoad" const="JVMTI_EVENT_CLASS_LOAD" filtered="thread" phase="start" num="55">

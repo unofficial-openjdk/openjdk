@@ -125,6 +125,11 @@ class JvmtiExport : public AllStatic {
   JVMTI_SUPPORT_FLAG(should_post_vm_object_alloc)
   JVMTI_SUPPORT_FLAG(should_post_sampled_object_alloc)
 
+  JVMTI_SUPPORT_FLAG(should_post_fiber_start)
+  JVMTI_SUPPORT_FLAG(should_post_fiber_end)
+  JVMTI_SUPPORT_FLAG(should_post_fiber_mount)
+  JVMTI_SUPPORT_FLAG(should_post_fiber_unmount)
+
   // If flag cannot be implemented, give an error if on=true
   static void report_unsupported(bool on);
 
@@ -320,6 +325,11 @@ class JvmtiExport : public AllStatic {
 
   static void post_thread_start          (JavaThread *thread) NOT_JVMTI_RETURN;
   static void post_thread_end            (JavaThread *thread) NOT_JVMTI_RETURN;
+
+  static void post_fiber_start           (jthread thread, jobject fiber) NOT_JVMTI_RETURN;
+  static void post_fiber_end             (jthread thread, jobject fiber) NOT_JVMTI_RETURN;
+  static void post_fiber_mount           (jthread thread, jobject fiber) NOT_JVMTI_RETURN;
+  static void post_fiber_unmount         (jthread thread, jobject fiber) NOT_JVMTI_RETURN;
 
   // Support for java.lang.instrument agent loading.
   static bool _should_post_class_file_load_hook;

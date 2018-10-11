@@ -32,8 +32,10 @@
 #define FIBER  "Ljava/lang/Fiber;"
 
 static JNINativeMethod methods[] = {
-    { "notifyMount",    "(" THREAD FIBER ")V", (void *)&JVM_FiberMount },
-    { "notifyUnmount",  "(" THREAD FIBER ")V", (void *)&JVM_FiberUnmount },
+    { "notifyFiberStart",   "(" THREAD FIBER ")V", (void *)&JVM_FiberStart },
+    { "notifyFiberEnd",     "(" THREAD FIBER ")V", (void *)&JVM_FiberEnd },
+    { "notifyFiberMount",   "(" THREAD FIBER ")V", (void *)&JVM_FiberMount },
+    { "notifyFiberUnmount", "(" THREAD FIBER ")V", (void *)&JVM_FiberUnmount },
 };
 
 JNIEXPORT void JNICALL

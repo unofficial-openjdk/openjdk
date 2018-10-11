@@ -1209,6 +1209,10 @@ bool              JvmtiExport::_should_post_resource_exhausted            = fals
 bool              JvmtiExport::_should_post_vm_object_alloc               = false;
 bool              JvmtiExport::_should_post_sampled_object_alloc          = false;
 bool              JvmtiExport::_should_post_on_exceptions                 = false;
+bool              JvmtiExport::_should_post_fiber_start                   = false;
+bool              JvmtiExport::_should_post_fiber_end                     = false;
+bool              JvmtiExport::_should_post_fiber_mount                   = false;
+bool              JvmtiExport::_should_post_fiber_unmount                 = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1454,6 +1458,144 @@ void JvmtiExport::post_thread_end(JavaThread *thread) {
     }
   }
 }
+
+
+void JvmtiExport::post_fiber_start(jthread thread, jobject fiber) {
+  if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
+  EVT_TRIG_TRACE(JVMTI_EVENT_FIBER_START, ("[%p] Trg Fiber Start event triggered", fiber));
+
+  JavaThread *cur_thread = JavaThread::current();
+  JvmtiThreadState *state = cur_thread->jvmti_thread_state();
+  if (state == NULL) {
+    return;
+  }
+
+  if (state->is_enabled(JVMTI_EVENT_FIBER_START)) {
+    JvmtiEnvThreadStateIterator it(state);
+
+    for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
+      if (ets->is_enabled(JVMTI_EVENT_FIBER_START)) {
+        JvmtiEnv *env = ets->get_env();
+        if (env->phase() == JVMTI_PHASE_PRIMORDIAL) {
+          continue;
+        }
+        EVT_TRACE(JVMTI_EVENT_FIBER_START, ("[%p] Evt Fiber Start event sent", fiber));
+
+        JvmtiThreadEventMark jem(cur_thread);
+        JvmtiJavaThreadEventTransition jet(cur_thread);
+        jvmtiEventFiberStart callback = env->callbacks()->FiberStart;
+        if (callback != NULL) {
+          (*callback)(env->jvmti_external(), jem.jni_env(), thread, fiber);
+        }
+      }
+    }
+  }
+}
+
+void JvmtiExport::post_fiber_end(jthread thread, jobject fiber) {
+  if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
+  EVT_TRIG_TRACE(JVMTI_EVENT_FIBER_END, ("[%p] Trg Fiber End event triggered", fiber));
+
+  JavaThread *cur_thread = JavaThread::current();
+  JvmtiThreadState *state = cur_thread->jvmti_thread_state();
+  if (state == NULL) {
+    return;
+  }
+
+  if (state->is_enabled(JVMTI_EVENT_FIBER_END)) {
+    JvmtiEnvThreadStateIterator it(state);
+
+    for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
+      if (ets->is_enabled(JVMTI_EVENT_FIBER_END)) {
+        JvmtiEnv *env = ets->get_env();
+        if (env->phase() == JVMTI_PHASE_PRIMORDIAL) {
+          continue;
+        }
+        EVT_TRACE(JVMTI_EVENT_FIBER_END, ("[%p] Evt Fiber End event sent", fiber));
+
+        JvmtiThreadEventMark jem(cur_thread);
+        JvmtiJavaThreadEventTransition jet(cur_thread);
+        jvmtiEventFiberEnd callback = env->callbacks()->FiberEnd;
+        if (callback != NULL) {
+          (*callback)(env->jvmti_external(), jem.jni_env(), thread, fiber);
+        }
+      }
+    }
+  }
+}
+
+void JvmtiExport::post_fiber_mount(jthread thread, jobject fiber) {
+  if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
+  EVT_TRIG_TRACE(JVMTI_EVENT_FIBER_MOUNT, ("[%p] Trg Fiber Mount event triggered", fiber));
+
+  JavaThread *cur_thread = JavaThread::current();
+  JvmtiThreadState *state = cur_thread->jvmti_thread_state();
+  if (state == NULL) {
+    return;
+  }
+
+  if (state->is_enabled(JVMTI_EVENT_FIBER_MOUNT)) {
+    JvmtiEnvThreadStateIterator it(state);
+
+    for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
+      if (ets->is_enabled(JVMTI_EVENT_FIBER_MOUNT)) {
+        JvmtiEnv *env = ets->get_env();
+        if (env->phase() == JVMTI_PHASE_PRIMORDIAL) {
+          continue;
+        }
+        EVT_TRACE(JVMTI_EVENT_FIBER_MOUNT, ("[%p] Evt Fiber Mount event sent", fiber));
+
+        JvmtiThreadEventMark jem(cur_thread);
+        JvmtiJavaThreadEventTransition jet(cur_thread);
+        jvmtiEventFiberMount callback = env->callbacks()->FiberMount;
+        if (callback != NULL) {
+          (*callback)(env->jvmti_external(), jem.jni_env(), thread, fiber);
+        }
+      }
+    }
+  }
+}
+
+void JvmtiExport::post_fiber_unmount(jthread thread, jobject fiber) {
+  if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
+  EVT_TRIG_TRACE(JVMTI_EVENT_FIBER_UNMOUNT, ("[%p] Trg Fiber Unmount event triggered", fiber));
+
+  JavaThread *cur_thread = JavaThread::current();
+  JvmtiThreadState *state = cur_thread->jvmti_thread_state();
+  if (state == NULL) {
+    return;
+  }
+
+  if (state->is_enabled(JVMTI_EVENT_FIBER_UNMOUNT)) {
+    JvmtiEnvThreadStateIterator it(state);
+
+    for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
+      if (ets->is_enabled(JVMTI_EVENT_FIBER_UNMOUNT)) {
+        JvmtiEnv *env = ets->get_env();
+        if (env->phase() == JVMTI_PHASE_PRIMORDIAL) {
+          continue;
+        }
+        EVT_TRACE(JVMTI_EVENT_FIBER_UNMOUNT, ("[%p] Evt Fiber Unmount event sent", fiber));
+
+        JvmtiThreadEventMark jem(cur_thread);
+        JvmtiJavaThreadEventTransition jet(cur_thread);
+        jvmtiEventFiberUnmount callback = env->callbacks()->FiberUnmount;
+        if (callback != NULL) {
+          (*callback)(env->jvmti_external(), jem.jni_env(), thread, fiber);
+        }
+      }
+    }
+  }
+}
+
 
 void JvmtiExport::post_object_free(JvmtiEnv* env, jlong tag) {
   assert(SafepointSynchronize::is_at_safepoint(), "must be executed at safepoint");

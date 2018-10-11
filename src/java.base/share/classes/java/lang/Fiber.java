@@ -225,6 +225,11 @@ public final class Fiber extends Strand {
         // ForkJoinPool is updated to reduce use of Thread.currentThread.
         Thread t = Thread.currentCarrierThread();
         Fiber fiber = t.getFiber();
+
+        if (notifyJvmtiEvents) {
+            notifyFiberStart(t, f);
+        }
+
         if (fiber != null) t.setFiber(null);
         try {
             scheduler.execute(runContinuation);
@@ -280,8 +285,8 @@ public final class Fiber extends Strand {
         // set the fiber so that Thread.currentThread() returns the Fiber object
         t.setFiber(this);
 
-        if (notifyMountEvents) {
-            notifyMount(t, this);
+        if (notifyJvmtiEvents) {
+            notifyFiberMount(t, this);
         }
     }
 
@@ -292,6 +297,10 @@ public final class Fiber extends Strand {
     private void unmount() {
         Thread t = Thread.currentCarrierThread();
 
+        if (notifyJvmtiEvents) {
+            notifyFiberUnmount(t, this);
+        }
+
         // drop connection between this fiber and the carrier thread
         t.setFiber(null);
         carrierThread = null;
@@ -299,10 +308,6 @@ public final class Fiber extends Strand {
         // notify shadow thread so that interrupt status is cleared
         ShadowThread st = this.shadowThread;
         if (st != null) st.onUnmount(t);
-
-        if (notifyMountEvents) {
-            notifyUnmount(t, this);
-        }
     }
 
     /**
@@ -324,6 +329,11 @@ public final class Fiber extends Strand {
     private void afterTerminate() {
         int oldState = stateGetAndSet(ST_TERMINATED);
         assert oldState == ST_RUNNABLE;
+
+        if (notifyJvmtiEvents) {
+            Thread t = Thread.currentCarrierThread();
+            notifyFiberEnd(t, this);
+        }
 
         // notify anyone waiting for this fiber to terminate
         lock.lock();
@@ -824,9 +834,11 @@ public final class Fiber extends Strand {
 
     // -- JVM TI support --
 
-    private static volatile boolean notifyMountEvents;  // set by VM
-    private static native void notifyMount(Thread t, Fiber f);
-    private static native void notifyUnmount(Thread t, Fiber f);
+    private static volatile boolean notifyJvmtiEvents;  // set by VM
+    private static native void notifyFiberStart(Thread t, Fiber f);
+    private static native void notifyFiberEnd(Thread t, Fiber f);
+    private static native void notifyFiberMount(Thread t, Fiber f);
+    private static native void notifyFiberUnmount(Thread t, Fiber f);
     private static native void registerNatives();
     static {
         registerNatives();

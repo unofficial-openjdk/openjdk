@@ -514,6 +514,7 @@
   template(runnable_signature,                        "Ljava/lang/Runnable;")                     \
   template(continuation_signature,                    "Ljava/lang/Continuation;")                 \
   template(continuationscope_signature,               "Ljava/lang/ContinuationScope;")            \
+  template(fiber_signature,                           "Ljava/lang/Fiber;")                        \
   template(object_void_signature,                     "(Ljava/lang/Object;)V")                    \
   template(object_int_signature,                      "(Ljava/lang/Object;)I")                    \
   template(object_boolean_signature,                  "(Ljava/lang/Object;)Z")                    \
