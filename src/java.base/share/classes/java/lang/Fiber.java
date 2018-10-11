@@ -227,7 +227,7 @@ public final class Fiber extends Strand {
         Fiber fiber = t.getFiber();
 
         if (notifyJvmtiEvents) {
-            notifyFiberStart(t, f);
+            notifyFiberStart(t, fiber);
         }
 
         if (fiber != null) t.setFiber(null);
