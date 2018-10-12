@@ -116,6 +116,7 @@ public:
 
 class DerivedOopClosure : public Closure {
  public:
+  enum { SkipNull = true };
   virtual void do_derived_oop(oop* base, oop* derived) = 0;
 };
 

@@ -209,17 +209,6 @@ bool frame::is_java_frame() const {
   return false;
 }
 
-
-bool frame::is_compiled_frame() const {
-  if (_cb != NULL &&
-      _cb->is_compiled() &&
-      ((CompiledMethod*)_cb)->is_java_method()) {
-    return true;
-  }
-  return false;
-}
-
-
 bool frame::is_runtime_frame() const {
   return (_cb != NULL && _cb->is_runtime_stub());
 }

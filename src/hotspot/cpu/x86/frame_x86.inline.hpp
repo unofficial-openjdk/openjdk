@@ -265,4 +265,9 @@ inline void frame::set_saved_oop_result(RegisterMap* map, oop obj) {
   *result_adr = obj;
 }
 
+inline bool frame::is_interpreted_frame() const {
+  return Interpreter::contains(pc());
+}
+
+
 #endif // CPU_X86_VM_FRAME_X86_INLINE_HPP

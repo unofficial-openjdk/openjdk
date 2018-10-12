@@ -28,6 +28,7 @@
 #include "code/nmethod.hpp"
 #include "code/scopeDesc.hpp"
 #include "compiler/oopMap.hpp"
+#include "compiler/oopMap.inline.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/iterator.hpp"
@@ -276,17 +277,14 @@ OopMap* OopMapSet::find_map_at_offset(int pc_offset) const {
   return m;
 }
 
-class AddDerivedOop : public DerivedOopClosure {
-  virtual void do_derived_oop(oop* base, oop* derived) {
+void AddDerivedOop::do_derived_oop(oop* base, oop* derived) {
 #if !defined(TIERED) && !INCLUDE_JVMCI
   COMPILER1_PRESENT(ShouldNotReachHere();)
 #endif // !defined(TIERED) && !INCLUDE_JVMCI
 #if COMPILER2_OR_JVMCI
   DerivedPointerTable::add(derived, base);
 #endif // COMPILER2_OR_JVMCI
-  }
-} add_derived_oop;
-
+}
 
 #ifndef PRODUCT
 static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map) {
@@ -316,8 +314,15 @@ static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map) {
 }
 #endif // PRODUCT
 
+
+
 void OopMapSet::oops_do(const frame *fr, const RegisterMap* reg_map, OopClosure* f, DerivedOopClosure* df) {
   // add_derived_oop: add derived oops to a table
+  AddDerivedOop add_derived_oop;
+  if (df == NULL) {
+    df = &add_derived_oop;
+  }
+
   find_map(fr)->oops_do(fr, reg_map, f, df);
   // all_do(fr, reg_map, f, df != NULL ? df : &add_derived_oop, &do_nothing_cl);
 }
@@ -327,56 +332,6 @@ void OopMapSet::oops_do(const frame *fr, const RegisterMap* reg_map, OopClosure*
 //                        OopClosure* value_fn) {
 //   find_map(fr)->oops_do(fr, reg_map, oop_fn, derived_oop_fn, value_fn);
 // }
-
-template <typename T>
-static void walk_derived_pointers1(T& oms, const frame *fr, const RegisterMap *reg_map, DerivedOopClosure* derived_oop_fn) {
-  assert (fr != NULL, "");
-  assert (derived_oop_fn != NULL, "");
-  OopMapValue omv;
-  do {
-    omv = oms.current();
-    oop* loc = fr->oopmapreg_to_location(omv.reg(),reg_map);
-    guarantee(loc != NULL, "missing saved register");
-    oop *derived_loc = loc;
-    oop *base_loc    = fr->oopmapreg_to_location(omv.content_reg(), reg_map);
-    // Ignore NULL oops and decoded NULL narrow oops which
-    // equal to Universe::narrow_oop_base when a narrow oop
-    // implicit null check is used in compiled code.
-    // The narrow_oop_base could be NULL or be the address
-    // of the page below heap depending on compressed oops mode.
-    if (base_loc != NULL && *base_loc != (oop)NULL && !Universe::is_narrow_oop_base(*base_loc)) {
-      derived_oop_fn->do_derived_oop(base_loc, derived_loc);
-    }
-    oms.next();
-  } while (!oms.is_done());
-}
-
-template <typename T>
-static void walk_derived_pointers(const frame *fr, const ImmutableOopMap* map, const RegisterMap *reg_map,
-                                  DerivedOopClosure* derived_oop_fn) {
-  T oms(map,OopMapValue::derived_oop_value);
-  if (!oms.is_done()) {
-#ifndef TIERED
-    COMPILER1_PRESENT(ShouldNotReachHere();)
-#if INCLUDE_JVMCI
-    if (UseJVMCICompiler) {
-      ShouldNotReachHere();
-    }
-#endif
-#endif // !TIERED
-
-    if (derived_oop_fn == &add_derived_oop) { // TODO: UGLY (basically used to decide if we're freezing/thawing continuation)
-      assert (reg_map->validate_oops(), "");
-      // Protect the operation on the derived pointers.  This
-      // protects the addition of derived pointers to the shared
-      // derived pointer table in DerivedPointerTable::add().
-      MutexLockerEx x(DerivedPointerTableGC_lock, Mutex::_no_safepoint_check_flag);
-      walk_derived_pointers1<T>(oms, fr, reg_map, derived_oop_fn);
-    } else {
-      walk_derived_pointers1<T>(oms, fr, reg_map, derived_oop_fn);
-    }
-  }
-}
 
 ExplodedOopMap::ExplodedOopMap(const ImmutableOopMap* oopMap) {
   _oopValues = copyOopMapValues(oopMap, OopMapValue::oop_value | OopMapValue::narrowoop_value, &_nrOopValues);
@@ -438,113 +393,10 @@ OopMapValue* ExplodedOopMap::copyOopMapValues(const ImmutableOopMap* oopMap, int
   return values;
 }
 
-class ExplodedOopMapStream {
-private:
-  int _current;
-  int _max;
-  OopMapValue* _values;
-public:
-  ExplodedOopMapStream(const ImmutableOopMap* oopMap, int mask) : _current(0), _max(oopMap->_exploded->count(mask)), _values(oopMap->_exploded->values(mask)) {}
-  bool is_done() const { return _current >= _max; }
-  void next() { ++_current; }
-  OopMapValue current() { return _values[_current]; }
-};
-
-template<typename T>
-static void iterate_oops_do(const frame *fr, const RegisterMap *reg_map,
-                              OopClosure* oop_fn, DerivedOopClosure* derived_oop_fn, const ImmutableOopMap* oopmap) {
-  NOT_PRODUCT(if (TraceCodeBlobStacks) trace_codeblob_maps(fr, reg_map);)
-
-  if (derived_oop_fn == NULL)
-    derived_oop_fn = &add_derived_oop;
-
-  // handle derived pointers first (otherwise base pointer may be
-  // changed before derived pointer offset has been collected)
-  if (reg_map->validate_oops())
-    walk_derived_pointers<T>(fr, oopmap, reg_map, derived_oop_fn);
-
-  OopMapValue omv;
-  // We want coop and oop oop_types
-  int mask = OopMapValue::oop_value | OopMapValue::narrowoop_value;
-  {
-    for (T oms(oopmap,mask); !oms.is_done(); oms.next()) {
-      omv = oms.current();
-      oop* loc = fr->oopmapreg_to_location(omv.reg(),reg_map);
-      // It should be an error if no location can be found for a
-      // register mentioned as contained an oop of some kind.  Maybe
-      // this was allowed previously because value_value items might
-      // be missing?
-#ifdef ASSERT
-    if (loc == NULL) {
-      VMReg reg = omv.reg();
-      tty->print_cr("missing saved register: reg: %ld %s loc: %p", reg->value(), reg->name(), loc);
-      fr->print_on(tty);
-    }
-#endif
-      guarantee(loc != NULL, "missing saved register");
-      if ( omv.type() == OopMapValue::oop_value ) {
-        oop val = *loc;
-        if (derived_oop_fn == &add_derived_oop && (val == (oop)NULL || Universe::is_narrow_oop_base(val))) { // TODO: UGLY (basically used to decide if we're freezing/thawing continuation)
-          // Ignore NULL oops and decoded NULL narrow oops which
-          // equal to Universe::narrow_oop_base when a narrow oop
-          // implicit null check is used in compiled code.
-          // The narrow_oop_base could be NULL or be the address
-          // of the page below heap depending on compressed oops mode.
-          continue;
-        }
-#ifdef ASSERT
-        // We can not verify the oop here if we are using ZGC, the oop
-        // will be bad in case we had a safepoint between a load and a
-        // load barrier.
-        if (!UseZGC && reg_map->validate_oops() &&
-            ((((uintptr_t)loc & (sizeof(*loc)-1)) != 0) ||
-             !Universe::heap()->is_in_or_null(*loc))) {
-          tty->print_cr("# Found non oop pointer.  Dumping state at failure");
-          // try to dump out some helpful debugging information
-          trace_codeblob_maps(fr, reg_map);
-          omv.print();
-          tty->print_cr("register r");
-          omv.reg()->print();
-          tty->print_cr("loc = %p *loc = %p\n", loc, (address)*loc);
-          // os::print_location(tty, (intptr_t)*loc);
-          tty->print("pc: "); os::print_location(tty, (intptr_t)fr->pc());
-          fr->print_value_on(tty, NULL);
-          // do the real assert.
-          assert(Universe::heap()->is_in_or_null(*loc), "found non oop pointer");
-        }
-#endif // ASSERT
-        oop_fn->do_oop(loc);
-      } else if ( omv.type() == OopMapValue::narrowoop_value ) {
-        narrowOop *nl = (narrowOop*)loc;
-#ifndef VM_LITTLE_ENDIAN
-        VMReg vmReg = omv.reg();
-        // Don't do this on SPARC float registers as they can be individually addressed
-        if (!vmReg->is_stack() SPARC_ONLY(&& !vmReg->is_FloatRegister())) {
-          // compressed oops in registers only take up 4 bytes of an
-          // 8 byte register but they are in the wrong part of the
-          // word so adjust loc to point at the right place.
-          nl = (narrowOop*)((address)nl + 4);
-        }
-#endif
-        oop_fn->do_oop(nl);
-      }
-    }
-  }
-
-  // When thawing continuation frames, we want to walk derived pointers
-  // after walking oops
-  if (!reg_map->validate_oops())
-    walk_derived_pointers<T>(fr, oopmap, reg_map, derived_oop_fn);
-}
-
 void ImmutableOopMap::oops_do(const frame *fr, const RegisterMap *reg_map,
                               OopClosure* oop_fn, DerivedOopClosure* derived_oop_fn) const {
-  if (_exploded != NULL) {
-    iterate_oops_do<ExplodedOopMapStream>(fr, reg_map, oop_fn, derived_oop_fn, this);
-  } else {
-    iterate_oops_do<OopMapStream>(fr, reg_map, oop_fn, derived_oop_fn, this);
-  }
-
+  OopMapDo<OopClosure, DerivedOopClosure, SkipNullValue> visitor(oop_fn, derived_oop_fn);
+  visitor.oops_do(fr, reg_map, this);
 }
 
 template<typename T>
@@ -557,10 +409,11 @@ static void iterate_all_do(const frame *fr, int mask, OopMapClosure* fn, const I
 }
 
 void ImmutableOopMap::all_do(const frame *fr, int mask, OopMapClosure* fn) const {
-  if (_exploded != NULL)
+  if (_exploded != NULL) {
     iterate_all_do<ExplodedOopMapStream>(fr, mask, fn, this);
-  else
+  } else {
     iterate_all_do<OopMapStream>(fr, mask, fn, this);
+  }
 }
 
 template <typename T>
@@ -573,7 +426,6 @@ static void update_register_map1(const ImmutableOopMap* oopmap, const frame* fr,
     //DEBUG_ONLY(nof_callee++;)
   }
 }
-
 
 void ImmutableOopMap::update_register_map(const frame *fr, RegisterMap *reg_map) const {
   // ResourceMark rm;
