@@ -298,10 +298,15 @@ class OopMapClosure : public Closure {
   virtual void do_value(VMReg reg, OopMapValue::oop_types type) = 0;
 };
 
+template <typename OopFnT, typename DerivedOopFnT, typename ValueFilterT>
+class OopMapDo;
+
 class ImmutableOopMap {
   friend class OopMapStream;
   friend class VMStructs;
   friend class ExplodedOopMapStream;
+  template <typename OopFnT, typename DerivedOopFnT, typename ValueFilterT>
+  friend class OopMapDo;
 #ifdef ASSERT
   friend class ImmutableOopMapBuilder;
 #endif
@@ -406,6 +411,19 @@ class OopMapStream : public StackObj {
 #endif
 };
 
+class ExplodedOopMapStream : public StackObj {
+private:
+  int _current;
+  int _max;
+  OopMapValue* _values;
+public:
+  ExplodedOopMapStream(const ImmutableOopMap* oopMap, int mask) : _current(0), _max(oopMap->_exploded->count(mask)), _values(oopMap->_exploded->values(mask)) {}
+  bool is_done() const { return _current >= _max; }
+  void next() { ++_current; }
+  OopMapValue current() { return _values[_current]; }
+};
+
+
 class ImmutableOopMapBuilder {
 private:
   class Mapping;
@@ -477,6 +495,39 @@ private:
   void fill(ImmutableOopMapSet* set, int size);
 };
 
+class AddDerivedOop : public DerivedOopClosure {
+public:
+  enum { SkipNull = true, NeedsLock = true };
+  virtual void do_derived_oop(oop* base, oop* derived);
+};
+
+class SkipNullValue {
+public:
+  static inline bool should_skip(oop val);
+};
+
+class IncludeAllValues {
+public:
+  static bool should_skip(oop value) { return false; }
+};
+
+template <typename OopFnT, typename DerivedOopFnT, typename ValueFilterT>
+class OopMapDo {
+private:
+  OopFnT* _oop_fn;
+  DerivedOopFnT* _derived_oop_fn;
+  bool _lock_derived_table;
+public:
+  OopMapDo(OopFnT* oop_fn, DerivedOopFnT* derived_oop_fn, bool lock_derived_table = true) : _oop_fn(oop_fn), _derived_oop_fn(derived_oop_fn), _lock_derived_table(lock_derived_table) {}
+  void oops_do(const frame* fr, const RegisterMap* reg_map, const ImmutableOopMap* oopmap);
+private:
+  template <typename OopMapStreamT>
+  void iterate_oops_do(const frame *fr, const RegisterMap *reg_map, const ImmutableOopMap* oopmap);
+  template <typename OopMapStreamT>
+  void walk_derived_pointers(const frame *fr, const ImmutableOopMap* map, const RegisterMap *reg_map);
+  template <typename OopMapStreamT>
+  void walk_derived_pointers1(OopMapStreamT& oms, const frame *fr, const RegisterMap *reg_map);
+};
 
 // Derived pointer support. This table keeps track of all derived points on a
 // stack.  It is cleared before each scavenge/GC.  During the traversal of all
