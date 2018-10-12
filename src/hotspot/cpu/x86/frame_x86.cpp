@@ -306,10 +306,6 @@ void frame::patch_pc(Thread* thread, address pc) {
   }
 }
 
-bool frame::is_interpreted_frame() const  {
-  return Interpreter::contains(pc());
-}
-
 int frame::frame_size(RegisterMap* map) const {
   frame sender = this->sender(map);
   return sender.sp() - sp();

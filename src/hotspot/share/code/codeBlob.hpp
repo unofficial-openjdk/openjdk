@@ -108,14 +108,16 @@ protected:
   address    _relocation_begin;
   address    _relocation_end;
 
+  bool       _is_compiled;
+
   ImmutableOopMapSet* _oop_maps;                 // OopMap for this CodeBlob
   bool                _caller_must_gc_arguments;
   CodeStrings         _strings;
   const char*         _name;
   S390_ONLY(int       _ctable_offset;)
 
-  CodeBlob(const char* name, CompilerType type, const CodeBlobLayout& layout, int frame_complete_offset, int frame_size, ImmutableOopMapSet* oop_maps, bool caller_must_gc_arguments);
-  CodeBlob(const char* name, CompilerType type, const CodeBlobLayout& layout, CodeBuffer* cb, int frame_complete_offset, int frame_size, OopMapSet* oop_maps, bool caller_must_gc_arguments);
+  CodeBlob(const char* name, CompilerType type, const CodeBlobLayout& layout, int frame_complete_offset, int frame_size, ImmutableOopMapSet* oop_maps, bool caller_must_gc_arguments, bool compiled = false);
+  CodeBlob(const char* name, CompilerType type, const CodeBlobLayout& layout, CodeBuffer* cb, int frame_complete_offset, int frame_size, OopMapSet* oop_maps, bool caller_must_gc_arguments, bool compiled = false);
 public:
   // Returns the space needed for CodeBlob
   static unsigned int allocation_size(CodeBuffer* cb, int header_size);
@@ -136,7 +138,7 @@ public:
   virtual bool is_vtable_blob() const                 { return false; }
   virtual bool is_method_handles_adapter_blob() const { return false; }
   virtual bool is_aot() const                         { return false; }
-  virtual bool is_compiled() const                    { return false; }
+  bool is_compiled() const                            { return _is_compiled; }
 
   inline bool is_compiled_by_c1() const    { return _type == compiler_c1; };
   inline bool is_compiled_by_c2() const    { return _type == compiler_c2; };
