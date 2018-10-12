@@ -77,7 +77,7 @@ public:
   static Method* interpreter_frame_method(const frame& fr, const RegisterMap* map);
   static address interpreter_frame_bcp(const frame& fr, const RegisterMap* map);
 
-  static inline oop continuation_scope(oop cont) { return cont != NULL ? java_lang_Continuation::scope(cont) : NULL; }
+  static inline oop continuation_scope(oop cont) { return cont != NULL ? java_lang_Continuation::scope(cont) : (oop)NULL; }
   static bool is_scope_bottom(oop cont_scope, const frame& fr, const RegisterMap* map);
   
   static int PERFTEST_LEVEL;

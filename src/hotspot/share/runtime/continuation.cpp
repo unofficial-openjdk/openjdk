@@ -51,6 +51,13 @@
 #include "utilities/exceptions.hpp"
 #include "utilities/macros.hpp"
 
+#ifdef __has_include
+#  if __has_include(<valgrind/callgrind.h>)
+#    include <valgrind/callgrind.h>
+#  endif
+#endif
+
+
 // #undef ASSERT
 // #undef assert
 // #define assert(p, ...)
@@ -2130,6 +2137,10 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
   return freeze_ok;
 }
 
+#ifdef CALLGRIND_START_INSTRUMENTATION
+  static int callgrind_counter = 1;
+#endif
+
 // returns the continuation yielding (based on context), or NULL for failure (due to pinning)
 // it freezes multiple continuations, depending on contex
 // it must set Continuation.stackSize
@@ -2140,6 +2151,18 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 //      unless freezing has failed, in which case fi->pc = 0
 //      However, fi->fp points to the _address_ on the stack of the entry frame's link to its caller (so *(fi->fp) is the fp)
 JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
+
+#ifdef CALLGRIND_START_INSTRUMENTATION
+  if (callgrind_counter != 0) {
+    if (callgrind_counter > 20000) {
+      tty->print_cr("Starting callgrind instrumentation");
+      CALLGRIND_START_INSTRUMENTATION;
+      callgrind_counter = 0;
+    } else
+      callgrind_counter++;
+  }
+#endif
+
   Continuation::PERFTEST_LEVEL = ContPerfTest;
 
   if (PERFTEST_LEVEL <= 10) {
