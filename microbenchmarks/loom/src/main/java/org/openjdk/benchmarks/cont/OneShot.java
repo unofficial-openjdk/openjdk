@@ -180,7 +180,7 @@ public class OneShot {
 
     @Setup(Level.Iteration)
     public void setup() {
-        System.out.println("pc = " + paramCount + " sd = " + stackDepth);
+        // System.out.println("pc = " + paramCount + " sd = " + stackDepth);
         cont = Yielder.continuation(paramCount, stackDepth, true);
     }
 

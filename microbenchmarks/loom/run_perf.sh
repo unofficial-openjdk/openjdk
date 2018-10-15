@@ -1,28 +1,23 @@
 #!/bin/bash
 
-declare -a arr=("5" "10" "15" "20" "25" "30")
+perflevels=(5 10 15 20 25 30)
 
-PATH=$1
-OPTIONS=${@:2}
+benchmarks='yield$'
+params=(-p stackDepth=5 -p paramCount=3)
 
 iter=20
+forks=2
+file=jmh.out
 
-for perf in "${arr[@]}"; do
-	COUNTER=0
-	while [  $COUNTER -lt 2 ]; do
-		echo
-		echo "======================================================"
-		echo "perf=$perf OPTIONS=$OPTIONS"
-		echo "------------------------------------------------------"
-		echo
+JDK=$1
+OPTIONS=${@:2}
 
-		$PATH/jdk/bin/java -XX:+UseParallelGC -XX:+UnlockDiagnosticVMOptions $OPTIONS -XX:ContPerfTest=$perf -jar target/benchmarks.jar 'yield$' -foe true -i $iter -p stackDepth=5 -p paramCount=3
+for perf in "${perflevels[@]}"; do
+	echo
+	echo "======================================================"
+	echo "perf=$perf OPTIONS=$OPTIONS"
+	echo "------------------------------------------------------"
+	echo
 
-		echo
-		echo "perf=$perf"
-		echo "------------------------------------------------------"
-		echo
-
-		let COUNTER=COUNTER+1 
-	done
+	$JDK/jdk/bin/java --add-opens java.base/java.io=ALL-UNNAMED -XX:+UseParallelGC -XX:+UnlockDiagnosticVMOptions $OPTIONS -XX:ContPerfTest=$perf -jar target/benchmarks.jar $benchmarks -foe true -f $forks -i $iter -v SILENT -rf text -rff $file ${params[@]} && cat $file
 done

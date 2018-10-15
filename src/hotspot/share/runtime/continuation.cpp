@@ -2795,10 +2795,6 @@ static address get_entry_pc_past_barrier(JavaThread* thread, const frame& f) {
   return pc;
 }
 
-bool Continuation::is_return_barrier_entry(address pc) {
-  return pc == StubRoutines::cont_returnBarrier();
-}
-
 address Continuation::fix_continuation_bottom_sender(const frame* callee, RegisterMap* map, address pc) {
   return (map->thread() != NULL && is_return_barrier_entry(pc)) ? get_entry_pc_past_barrier(map->thread(), *callee) : pc;
 }
