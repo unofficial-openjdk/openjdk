@@ -12,6 +12,8 @@ file=jmh.out
 JDK=$1
 OPTIONS=${@:2}
 
+last=0
+
 for perf in "${perflevels[@]}"; do
 	echo
 	echo "======================================================"
@@ -20,4 +22,9 @@ for perf in "${perflevels[@]}"; do
 	echo
 
 	$JDK/jdk/bin/java --add-opens java.base/java.io=ALL-UNNAMED -XX:+UseParallelGC -XX:+UnlockDiagnosticVMOptions $OPTIONS -XX:ContPerfTest=$perf -jar target/benchmarks.jar $benchmarks -foe true -f $forks -i $iter -v SILENT -rf text -rff $file ${params[@]} && cat $file
+	res=$(cat $file| tail -1 | awk '{ print $6 }')
+	echo
+	delta=$(echo "$res - $last" | bc)
+	last=$res
+	echo "Delta: $delta"
 done
