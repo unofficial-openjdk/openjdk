@@ -28,7 +28,7 @@ import org.openjdk.jmh.annotations.*;
 
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@State(Scope.Benchmark)
+@State(Scope.Thread)
 @Warmup(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 5, time = 1, timeUnit = TimeUnit.SECONDS)
 @Fork(1)
@@ -100,7 +100,7 @@ public class OneShot {
         static Continuation continuation(int paramCount, int maxDepth,
                                          boolean yieldAtLimit) {
             Runnable task = new Yielder(paramCount, maxDepth, yieldAtLimit);
-            return new Continuation(SCOPE, task);
+            return new Continuation(SCOPE, 2000, task);
         }
     }
 
@@ -176,6 +176,14 @@ public class OneShot {
     @Param({"5", "10", "20", "100"})
     public int stackDepth;
 
+    Continuation cont;
+
+    @Setup(Level.Iteration)
+    public void setup() {
+        System.out.println("pc = " + paramCount + " sd = " + stackDepth);
+        cont = Yielder.continuation(paramCount, stackDepth, true);
+    }
+
     /**
      * Creates and run continuation that does not yield.
      */
@@ -192,10 +200,12 @@ public class OneShot {
      */
     @Benchmark
     public void yield() {
-        Continuation cont = Yielder.continuation(paramCount, stackDepth, true);
+        // Continuation cont = Yielder.continuation(paramCount, stackDepth, true);
+ 
         cont.run();
-        if (cont.isDone())
-            throw new RuntimeException("continuation done???");
+       // if (cont.isDone())
+        //     throw new RuntimeException("continuation done???");
+        cont.something_something_1();
     }
 
     /**

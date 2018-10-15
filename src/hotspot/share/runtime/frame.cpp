@@ -54,9 +54,10 @@
 #include "utilities/decoder.hpp"
 #include "utilities/formatBuffer.hpp"
 
-RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool walk_cont, bool validate_oops) {
+RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool walk_cont, bool validate_oops, bool update_link) {
   _thread         = thread;
   _update_map     = update_map;
+  _update_link    = update_link;
   clear();
   debug_only(_update_for_id = NULL;)
   _validate_oops = validate_oops;
@@ -71,6 +72,7 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
   assert(map != NULL, "RegisterMap must be present");
   _thread                = map->thread();
   _update_map            = map->update_map();
+  _update_link           = map->update_link();
   _include_argument_oops = map->include_argument_oops();
   debug_only(_update_for_id = map->_update_for_id;)
   _validate_oops = map->_validate_oops;
@@ -208,17 +210,6 @@ bool frame::is_java_frame() const {
   if (is_compiled_frame())    return true;
   return false;
 }
-
-
-bool frame::is_compiled_frame() const {
-  if (_cb != NULL &&
-      _cb->is_compiled() &&
-      ((CompiledMethod*)_cb)->is_java_method()) {
-    return true;
-  }
-  return false;
-}
-
 
 bool frame::is_runtime_frame() const {
   return (_cb != NULL && _cb->is_runtime_stub());

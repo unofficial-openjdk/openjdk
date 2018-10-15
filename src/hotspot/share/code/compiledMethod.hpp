@@ -183,8 +183,6 @@ protected:
   CompiledMethod(Method* method, const char* name, CompilerType type, int size, int header_size, CodeBuffer* cb, int frame_complete_offset, int frame_size, OopMapSet* oop_maps, bool caller_must_gc_arguments);
 
 public:
-  virtual bool is_compiled() const                { return true; }
-
   bool  has_unsafe_access() const                 { return _has_unsafe_access; }
   void  set_has_unsafe_access(bool z)             { _has_unsafe_access = z; }
 

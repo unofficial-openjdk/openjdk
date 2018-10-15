@@ -204,8 +204,10 @@ public class Continuation {
         // A yield jumps to this method's caller as if returning from this method.
         try {
             if (stack == null || sp >= stack.length) { // is this the first run? (at this point we know !done)
+                if (TRACE)
+                    System.out.println("ENTERING " + id());
                 this.entrySP = getSP();
-                enter0(); // make this an invokevirtual rather than invokeinterface. Otherwise it freaks the interpreter (currently solved by patching in native)
+                enter0(); // make this an invokevirtual rather than invokeinterface. Otherwise it freaks out the interpreter (currently solved by patching in native)
             } else
                 doContinue(); // intrinsic. Jumps into yield, as a return from doYield
         } finally {
@@ -290,10 +292,11 @@ public class Continuation {
 
     private void postYieldCleanup(int origRefSP) {
         if (done) {
-            this.stack = null;
-            this.sp = -1;
-            this.refStack = null;
-            this.refSP = -1;
+            // TODO: The following are disabled just for some testing
+            // this.stack = null;
+            // this.sp = -1;
+            // this.refStack = null;
+            // this.refSP = -1;
         } else {
             if (TRACE && origRefSP < refSP)
                 System.out.println("Nulling refs " + origRefSP + " (inclusive) - " + refSP + " (exclusive)");
@@ -519,6 +522,27 @@ public class Continuation {
         return newCapacity;
     }
 
+    /**
+     * temporary testing
+     */
+    public void something_something_1() {
+        this.sp = stack.length + METADATA_SIZE;
+        this.refSP = refStack.length;
+        this.done = false;
+
+        this.fp = 0;
+        this.pc = 0;
+        this.entrySP = 0;
+        this.entryFP = 0;
+        this.entryPC = 0;
+
+        this.numFrames = 0;
+        this.numInterpretedFrames = 0;
+    
+        this.sizeCounter = 0;
+        this.stackWatermark = 0;
+        this.refStackWatermark = 0;
+    }
     // private void pushNmethod(long nmethod) {
     //     if (nmethods == null) {
     //         nmethods = new long[8];
