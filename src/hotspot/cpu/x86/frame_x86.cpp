@@ -457,7 +457,7 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
   intptr_t* unextended_sp = interpreter_frame_sender_sp();
 
 #if COMPILER2_OR_JVMCI
-  if (map->update_map()) {
+  if (map->update_map() || map->update_link()) {
     update_map_with_saved_link(map, (intptr_t**) addr_at(link_offset));
   }
 #endif // COMPILER2_OR_JVMCI
@@ -508,6 +508,8 @@ frame frame::sender_for_compiled_frame(RegisterMap* map, CodeBlobLookup* lookup)
     // Since the prolog does the save and restore of EBP there is no oopmap
     // for it so we must fill in its location as if there was an oopmap entry
     // since if our caller was compiled code there could be live jvm state in it.
+    update_map_with_saved_link(map, saved_fp_addr);
+  } else if (map->update_link()) {
     update_map_with_saved_link(map, saved_fp_addr);
   }
 
