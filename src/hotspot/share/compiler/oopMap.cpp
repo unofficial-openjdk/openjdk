@@ -286,43 +286,10 @@ void AddDerivedOop::do_derived_oop(oop* base, oop* derived) {
 #endif // COMPILER2_OR_JVMCI
 }
 
-#ifndef PRODUCT
-static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map) {
-  // Print oopmap and regmap
-  tty->print_cr("------ ");
-  CodeBlob* cb = fr->cb();
-  const ImmutableOopMapSet* maps = cb->oop_maps();
-  const ImmutableOopMap* map = cb->oop_map_for_return_address(fr->pc());
-  map->print();
-  if( cb->is_nmethod() ) {
-    nmethod* nm = (nmethod*)cb;
-    // native wrappers have no scope data, it is implied
-    if (nm->is_native_method()) {
-      tty->print("bci: 0 (native)");
-    } else {
-      ScopeDesc* scope  = nm->scope_desc_at(fr->pc());
-      tty->print("bci: %d ",scope->bci());
-    }
-  }
-  tty->cr();
-  fr->print_on(tty);
-  tty->print("     ");
-  cb->print_value_on(tty);  tty->cr();
-  reg_map->print();
-  tty->print_cr("------ ");
-
-}
-#endif // PRODUCT
-
 
 
 void OopMapSet::oops_do(const frame *fr, const RegisterMap* reg_map, OopClosure* f, DerivedOopClosure* df) {
   // add_derived_oop: add derived oops to a table
-  AddDerivedOop add_derived_oop;
-  if (df == NULL) {
-    df = &add_derived_oop;
-  }
-
   find_map(fr)->oops_do(fr, reg_map, f, df);
   // all_do(fr, reg_map, f, df != NULL ? df : &add_derived_oop, &do_nothing_cl);
 }
@@ -395,6 +362,10 @@ OopMapValue* ExplodedOopMap::copyOopMapValues(const ImmutableOopMap* oopMap, int
 
 void ImmutableOopMap::oops_do(const frame *fr, const RegisterMap *reg_map,
                               OopClosure* oop_fn, DerivedOopClosure* derived_oop_fn) const {
+  AddDerivedOop add_derived_oop;
+  if (derived_oop_fn == NULL) {
+    derived_oop_fn = &add_derived_oop;
+  }
   OopMapDo<OopClosure, DerivedOopClosure, SkipNullValue> visitor(oop_fn, derived_oop_fn);
   visitor.oops_do(fr, reg_map, this);
 }

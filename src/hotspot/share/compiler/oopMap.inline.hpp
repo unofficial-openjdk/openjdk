@@ -25,9 +25,39 @@
 #ifndef SHARE_VM_COMPILER_OOPMAP_INLINE_HPP
 #define SHARE_VM_COMPILER_OOPMAP_INLINE_HPP
 
+#include "gc/shared/collectedHeap.hpp"
+
 inline bool SkipNullValue::should_skip(oop val) {
   return val == (oop)NULL || Universe::is_narrow_oop_base(val);
 }
+
+#ifndef PRODUCT
+static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map) {
+  // Print oopmap and regmap
+  tty->print_cr("------ ");
+  CodeBlob* cb = fr->cb();
+  const ImmutableOopMapSet* maps = cb->oop_maps();
+  const ImmutableOopMap* map = cb->oop_map_for_return_address(fr->pc());
+  map->print();
+  if( cb->is_nmethod() ) {
+    nmethod* nm = (nmethod*)cb;
+    // native wrappers have no scope data, it is implied
+    if (nm->is_native_method()) {
+      tty->print("bci: 0 (native)");
+    } else {
+      ScopeDesc* scope  = nm->scope_desc_at(fr->pc());
+      tty->print("bci: %d ",scope->bci());
+    }
+  }
+  tty->cr();
+  fr->print_on(tty);
+  tty->print("     ");
+  cb->print_value_on(tty);  tty->cr();
+  reg_map->print();
+  tty->print_cr("------ ");
+
+}
+#endif // PRODUCT
 
 template <typename OopFnT, typename DerivedOopFnT, typename ValueFilterT>
 template <typename OopMapStreamT>
