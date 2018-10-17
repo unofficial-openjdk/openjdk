@@ -555,7 +555,7 @@ public:
   void doit();
 };
 
-// VM operation to frame location at safepoint.
+// VM operation get to frame location at safepoint.
 class VM_GetFrameLocation : public VM_Operation {
 private:
   JvmtiEnv *_env;
@@ -575,6 +575,26 @@ public:
     _location_ptr = location_ptr;
   }
   VMOp_Type type() const { return VMOp_GetFrameLocation; }
+  jvmtiError result()    { return _result; }
+  void doit();
+};
+
+// VM operation get to get fiber thread at safepoint.
+class VM_GetFiberThread : public VM_Operation {
+private:
+  JavaThread* _current_thread;
+  Handle _fiber_h;
+  jthread* _carrier_thread_ptr;
+  jvmtiError _result;
+
+public:
+  VM_GetFiberThread(JavaThread* current_thread, Handle fiber_h, jthread* carrier_thread_ptr) {
+    _current_thread = current_thread;
+    _fiber_h = fiber_h;
+    _carrier_thread_ptr = carrier_thread_ptr;
+    _result = JVMTI_ERROR_NONE;
+  }
+  VMOp_Type type() const { return VMOp_GetFiberThread; }
   jvmtiError result()    { return _result; }
   void doit();
 };

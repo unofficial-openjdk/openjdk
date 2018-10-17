@@ -1593,3 +1593,10 @@ VM_GetFrameLocation::doit() {
                                                         _method_ptr, _location_ptr);
   }
 }
+
+void
+VM_GetFiberThread::doit() {
+  oop carrier_thread = java_lang_Fiber::carrier_thread(_fiber_h());
+  *_carrier_thread_ptr = (jthread)JNIHandles::make_local(_current_thread, carrier_thread);
+}
+

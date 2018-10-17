@@ -85,8 +85,8 @@ static const jlong  OBJECT_FREE_BIT = (((jlong)1) << (JVMTI_EVENT_OBJECT_FREE - 
 static const jlong  RESOURCE_EXHAUSTED_BIT = (((jlong)1) << (JVMTI_EVENT_RESOURCE_EXHAUSTED - TOTAL_MIN_EVENT_TYPE_VAL));
 static const jlong  VM_OBJECT_ALLOC_BIT = (((jlong)1) << (JVMTI_EVENT_VM_OBJECT_ALLOC - TOTAL_MIN_EVENT_TYPE_VAL));
 static const jlong  SAMPLED_OBJECT_ALLOC_BIT = (((jlong)1) << (JVMTI_EVENT_SAMPLED_OBJECT_ALLOC - TOTAL_MIN_EVENT_TYPE_VAL));
-static const jlong  FIBER_START_BIT = (((jlong)1) << (JVMTI_EVENT_FIBER_START - TOTAL_MIN_EVENT_TYPE_VAL));
-static const jlong  FIBER_END_BIT = (((jlong)1) << (JVMTI_EVENT_FIBER_END - TOTAL_MIN_EVENT_TYPE_VAL));
+static const jlong  FIBER_SCHEDULED_BIT = (((jlong)1) << (JVMTI_EVENT_FIBER_SCHEDULED - TOTAL_MIN_EVENT_TYPE_VAL));
+static const jlong  FIBER_TERMINATED_BIT = (((jlong)1) << (JVMTI_EVENT_FIBER_TERMINATED - TOTAL_MIN_EVENT_TYPE_VAL));
 static const jlong  FIBER_MOUNT_BIT = (((jlong)1) << (JVMTI_EVENT_FIBER_MOUNT - TOTAL_MIN_EVENT_TYPE_VAL));
 static const jlong  FIBER_UNMOUNT_BIT = (((jlong)1) << (JVMTI_EVENT_FIBER_UNMOUNT - TOTAL_MIN_EVENT_TYPE_VAL));
 
@@ -94,7 +94,7 @@ static const jlong  FIBER_UNMOUNT_BIT = (((jlong)1) << (JVMTI_EVENT_FIBER_UNMOUN
 static const jlong  CLASS_UNLOAD_BIT = (((jlong)1) << (EXT_EVENT_CLASS_UNLOAD - TOTAL_MIN_EVENT_TYPE_VAL));
 
 
-static const jlong  FIBER_BITS = FIBER_START_BIT | FIBER_END_BIT | FIBER_MOUNT_BIT | FIBER_UNMOUNT_BIT;
+static const jlong  FIBER_BITS = FIBER_SCHEDULED_BIT | FIBER_TERMINATED_BIT | FIBER_MOUNT_BIT | FIBER_UNMOUNT_BIT;
 static const jlong  MONITOR_BITS = MONITOR_CONTENDED_ENTER_BIT | MONITOR_CONTENDED_ENTERED_BIT |
                           MONITOR_WAIT_BIT | MONITOR_WAITED_BIT;
 static const jlong  EXCEPTION_BITS = EXCEPTION_THROW_BIT | EXCEPTION_CATCH_BIT;
@@ -627,8 +627,8 @@ JvmtiEventControllerPrivate::recompute_enabled() {
     JvmtiExport::set_should_post_compiled_method_unload((any_env_thread_enabled & COMPILED_METHOD_UNLOAD_BIT) != 0);
     JvmtiExport::set_should_post_vm_object_alloc((any_env_thread_enabled & VM_OBJECT_ALLOC_BIT) != 0);
     JvmtiExport::set_should_post_sampled_object_alloc((any_env_thread_enabled & SAMPLED_OBJECT_ALLOC_BIT) != 0);
-    JvmtiExport::set_should_post_fiber_start((any_env_thread_enabled & FIBER_START_BIT) != 0);
-    JvmtiExport::set_should_post_fiber_end((any_env_thread_enabled & FIBER_END_BIT) != 0);
+    JvmtiExport::set_should_post_fiber_scheduled((any_env_thread_enabled & FIBER_SCHEDULED_BIT) != 0);
+    JvmtiExport::set_should_post_fiber_terminated((any_env_thread_enabled & FIBER_TERMINATED_BIT) != 0);
     JvmtiExport::set_should_post_fiber_mount((any_env_thread_enabled & FIBER_MOUNT_BIT) != 0);
     JvmtiExport::set_should_post_fiber_unmount((any_env_thread_enabled & FIBER_UNMOUNT_BIT) != 0);
 

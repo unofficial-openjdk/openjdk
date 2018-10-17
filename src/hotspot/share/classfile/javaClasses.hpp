@@ -502,6 +502,7 @@ class java_lang_ThreadGroup : AllStatic {
 class java_lang_Fiber : AllStatic {
  private:
   static int static_notify_jvmti_events_offset;
+  static int _carrierThread_offset;
  public:
   static void compute_offsets();
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
@@ -511,6 +512,7 @@ class java_lang_Fiber : AllStatic {
     return klass->is_subclass_of(SystemDictionary::Fiber_klass());
   }
   static bool is_instance(oop obj);
+  static oop carrier_thread(oop fiber);
   static int notify_jvmti_events_offset_in_bytes();
   static void set_notify_jvmti_events(jboolean enable);
 };

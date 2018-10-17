@@ -1892,11 +1892,13 @@ void java_lang_ThreadGroup::serialize_offsets(SerializeClosure* f) {
 // java_lang_Fiber
 
 int java_lang_Fiber::static_notify_jvmti_events_offset = 0;
+int java_lang_Fiber::_carrierThread_offset = 0;
 
 int java_lang_Fiber::notify_jvmti_events_offset_in_bytes() { return static_notify_jvmti_events_offset; }
 
 #define FIBER_FIELDS_DO(macro) \
-  macro(static_notify_jvmti_events_offset,  k, "notifyJvmtiEvents",  bool_signature, true)
+  macro(static_notify_jvmti_events_offset,  k, "notifyJvmtiEvents",  bool_signature, true); \
+  macro(_carrierThread_offset,  k, "carrierThread",  thread_signature, false)
 
 static jboolean fiber_notify_jvmti_events = JNI_FALSE;
 
@@ -1912,6 +1914,11 @@ void java_lang_Fiber::compute_offsets() {
 
 bool java_lang_Fiber::is_instance(oop obj) {
   return obj != NULL && is_subclass(obj->klass());
+}
+
+oop java_lang_Fiber::carrier_thread(oop fiber) {
+  oop thread = fiber->obj_field(_carrierThread_offset);
+  return thread;
 }
 
 #if INCLUDE_CDS

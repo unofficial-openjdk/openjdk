@@ -855,11 +855,11 @@ JvmtiEnv::IsFiber(jobject object, jboolean* is_fiber_ptr) {
 // java_thread - pre-checked
 // fiber_ptr - pre-checked for NULL
 jvmtiError
-JvmtiEnv::GetThreadFiber(JavaThread* java_thread, jthread* fiber_ptr) {
+JvmtiEnv::GetThreadFiber(JavaThread* java_thread, jobject* fiber_ptr) {
   JavaThread* current_thread  = JavaThread::current();
+  ResourceMark rm(current_thread);
   oop fiber_oop = NULL;
   uint32_t debug_bits = 0;
-  ResourceMark rm;
 
   JvmtiThreadState *state = JvmtiThreadState::state_for(java_thread);
   if (state == NULL) {
@@ -869,9 +869,27 @@ JvmtiEnv::GetThreadFiber(JavaThread* java_thread, jthread* fiber_ptr) {
     return JVMTI_ERROR_THREAD_NOT_SUSPENDED;
   }
   fiber_oop = java_lang_Thread::fiber(java_thread->threadObj());
-  *fiber_ptr = (jthread)JNIHandles::make_local(current_thread, fiber_oop);
+  *fiber_ptr = JNIHandles::make_local(current_thread, fiber_oop);
   return JVMTI_ERROR_NONE;
 } /* end GetThreadFiber */
+
+// fiber - pre-checked for NULL
+// is_thread_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetFiberThread(jobject fiber, jthread* thread_ptr) {
+  JavaThread* current_thread  = JavaThread::current();
+  HandleMark hm(current_thread);
+  oop fiber_obj = JNIHandles::resolve_external_guard(fiber);
+
+  if (!java_lang_Fiber::is_instance(fiber_obj)) {
+    return JVMTI_ERROR_INVALID_FIBER;
+  }
+
+  VM_GetFiberThread op(current_thread, Handle(current_thread, fiber_obj), thread_ptr);
+  VMThread::execute(&op);
+
+  return op.result();
+} /* end GetFiberThread */
 
 
   //

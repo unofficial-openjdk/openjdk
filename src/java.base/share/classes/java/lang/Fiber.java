@@ -227,11 +227,10 @@ public final class Fiber extends Strand {
         Fiber fiber = t.getFiber();
 
         if (notifyJvmtiEvents) {
-            notifyFiberStart(t, this);
+            notifyFiberScheduled(t, this);
         }
 
         if (fiber != null) t.setFiber(null);
-        // t.setFiber(this); // SERG_TMP
         try {
             scheduler.execute(runContinuation);
         } finally {
@@ -333,7 +332,7 @@ public final class Fiber extends Strand {
 
         if (notifyJvmtiEvents) {
             Thread t = Thread.currentCarrierThread();
-            notifyFiberEnd(t, this);
+            notifyFiberTerminated(t, this);
         }
 
         // notify anyone waiting for this fiber to terminate
@@ -836,8 +835,8 @@ public final class Fiber extends Strand {
     // -- JVM TI support --
 
     private static volatile boolean notifyJvmtiEvents;  // set by VM
-    private static native void notifyFiberStart(Thread t, Fiber f);
-    private static native void notifyFiberEnd(Thread t, Fiber f);
+    private static native void notifyFiberScheduled(Thread t, Fiber f);
+    private static native void notifyFiberTerminated(Thread t, Fiber f);
     private static native void notifyFiberMount(Thread t, Fiber f);
     private static native void notifyFiberUnmount(Thread t, Fiber f);
     private static native void registerNatives();
