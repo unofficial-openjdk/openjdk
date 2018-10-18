@@ -6586,6 +6586,8 @@ bool LibraryCallKit::inline_continuation_do_continue() {
   address call_addr = StubRoutines::cont_thaw();
   const TypeFunc* tf = OptoRuntime::void_void_Type();
   Node* call = make_runtime_call(RC_NO_LEAF, tf, call_addr, "doContinue", TypeRawPtr::BOTTOM);
+  assert (call->is_CallJava(), "");
+  Node* result = set_results_for_java_call((CallJavaNode*)call, false, /* deoptimize */ false);
   return true;
 }
 

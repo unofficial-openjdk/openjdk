@@ -48,6 +48,7 @@
 #include "runtime/frame.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jniHandles.inline.hpp"
+#include "runtime/sharedRuntime.hpp"
 #include "runtime/vframe_hp.hpp"
 #include "utilities/copy.hpp"
 #include "utilities/exceptions.hpp"
@@ -287,7 +288,7 @@ public:
 
   Method* method(ContMirror& cont);
 
-  inline frame to_frame();
+  inline frame to_frame(ContMirror& cont);
 
   void print_on(ContMirror& cont, outputStream* st);
   void print(ContMirror& cont) { print_on(cont, tty); }
@@ -518,9 +519,25 @@ public:
   template<typename Event> void post_jfr_event(Event *e);
 };
 
-inline frame hframe::to_frame() {
-  return frame(reinterpret_cast<intptr_t*>(_sp), reinterpret_cast<intptr_t*>(_sp), reinterpret_cast<intptr_t*>(_fp), _pc, 
-              _cb != NULL ? _cb : (_cb = CodeCache::find_blob(_pc)));
+inline frame hframe::to_frame(ContMirror& cont) {
+  bool deopt = false;
+  address pc = _pc;
+  if (!is_interpreted_frame()) {
+    CompiledMethod* cm = cb()->as_compiled_method_or_null();
+    if (cm != NULL && cm->is_deopt_pc(pc)) {
+      intptr_t* hsp = cont.stack_address(sp());
+      address orig_pc = *(address*) ((address)hsp + cm->orig_pc_offset());
+      assert (orig_pc != pc, "");
+      assert (orig_pc != NULL, "");
+
+      pc = orig_pc;
+      deopt = true;
+    }
+  }
+
+  return frame(reinterpret_cast<intptr_t*>(_sp), reinterpret_cast<intptr_t*>(_sp), reinterpret_cast<intptr_t*>(_fp), pc, 
+              _cb != NULL ? _cb : (_cb = CodeCache::find_blob(_pc)),
+              deopt);
 }
 
 void hframe::print_on(outputStream* st) {
@@ -2556,7 +2573,7 @@ static inline int thaw_num_frames(bool return_barrier) {
 // fi->sp is the top of the stack after thaw
 // fi->fp current rbp
 // called after preparations (stack overflow check and making room)
-static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_barrier) {
+static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_barrier, const bool exception) {
   EventContinuationThaw event;
   ResourceMark rm(thread);
 
@@ -2594,7 +2611,7 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
 
   // ResourceMark rm(cont.thread()); // apparently, oop-mapping may require resource allocation
 
-
+  // const address orig_top_pc = cont.pc();
   hframe hf = cont.last_frame();
   log_trace(jvmcont)("top_hframe before (thaw):");
   if (log_is_enabled(Trace, jvmcont)) hf.print_on(cont, tty);
@@ -2602,7 +2619,7 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
   RegisterMap map(thread, false, false, false);
   map.set_include_argument_oops(false);
   map.set_update_link(true);
-  assert (map.update_map(), "RegisterMap not set to update");
+  // assert (map.update_map(), "RegisterMap not set to update");
 
   DEBUG_ONLY(int orig_num_frames = cont.num_frames();)
   int frame_count = 0;
@@ -2624,9 +2641,12 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
   assert (cont.is_empty() <= (cont.num_interpreted_frames() == 0), "cont.is_empty: %d num_interpreted_frames: %d", cont.is_empty(), cont.num_interpreted_frames());
   assert (cont.num_frames() == orig_num_frames - frame_count, "cont.is_empty: %d num_frames: %d orig_num_frames: %d frame_count: %d", cont.is_empty(), cont.num_frames(), orig_num_frames, frame_count);
 
+  assert (!top.is_compiled_frame() || top.is_deoptimized_frame() == top.cb()->as_compiled_method()->is_deopt_pc(top.raw_pc()), "");
+  assert (!top.is_compiled_frame() || top.is_deoptimized_frame() == (top.pc() != top.raw_pc()), "");
+
   fi->sp = top.sp();
   fi->fp = top.fp();
-  fi->pc = top.pc(); // we'll jump to the current continuation pc // Interpreter::return_entry(vtos, 0, Bytecodes::_invokestatic, true); //
+  fi->pc = top.raw_pc(); // we'll jump to the current continuation pc // Interpreter::return_entry(vtos, 0, Bytecodes::_invokestatic, true); //
 
   log_trace(jvmcont)("thawed %d frames", frame_count);
 
@@ -2759,8 +2779,17 @@ JRT_END
 //      fi->fp = the FP " ...
 //      fi->pc = the PC " ...
 // JRT_ENTRY(void, Continuation::thaw(JavaThread* thread, FrameInfo* fi, int num_frames))
-JRT_LEAF(void, Continuation::thaw(FrameInfo* fi, bool return_barrier))
-  thaw1(JavaThread::current(), fi, return_barrier);
+JRT_LEAF(address, Continuation::thaw(FrameInfo* fi, bool return_barrier, bool exception))
+  thaw1(JavaThread::current(), fi, return_barrier, exception);
+
+  if (exception) {
+    // TODO: handle deopt. see TemplateInterpreterGenerator::generate_throw_exception, OptoRuntime::handle_exception_C, OptoRuntime::handle_exception_helper
+    // assert (!top.is_deoptimized_frame(), ""); -- seems to be handled
+    address ret = fi->pc;
+    fi->pc = SharedRuntime::raw_exception_handler_for_return_address(JavaThread::current(), fi->pc);
+    return ret;
+  } else
+    return NULL;
 JRT_END
 
 bool Continuation::is_continuation_entry_frame(const frame& f, const RegisterMap* map) {
@@ -2796,10 +2825,6 @@ static address get_entry_pc_past_barrier(JavaThread* thread, const frame& f) {
   address pc = java_lang_Continuation::entryPC(cont);
   // log_trace(jvmcont)("YEYEYEYEYEYEYEEYEY: " INTPTR_FORMAT, p2i(pc));
   return pc;
-}
-
-bool Continuation::is_return_barrier_entry(address pc) {
-  return pc == StubRoutines::cont_returnBarrier();
 }
 
 address Continuation::fix_continuation_bottom_sender(const frame* callee, RegisterMap* map, address pc) {
@@ -2845,7 +2870,7 @@ static frame continuation_top_frame(oop contOop, RegisterMap* map) {
   // tty->print_cr("continuation_top_frame");
   
   map->set_cont(map->thread(), contOop);
-  return hf.to_frame();
+  return hf.to_frame(cont);
 }
 
 static frame continuation_parent_frame(ContMirror& cont, RegisterMap* map) {
@@ -2876,7 +2901,7 @@ static frame sender_for_frame(const frame& callee, RegisterMap* map) {
   hframe sender = hfcallee.sender(cont);
 
   if (!sender.is_empty())
-    return sender.to_frame();
+    return sender.to_frame(cont);
   return continuation_parent_frame(cont, map);
 }
 

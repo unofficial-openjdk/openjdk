@@ -5633,7 +5633,7 @@ address generate_cont_doYield() {
     return start;
   }
 
-  address generate_cont_thaw(bool return_barrier) {
+  address generate_cont_thaw(bool return_barrier, bool exception) {
     address start = __ pc();
 
     // TODO: Handle Valhalla return types. May require generating different return barriers.
@@ -5650,9 +5650,9 @@ address generate_cont_doYield() {
     if (return_barrier) {
       __ push(rax); __ push_d(xmm0); // preserve possible return value from a method returning to the return barrier
     }
-    __ movl(c_rarg2, return_barrier);
+    __ movl(c_rarg1, return_barrier);
     push_FrameInfo(_masm, fi, fi, rbp, c_rarg3);
-    __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::prepare_thaw), fi, c_rarg2);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::prepare_thaw), fi, c_rarg1);
     __ testq(rax, rax);           // rax contains the size of the frames to thaw, 0 if overflow or no more frames
     __ jcc(Assembler::zero, thaw_fail);
 
@@ -5665,19 +5665,23 @@ address generate_cont_doYield() {
     if (return_barrier) {
       __ push(rdx); __ push_d(xmm0); // save original return value -- again
     }
-    __ movl(c_rarg2, return_barrier);
     push_FrameInfo(_masm, fi, fi, rbp, c_rarg3);
-    __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::thaw), fi, c_rarg2);
+    __ movl(c_rarg1, return_barrier);
+    __ movl(c_rarg2, exception);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::thaw), fi, c_rarg1, c_rarg2);
     if (!return_barrier) {
       __ movl(rax, 0); // return 0 (success) from doYield
+    } 
+    if (exception) {
+      __ movptr(rdx, rax); // rdx must contain the original pc in the case of exception
     }
     __ bind(thaw_fail);
-    pop_FrameInfo(_masm, fi, rbp, rdx);
+    pop_FrameInfo(_masm, fi, rbp, rbx);
     if (return_barrier) {
       __ pop_d(xmm0); __ pop(rax); // restore return value (no safepoint in the call to thaw, so even an oop return value should be OK)
     }
     __ movptr(rsp, fi); // we're now on the yield frame (which is above us b/c rsp has been pushed down)
-    __ jmp(rdx);
+    __ jmp(rbx);
 
     return start;
   }
@@ -5685,7 +5689,7 @@ address generate_cont_doYield() {
   address generate_cont_thaw() {
     StubCodeMark mark(this, "StubRoutines", "Cont thaw");
     address start = __ pc();
-    generate_cont_thaw(false);
+    generate_cont_thaw(false, false);
     return start;
   }
 
@@ -5697,7 +5701,19 @@ address generate_cont_doYield() {
     if (CONT_FULL_STACK)
       __ stop("RETURN BARRIER -- UNREACHABLE 0");
 
-    generate_cont_thaw(true);
+    generate_cont_thaw(true, false);
+
+    return start;
+  }
+
+  address generate_cont_returnBarrier_exception() {
+    StubCodeMark mark(this, "StubRoutines", "cont return barrier exception handler");
+    address start = __ pc();
+
+    if (CONT_FULL_STACK)
+      __ stop("RETURN BARRIER -- UNREACHABLE 0");
+
+    generate_cont_thaw(true, true);
 
     return start;
   }
@@ -5968,6 +5984,7 @@ address generate_cont_doYield() {
     // Continuation stubs:
     StubRoutines::_cont_thaw          = generate_cont_thaw();
     StubRoutines::_cont_returnBarrier = generate_cont_returnBarrier();
+    StubRoutines::_cont_returnBarrierExc = generate_cont_returnBarrier_exception();
     StubRoutines::_cont_doYield    = generate_cont_doYield();
     StubRoutines::_cont_jump       = generate_cont_jump();
     StubRoutines::_cont_getSP      = generate_cont_getSP();

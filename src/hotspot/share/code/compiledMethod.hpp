@@ -304,7 +304,6 @@ public:
 
   virtual oop* oop_addr_at(int index) const = 0;
   virtual Metadata** metadata_addr_at(int index) const = 0;
-  virtual void    set_original_pc(const frame* fr, address pc) = 0;
 
   // Exception cache support
   // Note: _exception_cache may be read concurrently. We rely on memory_order_consume here.
@@ -323,13 +322,21 @@ public:
   address deopt_mh_handler_begin() const  { return _deopt_mh_handler_begin; }
 
   address deopt_handler_begin() const { return _deopt_handler_begin; }
-  virtual address get_original_pc(const frame* fr) = 0;
   // Deopt
   // Return true is the PC is one would expect if the frame is being deopted.
   inline bool is_deopt_pc(address pc);
   bool is_deopt_mh_entry(address pc) { return pc == deopt_mh_handler_begin(); }
   inline bool is_deopt_entry(address pc);
 
+  // Accessor/mutator for the original pc of a frame before a frame was deopted.
+  address get_original_pc(const frame* fr) { return *orig_pc_addr(fr); }
+  void    set_original_pc(const frame* fr, address pc) { *orig_pc_addr(fr) = pc; }
+
+ virtual int orig_pc_offset() = 0;
+private:
+  address* orig_pc_addr(const frame* fr) { return (address*) ((address)fr->unextended_sp() + orig_pc_offset()); };
+
+public:
   virtual bool can_convert_to_zombie() = 0;
   virtual const char* compile_kind() const = 0;
   virtual int get_state() const = 0;

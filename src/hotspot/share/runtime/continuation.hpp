@@ -57,11 +57,11 @@ class Continuation : AllStatic {
 public:
   static int freeze(JavaThread* thread, FrameInfo* fi);
   static int prepare_thaw(FrameInfo* fi, bool return_barrier);
-  static void thaw(FrameInfo* fi, bool return_barrier);
+  static address thaw(FrameInfo* fi, bool return_barrier, bool exception);
 
   static bool is_continuation_entry_frame(const frame& f, const RegisterMap* map);
   static bool is_cont_bottom_frame(const frame& f);
-  static bool is_return_barrier_entry(const address pc);
+  static bool is_return_barrier_entry(const address pc) { return pc == StubRoutines::cont_returnBarrier(); }
   static bool is_frame_in_continuation(JavaThread* thread, const frame& f);
   static address fix_continuation_bottom_sender(const frame* callee, RegisterMap* map, address pc);
 

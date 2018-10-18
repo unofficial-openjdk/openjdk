@@ -181,6 +181,7 @@ address StubRoutines::_cont_doYield       = NULL;
 address StubRoutines::_cont_jump          = NULL;
 address StubRoutines::_cont_thaw          = NULL;
 address StubRoutines::_cont_returnBarrier = NULL;
+address StubRoutines::_cont_returnBarrierExc = NULL;
 address StubRoutines::_cont_getSP         = NULL;
 address StubRoutines::_cont_getPC         = NULL;
 
