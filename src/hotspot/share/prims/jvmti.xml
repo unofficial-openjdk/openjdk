@@ -2299,7 +2299,7 @@ jvmtiEnv *jvmti;
             </description>
         </param>
         <param id="fiber_ptr">
-          <outptr><jthread/></outptr>
+          <outptr><jobject/></outptr>
           <description>
             On return, points to the fiber mounted to the specified thread, or <code>NULL</code>.
           </description>
@@ -2309,9 +2309,8 @@ jvmtiEnv *jvmti;
       </errors>
     </function>
 
-    <!--
     <function id="GetFiberThread" num="117" since="12">
-      <synopsis>Ge Fiber Thread</synopsis>
+      <synopsis>Get Fiber Thread</synopsis>
       <description>
         Get the thread the specified fiber is mounted to.
         If the fiber is unmounted, <code>NULL</code> is returned.
@@ -2324,7 +2323,7 @@ jvmtiEnv *jvmti;
       </capabilities>
       <parameters>
         <param id="fiber">
-          <jthread />
+          <jobject />
             <description>
               The fiber to query.
             </description>
@@ -2333,6 +2332,7 @@ jvmtiEnv *jvmti;
           <outptr><jthread/></outptr>
           <description>
             On return, points to the thread the fiber is mounted to, or <code>NULL</code>.
+            The result is transient if not all carrier threads are suspended.
           </description>
         </param>
       </parameters>
@@ -2342,7 +2342,6 @@ jvmtiEnv *jvmti;
         </error>
       </errors>
     </function>
-    -->
 
   </category>
 
@@ -10490,8 +10489,8 @@ myInit() {
           <functionlink id="GetThreadFiber"></functionlink>, 
           <functionlink id="GetFiberThread"></functionlink>
           and the following fiber aware events can be enabled:
-          <eventlink id="FiberStart"></eventlink>,
-          <eventlink id="FiberEnd"></eventlink>,
+          <eventlink id="FiberScheduled"></eventlink>,
+          <eventlink id="FiberTerminated"></eventlink>,
           <eventlink id="FiberMount"></eventlink>,
           <eventlink id="FiberUnmount"></eventlink>.
         </description>
@@ -12835,10 +12834,10 @@ myInit() {
     </parameters>
   </event>
 
- <event label="Fiber Start"
-         id="FiberStart" const="JVMTI_EVENT_FIBER_START" filtered="thread" num="87" phase="start">
+ <event label="Fiber Scheduled"
+         id="FiberScheduled" const="JVMTI_EVENT_FIBER_SCHEDULED" filtered="thread" num="87" phase="start">
     <description>
-      Fiber start events are generated before its initial method executes.
+      Fiber scheduled events are generated before its initial method executes.
       <p/>
       The event is sent on the <paramlink id="thread"></paramlink>.
     </description>
@@ -12860,22 +12859,22 @@ myInit() {
       <param id="thread">
         <jthread/>
           <description>
-            Thread starting this fiber.
+            Thread scheduling this fiber.
           </description>
       </param>
       <param id="fiber">
         <jobject/>
           <description>
-            Fiber starting.
+            Fiber scheduled for execution.
           </description>
       </param>
     </parameters>
   </event>
 
-  <event label="Fiber End"
-         id="FiberEnd" const="JVMTI_EVENT_FIBER_END" filtered="thread" num="88" phase="start">
+  <event label="Fiber Terminated"
+         id="FiberTerminated" const="JVMTI_EVENT_FIBER_TERMINATED" filtered="thread" num="88" phase="start">
     <description>
-      Fiber end events are generated after its initial method has finished execution.
+      Fiber terminated events are generated after its initial method has finished execution.
       <p/>
       The event is sent on the <paramlink id="thread"></paramlink>.
     </description>
@@ -12897,13 +12896,13 @@ myInit() {
       <param id="thread">
         <jthread/>
           <description>
-            Thread ending this fiber.
+            Thread terminating this fiber.
           </description>
       </param>
       <param id="fiber">
         <jobject/>
           <description>
-            Fiber ending.
+            Fiber being terminated.
           </description>
       </param>
     </parameters>
@@ -12934,7 +12933,7 @@ myInit() {
       <param id="thread">
         <jthread/>
           <description>
-            Thread mounting this fiber.
+            Thread the fiber is mounted to.
           </description>
       </param>
       <param id="fiber">
