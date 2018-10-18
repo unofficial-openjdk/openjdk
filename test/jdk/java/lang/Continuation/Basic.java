@@ -101,8 +101,51 @@ public class Basic {
         long r = b+1;
         return "" + r;
     }
+
+    static class LoomException extends RuntimeException {
+        public LoomException(String message) {
+            super(message);
+        }
+    }
+
+    static double fooThrow(int a) {
+        long x = 8;
+        String s = "yyy";
+        String r = barThrow(a + 1);
+        return Integer.parseInt(r)+1;
+    }
+
+    static String barThrow(long b) {
+        double x = 9.99;
+        String s = "zzz";
+        Continuation.yield(FOO);
+
+        long r = b+1;
+
+        if (true)
+            throw new LoomException("Loom exception!");
+        return "" + r;
+    }
     
-    
+    public void testException1() {
+        Continuation cont = new Continuation(FOO, ()-> {
+            double r = 0;
+            for (int k = 1; k < 20; k++) {
+                int x = 3;
+                String s = "abc";
+                r += fooThrow(k);
+            }
+        });
+        
+        cont.run();
+        try {
+            cont.run();
+            fail("Exception not thrown.");
+        } catch (LoomException e) {
+            assertEquals(e.getMessage(), "Loom exception!");
+        }
+    }
+
     public void testManyArgs() {
         final AtomicInteger res = new AtomicInteger(0);
         Continuation cont = new Continuation(FOO, ()-> {
