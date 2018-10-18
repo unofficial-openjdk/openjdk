@@ -387,10 +387,6 @@ int nmethod::total_size() const {
     nul_chk_table_size();
 }
 
-address* nmethod::orig_pc_addr(const frame* fr) {
-  return (address*) ((address)fr->unextended_sp() + _orig_pc_offset);
-}
-
 const char* nmethod::compile_kind() const {
   if (is_osr_method())     return "osr";
   if (method() != NULL && is_native_method())  return "c2n";

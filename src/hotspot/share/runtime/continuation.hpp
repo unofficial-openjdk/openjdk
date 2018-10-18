@@ -57,7 +57,7 @@ class Continuation : AllStatic {
 public:
   static int freeze(JavaThread* thread, FrameInfo* fi);
   static int prepare_thaw(FrameInfo* fi, bool return_barrier);
-  static void thaw(FrameInfo* fi, bool return_barrier);
+  static address thaw(FrameInfo* fi, bool return_barrier, bool exception);
 
   static bool is_continuation_entry_frame(const frame& f, const RegisterMap* map);
   static bool is_cont_bottom_frame(const frame& f);

@@ -212,6 +212,7 @@ class StubRoutines: AllStatic {
   static address _cont_jump;
   static address _cont_thaw;
   static address _cont_returnBarrier;
+  static address _cont_returnBarrierExc;  
   static address _cont_getSP;
   static address _cont_getPC;
 
@@ -396,6 +397,7 @@ class StubRoutines: AllStatic {
   static address cont_jump()           { return _cont_jump; }
   static address cont_thaw()           { return _cont_thaw; }
   static address cont_returnBarrier()  { return _cont_returnBarrier; }
+  static address cont_returnBarrierExc(){return _cont_returnBarrierExc; }
   static address cont_getSP()          { return _cont_getSP; }
   static address cont_getPC()          { return _cont_getPC; }
 

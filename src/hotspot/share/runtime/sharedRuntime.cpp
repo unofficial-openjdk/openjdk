@@ -465,6 +465,10 @@ address SharedRuntime::raw_exception_handler_for_return_address(JavaThread* thre
   thread->set_exception_pc(NULL);
 #endif // INCLUDE_JVMCI
 
+  if (Continuation::is_return_barrier_entry(return_address)) {
+    return StubRoutines::cont_returnBarrierExc();
+  }
+  
   // The fastest case first
   CodeBlob* blob = CodeCache::find_blob(return_address);
   CompiledMethod* nm = (blob != NULL) ? blob->as_compiled_method_or_null() : NULL;
@@ -699,13 +703,14 @@ address SharedRuntime::compute_compiled_exc_handler(CompiledMethod* cm, address 
 
   if (t == NULL) {
     ttyLocker ttyl;
-    tty->print_cr("MISSING EXCEPTION HANDLER for pc " INTPTR_FORMAT " and handler bci %d", p2i(ret_pc), handler_bci);
+    tty->print_cr("MISSING EXCEPTION HANDLER for pc " INTPTR_FORMAT " and handler bci %d, catch_pco: %d", p2i(ret_pc), handler_bci, catch_pco);
     tty->print_cr("   Exception:");
     exception->print();
     tty->cr();
     tty->print_cr(" Compiled exception table :");
     table.print();
-    nm->print_code();
+    nm->print();
+    // nm->print_code();
     guarantee(false, "missing exception handler");
     return NULL;
   }

@@ -512,16 +512,12 @@ public:
  private:
   ScopeDesc* scope_desc_in(address begin, address end);
 
-  address* orig_pc_addr(const frame* fr);
-
  public:
   // copying of debugging information
   void copy_scopes_pcs(PcDesc* pcs, int count);
   void copy_scopes_data(address buffer, int size);
 
-  // Accessor/mutator for the original pc of a frame before a frame was deopted.
-  address get_original_pc(const frame* fr) { return *orig_pc_addr(fr); }
-  void    set_original_pc(const frame* fr, address pc) { *orig_pc_addr(fr) = pc; }
+  int orig_pc_offset() { return _orig_pc_offset; }
 
   // jvmti support:
   void post_compiled_method_load_event();

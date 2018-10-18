@@ -117,7 +117,6 @@ private:
   const int _method_index;
   oop _oop;  // method()->method_holder()->klass_holder()
 
-  address* orig_pc_addr(const frame* fr);
   bool make_not_entrant_helper(int new_state);
 
  public:
@@ -234,12 +233,10 @@ private:
   virtual oop* oop_addr_at(int index) const { ShouldNotReachHere(); return NULL; }
   virtual Metadata** metadata_addr_at(int index) const { ShouldNotReachHere(); return NULL; }
 
-  // Accessor/mutator for the original pc of a frame before a frame was deopted.
-  address get_original_pc(const frame* fr) { return *orig_pc_addr(fr); }
-  void    set_original_pc(const frame* fr, address pc) { *orig_pc_addr(fr) = pc; }
-
   virtual void metadata_do(void f(Metadata*));
 
+  int orig_pc_offset() { return _meta->orig_pc_offset(); }
+  
   bool metadata_got_contains(Metadata **p) {
     return p >= &_metadata_got[0] && p < &_metadata_got[_metadata_size];
   }

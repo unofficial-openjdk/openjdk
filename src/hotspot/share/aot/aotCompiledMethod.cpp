@@ -71,10 +71,6 @@ static void metadata_oops_do(Metadata** metadata_begin, Metadata **metadata_end,
 }
 #endif
 
-address* AOTCompiledMethod::orig_pc_addr(const frame* fr) {
-  return (address*) ((address)fr->unextended_sp() + _meta->orig_pc_offset());
-}
-
 bool AOTCompiledMethod::do_unloading_oops(address low_boundary, BoolObjectClosure* is_alive) {
   return false;
 }
