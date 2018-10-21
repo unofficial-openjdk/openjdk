@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 
 package jdk.test.lib.util;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -222,6 +223,7 @@ public final class JarUtils {
      *              be either updated or added. The files in the 2nd group
      *              will be removed. If no "-" exists, all files belong to
      *              the 1st group.
+     * @throws IOException if there is an error
      */
     @Deprecated
     public static void updateJar(String src, String dest, String... files)
@@ -259,7 +261,7 @@ public final class JarUtils {
      *                Value can be Path, byte[] or String. If key exists in
      *                src but value is Boolean FALSE. The entry is removed.
      *                Existing entries in src not a key is unmodified.
-     * @throws IOException
+     * @throws IOException if there is an error
      */
     @Deprecated
     public static void updateJar(String src, String dest,
@@ -270,6 +272,11 @@ public final class JarUtils {
         changes = new HashMap<>(changes);
 
         System.out.printf("Creating %s from %s...\n", dest, src);
+
+        if (dest.equals(src)) {
+            throw new IOException("src and dest cannot be the same");
+        }
+
         try (JarOutputStream jos = new JarOutputStream(
                 new FileOutputStream(dest))) {
 
@@ -295,6 +302,22 @@ public final class JarUtils {
             }
         }
         System.out.println();
+    }
+
+    /**
+     * Update the Manifest inside a jar.
+     *
+     * @param src the original jar file name
+     * @param dest the new jar file name
+     * @param man the Manifest
+     *
+     * @throws IOException
+     */
+    public static void updateManifest(String src, String dest, Manifest man)
+            throws IOException {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        man.write(bout);
+        updateJar(src, dest, Map.of(JarFile.MANIFEST_NAME, bout.toByteArray()));
     }
 
     private static void updateEntry(JarOutputStream jos, String name, Object content)

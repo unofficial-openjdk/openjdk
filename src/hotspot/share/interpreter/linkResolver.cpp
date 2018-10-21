@@ -793,24 +793,6 @@ methodHandle LinkResolver::resolve_method(const LinkInfo& link_info,
     check_method_loader_constraints(link_info, resolved_method, "method", CHECK_NULL);
   }
 
-  // For private method invocation we should only find the method in the resolved class.
-  // If that is not the case then we have a found a supertype method that we have nestmate
-  // access to.
-  if (resolved_method->is_private() && resolved_method->method_holder() != resolved_klass) {
-    ResourceMark rm(THREAD);
-    DEBUG_ONLY(bool is_nestmate = InstanceKlass::cast(link_info.current_klass())->has_nestmate_access_to(InstanceKlass::cast(resolved_klass), THREAD);)
-    assert(is_nestmate, "was only expecting nestmates to get here!");
-    Exceptions::fthrow(
-      THREAD_AND_LOCATION,
-      vmSymbols::java_lang_NoSuchMethodError(),
-      "%s: method %s%s not found",
-      resolved_klass->external_name(),
-      resolved_method->name()->as_C_string(),
-      resolved_method->signature()->as_C_string()
-    );
-    return NULL;
-  }
-
   return resolved_method;
 }
 
@@ -992,68 +974,68 @@ void LinkResolver::resolve_field(fieldDescriptor& fd,
     THROW_MSG(vmSymbols::java_lang_NoSuchFieldError(), field->as_C_string());
   }
 
-  if (!link_info.check_access())
-    // Access checking may be turned off when calling from within the VM.
-    return;
-
-  // check access
+  // Access checking may be turned off when calling from within the VM.
   Klass* current_klass = link_info.current_klass();
-  check_field_accessability(current_klass, resolved_klass, sel_klass, fd, CHECK);
+  if (link_info.check_access()) {
 
-  // check for errors
-  if (is_static != fd.is_static()) {
-    ResourceMark rm(THREAD);
-    char msg[200];
-    jio_snprintf(msg, sizeof(msg), "Expected %s field %s.%s", is_static ? "static" : "non-static", resolved_klass->external_name(), fd.name()->as_C_string());
-    THROW_MSG(vmSymbols::java_lang_IncompatibleClassChangeError(), msg);
-  }
+    // check access
+    check_field_accessability(current_klass, resolved_klass, sel_klass, fd, CHECK);
 
-  // A final field can be modified only
-  // (1) by methods declared in the class declaring the field and
-  // (2) by the <clinit> method (in case of a static field)
-  //     or by the <init> method (in case of an instance field).
-  if (is_put && fd.access_flags().is_final()) {
-    ResourceMark rm(THREAD);
-    stringStream ss;
-
-    if (sel_klass != current_klass) {
-      ss.print("Update to %s final field %s.%s attempted from a different class (%s) than the field's declaring class",
-                is_static ? "static" : "non-static", resolved_klass->external_name(), fd.name()->as_C_string(),
-                current_klass->external_name());
-      THROW_MSG(vmSymbols::java_lang_IllegalAccessError(), ss.as_string());
+    // check for errors
+    if (is_static != fd.is_static()) {
+      ResourceMark rm(THREAD);
+      char msg[200];
+      jio_snprintf(msg, sizeof(msg), "Expected %s field %s.%s", is_static ? "static" : "non-static", resolved_klass->external_name(), fd.name()->as_C_string());
+      THROW_MSG(vmSymbols::java_lang_IncompatibleClassChangeError(), msg);
     }
 
-    if (fd.constants()->pool_holder()->major_version() >= 53) {
-      methodHandle m = link_info.current_method();
-      assert(!m.is_null(), "information about the current method must be available for 'put' bytecodes");
-      bool is_initialized_static_final_update = (byte == Bytecodes::_putstatic &&
-                                                 fd.is_static() &&
-                                                 !m()->is_static_initializer());
-      bool is_initialized_instance_final_update = ((byte == Bytecodes::_putfield || byte == Bytecodes::_nofast_putfield) &&
-                                                   !fd.is_static() &&
-                                                   !m->is_object_initializer());
+    // A final field can be modified only
+    // (1) by methods declared in the class declaring the field and
+    // (2) by the <clinit> method (in case of a static field)
+    //     or by the <init> method (in case of an instance field).
+    if (is_put && fd.access_flags().is_final()) {
+      ResourceMark rm(THREAD);
+      stringStream ss;
 
-      if (is_initialized_static_final_update || is_initialized_instance_final_update) {
-        ss.print("Update to %s final field %s.%s attempted from a different method (%s) than the initializer method %s ",
+      if (sel_klass != current_klass) {
+        ss.print("Update to %s final field %s.%s attempted from a different class (%s) than the field's declaring class",
                  is_static ? "static" : "non-static", resolved_klass->external_name(), fd.name()->as_C_string(),
-                 m()->name()->as_C_string(),
-                 is_static ? "<clinit>" : "<init>");
+                current_klass->external_name());
         THROW_MSG(vmSymbols::java_lang_IllegalAccessError(), ss.as_string());
       }
+
+      if (fd.constants()->pool_holder()->major_version() >= 53) {
+        methodHandle m = link_info.current_method();
+        assert(!m.is_null(), "information about the current method must be available for 'put' bytecodes");
+        bool is_initialized_static_final_update = (byte == Bytecodes::_putstatic &&
+                                                   fd.is_static() &&
+                                                   !m()->is_static_initializer());
+        bool is_initialized_instance_final_update = ((byte == Bytecodes::_putfield || byte == Bytecodes::_nofast_putfield) &&
+                                                     !fd.is_static() &&
+                                                     !m->is_object_initializer());
+
+        if (is_initialized_static_final_update || is_initialized_instance_final_update) {
+          ss.print("Update to %s final field %s.%s attempted from a different method (%s) than the initializer method %s ",
+                   is_static ? "static" : "non-static", resolved_klass->external_name(), fd.name()->as_C_string(),
+                   m()->name()->as_C_string(),
+                   is_static ? "<clinit>" : "<init>");
+          THROW_MSG(vmSymbols::java_lang_IllegalAccessError(), ss.as_string());
+        }
+      }
+    }
+
+    // initialize resolved_klass if necessary
+    // note 1: the klass which declared the field must be initialized (i.e, sel_klass)
+    //         according to the newest JVM spec (5.5, p.170) - was bug (gri 7/28/99)
+    //
+    // note 2: we don't want to force initialization if we are just checking
+    //         if the field access is legal; e.g., during compilation
+    if (is_static && initialize_class) {
+      sel_klass->initialize(CHECK);
     }
   }
 
-  // initialize resolved_klass if necessary
-  // note 1: the klass which declared the field must be initialized (i.e, sel_klass)
-  //         according to the newest JVM spec (5.5, p.170) - was bug (gri 7/28/99)
-  //
-  // note 2: we don't want to force initialization if we are just checking
-  //         if the field access is legal; e.g., during compilation
-  if (is_static && initialize_class) {
-    sel_klass->initialize(CHECK);
-  }
-
-  if (sel_klass != current_klass) {
+  if ((sel_klass != current_klass) && (current_klass != NULL)) {
     check_field_loader_constraints(field, sig, current_klass, sel_klass, CHECK);
   }
 

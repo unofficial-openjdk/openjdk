@@ -135,7 +135,6 @@ PerfCounter*    ClassLoader::_sync_JVMFindLoadedClassLockFreeCounter = NULL;
 PerfCounter*    ClassLoader::_sync_JVMDefineClassLockFreeCounter = NULL;
 PerfCounter*    ClassLoader::_sync_JNIDefineClassLockFreeCounter = NULL;
 PerfCounter*    ClassLoader::_unsafe_defineClassCallCounter = NULL;
-PerfCounter*    ClassLoader::_load_instance_class_failCounter = NULL;
 
 GrowableArray<ModuleClassPathList*>* ClassLoader::_patch_mod_entries = NULL;
 GrowableArray<ModuleClassPathList*>* ClassLoader::_exploded_entries = NULL;
@@ -164,7 +163,7 @@ static const char* get_jimage_version_string() {
   static char version_string[10] = "";
   if (version_string[0] == '\0') {
     jio_snprintf(version_string, sizeof(version_string), "%d.%d",
-                 Abstract_VM_Version::vm_major_version(), Abstract_VM_Version::vm_minor_version());
+                 VM_Version::vm_major_version(), VM_Version::vm_minor_version());
   }
   return (const char*)version_string;
 }
@@ -1604,9 +1603,6 @@ void ClassLoader::initialize() {
 
     NEWPERFEVENTCOUNTER(_unsafe_defineClassCallCounter, SUN_CLS,
                         "unsafeDefineClassCalls");
-
-    NEWPERFEVENTCOUNTER(_load_instance_class_failCounter, SUN_CLS,
-                        "loadInstanceClassFailRate");
   }
 
   // lookup zip library entry points

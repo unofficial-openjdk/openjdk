@@ -33,7 +33,7 @@ static bool returns_to_call_stub(address return_pc) { return return_pc == _call_
 
 enum platform_dependent_constants {
   code_size1 = 20000 LP64_ONLY(+10000),         // simply increase if too small (assembler will crash if too small)
-  code_size2 = 33800 LP64_ONLY(+10000)           // simply increase if too small (assembler will crash if too small)
+  code_size2 = 35300 LP64_ONLY(+10000)          // simply increase if too small (assembler will crash if too small)
 };
 
 class x86 {
@@ -55,7 +55,13 @@ class x86 {
   static address _double_sign_mask;
   static address _double_sign_flip;
 
+  static address _method_entry_barrier;
+
  public:
+
+  static address method_entry_barrier() {
+    return _method_entry_barrier;
+  }
 
   static address get_previous_fp_entry() {
     return _get_previous_fp_entry;

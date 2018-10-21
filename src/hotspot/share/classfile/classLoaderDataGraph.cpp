@@ -48,7 +48,7 @@ volatile size_t ClassLoaderDataGraph::_num_instance_classes = 0;
 
 void ClassLoaderDataGraph::clear_claimed_marks() {
   for (ClassLoaderData* cld = _head; cld != NULL; cld = cld->next()) {
-    cld->clear_claimed();
+    cld->clear_claim();
   }
 }
 
@@ -231,14 +231,14 @@ ClassLoaderData* ClassLoaderDataGraph::add(Handle loader, bool is_unsafe_anonymo
 }
 
 void ClassLoaderDataGraph::cld_do(CLDClosure* cl) {
-  assert_locked_or_safepoint(ClassLoaderDataGraph_lock);
+  assert_locked_or_safepoint_weak(ClassLoaderDataGraph_lock);
   for (ClassLoaderData* cld = _head;  cld != NULL; cld = cld->_next) {
     cl->do_cld(cld);
   }
 }
 
 void ClassLoaderDataGraph::cld_unloading_do(CLDClosure* cl) {
-  assert_locked_or_safepoint(ClassLoaderDataGraph_lock);
+  assert_locked_or_safepoint_weak(ClassLoaderDataGraph_lock);
   // Only walk the head until any clds not purged from prior unloading
   // (CMS doesn't purge right away).
   for (ClassLoaderData* cld = _unloading; cld != _saved_unloading; cld = cld->next()) {
@@ -248,7 +248,7 @@ void ClassLoaderDataGraph::cld_unloading_do(CLDClosure* cl) {
 }
 
 void ClassLoaderDataGraph::roots_cld_do(CLDClosure* strong, CLDClosure* weak) {
-  assert_locked_or_safepoint(ClassLoaderDataGraph_lock);
+  assert_locked_or_safepoint_weak(ClassLoaderDataGraph_lock);
   for (ClassLoaderData* cld = _head;  cld != NULL; cld = cld->_next) {
     CLDClosure* closure = cld->keep_alive() ? strong : weak;
     if (closure != NULL) {
@@ -258,7 +258,7 @@ void ClassLoaderDataGraph::roots_cld_do(CLDClosure* strong, CLDClosure* weak) {
 }
 
 void ClassLoaderDataGraph::always_strong_cld_do(CLDClosure* cl) {
-  assert_locked_or_safepoint(ClassLoaderDataGraph_lock);
+  assert_locked_or_safepoint_weak(ClassLoaderDataGraph_lock);
   if (ClassUnloading) {
     roots_cld_do(cl, NULL);
   } else {
@@ -486,6 +486,21 @@ bool ClassLoaderDataGraph::contains_loader_data(ClassLoaderData* loader_data) {
   return false;
 }
 #endif // PRODUCT
+
+bool ClassLoaderDataGraph::is_valid(ClassLoaderData* loader_data) {
+  DEBUG_ONLY( if (!VMError::is_error_reported()) { assert_locked_or_safepoint(ClassLoaderDataGraph_lock); } )
+  if (loader_data != NULL) {
+    if (loader_data == ClassLoaderData::the_null_class_loader_data()) {
+      return true;
+    }
+    for (ClassLoaderData* data = _head; data != NULL; data = data->next()) {
+      if (loader_data == data) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 
 // Move class loader data from main list to the unloaded list for unloading
 // and deallocation later.
