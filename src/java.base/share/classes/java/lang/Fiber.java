@@ -207,7 +207,7 @@ public final class Fiber extends Strand {
      *        called from a fiber
      */
     public static Optional<Fiber> current() {
-        return Optional.of(Thread.currentCarrierThread().getFiber());
+        return Optional.ofNullable(Thread.currentCarrierThread().getFiber());
     }
 
     /**
