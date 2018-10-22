@@ -209,6 +209,9 @@ inline unsigned char java_lang_Continuation::flags(oop ref) {
 inline void java_lang_Continuation::set_flags(oop ref, unsigned char flags) {
   ref->byte_field_put(_flags_offset, (jbyte)flags);
 }
+inline bool java_lang_Continuation::is_reset(oop ref) {
+  return ref->bool_field(_reset_offset);
+}
 inline jshort java_lang_Continuation::numFrames(oop ref) {
   return ref->short_field(_numFrames_offset);
 }
