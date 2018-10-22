@@ -176,14 +176,6 @@ public class OneShot {
     @Param({"5", "10", "20", "100"})
     public int stackDepth;
 
-    Continuation cont;
-
-    @Setup(Level.Iteration)
-    public void setup() {
-        // System.out.println("pc = " + paramCount + " sd = " + stackDepth);
-        cont = Yielder.continuation(paramCount, stackDepth, true);
-    }
-
     /**
      * Creates and run continuation that does not yield.
      */
@@ -200,12 +192,10 @@ public class OneShot {
      */
     @Benchmark
     public void yield() {
-        // Continuation cont = Yielder.continuation(paramCount, stackDepth, true);
- 
+        Continuation cont = Yielder.continuation(paramCount, stackDepth, true);
         cont.run();
-       // if (cont.isDone())
-        //     throw new RuntimeException("continuation done???");
-        cont.something_something_1();
+        if (cont.isDone())
+            throw new RuntimeException("continuation done???");
     }
 
     /**

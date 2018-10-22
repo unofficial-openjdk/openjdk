@@ -26,13 +26,12 @@
 * @summary Basic tests for java.lang.Continuation
 * @run testng Basic
 * @run testng/othervm -Xint Basic
-* @run testng/othervm -Xint -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Basic
+* @run testng/othervm -XX:+UseParallelGC -Xcomp Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -Xcomp -XX:+UseNewCode Basic
 *
 * @summary Basic tests for java.lang.Continuation
 */
-
-//run testng/othervm -Xcomp Basic
-//run testng/othervm -Xcomp -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Basic
 
 import java.util.Arrays;
 import java.util.List;

@@ -2,7 +2,7 @@
 
 perflevels=(5 10 15 20 25 30)
 
-benchmarks='yield$'
+benchmarks='justYield$'
 params=(-p stackDepth=5 -p paramCount=3)
 
 iter=20
