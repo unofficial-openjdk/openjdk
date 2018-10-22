@@ -4070,6 +4070,7 @@ int java_lang_Continuation::_sp_offset;
 int java_lang_Continuation::_pc_offset;
 int java_lang_Continuation::_refSP_offset;
 int java_lang_Continuation::_flags_offset;
+int java_lang_Continuation::_reset_offset;
 int java_lang_ClassLoader::parent_offset;
 int java_lang_System::static_in_offset;
 int java_lang_System::static_out_offset;
@@ -4235,6 +4236,7 @@ void java_lang_AssertionStatusDirectives::set_deflt(oop o, bool val) {
   macro(_pc_offset,        k, vmSymbols::pc_name(),        long_signature,              false); \
   macro(_refSP_offset,     k, vmSymbols::refSP_name(),     int_signature,               false); \
   macro(_flags_offset,     k, vmSymbols::flags_name(),     byte_signature,              false); \
+  macro(_reset_offset,     k, vmSymbols::reset_name(),     bool_signature,              false); \
   macro(_numFrames_offset, k, vmSymbols::numFrames_name(), short_signature,             false); \
   macro(_numInterpretedFrames_offset, k, vmSymbols::numInterpretedFrames_name(), short_signature, false);
 

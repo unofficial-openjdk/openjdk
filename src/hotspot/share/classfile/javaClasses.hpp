@@ -968,6 +968,7 @@ class java_lang_Continuation: AllStatic {
   static int _pc_offset;
   static int _refSP_offset;
   static int _flags_offset;
+  static int _reset_offset;
 
   static void compute_offsets();
  public:
@@ -1006,6 +1007,7 @@ class java_lang_Continuation: AllStatic {
   static inline void* stack_base(oop ref);
   static inline HeapWord* refStack_base(oop ref);
   static bool on_local_stack(oop ref, address adr);
+  static bool is_reset(oop ref);
 };
 
 // Interface to java.lang.invoke.MethodHandle objects

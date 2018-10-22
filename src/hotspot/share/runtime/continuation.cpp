@@ -1297,10 +1297,10 @@ address ContMirror::freeze_target() {
 }
 
 void ContMirror::null_ref_stack(int start, int num) {
-  // TODO: disable for testing
-
-  // for (int i = 0; i < num; i++)
-  //   _ref_stack->obj_at_put(start + i, NULL);
+  if (java_lang_Continuation::is_reset(_cont)) return;
+  
+  for (int i = 0; i < num; i++)
+    _ref_stack->obj_at_put(start + i, NULL);
 }
 
 inline int ContMirror::add_oop(oop obj) {
