@@ -1548,6 +1548,7 @@ void JavaThread::initialize() {
   _pending_failed_speculation = 0;
   _pending_transfer_to_interpreter = false;
   _adjusting_comp_level = false;
+  _in_retryable_allocation = false;
   _jvmci._alternate_call_target = NULL;
   assert(_jvmci._implicit_exception_pc == NULL, "must be");
   if (JVMCICounterSize > 0) {
@@ -4215,10 +4216,10 @@ void JavaThread::invoke_shutdown_hooks() {
 //     <-- do not use anything that could get blocked by Safepoint -->
 //   + Disable tracing at JNI/JVM barriers
 //   + Set _vm_exited flag for threads that are still running native code
-//   + Delete this thread
 //   + Call exit_globals()
 //      > deletes tty
 //      > deletes PerfMemory resources
+//   + Delete this thread
 //   + Return to caller
 
 bool Threads::destroy_vm() {
@@ -4294,6 +4295,9 @@ bool Threads::destroy_vm() {
 
   notify_vm_shutdown();
 
+  // exit_globals() will delete tty
+  exit_globals();
+
   // We are after VM_Exit::set_vm_exited() so we can't call
   // thread->smr_delete() or we will block on the Threads_lock.
   // Deleting the shutdown thread here is safe because another
@@ -4306,9 +4310,6 @@ bool Threads::destroy_vm() {
     FREE_C_HEAP_ARRAY(jlong, JavaThread::_jvmci_old_thread_counters);
   }
 #endif
-
-  // exit_globals() will delete tty
-  exit_globals();
 
   LogConfiguration::finalize();
 
@@ -4572,9 +4573,9 @@ void Threads::print_on(outputStream* st, bool print_stacks,
   st->print_raw_cr(os::local_time_string(buf, sizeof(buf)));
 
   st->print_cr("Full thread dump %s (%s %s):",
-               Abstract_VM_Version::vm_name(),
-               Abstract_VM_Version::vm_release(),
-               Abstract_VM_Version::vm_info_string());
+               VM_Version::vm_name(),
+               VM_Version::vm_release(),
+               VM_Version::vm_info_string());
   st->cr();
 
 #if INCLUDE_SERVICES

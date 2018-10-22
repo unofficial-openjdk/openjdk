@@ -470,7 +470,7 @@ jvmtiError
 JvmtiEnv::GetObjectSize(jobject object, jlong* size_ptr) {
   oop mirror = JNIHandles::resolve_external_guard(object);
   NULL_CHECK(mirror, JVMTI_ERROR_INVALID_OBJECT);
-  *size_ptr = (jlong)mirror->size() * wordSize;
+  *size_ptr = (jlong)Universe::heap()->obj_size(mirror) * wordSize;
   return JVMTI_ERROR_NONE;
 } /* end GetObjectSize */
 
@@ -540,13 +540,6 @@ JvmtiEnv::SetEventNotificationMode(jvmtiEventMode mode, jvmtiEvent event_type, j
       record_class_file_load_hook_enabled();
     }
 
-    if (event_type == JVMTI_EVENT_SAMPLED_OBJECT_ALLOC) {
-      if (enabled) {
-        ThreadHeapSampler::enable();
-      } else {
-        ThreadHeapSampler::disable();
-      }
-    }
     JvmtiEventController::set_user_enabled(this, (JavaThread*) NULL, event_type, enabled);
   } else {
     // We have a specified event_thread.
@@ -926,7 +919,7 @@ JvmtiEnv::GetAllThreads(jint* threads_count_ptr, jthread** threads_ptr) {
   thread_objs = NEW_RESOURCE_ARRAY(Handle, nthreads);
   NULL_CHECK(thread_objs, JVMTI_ERROR_OUT_OF_MEMORY);
 
-  for (int i=0; i < nthreads; i++) {
+  for (int i = 0; i < nthreads; i++) {
     thread_objs[i] = Handle(tle.get_threadObj(i));
   }
 
@@ -1151,16 +1144,14 @@ JvmtiEnv::GetThreadInfo(jthread thread, jvmtiThreadInfo* info_ptr) {
   Handle context_class_loader;
   bool          is_daemon;
 
-  { MutexLocker mu(Threads_lock);
+  name = Handle(current_thread, java_lang_Thread::name(thread_obj()));
+  priority = java_lang_Thread::priority(thread_obj());
+  thread_group = Handle(current_thread, java_lang_Thread::threadGroup(thread_obj()));
+  is_daemon = java_lang_Thread::is_daemon(thread_obj());
 
-    name = Handle(current_thread, java_lang_Thread::name(thread_obj()));
-    priority = java_lang_Thread::priority(thread_obj());
-    thread_group = Handle(current_thread, java_lang_Thread::threadGroup(thread_obj()));
-    is_daemon = java_lang_Thread::is_daemon(thread_obj());
+  oop loader = java_lang_Thread::context_class_loader(thread_obj());
+  context_class_loader = Handle(current_thread, loader);
 
-    oop loader = java_lang_Thread::context_class_loader(thread_obj());
-    context_class_loader = Handle(current_thread, loader);
-  }
   { const char *n;
 
     if (name() != NULL) {
@@ -1409,13 +1400,10 @@ JvmtiEnv::GetThreadGroupInfo(jthreadGroup group, jvmtiThreadGroupInfo* info_ptr)
   bool is_daemon;
   ThreadPriority max_priority;
 
-  { MutexLocker mu(Threads_lock);
-
-    name         = java_lang_ThreadGroup::name(group_obj());
-    parent_group = Handle(current_thread, java_lang_ThreadGroup::parent(group_obj()));
-    is_daemon    = java_lang_ThreadGroup::is_daemon(group_obj());
-    max_priority = java_lang_ThreadGroup::maxPriority(group_obj());
-  }
+  name         = java_lang_ThreadGroup::name(group_obj());
+  parent_group = Handle(current_thread, java_lang_ThreadGroup::parent(group_obj()));
+  is_daemon    = java_lang_ThreadGroup::is_daemon(group_obj());
+  max_priority = java_lang_ThreadGroup::maxPriority(group_obj());
 
   info_ptr->is_daemon    = is_daemon;
   info_ptr->max_priority = max_priority;
@@ -1455,7 +1443,7 @@ JvmtiEnv::GetThreadGroupChildren(jthreadGroup group, jint* thread_count_ptr, jth
   Handle group_hdl(current_thread, group_obj);
 
   { // Cannot allow thread or group counts to change.
-    MutexLocker mu(Threads_lock);
+    ObjectLocker ol(group_hdl, current_thread);
 
     nthreads = java_lang_ThreadGroup::nthreads(group_hdl());
     ngroups  = java_lang_ThreadGroup::ngroups(group_hdl());
@@ -1465,7 +1453,7 @@ JvmtiEnv::GetThreadGroupChildren(jthreadGroup group, jint* thread_count_ptr, jth
       objArrayOop threads = java_lang_ThreadGroup::threads(group_hdl());
       assert(nthreads <= threads->length(), "too many threads");
       thread_objs = NEW_RESOURCE_ARRAY(Handle,nthreads);
-      for (int i=0, j=0; i<nthreads; i++) {
+      for (int i = 0, j = 0; i < nthreads; i++) {
         oop thread_obj = threads->obj_at(i);
         assert(thread_obj != NULL, "thread_obj is NULL");
         JavaThread *java_thread = NULL;
@@ -1497,15 +1485,14 @@ JvmtiEnv::GetThreadGroupChildren(jthreadGroup group, jint* thread_count_ptr, jth
       objArrayOop groups = java_lang_ThreadGroup::groups(group_hdl());
       assert(ngroups <= groups->length(), "too many groups");
       group_objs = NEW_RESOURCE_ARRAY(Handle,ngroups);
-      for (int i=0; i<ngroups; i++) {
+      for (int i = 0; i < ngroups; i++) {
         oop group_obj = groups->obj_at(i);
         assert(group_obj != NULL, "group_obj != NULL");
         group_objs[i] = Handle(current_thread, group_obj);
       }
     }
-  }
+  } // ThreadGroup unlocked here
 
-  // have to make global handles outside of Threads_lock
   *group_count_ptr  = ngroups;
   *thread_count_ptr = nthreads;
   *threads_ptr     = new_jthreadArray(nthreads, thread_objs);
@@ -3253,7 +3240,7 @@ JvmtiEnv::DestroyRawMonitor(JvmtiRawMonitor * rmonitor) {
       // objects that are locked.
       int r;
       intptr_t recursion = rmonitor->recursions();
-      for (intptr_t i=0; i <= recursion; i++) {
+      for (intptr_t i = 0; i <= recursion; i++) {
         r = rmonitor->raw_exit(thread);
         assert(r == ObjectMonitor::OM_OK, "raw_exit should have worked");
         if (r != ObjectMonitor::OM_OK) {  // robustness
@@ -3683,7 +3670,7 @@ JvmtiEnv::GetSystemProperties(jint* count_ptr, char*** property_ptr) {
         strcpy(*tmp_value, key);
       } else {
         // clean up previously allocated memory.
-        for (int j=0; j<readable_count; j++) {
+        for (int j = 0; j < readable_count; j++) {
           Deallocate((unsigned char*)*property_ptr+j);
         }
         Deallocate((unsigned char*)property_ptr);
