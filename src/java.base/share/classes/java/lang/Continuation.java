@@ -85,6 +85,8 @@ public class Continuation {
     private volatile boolean mounted = false;
     private Object yieldInfo;
 
+    private boolean reset = false; // perftest only
+
     // transient state
     // addresses into vstack. only valid when mounted
     private long entrySP = 0;
@@ -168,6 +170,9 @@ public class Continuation {
             // if (TRACE) walkFrames();
 
             int origRefSP = refSP;
+
+            int origSP = sp, origMaxSize = maxSize; long origFP = fp, origPC = pc; // perftest only (used only if reset is true)
+
             try {
                 enter();
             } finally {
@@ -176,7 +181,9 @@ public class Continuation {
 
                 currentCarrierThread().setContinuation(this.parent);
 
+                if (reset) { maxSize = origMaxSize; sp = origSP; fp = origFP; pc = origPC; refSP = origRefSP; } // perftest only
                 postYieldCleanup(origRefSP);
+
                 setMounted(false);
                 } catch (Throwable e) { e.printStackTrace(); System.exit(1); }
                 assert !hasLeak() : "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
@@ -212,7 +219,7 @@ public class Continuation {
                 doContinue(); // intrinsic. Jumps into yield, as a return from doYield
         } finally {
             done = true;
-            assert fence() && isStackEmpty() : "sp: " + sp + " stack.length: " + (stack != null ? stack.length : "null");
+            assert reset || fence() && isStackEmpty() : "sp: " + sp + " stack.length: " + (stack != null ? stack.length : "null");
             // assert doneX;
             // System.out.println("-- done!  " + id());
             if (TRACE)
@@ -276,14 +283,14 @@ public class Continuation {
             }
             if (TRACE) System.out.println(this + " res: " + res);
             this.yieldInfo = null;
-            assert !hasLeak() : "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
+            assert reset || !hasLeak() : "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
             if (res == 0)
                 onContinue();
             else
                 onPinned0(res);
         }
         assert yieldInfo == null;
-        assert !hasLeak() : "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
+        assert reset || !hasLeak() : "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
@@ -543,6 +550,21 @@ public class Continuation {
         this.stackWatermark = 0;
         this.refStackWatermark = 0;
     }
+
+    /**
+     * temporary testing
+     */
+    public void something_something_2() {
+        reset = true;
+    }
+
+    /**
+     * temporary testing
+     */
+    public void something_something_3() {
+        this.done = false;
+    }
+
     // private void pushNmethod(long nmethod) {
     //     if (nmethods == null) {
     //         nmethods = new long[8];

@@ -2344,7 +2344,7 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
   diagnostic(bool, UseNewCode3, false,                                      \
           "Testing Only: Use the new version while testing")                \
                                                                             \
-  diagnostic(intx, ContPerfTest, 100,                                       \
+  diagnostic(intx, ContPerfTest, 1000,                                       \
           "Testing Only: Use the new version while testing")                \
                                                                             \
   /* flags for performance data collection */                               \

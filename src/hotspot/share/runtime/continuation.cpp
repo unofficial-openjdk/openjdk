@@ -59,7 +59,21 @@
 #    include <valgrind/callgrind.h>
 #  endif
 #endif
-
+#ifdef CALLGRIND_START_INSTRUMENTATION
+  static int callgrind_counter = 1;
+  static void callgrind() {
+    if (callgrind_counter != 0) {
+      if (callgrind_counter > 20000) {
+        tty->print_cr("Starting callgrind instrumentation");
+        CALLGRIND_START_INSTRUMENTATION;
+        callgrind_counter = 0;
+      } else
+        callgrind_counter++;
+    }
+  }
+#else
+  static void callgrind() {};
+#endif
 
 // #undef ASSERT
 // #undef assert
@@ -68,6 +82,7 @@
 #define USE_GROWABLE_ARRAY false
 
 int Continuation::PERFTEST_LEVEL = ContPerfTest;
+// Freeze:
 // 5 - no call into C
 // 10 - immediate return from C
 // 15 - return after count_frames
@@ -75,7 +90,11 @@ int Continuation::PERFTEST_LEVEL = ContPerfTest;
 // 25 - copy to stack
 // 30 - freeze oops
 // 100 - everything
-
+//
+// Thaw:
+// 105 - no call into C (prepare_thaw)
+// 110 - immediate return from C (prepare_thaw)
+//
 // TODO
 //
 // !!! Keep an eye out for deopt, and patch_pc
@@ -1278,9 +1297,10 @@ address ContMirror::freeze_target() {
 }
 
 void ContMirror::null_ref_stack(int start, int num) {
-  for (int i = 0; i < num; i++) {
-    _ref_stack->obj_at_put(start + i, NULL);
-  }
+  // TODO: disable for testing
+
+  // for (int i = 0; i < num; i++)
+  //   _ref_stack->obj_at_put(start + i, NULL);
 }
 
 inline int ContMirror::add_oop(oop obj) {
@@ -2175,10 +2195,6 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
   return freeze_ok;
 }
 
-#ifdef CALLGRIND_START_INSTRUMENTATION
-  static int callgrind_counter = 1;
-#endif
-
 // returns the continuation yielding (based on context), or NULL for failure (due to pinning)
 // it freezes multiple continuations, depending on contex
 // it must set Continuation.stackSize
@@ -2189,18 +2205,7 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 //      unless freezing has failed, in which case fi->pc = 0
 //      However, fi->fp points to the _address_ on the stack of the entry frame's link to its caller (so *(fi->fp) is the fp)
 JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
-
-#ifdef CALLGRIND_START_INSTRUMENTATION
-  if (callgrind_counter != 0) {
-    if (callgrind_counter > 20000) {
-      tty->print_cr("Starting callgrind instrumentation");
-      CALLGRIND_START_INSTRUMENTATION;
-      callgrind_counter = 0;
-    } else
-      callgrind_counter++;
-  }
-#endif
-
+  callgrind();
   Continuation::PERFTEST_LEVEL = ContPerfTest;
 
   if (PERFTEST_LEVEL <= 10) {
@@ -2573,7 +2578,7 @@ static inline int thaw_num_frames(bool return_barrier) {
 // fi->sp is the top of the stack after thaw
 // fi->fp current rbp
 // called after preparations (stack overflow check and making room)
-static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_barrier, const bool exception) {
+static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_barrier) {
   EventContinuationThaw event;
   ResourceMark rm(thread);
 
@@ -2740,6 +2745,10 @@ static bool stack_overflow_check(JavaThread* thread, int size, address sp) {
 //                  fi->fp - cont's entry FP
 //                  fi->pc - overflow? throw StackOverflowError : cont's entry PC
 JRT_LEAF(int, Continuation::prepare_thaw(FrameInfo* fi, bool return_barrier))
+  Continuation::PERFTEST_LEVEL = ContPerfTest;
+  
+  if (PERFTEST_LEVEL <= 110) return 0;
+
   log_trace(jvmcont)("~~~~~~~~~ prepare_thaw");
 
   int num_frames = thaw_num_frames(return_barrier);
@@ -2771,6 +2780,8 @@ JRT_LEAF(int, Continuation::prepare_thaw(FrameInfo* fi, bool return_barrier))
   log_trace(jvmcont)("target: " INTPTR_FORMAT, p2i(target));
   log_trace(jvmcont)("QQQ BBBBB bottom: " INTPTR_FORMAT " top: " INTPTR_FORMAT " size: %d", p2i(bottom), p2i(target), size);
 
+  if (PERFTEST_LEVEL <= 120) return 0;
+
   return size;
 JRT_END
 
@@ -2780,7 +2791,10 @@ JRT_END
 //      fi->pc = the PC " ...
 // JRT_ENTRY(void, Continuation::thaw(JavaThread* thread, FrameInfo* fi, int num_frames))
 JRT_LEAF(address, Continuation::thaw(FrameInfo* fi, bool return_barrier, bool exception))
-  thaw1(JavaThread::current(), fi, return_barrier, exception);
+  callgrind();
+  Continuation::PERFTEST_LEVEL = ContPerfTest;
+
+  thaw1(JavaThread::current(), fi, return_barrier);
 
   if (exception) {
     // TODO: handle deopt. see TemplateInterpreterGenerator::generate_throw_exception, OptoRuntime::handle_exception_C, OptoRuntime::handle_exception_helper

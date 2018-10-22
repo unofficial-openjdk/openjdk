@@ -1,8 +1,8 @@
-import org.openjdk.benchmarks.cont.OneShot;
+import org.openjdk.benchmarks.cont.Thaw;
 
-public class Driver {
+public class ThawDriver {
     public static void main(String[] args) {
-        OneShot bm = new OneShot();
+        Thaw bm = new Thaw();
         bm.paramCount = 3;
         bm.stackDepth = 5;
 
@@ -11,7 +11,7 @@ public class Driver {
         System.out.println("Running " + n + " iterations");
         bm.setup();
         for (int i=0; i<n; i++) {
-            bm.yield();
+            bm.justContinue();
         }
         System.out.println("Done");
     }

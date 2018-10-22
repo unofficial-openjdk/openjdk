@@ -5730,7 +5730,11 @@ address generate_cont_doYield() {
     }
     __ movl(c_rarg1, return_barrier);
     push_FrameInfo(_masm, fi, fi, rbp, c_rarg3);
+    if (ContPerfTest > 105) {
     __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::prepare_thaw), fi, c_rarg1);
+    } else {
+      __ xorq(rax, rax);
+    }
     __ testq(rax, rax);           // rax contains the size of the frames to thaw, 0 if overflow or no more frames
     __ jcc(Assembler::zero, thaw_fail);
 
