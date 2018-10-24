@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -672,8 +672,8 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
             "ComboBox.buttonHighlight", ControlHighlightColor,
             "ComboBox.selectionBackground", SelectionBackgroundColor,
             "ComboBox.selectionForeground", SelectionTextColor,
-            "ComboBox.editorBorder", new XPValue(new EmptyBorder(1,4,1,1),
-                                                 new EmptyBorder(1,4,1,4)),
+            "ComboBox.editorBorder", new XPValue(new EmptyBorder(1,3,1,1),
+                                                 new EmptyBorder(1,3,1,4)),
             "ComboBox.disabledBackground",
                         new XPColorValue(Part.CP_COMBOBOX, State.DISABLED,
                         Prop.FILLCOLOR, DisabledTextBackground),
@@ -1587,7 +1587,7 @@ public class WindowsLookAndFeel extends BasicLookAndFeel
                 "CheckBoxMenuItem", "RadioButtonMenuItem",
         };
 
-        Object menuDefaults[] = new Object[menuClasses.length * 2];
+        Object[] menuDefaults = new Object[menuClasses.length * 2];
 
         /* all the menus need to be non opaque. */
         for (int i = 0, j = 0; i < menuClasses.length; i++) {
