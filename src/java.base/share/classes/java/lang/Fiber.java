@@ -173,7 +173,7 @@ public final class Fiber extends Strand {
      * @throws RejectedExecutionException if the scheduler cannot accept a task
      * @throws NullPointerException if the scheduler or task is {@code null}
      */
-    public static <V> CompletableFuture<V> schedule(Executor scheduler, Callable<V> task) {
+    public static <V> CompletableFuture<V> schedule(Executor scheduler, Callable<? extends V> task) {
         Objects.requireNonNull(task);
         CompletableFuture<V> result = new CompletableFuture<>();
         new Fiber(scheduler, () -> {
@@ -182,6 +182,7 @@ public final class Fiber extends Strand {
                 result.complete(value);
             } catch (Throwable e) {
                 result.completeExceptionally(e);
+                Unsafe.getUnsafe().throwException(e);
             }
         }).schedule();
         return result;
@@ -196,7 +197,7 @@ public final class Fiber extends Strand {
      * @return a CompletableFuture representing pending completion of the task
      * @throws NullPointerException if the task is {@code null}
      */
-    public static <V> CompletableFuture<V> schedule(Callable<V> task) {
+    public static <V> CompletableFuture<V> schedule(Callable<? extends V> task) {
         return schedule(DEFAULT_SCHEDULER, task);
     }
 
@@ -204,10 +205,14 @@ public final class Fiber extends Strand {
      * Returns the current {@code Fiber}.
      *
      * @return Returns the current fiber or an empty {@code Optional} if not
-     *        called from a fiber
+     *         called from a fiber
      */
     public static Optional<Fiber> current() {
-        return Optional.ofNullable(Thread.currentCarrierThread().getFiber());
+        return Optional.ofNullable(currentFiber());
+    }
+
+    static Fiber currentFiber() {
+        return Thread.currentCarrierThread().getFiber();
     }
 
     /**
@@ -221,20 +226,20 @@ public final class Fiber extends Strand {
         if (!stateCompareAndSet(ST_NEW, ST_STARTED))
             throw new IllegalStateException("Fiber already scheduled");
 
-        // switch to carrier thread when submitting task. Revisit this when
-        // ForkJoinPool is updated to reduce use of Thread.currentThread.
-        Thread t = Thread.currentCarrierThread();
-        Fiber fiber = t.getFiber();
+        Thread thread = Thread.currentCarrierThread();
+        Fiber fiber = thread.getFiber();
 
         if (notifyJvmtiEvents) {
-            notifyFiberScheduled(t, this);
+            notifyFiberScheduled(thread, this);
         }
 
-        if (fiber != null) t.setFiber(null);
+        // switch to carrier thread when submitting task. Revisit this when
+        // ForkJoinPool is updated to reduce use of Thread.currentThread.
+        if (fiber != null) thread.setFiber(null);
         try {
             scheduler.execute(runContinuation);
         } finally {
-            if (fiber != null) t.setFiber(fiber);
+            if (fiber != null) thread.setFiber(fiber);
         }
         return this;
     }
@@ -256,13 +261,17 @@ public final class Fiber extends Strand {
         }
 
         mount();
+        Throwable exc = null;
         try {
             cont.run();
+        } catch (Throwable t) {
+            exc = t;
         } finally {
             unmount();
             if (cont.isDone()) {
-                afterTerminate();
+                afterTerminate(exc);
             } else {
+                assert exc == null;
                 afterYield();
             }
         }
@@ -273,20 +282,20 @@ public final class Fiber extends Strand {
      * is run or continued. It binds the fiber to the current carrier thread.
      */
     private void mount() {
-        Thread t = Thread.currentCarrierThread();
+        Thread thread = Thread.currentCarrierThread();
 
         // sets the carrier thread
-        carrierThread = t;
+        carrierThread = thread;
 
         // notify the shadow thread so that the interrupt status can be forwarded
         ShadowThread st = this.shadowThread;
-        if (st != null) st.onMount(t);
+        if (st != null) st.onMount(thread);
 
         // set the fiber so that Thread.currentThread() returns the Fiber object
-        t.setFiber(this);
+        thread.setFiber(this);
 
         if (notifyJvmtiEvents) {
-            notifyFiberMount(t, this);
+            notifyFiberMount(thread, this);
         }
     }
 
@@ -295,19 +304,19 @@ public final class Fiber extends Strand {
      * yields or terminates. It unbinds this fiber from the carrier thread.
      */
     private void unmount() {
-        Thread t = Thread.currentCarrierThread();
+        Thread thread = Thread.currentCarrierThread();
 
         if (notifyJvmtiEvents) {
-            notifyFiberUnmount(t, this);
+            notifyFiberUnmount(thread, this);
         }
 
         // drop connection between this fiber and the carrier thread
-        t.setFiber(null);
+        thread.setFiber(null);
         carrierThread = null;
 
         // notify shadow thread so that interrupt status is cleared
         ShadowThread st = this.shadowThread;
-        if (st != null) st.onUnmount(t);
+        if (st != null) st.onUnmount(thread);
     }
 
     /**
@@ -326,7 +335,7 @@ public final class Fiber extends Strand {
      * Invoke after the continuation completes to set the state to ST_TERMINATED
      * and notify anyone waiting for the fiber to terminate.
      */
-    private void afterTerminate() {
+    private void afterTerminate(Throwable exc) {
         int oldState = stateGetAndSet(ST_TERMINATED);
         assert oldState == ST_RUNNABLE;
 
@@ -354,8 +363,8 @@ public final class Fiber extends Strand {
      */
     private void yieldFailed() {
         // switch to carrier thread
-        Thread t = Thread.currentCarrierThread();
-        t.setFiber(null);
+        Thread thread = Thread.currentCarrierThread();
+        thread.setFiber(null);
 
         boolean parkInterrupted = false;
         lock.lock();
@@ -384,7 +393,7 @@ public final class Fiber extends Strand {
             parkPermitGetAndSet(false);
 
             // switch back to fiber
-            t.setFiber(this);
+            thread.setFiber(this);
         }
 
         // restore interrupt status
@@ -426,18 +435,18 @@ public final class Fiber extends Strand {
      * @throws IllegalCallerException if not called from a fiber
      */
     static void parkNanos(long nanos) {
-        Thread t = Thread.currentCarrierThread();
-        Fiber fiber = t.getFiber();
+        Thread thread = Thread.currentCarrierThread();
+        Fiber fiber = thread.getFiber();
         if (fiber == null)
             throw new IllegalCallerException("not a fiber");
         if (nanos > 0) {
             // switch to carrier thread when submitting task to unpark
-            t.setFiber(null);
+            thread.setFiber(null);
             Future<?> unparker;
             try {
                 unparker = UNPARKER.schedule(fiber::unpark, nanos, NANOSECONDS);
             } finally {
-                t.setFiber(fiber);
+                thread.setFiber(fiber);
             }
             // now park
             try {
@@ -492,17 +501,17 @@ public final class Fiber extends Strand {
      * @return this fiber
      */
     Fiber unpark() {
-        Thread t = Thread.currentCarrierThread();
-        Fiber fiber = t.getFiber();
+        Thread thread = Thread.currentCarrierThread();
+        Fiber fiber = thread.getFiber();
         if (!parkPermitGetAndSet(true) && fiber != this) {
             int s = waitIfParking();
             if (s == ST_PARKED) {
                 // switch to carrier thread when submitting task to continue
-                if (fiber != null) t.setFiber(null);
+                if (fiber != null) thread.setFiber(null);
                 try {
                     scheduler.execute(runContinuation);
                 } finally {
-                    if (fiber != null) t.setFiber(fiber);
+                    if (fiber != null) thread.setFiber(fiber);
                 }
             }
         }
@@ -525,9 +534,9 @@ public final class Fiber extends Strand {
         }
         if (s == ST_PARKING || s == ST_PINNED) {
             boolean parkInterrupted = false;
-            Thread t = Thread.currentCarrierThread();
-            Fiber f = t.getFiber();
-            if (f != null) t.setFiber(null);
+            Thread thread = Thread.currentCarrierThread();
+            Fiber f = thread.getFiber();
+            if (f != null) thread.setFiber(null);
             lock.lock();
             try {
                 while ((s = stateGet()) == ST_PARKING) {
@@ -543,7 +552,7 @@ public final class Fiber extends Strand {
                 }
             } finally {
                 lock.unlock();
-                if (f != null) t.setFiber(f);
+                if (f != null) thread.setFiber(f);
             }
             if (parkInterrupted)
                 Thread.currentThread().interrupt();
@@ -672,8 +681,9 @@ public final class Fiber extends Strand {
      */
     public Fiber cancel() {
         cancelled = true;
-        if (stateGet() != ST_TERMINATED)
+        if (stateGet() != ST_TERMINATED) {
             unpark();
+        }
         return this;
     }
 
@@ -710,14 +720,14 @@ public final class Fiber extends Strand {
             throw new UnsupportedOperationException(
                 "currentThread() cannot be used in the context of a fiber");
         }
-        ShadowThread t = shadowThread;
-        if (t == null) {
-            shadowThread = t = new ShadowThread(this, inheritableThreadContext);
+        ShadowThread thread = shadowThread;
+        if (thread== null) {
+            shadowThread = thread = new ShadowThread(this, inheritableThreadContext);
 
             // allow context to be GC'ed.
             inheritableThreadContext = null;
         }
-        return t;
+        return thread;
     }
 
     /**
@@ -944,7 +954,6 @@ public final class Fiber extends Strand {
         stpe.setRemoveOnCancelPolicy(true);
         return stpe;
     }
-
 
     /**
      * Returns true if the Thread API is emulated when running in a fiber
