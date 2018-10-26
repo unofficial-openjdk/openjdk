@@ -899,6 +899,13 @@ Node* Node::uncast() const {
     return (Node*) this;
 }
 
+bool Node::eqv_uncast(const Node* n) const {
+  BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
+  Node* obj1 = bs->step_over_gc_barrier(const_cast<Node*>(this));
+  Node* obj2 = bs->step_over_gc_barrier(const_cast<Node*>(n));
+  return (obj1->uncast() == obj2->uncast());
+}
+
 // Find out of current node that matches opcode.
 Node* Node::find_out_with(int opcode) {
   for (DUIterator_Fast imax, i = fast_outs(imax); i < imax; i++) {
@@ -1389,7 +1396,7 @@ static void kill_dead_code( Node *dead, PhaseIterGVN *igvn ) {
             // and remove_globally_dead_node().
             igvn->add_users_to_worklist( n );
           } else {
-            BarrierSet::barrier_set()->barrier_set_c2()->enqueue_useful_gc_barrier(igvn->_worklist, n);
+            BarrierSet::barrier_set()->barrier_set_c2()->enqueue_useful_gc_barrier(igvn, n);
           }
         }
       }
