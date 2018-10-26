@@ -530,7 +530,7 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
     case vmIntrinsics::_getAndAddLong:
     case vmIntrinsics::_getAndSetInt:
     case vmIntrinsics::_getAndSetLong:
-    case vmIntrinsics::_getAndSetObject:
+    case vmIntrinsics::_getAndSetReference:
     case vmIntrinsics::_loadFence:
     case vmIntrinsics::_storeFence:
     case vmIntrinsics::_fullFence:
@@ -595,7 +595,7 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
   case vmIntrinsics::_updateByteBufferCRC32:
     if (!UseCRC32Intrinsics) return true;
     break;
-  case vmIntrinsics::_getObject:
+  case vmIntrinsics::_getReference:
   case vmIntrinsics::_getBoolean:
   case vmIntrinsics::_getByte:
   case vmIntrinsics::_getShort:
@@ -604,7 +604,7 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
   case vmIntrinsics::_getLong:
   case vmIntrinsics::_getFloat:
   case vmIntrinsics::_getDouble:
-  case vmIntrinsics::_putObject:
+  case vmIntrinsics::_putReference:
   case vmIntrinsics::_putBoolean:
   case vmIntrinsics::_putByte:
   case vmIntrinsics::_putShort:
@@ -613,7 +613,7 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
   case vmIntrinsics::_putLong:
   case vmIntrinsics::_putFloat:
   case vmIntrinsics::_putDouble:
-  case vmIntrinsics::_getObjectVolatile:
+  case vmIntrinsics::_getReferenceVolatile:
   case vmIntrinsics::_getBooleanVolatile:
   case vmIntrinsics::_getByteVolatile:
   case vmIntrinsics::_getShortVolatile:
@@ -622,7 +622,7 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
   case vmIntrinsics::_getLongVolatile:
   case vmIntrinsics::_getFloatVolatile:
   case vmIntrinsics::_getDoubleVolatile:
-  case vmIntrinsics::_putObjectVolatile:
+  case vmIntrinsics::_putReferenceVolatile:
   case vmIntrinsics::_putBooleanVolatile:
   case vmIntrinsics::_putByteVolatile:
   case vmIntrinsics::_putShortVolatile:
@@ -631,7 +631,7 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
   case vmIntrinsics::_putLongVolatile:
   case vmIntrinsics::_putFloatVolatile:
   case vmIntrinsics::_putDoubleVolatile:
-  case vmIntrinsics::_getObjectAcquire:
+  case vmIntrinsics::_getReferenceAcquire:
   case vmIntrinsics::_getBooleanAcquire:
   case vmIntrinsics::_getByteAcquire:
   case vmIntrinsics::_getShortAcquire:
@@ -640,7 +640,7 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
   case vmIntrinsics::_getLongAcquire:
   case vmIntrinsics::_getFloatAcquire:
   case vmIntrinsics::_getDoubleAcquire:
-  case vmIntrinsics::_putObjectRelease:
+  case vmIntrinsics::_putReferenceRelease:
   case vmIntrinsics::_putBooleanRelease:
   case vmIntrinsics::_putByteRelease:
   case vmIntrinsics::_putShortRelease:
@@ -649,7 +649,7 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
   case vmIntrinsics::_putLongRelease:
   case vmIntrinsics::_putFloatRelease:
   case vmIntrinsics::_putDoubleRelease:
-  case vmIntrinsics::_getObjectOpaque:
+  case vmIntrinsics::_getReferenceOpaque:
   case vmIntrinsics::_getBooleanOpaque:
   case vmIntrinsics::_getByteOpaque:
   case vmIntrinsics::_getShortOpaque:
@@ -658,7 +658,7 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
   case vmIntrinsics::_getLongOpaque:
   case vmIntrinsics::_getFloatOpaque:
   case vmIntrinsics::_getDoubleOpaque:
-  case vmIntrinsics::_putObjectOpaque:
+  case vmIntrinsics::_putReferenceOpaque:
   case vmIntrinsics::_putBooleanOpaque:
   case vmIntrinsics::_putByteOpaque:
   case vmIntrinsics::_putShortOpaque:
@@ -671,7 +671,7 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
   case vmIntrinsics::_getAndAddLong:
   case vmIntrinsics::_getAndSetInt:
   case vmIntrinsics::_getAndSetLong:
-  case vmIntrinsics::_getAndSetObject:
+  case vmIntrinsics::_getAndSetReference:
   case vmIntrinsics::_loadFence:
   case vmIntrinsics::_storeFence:
   case vmIntrinsics::_fullFence:
@@ -685,20 +685,20 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
   case vmIntrinsics::_weakCompareAndSetIntPlain:
   case vmIntrinsics::_weakCompareAndSetIntAcquire:
   case vmIntrinsics::_weakCompareAndSetIntRelease:
-  case vmIntrinsics::_compareAndSetObject:
-  case vmIntrinsics::_weakCompareAndSetObject:
-  case vmIntrinsics::_weakCompareAndSetObjectPlain:
-  case vmIntrinsics::_weakCompareAndSetObjectAcquire:
-  case vmIntrinsics::_weakCompareAndSetObjectRelease:
+  case vmIntrinsics::_compareAndSetReference:
+  case vmIntrinsics::_weakCompareAndSetReference:
+  case vmIntrinsics::_weakCompareAndSetReferencePlain:
+  case vmIntrinsics::_weakCompareAndSetReferenceAcquire:
+  case vmIntrinsics::_weakCompareAndSetReferenceRelease:
   case vmIntrinsics::_compareAndExchangeInt:
   case vmIntrinsics::_compareAndExchangeIntAcquire:
   case vmIntrinsics::_compareAndExchangeIntRelease:
   case vmIntrinsics::_compareAndExchangeLong:
   case vmIntrinsics::_compareAndExchangeLongAcquire:
   case vmIntrinsics::_compareAndExchangeLongRelease:
-  case vmIntrinsics::_compareAndExchangeObject:
-  case vmIntrinsics::_compareAndExchangeObjectAcquire:
-  case vmIntrinsics::_compareAndExchangeObjectRelease:
+  case vmIntrinsics::_compareAndExchangeReference:
+  case vmIntrinsics::_compareAndExchangeReferenceAcquire:
+  case vmIntrinsics::_compareAndExchangeReferenceRelease:
     if (!InlineUnsafeOps) return true;
     break;
   case vmIntrinsics::_getShortUnaligned:

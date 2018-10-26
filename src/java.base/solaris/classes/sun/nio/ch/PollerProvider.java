@@ -26,14 +26,14 @@ package sun.nio.ch;
 
 import java.io.IOException;
 
-public class PollerProvider {
+class PollerProvider {
 
     private static final short POLLIN       = 0x0001;
     private static final short POLLOUT      = 0x0004;
 
     private PollerProvider() { }
 
-    public static boolean available() {
+    static boolean available() {
         return true;
     }
 

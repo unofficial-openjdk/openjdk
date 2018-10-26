@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,17 +26,15 @@ package sun.nio.ch;
 
 import java.io.IOError;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.LockSupport;
 
 import jdk.internal.misc.InnocuousThread;
 import jdk.internal.misc.JavaLangAccess;
 import jdk.internal.misc.SharedSecrets;
 
-public abstract class Poller implements Runnable {
+abstract class Poller implements Runnable {
     private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
     private static final Poller READ_POLLER;
     private static final Poller WRITE_POLLER;
@@ -60,26 +58,46 @@ public abstract class Poller implements Runnable {
         } catch (Exception e) {
             throw new InternalError(e);
         }
-
     }
 
     /**
-     * Poll file descriptor for POLLIN or POLLOUT.
+     * Registers a strand to be unparked when a file descriptor is ready for I/O.
+     *
+     * @throws IllegalArgumentException if the event is not POLLIN or POLLOUT
+     * @throws IllegalStateException if another strand is already registered
+     *         to be unparked when the file descriptor is ready for this event
      */
-    public static void startPoll(int fdVal, int event) {
+    static void register(Strand strand, int fdVal, int event) {
         if (event == Net.POLLIN) {
-            READ_POLLER.register(fdVal);
+            READ_POLLER.register(strand, fdVal);
         } else if (event == Net.POLLOUT) {
-            WRITE_POLLER.register(fdVal);
+            WRITE_POLLER.register(strand, fdVal);
         } else {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Unknown event " + event);
         }
     }
 
     /**
-     * Unpark all strands that are polling the file descriptor.
+     * Deregister a strand so that it will not be unparked when a file descriptor
+     * is ready for I/O. This method is a no-op if the strand is not registered.
+     *
+     * @throws IllegalArgumentException if the event is not POLLIN or POLLOUT
      */
-    public static void stopPoll(int fdVal, int event) {
+    static void deregister(Strand strand, int fdVal, int event) {
+        if (event == Net.POLLIN) {
+            READ_POLLER.deregister(strand, fdVal);
+        } else if (event == Net.POLLOUT) {
+            WRITE_POLLER.deregister(strand, fdVal);
+        } else {
+            throw new IllegalArgumentException("Unknown event " + event);
+        }
+    }
+
+    /**
+     * Stops polling the file descriptor for the given event and unpark any
+     * strand registered to be unparked when the file descriptor is ready for I/O.
+     */
+    static void stopPoll(int fdVal, int event) {
         if (event == Net.POLLIN) {
             READ_POLLER.wakeup(fdVal);
         } else if (event == Net.POLLOUT) {
@@ -90,53 +108,36 @@ public abstract class Poller implements Runnable {
     }
 
     /**
-     * Unpark all strands that are polling the file descriptor.
+     * Stops polling the file descriptor and unpark any strands that are registered
+     * to be unparked when the file descriptor is ready for I/O.
      */
-    public static void stopPoll(int fdVal) {
+    static void stopPoll(int fdVal) {
         stopPoll(fdVal, Net.POLLIN);
         stopPoll(fdVal, Net.POLLOUT);
     }
 
-    private final Map<Integer, Object> map = new ConcurrentHashMap<>();
+    private final Map<Integer, Strand> map = new ConcurrentHashMap<>();
 
     protected Poller() { }
 
-    private void register(int fdVal) {
-        Strand caller = Strand.currentStrand();
-        Object newValue;
-        do {
-            newValue = caller;
-            if (map.putIfAbsent(fdVal, newValue) != null) {
-                // promote value to list of threads
-                newValue = map.computeIfPresent(fdVal, (k, oldValue) -> {
-                    if (oldValue instanceof List) {
-                        @SuppressWarnings("unchecked")
-                        List<Strand> list = (List<Strand>) oldValue;
-                        list.add(caller);
-                        return list;
-                    } else {
-                        List<Strand> list = new CopyOnWriteArrayList<>();
-                        list.add((Strand)oldValue);
-                        list.add(caller);
-                        return list;
-                    }
-                });
-            }
-        } while (newValue == null);
+    private void register(Strand strand, int fdVal) {
+        Strand previous = map.putIfAbsent(fdVal, strand);
+        if (previous != null && previous != strand) {
+            throw new IllegalStateException();
+        }
         implRegister(fdVal);
+    }
+    private void deregister(Strand strand, int fdVal) {
+        if (map.remove(fdVal, strand)) {
+            implDeregister(fdVal);
+        }
     }
 
     private void wakeup(int fdVal) {
-        Object value = map.remove(fdVal);
-        if (value != null) {
+        Strand strand = map.remove(fdVal);
+        if (strand != null) {
             implDeregister(fdVal);
-            if (value instanceof Strand) {
-                LockSupport.unpark((Strand) value);
-            } else {
-                @SuppressWarnings("unchecked")
-                List<Fiber> list = (List<Fiber>) value;
-                list.forEach(LockSupport::unpark);
-            }
+            LockSupport.unpark(strand);
         }
     }
 
@@ -144,25 +145,19 @@ public abstract class Poller implements Runnable {
      * Called by the polling facility when the file descriptor is polled
      */
     final protected void polled(int fdVal) {
-        Object value = map.remove(fdVal);
-        if (value != null) {
-            if (value instanceof Strand) {
-                LockSupport.unpark((Strand) value);
-            } else {
-                @SuppressWarnings("unchecked")
-                List<Fiber> list = (List<Fiber>) value;
-                list.forEach(LockSupport::unpark);
-            }
+        Strand strand = map.remove(fdVal);
+        if (strand != null) {
+            LockSupport.unpark(strand);
         }
     }
 
     /**
-     * Registers the file descriptor
+     * Register the file descriptor
      */
     abstract protected void implRegister(int fdVal);
 
     /**
-     * Deletes or disarms the file descriptor
+     * Deregister (or disarm) the file descriptor
      */
     abstract protected boolean implDeregister(int fdVal);
 }
