@@ -82,15 +82,19 @@ public interface SelChImpl extends Channel {
      * the thread or fiber to park.
      */
     default void park(int event, long nanos) throws IOException {
-        Strand s = Strand.currentStrand();
-        if (PollerProvider.available() && (s instanceof Fiber)) {
-            Poller.startPoll(getFDVal(), event);
+        Strand strand = Strand.currentStrand();
+        if (PollerProvider.available() && (strand instanceof Fiber)) {
+            Poller.register(strand, getFDVal(), event);
             if (isOpen()) {
                 JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
-                if (nanos == 0) {
-                    jla.parkFiber();
-                } else {
-                    jla.parkFiber(nanos);
+                try {
+                    if (nanos == 0) {
+                        jla.parkFiber();
+                    } else {
+                        jla.parkFiber(nanos);
+                    }
+                } finally {
+                    Poller.deregister(strand, getFDVal(), event);
                 }
             }
         } else {

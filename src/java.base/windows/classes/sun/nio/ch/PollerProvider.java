@@ -26,10 +26,10 @@ package sun.nio.ch;
 
 import java.io.IOException;
 
-public class PollerProvider {
+class PollerProvider {
     private PollerProvider() { }
 
-    public static boolean available() {
+    static boolean available() {
         return false;
     }
 

@@ -108,14 +108,18 @@ public class SocketStreams implements Closeable {
      * specified waiting time, unless the permit is available.
      */
     private void park(int event, long nanos) throws IOException {
-        Strand s = Strand.currentStrand();
-        if (PollerProvider.available() && (s instanceof Fiber)) {
-            Poller.startPoll(fdVal, event);
+        Strand strand = Strand.currentStrand();
+        if (PollerProvider.available() && (strand instanceof Fiber)) {
+            Poller.register(strand, fdVal, event);
             if (isOpen()) {
-                if (nanos == 0) {
-                    JLA.parkFiber();
-                } else {
-                    JLA.parkFiber(nanos);
+                try {
+                    if (nanos == 0) {
+                        JLA.parkFiber();
+                    } else {
+                        JLA.parkFiber(nanos);
+                    }
+                } finally{
+                    Poller.deregister(strand, fdVal, event);
                 }
             }
         } else {
