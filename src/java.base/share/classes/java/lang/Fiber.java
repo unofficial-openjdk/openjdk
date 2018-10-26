@@ -881,9 +881,9 @@ public final class Fiber extends Strand {
 
         CarrierThread(ForkJoinPool pool) {
             super(CARRIER_THREADGROUP, pool);
-            UNSAFE.putObject(this, CONTEXTCLASSLOADER, ClassLoader.getSystemClassLoader());
-            UNSAFE.putObject(this, INHERITABLETHREADLOCALS, null);
-            UNSAFE.putObjectRelease(this, INHERITEDACCESSCONTROLCONTEXT, INNOCUOUS_ACC);
+            UNSAFE.putReference(this, CONTEXTCLASSLOADER, ClassLoader.getSystemClassLoader());
+            UNSAFE.putReference(this, INHERITABLETHREADLOCALS, null);
+            UNSAFE.putReferenceRelease(this, INHERITEDACCESSCONTROLCONTEXT, INNOCUOUS_ACC);
         }
 
         @Override
