@@ -510,10 +510,12 @@ JVM_END
 // java.lang.Throwable //////////////////////////////////////////////////////
 
 
-JVM_ENTRY(void, JVM_FillInStackTrace(JNIEnv *env, jobject receiver))
+JVM_ENTRY(void, JVM_FillInStackTrace(JNIEnv *env, jobject receiver, jobject contScope))
   JVMWrapper("JVM_FillInStackTrace");
   Handle exception(thread, JNIHandles::resolve_non_null(receiver));
-  java_lang_Throwable::fill_in_stack_trace(exception);
+  Handle scope(thread, JNIHandles::resolve(contScope));
+  
+  java_lang_Throwable::fill_in_stack_trace(exception, scope);
 JVM_END
 
 

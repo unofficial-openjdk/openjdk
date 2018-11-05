@@ -346,7 +346,7 @@ class vframeStream : public vframeStreamCommon {
   // Constructors
   vframeStream(JavaThread* thread, bool stop_at_java_call_stub = false);
 
-  vframeStream(JavaThread* thread, Handle continuation_scope);
+  vframeStream(JavaThread* thread, Handle continuation_scope, bool stop_at_java_call_stub = false);
 
   // top_frame may not be at safepoint, start with sender
   vframeStream(JavaThread* thread, frame top_frame, bool stop_at_java_call_stub = false);

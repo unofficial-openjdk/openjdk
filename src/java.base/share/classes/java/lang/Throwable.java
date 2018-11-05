@@ -792,15 +792,36 @@ public class Throwable implements Serializable {
      * @see     java.lang.Throwable#printStackTrace()
      */
     public synchronized Throwable fillInStackTrace() {
+        return fillInStackTrace(null);
+    }
+
+    /**
+     * Fills in the execution stack trace. This method records within this
+     * {@code Throwable} object information about the current state of
+     * the stack frames for the current thread in the given {@link ContinuationScope}.
+     * 
+     * <p>If this method is called not inside a continuation with the given scope,
+     * the entire thread stack is returned.
+     *
+     * <p>If the stack trace of this {@code Throwable} {@linkplain
+     * Throwable#Throwable(String, Throwable, boolean, boolean) is not
+     * writable}, calling this method has no effect.
+     *
+     * @param  scope The scope of the continuation whose stack we want to capture; 
+     *               {@code null} for the entire thread stack.
+     * @return  a reference to this {@code Throwable} instance.
+     * @see     java.lang.Throwable#printStackTrace()
+     */
+    public synchronized Throwable fillInStackTrace(ContinuationScope scope) {
         if (stackTrace != null ||
             backtrace != null /* Out of protocol state */ ) {
-            fillInStackTrace(0);
+            fillInStackTrace(scope, 0);
             stackTrace = UNASSIGNED_STACK;
         }
         return this;
     }
 
-    private native Throwable fillInStackTrace(int dummy);
+    private native Throwable fillInStackTrace(ContinuationScope scope, int dummy);
 
     /**
      * Provides programmatic access to the stack trace information printed by

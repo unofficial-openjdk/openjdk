@@ -178,7 +178,7 @@ JVM_InitializeFromArchive(JNIEnv* env, jclass cls);
  * java.lang.Throwable
  */
 JNIEXPORT void JNICALL
-JVM_FillInStackTrace(JNIEnv *env, jobject throwable);
+JVM_FillInStackTrace(JNIEnv *env, jobject throwable, jobject contScope);
 
 /*
  * java.lang.StackTraceElement

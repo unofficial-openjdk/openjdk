@@ -89,7 +89,7 @@ public class Scoped {
                         StackWalker walker = StackWalker.getInstance();
                         List<String> frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
                 
-                        assertEquals(frames, Arrays.asList("lambda$bar$6", "enter0", "enter", "run", "bar", "lambda$foo$1", "enter0", "enter", "run", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
+                        assertEquals(frames.subList(0, 15), Arrays.asList("lambda$bar$6", "enter0", "enter", "run", "bar", "lambda$foo$1", "enter0", "enter", "run", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
                 
                         walker = StackWalker.getInstance(C);
                         frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
