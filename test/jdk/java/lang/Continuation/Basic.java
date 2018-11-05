@@ -81,7 +81,7 @@ public class Basic {
         StackWalker walker = StackWalker.getInstance();
         List<String> frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
 
-        assertEquals(frames, Arrays.asList("bar", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
+        assertEquals(frames.subList(0, 7), Arrays.asList("bar", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
 
         walker = StackWalker.getInstance(FOO);
         frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
@@ -104,6 +104,11 @@ public class Basic {
     static class LoomException extends RuntimeException {
         public LoomException(String message) {
             super(message);
+        }
+
+        @Override
+        public Throwable fillInStackTrace() {
+            return fillInStackTrace(FOO);
         }
     }
 
@@ -142,6 +147,12 @@ public class Basic {
             fail("Exception not thrown.");
         } catch (LoomException e) {
             assertEquals(e.getMessage(), "Loom exception!");
+
+            StackTraceElement[] stes = e.getStackTrace();
+            // System.out.println(Arrays.toString(stes));
+            assertEquals(stes[0].getMethodName(), "barThrow");
+            assertEquals(stes[stes.length - 1].getClassName(), "java.lang.Continuation");
+            assertEquals(stes[stes.length - 1].getMethodName(), "enter0");
         }
     }
 

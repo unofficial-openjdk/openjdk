@@ -2367,7 +2367,7 @@ void java_lang_Throwable::java_printStackTrace(Handle throwable, TRAPS) {
                           THREAD);
 }
 
-void java_lang_Throwable::fill_in_stack_trace(Handle throwable, const methodHandle& method, TRAPS) {
+void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope, const methodHandle& method, TRAPS) {
   if (!StackTraceInThrowable) return;
   ResourceMark rm(THREAD);
 
@@ -2402,7 +2402,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, const methodHand
   // The "ASSERT" here is to verify this method generates the exactly same stack
   // trace as utilizing vframe.
 #ifdef ASSERT
-  vframeStream st(thread); // st(thread, FIBER_SCOPE); -- LOOM TODO
+  vframeStream st(thread, contScope);
   methodHandle st_method(THREAD, st.method());
 #endif
   int total_count = 0;
@@ -2425,7 +2425,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, const methodHand
       bci = stream.read_bci();
     } else {
       if (fr.is_first_frame()) break;
-      // if (Continuation::is_scope_bottom(FIBER_SCOPE, fr, &map)) break;  -- LOOM TODO
+      if (Continuation::is_scope_bottom(contScope(), fr, &map)) break;
       address pc = fr.pc();
       if (fr.is_interpreted_frame()) {
         address bcp;
@@ -2460,14 +2460,9 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, const methodHand
       }
     }
 #ifdef ASSERT
-    assert(st_method() == method && st.bci() == bci,
-           "Wrong stack trace");
+    assert(st_method() == method && st.bci() == bci, "Wrong stack trace");
     st.next();
-    // vframeStream::method isn't GC-safe so store off a copy
-    // of the Method* in case we GC.
-    if (!st.at_end()) {
-      st_method = st.method();
-    }
+    if (!st.at_end()) st_method = st.method();// vframeStream::method isn't GC-safe so store off a copy of the Method* in case we GC.
 #endif
 
     // the format of the stacktrace will be:
@@ -2511,7 +2506,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, const methodHand
   set_depth(throwable(), total_count);
 }
 
-void java_lang_Throwable::fill_in_stack_trace(Handle throwable, const methodHandle& method) {
+void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope, const methodHandle& method) {
   // No-op if stack trace is disabled
   if (!StackTraceInThrowable) {
     return;
@@ -2525,7 +2520,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, const methodHand
   PRESERVE_EXCEPTION_MARK;
 
   JavaThread* thread = JavaThread::active();
-  fill_in_stack_trace(throwable, method, thread);
+  fill_in_stack_trace(throwable, contScope, method, thread);
   // ignore exceptions thrown during stack trace filling
   CLEAR_PENDING_EXCEPTION;
 }

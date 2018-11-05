@@ -501,10 +501,10 @@ vframeStream::vframeStream(JavaThread* thread, frame top_frame,
   }
 }
 
-vframeStream::vframeStream(JavaThread* thread, Handle continuation_scope) 
+vframeStream::vframeStream(JavaThread* thread, Handle continuation_scope, bool stop_at_java_call_stub) 
  : vframeStreamCommon(RegisterMap(thread, false, true)) {
 
-  _stop_at_java_call_stub = true;
+  _stop_at_java_call_stub = stop_at_java_call_stub;
   _continuation_scope = continuation_scope;
   
   if (!thread->has_last_Java_frame()) {
