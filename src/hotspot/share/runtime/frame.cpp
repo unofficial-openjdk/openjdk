@@ -80,9 +80,9 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
 
   _cont = map->_cont;
   pd_initialize_from(map);
-  if (update_map()) {
+  if (update_map() || update_link()) {
     for(int i = 0; i < location_valid_size; i++) {
-      LocationValidType bits = !update_map() ? 0 : map->_location_valid[i];
+      LocationValidType bits = map->_location_valid[i];
       _location_valid[i] = bits;
       // for whichever bits are set, pull in the corresponding map->_location
       int j = i*location_valid_type_size;
@@ -98,6 +98,43 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
   }
 }
 
+bool RegisterMap::equals(RegisterMap& other) {
+  if (_update_map != other._update_map) {
+    return false;
+  }
+  if (_update_link != other._update_link) {
+    return false;
+  }
+  if (_include_argument_oops != other._include_argument_oops) {
+    return false;
+  }
+  if (_validate_oops != other._validate_oops) {
+    return false;
+  }
+  if (_walk_cont != other._walk_cont) {
+    return false;
+  }
+
+  for (int i = 0; i < location_valid_size; ++i) {
+    if (_location_valid[i] != other._location_valid[i]) {
+      return false;
+    }
+
+    LocationValidType bits = _location_valid[i];
+    int j = i*location_valid_type_size;
+    while (bits != 0) {
+      if ((bits & 1) != 0) {
+        if (_location[j] != other._location[j]) {
+          return false;
+        }
+      }
+      bits >>= 1;
+      j += 1;
+    }
+  }
+  return true;
+}
+
 void RegisterMap::set_cont(Thread* thread, oop cont) {
   // tty->print_cr("set_cont: %d", cont != NULL);
   _cont = cont != NULL ? Handle(thread, cont) : Handle();
@@ -105,7 +142,7 @@ void RegisterMap::set_cont(Thread* thread, oop cont) {
 
 void RegisterMap::clear() {
   set_include_argument_oops(true);
-  if (_update_map) {
+  if (update_map() || update_link()) {
     for(int i = 0; i < location_valid_size; i++) {
       _location_valid[i] = 0;
     }
