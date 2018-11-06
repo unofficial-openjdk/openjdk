@@ -54,10 +54,9 @@
 #include "utilities/decoder.hpp"
 #include "utilities/formatBuffer.hpp"
 
-RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool walk_cont, bool validate_oops, bool update_link) {
+RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool walk_cont, bool validate_oops) {
   _thread         = thread;
   _update_map     = update_map;
-  _update_link    = update_link;
   clear();
   debug_only(_update_for_id = NULL;)
   _validate_oops = validate_oops;
@@ -72,7 +71,6 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
   assert(map != NULL, "RegisterMap must be present");
   _thread                = map->thread();
   _update_map            = map->update_map();
-  _update_link           = map->update_link();
   _include_argument_oops = map->include_argument_oops();
   debug_only(_update_for_id = map->_update_for_id;)
   _validate_oops = map->_validate_oops;
@@ -80,7 +78,7 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
 
   _cont = map->_cont;
   pd_initialize_from(map);
-  if (update_map() || update_link()) {
+  if (update_map()) {
     for(int i = 0; i < location_valid_size; i++) {
       LocationValidType bits = map->_location_valid[i];
       _location_valid[i] = bits;
@@ -100,9 +98,6 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
 
 bool RegisterMap::equals(RegisterMap& other) {
   if (_update_map != other._update_map) {
-    return false;
-  }
-  if (_update_link != other._update_link) {
     return false;
   }
   if (_include_argument_oops != other._include_argument_oops) {
@@ -142,7 +137,7 @@ void RegisterMap::set_cont(Thread* thread, oop cont) {
 
 void RegisterMap::clear() {
   set_include_argument_oops(true);
-  if (update_map() || update_link()) {
+  if (update_map()) {
     for(int i = 0; i < location_valid_size; i++) {
       _location_valid[i] = 0;
     }
