@@ -473,89 +473,11 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
   return frame(sender_sp, unextended_sp, link(), sender_pc);
 }
 
-//------------------------------------------------------------------------------
-// frame::sender_for_compiled_frame
-frame frame::sender_for_compiled_frame(RegisterMap* map, CodeBlobLookup* lookup) const {
-  assert(map != NULL, "map must be set");
-
-  if (map->walk_cont() && map->cont() != NULL) { // already in an h-stack
-    return Continuation::sender_for_compiled_frame(*this, map, lookup);
-  }
-
-  // frame owned by optimizing compiler
-  assert(_cb->frame_size() >= 0, "must have non-zero frame size");
-  intptr_t* sender_sp = unextended_sp() + _cb->frame_size();
-  intptr_t* unextended_sp = sender_sp;
-
-  assert (!is_compiled_frame() || sender_sp == real_fp(), "sender_sp: " INTPTR_FORMAT " real_fp: " INTPTR_FORMAT, p2i(sender_sp), p2i(real_fp()));
-
-  // On Intel the return_address is always the word on the stack
-  address sender_pc = (address) *(sender_sp-1);
-
-  // This is the saved value of EBP which may or may not really be an FP.
-  // It is only an FP if the sender is an interpreter frame (or C1?).
-  intptr_t** saved_fp_addr = (intptr_t**) (sender_sp - frame::sender_sp_offset);
-
-  if (map->update_map()) {
-    // Tell GC to use argument oopmaps for some runtime stubs that need it.
-    // For C1, the runtime stub might not have oop maps, so set this flag
-    // outside of update_register_map.
-    map->set_include_argument_oops(_cb->caller_must_gc_arguments(map->thread()));
-    if (!is_compiled_frame() && oop_map() != NULL) { // compiled frames do not use callee-saved registers
-      _oop_map->update_register_map(this, map);
-    }
-    assert (!is_compiled_frame() || oop_map() == NULL || OopMapStream(oop_map(), OopMapValue::callee_saved_value).is_done(), "callee-saved value in compiled frame");
-
-    // Since the prolog does the save and restore of EBP there is no oopmap
-    // for it so we must fill in its location as if there was an oopmap entry
-    // since if our caller was compiled code there could be live jvm state in it.
-    update_map_with_saved_link(map, saved_fp_addr);
-  } else if (map->update_link()) {
-    update_map_with_saved_link(map, saved_fp_addr);
-  }
-
-  if (sender_sp == sp()) {
-    tty->print_cr("sender_sp: " INTPTR_FORMAT " sp: " INTPTR_FORMAT, p2i(sender_sp), p2i(sp()));
-    print_on(tty);
-  }
-  assert(sender_sp != sp(), "must have changed");
-
-  if (Continuation::is_return_barrier_entry(sender_pc)) {
-    if (map->walk_cont()) // about to walk into an h-stack
-      return Continuation::top_frame(*this, map);
-    else
-      sender_pc = Continuation::fix_continuation_bottom_sender(this, map, sender_pc);
-  }
-
-  if (lookup != NULL) {
-    CodeBlob* sender_cb = lookup->find_blob(sender_pc);
-    if (sender_cb != NULL) {
-      return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc, sender_cb);
-    }
-  }
-
-  return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc);
-}
-
 
 //------------------------------------------------------------------------------
 // frame::sender
-frame frame::sender(RegisterMap* map, CodeBlobLookup* lookup) const {
-  // Default is we done have to follow them. The sender_for_xxx will
-  // update it accordingly
-  map->set_include_argument_oops(false);
-
-  if (is_entry_frame())       return sender_for_entry_frame(map);
-  if (is_interpreted_frame()) return sender_for_interpreter_frame(map);
-
-  assert(_cb == CodeCache::find_blob(pc()), "Must be the same");
-
-  if (_cb != NULL) {
-    return sender_for_compiled_frame(map, lookup);
-  }
-  // Must be native-compiled frame, i.e. the marshaling code for native
-  // methods that exists in the core system.
-  return frame(sender_sp(), link(), sender_pc());
+frame frame::sender(RegisterMap* map) const {
+  return frame_sender<CodeCache>(map);
 }
 
 bool frame::is_interpreted_frame_valid(JavaThread* thread) const {

@@ -67,7 +67,7 @@ public:
 
   static frame top_frame(const frame& callee, RegisterMap* map);
   static frame sender_for_interpreter_frame(const frame& callee, RegisterMap* map);
-  static frame sender_for_compiled_frame(const frame& callee, RegisterMap* map, CodeBlobLookup* lookup);
+  static frame sender_for_compiled_frame(const frame& callee, RegisterMap* map);
 
   // access frame data
   static address usp_offset_to_location(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes);

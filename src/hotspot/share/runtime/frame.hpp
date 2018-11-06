@@ -152,7 +152,10 @@ class frame {
   int frame_size(RegisterMap* map) const;
 
   // returns the sending frame
-  frame sender(RegisterMap* map, CodeBlobLookup* lookup = NULL) const;
+  frame sender(RegisterMap* map) const;
+
+  template<typename LOOKUP>
+  frame frame_sender(RegisterMap* map) const;
 
   // for Profiling - acting on another frame. walks sender frames
   // if valid.
@@ -169,7 +172,8 @@ class frame {
  private:
   // Helper methods for better factored code in frame::sender
   frame sender_for_entry_frame(RegisterMap* map) const;
-  frame sender_for_compiled_frame(RegisterMap* map, CodeBlobLookup* lookup = NULL) const;
+  template <typename LOOKUP>
+  frame sender_for_compiled_frame(RegisterMap* map) const;
   frame sender_for_interpreter_frame(RegisterMap* map) const;
   frame sender_for_native_frame(RegisterMap* map) const;
 

@@ -113,6 +113,8 @@ class RegisterMap : public StackObj {
     check_location_valid();
   }
 
+  bool equals(RegisterMap& other);
+
   // Called by an entry frame.
   void clear();
 
