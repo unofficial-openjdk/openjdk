@@ -2028,7 +2028,7 @@ public:
 
   res_freeze freeze(frame f, RegisterMap& regmap) {
     RegisterMap map = regmap;
-    map.set_update_link(true);
+    assert (map.update_map(), "RegisterMap not set to update");
     map.set_include_argument_oops(false);
     CallerInfo caller;
 
@@ -2525,8 +2525,7 @@ JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
   oop cont = get_continuation(thread);
   assert(cont != NULL && oopDesc::is_oop_or_null(cont), "Invalid cont: " INTPTR_FORMAT, p2i((void*)cont));
 
-  RegisterMap map(thread, false);
-  map.set_update_link(true);
+  RegisterMap map(thread, true);
   map.set_include_argument_oops(false);
   // Note: if the doYield stub does not have its own frame, we may need to consider deopt here, especially if yield is inlinable
   frame f = thread->last_frame(); // this is the doYield stub frame. last_frame is set up by the call_VM infrastructure
@@ -2773,8 +2772,7 @@ static frame thaw_frame(ContMirror& cont, hframe& hf, int oop_index, frame& send
   //   deoptimized = false;
   // }
 
-  RegisterMap map(cont.thread(), false, false, false);
-  map.set_update_link(true);
+  RegisterMap map(cont.thread(), true, false, false);
   map.set_include_argument_oops(false);
 
   bool is_interpreted = hf.is_interpreted_frame();
@@ -2913,10 +2911,9 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
   log_trace(jvmcont)("top_hframe before (thaw):");
   if (log_is_enabled(Trace, jvmcont)) hf.print_on(cont, tty);
 
-  RegisterMap map(thread, false, false, false);
+  RegisterMap map(thread, true, false, false);
   map.set_include_argument_oops(false);
-  map.set_update_link(true);
-  assert (map.update_link(), "RegisterMap not set to update");
+  assert (map.update_map(), "RegisterMap not set to update");
 
   DEBUG_ONLY(int orig_num_frames = cont.num_frames();)
   int frame_count = 0;

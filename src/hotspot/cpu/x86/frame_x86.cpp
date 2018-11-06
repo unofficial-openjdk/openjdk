@@ -457,7 +457,7 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
   intptr_t* unextended_sp = interpreter_frame_sender_sp();
 
 #if COMPILER2_OR_JVMCI
-  if (map->update_map() || map->update_link()) {
+  if (map->update_map()) {
     update_map_with_saved_link(map, (intptr_t**) addr_at(link_offset));
   }
 #endif // COMPILER2_OR_JVMCI
