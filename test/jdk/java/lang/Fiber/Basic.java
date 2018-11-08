@@ -34,6 +34,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.*;
 import java.util.stream.Stream;
+import java.nio.channels.Selector;
 
 import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
@@ -1409,6 +1410,94 @@ public class Basic {
         assertTrue(completed.get());
     }
 
+
+    // -- Thread.getStackTrace --
+
+    // runnable (mounted)
+    public void testThreadGetStackTrace1() throws Exception {
+        var ref = new AtomicReference<Thread>();
+        var sel = Selector.open();
+        new Fiber(() -> doSelect(ref, sel)).schedule();
+        Thread thread = waitForValue(ref);
+        try {
+            assertTrue(thread.getState() == Thread.State.RUNNABLE);
+            StackTraceElement[] stack = thread.getStackTrace();
+            assertTrue(contains(stack, "doSelect"));
+        } finally {
+            sel.close();
+        }
+    }
+
+    // block in Selector.select after recording current thread
+    private void doSelect(AtomicReference<Thread> ref, Selector sel) {
+        ref.set(Thread.currentThread());
+        try { sel.select(); } catch (Exception e) { }
+    }
+
+
+    // waiting (mounted)
+    public void testThreadGetStackTrace2() throws Exception {
+        var lock = new Object();
+        var ref = new AtomicReference<Thread>();
+        new Fiber(() -> {
+            synchronized (lock) {
+                ref.set(Thread.currentThread());
+                try { lock.wait(); } catch (InterruptedException e) { }
+            }
+        }).schedule();
+
+        // wait for carrier thread to block
+        Thread thread = waitForValue(ref);
+        while (thread.getState() != Thread.State.WAITING) {
+            Thread.sleep(20);
+        }
+
+        try {
+            StackTraceElement[] stack = thread.getStackTrace();
+            assertTrue(contains(stack, "Object.wait"));
+        } finally {
+            synchronized (lock) {
+                lock.notifyAll();
+            }
+        }
+    }
+
+    // parked (unmounted)
+    public void testThreadGetStackTrace3() throws Exception {
+        var ref = new AtomicReference<Thread>();
+        var fiber = new Fiber(() -> {
+            ref.set(Thread.currentThread());
+            LockSupport.park();
+        }).schedule();
+
+        // wait for fiber to park
+        Thread thread = waitForValue(ref);
+        while (thread.getState() != Thread.State.WAITING) {
+            Thread.sleep(20);
+        }
+
+        try {
+            StackTraceElement[] stack = thread.getStackTrace();
+            assertTrue(contains(stack, "LockSupport.park"));
+        } finally {
+            LockSupport.unpark(fiber);
+        }
+    }
+
+    // terminated
+    public void testThreadGetStackTrace4() {
+        var ref = new AtomicReference<Thread>();
+        var fiber = new Fiber(() -> ref.set(Thread.currentThread())).schedule();
+        fiber.await();
+        StackTraceElement[] stack = ref.get().getStackTrace();
+        assertTrue(stack.length == 0);
+    }
+
+    private boolean contains(StackTraceElement[] stack, String expected) {
+        return Stream.of(stack)
+                .map(Object::toString)
+                .anyMatch(s -> s.contains(expected));
+    }
 
     // -- ThreadGroup --
 

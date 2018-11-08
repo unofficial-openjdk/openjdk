@@ -28,6 +28,7 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
+import sun.security.util.SecurityConstants;
 
 /**
  * Represents a Thread returned by Thread.currentThread() when invoked in the
@@ -140,6 +141,16 @@ class ShadowThread extends Thread {
             }
         }
         return oldValue;
+    }
+
+    @Override
+    public StackTraceElement[] getStackTrace() {
+        SecurityManager sm;
+        if (this != Thread.currentThread()
+            && ((sm = System.getSecurityManager()) != null)) {
+            sm.checkPermission(SecurityConstants.GET_STACK_TRACE_PERMISSION);
+        }
+        return fiber.getStackTrace();
     }
 
     @Override

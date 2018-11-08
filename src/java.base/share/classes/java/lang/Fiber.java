@@ -24,6 +24,7 @@
  */
 package java.lang;
 
+import java.lang.StackWalker.StackFrame;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.security.AccessControlContext;
@@ -31,10 +32,12 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.security.ProtectionDomain;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Exchanger;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ForkJoinPool;
@@ -47,6 +50,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+
+import jdk.internal.misc.InnocuousThread;
 import jdk.internal.misc.Unsafe;
 import sun.security.action.GetPropertyAction;
 
@@ -102,6 +107,9 @@ public final class Fiber extends Strand {
 
     // cancellation
     private volatile boolean cancelled;
+
+    // task to execute after continue (for capturing stack trace and self-suspend)
+    private volatile Runnable afterContinueTask;
 
     // java.lang.Thread integration
     private volatile ShadowThread shadowThread;  // created lazily
@@ -292,6 +300,7 @@ public final class Fiber extends Strand {
         if (st != null) st.onMount(thread);
 
         // set the fiber so that Thread.currentThread() returns the Fiber object
+        assert thread.getFiber() == null;
         thread.setFiber(this);
 
         if (notifyJvmtiEvents) {
@@ -485,7 +494,15 @@ public final class Fiber extends Strand {
             return;
         }
 
-        Continuation.yield(FIBER_SCOPE);
+        // yield until continued on a carrier thread
+        boolean retry;
+        do {
+            Continuation.yield(FIBER_SCOPE);
+            if (retry = (carrierThread == null)) {
+                Runnable hook = this.afterContinueTask;
+                if (hook != null) hook.run();
+            }
+        } while (retry);
 
         // continued
         assert stateGet() == ST_RUNNABLE;
@@ -824,6 +841,148 @@ public final class Fiber extends Strand {
         return termination;
     }
 
+    // -- stack trace support --
+
+    private static final StackWalker STACK_WALKER = StackWalker.getInstance(FIBER_SCOPE);
+    private static final StackTraceElement[] EMPTY_STACK = new StackTraceElement[0];
+
+    /**
+     * Returns an array of stack trace elements representing the stack trace
+     * of this fiber.
+     */
+    StackTraceElement[] getStackTrace() {
+        if (Strand.currentStrand() == this) {
+            return STACK_WALKER
+                    .walk(s -> s.map(StackFrame::toStackTraceElement)
+                    .toArray(StackTraceElement[]::new));
+        } else {
+            // target fiber may be mounted or unmounted
+            StackTraceElement[] stackTrace;
+            do {
+                Thread carrier = carrierThread;
+                if (carrier != null) {
+                    // mounted
+                    stackTrace = tryGetStackTrace(carrier);
+                } else {
+                    // not mounted
+                    stackTrace = tryGetStackTrace();
+                }
+                if (stackTrace == null) {
+                    Thread.onSpinWait();
+                }
+            } while (stackTrace == null);
+            return stackTrace;
+        }
+    }
+
+    /**
+     * Returns the stack trace for this fiber if it mounted on the given carrier
+     * thread. If the fiber parks or is re-scheduled to another thread then
+     * null is returned.
+     */
+    private StackTraceElement[] tryGetStackTrace(Thread carrier) {
+        assert carrier != Thread.currentCarrierThread();
+
+        StackTraceElement[] stackTrace;
+        carrier.suspendThread();
+        try {
+            // get stack trace if fiber is still mounted on the suspended
+            // carrier thread. Skip if the fiber is parking as the
+            // continuation frames may or may not be on the thread stack.
+            if (carrierThread == carrier && stateGet() != ST_PARKING) {
+                PrivilegedAction<StackTraceElement[]> pa = carrier::getStackTrace;
+                stackTrace = AccessController.doPrivileged(pa);
+            } else {
+                stackTrace = null;
+            }
+        } finally {
+            carrier.resumeThread();
+        }
+
+        if (stackTrace != null) {
+            // return stack trace elements up to Fiber.runContinuation frame
+            int index = 0;
+            int runMethod = -1;
+            while (index < stackTrace.length && runMethod < 0) {
+                StackTraceElement e = stackTrace[index];
+                if ("java.base".equals(e.getModuleName())
+                        && "java.lang.Fiber".equals(e.getClassName())
+                        && "runContinuation".equals(e.getMethodName())) {
+                    runMethod = index;
+                } else {
+                    index++;
+                }
+            }
+            if (runMethod >= 0) {
+                stackTrace = Arrays.copyOf(stackTrace, runMethod + 1);
+            }
+        }
+
+        return stackTrace;
+    }
+
+    /**
+     * Returns the stack trace for this fiber if it not mounted. If the fiber
+     * is mounted then null is returned.
+     */
+    private StackTraceElement[] tryGetStackTrace() {
+        class CaptureStack implements Runnable {
+            StackTraceElement[] stack;
+            public void run() {
+                stack = STACK_WALKER.walk(s -> s.skip(1)  // skip this frame
+                        .map(StackFrame::toStackTraceElement)
+                        .toArray(StackTraceElement[]::new));
+            }
+        }
+        CaptureStack capture = new CaptureStack();
+        if (tryRun(capture)) {
+            return capture.stack;
+        } else {
+            short state = stateGet();
+            if (state == ST_NEW || state == ST_TERMINATED) {
+                return EMPTY_STACK;
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * Continues a parked fiber on the current thread to execute the given task.
+     * The task is executed without mounting the fiber. Returns true if the task
+     * was executed, false if the task could not be executed because the fiber
+     * is not parked.
+     *
+     * @throws IllegalCallerException if called from a fiber
+     */
+    private boolean tryRun(Runnable task) {
+        if (Thread.currentCarrierThread().getFiber() != null) {
+            throw new IllegalCallerException();
+        }
+        if (stateCompareAndSet(ST_PARKED, ST_RUNNABLE)) {
+            assert carrierThread == null && afterContinueTask == null;
+            afterContinueTask = task;
+            try {
+                cont.run();
+            } finally {
+                afterContinueTask = null;
+                int oldState = stateGetAndSet(ST_PARKED);
+                assert carrierThread == null;
+                assert oldState == ST_RUNNABLE;
+                assert !cont.isDone();
+            }
+
+            // fiber may have been unparked while running on this thread so we
+            // unpark to avoid a lost unpark. This will appear as a spurious
+            // (but harmless) wakeup
+            unpark();
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     // -- wrappers for VarHandle methods --
 
     private short stateGet() {
@@ -843,6 +1002,76 @@ public final class Fiber extends Strand {
     }
 
     // -- JVM TI support --
+
+    /**
+     * Returns a thread with the fiber's stack mounted. The thread is suspended
+     * or close to suspending itself. Returns {@code null} if the fiber is not
+     * parked or cannot be mounted.
+     *
+     * @apiNote This method is for use by JVM TI and debugging operations only
+     */
+    Thread tryMountAndSuspend() {
+        var exchanger = new Exchanger<Boolean>();
+        var thread = InnocuousThread.newThread(() -> {
+            boolean continued = tryRun(() -> {
+                exchangeUninterruptibly(exchanger, true);
+                Thread.currentCarrierThread().suspendThread();
+            });
+            if (!continued) {
+                exchangeUninterruptibly(exchanger, false);
+            }
+        });
+        thread.setDaemon(true);
+        thread.start();
+        boolean continued = exchangeUninterruptibly(exchanger, true);
+        if (continued) {
+            return thread;
+        } else {
+            joinUninterruptibly(thread);
+            return null;
+        }
+    }
+
+    /**
+     * Returns true if the fiber is mounted on a carrier thread with the
+     * continuation stack.
+     *
+     * @apiNote This method is for use by JVM TI and debugging operations only
+     */
+    boolean isMountedWithStack() {
+        return (carrierThread != null) && (stateGet() != ST_PARKING);
+    }
+
+    private static <V> V exchangeUninterruptibly(Exchanger<V> exchanger, V x) {
+        V y = null;
+        boolean interrupted = false;
+        while (y == null) {
+            try {
+                y = exchanger.exchange(x);
+            } catch (InterruptedException e) {
+                interrupted = true;
+            }
+        }
+        if (interrupted) {
+            Thread.currentThread().interrupt();
+        }
+        return y;
+    }
+
+    private static void joinUninterruptibly(Thread thread) {
+        boolean interrupted = false;
+        for (;;) {
+            try {
+                thread.join();
+                break;
+            } catch (InterruptedException e) {
+                interrupted = true;
+            }
+        }
+        if (interrupted) {
+            Thread.currentThread().interrupt();
+        }
+    }
 
     private static volatile boolean notifyJvmtiEvents;  // set by VM
     private static native void notifyFiberScheduled(Thread t, Fiber f);

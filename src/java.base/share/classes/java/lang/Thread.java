@@ -1219,6 +1219,10 @@ class Thread extends Strand implements Runnable {
         suspend0();
     }
 
+    void suspendThread() {
+        suspend0();
+    }
+
     /**
      * Resumes a suspended thread.
      * <p>
@@ -1246,6 +1250,10 @@ class Thread extends Strand implements Runnable {
         checkAccess();
         if (this instanceof ShadowThread)
             throw new UnsupportedOperationException();
+        resume0();
+    }
+
+    void resumeThread() {
         resume0();
     }
 
