@@ -453,6 +453,7 @@ JVMCIEnv::CodeInstallResult JVMCIEnv::register_method(
                                 Dependencies* dependencies,
                                 JVMCIEnv* env,
                                 int compile_id,
+                                bool has_monitors,
                                 bool has_unsafe_access,
                                 bool has_wide_vector,
                                 Handle installed_code,
@@ -526,6 +527,7 @@ JVMCIEnv::CodeInstallResult JVMCIEnv::register_method(
       } else {
         nm->set_has_unsafe_access(has_unsafe_access);
         nm->set_has_wide_vectors(has_wide_vector);
+        nm->set_has_monitors(has_monitors);
 
         // Record successful registration.
         // (Put nm into the task handle *before* publishing to the Java heap.)

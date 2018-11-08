@@ -168,6 +168,7 @@ public:
                        Dependencies*             dependencies,
                        JVMCIEnv*                 env,
                        int                       compile_id,
+                       bool                      has_monitors,
                        bool                      has_unsafe_access,
                        bool                      has_wide_vector,
                        Handle                    installed_code,
