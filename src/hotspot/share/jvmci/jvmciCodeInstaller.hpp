@@ -157,6 +157,7 @@ private:
   jobject       _comments_handle;
 #endif
 
+  bool          _has_monitors;
   bool          _has_wide_vector;
   jobject       _word_kind_handle;
 

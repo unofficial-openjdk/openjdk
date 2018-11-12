@@ -668,7 +668,7 @@ JVMCIEnv::CodeInstallResult CodeInstaller::install(JVMCICompiler* compiler, Hand
     result = JVMCIEnv::register_method(method, nm, entry_bci, &_offsets, _orig_pc_offset, &buffer,
                                        stack_slots, _debug_recorder->_oopmaps, &_exception_handler_table,
                                        compiler, _debug_recorder, _dependencies, env, id,
-                                       has_unsafe_access, _has_wide_vector, installed_code, compiled_code, speculation_log);
+                                       _has_monitors, has_unsafe_access, _has_wide_vector, installed_code, compiled_code, speculation_log);
     cb = nm->as_codeblob_or_null();
     if (nm != NULL && env == NULL) {
       DirectiveSet* directive = DirectivesStack::getMatchingDirective(method, compiler);
@@ -1111,6 +1111,9 @@ void CodeInstaller::record_scope(jint pc_offset, Handle position, ScopeMode scop
     jint local_count = BytecodeFrame::numLocals(frame);
     jint expression_count = BytecodeFrame::numStack(frame);
     jint monitor_count = BytecodeFrame::numLocks(frame);
+    if (monitor_count > 0 && !_has_monitors) {
+      _has_monitors = true;
+    }
     objArrayHandle values(THREAD, BytecodeFrame::values(frame));
     objArrayHandle slotKinds(THREAD, BytecodeFrame::slotKinds(frame));
 
