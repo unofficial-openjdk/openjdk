@@ -712,45 +712,66 @@ void TemplateInterpreterGenerator::generate_fixed_frame(bool native_call) {
 // End of helpers
 
 address TemplateInterpreterGenerator::generate_Continuation_runLevel_entry(void) {
+#ifdef _LP64
   address entry = __ pc();
 
   __ movl(rax, 0);
   __ ret(0);
 
   return entry;
+#else
+  Unimplemented();
+  return NULL;
+#endif
 }
 
 // return current sp
 address TemplateInterpreterGenerator::generate_Continuation_getSP_entry(void) {
+#ifdef _LP64
   address entry = __ pc();
 
   __ lea(rax, Address(rsp, wordSize)); // skip return address
   __ ret(0);
 
   return entry;
+#else
+  Unimplemented();
+  return NULL;
+#endif
 }
 
 // return current fp
 address TemplateInterpreterGenerator::generate_Continuation_getFP_entry(void) {
+#ifdef _LP64
   address entry = __ pc();
 
   __ movptr(rax, rbp);
   __ ret(0);
 
   return entry;
+#else
+  Unimplemented();
+  return NULL;
+#endif
 }
 
 // return current pc
 address TemplateInterpreterGenerator::generate_Continuation_getPC_entry(void) {
+#ifdef _LP64
   address entry = __ pc();
 
   __ movptr(rax, Address(rsp, 0));
   __ ret(0);
 
   return entry;
+#else
+  Unimplemented();
+  return NULL;
+#endif
 }
 
 address TemplateInterpreterGenerator::generate_Continuation_doYield_entry(void) {
+#ifdef _LP64
   address entry = __ pc();
   assert(StubRoutines::cont_doYield() != NULL, "stub not yet generated");
 
@@ -759,9 +780,14 @@ address TemplateInterpreterGenerator::generate_Continuation_doYield_entry(void) 
   // return value is in rax
 
   return entry;
+#else
+  Unimplemented();
+  return NULL;
+#endif
 }
 
 address TemplateInterpreterGenerator::generate_Continuation_jump_entry(void) {
+#ifdef _LP64
   address entry = __ pc();
   assert(StubRoutines::cont_jump() != NULL, "stub not yet generated");
 
@@ -771,15 +797,24 @@ address TemplateInterpreterGenerator::generate_Continuation_jump_entry(void) {
   __ jump(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::cont_jump())));
 
   return entry;
+#else
+  Unimplemented();
+  return NULL;
+#endif
 }
 
 address TemplateInterpreterGenerator::generate_Continuation_doContinue_entry(void) {
+#ifdef _LP64
   address entry = __ pc();
   assert(StubRoutines::cont_thaw() != NULL, "stub not yet generated");
 
   __ jump(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::cont_thaw())));
 
   return entry;
+#else
+  Unimplemented();
+  return NULL;
+#endif
 }
 
 // Method entry for java.lang.ref.Reference.get.

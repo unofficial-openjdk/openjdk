@@ -805,11 +805,6 @@ void MacroAssembler::set_last_Java_frame(Register last_java_sp,
   movptr(Address(r15_thread, JavaThread::last_Java_sp_offset()), last_java_sp);
 }
 
-void MacroAssembler::oopmap_metadata(int index) {
-  // if (index != -1) tty->print_cr("oopmap_metadata %d", index);
-  // mov64(r10, 1234); // TODO: Add a new relocInfo with external semantics. see relocInfo::metadata_type
-}
-
 static void pass_arg0(MacroAssembler* masm, Register arg) {
   if (c_rarg0 != arg ) {
     masm->mov(c_rarg0, arg);
@@ -960,6 +955,11 @@ void MacroAssembler::print_state64(int64_t pc, int64_t regs[]) {
 #endif // _LP64
 
 // Now versions that are common to 32/64 bit
+
+void MacroAssembler::oopmap_metadata(int index) {
+  // if (index != -1) tty->print_cr("oopmap_metadata %d", index);
+  // mov64(r10, 1234); // TODO: Add a new relocInfo with external semantics. see relocInfo::metadata_type
+}
 
 void MacroAssembler::addptr(Register dst, int32_t imm32) {
   LP64_ONLY(addq(dst, imm32)) NOT_LP64(addl(dst, imm32));
@@ -3491,12 +3491,16 @@ void MacroAssembler::pop_FPU_state() {
 
 #ifdef ASSERT
 void MacroAssembler::stop_if_in_cont(Register cont, const char* name) {
+#ifdef _LP64
   Label no_cont;
   movptr(cont, Address(r15_thread, in_bytes(JavaThread::continuation_offset())));
   testl(cont, cont);
   jcc(Assembler::zero, no_cont);
   stop(name);
   bind(no_cont);
+#else
+  Unimplemented();
+#endif
 }
 #endif
 

@@ -1093,7 +1093,7 @@ class CompiledArgumentOopFinder: public SignatureInfo {
     if (loc == NULL) {
       tty->print_cr("Error walking frame oops:");
       _fr.print_on(tty);
-      assert(loc != NULL, "reg: %ld %s loc: " INTPTR_FORMAT, reg->value(), reg->name(), p2i(loc));
+      assert(loc != NULL, "reg: " INTPTR_FORMAT " %s loc: " INTPTR_FORMAT, reg->value(), reg->name(), p2i(loc));
     }
   #endif
     _f->do_oop(loc);
