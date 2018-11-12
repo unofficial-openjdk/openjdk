@@ -34,7 +34,7 @@
 #include "oops/oop.inline.hpp"
 #include "prims/nativeLookup.hpp"
 #include "runtime/compilationPolicy.hpp"
-#include "runtime/frame.hpp"
+#include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/rframe.hpp"
 #include "runtime/stubRoutines.hpp"

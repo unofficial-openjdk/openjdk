@@ -83,7 +83,7 @@ void OopMapDo<OopFnT, DerivedOopFnT, ValueFilterT>::iterate_oops_do(const frame 
 #ifdef ASSERT
     if (loc == NULL) {
       VMReg reg = omv.reg();
-      tty->print_cr("missing saved register: reg: %ld %s loc: %p", reg->value(), reg->name(), loc);
+      tty->print_cr("missing saved register: reg: " INTPTR_FORMAT " %s loc: %p", reg->value(), reg->name(), loc);
       fr->print_on(tty);
     }
 #endif

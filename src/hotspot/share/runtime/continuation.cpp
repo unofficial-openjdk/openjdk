@@ -448,10 +448,10 @@ enum res_freeze {
   freeze_exception = 3
 };
 
-struct oopLoc {
-  bool narrow  : 1;
-  unsigned long loc : 63;
-};
+// struct oopLoc {
+//   bool narrow  : 1;
+//   unsigned long loc : 63;
+// };
 
 // Mirrors the Java continuation objects.
 // This object is created when we begin a freeze/thaw operation for a continuation, and is destroyed when the operation completes.
@@ -609,10 +609,10 @@ public:
   void null_ref_stack(int start, int num);
 
   inline size_t max_size() { return _max_size; }
-  inline void add_size(size_t s) { log_trace(jvmcont)("add max_size: %lu s: %lu", _max_size + s, s);
+  inline void add_size(size_t s) { log_trace(jvmcont)("add max_size: " SIZE_FORMAT " s: " SIZE_FORMAT, _max_size + s, s);
                                    _max_size += s; }
-  inline void sub_size(size_t s) { log_trace(jvmcont)("sub max_size: %lu s: %lu", _max_size - s, s);
-                                   assert(s <= _max_size, "s: %lu max_size: %lu", s, _max_size);
+  inline void sub_size(size_t s) { log_trace(jvmcont)("sub max_size: " SIZE_FORMAT " s: " SIZE_FORMAT, _max_size - s, s);
+                                   assert(s <= _max_size, "s: " SIZE_FORMAT " max_size: " SIZE_FORMAT, s, _max_size);
                                    _max_size -= s; }
   inline short num_interpreted_frames() { return _num_interpreted_frames; }
   inline void inc_num_interpreted_frames() { _num_interpreted_frames++; _e_num_interpreted_frames++; }
@@ -813,7 +813,8 @@ inline void hframe::patch_real_fp_offset(int offset, intptr_t value) {
 inline void hframe::patch_callee(ContMirror& cont, hframe& sender) {
   assert (_write == sender._write, "");
   if (sender.is_interpreted_frame()) {
-    patch_link_relative(sender.link_address());
+    assert(sizeof(long) == sizeof(intptr_t), "risky cast!");
+    patch_link_relative((intptr_t*)sender.link_address());
   } else {
     patch_link(sender.fp());
   }
@@ -899,7 +900,7 @@ void ContMirror::read() {
     _hstack = NULL;
   }
   _max_size = java_lang_Continuation::maxSize(_cont);
-  log_trace(jvmcont)("\tstack: " INTPTR_FORMAT " hstack: " INTPTR_FORMAT ", stack_length: %d max_size: %lu", p2i((oopDesc*)_stack), p2i(_hstack), _stack_length, _max_size);
+  log_trace(jvmcont)("\tstack: " INTPTR_FORMAT " hstack: " INTPTR_FORMAT ", stack_length: %d max_size: " SIZE_FORMAT, p2i((oopDesc*)_stack), p2i(_hstack), _stack_length, _max_size);
 
   _ref_stack = java_lang_Continuation::refStack(_cont);
   _ref_sp = java_lang_Continuation::refSP(_cont);
@@ -928,7 +929,7 @@ void ContMirror::write() {
   java_lang_Continuation::set_entryFP(_cont, _entryFP);
   java_lang_Continuation::set_entryPC(_cont, _entryPC);
 
-  log_trace(jvmcont)("\tmax_size: %lu", _max_size);
+  log_trace(jvmcont)("\tmax_size: " SIZE_FORMAT, _max_size);
   java_lang_Continuation::set_maxSize(_cont, (jint)_max_size);
 
   log_trace(jvmcont)("\tref_sp: %d", _ref_sp);
@@ -1251,7 +1252,7 @@ void ContMirror::allocate_stacks(int size, int oops, int frames) {
   // These assertions aren't important, as we'll overwrite the Java-computed ones, but they're just to test that the Java computation is OK.
   assert(_pc == java_lang_Continuation::pc(_cont), "_pc: " INTPTR_FORMAT "  this.pc: " INTPTR_FORMAT "",  p2i(_pc), p2i(java_lang_Continuation::pc(_cont)));
   assert(_sp == java_lang_Continuation::sp(_cont), "_sp: %d  this.sp: %d",  _sp, java_lang_Continuation::sp(_cont));
-  assert(_fp == java_lang_Continuation::fp(_cont), "_fp: %ld this.fp: %ld %d %d", _fp, java_lang_Continuation::fp(_cont), Interpreter::contains(_pc), is_flag(FLAG_LAST_FRAME_INTERPRETED));
+  assert(_fp == java_lang_Continuation::fp(_cont), "_fp: %lu  this.fp: " JLONG_FORMAT " %d %d", _fp, java_lang_Continuation::fp(_cont), Interpreter::contains(_pc), is_flag(FLAG_LAST_FRAME_INTERPRETED));
 
   if (!thread()->has_pending_exception()) return;
 
@@ -1921,7 +1922,7 @@ class CompiledFreezeOopFn: public ContOopBase {
     if (hloc_offset >= 0) {
       hloc = (intptr_t*)((address)_hsp + hloc_offset);
       *hloc = offset;
-      log_trace(jvmcont)("Writing derived pointer offset at " INTPTR_FORMAT " (offset: %ld, 0x%lx)", p2i(hloc), offset, offset);
+      log_trace(jvmcont)("Writing derived pointer offset at " INTPTR_FORMAT " (offset: " INTX_FORMAT ", " INTPTR_FORMAT ")", p2i(hloc), offset, offset);
     } else {
       assert ((intptr_t**)derived_loc == _fr->saved_link_address(_map), "");
       _callerinfo.set_fp_index(offset);
@@ -2384,14 +2385,14 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 
   LogStreamHandle(Trace, jvmcont) st;
 
-  DEBUG_ONLY(log_debug(jvmcont)("Freeze ### #%lx", cont.hash()));
+  DEBUG_ONLY(log_debug(jvmcont)("Freeze ### #" INTPTR_FORMAT, cont.hash()));
   log_trace(jvmcont)("Freeze 0000 sp: " INTPTR_FORMAT " fp: " INTPTR_FORMAT " pc: " INTPTR_FORMAT, p2i(f.sp()), p2i(f.fp()), p2i(f.pc()));
   log_trace(jvmcont)("Freeze 1111 sp: %d fp: 0x%lx pc: " INTPTR_FORMAT, cont.sp(), cont.fp(), p2i(cont.pc()));
 
   intptr_t* bottom = cont.entrySP(); // (bottom is highest address; stacks grow down)
   intptr_t* top = f.sp();
 
-  log_trace(jvmcont)("QQQ AAAAA bottom: " INTPTR_FORMAT " top: " INTPTR_FORMAT " size: %ld", p2i(bottom), p2i(top), (address)bottom - (address)top);
+  log_trace(jvmcont)("QQQ AAAAA bottom: " INTPTR_FORMAT " top: " INTPTR_FORMAT " size: " SIZE_FORMAT, p2i(bottom), p2i(top), pointer_delta(bottom, top, sizeof(address)));
 
   if (Continuation::PERFTEST_LEVEL <= 13) return freeze_ok;
 
@@ -2479,7 +2480,7 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
   cont.post_jfr_event(&event);
 
 #ifdef ASSERT
-  log_debug(jvmcont)("end of freeze cont ### #%lx", cont.hash());
+  log_debug(jvmcont)("end of freeze cont ### #" INTPTR_FORMAT, cont.hash());
 #else
   log_trace(jvmcont)("--- end of freeze_continuation");
 #endif
@@ -2892,7 +2893,7 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
     cont.set_entryPC(fi->pc);
   }
 
-  DEBUG_ONLY(log_debug(jvmcont)("THAW ### #%lx", cont.hash()));
+  DEBUG_ONLY(log_debug(jvmcont)("THAW ### #" INTPTR_FORMAT, cont.hash()));
 
 #ifndef PRODUCT
   set_anchor(cont);
@@ -2929,7 +2930,7 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
 
   assert (!CONT_FULL_STACK || cont.is_empty(), "");
   assert (cont.is_empty() == cont.last_frame().is_empty(), "cont.is_empty: %d cont.last_frame().is_empty(): %d", cont.is_empty(), cont.last_frame().is_empty());
-  assert (cont.is_empty() == (cont.max_size() == 0), "cont.is_empty: %d cont.max_size: %lu", cont.is_empty(), cont.max_size());
+  assert (cont.is_empty() == (cont.max_size() == 0), "cont.is_empty: %d cont.max_size: " SIZE_FORMAT, cont.is_empty(), cont.max_size());
   assert (cont.is_empty() <= (cont.refSP() == cont.refStack()->length()), "cont.is_empty: %d ref_sp: %d refStack.length: %d", cont.is_empty(), cont.refSP(), cont.refStack()->length());
   assert (cont.is_empty() == (cont.num_frames() == 0), "cont.is_empty: %d num_frames: %d", cont.is_empty(), cont.num_frames());
   assert (cont.is_empty() <= (cont.num_interpreted_frames() == 0), "cont.is_empty: %d num_interpreted_frames: %d", cont.is_empty(), cont.num_interpreted_frames());
@@ -2982,7 +2983,7 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
   cont.post_jfr_event(&event);
 
 #ifdef ASSERT
-  log_debug(jvmcont)("=== End of thaw #%lx", cont.hash());
+  log_debug(jvmcont)("=== End of thaw #" INTPTR_FORMAT, cont.hash());
 #else
   log_debug(jvmcont)("=== End of thaw");
 #endif

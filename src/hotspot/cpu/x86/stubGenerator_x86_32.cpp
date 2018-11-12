@@ -3890,6 +3890,6 @@ class StubGenerator: public StubCodeGenerator {
 }; // end class declaration
 
 
-void StubGenerator_generate(CodeBuffer* code, bool all) {
-  StubGenerator g(code, all);
+void StubGenerator_generate(CodeBuffer* code, int phase) {
+  StubGenerator g(code, phase);
 }
