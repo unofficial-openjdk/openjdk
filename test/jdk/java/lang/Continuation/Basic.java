@@ -27,8 +27,10 @@
 * @run testng Basic
 * @run testng/othervm -Xint Basic
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Basic
-* @run testng/othervm -XX:+UseParallelGC -Xcomp Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -Xcomp -XX:+UseNewCode Basic
+* @run testng/othervm -XX:+UseParallelGC -XX:-TieredCompilation -Xcomp Basic
+* @run testng/othervm -XX:+UseParallelGC -XX:TieredStopAtLevel=3 -Xcomp Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -Xcomp -XX:+UseNewCode Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode Basic
 *
 * @summary Basic tests for java.lang.Continuation
 */

@@ -30,9 +30,8 @@
  * @summary Nested continuations test
  */
 
-//run testng/othervm -Xcomp Scoped
-//run testng/othervm -Xcomp -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
-
+// * @run testng/othervm -Xcomp Scoped
+// * @run testng/othervm -Xcomp -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
 
 import java.util.Arrays;
 import java.util.List;

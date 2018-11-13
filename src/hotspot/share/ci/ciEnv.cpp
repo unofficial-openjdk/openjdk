@@ -1044,6 +1044,7 @@ void ciEnv::register_method(ciMethod* target,
       nm->set_has_unsafe_access(has_unsafe_access);
       nm->set_has_wide_vectors(has_wide_vectors);
       nm->set_has_monitors(has_monitors);
+      assert (!method->is_synchronized() || nm->has_monitors(), "");
 #if INCLUDE_RTM_OPT
       nm->set_rtm_state(rtm_state);
 #endif
