@@ -382,6 +382,10 @@ int Compilation::compile_java_method() {
     BAILOUT_("mdo allocation failed", no_frame_size);
   }
 
+  if (method()->is_synchronized()) {
+    set_has_monitors(true);
+  }
+
   {
     PhaseTraceTime timeit(_t_buildIR);
     build_hir();
@@ -421,8 +425,8 @@ void Compilation::install_code(int frame_size) {
     implicit_exception_table(),
     compiler(),
     has_unsafe_access(),
-    has_monitors(),
-    SharedRuntime::is_wide_vector(max_vector_size())
+    SharedRuntime::is_wide_vector(max_vector_size()),
+    has_monitors()
   );
 }
 
