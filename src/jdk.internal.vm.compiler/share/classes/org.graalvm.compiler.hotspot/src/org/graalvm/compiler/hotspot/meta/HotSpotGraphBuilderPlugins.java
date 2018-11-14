@@ -424,7 +424,7 @@ public class HotSpotGraphBuilderPlugins {
 
     private static void registerThreadPlugins(InvocationPlugins plugins, MetaAccessProvider metaAccess, WordTypes wordTypes, GraalHotSpotVMConfig config, BytecodeProvider bytecodeProvider) {
         Registration r = new Registration(plugins, Thread.class, bytecodeProvider);
-        r.register0("currentThread0", new InvocationPlugin() {
+        r.register0("currentThread", new InvocationPlugin() {
             @Override
             public boolean apply(GraphBuilderContext b, ResolvedJavaMethod targetMethod, Receiver receiver) {
                 CurrentJavaThreadNode thread = b.add(new CurrentJavaThreadNode(wordTypes.getWordKind()));

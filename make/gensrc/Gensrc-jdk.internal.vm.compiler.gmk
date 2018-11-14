@@ -121,6 +121,7 @@ TARGETS += $(GENSRC_DIR)/_gensrc_proc_done
 ################################################################################
 
 $(GENSRC_DIR)/module-info.java.extra: $(GENSRC_DIR)/_gensrc_proc_done
+	$(ECHO) "" > $@; \
 	($(CD) $(GENSRC_DIR)/META-INF/providers && \
 	    p=""; \
 	    impl=""; \

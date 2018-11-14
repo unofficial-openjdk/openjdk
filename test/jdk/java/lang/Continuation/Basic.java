@@ -35,6 +35,10 @@
 * @summary Basic tests for java.lang.Continuation
 */
 
+// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp Basic
+// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp -XX:+UseNewCode Basic
+
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
