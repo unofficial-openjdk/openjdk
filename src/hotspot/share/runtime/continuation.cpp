@@ -1665,11 +1665,6 @@ static bool is_compiled_frame_owning_locks(JavaThread* thread, RegisterMap* map,
     return false;
   }
 
-#ifdef ASSERT
-  { ResourceMark rm(thread);
-    tty->print_cr("Whoa!!!! %s",  frame_name(f)); } 
-#endif
-
   for (ScopeDesc* scope = nm->scope_desc_at(f.pc()); scope != NULL; scope = scope->sender()) {
     // scope->print_on(tty);
     GrowableArray<MonitorValue*>* mons = scope->monitors();

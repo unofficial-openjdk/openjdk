@@ -28,12 +28,16 @@
 * @run testng/othervm -Xint Basic
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Basic
 * @run testng/othervm -XX:+UseParallelGC -XX:-TieredCompilation -Xcomp Basic
-* @run testng/othervm -XX:+UseParallelGC -XX:TieredStopAtLevel=3 -Xcomp Basic
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -Xcomp -XX:+UseNewCode Basic
+* @run testng/othervm -XX:+UseParallelGC -XX:TieredStopAtLevel=3 -Xcomp Basic
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode Basic
 *
 * @summary Basic tests for java.lang.Continuation
 */
+
+// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp Basic
+// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp -XX:+UseNewCode Basic
+
 
 import java.util.Arrays;
 import java.util.List;
