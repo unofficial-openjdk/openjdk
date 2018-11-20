@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,8 +37,8 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.CharacterCodingException;
 import java.text.Normalizer;
-import jdk.internal.misc.JavaNetUriAccess;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.access.JavaNetUriAccess;
+import jdk.internal.access.SharedSecrets;
 import sun.nio.cs.ThreadLocalCoders;
 
 import java.lang.Character;             // for javadoc
@@ -861,9 +861,9 @@ public final class URI
      *
      * <p> This method is provided for use in situations where it is known that
      * the given string is a legal URI, for example for URI constants declared
-     * within in a program, and so it would be considered a programming error
+     * within a program, and so it would be considered a programming error
      * for the string not to parse as such.  The constructors, which throw
-     * {@link URISyntaxException} directly, should be used situations where a
+     * {@link URISyntaxException} directly, should be used in situations where a
      * URI is being constructed from user input or from some other source that
      * may be prone to errors.  </p>
      *

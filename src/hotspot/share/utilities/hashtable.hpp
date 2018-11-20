@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -147,12 +147,6 @@ public:
   BasicHashtable(int table_size, int entry_size,
                  HashtableBucket<F>* buckets, int number_of_entries);
 
-  // Sharing support.
-  size_t count_bytes_for_buckets();
-  size_t count_bytes_for_table();
-  void copy_buckets(char* top, char* end);
-  void copy_table(char* top, char* end);
-
   // Bucket handling
   int hash_to_index(unsigned int full_hash) const {
     int h = full_hash % _table_size;
@@ -284,39 +278,5 @@ public:
     return (HashtableEntry<T, F>**)BasicHashtable<F>::bucket_addr(i);
   }
 };
-
-template <class T, MEMFLAGS F> class RehashableHashtable : public Hashtable<T, F> {
- friend class VMStructs;
- protected:
-
-  enum {
-    rehash_count = 100,
-    rehash_multiple = 60
-  };
-
-  // Check that the table is unbalanced
-  bool check_rehash_table(int count);
-
- public:
-  RehashableHashtable(int table_size, int entry_size)
-    : Hashtable<T, F>(table_size, entry_size) { }
-
-  RehashableHashtable(int table_size, int entry_size,
-                   HashtableBucket<F>* buckets, int number_of_entries)
-    : Hashtable<T, F>(table_size, entry_size, buckets, number_of_entries) { }
-
-
-  // Function to move these elements into the new table.
-  void move_to(RehashableHashtable<T, F>* new_table);
-  static bool use_alternate_hashcode();
-  static juint seed();
-
- private:
-  static juint _seed;
-};
-
-template <class T, MEMFLAGS F> juint RehashableHashtable<T, F>::_seed = 0;
-template <class T, MEMFLAGS F> juint RehashableHashtable<T, F>::seed() { return _seed; };
-template <class T, MEMFLAGS F> bool  RehashableHashtable<T, F>::use_alternate_hashcode() { return _seed != 0; };
 
 #endif // SHARE_VM_UTILITIES_HASHTABLE_HPP

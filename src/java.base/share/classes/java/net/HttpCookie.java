@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,11 +32,10 @@ import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.Date;
 import java.util.Locale;
 import java.util.Objects;
-import jdk.internal.misc.JavaNetHttpCookieAccess;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.access.JavaNetHttpCookieAccess;
+import jdk.internal.access.SharedSecrets;
 
 /**
  * An HttpCookie object represents an HTTP cookie, which carries state
@@ -667,7 +666,7 @@ public final class HttpCookie implements Cloneable {
         int domainLength = domain.length();
         int lengthDiff = host.length() - domainLength;
         if (lengthDiff == 0) {
-            // if the host name and the domain name are just string-compare euqal
+            // if the host name and the domain name are just string-compare equal
             return host.equalsIgnoreCase(domain);
         }
         else if (lengthDiff > 0) {
@@ -1132,7 +1131,7 @@ public final class HttpCookie implements Cloneable {
      * Split cookie header string according to rfc 2965:
      *   1) split where it is a comma;
      *   2) but not the comma surrounding by double-quotes, which is the comma
-     *      inside port list or embeded URIs.
+     *      inside port list or embedded URIs.
      *
      * @param  header
      *         the cookie header string to split

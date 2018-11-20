@@ -42,10 +42,6 @@ inline bool CompiledMethod::is_deopt_entry(address pc) {
     ;
 }
 
-inline void CompiledMethod::release_set_exception_cache(ExceptionCache *ec) {
-  OrderAccess::release_store(&_exception_cache, ec);
-}
-
 // -----------------------------------------------------------------------------
 // CompiledMethod::get_deopt_original_pc
 //
@@ -88,24 +84,5 @@ address ExceptionCache::handler_at(int index) {
 
 // increment_count is only called under lock, but there may be concurrent readers.
 inline void ExceptionCache::increment_count() { OrderAccess::release_store(&_count, _count + 1); }
-
-inline bool ContinuationProfiling::is_frequent_freeze_at(address pc, const CompiledMethod* cm) {
-  if (_pc == pc && _count > 100) {
-    return true;
-  }
-
-  if (_pc == NULL) {
-    if (Atomic::cmpxchg(pc, &_pc, (address) NULL) == NULL) {
-      ++_count;
-      _oopmap = (ImmutableOopMap*) cm->oop_map_for_return_address(pc);
-      _oopmap->set_exploded(new ExplodedOopMap(_oopmap));
-
-    }
-  } else if (_pc == pc) {
-    return ++_count > 100;
-  }
-  return false;
-}
-
 
 #endif //SHARE_VM_CODE_COMPILEDMETHOD_INLINE_HPP

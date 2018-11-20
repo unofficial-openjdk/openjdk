@@ -201,10 +201,15 @@ var getJibProfiles = function (input) {
     data.configuration_make_arg = "CONF_NAME=";
 
     // Exclude list to use when Jib creates a source bundle
-    data.src_bundle_excludes = "./build .build webrev* */webrev* */*/webrev* */*/*/webrev* .hg */.hg */*/.hg */*/*/.hg";
+    data.src_bundle_excludes = [
+        "build", "{,**/}webrev*", "{,**/}.hg", "{,**/}JTwork", "{,**/}JTreport",
+        "{,**/}.git"
+    ];
     // Include list to use when creating a minimal jib source bundle which
     // contains just the jib configuration files.
-    data.conf_bundle_includes = "*/conf/jib-profiles.* make/autoconf/version-numbers"
+    data.conf_bundle_includes = [
+        "make/autoconf/version-numbers",
+    ];
 
     // Define some common values
     var common = getJibProfilesCommon(input, data);
@@ -238,7 +243,7 @@ var getJibProfilesCommon = function (input, data) {
 
     // These are the base setttings for all the main build profiles.
     common.main_profile_base = {
-        dependencies: ["boot_jdk", "gnumake", "jtreg", "jib", "autoconf"],
+        dependencies: ["boot_jdk", "gnumake", "jtreg", "jib", "autoconf", "jmh"],
         default_make_targets: ["product-bundles", "test-bundles"],
         configure_args: concat(["--enable-jtreg-failure-handler"],
             "--with-exclude-translations=de,es,fr,it,ko,pt_BR,sv,ca,tr,cs,sk,ja_JP_A,ja_JP_HA,ja_JP_HI,ja_JP_I,zh_TW,zh_HK",
@@ -356,7 +361,7 @@ var getJibProfilesCommon = function (input, data) {
         };
     };
 
-    common.boot_jdk_version = "10";
+    common.boot_jdk_version = "11";
     common.boot_jdk_home = input.get("boot_jdk", "home_path") + "/jdk-"
         + common.boot_jdk_version
         + (input.build_os == "macosx" ? ".jdk/Contents/Home" : "");
@@ -485,7 +490,7 @@ var getJibProfilesProfiles = function (input, common, data) {
         .forEach(function (name) {
             var maketestName = name + "-testmake";
             profiles[maketestName] = concatObjects(profiles[name], testmakeBase);
-            profiles[maketestName].default_make_targets = [ "test-make", "test-compile-commands" ];
+            profiles[maketestName].default_make_targets = [ "test-make" ];
         });
 
     // Profiles for building the zero jvm variant. These are used for verification.
@@ -520,6 +525,27 @@ var getJibProfilesProfiles = function (input, common, data) {
         var debugName = name + common.debug_suffix;
         profiles[name] = concatObjects(common.main_profile_base, profiles[name]);
         profiles[debugName] = concatObjects(profiles[name], common.debug_profile_base);
+    });
+
+    // Define a profile with precompiled headers disabled. This is just used for
+    // verfication of this build configuration.
+    var noPchProfiles = {
+        "linux-x64-debug-nopch": {
+            target_os: "linux",
+            target_cpu: "x64",
+            dependencies: ["devkit"],
+            configure_args: concat(common.configure_args_64bit,
+                "--with-zlib=system", "--disable-precompiled-headers"),
+        },
+    };
+    profiles = concatObjects(profiles, noPchProfiles);
+    // Add base settings to noPch profiles
+    Object.keys(noPchProfiles).forEach(function (name) {
+        profiles[name] = concatObjects(common.main_profile_base, profiles[name]);
+        profiles[name] = concatObjects(common.debug_profile_base, profiles[name]);
+        // Override default make target with hotspot as that's the only part of
+        // the build using precompiled headers.
+        profiles[name].default_make_targets = ["hotspot"];
     });
 
     // Bootcycle profiles runs the build with itself as the boot jdk. This can
@@ -709,7 +735,8 @@ var getJibProfilesProfiles = function (input, common, data) {
         "run-test-prebuilt": {
             target_os: input.build_os,
             target_cpu: input.build_cpu,
-            dependencies: [ "jtreg", "gnumake", "boot_jdk", "jib", testedProfile + ".jdk",
+            dependencies: [
+                "jtreg", "gnumake", "boot_jdk", "devkit", "jib", testedProfile + ".jdk",
                 testedProfile + ".test"
             ],
             src: "src.conf",
@@ -743,7 +770,6 @@ var getJibProfilesProfiles = function (input, common, data) {
     // This gives us a guaranteed working version of lldb for the jtreg failure handler.
     if (input.build_os == "macosx") {
         macosxRunTestExtra = {
-            dependencies: [ "devkit" ],
             environment_path: input.get("devkit", "install_path")
                 + "/Xcode.app/Contents/Developer/usr/bin"
         };
@@ -804,8 +830,8 @@ var getJibProfilesDependencies = function (input, common) {
         solaris_x64: "SS12u4-Solaris11u1+1.0",
         solaris_sparcv9: "SS12u6-Solaris11u3+1.0",
         windows_x64: "VS2017-15.5.5+1.0",
-        linux_aarch64: "gcc7.3.0-Fedora27+1.0",
-        linux_arm: "gcc7.3.0-Fedora27+1.0"
+        linux_aarch64: "gcc7.3.0-Fedora27+1.1",
+        linux_arm: "gcc7.3.0-Fedora27+1.1"
     };
 
     var devkit_platform = (input.target_cpu == "x86"
@@ -825,9 +851,10 @@ var getJibProfilesDependencies = function (input, common) {
             server: "jpg",
             product: "jdk",
             version: common.boot_jdk_version,
-            build_number: "46",
+            build_number: "28",
             file: "bundles/" + boot_jdk_platform + "/jdk-" + common.boot_jdk_version + "_"
-                + boot_jdk_platform + "_bin.tar.gz",
+                + boot_jdk_platform + "_bin"
+		+ (input.build_os == "windows" ? ".zip" : ".tar.gz"),
             configure_args: "--with-boot-jdk=" + common.boot_jdk_home,
             environment_path: common.boot_jdk_home + "/bin"
         },
@@ -836,7 +863,10 @@ var getJibProfilesDependencies = function (input, common) {
             organization: common.organization,
             ext: "tar.gz",
             module: "devkit-" + devkit_platform,
-            revision: devkit_platform_revisions[devkit_platform]
+            revision: devkit_platform_revisions[devkit_platform],
+            environment: {
+                "DEVKIT_HOME": input.get("devkit", "home_path"),
+            }
         },
 
         build_devkit: {
@@ -860,6 +890,12 @@ var getJibProfilesDependencies = function (input, common) {
             file: "jtreg_bin-4.2.zip",
             environment_name: "JT_HOME",
             environment_path: input.get("jtreg", "install_path") + "/jtreg/bin"
+        },
+
+        jmh: {
+            organization: common.organization,
+            ext: "tar.gz",
+            revision: "1.21+1.0"
         },
 
         gnumake: {
@@ -936,14 +972,6 @@ var getJibProfilesDependencies = function (input, common) {
             environment_name: "GRAALUNIT_LIB"
         },
     };
-
-    // Need to add a value for the Visual Studio tools variable to make
-    // jaot be able to pick up the Visual Studio linker in testing.
-    if (input.target_os == "windows") {
-        dependencies.devkit.environment = {
-            VS120COMNTOOLS: input.get("devkit", "install_path") + "/Common7/Tools"
-        };
-    }
 
     return dependencies;
 };

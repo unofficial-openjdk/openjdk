@@ -25,8 +25,8 @@
 
 package java.net;
 
-import jdk.internal.misc.JavaNetSocketAccess;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.access.JavaNetSocketAccess;
+import jdk.internal.access.SharedSecrets;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -76,10 +76,15 @@ class ServerSocket implements java.io.Closeable {
     private boolean oldImpl = false;
 
     /**
-     * Package-private constructor to create a ServerSocket associated with
-     * the given SocketImpl.
+     * Creates a server socket with a user-specified {@code SocketImpl}.
+     *
+     * @param      impl an instance of a SocketImpl to use on the ServerSocket.
+     *
+     * @throws     NullPointerException if impl is {@code null}.
+     *
+     * @since 12
      */
-    ServerSocket(SocketImpl impl) {
+    protected ServerSocket(SocketImpl impl) {
         this.impl = impl;
         impl.setServerSocket(this);
     }
@@ -161,7 +166,7 @@ class ServerSocket implements java.io.Closeable {
      * The {@code backlog} argument is the requested maximum number of
      * pending connections on the socket. Its exact semantics are implementation
      * specific. In particular, an implementation may impose a maximum length
-     * or may choose to ignore the parameter altogther. The value provided
+     * or may choose to ignore the parameter altogether. The value provided
      * should be greater than {@code 0}. If it is less than or equal to
      * {@code 0}, then an implementation specific default will be used.
      *
@@ -209,7 +214,7 @@ class ServerSocket implements java.io.Closeable {
      * The {@code backlog} argument is the requested maximum number of
      * pending connections on the socket. Its exact semantics are implementation
      * specific. In particular, an implementation may impose a maximum length
-     * or may choose to ignore the parameter altogther. The value provided
+     * or may choose to ignore the parameter altogether. The value provided
      * should be greater than {@code 0}. If it is less than or equal to
      * {@code 0}, then an implementation specific default will be used.
      *
@@ -346,7 +351,7 @@ class ServerSocket implements java.io.Closeable {
      * The {@code backlog} argument is the requested maximum number of
      * pending connections on the socket. Its exact semantics are implementation
      * specific. In particular, an implementation may impose a maximum length
-     * or may choose to ignore the parameter altogther. The value provided
+     * or may choose to ignore the parameter altogether. The value provided
      * should be greater than {@code 0}. If it is less than or equal to
      * {@code 0}, then an implementation specific default will be used.
      * @param   endpoint        The IP address and port number to bind to.
@@ -821,7 +826,7 @@ class ServerSocket implements java.io.Closeable {
      * <p>
      * The value of {@link SocketOptions#SO_RCVBUF SO_RCVBUF} is used both to
      * set the size of the internal socket receive buffer, and to set the size
-     * of the TCP receive window that is advertized to the remote peer.
+     * of the TCP receive window that is advertised to the remote peer.
      * <p>
      * It is possible to change the value subsequently, by calling
      * {@link Socket#setReceiveBufferSize(int)}. However, if the application
@@ -988,8 +993,8 @@ class ServerSocket implements java.io.Closeable {
         return getImpl().getOption(name);
     }
 
-    private static Set<SocketOption<?>> options;
-    private static boolean optionsSet = false;
+    // cache of unmodifiable impl options. Possibly set racy, in impl we trust
+    private volatile Set<SocketOption<?>> options;
 
     /**
      * Returns a set of the socket options supported by this server socket.
@@ -1003,19 +1008,17 @@ class ServerSocket implements java.io.Closeable {
      * @since 9
      */
     public Set<SocketOption<?>> supportedOptions() {
-        synchronized (ServerSocket.class) {
-            if (optionsSet) {
-                return options;
-            }
-            try {
-                SocketImpl impl = getImpl();
-                options = Collections.unmodifiableSet(impl.supportedOptions());
-            } catch (IOException e) {
-                options = Collections.emptySet();
-            }
-            optionsSet = true;
-            return options;
+        Set<SocketOption<?>> so = options;
+        if (so != null)
+            return so;
+
+        try {
+            SocketImpl impl = getImpl();
+            options = Collections.unmodifiableSet(impl.supportedOptions());
+        } catch (IOException e) {
+            options = Collections.emptySet();
         }
+        return options;
     }
 
     static {

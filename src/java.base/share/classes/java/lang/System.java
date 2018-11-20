@@ -66,8 +66,8 @@ import jdk.internal.module.ServicesCatalog;
 import jdk.internal.reflect.CallerSensitive;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.HotSpotIntrinsicCandidate;
-import jdk.internal.misc.JavaLangAccess;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.VM;
 import jdk.internal.logger.LoggerFinderLoader;
 import jdk.internal.logger.LazyLoggers;
@@ -627,72 +627,72 @@ public final class System {
      *     <th scope="col">Description of Associated Value</th></tr>
      * </thead>
      * <tbody>
-     * <tr><th scope="row">{@code java.version}</th>
+     * <tr><th scope="row">{@systemProperty java.version}</th>
      *     <td>Java Runtime Environment version, which may be interpreted
      *     as a {@link Runtime.Version}</td></tr>
-     * <tr><th scope="row">{@code java.version.date}</th>
+     * <tr><th scope="row">{@systemProperty java.version.date}</th>
      *     <td>Java Runtime Environment version date, in ISO-8601 YYYY-MM-DD
      *     format, which may be interpreted as a {@link
      *     java.time.LocalDate}</td></tr>
-     * <tr><th scope="row">{@code java.vendor}</th>
+     * <tr><th scope="row">{@systemProperty java.vendor}</th>
      *     <td>Java Runtime Environment vendor</td></tr>
-     * <tr><th scope="row">{@code java.vendor.url}</th>
+     * <tr><th scope="row">{@systemProperty java.vendor.url}</th>
      *     <td>Java vendor URL</td></tr>
-     * <tr><th scope="row">{@code java.vendor.version}</th>
+     * <tr><th scope="row">{@systemProperty java.vendor.version}</th>
      *     <td>Java vendor version</td></tr>
-     * <tr><th scope="row">{@code java.home}</th>
+     * <tr><th scope="row">{@systemProperty java.home}</th>
      *     <td>Java installation directory</td></tr>
-     * <tr><th scope="row">{@code java.vm.specification.version}</th>
+     * <tr><th scope="row">{@systemProperty java.vm.specification.version}</th>
      *     <td>Java Virtual Machine specification version, whose value is the
      *     {@linkplain Runtime.Version#feature feature} element of the
      *     {@linkplain Runtime#version() runtime version}</td></tr>
-     * <tr><th scope="row">{@code java.vm.specification.vendor}</th>
+     * <tr><th scope="row">{@systemProperty java.vm.specification.vendor}</th>
      *     <td>Java Virtual Machine specification vendor</td></tr>
-     * <tr><th scope="row">{@code java.vm.specification.name}</th>
+     * <tr><th scope="row">{@systemProperty java.vm.specification.name}</th>
      *     <td>Java Virtual Machine specification name</td></tr>
-     * <tr><th scope="row">{@code java.vm.version}</th>
+     * <tr><th scope="row">{@systemProperty java.vm.version}</th>
      *     <td>Java Virtual Machine implementation version which may be
      *     interpreted as a {@link Runtime.Version}</td></tr>
-     * <tr><th scope="row">{@code java.vm.vendor}</th>
+     * <tr><th scope="row">{@systemProperty java.vm.vendor}</th>
      *     <td>Java Virtual Machine implementation vendor</td></tr>
-     * <tr><th scope="row">{@code java.vm.name}</th>
+     * <tr><th scope="row">{@systemProperty java.vm.name}</th>
      *     <td>Java Virtual Machine implementation name</td></tr>
-     * <tr><th scope="row">{@code java.specification.version}</th>
+     * <tr><th scope="row">{@systemProperty java.specification.version}</th>
      *     <td>Java Runtime Environment specification version, whose value is
      *     the {@linkplain Runtime.Version#feature feature} element of the
      *     {@linkplain Runtime#version() runtime version}</td></tr>
-     * <tr><th scope="row">{@code java.specification.vendor}</th>
+     * <tr><th scope="row">{@systemProperty java.specification.vendor}</th>
      *     <td>Java Runtime Environment specification  vendor</td></tr>
-     * <tr><th scope="row">{@code java.specification.name}</th>
+     * <tr><th scope="row">{@systemProperty java.specification.name}</th>
      *     <td>Java Runtime Environment specification  name</td></tr>
-     * <tr><th scope="row">{@code java.class.version}</th>
+     * <tr><th scope="row">{@systemProperty java.class.version}</th>
      *     <td>Java class format version number</td></tr>
-     * <tr><th scope="row">{@code java.class.path}</th>
+     * <tr><th scope="row">{@systemProperty java.class.path}</th>
      *     <td>Java class path  (refer to
      *        {@link ClassLoader#getSystemClassLoader()} for details)</td></tr>
-     * <tr><th scope="row">{@code java.library.path}</th>
+     * <tr><th scope="row">{@systemProperty java.library.path}</th>
      *     <td>List of paths to search when loading libraries</td></tr>
-     * <tr><th scope="row">{@code java.io.tmpdir}</th>
+     * <tr><th scope="row">{@systemProperty java.io.tmpdir}</th>
      *     <td>Default temp file path</td></tr>
-     * <tr><th scope="row">{@code java.compiler}</th>
+     * <tr><th scope="row">{@systemProperty java.compiler}</th>
      *     <td>Name of JIT compiler to use</td></tr>
-     * <tr><th scope="row">{@code os.name}</th>
+     * <tr><th scope="row">{@systemProperty os.name}</th>
      *     <td>Operating system name</td></tr>
-     * <tr><th scope="row">{@code os.arch}</th>
+     * <tr><th scope="row">{@systemProperty os.arch}</th>
      *     <td>Operating system architecture</td></tr>
-     * <tr><th scope="row">{@code os.version}</th>
+     * <tr><th scope="row">{@systemProperty os.version}</th>
      *     <td>Operating system version</td></tr>
-     * <tr><th scope="row">{@code file.separator}</th>
+     * <tr><th scope="row">{@systemProperty file.separator}</th>
      *     <td>File separator ("/" on UNIX)</td></tr>
-     * <tr><th scope="row">{@code path.separator}</th>
+     * <tr><th scope="row">{@systemProperty path.separator}</th>
      *     <td>Path separator (":" on UNIX)</td></tr>
-     * <tr><th scope="row">{@code line.separator}</th>
+     * <tr><th scope="row">{@systemProperty line.separator}</th>
      *     <td>Line separator ("\n" on UNIX)</td></tr>
-     * <tr><th scope="row">{@code user.name}</th>
+     * <tr><th scope="row">{@systemProperty user.name}</th>
      *     <td>User's account name</td></tr>
-     * <tr><th scope="row">{@code user.home}</th>
+     * <tr><th scope="row">{@systemProperty user.home}</th>
      *     <td>User's home directory</td></tr>
-     * <tr><th scope="row">{@code user.dir}</th>
+     * <tr><th scope="row">{@systemProperty user.dir}</th>
      *     <td>User's current working directory</td></tr>
      * </tbody>
      * </table>
@@ -722,13 +722,13 @@ public final class System {
      *     <th scope="col">Description of Associated Value</th></tr>
      * </thead>
      * <tbody>
-     * <tr><th scope="row">{@code jdk.module.path}</th>
+     * <tr><th scope="row">{@systemProperty jdk.module.path}</th>
      *     <td>The application module path</td></tr>
-     * <tr><th scope="row">{@code jdk.module.upgrade.path}</th>
+     * <tr><th scope="row">{@systemProperty jdk.module.upgrade.path}</th>
      *     <td>The upgrade module path</td></tr>
-     * <tr><th scope="row">{@code jdk.module.main}</th>
+     * <tr><th scope="row">{@systemProperty jdk.module.main}</th>
      *     <td>The module name of the initial/main module</td></tr>
-     * <tr><th scope="row">{@code jdk.module.main.class}</th>
+     * <tr><th scope="row">{@systemProperty jdk.module.main.class}</th>
      *     <td>The main class name of the initial module</td></tr>
      * </tbody>
      * </table>
@@ -802,6 +802,7 @@ public final class System {
         if (props == null) {
             props = new Properties();
             initProperties(props);
+            VersionProps.init(props);
         }
         System.props = props;
     }
@@ -1973,6 +1974,7 @@ public final class System {
         // be put into it directly.
         props = new Properties(84);
         initProperties(props);  // initialized by the VM
+        VersionProps.init(props);
 
         // There are certain system configurations that may be controlled by
         // VM options such as the maximum amount of direct memory and
@@ -1992,7 +1994,6 @@ public final class System {
 
         lineSeparator = props.getProperty("line.separator");
         StaticProperty.javaHome();          // Load StaticProperty to cache the property values
-        VersionProps.init();
 
         FileInputStream fdIn = new FileInputStream(FileDescriptor.in);
         FileOutputStream fdOut = new FileOutputStream(FileDescriptor.out);

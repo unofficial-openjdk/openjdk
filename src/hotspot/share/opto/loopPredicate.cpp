@@ -301,11 +301,78 @@ Node* PhaseIdealLoop::clone_loop_predicates(Node* old_entry, Node* new_entry, bo
   return clone_loop_predicates(old_entry, new_entry, clone_limit_check, this, &this->_igvn);
 }
 
+void PhaseIdealLoop::clone_loop_predicates_fix_mem(ProjNode* dom_proj , ProjNode* proj,
+                                                   PhaseIdealLoop* loop_phase,
+                                                   PhaseIterGVN* igvn) {
+  Compile* C = NULL;
+  if (loop_phase != NULL) {
+    igvn = &loop_phase->igvn();
+  }
+  C = igvn->C;
+  ProjNode* other_dom_proj = dom_proj->in(0)->as_Multi()->proj_out(1-dom_proj->_con);
+  Node* dom_r = other_dom_proj->unique_ctrl_out();
+  if (dom_r->is_Region()) {
+    assert(dom_r->unique_ctrl_out()->is_Call(), "unc expected");
+    ProjNode* other_proj = proj->in(0)->as_Multi()->proj_out(1-proj->_con);
+    Node* r = other_proj->unique_ctrl_out();
+    assert(r->is_Region() && r->unique_ctrl_out()->is_Call(), "cloned predicate should have caused region to be added");
+    for (DUIterator_Fast imax, i = dom_r->fast_outs(imax); i < imax; i++) {
+      Node* dom_use = dom_r->fast_out(i);
+      if (dom_use->is_Phi() && dom_use->bottom_type() == Type::MEMORY) {
+        assert(dom_use->in(0) == dom_r, "");
+        Node* phi = NULL;
+        for (DUIterator_Fast jmax, j = r->fast_outs(jmax); j < jmax; j++) {
+          Node* use = r->fast_out(j);
+          if (use->is_Phi() && use->bottom_type() == Type::MEMORY &&
+              use->adr_type() == dom_use->adr_type()) {
+            assert(use->in(0) == r, "");
+            assert(phi == NULL, "only one phi");
+            phi = use;
+          }
+        }
+        if (phi == NULL) {
+          const TypePtr* adr_type = dom_use->adr_type();
+          int alias = C->get_alias_index(adr_type);
+          Node* call = r->unique_ctrl_out();
+          Node* mem = call->in(TypeFunc::Memory);
+          MergeMemNode* mm = NULL;
+          if (mem->is_MergeMem()) {
+            mm = mem->clone()->as_MergeMem();
+            if (adr_type == TypePtr::BOTTOM) {
+              mem = mem->as_MergeMem()->base_memory();
+            } else {
+              mem = mem->as_MergeMem()->memory_at(alias);
+            }
+          } else {
+            mm = MergeMemNode::make(mem);
+          }
+          phi = PhiNode::make(r, mem, Type::MEMORY, adr_type);
+          if (adr_type == TypePtr::BOTTOM) {
+            mm->set_base_memory(phi);
+          } else {
+            mm->set_memory_at(alias, phi);
+          }
+          if (loop_phase != NULL) {
+            loop_phase->register_new_node(mm, r);
+            loop_phase->register_new_node(phi, r);
+          } else {
+            igvn->register_new_node_with_optimizer(mm);
+            igvn->register_new_node_with_optimizer(phi);
+          }
+          igvn->replace_input_of(call, TypeFunc::Memory, mm);
+        }
+        igvn->replace_input_of(phi, r->find_edge(other_proj), dom_use->in(dom_r->find_edge(other_dom_proj)));
+      }
+    }
+  }
+}
+
+
 // Clone loop predicates to cloned loops (peeled, unswitched, split_if).
 Node* PhaseIdealLoop::clone_loop_predicates(Node* old_entry, Node* new_entry,
-                                                bool clone_limit_check,
-                                                PhaseIdealLoop* loop_phase,
-                                                PhaseIterGVN* igvn) {
+                                            bool clone_limit_check,
+                                            PhaseIdealLoop* loop_phase,
+                                            PhaseIterGVN* igvn) {
 #ifdef ASSERT
   if (new_entry == NULL || !(new_entry->is_Proj() || new_entry->is_Region() || new_entry->is_SafePoint())) {
     if (new_entry != NULL)
@@ -318,7 +385,7 @@ Node* PhaseIdealLoop::clone_loop_predicates(Node* old_entry, Node* new_entry,
   ProjNode* limit_check_proj = NULL;
   limit_check_proj = find_predicate_insertion_point(entry, Deoptimization::Reason_loop_limit_check);
   if (limit_check_proj != NULL) {
-    entry = entry->in(0)->in(0);
+    entry = skip_loop_predicates(entry);
   }
   ProjNode* profile_predicate_proj = NULL;
   ProjNode* predicate_proj = NULL;
@@ -333,13 +400,23 @@ Node* PhaseIdealLoop::clone_loop_predicates(Node* old_entry, Node* new_entry,
   }
   if (predicate_proj != NULL) { // right pattern that can be used by loop predication
     // clone predicate
-    new_entry = clone_predicate(predicate_proj, new_entry,
-                                Deoptimization::Reason_predicate,
-                                loop_phase, igvn);
-    assert(new_entry != NULL && new_entry->is_Proj(), "IfTrue or IfFalse after clone predicate");
+    ProjNode* proj = clone_predicate(predicate_proj, new_entry,
+                                     Deoptimization::Reason_predicate,
+                                     loop_phase, igvn);
+    assert(proj != NULL, "IfTrue or IfFalse after clone predicate");
+    new_entry = proj;
     if (TraceLoopPredicate) {
       tty->print("Loop Predicate cloned: ");
       debug_only( new_entry->in(0)->dump(); );
+    }
+    if (profile_predicate_proj != NULL) {
+      // A node that produces memory may be out of loop and depend on
+      // a profiled predicates. In that case the memory state at the
+      // end of profiled predicates and at the end of predicates are
+      // not the same. The cloned predicates are dominated by the
+      // profiled predicates but may have the wrong memory
+      // state. Update it.
+      clone_loop_predicates_fix_mem(profile_predicate_proj, proj, loop_phase, igvn);
     }
   }
   if (profile_predicate_proj != NULL) { // right pattern that can be used by loop predication
@@ -390,7 +467,7 @@ Node* PhaseIdealLoop::skip_all_loop_predicates(Node* entry) {
   Node* predicate = NULL;
   predicate = find_predicate_insertion_point(entry, Deoptimization::Reason_loop_limit_check);
   if (predicate != NULL) {
-    entry = entry->in(0)->in(0);
+    entry = skip_loop_predicates(entry);
   }
   if (UseProfiledLoopPredicate) {
     predicate = find_predicate_insertion_point(entry, Deoptimization::Reason_profile_predicate);
@@ -865,6 +942,15 @@ private:
   GrowableArray<float> _freqs; // cache frequencies
   PhaseIdealLoop* _phase;
 
+  void set_rounding(int mode) {
+    // fesetround is broken on windows
+    NOT_WINDOWS(fesetround(mode);)
+  }
+
+  void check_frequency(float f) {
+    NOT_WINDOWS(assert(f <= 1 && f >= 0, "Incorrect frequency");)
+  }
+
 public:
   PathFrequency(Node* dom, PhaseIdealLoop* phase)
     : _dom(dom), _stack(0), _phase(phase) {
@@ -872,7 +958,7 @@ public:
 
   float to(Node* n) {
     // post order walk on the CFG graph from n to _dom
-    fesetround(FE_TOWARDZERO); // make sure rounding doesn't push frequency above 1
+    set_rounding(FE_TOWARDZERO); // make sure rounding doesn't push frequency above 1
     IdealLoopTree* loop = _phase->get_loop(_dom);
     Node* c = n;
     for (;;) {
@@ -899,14 +985,14 @@ public:
                 inner_head = inner_loop->_head->as_Loop();
                 inner_head->verify_strip_mined(1);
               }
-              fesetround(FE_UPWARD);  // make sure rounding doesn't push frequency above 1
+              set_rounding(FE_UPWARD);  // make sure rounding doesn't push frequency above 1
               float loop_exit_cnt = 0.0f;
               for (uint i = 0; i < inner_loop->_body.size(); i++) {
                 Node *n = inner_loop->_body[i];
                 float c = inner_loop->compute_profile_trip_cnt_helper(n);
                 loop_exit_cnt += c;
               }
-              fesetround(FE_TOWARDZERO);
+              set_rounding(FE_TOWARDZERO);
               float cnt = -1;
               if (n->in(0)->is_If()) {
                 IfNode* iff = n->in(0)->as_If();
@@ -926,9 +1012,9 @@ public:
                 cnt = p * jmp->_fcnt;
               }
               float this_exit_f = cnt > 0 ? cnt / loop_exit_cnt : 0;
-              assert(this_exit_f <= 1 && this_exit_f >= 0, "Incorrect frequency");
+              check_frequency(this_exit_f);
               f = f * this_exit_f;
-              assert(f <= 1 && f >= 0, "Incorrect frequency");
+              check_frequency(f);
             } else {
               float p = -1;
               if (n->in(0)->is_If()) {
@@ -941,7 +1027,7 @@ public:
                 p = n->in(0)->as_Jump()->_probs[n->as_JumpProj()->_con];
               }
               f = f * p;
-              assert(f <= 1 && f >= 0, "Incorrect frequency");
+              check_frequency(f);
             }
             _freqs.at_put_grow(n->_idx, (float)f, -1);
             _stack.pop();
@@ -949,7 +1035,7 @@ public:
             float prev_f = _freqs_stack.pop();
             float new_f = f;
             f = new_f + prev_f;
-            assert(f <= 1 && f >= 0, "Incorrect frequency");
+            check_frequency(f);
             uint i = _stack.index();
             if (i < n->req()) {
               c = n->in(i);
@@ -962,8 +1048,8 @@ public:
           }
         }
         if (_stack.size() == 0) {
-          fesetround(FE_TONEAREST);
-          assert(f >= 0 && f <= 1, "should have been computed");
+          set_rounding(FE_TONEAREST);
+          check_frequency(f);
           return f;
         }
       } else if (c->is_Loop()) {
@@ -1277,7 +1363,7 @@ bool PhaseIdealLoop::loop_predication_impl(IdealLoopTree *loop) {
   // Loop limit check predicate should be near the loop.
   loop_limit_proj = find_predicate_insertion_point(entry, Deoptimization::Reason_loop_limit_check);
   if (loop_limit_proj != NULL) {
-    entry = loop_limit_proj->in(0)->in(0);
+    entry = skip_loop_predicates(loop_limit_proj);
   }
   bool has_profile_predicates = false;
   profile_predicate_proj = find_predicate_insertion_point(entry, Deoptimization::Reason_profile_predicate);

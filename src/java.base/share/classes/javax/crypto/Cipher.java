@@ -492,6 +492,12 @@ public class Cipher {
      * <p> Note that the list of registered providers may be retrieved via
      * the {@link Security#getProviders() Security.getProviders()} method.
      *
+     * @apiNote
+     * It is recommended to use a transformation that fully specifies the
+     * algorithm, mode, and padding. By not doing so, the provider will
+     * use a default for the mode and padding which may not meet the security
+     * requirements of your application.
+     *
      * @implNote
      * The JDK Reference Implementation additionally uses the
      * {@code jdk.security.provider.preferred}
@@ -499,6 +505,9 @@ public class Cipher {
      * the preferred provider order for the specified algorithm. This
      * may be different than the order of providers returned by
      * {@link Security#getProviders() Security.getProviders()}.
+     * See also the Cipher Transformations section of the {@extLink
+     * security_guide_jdk_providers JDK Providers} document for information
+     * on the transformation defaults used by JDK providers.
      *
      * @param transformation the name of the transformation, e.g.,
      * <i>AES/CBC/PKCS5Padding</i>.
@@ -578,6 +587,17 @@ public class Cipher {
      * <p> Note that the list of registered providers may be retrieved via
      * the {@link Security#getProviders() Security.getProviders()} method.
      *
+     * @apiNote
+     * It is recommended to use a transformation that fully specifies the
+     * algorithm, mode, and padding. By not doing so, the provider will
+     * use a default for the mode and padding which may not meet the security
+     * requirements of your application.
+     *
+     * @implNote
+     * See the Cipher Transformations section of the {@extLink
+     * security_guide_jdk_providers JDK Providers} document for information
+     * on the transformation defaults used by JDK providers.
+     *
      * @param transformation the name of the transformation,
      * e.g., <i>AES/CBC/PKCS5Padding</i>.
      * See the Cipher section in the <a href=
@@ -637,6 +657,17 @@ public class Cipher {
      * CipherSpi implementation from the specified Provider
      * object is returned.  Note that the specified Provider object
      * does not have to be registered in the provider list.
+     *
+     * @apiNote
+     * It is recommended to use a transformation that fully specifies the
+     * algorithm, mode, and padding. By not doing so, the provider will
+     * use a default for the mode and padding which may not meet the security
+     * requirements of your application.
+     *
+     * @implNote
+     * See the Cipher Transformations section of the {@extLink
+     * security_guide_jdk_providers JDK Providers} document for information
+     * on the transformation defaults used by JDK providers.
      *
      * @param transformation the name of the transformation,
      * e.g., <i>AES/CBC/PKCS5Padding</i>.
@@ -1152,21 +1183,6 @@ public class Cipher {
         }
     }
 
-    private static String getOpmodeString(int opmode) {
-        switch (opmode) {
-            case ENCRYPT_MODE:
-                return "encryption";
-            case DECRYPT_MODE:
-                return "decryption";
-            case WRAP_MODE:
-                return "key wrapping";
-            case UNWRAP_MODE:
-                return "key unwrapping";
-            default:
-                return "";
-        }
-    }
-
     /**
      * Initializes this cipher with a key.
      *
@@ -1294,9 +1310,7 @@ public class Cipher {
         this.opmode = opmode;
 
         if (!skipDebug && pdebug != null) {
-            pdebug.println("Cipher." + transformation + " " +
-                getOpmodeString(opmode) + " algorithm from: " +
-                getProviderName());
+            pdebug.println(this.toString());
         }
     }
 
@@ -1437,9 +1451,7 @@ public class Cipher {
         this.opmode = opmode;
 
         if (!skipDebug && pdebug != null) {
-            pdebug.println("Cipher." + transformation + " " +
-                getOpmodeString(opmode) + " algorithm from: " +
-                getProviderName());
+            pdebug.println(this.toString());
         }
     }
 
@@ -1580,9 +1592,7 @@ public class Cipher {
         this.opmode = opmode;
 
         if (!skipDebug && pdebug != null) {
-            pdebug.println("Cipher." + transformation + " " +
-                getOpmodeString(opmode) + " algorithm from: " +
-                getProviderName());
+            pdebug.println(this.toString());
         }
     }
 
@@ -1657,8 +1667,7 @@ public class Cipher {
 
     /**
      * Initializes this cipher with the public key from the given certificate
-     * and
-     * a source of randomness.
+     * and a source of randomness.
      *
      * <p>The cipher is initialized for one of the following four operations:
      * encryption, decryption, key wrapping
@@ -1726,8 +1735,7 @@ public class Cipher {
         initialized = false;
         checkOpmode(opmode);
 
-        // Check key usage if the certificate is of
-        // type X.509.
+        // Check key usage if the certificate is of type X.509.
         if (certificate instanceof java.security.cert.X509Certificate) {
             // Check whether the cert has a key usage extension
             // marked as a critical extension.
@@ -1770,9 +1778,7 @@ public class Cipher {
         this.opmode = opmode;
 
         if (!skipDebug && pdebug != null) {
-            pdebug.println("Cipher." + transformation + " " +
-                getOpmodeString(opmode) + " algorithm from: " +
-                getProviderName());
+            pdebug.println(this.toString());
         }
     }
 
@@ -2793,5 +2799,45 @@ public class Cipher {
             return;
         }
         spi.engineUpdateAAD(src);
+    }
+
+    /**
+     * Returns a String representation of this Cipher.
+     *
+     * @implNote
+     * This implementation returns a String containing the transformation,
+     * mode, and provider of this Cipher.
+     * The exact format of the String is unspecified and is subject to change.
+     *
+     * @return a String describing this Cipher
+     */
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Cipher.")
+                .append(transformation)
+                .append(", mode: ");
+        switch (opmode) {
+            case 0:
+                sb.append("not initialized");
+                break;
+            case ENCRYPT_MODE:
+                sb.append("encryption");
+                break;
+            case DECRYPT_MODE:
+                sb.append("decryption");
+                break;
+            case WRAP_MODE:
+                sb.append("key wrapping");
+                break;
+            case UNWRAP_MODE:
+                sb.append("key unwrapping");
+                break;
+            default:
+                // should never happen
+                sb.append("error:").append(Integer.toString(opmode));
+        }
+        sb.append(", algorithm from: ").append(getProviderName());
+        return sb.toString();
     }
 }

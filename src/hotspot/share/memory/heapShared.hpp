@@ -28,6 +28,7 @@
 #include "classfile/compactHashtable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "memory/allocation.hpp"
+#include "memory/metaspaceShared.hpp"
 #include "memory/universe.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "oops/oop.hpp"
@@ -37,6 +38,14 @@
 #include "utilities/resourceHash.hpp"
 
 #if INCLUDE_CDS_JAVA_HEAP
+struct ArchivableStaticFieldInfo {
+  const char* klass_name;
+  const char* field_name;
+  InstanceKlass* klass;
+  int offset;
+  BasicType type;
+};
+
 // A dump time sub-graph info for Klass _k. It includes the entry points
 // (static fields in _k's mirror) of the archived sub-graphs reachable
 // from _k's mirror. It also contains a list of Klasses of the objects
@@ -50,7 +59,8 @@ class KlassSubGraphInfo: public CHeapObj<mtClass> {
   // object sub-graphs can be accessed at runtime.
   GrowableArray<Klass*>* _subgraph_object_klasses;
   // A list of _k's static fields as the entry points of archived sub-graphs.
-  // For each entry field, it is a pair of field_offset and field_value.
+  // For each entry field, it is a tuple of field_offset, field_value and
+  // is_closed_archive flag.
   GrowableArray<juint>*  _subgraph_entry_fields;
 
  public:
@@ -73,7 +83,8 @@ class KlassSubGraphInfo: public CHeapObj<mtClass> {
   GrowableArray<juint>*  subgraph_entry_fields() {
     return _subgraph_entry_fields;
   }
-  void add_subgraph_entry_field(int static_field_offset, oop v);
+  void add_subgraph_entry_field(int static_field_offset, oop v,
+                                bool is_closed_archive);
   void add_subgraph_object_klass(Klass *orig_k, Klass *relocated_k);
   int num_subgraph_object_klasses() {
     return _subgraph_object_klasses == NULL ? 0 :
@@ -98,9 +109,9 @@ class ArchivedKlassSubGraphInfoRecord {
   ArchivedKlassSubGraphInfoRecord() :
     _k(NULL), _entry_field_records(NULL), _subgraph_object_klasses(NULL) {}
   void init(KlassSubGraphInfo* info);
-  Klass* klass() { return _k; }
-  Array<juint>*  entry_field_records() { return _entry_field_records; }
-  Array<Klass*>* subgraph_object_klasses() { return _subgraph_object_klasses; }
+  Klass* klass() const { return _k; }
+  Array<juint>*  entry_field_records() const { return _entry_field_records; }
+  Array<Klass*>* subgraph_object_klasses() const { return _subgraph_object_klasses; }
 };
 #endif // INCLUDE_CDS_JAVA_HEAP
 
@@ -109,6 +120,7 @@ class HeapShared: AllStatic {
  private:
 
 #if INCLUDE_CDS_JAVA_HEAP
+  static bool _closed_archive_heap_region_mapped;
   static bool _open_archive_heap_region_mapped;
   static bool _archive_heap_region_fixed;
 
@@ -142,38 +154,49 @@ class HeapShared: AllStatic {
     int _count;
   };
 
-  inline static ArchivedKlassSubGraphInfoRecord* read_record_from_compact_hashtable(address base_address, u4 offset) {
-    return (ArchivedKlassSubGraphInfoRecord*)(base_address + offset);
-  }
-
-  inline static bool record_equals_compact_hashtable_entry(ArchivedKlassSubGraphInfoRecord* value, const Klass* key, int len_unused) {
+public: // solaris compiler wants this for RunTimeKlassSubGraphInfoTable
+  inline static bool record_equals_compact_hashtable_entry(
+       const ArchivedKlassSubGraphInfoRecord* value, const Klass* key, int len_unused) {
     return (value->klass() == key);
   }
 
-  typedef CompactHashtable<
+private:
+  typedef OffsetCompactHashtable<
     const Klass*,
-    ArchivedKlassSubGraphInfoRecord*,
-    read_record_from_compact_hashtable,
+    const ArchivedKlassSubGraphInfoRecord*,
     record_equals_compact_hashtable_entry
     > RunTimeKlassSubGraphInfoTable;
 
   static DumpTimeKlassSubGraphInfoTable* _dump_time_subgraph_info_table;
   static RunTimeKlassSubGraphInfoTable _run_time_subgraph_info_table;
 
+  static void check_closed_archive_heap_region_object(InstanceKlass* k,
+                                                      Thread* THREAD);
+
+  static void archive_object_subgraphs(ArchivableStaticFieldInfo fields[],
+                                       int num,
+                                       bool is_closed_archive,
+                                       Thread* THREAD);
+
   // Archive object sub-graph starting from the given static field
   // in Klass k's mirror.
   static void archive_reachable_objects_from_static_field(
     InstanceKlass* k, const char* klass_name,
-    int field_offset, const char* field_name, TRAPS);
+    int field_offset, const char* field_name,
+    bool is_closed_archive, TRAPS);
+
   static void verify_subgraph_from_static_field(
     InstanceKlass* k, int field_offset) PRODUCT_RETURN;
-
   static void verify_reachable_objects_from(oop obj, bool is_archived) PRODUCT_RETURN;
+  static void verify_subgraph_from(oop orig_obj) PRODUCT_RETURN;
 
   static KlassSubGraphInfo* get_subgraph_info(Klass *k);
   static int num_of_subgraph_infos();
 
   static void build_archived_subgraph_info_records(int num_records);
+
+  static void init_subgraph_entry_fields(ArchivableStaticFieldInfo fields[],
+                                         int num, Thread* THREAD);
 
   // Used by decode_from_archive
   static address _narrow_oop_base;
@@ -245,6 +268,14 @@ class HeapShared: AllStatic {
                                         GrowableArray<MemRegion> *open);
   static void copy_closed_archive_heap_objects(GrowableArray<MemRegion> * closed_archive);
   static void copy_open_archive_heap_objects(GrowableArray<MemRegion> * open_archive);
+
+  static oop archive_reachable_objects_from(int level,
+                                            KlassSubGraphInfo* subgraph_info,
+                                            oop orig_obj,
+                                            bool is_closed_archive,
+                                            TRAPS);
+
+  static ResourceBitMap calculate_oopmap(MemRegion region);
 #endif // INCLUDE_CDS_JAVA_HEAP
 
  public:
@@ -253,6 +284,30 @@ class HeapShared: AllStatic {
     NOT_CDS_JAVA_HEAP(return false;)
   }
 
+  static bool is_heap_region(int idx) {
+    CDS_JAVA_HEAP_ONLY(return (idx >= MetaspaceShared::first_closed_archive_heap_region &&
+                               idx <= MetaspaceShared::last_open_archive_heap_region));
+    NOT_CDS_JAVA_HEAP_RETURN_(false);
+  }
+  static bool is_closed_archive_heap_region(int idx) {
+    CDS_JAVA_HEAP_ONLY(return (idx >= MetaspaceShared::first_closed_archive_heap_region &&
+                               idx <= MetaspaceShared::last_closed_archive_heap_region));
+    NOT_CDS_JAVA_HEAP_RETURN_(false);
+  }
+  static bool is_open_archive_heap_region(int idx) {
+    CDS_JAVA_HEAP_ONLY(return (idx >= MetaspaceShared::first_open_archive_heap_region &&
+                               idx <= MetaspaceShared::last_open_archive_heap_region));
+    NOT_CDS_JAVA_HEAP_RETURN_(false);
+  }
+
+  static void set_closed_archive_heap_region_mapped() {
+    CDS_JAVA_HEAP_ONLY(_closed_archive_heap_region_mapped = true);
+    NOT_CDS_JAVA_HEAP_RETURN;
+  }
+  static bool closed_archive_heap_region_mapped() {
+    CDS_JAVA_HEAP_ONLY(return _closed_archive_heap_region_mapped);
+    NOT_CDS_JAVA_HEAP_RETURN_(false);
+  }
   static void set_open_archive_heap_region_mapped() {
     CDS_JAVA_HEAP_ONLY(_open_archive_heap_region_mapped = true);
     NOT_CDS_JAVA_HEAP_RETURN;
@@ -283,15 +338,8 @@ class HeapShared: AllStatic {
   static void patch_archived_heap_embedded_pointers(MemRegion mem, address  oopmap,
                                                     size_t oopmap_in_bits) NOT_CDS_JAVA_HEAP_RETURN;
 
-  static void init_archivable_static_fields(Thread* THREAD) NOT_CDS_JAVA_HEAP_RETURN;
-  static void archive_object_subgraphs(Thread* THREAD) NOT_CDS_JAVA_HEAP_RETURN;
+  static void init_subgraph_entry_fields(Thread* THREAD) NOT_CDS_JAVA_HEAP_RETURN;
   static void write_subgraph_info_table() NOT_CDS_JAVA_HEAP_RETURN;
   static void serialize_subgraph_info_table_header(SerializeClosure* soc) NOT_CDS_JAVA_HEAP_RETURN;
-
-#if INCLUDE_CDS_JAVA_HEAP
-  static ResourceBitMap calculate_oopmap(MemRegion region);
-  static oop archive_reachable_objects_from(int level, KlassSubGraphInfo* subgraph_info, oop orig_obj, TRAPS);
-  static void verify_subgraph_from(oop orig_obj) PRODUCT_RETURN;
-#endif
 };
 #endif // SHARE_VM_MEMORY_HEAPSHARED_HPP

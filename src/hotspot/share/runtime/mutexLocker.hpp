@@ -58,7 +58,6 @@ extern Mutex*   AdapterHandlerLibrary_lock;      // a lock on the AdapterHandler
 extern Mutex*   SignatureHandlerLibrary_lock;    // a lock on the SignatureHandlerLibrary
 extern Mutex*   VtableStubs_lock;                // a lock on the VtableStubs
 extern Mutex*   SymbolArena_lock;                // a lock on the symbol table arena
-extern Mutex*   StringTable_lock;                // a lock on the interned string table
 extern Monitor* StringDedupQueue_lock;           // a lock on the string deduplication queue
 extern Mutex*   StringDedupTable_lock;           // a lock on the string deduplication table
 extern Monitor* CodeCache_lock;                  // a lock on the CodeCache, rank is special, use MutexLockerEx
@@ -110,6 +109,7 @@ extern Monitor* Notify_lock;                     // a lock used to synchronize t
 extern Mutex*   ProfilePrint_lock;               // a lock used to serialize the printing of profiles
 extern Mutex*   ExceptionCache_lock;             // a lock used to synchronize exception cache updates
 extern Mutex*   OsrList_lock;                    // a lock used to serialize access to OSR queues
+extern Mutex*   NMethodSweeperStats_lock;        // a lock used to serialize access to sweeper statistics
 
 #ifndef PRODUCT
 extern Mutex*   FullGCALot_lock;                 // a lock to make FullGCALot MT safe
@@ -132,12 +132,18 @@ extern Mutex*   Management_lock;                 // a lock used to serialize JVM
 extern Monitor* Service_lock;                    // a lock used for service thread operation
 extern Monitor* PeriodicTask_lock;               // protects the periodic task structure
 extern Monitor* RedefineClasses_lock;            // locks classes from parallel redefinition
-
+extern Monitor* ThreadsSMRDelete_lock;           // Used by ThreadsSMRSupport to take pressure off the Threads_lock
+extern Mutex*   SharedDecoder_lock;              // serializes access to the decoder during normal (not error reporting) use
+extern Mutex*   DCmdFactory_lock;                // serialize access to DCmdFactory information
+#if INCLUDE_NMT
+extern Mutex*   NMTQuery_lock;                   // serialize NMT Dcmd queries
+#endif
 #if INCLUDE_JFR
 extern Mutex*   JfrStacktrace_lock;              // used to guard access to the JFR stacktrace table
 extern Monitor* JfrMsg_lock;                     // protects JFR messaging
 extern Mutex*   JfrBuffer_lock;                  // protects JFR buffer operations
 extern Mutex*   JfrStream_lock;                  // protects JFR stream access
+extern Monitor* JfrThreadSampler_lock;           // used to suspend/resume JFR thread sampler
 #endif
 
 #ifndef SUPPORTS_NATIVE_CX8
@@ -345,39 +351,5 @@ class MutexUnlockerEx: StackObj {
     }
   }
 };
-
-#ifndef PRODUCT
-//
-// A special MutexLocker that allows:
-//   - reentrant locking
-//   - locking out of order
-//
-// Only to be used for verify code, where we can relax out dead-lock
-// detection code a bit (unsafe, but probably ok). This code is NEVER to
-// be included in a product version.
-//
-class VerifyMutexLocker: StackObj {
- private:
-  Monitor * _mutex;
-  bool   _reentrant;
- public:
-  VerifyMutexLocker(Monitor * mutex) {
-    _mutex     = mutex;
-    _reentrant = mutex->owned_by_self();
-    if (!_reentrant) {
-      // We temp. disable strict safepoint checking, while we require the lock
-      FlagSetting fs(StrictSafepointChecks, false);
-      _mutex->lock();
-    }
-  }
-
-  ~VerifyMutexLocker() {
-    if (!_reentrant) {
-      _mutex->unlock();
-    }
-  }
-};
-
-#endif
 
 #endif // SHARE_VM_RUNTIME_MUTEXLOCKER_HPP

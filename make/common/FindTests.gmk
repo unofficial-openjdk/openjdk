@@ -72,6 +72,9 @@ ALL_NAMED_TESTS += $(JTREG_TEST_GROUPS)
 # Add Gtest
 ALL_NAMED_TESTS += gtest
 
+# Add microbenchmarks
+ALL_NAMED_TESTS += micro
+
 # Find make test targets
 MAKE_TEST_TARGETS := $(shell $(MAKE) -s --no-print-directory $(MAKE_ARGS) \
     SPEC=$(SPEC) -f $(TOPDIR)/test/make/TestMake.gmk print-targets)
@@ -79,7 +82,7 @@ MAKE_TEST_TARGETS := $(shell $(MAKE) -s --no-print-directory $(MAKE_ARGS) \
 ALL_NAMED_TESTS += $(addprefix make-, $(MAKE_TEST_TARGETS))
 
 # Add special tests
-ALL_NAMED_TESTS += hotspot-internal failure-handler make
+ALL_NAMED_TESTS += failure-handler make
 
 ################################################################################
 

@@ -88,6 +88,12 @@ protected:
   virtual bool is_gc_barrier_node(Node* node) const;
   virtual void eliminate_gc_barrier(PhaseMacroExpand* macro, Node* node) const;
   virtual Node* step_over_gc_barrier(Node* c) const;
+
+#ifdef ASSERT
+  virtual void verify_gc_barriers(Compile* compile, CompilePhase phase) const;
+#endif
+
+  virtual bool escape_add_to_con_graph(ConnectionGraph* conn_graph, PhaseGVN* gvn, Unique_Node_List* delayed_worklist, Node* n, uint opcode) const;
 };
 
 #endif // SHARE_GC_SHARED_C2_G1BARRIERSETC2_HPP
