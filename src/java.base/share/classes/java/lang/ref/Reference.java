@@ -27,8 +27,8 @@ package java.lang.ref;
 
 import jdk.internal.vm.annotation.ForceInline;
 import jdk.internal.HotSpotIntrinsicCandidate;
-import jdk.internal.misc.JavaLangRefAccess;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.access.JavaLangRefAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.ref.Cleaner;
 
 /**
@@ -379,7 +379,7 @@ public abstract class Reference<T> {
      * Throws {@link CloneNotSupportedException}. A {@code Reference} cannot be
      * meaningfully cloned. Construct a new {@code Reference} instead.
      *
-     * @returns never returns normally
+     * @return never returns normally
      * @throws  CloneNotSupportedException always
      *
      * @since 11

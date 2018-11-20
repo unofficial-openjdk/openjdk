@@ -69,7 +69,7 @@ import jdk.internal.net.http.hpack.DecodingCallback;
  * RESPONSES
  *
  * Multiple responses can be received per request. Responses are queued up on
- * a LinkedList of CF<HttpResponse> and the the first one on the list is completed
+ * a LinkedList of CF<HttpResponse> and the first one on the list is completed
  * with the next response
  *
  * getResponseAsync() -- queries list of response CFs and returns first one
@@ -608,8 +608,20 @@ class Stream<T> extends ExchangeImpl<T> {
         if (contentLength > 0) {
             h.setHeader("content-length", Long.toString(contentLength));
         }
+        URI uri = request.uri();
+        if (uri != null) {
+            h.setHeader("host", Utils.hostString(request));
+        }
         HttpHeaders sysh = filterHeaders(h.build());
         HttpHeaders userh = filterHeaders(request.getUserHeaders());
+        // Filter context restricted from userHeaders
+        userh = HttpHeaders.of(userh.map(), Utils.CONTEXT_RESTRICTED(client()));
+
+        final HttpHeaders uh = userh;
+
+        // Filter any headers from systemHeaders that are set in userHeaders
+        sysh = HttpHeaders.of(sysh.map(), (k,v) -> uh.firstValue(k).isEmpty());
+
         OutgoingHeaders<Stream<T>> f = new OutgoingHeaders<>(sysh, userh, this);
         if (contentLength == 0) {
             f.setFlag(HeadersFrame.END_STREAM);

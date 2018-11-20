@@ -117,6 +117,10 @@ public:
   // effective gid, or if given uid is root.
   static bool matches_effective_uid_and_gid_or_root(uid_t uid, gid_t gid);
 
+  static void print_umask(outputStream* st, mode_t umsk);
+
+  static void print_user_info(outputStream* st);
+
 #ifdef SUPPORTS_CLOCK_MONOTONIC
 
   static bool supports_monotonic_clock();
@@ -129,11 +133,6 @@ public:
 
 #endif
 };
-
-// On POSIX platforms the signal handler is global so we just do the write.
-static void write_memory_serialize_page_with_handler(JavaThread* thread) {
-  write_memory_serialize_page(thread);
-}
 
 /*
  * Crash protection for the watcher thread. Wrap the callback

@@ -30,8 +30,8 @@ import java.io.FileDescriptor;
 import java.io.IOException;
 import static java.util.concurrent.TimeUnit.*;
 
-import jdk.internal.misc.JavaLangAccess;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 
 /**
  * An interface that allows translation (and more!).

@@ -31,8 +31,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.LockSupport;
 
 import jdk.internal.misc.InnocuousThread;
-import jdk.internal.misc.JavaLangAccess;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 
 abstract class Poller implements Runnable {
     private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();

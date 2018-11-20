@@ -31,8 +31,8 @@ package java.nio.channels.spi;
 import java.io.IOException;
 import java.nio.channels.*;
 
-import jdk.internal.misc.JavaLangAccess;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 import sun.nio.ch.Interruptible;
 
 

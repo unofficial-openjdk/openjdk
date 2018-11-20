@@ -247,12 +247,6 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
           range(8, 256)                                                     \
           constraint(ObjectAlignmentInBytesConstraintFunc,AtParse)          \
                                                                             \
-  /* UseMembar is theoretically a temp flag used for memory barrier      */ \
-  /* removal testing.  It was supposed to be removed before FCS but has  */ \
-  /* been re-added (see 6401008)                                         */ \
-  product_pd(bool, UseMembar,                                               \
-          "(Unstable) Issues membars on thread state transitions")          \
-                                                                            \
   develop(bool, CleanChunkPoolAsync, true,                                  \
           "Clean the chunk pool asynchronously")                            \
                                                                             \
@@ -1267,6 +1261,10 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
           "If an error occurs, save the error data to this file "           \
           "[default: ./hs_err_pid%p.log] (%p replaced with pid)")           \
                                                                             \
+  product(bool, ExtensiveErrorReports,                                      \
+          PRODUCT_ONLY(false) NOT_PRODUCT(true),                            \
+          "Error reports are more extensive.")                              \
+                                                                            \
   product(bool, DisplayVMOutputToStderr, false,                             \
           "If DisplayVMOutput is true, display all VM output to stderr")    \
                                                                             \
@@ -2021,6 +2019,9 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
   notproduct(bool, CIObjectFactoryVerify, false,                            \
           "enable potentially expensive verification in ciObjectFactory")   \
                                                                             \
+  diagnostic(bool, AbortVMOnCompilationFailure, false,                      \
+          "Abort VM when method had failed to compile.")                    \
+                                                                            \
   /* Priorities */                                                          \
   product_pd(bool, UseThreadPriorities,  "Use native thread priorities")    \
                                                                             \
@@ -2439,9 +2440,8 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
           "Average number of symbols per bucket in shared table")           \
           range(2, 246)                                                     \
                                                                             \
-  diagnostic(bool, IgnoreUnverifiableClassesDuringDump, true,              \
-          "Do not quit -Xshare:dump even if we encounter unverifiable "     \
-          "classes. Just exclude them from the shared dictionary.")         \
+  diagnostic(bool, AllowArchivingWithJavaAgent, false,                      \
+          "Allow Java agent to be run with CDS dumping")                    \
                                                                             \
   diagnostic(bool, PrintMethodHandleStubs, false,                           \
           "Print generated stub code for method handles")                   \

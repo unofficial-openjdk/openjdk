@@ -71,10 +71,6 @@ static void metadata_oops_do(Metadata** metadata_begin, Metadata **metadata_end,
 }
 #endif
 
-bool AOTCompiledMethod::do_unloading_oops(address low_boundary, BoolObjectClosure* is_alive) {
-  return false;
-}
-
 oop AOTCompiledMethod::oop_at(int index) const {
   if (index == 0) { // 0 is reserved
     return NULL;
@@ -348,7 +344,7 @@ void AOTCompiledMethod::log_identity(xmlStream* log) const {
   log->print(" aot='%2d'", _heap->dso_id());
 }
 
-void AOTCompiledMethod::log_state_change(oop cause) const {
+void AOTCompiledMethod::log_state_change() const {
   if (LogCompilation) {
     ResourceMark m;
     if (xtty != NULL) {

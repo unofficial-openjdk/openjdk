@@ -43,8 +43,6 @@ compiler/intrinsics/mathexact/LongMulOverflowTest.java          8196568   generi
 
 compiler/jvmci/SecurityRestrictionsTest.java                    8181837   generic-all
 
-compiler/jsr292/RedefineMethodUsedByMultipleMethodHandles.java  8204521   windows-all
-
 compiler/unsafe/UnsafeGetConstantField.java                     8181833   generic-all
 compiler/unsafe/UnsafeGetStableArrayElement.java                8181833   generic-all
 compiler/unsafe/UnsafeOffHeapBooleanTest.java                   8181833   generic-all
@@ -109,16 +107,6 @@ vmTestbase/nsk/jdi/ThreadReference/forceEarlyReturn/forceEarlyReturn009/forceEar
 
 vmTestbase/nsk/jdi/ThreadReference/forceEarlyReturn/forceEarlyReturn007/TestDescription.java       8195600   generic-all
 
-vmTestbase/nsk/jdi/ArrayType/newInstance/newinstance001/TestDescription.java                              8203174   generic-all
-vmTestbase/nsk/jdi/ArrayType/newInstance/newinstance002/TestDescription.java                              8203174   generic-all
-vmTestbase/nsk/jdi/ArrayType/newInstance/newinstance003/TestDescription.java                              8203174   generic-all
-vmTestbase/nsk/jdi/ReferenceType/instances/instances002/instances002.java                                 8203174   generic-all
-vmTestbase/nsk/jdi/ReferenceType/instances/instances003/instances003.java                                 8203174   generic-all
-vmTestbase/nsk/jdi/stress/MonitorEvents/MonitorEvents002/TestDescription.java                             8203174   generic-all
-vmTestbase/nsk/jdi/stress/serial/heapwalking001/TestDescription.java                                      8203174   generic-all
-vmTestbase/nsk/jdi/stress/serial/heapwalking002/TestDescription.java                                      8203174   generic-all
-vmTestbase/nsk/jdi/stress/serial/mixed002/TestDescription.java                                            8203174   generic-all
-
 vmTestbase/nsk/jdi/VirtualMachine/redefineClasses/redefineclasses026/TestDescription.java   8195627   generic-all
 vmTestbase/nsk/jdi/VirtualMachine/redefineClasses/redefineclasses028/TestDescription.java   8195627   generic-all
 vmTestbase/nsk/jdi/VirtualMachine/redefineClasses/redefineclasses030/TestDescription.java   8195627   generic-all
@@ -166,18 +154,19 @@ compiler/stable/TestStableUShort.java                            8204347   gener
 
 # Graal unit tests
 org.graalvm.compiler.core.test.CheckGraalInvariants                              8205081
-org.graalvm.compiler.core.test.inlining.PolymorphicInliningTest                  8205081
 org.graalvm.compiler.core.test.OptionsVerifierTest                               8205081
-org.graalvm.compiler.core.test.ProfilingInfoTest                                 8205081
 org.graalvm.compiler.hotspot.test.CompilationWrapperTest                         8205081
-org.graalvm.compiler.hotspot.test.HsErrLogTest                                   8205081
-org.graalvm.compiler.hotspot.test.OptionsInFileTest                              8205081
-org.graalvm.compiler.hotspot.test.ReservedStackAccessTest                        8205081
 org.graalvm.compiler.replacements.test.classfile.ClassfileBytecodeProviderTest   8205081
-org.graalvm.compiler.replacements.test.classfile.RedefineIntrinsicTest           8205081
 
 org.graalvm.compiler.core.test.deopt.CompiledMethodTest          8202955
 org.graalvm.compiler.core.test.CountedLoopTest                   8211179
 org.graalvm.compiler.debug.test.DebugContextTest                 8203504
 
 org.graalvm.compiler.hotspot.test.GraalOSRTest                   8206947
+org.graalvm.compiler.hotspot.test.ReservedStackAccessTest        8213567   windows-all
+
+org.graalvm.compiler.hotspot.test.BigIntegerIntrinsicsTest       8213556
+org.graalvm.compiler.replacements.test.StringCompressInflateTest 8213556
+org.graalvm.compiler.replacements.test.SubstitutionNodeSourcePositionTest 8213556
+
+org.graalvm.compiler.debug.test.TimerKeyTest                     8213598

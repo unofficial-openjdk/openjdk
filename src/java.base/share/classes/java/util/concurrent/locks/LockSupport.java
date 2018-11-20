@@ -37,8 +37,8 @@ package java.util.concurrent.locks;
 
 import java.util.concurrent.TimeUnit;
 
-import jdk.internal.misc.JavaLangAccess;
-import jdk.internal.misc.SharedSecrets;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Unsafe;
 
 /**

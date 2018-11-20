@@ -33,7 +33,6 @@
 #include "classfile/stringTable.hpp"
 #include "logging/log.hpp"
 #include "memory/allocation.inline.hpp"
-#include "memory/metaspaceShared.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/weakHandle.inline.hpp"
@@ -97,74 +96,9 @@ template <class T, MEMFLAGS F> HashtableEntry<T, F>* Hashtable<T, F>::allocate_n
   return entry;
 }
 
-// Check to see if the hashtable is unbalanced.  The caller set a flag to
-// rehash at the next safepoint.  If this bucket is 60 times greater than the
-// expected average bucket length, it's an unbalanced hashtable.
-// This is somewhat an arbitrary heuristic but if one bucket gets to
-// rehash_count which is currently 100, there's probably something wrong.
-
-template <class T, MEMFLAGS F> bool RehashableHashtable<T, F>::check_rehash_table(int count) {
-  assert(this->table_size() != 0, "underflow");
-  if (count > (((double)this->number_of_entries()/(double)this->table_size())*rehash_multiple)) {
-    // Set a flag for the next safepoint, which should be at some guaranteed
-    // safepoint interval.
-    return true;
-  }
-  return false;
-}
-
-// Create a new table and using alternate hash code, populate the new table
-// with the existing elements.   This can be used to change the hash code
-// and could in the future change the size of the table.
-
-template <class T, MEMFLAGS F> void RehashableHashtable<T, F>::move_to(RehashableHashtable<T, F>* new_table) {
-
-  // Initialize the global seed for hashing.
-  _seed = AltHashing::compute_seed();
-  assert(seed() != 0, "shouldn't be zero");
-
-  int saved_entry_count = this->number_of_entries();
-
-  // Iterate through the table and create a new entry for the new table
-  for (int i = 0; i < new_table->table_size(); ++i) {
-    for (HashtableEntry<T, F>* p = this->bucket(i); p != NULL; ) {
-      HashtableEntry<T, F>* next = p->next();
-      T string = p->literal();
-      // Use alternate hashing algorithm on the symbol in the first table
-      unsigned int hashValue = string->new_hash(seed());
-      // Get a new index relative to the new table (can also change size)
-      int index = new_table->hash_to_index(hashValue);
-      p->set_hash(hashValue);
-      // Keep the shared bit in the Hashtable entry to indicate that this entry
-      // can't be deleted.   The shared bit is the LSB in the _next field so
-      // walking the hashtable past these entries requires
-      // BasicHashtableEntry::make_ptr() call.
-      bool keep_shared = p->is_shared();
-      this->unlink_entry(p);
-      new_table->add_entry(index, p);
-      if (keep_shared) {
-        p->set_shared();
-      }
-      p = next;
-    }
-  }
-  // give the new table the free list as well
-  new_table->copy_freelist(this);
-
-  // Destroy memory used by the buckets in the hashtable.  The memory
-  // for the elements has been used in a new table and is not
-  // destroyed.  The memory reuse will benefit resizing the SystemDictionary
-  // to avoid a memory allocation spike at safepoint.
-  BasicHashtable<F>::free_buckets();
-}
-
 template <MEMFLAGS F> void BasicHashtable<F>::free_buckets() {
   if (NULL != _buckets) {
-    // Don't delete the buckets in the shared space.  They aren't
-    // allocated by os::malloc
-    if (!MetaspaceShared::is_in_shared_metaspace(_buckets)) {
-       FREE_C_HEAP_ARRAY(HashtableBucket, _buckets);
-    }
+    FREE_C_HEAP_ARRAY(HashtableBucket, _buckets);
     _buckets = NULL;
   }
 }
@@ -197,47 +131,6 @@ template <MEMFLAGS F> void BasicHashtable<F>::bulk_free_entries(BucketUnlinkCont
     current = old;
   }
   Atomic::add(-context->_num_removed, &_number_of_entries);
-}
-// Copy the table to the shared space.
-template <MEMFLAGS F> size_t BasicHashtable<F>::count_bytes_for_table() {
-  size_t bytes = 0;
-  bytes += sizeof(intptr_t); // len
-
-  for (int i = 0; i < _table_size; ++i) {
-    for (BasicHashtableEntry<F>** p = _buckets[i].entry_addr();
-         *p != NULL;
-         p = (*p)->next_addr()) {
-      bytes += entry_size();
-    }
-  }
-
-  return bytes;
-}
-
-// Dump the hash table entries (into CDS archive)
-template <MEMFLAGS F> void BasicHashtable<F>::copy_table(char* top, char* end) {
-  assert(is_aligned(top, sizeof(intptr_t)), "bad alignment");
-  intptr_t *plen = (intptr_t*)(top);
-  top += sizeof(*plen);
-
-  int i;
-  for (i = 0; i < _table_size; ++i) {
-    for (BasicHashtableEntry<F>** p = _buckets[i].entry_addr();
-         *p != NULL;
-         p = (*p)->next_addr()) {
-      *p = (BasicHashtableEntry<F>*)memcpy(top, (void*)*p, entry_size());
-      top += entry_size();
-    }
-  }
-  *plen = (char*)(top) - (char*)plen - sizeof(*plen);
-  assert(top == end, "count_bytes_for_table is wrong");
-  // Set the shared bit.
-
-  for (i = 0; i < _table_size; ++i) {
-    for (BasicHashtableEntry<F>* p = bucket(i); p != NULL; p = p->next()) {
-      p->set_shared();
-    }
-  }
 }
 
 // For oops and Strings the size of the literal is interesting. For other types, nobody cares.
@@ -358,34 +251,6 @@ template <class T, MEMFLAGS F> void Hashtable<T, F>::print_table_statistics(outp
   st->print_cr("Maximum bucket size     : %9d", (int)summary.maximum());
 }
 
-
-// Dump the hash table buckets.
-
-template <MEMFLAGS F> size_t BasicHashtable<F>::count_bytes_for_buckets() {
-  size_t bytes = 0;
-  bytes += sizeof(intptr_t); // len
-  bytes += sizeof(intptr_t); // _number_of_entries
-  bytes += _table_size * sizeof(HashtableBucket<F>); // the buckets
-
-  return bytes;
-}
-
-// Dump the buckets (into CDS archive)
-template <MEMFLAGS F> void BasicHashtable<F>::copy_buckets(char* top, char* end) {
-  assert(is_aligned(top, sizeof(intptr_t)), "bad alignment");
-  intptr_t len = _table_size * sizeof(HashtableBucket<F>);
-  *(intptr_t*)(top) = len;
-  top += sizeof(intptr_t);
-
-  *(intptr_t*)(top) = _number_of_entries;
-  top += sizeof(intptr_t);
-
-  _buckets = (HashtableBucket<F>*)memcpy(top, (void*)_buckets, len);
-  top += len;
-
-  assert(top == end, "count_bytes_for_buckets is wrong");
-}
-
 #ifndef PRODUCT
 template <class T> void print_literal(T l) {
   l->print();
@@ -452,8 +317,6 @@ template class Hashtable<nmethod*, mtGC>;
 template class HashtableEntry<nmethod*, mtGC>;
 template class BasicHashtable<mtGC>;
 template class Hashtable<ConstantPool*, mtClass>;
-template class RehashableHashtable<Symbol*, mtSymbol>;
-template class RehashableHashtable<oop, mtSymbol>;
 template class Hashtable<Symbol*, mtSymbol>;
 template class Hashtable<Klass*, mtClass>;
 template class Hashtable<InstanceKlass*, mtClass>;

@@ -230,8 +230,7 @@ class CompileBroker: AllStatic {
   static volatile int _print_compilation_warning;
 
   static Handle create_thread_oop(const char* name, TRAPS);
-  static JavaThread* make_thread(jobject thread_oop, CompileQueue* queue,
-                                 AbstractCompiler* comp, bool compiler_thread, TRAPS);
+  static JavaThread* make_thread(jobject thread_oop, CompileQueue* queue, AbstractCompiler* comp, TRAPS);
   static void init_compiler_sweeper_threads();
   static void possibly_add_compiler_threads();
   static bool compilation_is_complete  (const methodHandle& method, int osr_bci, int comp_level);
@@ -253,7 +252,8 @@ class CompileBroker: AllStatic {
 #endif
 
   static void invoke_compiler_on_method(CompileTask* task);
-  static void post_compile(CompilerThread* thread, CompileTask* task, bool success, ciEnv* ci_env);
+  static void post_compile(CompilerThread* thread, CompileTask* task, bool success, ciEnv* ci_env,
+                           int compilable, const char* failure_reason);
   static void set_last_compile(CompilerThread *thread, const methodHandle& method, bool is_osr, int comp_level);
   static void push_jni_handle_block();
   static void pop_jni_handle_block();
