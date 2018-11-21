@@ -1784,9 +1784,8 @@ static inline void clear_anchor(JavaThread* thread) {
 class FreezeContinuation {
 private:
   JavaThread* _thread;
-  oop _cont;
   ContMirror& _mirror;
-  intptr_t *_bottom;
+  intptr_t *_bottom_address;
 
   int _oops;
   int _size; // total size of all frames plus metadata. keeps track of offset where a frame should be written and how many bytes we need to allocate.
@@ -1795,25 +1794,34 @@ private:
   int _wsp; // the current hstack sp during the freezing operation
   int _wref_sp; // the current hstack ref_sp during the freezing operation
 
-  hframe _last;
+  hframe _bottom;
   hframe _top;
-  frame _frame;
+  frame _entry_frame;
+
+  bool _is_first;
+  bool _is_last;
+
+  void hit_first()  { _is_first = true; }
+  bool test_first() { return _is_first ? (_is_first = false, true) : false; }
+
+  void hit_last()   { _is_last = true; }
+  bool test_last()  { return _is_last ? (_is_last = false, true) : false; }
 
   int _compiled;
-  bool _done;
 
 public:
-  FreezeContinuation(JavaThread* thread, oop cont, ContMirror& mirror) : _thread(thread), _cont(cont), _mirror(mirror), _bottom(mirror.entrySP()), 
+  FreezeContinuation(JavaThread* thread, ContMirror& mirror) : 
+    _thread(thread), _mirror(mirror), _bottom_address(mirror.entrySP()), 
     _oops(0), _size(0), _frames(0), _wsp(0), _wref_sp(0),
-    _compiled(0), _done(false) {}
+    _is_first(false), _is_last(false),
+    _compiled(0) {}
 
   int nr_oops() const { return _oops; }
   int nr_bytes() const { return _size; }
   int nr_frames() const { return _frames; }
-  hframe bottom_hframe() { return _last; }
+  hframe bottom_hframe() { return _bottom; }
   hframe top_hframe() { return _top; }
-  frame bottom_frame() { return _frame; }
-  bool done() const { return _done; }
+  frame entry_frame() { return _entry_frame; }
   int wsp() const { return _wsp; }
   int wref_sp() const { return _wref_sp; }
 
@@ -1823,15 +1831,14 @@ public:
     map.set_include_argument_oops(false);
     CallerInfo caller;
 
-    HStackFrameDescriptor hstackframe; // = hstack.frame(fsize, f.pc(), NULL, true, 0, (intptr_t *) (f.fp() - vsp));
-    res_freeze result = freeze(f, map, caller, hstackframe);
+    hit_first(); // the first frame we'll visit is the top
+    res_freeze result = freeze(f, map, caller);
 
     if (caller.has_fp_index()) {
       assert(!caller.is_interpreted_frame(), "only compiled frames");
       _top.set_fp(caller.fp_index());
     }
 
-    _done = true;
     return result;
   }
 
@@ -1938,12 +1945,12 @@ public:
     return num_oops;
   }
 
-  res_freeze freeze_interpreted_stackframe(frame& f, RegisterMap& map, CallerInfo& caller, HStackFrameDescriptor& callee) {
+  res_freeze freeze_interpreted_stackframe(frame& f, RegisterMap& map, CallerInfo& caller) {
     if (is_interpreted_frame_owning_locks(f)) {
       return freeze_pinned_monitor;
     }
 
-    bool first = callee.empty();
+    bool first = test_first();
 
     int oops = 0;
     const int fsize = FreezeInterpretedFrame::frame_size(f, &oops);
@@ -1973,7 +1980,7 @@ public:
 
     HStackFrameDescriptor hstackframe(fsize, f.pc(), NULL, true, 0, (intptr_t *) (f.fp() - vsp));
 
-    res_freeze result = freeze(sender, map, caller, hstackframe); // <----- recursive call
+    res_freeze result = freeze(sender, map, caller); // <----- recursive call
     if (result != freeze_ok) {
       return result;
     }
@@ -1993,6 +2000,9 @@ public:
     hframe hf = hstackframe.create_hframe(this, _mirror, hsp);
     if (first) {
       _top = hf;
+    }
+    if (test_last()) {
+       _bottom = hf;
     }
 
     _mirror.copy_to_stack(vsp, hsp, fsize);
@@ -2035,7 +2045,7 @@ public:
     return freeze_ok;
   }
 
-  res_freeze freeze_compiled_stackframe(frame& f, RegisterMap& map, CallerInfo& caller, HStackFrameDescriptor& callee) {
+  res_freeze freeze_compiled_stackframe(frame& f, RegisterMap& map, CallerInfo& caller) {
     if (is_compiled_frame_owning_locks(_mirror.thread(), &map, f)) {
       return freeze_pinned_monitor;
     }
@@ -2048,7 +2058,7 @@ public:
 
     ++_compiled;
 
-    bool first = callee.empty();
+    bool first = test_first();
 
     _size += fsize + METADATA_SIZE;
     _oops += oops;
@@ -2071,7 +2081,7 @@ public:
 #endif
     HStackFrameDescriptor hstackframe(fsize, f.pc(), f.cb(), false, f.fp(), NULL);
 
-    res_freeze result = freeze(sender, map, caller, hstackframe); // <----- recursive call
+    res_freeze result = freeze(sender, map, caller); // <----- recursive call
     if (result != freeze_ok) {
       return result;
     }
@@ -2092,6 +2102,9 @@ public:
     hframe hf = hstackframe.create_hframe(this, _mirror, hsp);
     if (first) {
       _top = hf;
+    }
+    if (test_last()) {
+       _bottom = hf;
     }
 
     _mirror.copy_to_stack(vsp, hsp, fsize);
@@ -2118,10 +2131,10 @@ public:
     return freeze_ok;
   }
 
-  void finalize(frame& f, HStackFrameDescriptor& callee) {
+  void finalize(frame& f) {
     if (Continuation::PERFTEST_LEVEL <= 15) return;
 
-    _frame = f;
+    _entry_frame = f;
     hframe orig_top_frame = _mirror.last_frame();
     log_trace(jvmcont)("top_hframe before (freeze):");
     if (log_is_enabled(Trace, jvmcont)) orig_top_frame.print_on(_mirror, tty);
@@ -2137,13 +2150,12 @@ public:
     _wsp = _mirror.sp() - to_index(METADATA_SIZE);
     _wref_sp = _mirror.refSP();
 
-    intptr_t* hsp = _mirror.stack_address(_wsp - to_index(callee.size()));
-    _last = callee.create_hframe(this, _mirror, hsp); // TODO: seems like this hframe object is created twice; once here and once when freezing the callee
+    hit_last(); // the next frame we return to is bottom
   }
 
-  res_freeze freeze(frame& f, RegisterMap& map, CallerInfo& caller, HStackFrameDescriptor& callee) {
-    if (f.real_fp() > _bottom) {
-      finalize(f, callee);
+  res_freeze freeze(frame& f, RegisterMap& map, CallerInfo& caller) {
+    if (f.real_fp() > _bottom_address) {
+      finalize(f);
       // done with recursion
       return freeze_ok;
     }
@@ -2154,13 +2166,13 @@ public:
       if (f.oop_map() == NULL) {
         return freeze_pinned_native; // special native frame
       }
-      return freeze_compiled_stackframe(f, map, caller, callee);
+      return freeze_compiled_stackframe(f, map, caller);
     } else {
       bool is_interpreted = f.is_interpreted_frame();
       if (!is_interpreted) {
         return freeze_pinned_native;
       }
-      return freeze_interpreted_stackframe(f, map, caller, callee);
+      return freeze_interpreted_stackframe(f, map, caller);
     }
   }
 
@@ -2204,7 +2216,7 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 
   const bool empty = cont.is_empty();
 
-  FreezeContinuation fc(thread, oopCont, cont);
+  FreezeContinuation fc(thread, cont);
   res_freeze result = fc.freeze(f, map);
   if (result != freeze_ok) {
     return result;
@@ -2225,7 +2237,7 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 
   hframe hf = fc.bottom_hframe();
   hframe new_top = fc.top_hframe();
-  f = fc.bottom_frame();
+  f = fc.entry_frame();
 
   assert (fc.wsp() <= cont.sp() - to_index(METADATA_SIZE), "wsp: %d sp - to_index(METADATA_SIZE): %d", fc.wsp(), cont.sp() - to_index(METADATA_SIZE));
 
