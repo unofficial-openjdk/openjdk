@@ -1842,30 +1842,33 @@ public:
     return result;
   }
 
-  class FreezeCompiledFrame {
-  public:
-    static int frame_size(frame& f, int* num_oops) {
-      *num_oops = f.oop_map()->num_oops();
-      return f.cb()->frame_size() * wordSize;
+  void save_bounding_hframe(hframe& hf, bool first) {
+    if (first) {
+      _top = hf;
     }
-  };
-
-  class FreezeInterpretedFrame {
-  public:
-    static int frame_size(frame&f, int* num_oops) {
-      int n = 0;
-      n++; // for the mirror
-      n += ((intptr_t*)f.interpreter_frame_monitor_begin() - (intptr_t*)f.interpreter_frame_monitor_end())/f.interpreter_frame_monitor_size();
-
-      InterpreterOopMap mask;
-      interpreter_oop_mask(f, &mask);
-      n += mask.num_oops();
-      *num_oops = n;
-
-      int size = (interpreted_frame_bottom(f) - interpreted_frame_top(f, &mask)) * wordSize;
-      return size;
+    if (test_last()) {
+       _bottom = hf;
     }
-  };
+  }
+
+  static int compiled_frame_size(frame& f, int* num_oops) {
+    *num_oops = f.oop_map()->num_oops();
+    return f.cb()->frame_size() * wordSize;
+  }
+
+  static int interpreted_frame_size(frame&f, int* num_oops) {
+    int n = 0;
+    n++; // for the mirror
+    n += ((intptr_t*)f.interpreter_frame_monitor_begin() - (intptr_t*)f.interpreter_frame_monitor_end())/f.interpreter_frame_monitor_size();
+
+    InterpreterOopMap mask;
+    interpreter_oop_mask(f, &mask);
+    n += mask.num_oops();
+    *num_oops = n;
+
+    int size = (interpreted_frame_bottom(f) - interpreted_frame_top(f, &mask)) * wordSize;
+    return size;
+  }
 
   template <bool callee_is_interpreted>
   void patch(frame& f, hframe& callee, CallerInfo& caller) {
@@ -1904,26 +1907,37 @@ public:
 
   }
 
-  int freeze_interpreted_oops(frame& f, intptr_t* vsp, intptr_t *hsp, RegisterMap& map, int starting_index) {
+  intptr_t* freeze_raw_frame(intptr_t* vsp, int fsize) {
+    _wsp -= to_index(fsize);
+    intptr_t* hsp = _mirror.stack_address(_wsp);
+    _mirror.copy_to_stack(vsp, hsp, fsize);
+    _wsp -= to_index(METADATA_SIZE);
+
+    return hsp;
+  }
+
+  void freeze_interpreted_oops(frame& f, intptr_t* vsp, intptr_t *hsp, RegisterMap& map, int num_oops) {
     if (Continuation::PERFTEST_LEVEL < 30) {
-      return 0;
+      return;
     }
 
     log_trace(jvmcont)("Walking oops (freeze)");
 
     assert (!map.include_argument_oops(), "");
 
+    int starting_index = _wref_sp - num_oops;
+
     InterpretedFreezeOopFn oopFn(&_mirror, &f, vsp, hsp, &map, starting_index);
     ForwardingOopClosure<InterpretedFreezeOopFn> oopClosure(&oopFn);
     f.oops_do(&oopClosure, NULL, &oopClosure, &map);
 
-    int num_oops = oopFn.count();
-    return num_oops;
+    assert(oopFn.count() == num_oops, "check");
+    _wref_sp = starting_index;
   }
 
-  int freeze_compiled_oops(frame& f, intptr_t* vsp, intptr_t *hsp, RegisterMap& map, int starting_index, CallerInfo& current) {
+  void freeze_compiled_oops(frame& f, intptr_t* vsp, intptr_t *hsp, RegisterMap& map, int num_oops, CallerInfo& current) {
     if (Continuation::PERFTEST_LEVEL < 30) {
-      return 0;
+      return;
     }
 
     log_trace(jvmcont)("Walking oops (freeze)");
@@ -1931,6 +1945,8 @@ public:
     assert (!map.include_argument_oops(), "");
     const ImmutableOopMap* oopmap = f.oop_map();
     assert(oopmap, "must have");
+
+    int starting_index = _wref_sp - num_oops;
 
     CompiledFreezeOopFn oopFn(&_mirror, &f, vsp, hsp, current, &map, starting_index);
 
@@ -1941,8 +1957,8 @@ public:
       f.cb()->preserve_callee_argument_oops(f, &map, &oopClosure);
     }
 
-    int num_oops = oopFn.count();
-    return num_oops;
+    assert(oopFn.count() == num_oops, "check");
+    _wref_sp = starting_index;
   }
 
   res_freeze freeze_interpreted_stackframe(frame& f, RegisterMap& map, CallerInfo& caller) {
@@ -1953,7 +1969,7 @@ public:
     bool first = test_first();
 
     int oops = 0;
-    const int fsize = FreezeInterpretedFrame::frame_size(f, &oops);
+    const int fsize = interpreted_frame_size(f, &oops);
     if (fsize < 0) {
       return freeze_pinned_native;
     }
@@ -1993,21 +2009,11 @@ public:
 
     if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
 
-     _wsp -= to_index(fsize);
-    intptr_t* hsp = _mirror.stack_address(_wsp);
+    intptr_t* hsp = freeze_raw_frame(vsp, fsize);
     intptr_t* hfp = hsp + (vfp - vsp);
 
     hframe hf = hstackframe.create_hframe(this, _mirror, hsp);
-    if (first) {
-      _top = hf;
-    }
-    if (test_last()) {
-       _bottom = hf;
-    }
-
-    _mirror.copy_to_stack(vsp, hsp, fsize);
-
-    _wsp -= to_index(METADATA_SIZE);
+    save_bounding_hframe(hf, first);
 
     /* TODO: Some of the writes that happen below writes to the same memory, they need to go away - rbackman */
     // TODO: for compression, initial_sp seems to always point to itself, and locals points to the previous frame's initial_sp + 1 word
@@ -2036,10 +2042,7 @@ public:
     // patch our stuff - this used to happen in the caller so it needs to happen last
     patch<true>(f, hf, caller); 
 
-    int oops_offset = _wref_sp - oops;
-    int nr_oops = freeze_interpreted_oops(f, vsp, hsp, map, oops_offset);
-    assert(nr_oops == oops, "check");
-    _wref_sp = oops_offset;
+    freeze_interpreted_oops(f, vsp, hsp, map, oops);
 
     caller = CallerInfo::create_interpreted(hsp, hfp);
     return freeze_ok;
@@ -2051,7 +2054,7 @@ public:
     }
 
     int oops = 0;
-    const int fsize = FreezeCompiledFrame::frame_size(f, &oops);
+    const int fsize = compiled_frame_size(f, &oops);
     if (fsize < 0) {
       return freeze_pinned_native;
     }
@@ -2096,20 +2099,10 @@ public:
 
     f.cb()->as_compiled_method()->inc_on_continuation_stack();
 
-     _wsp -= to_index(fsize);
-    intptr_t* hsp = _mirror.stack_address(_wsp);
+    intptr_t* hsp = freeze_raw_frame(vsp, fsize);
 
     hframe hf = hstackframe.create_hframe(this, _mirror, hsp);
-    if (first) {
-      _top = hf;
-    }
-    if (test_last()) {
-       _bottom = hf;
-    }
-
-    _mirror.copy_to_stack(vsp, hsp, fsize);
-
-    _wsp -= to_index(METADATA_SIZE);
+    save_bounding_hframe(hf, first);
 
     hf.zero_link();
     hf.set_size(_mirror, fsize);
@@ -2123,10 +2116,7 @@ public:
 
     caller = CallerInfo::create_compiled(hsp, f.fp());
 
-    int oops_offset = _wref_sp - oops;
-    int nr_oops = freeze_compiled_oops(f, vsp, hsp, map, oops_offset, caller);
-    assert(nr_oops == oops, "check");
-    _wref_sp = oops_offset;
+    freeze_compiled_oops(f, vsp, hsp, map, oops, caller);
 
     return freeze_ok;
   }
