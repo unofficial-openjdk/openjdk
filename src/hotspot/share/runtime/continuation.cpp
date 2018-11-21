@@ -1822,8 +1822,6 @@ public:
   hframe bottom_hframe() { return _bottom; }
   hframe top_hframe() { return _top; }
   frame entry_frame() { return _entry_frame; }
-  int wsp() const { return _wsp; }
-  int wref_sp() const { return _wref_sp; }
 
   res_freeze freeze(frame f, RegisterMap& regmap) {
     RegisterMap map = regmap;
@@ -2177,7 +2175,12 @@ public:
     return result;
   }
 
-  void verify() {
+  void commit() {
+    hframe new_top = top_hframe();
+    assert (_wsp <= _mirror.sp() - to_index(METADATA_SIZE), "wsp: %d sp - to_index(METADATA_SIZE): %d", _wsp, _mirror.sp() - to_index(METADATA_SIZE));
+    assert (_wsp == new_top.sp() - to_index(METADATA_SIZE), "wsp: %d top sp - to_index(METADATA_SIZE): %d", _wsp, new_top.sp() - to_index(METADATA_SIZE));
+    _mirror.set_last_frame(new_top);
+    _mirror.set_refSP(_wref_sp);
   }
 };
 
@@ -2226,16 +2229,11 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
   assert (orig_top_frame.is_empty() == empty, "empty: %d f.sp: %d f.fp: 0x%lx f.pc: " INTPTR_FORMAT, empty, orig_top_frame.sp(), orig_top_frame.fp(), p2i(orig_top_frame.pc()));
 
   hframe hf = fc.bottom_hframe();
-  hframe new_top = fc.top_hframe();
   f = fc.entry_frame();
-
-  assert (fc.wsp() <= cont.sp() - to_index(METADATA_SIZE), "wsp: %d sp - to_index(METADATA_SIZE): %d", fc.wsp(), cont.sp() - to_index(METADATA_SIZE));
 
   if (thread->has_pending_exception()) return freeze_exception;
 
-  assert (fc.wsp() == new_top.sp() - to_index(METADATA_SIZE), "wsp: %d top sp - to_index(METADATA_SIZE): %d", fc.wsp(), new_top.sp() - to_index(METADATA_SIZE));
-  cont.set_last_frame(new_top); // must be done after loop, because we rely on the old top when patching last-copied frame
-  cont.set_refSP(fc.wref_sp());
+  fc.commit();
 
   // f now points at the entry frame
 
@@ -2269,7 +2267,7 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
   DEBUG_ONLY(address ret_pc =  return_pc(f, f.is_interpreted_frame());)
 
   // assert (strcmp(method_name(new_top.method(cont)), YIELD_SIG) == 0, "name: %s", method_name(new_top.method(cont)));  // not true if yield is not @DontInline
-  assert (cont.is_flag(FLAG_LAST_FRAME_INTERPRETED) == new_top.is_interpreted_frame(), "flag: %d is_interpreted: %d", cont.is_flag(FLAG_LAST_FRAME_INTERPRETED), new_top.is_interpreted_frame());
+  assert (cont.is_flag(FLAG_LAST_FRAME_INTERPRETED) == cont.last_frame().is_interpreted_frame(), "flag: %d is_interpreted: %d", cont.is_flag(FLAG_LAST_FRAME_INTERPRETED), cont.last_frame().is_interpreted_frame());
 
   cont.write();
 
