@@ -244,6 +244,10 @@ public:
       _cb = NULL;
       set_link_address(cont);
     }
+  hframe(int sp, long fp, address pc, CodeBlob* cb, bool is_interpreted, ContMirror& cont, bool dummy) // called by ContMirror::new_hframe
+    : _sp(sp), _fp(fp), _pc(pc), _cb(cb), 
+      _is_interpreted(is_interpreted), _link_address(NULL) {
+    }
 
   bool operator==(const hframe& other) { 
     return _sp == other._sp && _fp == other._fp && _pc == other._pc; 
@@ -272,8 +276,11 @@ public:
   long link()         { return *link_address(); }
   address return_pc(ContMirror& cont) { return *return_pc_address(cont); }
 
-  long* get_link_address(ContMirror& cont);
-  void set_link_address(ContMirror& cont);
+  template<bool interpreted> long* get_link_address(ContMirror& cont);
+  template<bool interpreted> void set_link_address(ContMirror& cont);
+
+  long* get_link_address(ContMirror& cont) { return _is_interpreted ? get_link_address<true>(cont) : get_link_address<false>(cont); }
+  void set_link_address(ContMirror& cont)  { if (_is_interpreted) set_link_address<true>(cont); else set_link_address<false>(cont); }
 
   hframe sender(ContMirror& cont);
 
@@ -335,7 +342,7 @@ public:
   HStackFrameDescriptor() : _size(0) {}
   HStackFrameDescriptor(size_t size, address pc, CodeBlob* cb, bool interpreted, intptr_t* fp_value, intptr_t* link_offset) : _size(size), _pc(pc), _cb(cb), _interpreted(interpreted), _fp_value(fp_value), _link_offset(link_offset) {}
   bool empty() const { return _size <= METADATA_SIZE; } // used to be > 0 but since every frame has a METADATA_SIZE...
-  hframe create_hframe(FreezeContinuation* freeze, ContMirror& mirror, intptr_t *hsp);
+  template<bool interpreted> hframe create_hframe(FreezeContinuation* freeze, ContMirror& mirror, intptr_t *hsp);
   void set_fp(intptr_t *value) { _fp_value = value; }
 
   size_t size() const { return _size; }
@@ -513,7 +520,7 @@ public:
   bool is_empty();
 
   //hframe new_hframe(int hsp_offset, int hfp_offset, address pc, CodeBlob* cb, bool is_interpreted);
-  hframe new_hframe(intptr_t* hsp, intptr_t* hfp, address pc, CodeBlob* cb, bool is_interpreted);
+  template <bool interpreted> hframe new_hframe(intptr_t* hsp, intptr_t* hfp, address pc, CodeBlob* cb, bool is_interpreted);
   hframe last_frame();
   inline void set_last_frame(hframe& f);
 
@@ -547,18 +554,23 @@ public:
   template<typename Event> void post_jfr_event(Event *e);
 };
 
-hframe HStackFrameDescriptor::create_hframe(FreezeContinuation* freeze, ContMirror& mirror, intptr_t *hsp) {
+template<>
+hframe HStackFrameDescriptor::create_hframe<true>(FreezeContinuation* freeze, ContMirror& mirror, intptr_t *hsp) {
   if (empty()) {
     return hframe();
   }
 
-  if (_interpreted) {
-    return mirror.new_hframe(hsp, hsp + (long) _link_offset, _pc, _cb, _interpreted);
-  } else {
-    return mirror.new_hframe(hsp, _fp_value, _pc, _cb, _interpreted);
-  }
+  return mirror.new_hframe<true>(hsp, hsp + (long) _link_offset, _pc, _cb, _interpreted);
 }
 
+template<>
+hframe HStackFrameDescriptor::create_hframe<false>(FreezeContinuation* freeze, ContMirror& mirror, intptr_t *hsp) {
+  if (empty()) {
+    return hframe();
+  }
+
+  return mirror.new_hframe<false>(hsp, _fp_value, _pc, _cb, _interpreted);
+}
 
 inline frame hframe::to_frame(ContMirror& cont) {
   bool deopt = false;
@@ -669,14 +681,17 @@ inline int hframe::real_fp_index(ContMirror& cont) {
   return _sp + to_index(cb()->frame_size() * sizeof(intptr_t));
 }
 
+template<bool interpreted>
 long* hframe::get_link_address(ContMirror& cont) {
-  return _is_interpreted
+  assert (interpreted == _is_interpreted, "");
+  return interpreted
     ? (long*)&index_address(cont, _fp)[frame::link_offset]
     : (long*)(real_fp(cont) - frame::sender_sp_offset); // x86-specific
 }
 
+template<bool interpreted>
 void hframe::set_link_address(ContMirror& cont) {
-  if (_is_interpreted) {
+  if (interpreted) {
     if (cont.valid_stack_index(_fp)) {
       _link_address = (long*)&index_address(cont, _fp)[frame::link_offset];
     }
@@ -686,7 +701,6 @@ void hframe::set_link_address(ContMirror& cont) {
     }
   }
 }
-
 inline int hframe::link_index(ContMirror& cont) {
   return _is_interpreted ? _fp : (real_fp_index(cont) - to_index(frame::sender_sp_offset * sizeof(intptr_t*))); // x86-specific
 }
@@ -1200,12 +1214,15 @@ void ContMirror::cleanup() {
   }
 }
 
+template <bool interpreted>
 hframe ContMirror::new_hframe(intptr_t* hsp, intptr_t* hfp, address pc, CodeBlob* cb, bool is_interpreted) {
+  assert (interpreted == is_interpreted, "");
   int sp;
   long fp;
   sp = stack_index(hsp);
   fp = is_interpreted ? stack_index(hfp) : (long)hfp;
-  hframe result = hframe(sp, fp, pc, cb, is_interpreted, *this);
+  hframe result = hframe(sp, fp, pc, cb, is_interpreted, *this, true);
+  result.set_link_address<interpreted>(*this);
   return result;
 }
 
@@ -1822,8 +1839,6 @@ public:
   hframe bottom_hframe() { return _bottom; }
   hframe top_hframe() { return _top; }
   frame entry_frame() { return _entry_frame; }
-  int wsp() const { return _wsp; }
-  int wref_sp() const { return _wref_sp; }
 
   res_freeze freeze(frame f, RegisterMap& regmap) {
     RegisterMap map = regmap;
@@ -2012,7 +2027,7 @@ public:
     intptr_t* hsp = freeze_raw_frame(vsp, fsize);
     intptr_t* hfp = hsp + (vfp - vsp);
 
-    hframe hf = hstackframe.create_hframe(this, _mirror, hsp);
+    hframe hf = hstackframe.create_hframe<true>(this, _mirror, hsp);
     save_bounding_hframe(hf, first);
 
     /* TODO: Some of the writes that happen below writes to the same memory, they need to go away - rbackman */
@@ -2101,7 +2116,7 @@ public:
 
     intptr_t* hsp = freeze_raw_frame(vsp, fsize);
 
-    hframe hf = hstackframe.create_hframe(this, _mirror, hsp);
+    hframe hf = hstackframe.create_hframe<false>(this, _mirror, hsp);
     save_bounding_hframe(hf, first);
 
     hf.zero_link();
@@ -2177,7 +2192,12 @@ public:
     return result;
   }
 
-  void verify() {
+  void commit() {
+    hframe new_top = top_hframe();
+    assert (_wsp <= _mirror.sp() - to_index(METADATA_SIZE), "wsp: %d sp - to_index(METADATA_SIZE): %d", _wsp, _mirror.sp() - to_index(METADATA_SIZE));
+    assert (_wsp == new_top.sp() - to_index(METADATA_SIZE), "wsp: %d top sp - to_index(METADATA_SIZE): %d", _wsp, new_top.sp() - to_index(METADATA_SIZE));
+    _mirror.set_last_frame(new_top);
+    _mirror.set_refSP(_wref_sp);
   }
 };
 
@@ -2226,16 +2246,11 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
   assert (orig_top_frame.is_empty() == empty, "empty: %d f.sp: %d f.fp: 0x%lx f.pc: " INTPTR_FORMAT, empty, orig_top_frame.sp(), orig_top_frame.fp(), p2i(orig_top_frame.pc()));
 
   hframe hf = fc.bottom_hframe();
-  hframe new_top = fc.top_hframe();
   f = fc.entry_frame();
-
-  assert (fc.wsp() <= cont.sp() - to_index(METADATA_SIZE), "wsp: %d sp - to_index(METADATA_SIZE): %d", fc.wsp(), cont.sp() - to_index(METADATA_SIZE));
 
   if (thread->has_pending_exception()) return freeze_exception;
 
-  assert (fc.wsp() == new_top.sp() - to_index(METADATA_SIZE), "wsp: %d top sp - to_index(METADATA_SIZE): %d", fc.wsp(), new_top.sp() - to_index(METADATA_SIZE));
-  cont.set_last_frame(new_top); // must be done after loop, because we rely on the old top when patching last-copied frame
-  cont.set_refSP(fc.wref_sp());
+  fc.commit();
 
   // f now points at the entry frame
 
@@ -2269,7 +2284,7 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
   DEBUG_ONLY(address ret_pc =  return_pc(f, f.is_interpreted_frame());)
 
   // assert (strcmp(method_name(new_top.method(cont)), YIELD_SIG) == 0, "name: %s", method_name(new_top.method(cont)));  // not true if yield is not @DontInline
-  assert (cont.is_flag(FLAG_LAST_FRAME_INTERPRETED) == new_top.is_interpreted_frame(), "flag: %d is_interpreted: %d", cont.is_flag(FLAG_LAST_FRAME_INTERPRETED), new_top.is_interpreted_frame());
+  assert (cont.is_flag(FLAG_LAST_FRAME_INTERPRETED) == cont.last_frame().is_interpreted_frame(), "flag: %d is_interpreted: %d", cont.is_flag(FLAG_LAST_FRAME_INTERPRETED), cont.last_frame().is_interpreted_frame());
 
   cont.write();
 
