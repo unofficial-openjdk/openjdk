@@ -303,11 +303,8 @@ public:
     *la = 0;
   }
 
-  void patch_link_relative(intptr_t* fp) {
-    long* la = link_address();
-    long new_value = to_index((address)fp - (address)la);
-    *la = new_value;
-  }
+  inline void patch_link_relative(intptr_t* fp);
+  inline void patch_sender_sp_relative(ContMirror& cont, intptr_t* value);
 
   inline void patch_callee(ContMirror& cont, hframe& sender);
 
@@ -318,7 +315,6 @@ public:
   inline void patch_return_pc(ContMirror& cont, address value);
   inline void patch_real_fp_offset(int offset, intptr_t value);
   inline intptr_t* get_real_fp_offset(int offset) { return (intptr_t*)*(link_address() + offset); }
-  inline void patch_real_fp_offset_relative(ContMirror& cont, intptr_t* value);
 
   bool is_bottom(const ContMirror& cont) const;
 
@@ -563,10 +559,11 @@ public:
   template<typename Event> void post_jfr_event(Event *e);
 };
 
-template<bool interpreted>
+template<bool interp>
 hframe HStackFrameDescriptor::create_hframe(FreezeContinuation* freeze, ContMirror& mirror, intptr_t *hsp) {
   assert(!empty(), "never");
-  return mirror.new_hframe<interpreted>(hsp, interpreted ? (hsp + (long) _link_offset) : _fp_value, _pc, _cb, _interpreted);
+  assert(interp == _interpreted, "");
+  return mirror.new_hframe<interp>(hsp, interp ? (hsp + (long) _link_offset) : _fp_value, _pc, _cb, interp);
 }
 
 inline frame hframe::to_frame(ContMirror& cont) {
@@ -691,8 +688,15 @@ inline address* hframe::return_pc_address(const ContMirror& cont) const {
     : (address*)(real_fp(cont) - 1); // x86-specific
 }
 
-inline void hframe::patch_real_fp_offset_relative(ContMirror& cont, intptr_t* value) {
-  long* la = (long*)((_is_interpreted ? index_address(cont, _fp) : real_fp(cont)) + frame::interpreter_frame_sender_sp_offset);
+inline void hframe::patch_link_relative(intptr_t* fp) {
+  long* la = link_address();
+  long new_value = to_index((address)fp - (address)la);
+  *la = new_value;
+}
+
+inline void hframe::patch_sender_sp_relative(ContMirror& cont, intptr_t* value) {
+  assert (_is_interpreted, "");
+  long* la = (long*)(index_address(cont, _fp) + frame::interpreter_frame_sender_sp_offset);
   *la = to_index((address)value - (address)la);
 }
 
@@ -729,7 +733,7 @@ inline void hframe::patch_callee(ContMirror& cont, hframe& sender) {
     patch_link(sender.fp());
   }
   if (is_interpreted_frame()) {
-    patch_real_fp_offset_relative(cont, index_address(cont, sender.sp()));
+    patch_sender_sp_relative(cont, index_address(cont, sender.sp()));
   }
 }
 
@@ -1801,11 +1805,8 @@ private:
   VMReg vmRegRbp;
   VMReg vmRegRbpNext;
 
-  void hit_first()  { _is_first = true; }
-  bool test_first() { return _is_first ? (_is_first = false, true) : false; }
-
-  void hit_last()   { _is_last = true; }
-  bool test_last()  { return _is_last ? (_is_last = false, true) : false; }
+  bool is_first() { return _is_first; }
+  bool is_last()  { return _is_last;  } // this is only true after returning from the recursive call
 
 public:
   FreezeContinuation(JavaThread* thread, ContMirror& mirror) : 
@@ -1830,8 +1831,8 @@ public:
     map.set_include_argument_oops(false);
     CallerInfo caller;
 
-    hit_first(); // the first frame we'll visit is the top
-    res_freeze result = freeze(f, map, caller);
+    _is_first = true; // the first frame we'll visit is the top
+    res_freeze result = freeze(f, map, caller, true);
 
     if (caller.has_fp_index()) {
       assert(!caller.is_interpreted_frame(), "only compiled frames");
@@ -1841,11 +1842,11 @@ public:
     return result;
   }
 
-  void save_bounding_hframe(hframe& hf, bool first) {
-    if (first) {
+  void save_bounding_hframe(hframe& hf) {
+    if (is_first()) {
       _top = hf;
     }
-    if (test_last()) {
+    if (is_last()) {
        _bottom = hf;
     }
   }
@@ -1871,21 +1872,19 @@ public:
 
   template <bool callee_is_interpreted>
   void patch(frame& f, hframe& callee, CallerInfo& caller) {
-
     if (!caller.empty()) {
       if (caller.is_interpreted_frame()) {
-
         callee.patch_link_relative(caller.hfp());
-        if (callee_is_interpreted && callee.get_real_fp_offset(frame::interpreter_frame_sender_sp_offset) == 0) {
-          callee.patch_real_fp_offset_relative(_mirror, caller.hsp());
-        }
-
       } else {
         callee.patch_link((long)caller.fp());
-        if (callee_is_interpreted) {
-          assert (callee.get_real_fp_offset(frame::interpreter_frame_sender_sp_offset) == 0, "");
-          callee.patch_real_fp_offset_relative(_mirror, caller.hsp());
-        }
+      }
+      if (callee_is_interpreted) {
+        callee.patch_sender_sp_relative(_mirror, caller.hsp());
+      }
+    } else {
+      callee.zero_link();
+      if (callee_is_interpreted) {
+        callee.patch_real_fp_offset(frame::interpreter_frame_sender_sp_offset, 0);
       }
     }
 
@@ -1894,16 +1893,11 @@ public:
       callee.patch_link(caller.fp_index());
     }
 
-    if (Continuation::is_cont_bottom_frame(f)) {
-      assert (!_mirror.is_empty(), "");
+    if (is_last() && !_mirror.is_empty()) {
+      assert (Continuation::is_cont_bottom_frame(f), "");
       log_trace(jvmcont)("Fixing return address on bottom frame: " INTPTR_FORMAT, p2i(_mirror.pc()));
       callee.patch_return_pc(_mirror, _mirror.pc());
     }
-
-    if (!callee_is_interpreted && Interpreter::contains(callee.return_pc(_mirror))) { // do after fixing return_pc
-      _mirror.add_size(sizeof(intptr_t)); // possible alignment
-    }
-
   }
 
   intptr_t* freeze_raw_frame(intptr_t* vsp, int fsize) {
@@ -1963,8 +1957,6 @@ public:
       return freeze_pinned_monitor;
     }
 
-    bool first = test_first();
-
     int oops = 0;
     const int fsize = interpreted_frame_size(f, &oops);
     if (fsize < 0) {
@@ -2004,23 +1996,11 @@ public:
     intptr_t* hfp = hsp + (vfp - vsp);
 
     hframe hf = hstackframe.create_hframe<true>(this, _mirror, hsp);
-    save_bounding_hframe(hf, first);
-
-    /* TODO: Some of the writes that happen below writes to the same memory, they need to go away - rbackman */
-    // TODO: for compression, initial_sp seems to always point to itself, and locals points to the previous frame's initial_sp + 1 word
-    intptr_t* bottom = (intptr_t*)((address)vsp + fsize);
-    if (*(intptr_t**)(vfp + frame::interpreter_frame_locals_offset) < bottom) {
-      relativize(vfp, hfp, frame::interpreter_frame_sender_sp_offset);
-    } else {
-      hf.patch_real_fp_offset(frame::interpreter_frame_sender_sp_offset, 0);
-    }
+    save_bounding_hframe(hf);
 
     relativize(vfp, hfp, frame::interpreter_frame_last_sp_offset);
     relativize(vfp, hfp, frame::interpreter_frame_initial_sp_offset); // == block_top == block_bottom
     relativize(vfp, hfp, frame::interpreter_frame_locals_offset);
-
-    hf.zero_link();
-    hf.patch_real_fp_offset(frame::interpreter_frame_sender_sp_offset, 0);
 
     hf.set_size(_mirror, fsize);
     hf.set_uncompressed_size(_mirror, fsize);
@@ -2049,8 +2029,6 @@ public:
     if (fsize < 0) {
       return freeze_pinned_native;
     }
-
-    bool first = test_first();
 
     _size += fsize + METADATA_SIZE;
     _oops += oops;
@@ -2084,9 +2062,8 @@ public:
     intptr_t* hsp = freeze_raw_frame(vsp, fsize);
 
     hframe hf = hstackframe.create_hframe<false>(this, _mirror, hsp);
-    save_bounding_hframe(hf, first);
+    save_bounding_hframe(hf);
 
-    hf.zero_link();
     hf.set_size(_mirror, fsize);
     hf.set_uncompressed_size(_mirror, 0);
     hf.set_num_oops(_mirror, oops);
@@ -2095,6 +2072,16 @@ public:
     _mirror.add_size(fsize);
 
     patch<false>(f, hf, caller);
+
+    assert (Interpreter::contains(hf.return_pc(_mirror)) == ((!caller.empty() && caller.is_interpreted_frame()) || (caller.empty() && !_mirror.is_empty() && _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED))), 
+      "Interpreter::contains(hf.return_pc(_mirror)): %d caller.empty(): %d caller.is_interpreted_frame(): %d _mirror.is_empty(): %d _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED): %d", 
+      Interpreter::contains(hf.return_pc(_mirror)),
+      caller.empty(), caller.is_interpreted_frame(), 
+      _mirror.is_empty(), _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED));
+
+    if (Interpreter::contains(hf.return_pc(_mirror))) { // do after fixing return_pc in patch (and/or use equivalent condition above)
+      _mirror.add_size(sizeof(intptr_t)); // possible alignment
+    }
 
     caller = CallerInfo::create_compiled(hsp, f.fp());
 
@@ -2127,30 +2114,38 @@ public:
     _wsp = _mirror.sp() - to_index(METADATA_SIZE);
     _wref_sp = _mirror.refSP();
 
-    hit_last(); // the next frame we return to is bottom
     return freeze_ok;
   }
 
-  res_freeze freeze(frame& f, RegisterMap& map, CallerInfo& caller) {
+  res_freeze freeze(frame& f, RegisterMap& map, CallerInfo& caller, bool start = false) {
     if (f.real_fp() > _bottom_address) {
       // done with recursion
+      _is_last = true; // the next frame we return to is bottom
       return finalize(f);
     }
 
-    res_freeze result = freeze_ok;
+    bool is_first = _is_first;
+    if (is_first & !start) _is_first = false;
+
+    res_freeze result;
     bool is_compiled = f.is_compiled_frame();
     if (is_compiled) {
       if (f.oop_map() == NULL) {
         return freeze_pinned_native; // special native frame
       }
-      return freeze_compiled_stackframe(f, map, caller);
+      result = freeze_compiled_stackframe(f, map, caller);
     } else {
       bool is_interpreted = f.is_interpreted_frame();
       if (!is_interpreted) {
         return freeze_pinned_native;
       }
-      return freeze_interpreted_stackframe(f, map, caller);
+      result = freeze_interpreted_stackframe(f, map, caller);
     }
+
+    if (_is_last) _is_last = false;
+    _is_first = is_first;
+
+    return result;
   }
 
   bool cmp(int* a, int* b, int size) {
@@ -2164,16 +2159,19 @@ public:
     return result;
   }
 
-
-  void finish(bool empty, frame& f) {
-    f = entry_frame();
-
+  void commit() {
     assert (_wsp <= _mirror.sp() - to_index(METADATA_SIZE), "wsp: %d sp - to_index(METADATA_SIZE): %d", _wsp, _mirror.sp() - to_index(METADATA_SIZE));
     assert (_wsp == _top.sp() - to_index(METADATA_SIZE), "wsp: %d top sp - to_index(METADATA_SIZE): %d", _wsp, _top.sp() - to_index(METADATA_SIZE));
     _mirror.set_last_frame(_top);
     _mirror.set_refSP(_wref_sp);
+  }
 
-    // f now points at the entry frame
+  void finish(bool empty, frame& f) {
+    hframe orig_top_frame = _mirror.last_frame(); // must be done before committing the changes
+
+    commit();
+
+    f = entry_frame();
 
     assert (_bottom.is_interpreted_frame() || _bottom.size(_mirror) % 16 == 0, "");
 
@@ -2191,7 +2189,6 @@ public:
       }
       assert (_bottom.sender(_mirror).is_empty(), "");
     } else {
-      hframe orig_top_frame = _mirror.last_frame();
       _bottom.patch_callee(_mirror, orig_top_frame);
 
       assert (_bottom.sender(_mirror) == orig_top_frame, "");
@@ -2207,12 +2204,6 @@ public:
 
     // assert (strcmp(method_name(new_top.method(_mirror)), YIELD_SIG) == 0, "name: %s", method_name(new_top.method(_mirror)));  // not true if yield is not @DontInline
     assert (_mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED) == _mirror.last_frame().is_interpreted_frame(), "flag: %d is_interpreted: %d", _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED), _mirror.last_frame().is_interpreted_frame());
-
-    _mirror.write();
-  }
-
-
-  void commit() {
   }
 };
 
@@ -2250,6 +2241,8 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
   if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
 
   fc.finish(empty, f);
+  
+  cont.write();
 
   // notify JVMTI
   JvmtiThreadState *jvmti_state = thread->jvmti_thread_state();
