@@ -1967,11 +1967,6 @@ public:
     _oops += oops;
     _frames++;
 
-    address link1 = map.trusted_location(vmRegRbp);
-    //address link2 = map.location(rbp->as_VMReg()->next());
-
-    frame sender = f.frame_sender<ContinuationCodeBlobLookup>(&map); // LOOKUP
-
     intptr_t* vsp = interpreted_frame_top(f);
     intptr_t* vfp = f.fp();
 #ifdef ASSERT
@@ -1982,13 +1977,10 @@ public:
 
     HStackFrameDescriptor hstackframe(fsize, f.pc(), NULL, true, 0, (intptr_t *) (f.fp() - vsp));
 
-    res_freeze result = freeze(sender, map, caller); // <----- recursive call
+    res_freeze result = freeze_caller(f, map, caller); // <----- recursive call
     if (result != freeze_ok) {
       return result;
     }
-
-    map.update_location(vmRegRbp, link1);
-    map.update_location(vmRegRbpNext, link1);
 
     if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
 
@@ -2034,11 +2026,6 @@ public:
     _oops += oops;
     _frames++;
 
-    address link1 = map.trusted_location(vmRegRbp);
-    //address link2 = map.location(vmRegRbpNext);
-
-    frame sender = f.frame_sender<ContinuationCodeBlobLookup>(&map); // LOOKUP
-
     intptr_t* vsp = compiled_frame_top(f); // consider moving past recursive call
 #ifdef ASSERT
     intptr_t* bottom = compiled_frame_bottom(f);
@@ -2047,13 +2034,10 @@ public:
 #endif
     HStackFrameDescriptor hstackframe(fsize, f.pc(), f.cb(), false, f.fp(), NULL);
 
-    res_freeze result = freeze(sender, map, caller); // <----- recursive call
+    res_freeze result = freeze_caller(f, map, caller); // <----- recursive call
     if (result != freeze_ok) {
       return result;
     }
-
-    map.update_location(vmRegRbp, link1);
-    map.update_location(vmRegRbpNext, link1);
 
     if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
 
@@ -2117,15 +2101,29 @@ public:
     return freeze_ok;
   }
 
+  inline res_freeze freeze_caller(frame& f, RegisterMap& map, CallerInfo& caller) { // TODO: templatize by callee frame type and use in sender;
+    bool is_first = _is_first;
+    if (is_first) _is_first = false;
+
+    address link1 = map.trusted_location(vmRegRbp);
+    //address link2 = map.trusted_location(vmRegRbpNext);
+    
+    frame sender = f.frame_sender<ContinuationCodeBlobLookup>(&map); // LOOKUP // TODO: templatize by callee frame type
+    res_freeze result = freeze(sender, map, caller);
+
+    map.update_location(vmRegRbp,     link1);
+    map.update_location(vmRegRbpNext, link1);
+
+    _is_first = is_first;
+
+    return result;
+  }
+
   res_freeze freeze(frame& f, RegisterMap& map, CallerInfo& caller, bool start = false) {
     if (f.real_fp() > _bottom_address) {
-      // done with recursion
       _is_last = true; // the next frame we return to is bottom
-      return finalize(f);
+      return finalize(f); // done with recursion
     }
-
-    bool is_first = _is_first;
-    if (is_first & !start) _is_first = false;
 
     res_freeze result;
     bool is_compiled = f.is_compiled_frame();
@@ -2143,7 +2141,6 @@ public:
     }
 
     if (_is_last) _is_last = false;
-    _is_first = is_first;
 
     return result;
   }
