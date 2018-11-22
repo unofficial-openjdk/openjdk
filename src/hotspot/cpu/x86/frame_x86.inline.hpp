@@ -178,6 +178,20 @@ inline intptr_t* frame::link() const              { return (intptr_t*) *(intptr_
 
 inline intptr_t* frame::unextended_sp() const     { return _unextended_sp; }
 
+inline intptr_t* frame::real_fp() const {
+  if (_cb != NULL) {
+    // use the frame size if valid
+    int size = _cb->frame_size();
+    if (size > 0) {
+      return unextended_sp() + size;
+    }
+  }
+  // else rely on fp()
+  assert(! is_compiled_frame(), "unknown compiled frame size");
+  return fp();
+}
+
+
 // Return address:
 
 inline address* frame::sender_pc_addr()      const { return (address*) addr_at( return_addr_offset); }
