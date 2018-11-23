@@ -251,7 +251,7 @@ public:
     : _sp(sp), _fp(fp), _pc(pc), 
       _is_interpreted(is_interpreted), _link_address(NULL) {
       _cb = NULL;
-      set_codeblob(_pc);
+      set_codeblob(_pc); // TODO: lazify
       set_link_address(cont);
     }
   hframe(int sp, long fp, address pc, CodeBlob* cb, bool is_interpreted, ContMirror& cont, bool dummy) // called by ContMirror::new_hframe
@@ -305,6 +305,7 @@ public:
 
   inline void patch_link_relative(intptr_t* fp);
   inline void patch_sender_sp_relative(ContMirror& cont, intptr_t* value);
+  inline void patch_sender_sp_relative(ContMirror& cont, int index);
 
   inline void patch_callee(ContMirror& cont, hframe& sender);
 
@@ -328,32 +329,6 @@ public:
   void print(ContMirror& cont) { print_on(cont, tty); }
   void print_on(outputStream* st);
   void print() { print_on(tty); }
-};
-
-class FreezeContinuation;
-
-class HStackFrameDescriptor {
-private:
-  size_t _size; // nr of bytes for this frame
-
-  address _pc;
-  CodeBlob* _cb;
-  bool _interpreted;
-
-  intptr_t* _fp_value; // for compiled frames this is the content of rbp / fp register
-  intptr_t* _link_offset; // link offset for interpreted frames
-
-public:
-  HStackFrameDescriptor() : _size(0) {}
-  HStackFrameDescriptor(size_t size, address pc, CodeBlob* cb, bool interpreted, intptr_t* fp_value, intptr_t* link_offset) : _size(size), _pc(pc), _cb(cb), _interpreted(interpreted), _fp_value(fp_value), _link_offset(link_offset) {}
-  bool empty() const { return _size <= METADATA_SIZE; } // used to be > 0 but since every frame has a METADATA_SIZE...
-  template<bool interpreted> hframe create_hframe(FreezeContinuation* freeze, ContMirror& mirror, intptr_t *hsp);
-
-  size_t index_to_addr_offset(size_t index) const {
-    return sizeof(void*) * index;
-  }
-
-  bool interpreted() const { return _interpreted; }
 };
 
 intptr_t* hframe::interpreter_frame_metadata_at(const ContMirror& cont, int offset) const {
@@ -555,13 +530,6 @@ public:
   template<typename Event> void post_jfr_event(Event *e);
 };
 
-template<bool interp>
-hframe HStackFrameDescriptor::create_hframe(FreezeContinuation* freeze, ContMirror& mirror, intptr_t *hsp) {
-  assert(!empty(), "never");
-  assert(interp == _interpreted, "");
-  return mirror.new_hframe<interp>(hsp, interp ? (hsp + (long) _link_offset) : _fp_value, _pc, _cb, interp);
-}
-
 inline frame hframe::to_frame(ContMirror& cont) {
   bool deopt = false;
   address pc = _pc;
@@ -694,6 +662,10 @@ inline void hframe::patch_sender_sp_relative(ContMirror& cont, intptr_t* value) 
   assert (_is_interpreted, "");
   long* la = (long*)(index_address(cont, _fp) + frame::interpreter_frame_sender_sp_offset);
   *la = to_index((address)value - (address)la);
+}
+
+inline void hframe::patch_sender_sp_relative(ContMirror& cont, int index) {
+  patch_sender_sp_relative(cont, index_address(cont, index));
 }
 
 void hframe::set_size(ContMirror& cont, size_t size) { 
@@ -895,7 +867,7 @@ void ContMirror::copy_to_stack(void* from, void* to, int size) {
   //assert (write_stack_index(to) == _wsp + to_index(METADATA_SIZE), "to: %d wsp: %d", write_stack_index(to), _wsp);
 
   if (Continuation::PERFTEST_LEVEL >= 25) {
-    Copy::conjoint_memory_atomic(from, to, size);
+    Copy::conjoint_memory_atomic(from, to, size); // Copy::disjoint_words((HeapWord*)from, (HeapWord*)to, size/wordSize); // 
   }
 
   _e_size += size;
@@ -1528,44 +1500,6 @@ protected:
   }
 };
 
-class CallerInfo {
-private:
-  intptr_t* _hsp;
-  intptr_t* _hfp;
-  intptr_t* _fp;
-  bool _interpreted;
-  bool _has_fp_index;
-  int _fp_index;
-
-  CallerInfo(intptr_t* hsp, intptr_t *hfp, intptr_t* fp, bool interpreted) : _hsp(hsp), _hfp(hfp), _fp(fp), _interpreted(interpreted), _has_fp_index(false), _fp_index(0) {}
-public:
-  CallerInfo() : _hsp(NULL), _hfp(NULL), _fp(NULL), _interpreted(false), _has_fp_index(false), _fp_index(0) {}
-  bool is_interpreted_frame() const { return _interpreted; }
-
-  intptr_t* hsp() const { return _hsp; }
-  intptr_t* hfp() const { assert(is_interpreted_frame(), "only interpreted"); return _hfp; }
-  intptr_t* fp() const { assert(!is_interpreted_frame(), "only compiled"); return _fp; }
-  bool empty() const { return _hsp == NULL; }
-
-  void set_fp_index(int index) {
-    assert(_has_fp_index == false, "can only have one");
-    _has_fp_index = true;
-    _fp_index = index;
-  }
-
-  bool has_fp_index() const {
-    return _has_fp_index;
-  }
-
-  int fp_index() const { 
-    return _fp_index;
-  }
-
-  static CallerInfo create_interpreted(intptr_t* hsp, intptr_t *hfp) { return CallerInfo(hsp, hfp, NULL, true); }
-  static CallerInfo create_compiled(intptr_t* hsp, intptr_t *fp) { return CallerInfo(hsp, NULL, fp, false); }
-};
-
-
 template <typename T>
 class ForwardingOopClosure: public OopClosure, public DerivedOopClosure {
 private:
@@ -1630,13 +1564,38 @@ class InterpretedFreezeOopFn: public ContOopBase {
   }
 };
 
+#ifndef PRODUCT
+static void set_anchor(JavaThread* thread, FrameInfo* fi) {
+  JavaFrameAnchor* anchor = thread->frame_anchor();
+  anchor->set_last_Java_sp((intptr_t*)fi->sp);
+  anchor->set_last_Java_fp((intptr_t*)fi->fp);
+  anchor->set_last_Java_pc(fi->pc);
+
+  assert(thread->last_frame().cb() != NULL, "");
+
+  log_trace(jvmcont)("set_anchor:");
+  print_vframe(thread->last_frame());
+}
+
+static void set_anchor(ContMirror& cont) {
+  FrameInfo fi = { cont.entryPC(), cont.entryFP(), cont.entrySP() };
+  set_anchor(cont.thread(), &fi);
+}
+
+static inline void clear_anchor(JavaThread* thread) {
+  thread->frame_anchor()->clear();
+}
+#endif
+
+class FreezeContinuation {
+
 class CompiledFreezeOopFn: public ContOopBase {
  public:
   enum { SkipNull = false };
 
  private:
+  FreezeContinuation* _fc;
   void* const _hsp;
-  CallerInfo& _callerinfo;
   int _starting_index;
   int _refStack_length;
   int _count;
@@ -1674,14 +1633,14 @@ class CompiledFreezeOopFn: public ContOopBase {
       assert(offset < 32768, "");
     } else {
       assert (p == (T*)_fr->saved_link_address(_map), "");
-      _callerinfo.set_fp_index(oop_reverse_index);
+      _fc->set_oop_fp_index(oop_reverse_index);
       log_trace(jvmcont)("Setting reverse oop index in callerinfo (offset: %d) : %d (length: %d)", offset, oop_reverse_index, _refStack_length);
     }
   }
 
  public:
-  CompiledFreezeOopFn(ContMirror* cont, frame* fr, void* vsp, void* hsp, CallerInfo& callerinfo, RegisterMap* map, int starting_index)
-   : ContOopBase(cont, fr, map, vsp), _hsp(hsp), _callerinfo(callerinfo), _starting_index(starting_index), _count(0) { 
+  CompiledFreezeOopFn(ContMirror* cont, FreezeContinuation* fc, frame* fr, void* vsp, void* hsp, RegisterMap* map, int starting_index)
+   : ContOopBase(cont, fr, map, vsp), _fc(fc), _hsp(hsp), _starting_index(starting_index), _count(0) { 
      assert (cont->in_hstack(hsp), "");
      _refStack_length = cont->refStack()->length();
   }
@@ -1708,77 +1667,12 @@ class CompiledFreezeOopFn: public ContOopBase {
       log_trace(jvmcont)("Writing derived pointer offset at " INTPTR_FORMAT " (offset: " INTX_FORMAT ", " INTPTR_FORMAT ")", p2i(hloc), offset, offset);
     } else {
       assert ((intptr_t**)derived_loc == _fr->saved_link_address(_map), "");
-      _callerinfo.set_fp_index(offset);
+      _fc->set_oop_fp_index(offset);
       log_trace(jvmcont)("Writing derived pointer offset in callerinfo (offset: %ld, 0x%lx)", offset, offset);
     }
   }
 };
 
-class ThawOopFn: public ContOopBase {
- private:
-  int _i;
-
- protected:
-  template <class T> inline void do_oop_work(T* p) {
-    if (!process(p)) return;
-
-    oop obj = _cont->obj_at(_i); // does a HeapAccess<IN_HEAP_ARRAY> load barrier
-    assert (oopDesc::is_oop_or_null(obj), "invalid oop");
-    log_trace(jvmcont)("i: %d", _i); print_oop(p, obj);
-    NativeAccess<IS_DEST_UNINITIALIZED>::oop_store(p, obj);
-    _i++;
-  }
- public:
-  ThawOopFn(ContMirror* cont, frame* fr, int index, int num_oops, void* vsp, RegisterMap* map)
-    : ContOopBase(cont, fr, map, vsp) { _i = index; }
-  void do_oop(oop* p)       { do_oop_work(p); }
-  void do_oop(narrowOop* p) { do_oop_work(p); }
-
-  void do_derived_oop(oop *base_loc, oop *derived_loc) {
-    assert(Universe::heap()->is_in_or_null(*base_loc), "not an oop: " INTPTR_FORMAT " (at " INTPTR_FORMAT ")", p2i((oopDesc*)*base_loc), p2i(base_loc));
-    verify(derived_loc);
-    verify(base_loc);
-    assert (oopDesc::is_oop_or_null(*base_loc), "invalid oop");
-
-    intptr_t offset = *(intptr_t*)derived_loc;
-
-    log_trace(jvmcont)(
-      "Continuation thaw derived pointer@" INTPTR_FORMAT " - Derived: " INTPTR_FORMAT " Base: " INTPTR_FORMAT " (@" INTPTR_FORMAT ") (Offset: " INTX_FORMAT ")",
-      p2i(derived_loc), p2i((address)*derived_loc), p2i((address)*base_loc), p2i(base_loc), offset);
-
-    oop obj = cast_to_oop(cast_from_oop<intptr_t>(*base_loc) + offset);
-    assert(Universe::heap()->is_in_or_null(obj), "");
-    *derived_loc = obj;
-
-
-    assert(derived_loc != base_loc, "Base and derived in same location");
-  }
-};
-
-#ifndef PRODUCT
-static void set_anchor(JavaThread* thread, FrameInfo* fi) {
-  JavaFrameAnchor* anchor = thread->frame_anchor();
-  anchor->set_last_Java_sp((intptr_t*)fi->sp);
-  anchor->set_last_Java_fp((intptr_t*)fi->fp);
-  anchor->set_last_Java_pc(fi->pc);
-
-  assert(thread->last_frame().cb() != NULL, "");
-
-  log_trace(jvmcont)("set_anchor:");
-  print_vframe(thread->last_frame());
-}
-
-static void set_anchor(ContMirror& cont) {
-  FrameInfo fi = { cont.entryPC(), cont.entryFP(), cont.entrySP() };
-  set_anchor(cont.thread(), &fi);
-}
-
-static inline void clear_anchor(JavaThread* thread) {
-  thread->frame_anchor()->clear();
-}
-#endif
-
-class FreezeContinuation {
 private:
   JavaThread* _thread;
   ContMirror& _mirror;
@@ -1795,6 +1689,9 @@ private:
   hframe _top;
   frame _entry_frame;
 
+  bool _has_fp_oop;
+  int _fp_index;
+
   bool _is_first;
   bool _is_last;
 
@@ -1808,6 +1705,7 @@ public:
   FreezeContinuation(JavaThread* thread, ContMirror& mirror) : 
     _thread(thread), _mirror(mirror), _bottom_address(mirror.entrySP()), 
     _oops(0), _size(0), _frames(0), _wsp(0), _wref_sp(0),
+    _has_fp_oop(false), _fp_index(0),
     _is_first(false), _is_last(false) {
 
       vmRegRbp = rbp->as_VMReg();
@@ -1825,14 +1723,14 @@ public:
     RegisterMap map = regmap;
     assert (map.update_map(), "RegisterMap not set to update");
     map.set_include_argument_oops(false);
-    CallerInfo caller;
+    hframe caller;
 
     _is_first = true; // the first frame we'll visit is the top
     res_freeze result = freeze(f, map, caller);
 
-    if (caller.has_fp_index()) {
+    if (_has_fp_oop) {
       assert(!caller.is_interpreted_frame(), "only compiled frames");
-      _top.set_fp(caller.fp_index());
+      _top.set_fp(_fp_index);
     }
 
     return result;
@@ -1845,6 +1743,12 @@ public:
     if (is_last()) {
        _bottom = hf;
     }
+  }
+
+  void set_oop_fp_index(int index) {
+    assert(_has_fp_oop == false, "can only have one");
+    _has_fp_oop = true;
+    _fp_index = index;
   }
 
   static int compiled_frame_size(frame& f, int* num_oops) {
@@ -1867,15 +1771,15 @@ public:
   }
 
   template <bool callee_is_interpreted>
-  void patch(frame& f, hframe& callee, CallerInfo& caller) {
-    if (!caller.empty()) {
+  void patch(frame& f, hframe& callee, hframe& caller) {
+    if (!caller.is_empty()) {
       if (caller.is_interpreted_frame()) {
-        callee.patch_link_relative(caller.hfp());
+        callee.patch_link_relative(caller.link_address());
       } else {
-        callee.patch_link((long)caller.fp());
+        callee.patch_link(caller.fp());
       }
       if (callee_is_interpreted) {
-        callee.patch_sender_sp_relative(_mirror, caller.hsp());
+        callee.patch_sender_sp_relative(_mirror, caller.sp());
       }
     } else {
       callee.zero_link();
@@ -1884,9 +1788,9 @@ public:
       }
     }
 
-    if (caller.has_fp_index()) {
+    if (_has_fp_oop) {
       assert(!caller.is_interpreted_frame(), "only compiled frames");
-      callee.patch_link(caller.fp_index());
+      callee.patch_link(_fp_index);
     }
 
     if (is_last() && !_mirror.is_empty()) {
@@ -1907,7 +1811,7 @@ public:
 
   class FreezeInterpretedOops {
   public:
-    static int freeze_oops(ContMirror& mirror, frame& f, intptr_t* vsp, intptr_t* hsp, RegisterMap& map, int starting_index, CallerInfo& current) {
+    static int freeze_oops(ContMirror& mirror, FreezeContinuation* fc, frame& f, intptr_t* vsp, intptr_t* hsp, RegisterMap& map, int starting_index) {
       InterpretedFreezeOopFn oopFn(&mirror, &f, vsp, hsp, &map, starting_index);
       ForwardingOopClosure<InterpretedFreezeOopFn> oopClosure(&oopFn);
       f.oops_do(&oopClosure, NULL, &oopClosure, &map);
@@ -1917,10 +1821,10 @@ public:
 
   class FreezeCompiledOops {
   public:
-    static int freeze_oops(ContMirror& mirror, frame& f, intptr_t* vsp, intptr_t* hsp, RegisterMap& map, int starting_index, CallerInfo& current) {
+    static int freeze_oops(ContMirror& mirror, FreezeContinuation* fc, frame& f, intptr_t* vsp, intptr_t* hsp, RegisterMap& map, int starting_index) {
       const ImmutableOopMap* oopmap = f.oop_map();
       assert(oopmap, "must have");
-      CompiledFreezeOopFn oopFn(&mirror, &f, vsp, hsp, current, &map, starting_index);
+      CompiledFreezeOopFn oopFn(&mirror, fc, &f, vsp, hsp, &map, starting_index);
 
       OopMapDo<CompiledFreezeOopFn, CompiledFreezeOopFn, IncludeAllValues> visitor(&oopFn, &oopFn, false /* no derived table lock */);
       visitor.oops_do(&f, &map, oopmap);
@@ -1933,7 +1837,7 @@ public:
   };
 
   template <typename FreezeOops>
-  void freeze_oops(frame& f, intptr_t* vsp, intptr_t *hsp, RegisterMap& map, int num_oops, CallerInfo& current) {
+  void freeze_oops(frame& f, intptr_t* vsp, intptr_t *hsp, RegisterMap& map, int num_oops) {
     if (Continuation::PERFTEST_LEVEL < 30) {
       return;
     }
@@ -1942,13 +1846,14 @@ public:
 
     assert (!map.include_argument_oops(), "");
 
+    _has_fp_oop = false;
     int starting_index = _wref_sp - num_oops;
-    int frozen = FreezeOops::freeze_oops(_mirror, f, vsp, hsp, map, starting_index, current);
+    int frozen = FreezeOops::freeze_oops(_mirror, this, f, vsp, hsp, map, starting_index);
     assert(frozen == num_oops, "check");
     _wref_sp = starting_index;
   }
 
-  res_freeze freeze_interpreted_stackframe(frame& f, RegisterMap& map, CallerInfo& caller) {
+  res_freeze freeze_interpreted_stackframe(frame& f, RegisterMap& map, hframe& caller) {
     if (is_interpreted_frame_owning_locks(f)) {
       return freeze_pinned_monitor;
     }
@@ -1966,6 +1871,7 @@ public:
     if (result != freeze_ok) {
       return result;
     }
+    if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
 
     intptr_t* vsp = interpreted_frame_top(f);
     intptr_t* vfp = f.fp();
@@ -1975,13 +1881,10 @@ public:
     assert (fsize1 == fsize, "");
 #endif
 
-    if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
-
     intptr_t* hsp = freeze_raw_frame(vsp, fsize);
     intptr_t* hfp = hsp + (vfp - vsp);
 
-    HStackFrameDescriptor hstackframe(fsize, f.pc(), NULL, true, 0, (intptr_t *) (f.fp() - vsp));
-    hframe hf = hstackframe.create_hframe<true>(this, _mirror, hsp);
+    hframe hf = _mirror.new_hframe<true>(hsp, (hsp + (long)(f.fp() - vsp)), f.pc(), NULL, true);
     save_bounding_hframe(hf);
 
     relativize(vfp, hfp, frame::interpreter_frame_last_sp_offset);
@@ -1995,9 +1898,9 @@ public:
     // patch our stuff - this used to happen in the caller so it needs to happen last
     patch<true>(f, hf, caller); 
 
-    freeze_oops<FreezeInterpretedOops>(f, vsp, hsp, map, oops, caller);
+    freeze_oops<FreezeInterpretedOops>(f, vsp, hsp, map, oops);
 
-    caller = CallerInfo::create_interpreted(hsp, hfp);
+    caller = hf;
 
     _mirror.add_size(fsize);
     _mirror.inc_num_interpreted_frames();
@@ -2006,7 +1909,7 @@ public:
     return freeze_ok;
   }
 
-  res_freeze freeze_compiled_stackframe(frame& f, RegisterMap& map, CallerInfo& caller) {
+  res_freeze freeze_compiled_stackframe(frame& f, RegisterMap& map, hframe& caller) {
     if (is_compiled_frame_owning_locks(_mirror.thread(), &map, f)) {
       return freeze_pinned_monitor;
     }
@@ -2024,6 +1927,7 @@ public:
     if (result != freeze_ok) {
       return result;
     }
+    if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
 
     intptr_t* vsp = compiled_frame_top(f); // consider moving past recursive call
 #ifdef ASSERT
@@ -2032,14 +1936,11 @@ public:
     assert (fsize1 == fsize, "");
 #endif
 
-    if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
-
     f.cb()->as_compiled_method()->inc_on_continuation_stack();
 
     intptr_t* hsp = freeze_raw_frame(vsp, fsize);
 
-    HStackFrameDescriptor hstackframe(fsize, f.pc(), f.cb(), false, f.fp(), NULL);
-    hframe hf = hstackframe.create_hframe<false>(this, _mirror, hsp);
+    hframe hf = _mirror.new_hframe<false>(hsp, f.fp(), f.pc(), f.cb(), false);
     save_bounding_hframe(hf);
 
     hf.set_size(_mirror, fsize);
@@ -2048,12 +1949,12 @@ public:
 
     patch<false>(f, hf, caller);
 
-    assert (Interpreter::contains(hf.return_pc(_mirror)) == ((!caller.empty() && caller.is_interpreted_frame()) || (caller.empty() && !_mirror.is_empty() && _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED))), "");
+    assert (Interpreter::contains(hf.return_pc(_mirror)) == ((!caller.is_empty() && caller.is_interpreted_frame()) || (caller.is_empty() && !_mirror.is_empty() && _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED))), "");
     bool may_need_alignment = Interpreter::contains(hf.return_pc(_mirror)); // do after fixing return_pc in patch (and/or use equivalent condition above)
 
-    caller = CallerInfo::create_compiled(hsp, f.fp());
+    freeze_oops<FreezeCompiledOops>(f, vsp, hsp, map, oops); // must be called after patch, as patch uses the previous freeze_oop data
 
-    freeze_oops<FreezeCompiledOops>(f, vsp, hsp, map, oops, caller);
+    caller = hf;
 
     _mirror.inc_num_frames();
     _mirror.add_size(fsize);
@@ -2091,7 +1992,7 @@ public:
     return freeze_ok;
   }
 
-  inline res_freeze freeze_caller(frame& f, RegisterMap& map, CallerInfo& caller) { // TODO: templatize by callee frame type and use in sender;
+  inline res_freeze freeze_caller(frame& f, RegisterMap& map, hframe& caller) { // TODO: templatize by callee frame type and use in sender;
     bool is_first = _is_first;
     if (is_first) _is_first = false;
 
@@ -2109,7 +2010,7 @@ public:
     return result;
   }
 
-  res_freeze freeze(frame& f, RegisterMap& map, CallerInfo& caller) {
+  res_freeze freeze(frame& f, RegisterMap& map, hframe& caller) {
     if (f.real_fp() > _bottom_address) {
       _is_last = true; // the next frame we return to is bottom
       return finalize(f); // done with recursion
@@ -2340,6 +2241,49 @@ JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
 
   return 0;
 JRT_END
+
+///////////////
+
+class ThawOopFn: public ContOopBase {
+ private:
+  int _i;
+
+ protected:
+  template <class T> inline void do_oop_work(T* p) {
+    if (!process(p)) return;
+
+    oop obj = _cont->obj_at(_i); // does a HeapAccess<IN_HEAP_ARRAY> load barrier
+    assert (oopDesc::is_oop_or_null(obj), "invalid oop");
+    log_trace(jvmcont)("i: %d", _i); print_oop(p, obj);
+    NativeAccess<IS_DEST_UNINITIALIZED>::oop_store(p, obj);
+    _i++;
+  }
+ public:
+  ThawOopFn(ContMirror* cont, frame* fr, int index, int num_oops, void* vsp, RegisterMap* map)
+    : ContOopBase(cont, fr, map, vsp) { _i = index; }
+  void do_oop(oop* p)       { do_oop_work(p); }
+  void do_oop(narrowOop* p) { do_oop_work(p); }
+
+  void do_derived_oop(oop *base_loc, oop *derived_loc) {
+    assert(Universe::heap()->is_in_or_null(*base_loc), "not an oop: " INTPTR_FORMAT " (at " INTPTR_FORMAT ")", p2i((oopDesc*)*base_loc), p2i(base_loc));
+    verify(derived_loc);
+    verify(base_loc);
+    assert (oopDesc::is_oop_or_null(*base_loc), "invalid oop");
+
+    intptr_t offset = *(intptr_t*)derived_loc;
+
+    log_trace(jvmcont)(
+      "Continuation thaw derived pointer@" INTPTR_FORMAT " - Derived: " INTPTR_FORMAT " Base: " INTPTR_FORMAT " (@" INTPTR_FORMAT ") (Offset: " INTX_FORMAT ")",
+      p2i(derived_loc), p2i((address)*derived_loc), p2i((address)*base_loc), p2i(base_loc), offset);
+
+    oop obj = cast_to_oop(cast_from_oop<intptr_t>(*base_loc) + offset);
+    assert(Universe::heap()->is_in_or_null(obj), "");
+    *derived_loc = obj;
+
+
+    assert(derived_loc != base_loc, "Base and derived in same location");
+  }
+};
 
 
 static frame thaw_interpreted_frame(ContMirror& cont, hframe& hf, intptr_t* vsp, frame& sender) {
