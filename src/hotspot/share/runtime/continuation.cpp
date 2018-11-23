@@ -348,10 +348,6 @@ public:
   HStackFrameDescriptor(size_t size, address pc, CodeBlob* cb, bool interpreted, intptr_t* fp_value, intptr_t* link_offset) : _size(size), _pc(pc), _cb(cb), _interpreted(interpreted), _fp_value(fp_value), _link_offset(link_offset) {}
   bool empty() const { return _size <= METADATA_SIZE; } // used to be > 0 but since every frame has a METADATA_SIZE...
   template<bool interpreted> hframe create_hframe(FreezeContinuation* freeze, ContMirror& mirror, intptr_t *hsp);
-  void set_fp(intptr_t *value) { _fp_value = value; }
-
-  size_t size() const { return _size; }
-  size_t stack_slots() const { return _size / sizeof(intptr_t *); }
 
   size_t index_to_addr_offset(size_t index) const {
     return sizeof(void*) * index;
@@ -1204,8 +1200,8 @@ hframe ContMirror::new_hframe(intptr_t* hsp, intptr_t* hfp, address pc, CodeBlob
   int sp;
   long fp;
   sp = stack_index(hsp);
-  fp = is_interpreted ? stack_index(hfp) : (long)hfp;
-  hframe result = hframe(sp, fp, pc, cb, is_interpreted, *this, true);
+  fp = interpreted ? stack_index(hfp) : (long)hfp;
+  hframe result = hframe(sp, fp, pc, cb, interpreted, *this, true);
   result.set_link_address<interpreted>(*this);
   return result;
 }
@@ -1832,7 +1828,7 @@ public:
     CallerInfo caller;
 
     _is_first = true; // the first frame we'll visit is the top
-    res_freeze result = freeze(f, map, caller, true);
+    res_freeze result = freeze(f, map, caller);
 
     if (caller.has_fp_index()) {
       assert(!caller.is_interpreted_frame(), "only compiled frames");
@@ -1965,7 +1961,11 @@ public:
 
     _size += fsize + METADATA_SIZE;
     _oops += oops;
-    _frames++;
+
+    res_freeze result = freeze_caller(f, map, caller); // <----- recursive call
+    if (result != freeze_ok) {
+      return result;
+    }
 
     intptr_t* vsp = interpreted_frame_top(f);
     intptr_t* vfp = f.fp();
@@ -1975,18 +1975,12 @@ public:
     assert (fsize1 == fsize, "");
 #endif
 
-    HStackFrameDescriptor hstackframe(fsize, f.pc(), NULL, true, 0, (intptr_t *) (f.fp() - vsp));
-
-    res_freeze result = freeze_caller(f, map, caller); // <----- recursive call
-    if (result != freeze_ok) {
-      return result;
-    }
-
     if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
 
     intptr_t* hsp = freeze_raw_frame(vsp, fsize);
     intptr_t* hfp = hsp + (vfp - vsp);
 
+    HStackFrameDescriptor hstackframe(fsize, f.pc(), NULL, true, 0, (intptr_t *) (f.fp() - vsp));
     hframe hf = hstackframe.create_hframe<true>(this, _mirror, hsp);
     save_bounding_hframe(hf);
 
@@ -1998,16 +1992,17 @@ public:
     hf.set_uncompressed_size(_mirror, fsize);
     hf.set_num_oops(_mirror, oops);
 
-    _mirror.add_size(fsize);
-    _mirror.inc_num_interpreted_frames();
-    _mirror.inc_num_frames();
-
     // patch our stuff - this used to happen in the caller so it needs to happen last
     patch<true>(f, hf, caller); 
 
     freeze_oops<FreezeInterpretedOops>(f, vsp, hsp, map, oops, caller);
 
     caller = CallerInfo::create_interpreted(hsp, hfp);
+
+    _mirror.add_size(fsize);
+    _mirror.inc_num_interpreted_frames();
+    _mirror.inc_num_frames();
+
     return freeze_ok;
   }
 
@@ -2024,7 +2019,11 @@ public:
 
     _size += fsize + METADATA_SIZE;
     _oops += oops;
-    _frames++;
+
+    res_freeze result = freeze_caller(f, map, caller); // <----- recursive call
+    if (result != freeze_ok) {
+      return result;
+    }
 
     intptr_t* vsp = compiled_frame_top(f); // consider moving past recursive call
 #ifdef ASSERT
@@ -2032,12 +2031,6 @@ public:
     const int fsize1 = (bottom - vsp) * sizeof(intptr_t);
     assert (fsize1 == fsize, "");
 #endif
-    HStackFrameDescriptor hstackframe(fsize, f.pc(), f.cb(), false, f.fp(), NULL);
-
-    res_freeze result = freeze_caller(f, map, caller); // <----- recursive call
-    if (result != freeze_ok) {
-      return result;
-    }
 
     if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
 
@@ -2045,6 +2038,7 @@ public:
 
     intptr_t* hsp = freeze_raw_frame(vsp, fsize);
 
+    HStackFrameDescriptor hstackframe(fsize, f.pc(), f.cb(), false, f.fp(), NULL);
     hframe hf = hstackframe.create_hframe<false>(this, _mirror, hsp);
     save_bounding_hframe(hf);
 
@@ -2052,24 +2046,20 @@ public:
     hf.set_uncompressed_size(_mirror, 0);
     hf.set_num_oops(_mirror, oops);
 
-    _mirror.inc_num_frames();
-    _mirror.add_size(fsize);
-
     patch<false>(f, hf, caller);
 
-    assert (Interpreter::contains(hf.return_pc(_mirror)) == ((!caller.empty() && caller.is_interpreted_frame()) || (caller.empty() && !_mirror.is_empty() && _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED))), 
-      "Interpreter::contains(hf.return_pc(_mirror)): %d caller.empty(): %d caller.is_interpreted_frame(): %d _mirror.is_empty(): %d _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED): %d", 
-      Interpreter::contains(hf.return_pc(_mirror)),
-      caller.empty(), caller.is_interpreted_frame(), 
-      _mirror.is_empty(), _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED));
-
-    if (Interpreter::contains(hf.return_pc(_mirror))) { // do after fixing return_pc in patch (and/or use equivalent condition above)
-      _mirror.add_size(sizeof(intptr_t)); // possible alignment
-    }
+    assert (Interpreter::contains(hf.return_pc(_mirror)) == ((!caller.empty() && caller.is_interpreted_frame()) || (caller.empty() && !_mirror.is_empty() && _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED))), "");
+    bool may_need_alignment = Interpreter::contains(hf.return_pc(_mirror)); // do after fixing return_pc in patch (and/or use equivalent condition above)
 
     caller = CallerInfo::create_compiled(hsp, f.fp());
 
     freeze_oops<FreezeCompiledOops>(f, vsp, hsp, map, oops, caller);
+
+    _mirror.inc_num_frames();
+    _mirror.add_size(fsize);
+    if (may_need_alignment) { 
+      _mirror.add_size(sizeof(intptr_t)); // possible alignment
+    }
 
     return freeze_ok;
   }
@@ -2119,12 +2109,13 @@ public:
     return result;
   }
 
-  res_freeze freeze(frame& f, RegisterMap& map, CallerInfo& caller, bool start = false) {
+  res_freeze freeze(frame& f, RegisterMap& map, CallerInfo& caller) {
     if (f.real_fp() > _bottom_address) {
       _is_last = true; // the next frame we return to is bottom
       return finalize(f); // done with recursion
     }
 
+    _frames++;
     res_freeze result;
     bool is_compiled = f.is_compiled_frame();
     if (is_compiled) {
