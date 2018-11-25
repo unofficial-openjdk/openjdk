@@ -77,7 +77,7 @@ class RegisterMap : public StackObj {
   Handle      _cont;                    // The current continuation, if any
   bool        _update_map;              // Tells if the register map need to be
                                         // updated when traversing the stack
-  bool        _validate_oops;           // whether to perform valid oop checks in asserts
+  bool        _validate_oops;           // whether to perform valid oop checks in asserts -- used only in the map use for continuation freeze/thaw
   bool        _walk_cont;               // whether to walk frames on a continuation stack
 
 #ifdef ASSERT
@@ -110,7 +110,7 @@ class RegisterMap : public StackObj {
     int index = reg->value() / location_valid_type_size;
     assert(0 <= reg->value() && reg->value() < reg_count, "range check");
     assert(0 <= index && index < location_valid_size, "range check");
-    assert(_update_map, "updating map that does not need updating");
+    assert(!_validate_oops || _update_map, "updating map that does not need updating");
     _location[reg->value()] = (intptr_t*) loc;
     check_location_valid();
   }
@@ -119,7 +119,7 @@ class RegisterMap : public StackObj {
     int index = reg->value() / location_valid_type_size;
     assert(0 <= reg->value() && reg->value() < reg_count, "range check");
     assert(0 <= index && index < location_valid_size, "range check");
-    assert(_update_map, "updating map that does not need updating");
+    assert(!_validate_oops || _update_map, "updating map that does not need updating");
     _location[reg->value()] = (intptr_t*) loc;
     _location_valid[index] |= ((LocationValidType)1 << (reg->value() % location_valid_type_size));
     check_location_valid();
