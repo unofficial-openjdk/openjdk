@@ -237,10 +237,6 @@ public final class Fiber extends Strand {
         Thread thread = Thread.currentCarrierThread();
         Fiber fiber = thread.getFiber();
 
-        if (notifyJvmtiEvents) {
-            notifyFiberScheduled(thread, this);
-        }
-
         // switch to carrier thread when submitting task. Revisit this when
         // ForkJoinPool is updated to reduce use of Thread.currentThread.
         if (fiber != null) thread.setFiber(null);
@@ -259,7 +255,8 @@ public final class Fiber extends Strand {
         assert Thread.currentCarrierThread().getFiber() == null;
 
         // set state to ST_RUNNING
-        if (!stateCompareAndSet(ST_STARTED, ST_RUNNABLE)) {
+        boolean started = stateCompareAndSet(ST_STARTED, ST_RUNNABLE);
+        if (!started) {
             // continue on this carrier thread if fiber was parked
             if (stateCompareAndSet(ST_PARKED, ST_RUNNABLE)) {
                 parkPermitGetAndSet(false);  // consume parking permit
@@ -268,7 +265,7 @@ public final class Fiber extends Strand {
             }
         }
 
-        mount();
+        mount(started);
         Throwable exc = null;
         try {
             cont.run();
@@ -289,7 +286,7 @@ public final class Fiber extends Strand {
      * Mounts this fiber. This method must be invoked before the continuation
      * is run or continued. It binds the fiber to the current carrier thread.
      */
-    private void mount() {
+    private void mount(boolean started) {
         Thread thread = Thread.currentCarrierThread();
 
         // sets the carrier thread
@@ -304,6 +301,8 @@ public final class Fiber extends Strand {
         thread.setFiber(this);
 
         if (notifyJvmtiEvents) {
+            if (started)
+                notifyFiberStarted(thread, this);
             notifyFiberMount(thread, this);
         }
     }
@@ -1074,10 +1073,10 @@ public final class Fiber extends Strand {
     }
 
     private static volatile boolean notifyJvmtiEvents;  // set by VM
-    private static native void notifyFiberScheduled(Thread t, Fiber f);
-    private static native void notifyFiberTerminated(Thread t, Fiber f);
-    private static native void notifyFiberMount(Thread t, Fiber f);
-    private static native void notifyFiberUnmount(Thread t, Fiber f);
+    private static native void notifyFiberStarted(Thread thread, Fiber fiber);
+    private static native void notifyFiberTerminated(Thread thread, Fiber fiber);
+    private static native void notifyFiberMount(Thread thread, Fiber fiber);
+    private static native void notifyFiberUnmount(Thread thread, Fiber fiber);
     private static native void registerNatives();
     static {
         registerNatives();

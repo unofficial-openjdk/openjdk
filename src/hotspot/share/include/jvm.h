@@ -1224,7 +1224,7 @@ JVM_GetEnclosingMethodInfo(JNIEnv* env, jclass ofClass);
 /* Fiber support.
  */
 JNIEXPORT void JNICALL
-JVM_FiberScheduled(JNIEnv* env, jclass fiber_class, jobject event_thread, jobject fiber);
+JVM_FiberStarted(JNIEnv* env, jclass fiber_class, jobject event_thread, jobject fiber);
 
 JNIEXPORT void JNICALL
 JVM_FiberTerminated(JNIEnv* env, jclass fiber_class, jobject event_hread, jobject fiber);

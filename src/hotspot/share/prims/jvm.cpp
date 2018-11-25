@@ -3647,8 +3647,8 @@ JVM_ENTRY_NO_ENV(jint, JVM_FindSignal(const char *name))
   return os::get_signal_number(name);
 JVM_END
 
-JVM_ENTRY(void, JVM_FiberScheduled(JNIEnv* env, jclass fiber_class, jthread event_hread, jobject fiber))
-  JVMWrapper("JVM_FiberScheduled");
+JVM_ENTRY(void, JVM_FiberStarted(JNIEnv* env, jclass fiber_class, jthread event_hread, jobject fiber))
+  JVMWrapper("JVM_FiberStarted");
   if (JvmtiExport::should_post_fiber_scheduled()) {
     JvmtiExport::post_fiber_scheduled(event_hread, fiber);
   }

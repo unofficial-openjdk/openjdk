@@ -194,7 +194,7 @@ JVM_DefineModule
 JVM_SetBootLoaderUnnamedModule
 
 # Fiber support
-JVM_FiberScheduled
+JVM_FiberStarted
 JVM_FiberTerminated
 JVM_FiberMount
 JVM_FiberUnmount
