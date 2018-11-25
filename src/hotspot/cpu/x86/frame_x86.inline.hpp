@@ -48,7 +48,7 @@ inline void frame::init(intptr_t* sp, intptr_t* fp, address pc) {
   _fp = fp;
   _pc = pc;
   assert(pc != NULL, "no pc?");
-  _cb = CodeCache::find_blob(pc);
+  _cb = StubRoutines::cont_doYield_stub()->contains(pc) ? StubRoutines::cont_doYield_stub() : CodeCache::find_blob(pc); // a temporary optimization for JavaThread::pd_last_frame
   adjust_unextended_sp();
 
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
@@ -305,9 +305,7 @@ frame frame::frame_sender(RegisterMap* map) const {
   assert(_cb == CodeCache::find_blob(pc()), "Must be the same");
 
   if (_cb != NULL) {
-    if (is_compiled_frame())
-      return sender_for_compiled_frame<LOOKUP>(map);
-    return sender_for_stub_frame(map);
+    return is_compiled_frame() ? sender_for_compiled_frame<LOOKUP, false>(map) : sender_for_compiled_frame<LOOKUP, true>(map);
   }
   // Must be native-compiled frame, i.e. the marshaling code for native
   // methods that exists in the core system.
@@ -316,7 +314,7 @@ frame frame::frame_sender(RegisterMap* map) const {
 
 //------------------------------------------------------------------------------
 // frame::sender_for_compiled_frame
-template <typename LOOKUP>
+template <typename LOOKUP, bool stub>
 frame frame::sender_for_compiled_frame(RegisterMap* map) const {
   assert(map != NULL, "map must be set");
 
@@ -342,11 +340,14 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
     // Tell GC to use argument oopmaps for some runtime stubs that need it.
     // For C1, the runtime stub might not have oop maps, so set this flag
     // outside of update_register_map.
-    assert (!_cb->caller_must_gc_arguments(map->thread()), "");
-    assert (!map->include_argument_oops(), "");
-    // if (!is_compiled_frame() && oop_map() != NULL) { // compiled frames do not use callee-saved registers
-    //   _oop_map->update_register_map(this, map);
-    // }
+    assert (stub || !_cb->caller_must_gc_arguments(map->thread()), "");
+    assert (stub || !map->include_argument_oops(), "");
+    if (stub) { // compiled frames do not use callee-saved registers
+      map->set_include_argument_oops(_cb->caller_must_gc_arguments(map->thread()));
+      if (oop_map() != NULL) { 
+        _oop_map->update_register_map(this, map);
+      }
+    }
     assert (oop_map() == NULL || OopMapStream(oop_map(), OopMapValue::callee_saved_value).is_done(), "callee-saved value in compiled frame");
 
     // Since the prolog does the save and restore of EBP there is no oopmap
@@ -371,7 +372,5 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
   }
   return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc);
 }
-
-
 
 #endif // CPU_X86_VM_FRAME_X86_INLINE_HPP
