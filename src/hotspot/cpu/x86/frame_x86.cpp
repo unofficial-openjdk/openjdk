@@ -374,45 +374,6 @@ frame frame::sender_for_entry_frame(RegisterMap* map) const {
   return fr;
 }
 
-frame frame::sender_for_stub_frame(RegisterMap* map) const {
-  assert(map != NULL, "map must be set");
-  assert (!(map->walk_cont() && map->cont() != NULL), "");
-  assert(_cb->frame_size() >= 0, "must have non-zero frame size");
-  
-  intptr_t* sender_sp = unextended_sp() + _cb->frame_size();
-  intptr_t* unextended_sp = sender_sp;
-
-  // On Intel the return_address is always the word on the stack
-  address sender_pc = (address) *(sender_sp-1);
-
-  // This is the saved value of EBP which may or may not really be an FP.
-  // It is only an FP if the sender is an interpreter frame (or C1?).
-  intptr_t** saved_fp_addr = (intptr_t**) (sender_sp - frame::sender_sp_offset);
-
-  if (map->update_map()) {
-    // Tell GC to use argument oopmaps for some runtime stubs that need it.
-    // For C1, the runtime stub might not have oop maps, so set this flag
-    // outside of update_register_map.
-    map->set_include_argument_oops(_cb->caller_must_gc_arguments(map->thread()));
-    if (oop_map() != NULL) {
-      _oop_map->update_register_map(this, map);
-    }
- 
-    // Since the prolog does the save and restore of EBP there is no oopmap
-    // for it so we must fill in its location as if there was an oopmap entry
-    // since if our caller was compiled code there could be live jvm state in it.
-    update_map_with_saved_link(map, saved_fp_addr);
-  }
-
-  assert(sender_sp != sp(), "must have changed");
-
-  if (Continuation::is_return_barrier_entry(sender_pc)) { // can happen for safepoint blob
-    assert (!map->walk_cont(), "");
-    sender_pc = Continuation::fix_continuation_bottom_sender(this, map, sender_pc);
-  }
-  return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc);
-}
-
 //------------------------------------------------------------------------------
 // frame::verify_deopt_original_pc
 //

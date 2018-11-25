@@ -171,10 +171,9 @@ class frame {
 
  private:
   // Helper methods for better factored code in frame::sender
-  template <typename LOOKUP>
+  template <typename LOOKUP, bool stub>
   frame sender_for_compiled_frame(RegisterMap* map) const;
   frame sender_for_entry_frame(RegisterMap* map) const;
-  frame sender_for_stub_frame(RegisterMap* map) const;
   frame sender_for_interpreter_frame(RegisterMap* map) const;
   frame sender_for_native_frame(RegisterMap* map) const;
 

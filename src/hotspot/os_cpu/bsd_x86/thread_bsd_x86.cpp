@@ -30,8 +30,6 @@
 frame JavaThread::pd_last_frame() {
   assert(has_last_Java_frame(), "must have last_Java_sp() when suspended");
   vmassert(_anchor.last_Java_pc() != NULL, "not walkable");
-  if (StubRoutines::cont_doYield_stub()->contains(_anchor.last_Java_pc())) // give this special case a little boost in finding the CodeBlob
-    return frame(_anchor.last_Java_sp(), _anchor.last_Java_sp(), _anchor.last_Java_fp(), _anchor.last_Java_pc(), StubRoutines::cont_doYield_stub());
   return frame(_anchor.last_Java_sp(), _anchor.last_Java_fp(), _anchor.last_Java_pc());
 }
 
