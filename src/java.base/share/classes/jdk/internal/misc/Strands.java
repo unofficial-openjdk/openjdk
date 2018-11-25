@@ -64,7 +64,7 @@ public final class Strands {
     /**
      * Re-enables this fiber for scheduling.
      */
-    public static void unparkFiber(Fiber fiber) {
+    public static void unparkFiber(Fiber<?> fiber) {
         JLA.unparkFiber(fiber);
     }
 
@@ -72,7 +72,7 @@ public final class Strands {
      * Returns the Fiber for the given shadow Thread object. Returns null if
      * the thread is not a shadow thread.
      */
-    public static Fiber getFiber(Thread thread) {
+    public static Fiber<?> getFiber(Thread thread) {
         return JLA.getFiber(thread);
     }
 
@@ -80,7 +80,7 @@ public final class Strands {
      * Returns the shadow thread for the given fiber or null if it does not
      * have a shadow thread.
      */
-    public static Thread getShadowThread(Fiber fiber) {
+    public static Thread getShadowThread(Fiber<?> fiber) {
         return JLA.getShadowThread(fiber);
     }
 }

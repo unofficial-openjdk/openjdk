@@ -276,7 +276,7 @@ class Thread implements Runnable {
      */
     public static Thread currentThread() {
         Thread t = currentThread0();
-        Fiber fiber = t.fiber;
+        Fiber<?> fiber = t.fiber;
         if (fiber != null) {
             return fiber.shadowThread();
         } else {
@@ -298,7 +298,7 @@ class Thread implements Runnable {
      * Binds this thread to given Fiber. Once set, Thread.currentThread() will
      * return the Fiber rather than the Thread object for the carrier thread.
      */
-    void setFiber(Fiber fiber) {
+    void setFiber(Fiber<?> fiber) {
         //assert this == currentThread0();
         this.fiber = fiber;
     }
@@ -306,12 +306,12 @@ class Thread implements Runnable {
     /**
      * Returns the Fiber that is currently bound to this thread.
      */
-    Fiber getFiber() {
+    Fiber<?> getFiber() {
         //assert this == currentThread0();
         return fiber;
     }
 
-    private Fiber fiber;
+    private Fiber<?> fiber;
 
     /**
      * A hint to the scheduler that the current thread is willing to yield
@@ -352,7 +352,7 @@ class Thread implements Runnable {
         if (millis < 0) {
             throw new IllegalArgumentException("timeout value is negative");
         }
-        Fiber f = currentCarrierThread().getFiber();
+        Fiber<?> f = currentCarrierThread().getFiber();
         if (f != null) {
             if (!Fiber.emulateCurrentThread()) {
                 throw new UnsupportedOperationException(
@@ -1125,7 +1125,7 @@ class Thread implements Runnable {
      */
     public static boolean interrupted() {
         Thread thread = Thread.currentCarrierThread();
-        Fiber fiber = thread.getFiber();
+        Fiber<?> fiber = thread.getFiber();
         if (fiber == null) {
             return thread.getAndClearInterrupt();
         } else {
@@ -1445,7 +1445,7 @@ class Thread implements Runnable {
      */
     public final void join(long millis) throws InterruptedException {
         if (this instanceof ShadowThread) {
-            Fiber f = ((ShadowThread) this).fiber();
+            Fiber<?> f = ((ShadowThread) this).fiber();
             long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
             f.awaitInterruptibly(nanos);
             return;

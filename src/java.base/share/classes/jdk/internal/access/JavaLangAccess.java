@@ -334,13 +334,13 @@ public interface JavaLangAccess {
      * Returns the Fiber for the given shadow Thread object. Returns null if
      * the thread is not a shadow thread.
      */
-    Fiber getFiber(Thread t);
+    Fiber<?> getFiber(Thread t);
 
     /**
      * Returns the shadow thread for the given fiber or null if it does not
      * have a shadow thread.
      */
-    Thread getShadowThread(Fiber f);
+    Thread getShadowThread(Fiber<?> f);
 
     /**
      * Returns the currently executing strand. If executed from a running fiber
@@ -363,5 +363,5 @@ public interface JavaLangAccess {
     /**
      * Re-enables a fiber for scheduling.
      */
-    void unparkFiber(Fiber fiber);
+    void unparkFiber(Fiber<?> fiber);
 }

@@ -353,7 +353,7 @@ public class Object {
         try {
             wait0(timeoutMillis);
         } catch (InterruptedException e) {
-            Fiber fiber = Fiber.currentFiber();
+            Fiber<?> fiber = Fiber.currentFiber();
             if (fiber != null) {
                 // clear shadow thread's interrupt status
                 fiber.shadowThread().getAndClearInterrupt();

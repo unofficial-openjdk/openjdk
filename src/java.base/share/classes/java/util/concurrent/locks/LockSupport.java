@@ -147,7 +147,7 @@ public class LockSupport {
         U.putReference(t, THREAD_PARKBLOCKER, arg);
     }
 
-    private static void setBlocker(Fiber f, Object arg) {
+    private static void setBlocker(Fiber<?> f, Object arg) {
         // Even though volatile, hotspot doesn't need a write barrier here.
         U.putReference(f, FIBER_PARKBLOCKER, arg);
     }
@@ -165,7 +165,7 @@ public class LockSupport {
      */
     public static void unpark(Thread thread) {
         if (thread != null) {
-            Fiber fiber = Strands.getFiber(thread);
+            Fiber<?> fiber = Strands.getFiber(thread);
             if (fiber != null) {
                 Strands.unparkFiber(fiber); // can throw RejectedExecutionException
             } else {
@@ -192,7 +192,7 @@ public class LockSupport {
             if (strand instanceof Thread) {
                 unpark((Thread) strand);
             } else if (strand instanceof Fiber) {
-                Strands.unparkFiber((Fiber) strand);  // can throw RejectedExecutionException
+                Strands.unparkFiber((Fiber<?>) strand);  // can throw RejectedExecutionException
             } else {
                 throw new IllegalArgumentException();
             }
@@ -230,7 +230,7 @@ public class LockSupport {
     public static void park(Object blocker) {
         Object strand = Strands.currentStrand();
         if (strand instanceof Fiber) {
-            Fiber fiber = (Fiber) strand;
+            Fiber<?> fiber = (Fiber<?>) strand;
             setBlocker(fiber, blocker);
             Strands.parkFiber();
             setBlocker(fiber, null);
@@ -278,7 +278,7 @@ public class LockSupport {
         if (nanos > 0) {
             Object strand = Strands.currentStrand();
             if (strand instanceof Fiber) {
-                Fiber fiber = (Fiber) strand;
+                Fiber<?> fiber = (Fiber<?>) strand;
                 setBlocker(fiber, blocker);
                 Strands.parkFiber(nanos);
                 setBlocker(fiber, null);
@@ -327,7 +327,7 @@ public class LockSupport {
     public static void parkUntil(Object blocker, long deadline) {
         Object strand = Strands.currentStrand();
         if (strand instanceof Fiber) {
-            Fiber fiber = (Fiber) strand;
+            Fiber<?> fiber = (Fiber<?>) strand;
             setBlocker(fiber, blocker);
             long millis = deadline - System.currentTimeMillis();
             long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);

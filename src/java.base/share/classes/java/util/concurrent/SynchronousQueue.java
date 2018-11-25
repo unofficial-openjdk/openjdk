@@ -440,7 +440,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             if (w instanceof Thread) {
                 t = (Thread) w;
             } else {
-                t = Strands.getShadowThread((Fiber)w);
+                t = Strands.getShadowThread((Fiber<?>)w);
             }
             int spins = shouldSpin(s)
                 ? (timed ? MAX_TIMED_SPINS : MAX_UNTIMED_SPINS)
@@ -745,7 +745,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             if (w instanceof Thread) {
                 t = (Thread) w;
             } else {
-                t = Strands.getShadowThread((Fiber)w);
+                t = Strands.getShadowThread((Fiber<?>)w);
             }
             int spins = (head.next == s)
                 ? (timed ? MAX_TIMED_SPINS : MAX_UNTIMED_SPINS)

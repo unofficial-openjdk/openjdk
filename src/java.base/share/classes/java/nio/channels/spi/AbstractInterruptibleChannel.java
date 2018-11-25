@@ -206,7 +206,7 @@ public abstract class AbstractInterruptibleChannel
         if (s instanceof Thread) {
             me = (Thread) s;
         } else {
-            me = Strands.getShadowThread((Fiber)s);
+            me = Strands.getShadowThread((Fiber<?>)s);
         }
         if (me != null) {
             blockedOn(null);

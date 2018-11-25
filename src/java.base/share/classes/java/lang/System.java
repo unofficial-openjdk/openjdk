@@ -2258,7 +2258,7 @@ public final class System {
             }
             public <R> R executeOnCarrierThread(Callable<R> task) throws Exception {
                 Thread t = Thread.currentCarrierThread();
-                Fiber f = t.getFiber();
+                Fiber<?> f = t.getFiber();
                 if (f != null) t.setFiber(null);
                 try {
                     return task.call();
@@ -2269,19 +2269,19 @@ public final class System {
             public <T> T getCarrierThreadLocal(ThreadLocal<T> local) {
                 return local.getCarrierThreadLocal();
             }
-            public Fiber getFiber(Thread t) {
+            public Fiber<?> getFiber(Thread t) {
                 if (t instanceof ShadowThread) {
                     return ((ShadowThread) t).fiber();
                 } else {
                     return null;
                 }
             }
-            public Thread getShadowThread(Fiber f) {
+            public Thread getShadowThread(Fiber<?> f) {
                 return f.shadowThreadOrNull();
             }
             public Object currentStrand() {
                 Thread thread = Thread.currentCarrierThread();
-                Fiber fiber = thread.getFiber();
+                Fiber<?> fiber = thread.getFiber();
                 return (fiber != null) ? fiber : thread;
             }
             public void parkFiber() {
@@ -2290,7 +2290,7 @@ public final class System {
             public void parkFiber(long nanos) {
                 Fiber.parkNanos(nanos);
             }
-            public void unparkFiber(Fiber fiber) {
+            public void unparkFiber(Fiber<?> fiber) {
                 fiber.unpark();
             }
         });

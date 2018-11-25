@@ -46,7 +46,7 @@ class ShadowThread extends Thread {
     private static final AccessControlContext INNOCUOUS_ACC = innocuousACC();
 
     // the Fiber that this object shadows
-    private final Fiber fiber;
+    private final Fiber<?> fiber;
 
     // Thread interrupt support
     private final Object interruptLock = new Object();
@@ -59,7 +59,7 @@ class ShadowThread extends Thread {
      * All shadow threads are in the same thread group and use the same innocuous
      * access control context.
      */
-    ShadowThread(Fiber fiber, InheritableThreadContext ctxt) {
+    ShadowThread(Fiber<?> fiber, InheritableThreadContext ctxt) {
         super(SHADOW_THREAD_GROUP,
                 "Fiber",
                 ctxt.contextClassLoader(),
@@ -68,7 +68,7 @@ class ShadowThread extends Thread {
         this.fiber = fiber;
     }
 
-    Fiber fiber() {
+    Fiber<?> fiber() {
         return fiber;
     }
 

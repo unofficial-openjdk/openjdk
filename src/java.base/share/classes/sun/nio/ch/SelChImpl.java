@@ -84,7 +84,6 @@ public interface SelChImpl extends Channel {
     default void park(int event, long nanos) throws IOException {
         Object strand = Strands.currentStrand();
         if (PollerProvider.available() && (strand instanceof Fiber)) {
-            Fiber fiber = (Fiber) strand;
             Poller.register(strand, getFDVal(), event);
             if (isOpen()) {
                 try {
