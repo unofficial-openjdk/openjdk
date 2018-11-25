@@ -108,35 +108,6 @@ public interface JavaLangAccess {
     void blockedOn(Interruptible b);
 
     /**
-     * Returns a reference to the Thread object for the currently executing
-     * carrier thread.
-     */
-    Thread currentCarrierThread();
-
-    /**
-     * Executes the given value returning task on the current carrier thread.
-     */
-    <R> R executeOnCarrierThread(Callable<R> task) throws Exception;
-
-    /**
-     * Returns the value in the current carrier thread's copy of a
-     * thread-local variable.
-     */
-    <T> T getCarrierThreadLocal(ThreadLocal<T> local);
-
-    /**
-     * Returns the Fiber for the given shadow Thread object. Returns null if
-     * the thread is not a shadow thread.
-     */
-    Fiber getFiber(Thread t);
-
-    /**
-     * Returns the shadow thread for the given fiber or null if it does not
-     * have a shadow thread.
-     */
-    Thread getShadowThread(Fiber f);
-
-    /**
      * Registers a shutdown hook.
      *
      * It is expected that this method with registerShutdownInProgress=true
@@ -343,6 +314,42 @@ public interface JavaLangAccess {
     void setCause(Throwable t, Throwable cause);
 
     /**
+     * Returns a reference to the Thread object for the currently executing
+     * carrier thread.
+     */
+    Thread currentCarrierThread();
+
+    /**
+     * Executes the given value returning task on the current carrier thread.
+     */
+    <R> R executeOnCarrierThread(Callable<R> task) throws Exception;
+
+    /**
+     * Returns the value in the current carrier thread's copy of a
+     * thread-local variable.
+     */
+    <T> T getCarrierThreadLocal(ThreadLocal<T> local);
+
+    /**
+     * Returns the Fiber for the given shadow Thread object. Returns null if
+     * the thread is not a shadow thread.
+     */
+    Fiber getFiber(Thread t);
+
+    /**
+     * Returns the shadow thread for the given fiber or null if it does not
+     * have a shadow thread.
+     */
+    Thread getShadowThread(Fiber f);
+
+    /**
+     * Returns the currently executing strand. If executed from a running fiber
+     * then the {@link Fiber} object will be returned, otherwise the {@code
+     * Thread} object.
+     */
+    Object currentStrand();
+
+    /**
      * Disables the current fiber for scheduling purposes.
      */
     void parkFiber();
@@ -354,7 +361,7 @@ public interface JavaLangAccess {
     void parkFiber(long nanos);
 
     /**
-     * Re-enables this fiber for scheduling.
+     * Re-enables a fiber for scheduling.
      */
     void unparkFiber(Fiber fiber);
 }

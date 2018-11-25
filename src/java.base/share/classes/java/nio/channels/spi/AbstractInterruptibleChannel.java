@@ -31,8 +31,8 @@ package java.nio.channels.spi;
 import java.io.IOException;
 import java.nio.channels.*;
 
-import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.misc.Strands;
 import sun.nio.ch.Interruptible;
 
 
@@ -86,7 +86,6 @@ import sun.nio.ch.Interruptible;
 public abstract class AbstractInterruptibleChannel
     implements Channel, InterruptibleChannel
 {
-    private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
     private final Object closeLock = new Object();
     private volatile boolean closed;
 
@@ -152,12 +151,12 @@ public abstract class AbstractInterruptibleChannel
      * closing and interruption for this channel.  </p>
      */
     protected final void begin() {
-        Strand s = Strand.currentStrand();
+        Object strand = Strands.currentStrand();
         Thread me;
-        if (s instanceof Thread) {
-            me = (Thread) s;
+        if (strand instanceof Thread) {
+            me = (Thread) strand;
         } else {
-            me = JLA.getShadowThread((Fiber)s);
+            me = Strands.getShadowThread((Fiber) strand);
         }
         if (me != null) {
             if (interruptor == null) {
@@ -202,12 +201,12 @@ public abstract class AbstractInterruptibleChannel
     protected final void end(boolean completed)
         throws AsynchronousCloseException
     {
-        Strand s = Strand.currentStrand();
+        Object s = Strands.currentStrand();
         Thread me;
         if (s instanceof Thread) {
             me = (Thread) s;
         } else {
-            me = JLA.getShadowThread((Fiber)s);
+            me = Strands.getShadowThread((Fiber)s);
         }
         if (me != null) {
             blockedOn(null);

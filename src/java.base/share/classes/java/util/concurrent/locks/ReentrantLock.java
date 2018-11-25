@@ -37,6 +37,8 @@ package java.util.concurrent.locks;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+
+import jdk.internal.misc.Strands;
 import jdk.internal.vm.annotation.ReservedStackAccess;
 
 /**
@@ -124,18 +126,18 @@ public class ReentrantLock implements Lock, java.io.Serializable {
          */
         @ReservedStackAccess
         final boolean nonfairTryAcquire(int acquires) {
-            final Strand current = Strand.currentStrand();
+            final Object current = Strands.currentStrand();
             int c = getState();
             if (c == 0) {
                 if (compareAndSetState(0, acquires)) {
-                    setExclusiveOwnerStrand(current);
+                    setExclusiveOwner(current);
                     return true;
                 }
             }
-            else if (current == getExclusiveOwnerStrand()) {
+            else if (current == getExclusiveOwner()) {
                 int nextc = c + acquires;
                 if (nextc < 0) // overflow
-                    throw new Error("Maximum lock count exceeded");
+                    throw new Error("Maximum lock count esetExclusiveOwnexceeded");
                 setState(nextc);
                 return true;
             }
@@ -145,12 +147,12 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         @ReservedStackAccess
         protected final boolean tryRelease(int releases) {
             int c = getState() - releases;
-            if (Strand.currentStrand() != getExclusiveOwnerStrand())
+            if (Strands.currentStrand() != getExclusiveOwner())
                 throw new IllegalMonitorStateException();
             boolean free = false;
             if (c == 0) {
                 free = true;
-                setExclusiveOwnerStrand(null);
+                setExclusiveOwner(null);
             }
             setState(c);
             return free;
@@ -159,7 +161,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
         protected final boolean isHeldExclusively() {
             // While we must in general read state before owner,
             // we don't need to do so to check if current thread is owner
-            return getExclusiveOwnerStrand() == Strand.currentStrand();
+            return getExclusiveOwner() == Strands.currentStrand();
         }
 
         final ConditionObject newCondition() {
@@ -168,8 +170,8 @@ public class ReentrantLock implements Lock, java.io.Serializable {
 
         // Methods relayed from outer class
 
-        final Strand getOwner() {
-            return getState() == 0 ? null : getExclusiveOwnerStrand();
+        final Object getOwner() {
+            return getState() == 0 ? null : getExclusiveOwner();
         }
 
         final int getHoldCount() {
@@ -211,16 +213,16 @@ public class ReentrantLock implements Lock, java.io.Serializable {
          */
         @ReservedStackAccess
         protected final boolean tryAcquire(int acquires) {
-            final Strand current = Strand.currentStrand();
+            final Object current = Strands.currentStrand();
             int c = getState();
             if (c == 0) {
                 if (!hasQueuedPredecessors() &&
                     compareAndSetState(0, acquires)) {
-                    setExclusiveOwnerStrand(current);
+                    setExclusiveOwner(current);
                     return true;
                 }
             }
-            else if (current == getExclusiveOwnerStrand()) {
+            else if (current == getExclusiveOwner()) {
                 int nextc = c + acquires;
                 if (nextc < 0)
                     throw new Error("Maximum lock count exceeded");
@@ -736,7 +738,7 @@ public class ReentrantLock implements Lock, java.io.Serializable {
      * @return a string identifying this lock, as well as its lock state
      */
     public String toString() {
-        Strand o = sync.getOwner();
+        Object o = sync.getOwner();
         String name = "";
         if (o instanceof Thread) {
             name = "thread " + ((Thread) o).getName();

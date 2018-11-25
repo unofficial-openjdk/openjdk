@@ -36,8 +36,7 @@ import java.nio.ByteBuffer;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantLock;
 
-import jdk.internal.access.JavaLangAccess;
-import jdk.internal.access.SharedSecrets;
+import jdk.internal.misc.Strands;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -49,7 +48,6 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class SocketStreams implements Closeable {
     private static final NativeDispatcher nd = new SocketDispatcher();
-    private static JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
 
     private final Closeable parent;
     private final FileDescriptor fd;
@@ -108,15 +106,15 @@ public class SocketStreams implements Closeable {
      * specified waiting time, unless the permit is available.
      */
     private void park(int event, long nanos) throws IOException {
-        Strand strand = Strand.currentStrand();
+        Object strand = Strands.currentStrand();
         if (PollerProvider.available() && (strand instanceof Fiber)) {
             Poller.register(strand, fdVal, event);
             if (isOpen()) {
                 try {
                     if (nanos == 0) {
-                        JLA.parkFiber();
+                        Strands.parkFiber();
                     } else {
-                        JLA.parkFiber(nanos);
+                        Strands.parkFiber(nanos);
                     }
                 } finally{
                     Poller.deregister(strand, fdVal, event);

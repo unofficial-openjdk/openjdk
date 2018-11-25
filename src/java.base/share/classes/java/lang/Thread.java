@@ -141,7 +141,7 @@ import jdk.internal.HotSpotIntrinsicCandidate;
  * @since   1.0
  */
 public
-class Thread extends Strand implements Runnable {
+class Thread implements Runnable {
     /* Make sure registerNatives is the first thing <clinit> does. */
     private static native void registerNatives();
     static {
@@ -175,6 +175,12 @@ class Thread extends Strand implements Runnable {
     private static synchronized int nextThreadNum() {
         return threadInitNumber++;
     }
+
+    /*
+     * ThreadLocal values pertaining to this thread. This map is maintained
+     * by the ThreadLocal class.
+     */
+    ThreadLocal.ThreadLocalMap threadLocals = null;
 
     /*
      * InheritableThreadLocal values pertaining to this thread. This map is
@@ -935,7 +941,7 @@ class Thread extends Strand implements Runnable {
      * a chance to clean up before it actually exits.
      */
     private void exit() {
-        if (locals != null && TerminatingThreadLocal.REGISTRY.isPresent()) {
+        if (threadLocals != null && TerminatingThreadLocal.REGISTRY.isPresent()) {
             TerminatingThreadLocal.threadTerminated();
         }
         if (group != null) {
@@ -945,7 +951,7 @@ class Thread extends Strand implements Runnable {
         /* Aggressively null out all reference fields: see bug 4006245 */
         target = null;
         /* Speed the release of some of these resources */
-        locals = null;
+        threadLocals = null;
         inheritableThreadLocals = null;
         inheritedAccessControlContext = null;
         blocker = null;

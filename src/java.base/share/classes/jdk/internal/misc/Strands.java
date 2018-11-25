@@ -23,36 +23,64 @@
  * questions.
  */
 
-package java.lang;
+package jdk.internal.misc;
 
-import jdk.internal.vm.annotation.ForceInline;
+import jdk.internal.access.JavaLangAccess;
+import jdk.internal.access.SharedSecrets;
 
 /**
- * A sequence of computer instructions executed sequentially, either a {@code
- * Thread} or a light weight {@code Fiber}.
- *
- * @apiNote This is a class rather than an interface for now. The constructor is
- * not public (or protected) so that it can't be extended outside of the java.lang
- * package.
+ * This class consists exclusively of static methods to support execution in
+ * the context of a Fiber.
  */
 
-public class Strand {
-    Strand() { }
-
-    // thread or fiber locals, maintained by ThreadLocal
-    ThreadLocal.ThreadLocalMap locals;
+public final class Strands {
+    private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+    private Strands() { }
 
     /**
      * Returns the currently executing strand. If executed from a running fiber
      * then the {@link Fiber} object will be returned, otherwise the {@code
      * Thread} object.
-     *
-     * @return  the currently executing strand
      */
-    @ForceInline
-    public static Strand currentStrand() {
-        Thread thread = Thread.currentCarrierThread();
-        Fiber fiber = thread.getFiber();
-        return (fiber != null) ? fiber : thread;
+    public static Object currentStrand() {
+        return JLA.currentStrand();
+    }
+
+    /**
+     * Disables the current fiber for scheduling purposes.
+     */
+    public static void parkFiber() {
+        JLA.parkFiber();
+    }
+
+    /**
+     * Disables the current fiber for scheduling purposes for up to the
+     * given waiting time.
+     */
+    public static void parkFiber(long nanos) {
+        JLA.parkFiber(nanos);
+    }
+
+    /**
+     * Re-enables this fiber for scheduling.
+     */
+    public static void unparkFiber(Fiber fiber) {
+        JLA.unparkFiber(fiber);
+    }
+
+    /**
+     * Returns the Fiber for the given shadow Thread object. Returns null if
+     * the thread is not a shadow thread.
+     */
+    public static Fiber getFiber(Thread thread) {
+        return JLA.getFiber(thread);
+    }
+
+    /**
+     * Returns the shadow thread for the given fiber or null if it does not
+     * have a shadow thread.
+     */
+    public static Thread getShadowThread(Fiber fiber) {
+        return JLA.getShadowThread(fiber);
     }
 }

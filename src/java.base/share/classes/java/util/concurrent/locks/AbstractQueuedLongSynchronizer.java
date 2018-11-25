@@ -43,6 +43,8 @@ import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.AbstractQueuedSynchronizer.Node;
 
+import jdk.internal.misc.Strands;
+
 /**
  * A version of {@link AbstractQueuedSynchronizer} in
  * which synchronization state is maintained as a {@code long}.
@@ -955,7 +957,7 @@ public abstract class AbstractQueuedLongSynchronizer
     /**
      * Version of getFirstQueuedStrand called when fastpath fails.
      */
-    private Strand fullGetFirstQueuedStrand() {
+    private Object fullGetFirstQueuedStrand() {
         /*
          * The first node is normally head.next. Try to get its
          * thread field, ensuring consistent reads: If thread
@@ -965,7 +967,7 @@ public abstract class AbstractQueuedLongSynchronizer
          * resorting to traversal.
          */
         Node h, s;
-        Strand st;
+        Object st;
         if (((h = head) != null && (s = h.next) != null &&
              s.prev == head && (st = s.strand) != null) ||
             ((h = head) != null && (s = h.next) != null &&
@@ -980,9 +982,9 @@ public abstract class AbstractQueuedLongSynchronizer
          * guaranteeing termination.
          */
 
-        Strand firstStrand = null;
+        Object firstStrand = null;
         for (Node p = tail; p != null && p != head; p = p.prev) {
-            Strand strand = p.strand;
+            Object strand = p.strand;
             if (strand != null)
                 firstStrand = strand;
         }
@@ -1078,7 +1080,7 @@ public abstract class AbstractQueuedLongSynchronizer
                         s = p;
                 }
             }
-            if (s != null && s.strand != Strand.currentStrand())
+            if (s != null && s.strand != Strands.currentStrand())
                 return true;
         }
         return false;
@@ -1118,7 +1120,7 @@ public abstract class AbstractQueuedLongSynchronizer
     public final Collection<Thread> getQueuedThreads() {
         ArrayList<Thread> list = new ArrayList<>();
         for (Node p = tail; p != null; p = p.prev) {
-            Strand s = p.strand;
+            Object s = p.strand;
             if (s instanceof Thread)
                 list.add((Thread)s);
         }
@@ -1137,7 +1139,7 @@ public abstract class AbstractQueuedLongSynchronizer
         ArrayList<Thread> list = new ArrayList<>();
         for (Node p = tail; p != null; p = p.prev) {
             if (!p.isShared()) {
-                Strand s = p.strand;
+                Object s = p.strand;
                 if (s instanceof Thread)
                     list.add((Thread)s);
             }
@@ -1157,7 +1159,7 @@ public abstract class AbstractQueuedLongSynchronizer
         ArrayList<Thread> list = new ArrayList<>();
         for (Node p = tail; p != null; p = p.prev) {
             if (p.isShared()) {
-                Strand s = p.strand;
+                Object s = p.strand;
                 if (s instanceof Thread)
                     list.add((Thread)s);
             }
@@ -1809,7 +1811,7 @@ public abstract class AbstractQueuedLongSynchronizer
             ArrayList<Thread> list = new ArrayList<>();
             for (Node w = firstWaiter; w != null; w = w.nextWaiter) {
                 if (w.waitStatus == Node.CONDITION) {
-                    Strand s = w.strand;
+                    Object s = w.strand;
                     if (s instanceof Thread)
                         list.add((Thread)s);
                 }

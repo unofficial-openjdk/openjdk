@@ -70,31 +70,21 @@ public class InheritableThreadLocal<T> extends ThreadLocal<T> {
     /**
      * Get the map associated with a ThreadLocal.
      *
-     * @param s the current strand
+     * @param t the current thread
      */
     @Override
-    ThreadLocalMap getMap(Strand s) {
-        Thread t = thread(s);
+    ThreadLocalMap getMap(Thread t) {
         return t.inheritableThreadLocals;
     }
 
     /**
      * Create the map associated with a ThreadLocal.
      *
-     * @param s the current strand
+     * @param t the current strand
      * @param firstValue value for the initial entry of the table.
      */
     @Override
-    void createMap(Strand s, T firstValue) {
-        Thread t = thread(s);
+    void createMap(Thread t, T firstValue) {
         t.inheritableThreadLocals = new ThreadLocalMap(this, firstValue);
-    }
-
-    private Thread thread(Strand s) {
-        if (s instanceof Fiber) {
-            return ((Fiber)s).shadowThread();
-        } else {
-            return ((Thread)s);
-        }
     }
 }

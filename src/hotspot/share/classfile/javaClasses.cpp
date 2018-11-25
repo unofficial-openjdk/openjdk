@@ -4311,7 +4311,7 @@ void java_nio_Buffer::serialize_offsets(SerializeClosure* f) {
 #endif
 
 #define AOS_FIELDS_DO(macro) \
-  macro(_owner_offset, k, "exclusiveOwnerStrand", strand_signature, false)
+  macro(_owner_offset, k, "exclusiveOwner", object_signature, false)
 
 void java_util_concurrent_locks_AbstractOwnableSynchronizer::compute_offsets() {
   InstanceKlass* k = SystemDictionary::java_util_concurrent_locks_AbstractOwnableSynchronizer_klass();

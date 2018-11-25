@@ -67,7 +67,7 @@ abstract class Poller implements Runnable {
      * @throws IllegalStateException if another strand is already registered
      *         to be unparked when the file descriptor is ready for this event
      */
-    static void register(Strand strand, int fdVal, int event) {
+    static void register(Object strand, int fdVal, int event) {
         if (event == Net.POLLIN) {
             READ_POLLER.register(strand, fdVal);
         } else if (event == Net.POLLOUT) {
@@ -83,7 +83,7 @@ abstract class Poller implements Runnable {
      *
      * @throws IllegalArgumentException if the event is not POLLIN or POLLOUT
      */
-    static void deregister(Strand strand, int fdVal, int event) {
+    static void deregister(Object strand, int fdVal, int event) {
         if (event == Net.POLLIN) {
             READ_POLLER.deregister(strand, fdVal);
         } else if (event == Net.POLLOUT) {
@@ -116,25 +116,25 @@ abstract class Poller implements Runnable {
         stopPoll(fdVal, Net.POLLOUT);
     }
 
-    private final Map<Integer, Strand> map = new ConcurrentHashMap<>();
+    private final Map<Integer, Object> map = new ConcurrentHashMap<>();
 
     protected Poller() { }
 
-    private void register(Strand strand, int fdVal) {
-        Strand previous = map.putIfAbsent(fdVal, strand);
+    private void register(Object strand, int fdVal) {
+        Object previous = map.putIfAbsent(fdVal, strand);
         if (previous != null && previous != strand) {
             throw new IllegalStateException();
         }
         implRegister(fdVal);
     }
-    private void deregister(Strand strand, int fdVal) {
+    private void deregister(Object strand, int fdVal) {
         if (map.remove(fdVal, strand)) {
             implDeregister(fdVal);
         }
     }
 
     private void wakeup(int fdVal) {
-        Strand strand = map.remove(fdVal);
+        Object strand = map.remove(fdVal);
         if (strand != null) {
             implDeregister(fdVal);
             LockSupport.unpark(strand);
@@ -145,7 +145,7 @@ abstract class Poller implements Runnable {
      * Called by the polling facility when the file descriptor is polled
      */
     final protected void polled(int fdVal) {
-        Strand strand = map.remove(fdVal);
+        Object strand = map.remove(fdVal);
         if (strand != null) {
             LockSupport.unpark(strand);
         }

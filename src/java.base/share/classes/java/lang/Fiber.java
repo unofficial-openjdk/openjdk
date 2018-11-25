@@ -62,7 +62,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * scheduled by the Java virtual machine rather than the operating system.
  */
 
-public final class Fiber extends Strand {
+public final class Fiber {
     private static final ContinuationScope FIBER_SCOPE = new ContinuationScope("Fibers");
     private static final Executor DEFAULT_SCHEDULER = defaultScheduler();
     private static final ScheduledExecutorService UNPARKER = delayedTaskScheduler();
@@ -690,7 +690,7 @@ public final class Fiber extends Strand {
 
     /**
      * Sets this fiber's cancel status. If the fiber hasn't terminated then it
-     * is also {@link java.util.concurrent.locks.LockSupport#unpark(Strand)
+     * is also {@link java.util.concurrent.locks.LockSupport#unpark(Object)
      * unparked}.
      *
      * @return this fiber
@@ -850,7 +850,7 @@ public final class Fiber extends Strand {
      * of this fiber.
      */
     StackTraceElement[] getStackTrace() {
-        if (Strand.currentStrand() == this) {
+        if (Thread.currentCarrierThread().getFiber() == this) {
             return STACK_WALKER
                     .walk(s -> s.map(StackFrame::toStackTraceElement)
                     .toArray(StackTraceElement[]::new));

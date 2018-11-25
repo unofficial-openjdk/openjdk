@@ -37,8 +37,7 @@ package java.util.concurrent.locks;
 
 import java.util.concurrent.TimeUnit;
 
-import jdk.internal.access.JavaLangAccess;
-import jdk.internal.access.SharedSecrets;
+import jdk.internal.misc.Strands;
 import jdk.internal.misc.Unsafe;
 
 /**
@@ -141,8 +140,6 @@ import jdk.internal.misc.Unsafe;
  * @since 1.5
  */
 public class LockSupport {
-    private static JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
-
     private LockSupport() {} // Cannot be instantiated.
 
     private static void setBlocker(Thread t, Object arg) {
@@ -168,9 +165,9 @@ public class LockSupport {
      */
     public static void unpark(Thread thread) {
         if (thread != null) {
-            Fiber f = JLA.getFiber(thread);
-            if (f != null) {
-                JLA.unparkFiber(f);
+            Fiber fiber = Strands.getFiber(thread);
+            if (fiber != null) {
+                Strands.unparkFiber(fiber); // can throw RejectedExecutionException
             } else {
                 U.unpark(thread);
             }
@@ -187,13 +184,17 @@ public class LockSupport {
      *
      * @param strand the strand to unpark, or {@code null}, in which case
      *        this operation has no effect
+     * @throws IllegalArgumentException if strand is not a {@code Thread},
+     *         {@code Fiber} or {@code null}
      */
-    public static void unpark(Strand strand) {
+    public static void unpark(Object strand) {
         if (strand != null) {
-            if (strand instanceof Fiber) {
-                JLA.unparkFiber((Fiber) strand);
+            if (strand instanceof Thread) {
+                unpark((Thread) strand);
+            } else if (strand instanceof Fiber) {
+                Strands.unparkFiber((Fiber) strand);  // can throw RejectedExecutionException
             } else {
-                U.unpark(strand);
+                throw new IllegalArgumentException();
             }
         }
     }
@@ -227,17 +228,17 @@ public class LockSupport {
      * @since 1.6
      */
     public static void park(Object blocker) {
-        Strand s = Strand.currentStrand();
-        if (s instanceof Fiber) {
-            Fiber f = (Fiber) s;
-            setBlocker(f, blocker);
-            JLA.parkFiber();
-            setBlocker(f, null);
+        Object strand = Strands.currentStrand();
+        if (strand instanceof Fiber) {
+            Fiber fiber = (Fiber) strand;
+            setBlocker(fiber, blocker);
+            Strands.parkFiber();
+            setBlocker(fiber, null);
         } else {
-            Thread t = (Thread) s;
-            setBlocker(t, blocker);
+            Thread thread = (Thread) strand;
+            setBlocker(thread, blocker);
             U.park(false, 0L);
-            setBlocker(t, null);
+            setBlocker(thread, null);
         }
     }
 
@@ -275,17 +276,17 @@ public class LockSupport {
      */
     public static void parkNanos(Object blocker, long nanos) {
         if (nanos > 0) {
-            Strand s = Strand.currentStrand();
-            if (s instanceof Fiber) {
-                Fiber f = (Fiber) s;
-                setBlocker(f, blocker);
-                JLA.parkFiber(nanos);
-                setBlocker(f, null);
+            Object strand = Strands.currentStrand();
+            if (strand instanceof Fiber) {
+                Fiber fiber = (Fiber) strand;
+                setBlocker(fiber, blocker);
+                Strands.parkFiber(nanos);
+                setBlocker(fiber, null);
             } else {
-                Thread t = (Thread) s;
-                setBlocker(t, blocker);
+                Thread thread = (Thread) strand;
+                setBlocker(thread, blocker);
                 U.park(false, nanos);
-                setBlocker(t, null);
+                setBlocker(thread, null);
             }
         }
     }
@@ -324,19 +325,19 @@ public class LockSupport {
      * @since 1.6
      */
     public static void parkUntil(Object blocker, long deadline) {
-        Strand s = Strand.currentStrand();
-        if (s instanceof Fiber) {
-            Fiber f = (Fiber) s;
-            setBlocker(f, blocker);
+        Object strand = Strands.currentStrand();
+        if (strand instanceof Fiber) {
+            Fiber fiber = (Fiber) strand;
+            setBlocker(fiber, blocker);
             long millis = deadline - System.currentTimeMillis();
             long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
-            JLA.parkFiber(nanos);
-            setBlocker(f, null);
+            Strands.parkFiber(nanos);
+            setBlocker(fiber, null);
         } else {
-            Thread t = (Thread) s;
-            setBlocker(t, blocker);
+            Thread thread = (Thread) strand;
+            setBlocker(thread, blocker);
             U.park(true, deadline);
-            setBlocker(t, null);
+            setBlocker(thread, null);
         }
     }
 
@@ -384,9 +385,9 @@ public class LockSupport {
      * for example, the interrupt status of the thread upon return.
      */
     public static void park() {
-        Strand t = Strand.currentStrand();
-        if (t instanceof Fiber) {
-            JLA.parkFiber();
+        Object strand = Strands.currentStrand();
+        if (strand instanceof Fiber) {
+            Strands.parkFiber();
         } else {
             U.park(false, 0L);
         }
@@ -423,9 +424,9 @@ public class LockSupport {
      */
     public static void parkNanos(long nanos) {
         if (nanos > 0) {
-            Strand s = Strand.currentStrand();
-            if (s instanceof Fiber) {
-                JLA.parkFiber(nanos);
+            Object strand = Strands.currentStrand();
+            if (strand instanceof Fiber) {
+                Strands.parkFiber(nanos);
             } else {
                 U.park(false, nanos);
             }
@@ -463,11 +464,11 @@ public class LockSupport {
      *        to wait until
      */
     public static void parkUntil(long deadline) {
-        Strand s = Strand.currentStrand();
-        if (s instanceof Fiber) {
+        Object strand = Strands.currentStrand();
+        if (strand instanceof Fiber) {
             long millis = deadline - System.currentTimeMillis();
             long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
-            JLA.parkFiber(nanos);
+            Strands.parkFiber(nanos);
         } else {
             U.park(true, deadline);
         }

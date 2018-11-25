@@ -37,6 +37,8 @@ package sun.nio.ch;
 // always returns -1 and the signal(long) method has no effect.
 
 
+import jdk.internal.misc.Strands;
+
 public class NativeThread {
     private static final long FIBER_ID = -1L;
 
@@ -45,7 +47,7 @@ public class NativeThread {
      * context of a Fiber.
      */
     public static long current() {
-        Strand s = Strand.currentStrand();
+        Object s = Strands.currentStrand();
         if (s instanceof Fiber) {
             return FIBER_ID;
         } else {

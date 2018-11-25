@@ -68,6 +68,8 @@ import java.util.function.ToIntFunction;
 import java.util.function.ToLongBiFunction;
 import java.util.function.ToLongFunction;
 import java.util.stream.Stream;
+
+import jdk.internal.misc.Strands;
 import jdk.internal.misc.Unsafe;
 
 /**
@@ -2764,7 +2766,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     static final class TreeBin<K,V> extends Node<K,V> {
         TreeNode<K,V> root;
         volatile TreeNode<K,V> first;
-        volatile Strand waiter;
+        volatile Object waiter;
         volatile int lockState;
         // values for lockState
         static final int WRITER = 1; // set while holding write lock
@@ -2866,7 +2868,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 else if ((s & WAITER) == 0) {
                     if (U.compareAndSetInt(this, LOCKSTATE, s, s | WAITER)) {
                         waiting = true;
-                        waiter = Strand.currentStrand();
+                        waiter = Strands.currentStrand();
                     }
                 }
                 else if (waiting)
@@ -2896,7 +2898,7 @@ public class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                             p = ((r = root) == null ? null :
                                  r.findTreeNode(h, k, null));
                         } finally {
-                            Strand w;
+                            Object w;
                             if (U.getAndAddInt(this, LOCKSTATE, -READER) ==
                                 (READER|WAITER) && (w = waiter) != null)
                                 LockSupport.unpark(w);

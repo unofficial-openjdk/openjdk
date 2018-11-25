@@ -28,10 +28,10 @@ package sun.nio.ch;
 import java.nio.channels.Channel;
 import java.io.FileDescriptor;
 import java.io.IOException;
+
 import static java.util.concurrent.TimeUnit.*;
 
-import jdk.internal.access.JavaLangAccess;
-import jdk.internal.access.SharedSecrets;
+import jdk.internal.misc.Strands;
 
 /**
  * An interface that allows translation (and more!).
@@ -82,16 +82,16 @@ public interface SelChImpl extends Channel {
      * the thread or fiber to park.
      */
     default void park(int event, long nanos) throws IOException {
-        Strand strand = Strand.currentStrand();
+        Object strand = Strands.currentStrand();
         if (PollerProvider.available() && (strand instanceof Fiber)) {
+            Fiber fiber = (Fiber) strand;
             Poller.register(strand, getFDVal(), event);
             if (isOpen()) {
-                JavaLangAccess jla = SharedSecrets.getJavaLangAccess();
                 try {
                     if (nanos == 0) {
-                        jla.parkFiber();
+                        Strands.parkFiber();
                     } else {
-                        jla.parkFiber(nanos);
+                        Strands.parkFiber(nanos);
                     }
                 } finally {
                     Poller.deregister(strand, getFDVal(), event);
@@ -111,5 +111,4 @@ public interface SelChImpl extends Channel {
     default void park(int event) throws IOException {
         park(event, 0L);
     }
-
 }
