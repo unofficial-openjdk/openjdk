@@ -133,6 +133,8 @@ struct HFrameMetadata {
   unsigned short uncompressed_size;
 };
 
+static const void* TOMBSTONE = reinterpret_cast<void*>(-1);
+
 #define METADATA_SIZE sizeof(HFrameMetadata) // bytes
 
 #define ELEM_SIZE sizeof(jint) // stack is int[]
@@ -1587,6 +1589,37 @@ static inline void clear_anchor(JavaThread* thread) {
 }
 #endif
 
+static const VMReg vmRegRbp = rbp->as_VMReg();
+static const VMReg vmRegRbpNext = vmRegRbp->next();
+
+static void update_map_with_saved_link(RegisterMap* map, intptr_t** link_addr) { // see frame::update_map_with_saved_link
+  map->update_location(vmRegRbp, (address) link_addr);
+#ifdef AMD64
+  // this is weird "H" ought to be at a higher address however the
+  // oopMaps seems to have the "H" regs at the same address and the
+  // vanilla register.
+  // XXXX make this go away
+  if (true) {
+    map->update_location(vmRegRbpNext, (address) link_addr);
+  }
+#endif // AMD64
+}
+
+static inline frame sender_for_compiled_frame(frame& f, intptr_t** link_addr, ContMirror& cont) {
+  intptr_t* sender_sp = (intptr_t*)(link_addr + frame::sender_sp_offset); //  f.unextended_sp() + (fsize/wordSize); // 
+  address sender_pc = (address) *(sender_sp-1);
+  assert(sender_sp != f.sp(), "must have changed");
+
+  if (Continuation::is_return_barrier_entry(sender_pc)) {
+    sender_pc = cont.entryPC();
+  }
+
+  CodeBlob* sender_cb = ContinuationCodeBlobLookup::find_blob(sender_pc);
+  return sender_cb != NULL 
+   ? frame(sender_sp, sender_sp, *link_addr, sender_pc, sender_cb)
+   : frame(sender_sp, sender_sp, *link_addr, sender_pc);
+}
+
 class FreezeContinuation {
 
 class CompiledFreezeOopFn: public ContOopBase {
@@ -1678,6 +1711,8 @@ private:
   ContMirror& _mirror;
   intptr_t *_bottom_address;
 
+  RegisterMap& _map;
+
   int _oops;
   int _size; // total size of all frames plus metadata. keeps track of offset where a frame should be written and how many bytes we need to allocate.
   int _frames;
@@ -1695,21 +1730,15 @@ private:
   bool _is_first;
   bool _is_last;
 
-  VMReg vmRegRbp;
-  VMReg vmRegRbpNext;
-
   bool is_first() { return _is_first; }
   bool is_last()  { return _is_last;  } // this is only true after returning from the recursive call
 
 public:
-  FreezeContinuation(JavaThread* thread, ContMirror& mirror) : 
-    _thread(thread), _mirror(mirror), _bottom_address(mirror.entrySP()), 
+  FreezeContinuation(JavaThread* thread, ContMirror& mirror, RegisterMap& map) : 
+    _thread(thread), _mirror(mirror), _bottom_address(mirror.entrySP()), _map(map),
     _oops(0), _size(0), _frames(0), _wsp(0), _wref_sp(0),
     _has_fp_oop(false), _fp_index(0),
     _is_first(false), _is_last(false) {
-
-      vmRegRbp = rbp->as_VMReg();
-      vmRegRbpNext = rbp->as_VMReg()->next();
   }
 
   int nr_oops() const { return _oops; }
@@ -1719,14 +1748,13 @@ public:
   hframe top_hframe() { return _top; }
   frame entry_frame() { return _entry_frame; }
 
-  res_freeze freeze(frame f, RegisterMap& regmap) {
-    RegisterMap map = regmap;
-    assert (map.update_map(), "RegisterMap not set to update");
-    map.set_include_argument_oops(false);
+  res_freeze freeze(frame f) {
+    // assert (map.update_map(), "RegisterMap not set to update");
+    assert (!_map.include_argument_oops(), "should be");
     hframe caller;
 
     _is_first = true; // the first frame we'll visit is the top
-    res_freeze result = freeze(f, map, caller);
+    res_freeze result = freeze(f, frame::saved_link_address(&_map), caller); // we do update the link address for the first frame in the map
 
     if (_has_fp_oop) {
       assert(!caller.is_interpreted_frame(), "only compiled frames");
@@ -1828,32 +1856,33 @@ public:
 
       OopMapDo<CompiledFreezeOopFn, CompiledFreezeOopFn, IncludeAllValues> visitor(&oopFn, &oopFn, false /* no derived table lock */);
       visitor.oops_do(&f, &map, oopmap);
-      if (map.include_argument_oops()) {
-        ForwardingOopClosure<CompiledFreezeOopFn> oopClosure(&oopFn);
-        f.cb()->preserve_callee_argument_oops(f, &map, &oopClosure);
-      }
+      assert (!map.include_argument_oops(), "");
+      // if (map.include_argument_oops()) {
+      //   ForwardingOopClosure<CompiledFreezeOopFn> oopClosure(&oopFn);
+      //   f.cb()->preserve_callee_argument_oops(f, &map, &oopClosure);
+      // }
       return oopFn.count();
     }
   };
 
   template <typename FreezeOops>
-  void freeze_oops(frame& f, intptr_t* vsp, intptr_t *hsp, RegisterMap& map, int num_oops) {
+  void freeze_oops(frame& f, intptr_t* vsp, intptr_t *hsp, int num_oops) {
     if (Continuation::PERFTEST_LEVEL < 30) {
       return;
     }
 
     log_trace(jvmcont)("Walking oops (freeze)");
 
-    assert (!map.include_argument_oops(), "");
+    assert (!_map.include_argument_oops(), "");
 
     _has_fp_oop = false;
     int starting_index = _wref_sp - num_oops;
-    int frozen = FreezeOops::freeze_oops(_mirror, this, f, vsp, hsp, map, starting_index);
+    int frozen = FreezeOops::freeze_oops(_mirror, this, f, vsp, hsp, _map, starting_index);
     assert(frozen == num_oops, "check");
     _wref_sp = starting_index;
   }
 
-  res_freeze freeze_interpreted_stackframe(frame& f, RegisterMap& map, hframe& caller) {
+  res_freeze freeze_interpreted_stackframe(frame& f, hframe& caller) {
     if (is_interpreted_frame_owning_locks(f)) {
       return freeze_pinned_monitor;
     }
@@ -1867,7 +1896,7 @@ public:
     _size += fsize + METADATA_SIZE;
     _oops += oops;
 
-    res_freeze result = freeze_caller(f, map, caller); // <----- recursive call
+    res_freeze result = freeze_caller<true>(f, link_address(f, true), caller); // <----- recursive call
     if (result != freeze_ok) {
       return result;
     }
@@ -1898,7 +1927,7 @@ public:
     // patch our stuff - this used to happen in the caller so it needs to happen last
     patch<true>(f, hf, caller); 
 
-    freeze_oops<FreezeInterpretedOops>(f, vsp, hsp, map, oops);
+    freeze_oops<FreezeInterpretedOops>(f, vsp, hsp, oops);
 
     caller = hf;
 
@@ -1909,8 +1938,8 @@ public:
     return freeze_ok;
   }
 
-  res_freeze freeze_compiled_stackframe(frame& f, RegisterMap& map, hframe& caller) {
-    if (is_compiled_frame_owning_locks(_mirror.thread(), &map, f)) {
+  res_freeze freeze_compiled_stackframe(frame& f, intptr_t** callee_link_address, hframe& caller) {
+    if (is_compiled_frame_owning_locks(_mirror.thread(), &_map, f)) {
       return freeze_pinned_monitor;
     }
 
@@ -1923,7 +1952,8 @@ public:
     _size += fsize + METADATA_SIZE;
     _oops += oops;
 
-    res_freeze result = freeze_caller(f, map, caller); // <----- recursive call
+    intptr_t** my_link_address = (intptr_t**) (f.unextended_sp() + f.cb()->frame_size() - frame::sender_sp_offset); // x86 - specific // link_address(f, false)
+    res_freeze result = freeze_caller<false>(f, my_link_address, caller); // <----- recursive call
     if (result != freeze_ok) {
       return result;
     }
@@ -1952,7 +1982,9 @@ public:
     assert (Interpreter::contains(hf.return_pc(_mirror)) == ((!caller.is_empty() && caller.is_interpreted_frame()) || (caller.is_empty() && !_mirror.is_empty() && _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED))), "");
     bool may_need_alignment = Interpreter::contains(hf.return_pc(_mirror)); // do after fixing return_pc in patch (and/or use equivalent condition above)
 
-    freeze_oops<FreezeCompiledOops>(f, vsp, hsp, map, oops); // must be called after patch, as patch uses the previous freeze_oop data
+    update_map_with_saved_link(&_map, callee_link_address);
+
+    freeze_oops<FreezeCompiledOops>(f, vsp, hsp, oops); // must be called after patch, as patch uses the previous freeze_oop data
 
     caller = hf;
 
@@ -1992,25 +2024,28 @@ public:
     return freeze_ok;
   }
 
-  inline res_freeze freeze_caller(frame& f, RegisterMap& map, hframe& caller) { // TODO: templatize by callee frame type and use in sender;
+  template <bool interpreted>
+  inline res_freeze freeze_caller(frame& f, intptr_t** link_address, hframe& caller) {
     bool is_first = _is_first;
     if (is_first) _is_first = false;
 
-    address link1 = map.trusted_location(vmRegRbp);
-    //address link2 = map.trusted_location(vmRegRbpNext);
-    
-    frame sender = f.frame_sender<ContinuationCodeBlobLookup>(&map); // LOOKUP // TODO: templatize by callee frame type
-    res_freeze result = freeze(sender, map, caller);
+    // address link1 = map.trusted_location(vmRegRbp);
+    // //address link2 = map.trusted_location(vmRegRbpNext);
 
-    map.update_location(vmRegRbp,     link1);
-    map.update_location(vmRegRbpNext, link1);
+    frame sender = interpreted
+      ? f.frame_sender<ContinuationCodeBlobLookup>(&_map)
+      : sender_for_compiled_frame(f, link_address, _mirror); // f.sender_for_compiled_frame<ContinuationCodeBlobLookup>(&map); // 
+    res_freeze result = freeze(sender, link_address, caller);
+
+    // map.update_location(vmRegRbp,     link1);
+    // map.update_location(vmRegRbpNext, link1);
 
     _is_first = is_first;
 
     return result;
   }
 
-  res_freeze freeze(frame& f, RegisterMap& map, hframe& caller) {
+  res_freeze freeze(frame& f, intptr_t** callee_link_address, hframe& caller) {
     if (f.real_fp() > _bottom_address) {
       _is_last = true; // the next frame we return to is bottom
       return finalize(f); // done with recursion
@@ -2023,13 +2058,13 @@ public:
       if (f.oop_map() == NULL) {
         return freeze_pinned_native; // special native frame
       }
-      result = freeze_compiled_stackframe(f, map, caller);
+      result = freeze_compiled_stackframe(f, callee_link_address, caller);
     } else {
       bool is_interpreted = f.is_interpreted_frame();
       if (!is_interpreted) {
         return freeze_pinned_native;
       }
-      result = freeze_interpreted_stackframe(f, map, caller);
+      result = freeze_interpreted_stackframe(f, caller);
     }
 
     if (_is_last) _is_last = false;
@@ -2121,8 +2156,8 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 
   const bool empty = cont.is_empty();
 
-  FreezeContinuation fc(thread, cont);
-  res_freeze result = fc.freeze(f, map);
+  FreezeContinuation fc(thread, cont, map);
+  res_freeze result = fc.freeze(f);
   if (result != freeze_ok) {
     return result;
   }
@@ -2192,11 +2227,15 @@ JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
   oop cont = get_continuation(thread);
   assert(cont != NULL && oopDesc::is_oop_or_null(cont), "Invalid cont: " INTPTR_FORMAT, p2i((void*)cont));
 
-  RegisterMap map(thread, true);
+  RegisterMap map(thread, false, false, false);
   map.set_include_argument_oops(false);
   // Note: if the doYield stub does not have its own frame, we may need to consider deopt here, especially if yield is inlinable
-  frame f = thread->last_frame(); // this is the doYield stub frame. last_frame is set up by the call_VM infrastructure
+  frame f = thread->last_frame(); // this is the doYield stub frame. last_frame is set up by the call_VM infrastructure // <---- CodeCache::find_blob is expensive
+  // f.print_on(tty);
+
+  frame::update_map_with_saved_link(&map, link_address(f));
   f = f.frame_sender<ContinuationCodeBlobLookup>(&map); // LOOKUP // this is the yield frame
+
   assert (f.pc() == fi->pc, "");
   // The following doesn't work because fi->fp can contain an oop, that a GC doesn't know about when walking.
   // frame::update_map_with_saved_link(&map, (intptr_t **)&fi->fp);

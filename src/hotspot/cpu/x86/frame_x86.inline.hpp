@@ -305,7 +305,9 @@ frame frame::frame_sender(RegisterMap* map) const {
   assert(_cb == CodeCache::find_blob(pc()), "Must be the same");
 
   if (_cb != NULL) {
-    return sender_for_compiled_frame<LOOKUP>(map);
+    if (is_compiled_frame())
+      return sender_for_compiled_frame<LOOKUP>(map);
+    return sender_for_stub_frame(map);
   }
   // Must be native-compiled frame, i.e. the marshaling code for native
   // methods that exists in the core system.
@@ -327,7 +329,7 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
   intptr_t* sender_sp = unextended_sp() + _cb->frame_size();
   intptr_t* unextended_sp = sender_sp;
 
-  assert (!is_compiled_frame() || sender_sp == real_fp(), "sender_sp: " INTPTR_FORMAT " real_fp: " INTPTR_FORMAT, p2i(sender_sp), p2i(real_fp()));
+  assert (sender_sp == real_fp(), "sender_sp: " INTPTR_FORMAT " real_fp: " INTPTR_FORMAT, p2i(sender_sp), p2i(real_fp()));
 
   // On Intel the return_address is always the word on the stack
   address sender_pc = (address) *(sender_sp-1);
@@ -340,11 +342,12 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
     // Tell GC to use argument oopmaps for some runtime stubs that need it.
     // For C1, the runtime stub might not have oop maps, so set this flag
     // outside of update_register_map.
-    map->set_include_argument_oops(_cb->caller_must_gc_arguments(map->thread()));
-    if (!is_compiled_frame() && oop_map() != NULL) { // compiled frames do not use callee-saved registers
-      _oop_map->update_register_map(this, map);
-    }
-    assert (!is_compiled_frame() || oop_map() == NULL || OopMapStream(oop_map(), OopMapValue::callee_saved_value).is_done(), "callee-saved value in compiled frame");
+    assert (!_cb->caller_must_gc_arguments(map->thread()), "");
+    assert (!map->include_argument_oops(), "");
+    // if (!is_compiled_frame() && oop_map() != NULL) { // compiled frames do not use callee-saved registers
+    //   _oop_map->update_register_map(this, map);
+    // }
+    assert (oop_map() == NULL || OopMapStream(oop_map(), OopMapValue::callee_saved_value).is_done(), "callee-saved value in compiled frame");
 
     // Since the prolog does the save and restore of EBP there is no oopmap
     // for it so we must fill in its location as if there was an oopmap entry
@@ -352,10 +355,6 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
     update_map_with_saved_link(map, saved_fp_addr);
   }
 
-  if (sender_sp == sp()) {
-    tty->print_cr("sender_sp: " INTPTR_FORMAT " sp: " INTPTR_FORMAT, p2i(sender_sp), p2i(sp()));
-    print_on(tty);
-  }
   assert(sender_sp != sp(), "must have changed");
 
   if (Continuation::is_return_barrier_entry(sender_pc)) {

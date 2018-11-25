@@ -5612,7 +5612,7 @@ void pop_FrameInfo(MacroAssembler* _masm, Register sp, Register fp, Register pc)
 }
 
   // c_rarg1 ContinuationScope
-address generate_cont_doYield() {
+RuntimeStub* generate_cont_doYield() {
     const char *name = "cont_doYield";
 
     enum layout {
@@ -5693,7 +5693,7 @@ address generate_cont_doYield() {
                                   frame_complete,
                                   (framesize >> (LogBytesPerWord - LogBytesPerInt)),
                                   oop_maps, false);
-    return stub->entry_point();
+    return stub;
   }
 
   // c_rarg1 - sp
@@ -6067,7 +6067,8 @@ address generate_cont_doYield() {
     StubRoutines::_cont_thaw          = generate_cont_thaw();
     StubRoutines::_cont_returnBarrier = generate_cont_returnBarrier();
     StubRoutines::_cont_returnBarrierExc = generate_cont_returnBarrier_exception();
-    StubRoutines::_cont_doYield    = generate_cont_doYield();
+    StubRoutines::_cont_doYield_stub = generate_cont_doYield();
+    StubRoutines::_cont_doYield    = StubRoutines::_cont_doYield_stub->entry_point();
     StubRoutines::_cont_jump       = generate_cont_jump();
     StubRoutines::_cont_getSP      = generate_cont_getSP();
     StubRoutines::_cont_getPC      = generate_cont_getPC();
