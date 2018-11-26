@@ -340,15 +340,16 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
     // Tell GC to use argument oopmaps for some runtime stubs that need it.
     // For C1, the runtime stub might not have oop maps, so set this flag
     // outside of update_register_map.
-    assert (stub || !_cb->caller_must_gc_arguments(map->thread()), "");
-    assert (stub || !map->include_argument_oops(), "");
     if (stub) { // compiled frames do not use callee-saved registers
       map->set_include_argument_oops(_cb->caller_must_gc_arguments(map->thread()));
       if (oop_map() != NULL) { 
         _oop_map->update_register_map(this, map);
       }
+    } else {
+      assert (!_cb->caller_must_gc_arguments(map->thread()), "");
+      assert (!map->include_argument_oops(), "");
+      assert (oop_map() == NULL || OopMapStream(oop_map(), OopMapValue::callee_saved_value).is_done(), "callee-saved value in compiled frame");
     }
-    assert (oop_map() == NULL || OopMapStream(oop_map(), OopMapValue::callee_saved_value).is_done(), "callee-saved value in compiled frame");
 
     // Since the prolog does the save and restore of EBP there is no oopmap
     // for it so we must fill in its location as if there was an oopmap entry

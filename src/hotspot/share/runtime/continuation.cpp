@@ -1979,7 +1979,10 @@ public:
 
     patch<false>(f, hf, caller);
 
-    assert (Interpreter::contains(hf.return_pc(_mirror)) == ((!caller.is_empty() && caller.is_interpreted_frame()) || (caller.is_empty() && !_mirror.is_empty() && _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED))), "");
+    assert (Interpreter::contains(hf.return_pc(_mirror)) == 
+              ((!caller.is_empty() && caller.is_interpreted_frame()) 
+              || (caller.is_empty() && _mirror.is_empty() && _entry_frame.is_interpreted_frame())
+              || (caller.is_empty() && !_mirror.is_empty() && _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED))), "");
     bool may_need_alignment = Interpreter::contains(hf.return_pc(_mirror)); // do after fixing return_pc in patch (and/or use equivalent condition above)
 
     update_map_with_saved_link(&_map, callee_link_address);
