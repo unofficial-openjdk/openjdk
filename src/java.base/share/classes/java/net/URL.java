@@ -95,7 +95,7 @@ import sun.security.action.GetPropertyAction;
  * as a "ref" or a "reference". The fragment is indicated by the sharp
  * sign character "#" followed by more characters. For example,
  * <blockquote><pre>
- *     http://java.sun.com/index.html#chapter1
+ *     http://www.example.com/index.html#chapter1
  * </pre></blockquote>
  * <p>
  * This fragment is not technically part of the URL. Rather, it
@@ -109,7 +109,7 @@ import sun.security.action.GetPropertyAction;
  * relative to another URL. Relative URLs are frequently used within
  * HTML pages. For example, if the contents of the URL:
  * <blockquote><pre>
- *     http://java.sun.com/index.html
+ *     http://www.example.com/index.html
  * </pre></blockquote>
  * contained within it the relative URL:
  * <blockquote><pre>
@@ -117,7 +117,7 @@ import sun.security.action.GetPropertyAction;
  * </pre></blockquote>
  * it would be a shorthand for:
  * <blockquote><pre>
- *     http://java.sun.com/FAQ.html
+ *     http://www.example.com/FAQ.html
  * </pre></blockquote>
  * <p>
  * The relative URL need not specify all the components of a URL. If
@@ -1393,33 +1393,33 @@ public final class URL implements java.io.Serializable {
             }
         }
 
+        if (handler == null) {
+            // Try the built-in protocol handler
+            handler = defaultFactory.createURLStreamHandler(protocol);
+        }
+
         synchronized (streamHandlerLock) {
-            if (handler == null) {
-                // Try the built-in protocol handler
-                handler = defaultFactory.createURLStreamHandler(protocol);
-            } else {
-                URLStreamHandler handler2 = null;
+            URLStreamHandler handler2 = null;
 
-                // Check again with hashtable just in case another
-                // thread created a handler since we last checked
-                handler2 = handlers.get(protocol);
+            // Check again with hashtable just in case another
+            // thread created a handler since we last checked
+            handler2 = handlers.get(protocol);
 
-                if (handler2 != null) {
-                    return handler2;
-                }
+            if (handler2 != null) {
+                return handler2;
+            }
 
-                // Check with factory if another thread set a
-                // factory since our last check
-                if (!checkedWithFactory && (fac = factory) != null) {
-                    handler2 = fac.createURLStreamHandler(protocol);
-                }
+            // Check with factory if another thread set a
+            // factory since our last check
+            if (!checkedWithFactory && (fac = factory) != null) {
+                handler2 = fac.createURLStreamHandler(protocol);
+            }
 
-                if (handler2 != null) {
-                    // The handler from the factory must be given more
-                    // importance. Discard the default handler that
-                    // this thread created.
-                    handler = handler2;
-                }
+            if (handler2 != null) {
+                // The handler from the factory must be given more
+                // importance. Discard the default handler that
+                // this thread created.
+                handler = handler2;
             }
 
             // Insert this handler into the hashtable
@@ -1427,7 +1427,6 @@ public final class URL implements java.io.Serializable {
                 handlers.put(protocol, handler);
             }
         }
-
         return handler;
     }
 

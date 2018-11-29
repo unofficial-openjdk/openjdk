@@ -200,14 +200,16 @@ public:
   virtual void unregister_potential_barrier_node(Node* node) const;
   virtual bool array_copy_requires_gc_barriers(bool tightly_coupled_alloc, BasicType type, bool is_clone, ArrayCopyPhase phase) const;
   virtual Node* step_over_gc_barrier(Node* c) const;
-  // If the BarrierSetC2 state has kept macro nodes in its compilation unit state to be
+  // If the BarrierSetC2 state has kept barrier nodes in its compilation unit state to be
   // expanded later, then now is the time to do so.
-  virtual bool expand_macro_nodes(PhaseMacroExpand* macro) const;
+  virtual bool expand_barriers(Compile* C, PhaseIterGVN& igvn) const;
 
   static void find_dominating_barriers(PhaseIterGVN& igvn);
   static void loop_optimize_gc_barrier(PhaseIdealLoop* phase, Node* node, bool last_round);
 
   virtual bool final_graph_reshaping(Compile* compile, Node* n, uint opcode) const;
+
+  virtual bool matcher_find_shared_visit(Matcher* matcher, Matcher::MStack& mstack, Node* n, uint opcode, bool& mem_op, int& mem_addr_idx) const;
 
 #ifdef ASSERT
   virtual void verify_gc_barriers(Compile* compile, CompilePhase phase) const;

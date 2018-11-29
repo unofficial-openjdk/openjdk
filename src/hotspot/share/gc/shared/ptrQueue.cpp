@@ -74,12 +74,6 @@ void PtrQueue::enqueue_known_active(void* ptr) {
   _buf[index()] = ptr;
 }
 
-void PtrQueue::locking_enqueue_completed_buffer(BufferNode* node) {
-  assert(_lock->owned_by_self(), "Required.");
-  qset()->enqueue_complete_buffer(node);
-}
-
-
 BufferNode* BufferNode::allocate(size_t size) {
   size_t byte_size = size * sizeof(void*);
   void* data = NEW_C_HEAP_ARRAY(char, buffer_offset() + byte_size, mtGC);
@@ -222,7 +216,7 @@ void PtrQueue::handle_zero_index() {
       BufferNode* node = BufferNode::make_node_from_buffer(_buf, index());
       _buf = NULL;         // clear shared _buf field
 
-      locking_enqueue_completed_buffer(node); // enqueue completed buffer
+      qset()->enqueue_complete_buffer(node);
       assert(_buf == NULL, "multiple enqueuers appear to be racing");
     } else {
       BufferNode* node = BufferNode::make_node_from_buffer(_buf, index());
@@ -333,7 +327,7 @@ void PtrQueueSet::merge_bufferlists(PtrQueueSet *src) {
 
 void PtrQueueSet::notify_if_necessary() {
   MutexLockerEx x(_cbl_mon, Mutex::_no_safepoint_check_flag);
-  assert(_process_completed_threshold >= 0, "_process_completed is negative");
+  assert(_process_completed_threshold >= 0, "_process_completed_threshold is negative");
   if (_n_completed_buffers >= (size_t)_process_completed_threshold || _max_completed_queue == 0) {
     _process_completed = true;
     if (_notify_when_complete)

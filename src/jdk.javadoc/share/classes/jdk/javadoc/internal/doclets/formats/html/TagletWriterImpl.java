@@ -41,11 +41,11 @@ import com.sun.source.doctree.SystemPropertyTree;
 import jdk.javadoc.internal.doclets.formats.html.markup.ContentBuilder;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlStyle;
 import jdk.javadoc.internal.doclets.formats.html.markup.HtmlTree;
-import jdk.javadoc.internal.doclets.formats.html.markup.Links;
 import jdk.javadoc.internal.doclets.formats.html.markup.RawHtml;
 import jdk.javadoc.internal.doclets.formats.html.markup.StringContent;
 import jdk.javadoc.internal.doclets.toolkit.BaseConfiguration;
 import jdk.javadoc.internal.doclets.toolkit.Content;
+import jdk.javadoc.internal.doclets.toolkit.DocletElement;
 import jdk.javadoc.internal.doclets.toolkit.Resources;
 import jdk.javadoc.internal.doclets.toolkit.builders.SerializedFormBuilder;
 import jdk.javadoc.internal.doclets.toolkit.taglets.TagletWriter;
@@ -223,7 +223,7 @@ public class TagletWriterImpl extends TagletWriter {
         ContentBuilder result = new ContentBuilder();
         CommentHelper ch = utils.getCommentHelper(element);
         result.addContent(HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.returnLabel,
-                new StringContent(configuration.getText("doclet.Returns")))));
+                new StringContent(resources.getText("doclet.Returns")))));
         result.addContent(HtmlTree.DD(htmlWriter.commentTagsToContent(
                 returnTag, element, ch.getDescription(configuration, returnTag), false, inSummary)));
         return result;
@@ -249,7 +249,7 @@ public class TagletWriterImpl extends TagletWriter {
                     utils.getSimpleName(holder);
             DocLink link = constantsPath.fragment(whichConstant);
             body.addContent(htmlWriter.links.createLink(link,
-                    new StringContent(configuration.getText("doclet.Constants_Summary"))));
+                    new StringContent(resources.getText("doclet.Constants_Summary"))));
         }
         if (utils.isClass(holder) && utils.isSerializable((TypeElement)holder)) {
             //Automatically add link to serialized form page for serializable classes.
@@ -259,7 +259,7 @@ public class TagletWriterImpl extends TagletWriter {
                 DocPath serialPath = htmlWriter.pathToRoot.resolve(DocPaths.SERIALIZED_FORM);
                 DocLink link = serialPath.fragment(utils.getFullyQualifiedName(holder));
                 body.addContent(htmlWriter.links.createLink(link,
-                        new StringContent(configuration.getText("doclet.Serialized_Form"))));
+                        new StringContent(resources.getText("doclet.Serialized_Form"))));
             }
         }
         if (body.isEmpty())
@@ -267,7 +267,7 @@ public class TagletWriterImpl extends TagletWriter {
 
         ContentBuilder result = new ContentBuilder();
         result.addContent(HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.seeLabel,
-                new StringContent(configuration.getText("doclet.See_Also")))));
+                new StringContent(resources.getText("doclet.See_Also")))));
         result.addContent(HtmlTree.DD(body));
         return result;
 
@@ -329,7 +329,7 @@ public class TagletWriterImpl extends TagletWriter {
      */
     public Content getThrowsHeader() {
         HtmlTree result = HtmlTree.DT(HtmlTree.SPAN(HtmlStyle.throwsLabel,
-                new StringContent(configuration.getText("doclet.Throws"))));
+                new StringContent(resources.getText("doclet.Throws"))));
         return result;
     }
 
@@ -421,47 +421,43 @@ public class TagletWriterImpl extends TagletWriter {
                 SearchIndexItem si = new SearchIndexItem();
                 si.setLabel(tagText);
                 si.setDescription(desc);
+                si.setUrl(htmlWriter.path.getPath() + "#" + anchorName);
                 DocPaths docPaths = configuration.docPaths;
                 new SimpleElementVisitor9<Void, Void>() {
                     @Override
-                    public Void visitModule(ModuleElement e, Void p) {
-                        si.setUrl(docPaths.moduleSummary(e).getPath() + "#" + anchorName);
-                        si.setHolder(utils.getFullyQualifiedName(element));
-                        return null;
-                    }
-
-                    @Override
-                    public Void visitPackage(PackageElement e, Void p) {
-                        si.setUrl(docPaths.forPackage(e).getPath()
-                                + "/" + DocPaths.PACKAGE_SUMMARY.getPath() + "#" + anchorName);
-                        si.setHolder(utils.getSimpleName(element));
-                        return null;
-                    }
-
-                    @Override
-                    public Void visitType(TypeElement e, Void p) {
-                        si.setUrl(docPaths.forClass(e).getPath() + "#" + anchorName);
-                        si.setHolder(utils.getFullyQualifiedName(e));
-                        return null;
-                    }
-
-                    @Override
                     public Void visitVariable(VariableElement e, Void p) {
                         TypeElement te = utils.getEnclosingTypeElement(e);
-                        si.setUrl(docPaths.forClass(te).getPath() + "#" + anchorName);
                         si.setHolder(utils.getFullyQualifiedName(e) + "." + utils.getSimpleName(e));
                         return null;
                     }
 
                     @Override
+                    public Void visitUnknown(Element e, Void p) {
+                        if (e instanceof DocletElement) {
+                            DocletElement de = (DocletElement) e;
+                            switch (de.getSubKind()) {
+                                case OVERVIEW:
+                                    si.setHolder(resources.getText("doclet.Overview"));
+                                    break;
+                                case DOCFILE:
+                                    si.setHolder(de.getPackageElement().toString());
+                                    break;
+                                default:
+                                    throw new IllegalStateException();
+                            }
+                            return null;
+                        } else {
+                            return super.visitUnknown(e, p);
+                        }
+                    }
+
+                    @Override
                     protected Void defaultAction(Element e, Void p) {
-                        TypeElement te = utils.getEnclosingTypeElement(e);
-                        si.setUrl(docPaths.forClass(te).getPath() + "#" + anchorName);
                         si.setHolder(utils.getFullyQualifiedName(e));
                         return null;
                     }
                 }.visit(element);
-                si.setCategory(configuration.getContent("doclet.SearchTags").toString());
+                si.setCategory(SearchIndexItem.Category.SEARCH_TAGS);
                 configuration.tagSearchIndex.add(si);
             }
         }
