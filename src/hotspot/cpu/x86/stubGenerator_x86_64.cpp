@@ -5613,15 +5613,6 @@ void pop_FrameInfo(MacroAssembler* _masm, Register sp, Register fp, Register pc)
 
   // c_rarg1 ContinuationScope
 RuntimeStub* generate_cont_doYield() {
-  class YieldMacroAssembler : public MacroAssembler {
-  public:
-    YieldMacroAssembler(CodeBuffer* code) : MacroAssembler(code) {}
-
-    virtual void post_vm_call() {
-      post_call_nop();
-    }
-  };
-
     const char *name = "cont_doYield";
 
     enum layout {
@@ -5642,7 +5633,7 @@ RuntimeStub* generate_cont_doYield() {
     int locs_size  = 64;
     CodeBuffer code(name, insts_size, locs_size);
     OopMapSet* oop_maps  = new OopMapSet();
-    MacroAssembler* masm = new YieldMacroAssembler(&code);
+    MacroAssembler* masm = new MacroAssembler(&code);
     MacroAssembler* _masm = masm;
 
     // MacroAssembler* masm = _masm;
@@ -5667,7 +5658,7 @@ RuntimeStub* generate_cont_doYield() {
     int frame_complete = __ pc() - start;
     address the_pc = __ pc();
 
-    __ post_call_nop();
+    __ post_call_nop(); // this must be exactly after the pc value that is pushed into the frame info, we use this nop for fast CodeBlob lookup
 
     if (ContPerfTest > 5) {
     __ set_last_Java_frame(rsp, rbp, the_pc); // may be unnecessary. also, consider MacroAssembler::call_VM_leaf_base
