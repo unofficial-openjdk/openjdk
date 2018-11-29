@@ -133,6 +133,7 @@ public:
   }
 };
 
+
 class CompiledMethod : public CodeBlob {
   friend class VMStructs;
   friend class NMethodSweeper;
@@ -149,8 +150,6 @@ protected:
 
   bool _is_far_code; // Code is far from CodeCache.
                      // Have to use far call instructions to call it from code in CodeCache.
-
-  volatile uint8_t _is_unloading_state;      // Local state used to keep track of whether unloading is happening or not
 
   // set during construction
   unsigned int _has_unsafe_access:1;         // May fault due to unsafe access.
@@ -171,14 +170,24 @@ protected:
   PcDescContainer _pc_desc_container;
   ExceptionCache * volatile _exception_cache;
 
+  void* _gc_data;
+
   virtual void flush() = 0;
 protected:
   CompiledMethod(Method* method, const char* name, CompilerType type, const CodeBlobLayout& layout, int frame_complete_offset, int frame_size, ImmutableOopMapSet* oop_maps, bool caller_must_gc_arguments);
   CompiledMethod(Method* method, const char* name, CompilerType type, int size, int header_size, CodeBuffer* cb, int frame_complete_offset, int frame_size, OopMapSet* oop_maps, bool caller_must_gc_arguments);
 
 public:
+  template<typename T>
+  T* gc_data() const                              { return reinterpret_cast<T*>(_gc_data); }
+  template<typename T>
+  void set_gc_data(T* gc_data)                    { _gc_data = reinterpret_cast<void*>(gc_data); }
+
   bool  has_unsafe_access() const                 { return _has_unsafe_access; }
   void  set_has_unsafe_access(bool z)             { _has_unsafe_access = z; }
+
+  bool  has_monitors() const                      { return _has_monitors; }
+  void  set_has_monitors(bool z)                  { _has_monitors = z; }
 
   bool  has_method_handle_invokes() const         { return _has_method_handle_invokes; }
   void  set_has_method_handle_invokes(bool z)     { _has_method_handle_invokes = z; }
@@ -188,9 +197,6 @@ public:
 
   bool  has_wide_vectors() const                  { return _has_wide_vectors; }
   void  set_has_wide_vectors(bool z)              { _has_wide_vectors = z; }
-
-  bool  has_monitors() const                      { return _has_monitors; }
-  void  set_has_monitors(bool z)                  { _has_monitors = z; }
 
   enum { not_installed = -1, // in construction, only the owner doing the construction is
                              // allowed to advance state
@@ -398,10 +404,9 @@ public:
   // GC unloading support
   // Cleans unloaded klasses and unloaded nmethods in inline caches
 
-  bool is_unloading();
+  virtual bool is_unloading() = 0;
 
   void unload_nmethod_caches(bool class_unloading_occurred);
-  void clear_unloading_state();
   virtual void do_unloading(bool unloading_occurred) { }
 
   void inc_on_continuation_stack();

@@ -368,8 +368,7 @@ void OtherRegionsTable::add_reference(OopOrNarrowOopStar from, uint tid) {
 
       CardIdx_t card_index = card_within_region(from, from_hr);
 
-      if (G1HRRSUseSparseTable &&
-          _sparse_table.add_card(from_hrm_ind, card_index)) {
+      if (_sparse_table.add_card(from_hrm_ind, card_index)) {
         assert(contains_reference_locked(from), "We just added " PTR_FORMAT " to the Sparse table", p2i(from));
         return;
       }
@@ -397,18 +396,16 @@ void OtherRegionsTable::add_reference(OopOrNarrowOopStar from, uint tid) {
       OrderAccess::release_store(&_fine_grain_regions[ind], prt);
       _n_fine_entries++;
 
-      if (G1HRRSUseSparseTable) {
-        // Transfer from sparse to fine-grain.
-        SparsePRTEntry *sprt_entry = _sparse_table.get_entry(from_hrm_ind);
-        assert(sprt_entry != NULL, "There should have been an entry");
-        for (int i = 0; i < sprt_entry->num_valid_cards(); i++) {
-          CardIdx_t c = sprt_entry->card(i);
-          prt->add_card(c);
-        }
-        // Now we can delete the sparse entry.
-        bool res = _sparse_table.delete_entry(from_hrm_ind);
-        assert(res, "It should have been there.");
+      // Transfer from sparse to fine-grain.
+      SparsePRTEntry *sprt_entry = _sparse_table.get_entry(from_hrm_ind);
+      assert(sprt_entry != NULL, "There should have been an entry");
+      for (int i = 0; i < sprt_entry->num_valid_cards(); i++) {
+        CardIdx_t c = sprt_entry->card(i);
+        prt->add_card(c);
       }
+      // Now we can delete the sparse entry.
+      bool res = _sparse_table.delete_entry(from_hrm_ind);
+      assert(res, "It should have been there.");
     }
     assert(prt != NULL && prt->hr() == from_hr, "consequence");
   }
@@ -601,11 +598,6 @@ bool OtherRegionsTable::contains_reference_locked(OopOrNarrowOopStar from) const
   }
 }
 
-void
-OtherRegionsTable::do_cleanup_work(HRRSCleanupTask* hrrs_cleanup_task) {
-  _sparse_table.do_cleanup_work(hrrs_cleanup_task);
-}
-
 HeapRegionRemSet::HeapRegionRemSet(G1BlockOffsetTable* bot,
                                    HeapRegion* hr)
   : _bot(bot),
@@ -633,10 +625,6 @@ void HeapRegionRemSet::setup_remset_size() {
     G1RSetRegionEntries = G1RSetRegionEntriesBase * (region_size_log_mb + 1);
   }
   guarantee(G1RSetSparseRegionEntries > 0 && G1RSetRegionEntries > 0 , "Sanity");
-}
-
-void HeapRegionRemSet::cleanup() {
-  SparsePRT::cleanup_all();
 }
 
 void HeapRegionRemSet::clear(bool only_cardset) {
@@ -820,18 +808,6 @@ bool HeapRegionRemSetIterator::has_next(size_t& card_index) {
     break;
   }
   return false;
-}
-
-void HeapRegionRemSet::reset_for_cleanup_tasks() {
-  SparsePRT::reset_for_cleanup_tasks();
-}
-
-void HeapRegionRemSet::do_cleanup_work(HRRSCleanupTask* hrrs_cleanup_task) {
-  _other_regions.do_cleanup_work(hrrs_cleanup_task);
-}
-
-void HeapRegionRemSet::finish_cleanup_task(HRRSCleanupTask* hrrs_cleanup_task) {
-  SparsePRT::finish_cleanup_task(hrrs_cleanup_task);
 }
 
 #ifndef PRODUCT

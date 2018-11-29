@@ -284,19 +284,25 @@ InstanceKlass* InstanceKlass::nest_host(Symbol* validationException, TRAPS) {
 
       if (log_is_enabled(Trace, class, nestmates)) {
         ResourceMark rm(THREAD);
-        log_trace(class, nestmates)("Type %s is not a nest member of resolved type %s: %s",
-                                    this->external_name(),
-                                    k->external_name(),
-                                    error);
+        log_trace(class, nestmates)
+          ("Type %s (loader: %s) is not a nest member of "
+           "resolved type %s (loader: %s): %s",
+           this->external_name(),
+           this->class_loader_data()->loader_name_and_id(),
+           k->external_name(),
+           k->class_loader_data()->loader_name_and_id(),
+           error);
       }
 
       if (validationException != NULL) {
         ResourceMark rm(THREAD);
         Exceptions::fthrow(THREAD_AND_LOCATION,
                            validationException,
-                           "Type %s is not a nest member of %s: %s",
+                           "Type %s (loader: %s) is not a nest member of %s (loader: %s): %s",
                            this->external_name(),
+                           this->class_loader_data()->loader_name_and_id(),
                            k->external_name(),
+                           k->class_loader_data()->loader_name_and_id(),
                            error
                            );
       }
@@ -1282,7 +1288,6 @@ Klass* InstanceKlass::array_klass_impl(bool or_null, int n, TRAPS) {
     JavaThread *jt = (JavaThread *)THREAD;
     {
       // Atomic creation of array_klasses
-      MutexLocker mc(Compile_lock, THREAD);   // for vtables
       MutexLocker ma(MultiArray_lock, THREAD);
 
       // Check if update has already taken place

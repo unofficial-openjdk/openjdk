@@ -54,7 +54,7 @@ public class TestSafepointEvents {
 
     static final String[] EVENT_NAMES = new String[] {
         EventNames.SafepointBegin,
-        EventNames.SafepointStateSyncronization,
+        EventNames.SafepointStateSynchronization,
         EventNames.SafepointWaitBlocked,
         EventNames.SafepointCleanup,
         EventNames.SafepointCleanupTask,
@@ -84,9 +84,9 @@ public class TestSafepointEvents {
             }
 
             // Collect all events grouped by safepoint id
-            SortedMap<Integer, Set<String>> safepointIds = new TreeMap<>();
+            SortedMap<Long, Set<String>> safepointIds = new TreeMap<>();
             for (RecordedEvent event : Events.fromRecording(recording)) {
-                Integer safepointId = event.getValue("safepointId");
+                Long safepointId = event.getValue("safepointId");
                 if (!safepointIds.containsKey(safepointId)) {
                     safepointIds.put(safepointId, new HashSet<>());
                 }

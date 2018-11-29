@@ -996,9 +996,8 @@ void ZBarrierSetC2::expand_loadbarrier_optimized(PhaseMacroExpand* phase, LoadBa
   return;
 }
 
-bool ZBarrierSetC2::expand_macro_nodes(PhaseMacroExpand* macro) const {
-  Compile* C = Compile::current();
-  PhaseIterGVN &igvn = macro->igvn();
+bool ZBarrierSetC2::expand_barriers(Compile* C, PhaseIterGVN& igvn) const {
+  PhaseMacroExpand macro(igvn);
   ZBarrierSetC2State* s = state();
   if (s->load_barrier_count() > 0) {
 #ifdef ASSERT
@@ -1018,7 +1017,7 @@ bool ZBarrierSetC2::expand_macro_nodes(PhaseMacroExpand* macro) const {
         skipped++;
         continue;
       }
-      expand_loadbarrier_node(macro, n);
+      expand_loadbarrier_node(&macro, n);
       assert(s->load_barrier_count() < load_barrier_count, "must have deleted a node from load barrier list");
       if (C->failing())  return true;
     }
@@ -1027,7 +1026,7 @@ bool ZBarrierSetC2::expand_macro_nodes(PhaseMacroExpand* macro) const {
       LoadBarrierNode* n = s->load_barrier_node(load_barrier_count - 1);
       assert(!(igvn.type(n) == Type::TOP || (n->in(0) != NULL && n->in(0)->is_top())), "should have been processed already");
       assert(!n->can_be_eliminated(), "should have been processed already");
-      expand_loadbarrier_node(macro, n);
+      expand_loadbarrier_node(&macro, n);
       assert(s->load_barrier_count() < load_barrier_count, "must have deleted a node from load barrier list");
       if (C->failing())  return true;
     }
@@ -1457,6 +1456,17 @@ bool ZBarrierSetC2::final_graph_reshaping(Compile* compile, Node* n, uint opcode
       handled = false;
   }
   return handled;
+}
+
+bool ZBarrierSetC2::matcher_find_shared_visit(Matcher* matcher, Matcher::MStack& mstack, Node* n, uint opcode, bool& mem_op, int& mem_addr_idx) const {
+  if (opcode == Op_CallLeaf &&
+      (n->as_Call()->entry_point() == ZBarrierSetRuntime::load_barrier_on_oop_field_preloaded_addr() ||
+       n->as_Call()->entry_point() == ZBarrierSetRuntime::load_barrier_on_weak_oop_field_preloaded_addr())) {
+    mem_op = true;
+    mem_addr_idx = TypeFunc::Parms + 1;
+    return true;
+  }
+  return false;
 }
 
 // == Verification ==
