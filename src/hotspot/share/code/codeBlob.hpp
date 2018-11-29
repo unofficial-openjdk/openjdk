@@ -205,6 +205,13 @@ public:
   // OopMap for frame
   ImmutableOopMapSet* oop_maps() const           { return _oop_maps; }
   void set_oop_maps(OopMapSet* p);
+
+  const ImmutableOopMap* oop_map_for_slot(int slot, address return_address) const {
+    assert(_oop_maps != NULL, "nope");
+    return _oop_maps->find_map_at_slot(slot, (intptr_t) return_address - (intptr_t) code_begin());
+  }
+
+  //const ImmutableOopMap* oop_map_for_slot(int slot, address return_address) const;
   const ImmutableOopMap* oop_map_for_return_address(address return_address) const;
   virtual void preserve_callee_argument_oops(frame fr, const RegisterMap* reg_map, OopClosure* f) = 0;
 

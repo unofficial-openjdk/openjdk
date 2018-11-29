@@ -167,7 +167,7 @@ void CodeBlob::set_oop_maps(OopMapSet* p) {
   // Danger Will Robinson! This method allocates a big
   // chunk of memory, its your job to free it.
   if (p != NULL) {
-    _oop_maps = ImmutableOopMapSet::build_from(p, this);
+    _oop_maps = ImmutableOopMapSet::build_from(p);
   } else {
     _oop_maps = NULL;
   }

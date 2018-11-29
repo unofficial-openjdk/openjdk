@@ -48,7 +48,7 @@ inline void frame::init(intptr_t* sp, intptr_t* fp, address pc) {
   _fp = fp;
   _pc = pc;
   assert(pc != NULL, "no pc?");
-  _cb = StubRoutines::cont_doYield_stub()->contains(pc) ? StubRoutines::cont_doYield_stub() : CodeCache::find_blob(pc); // a temporary optimization for JavaThread::pd_last_frame
+  _cb = CodeCache::find_blob_fast(pc);
   adjust_unextended_sp();
 
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
