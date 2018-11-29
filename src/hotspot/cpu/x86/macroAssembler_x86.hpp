@@ -194,7 +194,6 @@ class MacroAssembler: public Assembler {
   void align(int modulus);
   void align(int modulus, int target);
 
-  virtual void post_vm_call() {} // overrided by implementors
   void post_call_nop();
   // A 5 byte nop that is safe for patching (see patch_verified_entry)
   void fat_nop();

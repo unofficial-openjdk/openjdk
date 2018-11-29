@@ -550,7 +550,6 @@ void MacroAssembler::call_VM_leaf_base(address entry_point, int num_args) {
   {
     call(RuntimeAddress(entry_point));
     oopmap_metadata(-1);
-    post_vm_call();
   }
   addq(rsp, 8);
   jmp(E);
@@ -559,7 +558,6 @@ void MacroAssembler::call_VM_leaf_base(address entry_point, int num_args) {
   {
     call(RuntimeAddress(entry_point));
     oopmap_metadata(-1);
-    post_vm_call();
   }
 
   bind(E);
