@@ -173,33 +173,7 @@ static long java_tid(JavaThread* thread) {
 class ContinuationCodeBlobLookup {
 public:
   static CodeBlob* find_blob(address pc) {
-    NativePostCallNop* nop = nativePostCallNop_at(pc);
-    if (nop != NULL) {
-      Continuations::nmethod_hit();
-      bool patched = false;
-      CodeBlob* cb;
-      if (nop->displacement() != 0) {
-        int offset = nop->displacement();
-        cb = (CodeBlob*) ((address) pc - offset);
-      } else {
-        cb = CodeCache::find_blob(pc);
-        intptr_t cbaddr = (intptr_t) cb;
-        intptr_t offset = ((intptr_t) pc) - cbaddr;
-        nop->patch((jint) offset);
-        patched = true;
-      }
-      //log_info(jvmcont)("found nop, cb @ " INTPTR_FORMAT " - %s", p2i(cb), patched ? "patched" : "existing");
-      assert(cb != NULL, "must be");
-      //assert(cb == CodeCache::find_blob(pc), "double check");
-      return cb;
-    } else {
-      CodeBlob* cb = CodeCache::find_blob(pc);
-      if (cb->is_nmethod()) {
-        Continuations::nmethod_miss();
-      }
-      //log_info(jvmcont)("failed to find nop in cb " INTPTR_FORMAT ", %d, %d", p2i(cb), cb->is_compiled_by_c1(), cb->is_compiled_by_c2());
-      return cb;
-    }
+    return CodeCache::find_blob_fast(pc);
   }
 };
 
@@ -1414,7 +1388,6 @@ static bool is_interpreted_frame_owning_locks(frame& f) {
 static bool is_compiled_frame_owning_locks(JavaThread* thread, RegisterMap* map, frame& f) {
   if (!DetectLocksInCompiledFrames)
     return false;
-  // ResourceMark rm(thread); // vframes/scopes are allocated in the resource area
   nmethod* nm = f.cb()->as_nmethod();
   assert (!nm->is_compiled() || !nm->as_compiled_method()->is_native_method(), ""); // ??? See compiledVFrame::compiledVFrame(...) in vframe_hp.cpp
 
@@ -1727,10 +1700,8 @@ private:
   bool _has_fp_oop;
   int _fp_index;
 
-  bool _is_first;
   bool _is_last;
 
-  bool is_first() { return _is_first; }
   bool is_last()  { return _is_last;  } // this is only true after returning from the recursive call
 
 public:
@@ -1738,7 +1709,7 @@ public:
     _thread(thread), _mirror(mirror), _bottom_address(mirror.entrySP()), _map(map),
     _oops(0), _size(0), _frames(0), _wsp(0), _wref_sp(0),
     _has_fp_oop(false), _fp_index(0),
-    _is_first(false), _is_last(false) {
+    _is_last(false) {
   }
 
   int nr_oops() const { return _oops; }
@@ -1753,8 +1724,7 @@ public:
     assert (!_map.include_argument_oops(), "should be");
     hframe caller;
 
-    _is_first = true; // the first frame we'll visit is the top
-    res_freeze result = freeze(f, frame::saved_link_address(&_map), caller); // we do update the link address for the first frame in the map
+    res_freeze result = freeze(f, frame::saved_link_address(&_map), caller, true); // we do update the link address for the first frame in the map
 
     if (_has_fp_oop) {
       assert(!caller.is_interpreted_frame(), "only compiled frames");
@@ -1764,8 +1734,8 @@ public:
     return result;
   }
 
-  void save_bounding_hframe(hframe& hf) {
-    if (is_first()) {
+  void save_bounding_hframe(hframe& hf, bool is_first) {
+    if (is_first) {
       _top = hf;
     }
     if (is_last()) {
@@ -1882,7 +1852,7 @@ public:
     _wref_sp = starting_index;
   }
 
-  res_freeze freeze_interpreted_stackframe(frame& f, hframe& caller) {
+  res_freeze freeze_interpreted_stackframe(frame& f, hframe& caller, bool is_first) {
     if (is_interpreted_frame_owning_locks(f)) {
       return freeze_pinned_monitor;
     }
@@ -1914,7 +1884,7 @@ public:
     intptr_t* hfp = hsp + (vfp - vsp);
 
     hframe hf = _mirror.new_hframe<true>(hsp, (hsp + (long)(f.fp() - vsp)), f.pc(), NULL, true);
-    save_bounding_hframe(hf);
+    save_bounding_hframe(hf, is_first);
 
     relativize(vfp, hfp, frame::interpreter_frame_last_sp_offset);
     relativize(vfp, hfp, frame::interpreter_frame_initial_sp_offset); // == block_top == block_bottom
@@ -1938,7 +1908,7 @@ public:
     return freeze_ok;
   }
 
-  res_freeze freeze_compiled_stackframe(frame& f, intptr_t** callee_link_address, hframe& caller) {
+  res_freeze freeze_compiled_stackframe(frame& f, intptr_t** callee_link_address, hframe& caller, bool is_first) {
     if (is_compiled_frame_owning_locks(_mirror.thread(), &_map, f)) {
       return freeze_pinned_monitor;
     }
@@ -1971,7 +1941,7 @@ public:
     intptr_t* hsp = freeze_raw_frame(vsp, fsize);
 
     hframe hf = _mirror.new_hframe<false>(hsp, f.fp(), f.pc(), f.cb(), false);
-    save_bounding_hframe(hf);
+    save_bounding_hframe(hf, is_first);
 
     hf.set_size(_mirror, fsize);
     hf.set_uncompressed_size(_mirror, 0);
@@ -2029,26 +1999,14 @@ public:
 
   template <bool interpreted>
   inline res_freeze freeze_caller(frame& f, intptr_t** link_address, hframe& caller) {
-    bool is_first = _is_first;
-    if (is_first) _is_first = false;
-
-    // address link1 = map.trusted_location(vmRegRbp);
-    // //address link2 = map.trusted_location(vmRegRbpNext);
-
     frame sender = interpreted
       ? f.frame_sender<ContinuationCodeBlobLookup>(&_map)
       : sender_for_compiled_frame(f, link_address, _mirror); // f.sender_for_compiled_frame<ContinuationCodeBlobLookup>(&map); // 
     res_freeze result = freeze(sender, link_address, caller);
-
-    // map.update_location(vmRegRbp,     link1);
-    // map.update_location(vmRegRbpNext, link1);
-
-    _is_first = is_first;
-
     return result;
   }
 
-  res_freeze freeze(frame& f, intptr_t** callee_link_address, hframe& caller) {
+  res_freeze freeze(frame& f, intptr_t** callee_link_address, hframe& caller, bool is_first = false) {
     if (f.real_fp() > _bottom_address) {
       _is_last = true; // the next frame we return to is bottom
       return finalize(f); // done with recursion
@@ -2061,13 +2019,13 @@ public:
       if (f.oop_map() == NULL) {
         return freeze_pinned_native; // special native frame
       }
-      result = freeze_compiled_stackframe(f, callee_link_address, caller);
+      result = freeze_compiled_stackframe(f, callee_link_address, caller, is_first);
     } else {
       bool is_interpreted = f.is_interpreted_frame();
       if (!is_interpreted) {
         return freeze_pinned_native;
       }
-      result = freeze_interpreted_stackframe(f, caller);
+      result = freeze_interpreted_stackframe(f, caller, is_first);
     }
 
     if (_is_last) _is_last = false;
@@ -2220,6 +2178,7 @@ JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
   DEBUG_ONLY(thread->_continuation = NULL;)
 
   HandleMark hm(thread);
+  ResourceMark rm(thread); // we need it for is_compiled_frame_owning_locks
 
   if (thread->has_pending_exception()) {
     fi->fp = NULL; fi->sp = NULL; fi->pc = NULL;

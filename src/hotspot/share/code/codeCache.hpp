@@ -158,6 +158,7 @@ class CodeCache : AllStatic {
   // Lookup
   static CodeBlob* find_blob(void* start);              // Returns the CodeBlob containing the given address
   static CodeBlob* find_blob_unsafe(void* start);       // Same as find_blob but does not fail if looking up a zombie method
+  static CodeBlob* find_blob_fast(void* start);         // Returns the CodeBlob containing the given address
   static nmethod*  find_nmethod(void* start);           // Returns the nmethod containing the given address
   static CompiledMethod* find_compiled(void* start);
 

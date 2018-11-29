@@ -27,42 +27,26 @@
 
 #include "gc/shared/collectedHeap.hpp"
 
+inline const ImmutableOopMap* ImmutableOopMapSet::find_map_at_slot(int slot, int pc_offset) const {
+  assert(slot >= 0 && slot < _count, "bounds");
+  ImmutableOopMapPair* pairs = get_pairs();
+  ImmutableOopMapPair* last = &pairs[slot];
+  assert(last->pc_offset() == pc_offset, "oopmap not found");
+  return last->get_from(this);
+}
+
+inline const ImmutableOopMap* ImmutableOopMapPair::get_from(const ImmutableOopMapSet* set) const {
+  return set->oopmap_at_offset(_oopmap_offset);
+}
+
 inline bool SkipNullValue::should_skip(oop val) {
   return val == (oop)NULL || Universe::is_narrow_oop_base(val);
 }
 
-#ifndef PRODUCT
-static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map) {
-  // Print oopmap and regmap
-  tty->print_cr("------ ");
-  CodeBlob* cb = fr->cb();
-  const ImmutableOopMapSet* maps = cb->oop_maps();
-  const ImmutableOopMap* map = cb->oop_map_for_return_address(fr->pc());
-  map->print();
-  if( cb->is_nmethod() ) {
-    nmethod* nm = (nmethod*)cb;
-    // native wrappers have no scope data, it is implied
-    if (nm->is_native_method()) {
-      tty->print("bci: 0 (native)");
-    } else {
-      ScopeDesc* scope  = nm->scope_desc_at(fr->pc());
-      tty->print("bci: %d ",scope->bci());
-    }
-  }
-  tty->cr();
-  fr->print_on(tty);
-  tty->print("     ");
-  cb->print_value_on(tty);  tty->cr();
-  reg_map->print();
-  tty->print_cr("------ ");
-
-}
-#endif // PRODUCT
-
 template <typename OopFnT, typename DerivedOopFnT, typename ValueFilterT>
 template <typename OopMapStreamT>
 void OopMapDo<OopFnT, DerivedOopFnT, ValueFilterT>::iterate_oops_do(const frame *fr, const RegisterMap *reg_map, const ImmutableOopMap* oopmap) {
-  NOT_PRODUCT(if (TraceCodeBlobStacks) trace_codeblob_maps(fr, reg_map);)
+  NOT_PRODUCT(if (TraceCodeBlobStacks) OopMapSet::trace_codeblob_maps(fr, reg_map);)
 
   // handle derived pointers first (otherwise base pointer may be
   // changed before derived pointer offset has been collected)
@@ -107,7 +91,7 @@ void OopMapDo<OopFnT, DerivedOopFnT, ValueFilterT>::iterate_oops_do(const frame 
              !Universe::heap()->is_in_or_null(*loc))) {
           tty->print_cr("# Found non oop pointer.  Dumping state at failure");
           // try to dump out some helpful debugging information
-          trace_codeblob_maps(fr, reg_map);
+          OopMapSet::trace_codeblob_maps(fr, reg_map);
           omv.print();
           tty->print_cr("register r");
           omv.reg()->print();

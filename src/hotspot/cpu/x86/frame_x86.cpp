@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "compiler/oopMap.inline.hpp"
 #include "interpreter/interpreter.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/markOop.hpp"
@@ -539,8 +540,12 @@ bool frame::is_interpreted_frame_valid(JavaThread* thread) const {
 const ImmutableOopMap* frame::get_oop_map() const {
   if (_cb == NULL) return NULL;
   if (_cb->oop_maps() != NULL) {
+    NativePostCallNop* nop = nativePostCallNop_at(_pc);
+    if (nop != NULL && nop->displacement() != 0) {
+      int slot = ((nop->displacement() >> 24) & 0xff);
+      return _cb->oop_map_for_slot(slot, _pc);
+    }
     const ImmutableOopMap* oop_map = OopMapSet::find_map(this);
-    assert(oop_map->cb() == _cb, "cb should match");
     return oop_map;
   }
   return NULL;

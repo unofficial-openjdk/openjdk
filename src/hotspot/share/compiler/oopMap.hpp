@@ -261,6 +261,10 @@ class OopMapSet : public ResourceObj {
                                   const RegisterMap* reg_map, OopClosure* f) { oops_do(fr, reg_map, f, NULL); }
   static void update_register_map(const frame* fr, RegisterMap *reg_map);
 
+#ifndef PRODUCT
+  static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map);
+#endif
+
   // // Iterates through frame for a compiled method for dead ones and values, too
   // static void all_do(const frame* fr, const RegisterMap* reg_map,
   //                    OopClosure* oop_fn,
@@ -311,21 +315,19 @@ class ImmutableOopMap {
   friend class ImmutableOopMapBuilder;
 #endif
 private:
-  const CodeBlob* _cb;
   ExplodedOopMap* _exploded;
   int _count; // contains the number of entries in this OopMap
   int _num_oops;
 
   address data_addr() const { return (address) this + sizeof(ImmutableOopMap); }
 public:
-  ImmutableOopMap(const OopMap* oopmap, const CodeBlob* cb);
+  ImmutableOopMap(const OopMap* oopmap);
 
   void set_exploded(ExplodedOopMap* exploded) { _exploded = exploded; }
   bool has_exploded() const { return _exploded != NULL; }
   bool has_derived_pointer() const PRODUCT_RETURN0;
   int count() const { return _count; }
   int num_oops() const { return _num_oops; }
-  const CodeBlob* cb() const { return _cb; }
 #ifdef ASSERT
   int nr_of_bytes() const; // this is an expensive operation, only used in debug builds
 #endif
@@ -377,9 +379,11 @@ public:
 
   ImmutableOopMapPair* get_pairs() const { return (ImmutableOopMapPair*) ((address) this + sizeof(*this)); }
 
-  static ImmutableOopMapSet* build_from(const OopMapSet* oopmap_set, const CodeBlob* cb);
+  static ImmutableOopMapSet* build_from(const OopMapSet* oopmap_set);
 
+  int find_slot_for_offset(int pc_offset) const;
   const ImmutableOopMap* find_map_at_offset(int pc_offset) const;
+  const ImmutableOopMap* find_map_at_slot(int slot, int pc_offset) const;
 
   const ImmutableOopMapPair* pair_at(int index) const { assert(index >= 0 && index < _count, "check"); return &get_pairs()[index]; }
 
@@ -430,7 +434,6 @@ private:
 
 private:
   const OopMapSet* _set;
-  const CodeBlob* _cb;
   const OopMap* _empty;
   const OopMap* _last;
   int _empty_offset;
@@ -463,8 +466,7 @@ private:
   };
 
 public:
-  ImmutableOopMapBuilder(const OopMapSet* set); // TODO: used by jvmciCompilerToVM.cpp. What to do about this?
-  ImmutableOopMapBuilder(const OopMapSet* set, const CodeBlob* cb);
+  ImmutableOopMapBuilder(const OopMapSet* set);
 
   int heap_size();
   ImmutableOopMapSet* build();

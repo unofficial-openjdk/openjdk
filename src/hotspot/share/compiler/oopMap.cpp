@@ -258,7 +258,6 @@ OopMap* OopMapSet::singular_oop_map() {
   return at(0);
 }
 
-
 OopMap* OopMapSet::find_map_at_offset(int pc_offset) const {
   int i, len = om_count();
   assert( len > 0, "must have pointer maps" );
@@ -400,6 +399,8 @@ static void update_register_map1(const ImmutableOopMap* oopmap, const frame* fr,
 
 void ImmutableOopMap::update_register_map(const frame *fr, RegisterMap *reg_map) const {
   // ResourceMark rm;
+  CodeBlob* cb = fr->cb();
+  assert(cb != NULL, "no codeblob");
   // Any reg might be saved by a safepoint handler (see generate_handler_blob).
   assert( reg_map->_update_for_id == NULL || fr->is_older(reg_map->_update_for_id),
          "already updated this map; do not 'update' it twice!" );
@@ -408,7 +409,7 @@ void ImmutableOopMap::update_register_map(const frame *fr, RegisterMap *reg_map)
 
   // Check if caller must update oop argument
   assert((reg_map->include_argument_oops() ||
-          !_cb->caller_must_gc_arguments(reg_map->thread())),
+          !cb->caller_must_gc_arguments(reg_map->thread())),
          "include_argument_oops should already be set");
 
   // Scan through oopmap and find location of all callee-saved registers
@@ -433,7 +434,7 @@ void ImmutableOopMap::update_register_map(const frame *fr, RegisterMap *reg_map)
 
   // Check that runtime stubs save all callee-saved registers
 #ifdef COMPILER2
-  assert(_cb == NULL || _cb->is_compiled_by_c1() || _cb->is_compiled_by_jvmci() || !_cb->is_runtime_stub() ||
+  assert(cb == NULL || cb->is_compiled_by_c1() || cb->is_compiled_by_jvmci() || !cb->is_runtime_stub() ||
          (nof_callee >= SAVED_ON_ENTRY_REG_COUNT || nof_callee >= C_SAVED_ON_ENTRY_REG_COUNT),
          "must save all");
 #endif // COMPILER2
@@ -446,7 +447,7 @@ const ImmutableOopMap* OopMapSet::find_map(const frame *fr) {
   const ImmutableOopMap* map = cb->oop_map_for_return_address(fr->pc());
 
   assert(map != NULL, "no ptr map found");
-  assert (fr->cb() != NULL && fr->cb() == map->cb(), "");
+  assert (fr->cb() != NULL, "");
 
   return map;
 }
@@ -472,6 +473,35 @@ bool ImmutableOopMap::has_derived_pointer() const {
   return false;
 #endif // COMPILER2_OR_JVMCI
 }
+
+#ifndef PRODUCT
+void OopMapSet::trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map) {
+  // Print oopmap and regmap
+  tty->print_cr("------ ");
+  CodeBlob* cb = fr->cb();
+  const ImmutableOopMapSet* maps = cb->oop_maps();
+  const ImmutableOopMap* map = cb->oop_map_for_return_address(fr->pc());
+  map->print();
+  if( cb->is_nmethod() ) {
+    nmethod* nm = (nmethod*)cb;
+    // native wrappers have no scope data, it is implied
+    if (nm->is_native_method()) {
+      tty->print("bci: 0 (native)");
+    } else {
+      ScopeDesc* scope  = nm->scope_desc_at(fr->pc());
+      tty->print("bci: %d ",scope->bci());
+    }
+  }
+  tty->cr();
+  fr->print_on(tty);
+  tty->print("     ");
+  cb->print_value_on(tty);  tty->cr();
+  reg_map->print();
+  tty->print_cr("------ ");
+
+}
+#endif // PRODUCT
+
 
 #endif //PRODUCT
 
@@ -568,6 +598,20 @@ bool OopMap::equals(const OopMap* other) const {
   return true;
 }
 
+int ImmutableOopMapSet::find_slot_for_offset(int pc_offset) const {
+  ImmutableOopMapPair* pairs = get_pairs();
+
+  int i;
+  for (i = 0; i < _count; ++i) {
+    if (pairs[i].pc_offset() >= pc_offset) {
+      break;
+    }
+  }
+  ImmutableOopMapPair* last = &pairs[i];
+  assert(last->pc_offset() == pc_offset, "oopmap not found");
+  return i;
+}
+
 const ImmutableOopMap* ImmutableOopMapSet::find_map_at_offset(int pc_offset) const {
   ImmutableOopMapPair* pairs = get_pairs();
 
@@ -583,12 +627,7 @@ const ImmutableOopMap* ImmutableOopMapSet::find_map_at_offset(int pc_offset) con
   return last->get_from(this);
 }
 
-const ImmutableOopMap* ImmutableOopMapPair::get_from(const ImmutableOopMapSet* set) const {
-  return set->oopmap_at_offset(_oopmap_offset);
-}
-
-ImmutableOopMap::ImmutableOopMap(const OopMap* oopmap, const CodeBlob* cb) : _exploded(NULL), _count(oopmap->count()), _num_oops(oopmap->num_oops()) {
-  _cb = cb;
+ImmutableOopMap::ImmutableOopMap(const OopMap* oopmap) : _exploded(NULL), _count(oopmap->count()), _num_oops(oopmap->num_oops()) {
   _num_oops = oopmap->num_oops();
   address addr = data_addr();
   oopmap->copy_data_to(addr);
@@ -608,13 +647,8 @@ int ImmutableOopMap::nr_of_bytes() const {
 }
 #endif
 
-ImmutableOopMapBuilder::ImmutableOopMapBuilder(const OopMapSet* set, const CodeBlob* cb)
-  : _set(set), _cb(cb), _empty(NULL), _last(NULL), _empty_offset(-1), _last_offset(-1), _offset(0), _required(-1), _new_set(NULL) {
-  _mapping = NEW_RESOURCE_ARRAY(Mapping, _set->size());
-}
-
 ImmutableOopMapBuilder::ImmutableOopMapBuilder(const OopMapSet* set)
-  : _set(set), _cb(NULL), _empty(NULL), _last(NULL), _empty_offset(-1), _last_offset(-1), _offset(0), _required(-1), _new_set(NULL) {
+  : _set(set), _empty(NULL), _last(NULL), _empty_offset(-1), _last_offset(-1), _offset(0), _required(-1), _new_set(NULL) {
   _mapping = NEW_RESOURCE_ARRAY(Mapping, _set->size());
 }
 
@@ -674,7 +708,7 @@ int ImmutableOopMapBuilder::fill_map(ImmutableOopMapPair* pair, const OopMap* ma
   fill_pair(pair, map, offset, set);
   address addr = (address) pair->get_from(_new_set); // location of the ImmutableOopMap
 
-  new (addr) ImmutableOopMap(map, _cb);
+  new (addr) ImmutableOopMap(map);
   return size_for(map);
 }
 
@@ -732,9 +766,9 @@ ImmutableOopMapSet* ImmutableOopMapBuilder::build() {
   return generate_into(buffer);
 }
 
-ImmutableOopMapSet* ImmutableOopMapSet::build_from(const OopMapSet* oopmap_set, const CodeBlob* cb) {
+ImmutableOopMapSet* ImmutableOopMapSet::build_from(const OopMapSet* oopmap_set) {
   ResourceMark mark;
-  ImmutableOopMapBuilder builder(oopmap_set, cb);
+  ImmutableOopMapBuilder builder(oopmap_set);
   return builder.build();
 }
 
