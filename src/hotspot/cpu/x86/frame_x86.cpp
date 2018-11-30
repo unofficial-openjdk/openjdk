@@ -537,37 +537,6 @@ bool frame::is_interpreted_frame_valid(JavaThread* thread) const {
   return true;
 }
 
-const ImmutableOopMap* frame::get_oop_map() const {
-  if (_cb == NULL) return NULL;
-  if (_cb->oop_maps() != NULL) {
-    NativePostCallNop* nop = nativePostCallNop_at(_pc);
-    if (nop != NULL && nop->displacement() != 0) {
-      int slot = ((nop->displacement() >> 24) & 0xff);
-      return _cb->oop_map_for_slot(slot, _pc);
-    }
-    const ImmutableOopMap* oop_map = OopMapSet::find_map(this);
-    return oop_map;
-  }
-  return NULL;
-  // if (CodeCache::contains(pc()) && is_compiled_frame()) {
-  //   unsigned char *oopmap_metadata_header = (unsigned char *)pc();
-  //   if (*oopmap_metadata_header != 0x49) {
-  //     tty->print_cr("wrong oopmap_metadata_header");
-  //     print_on(tty);
-  //     for (int i=0; i<10; i++) tty->print_cr("$$ " INTPTR_FORMAT ": %x", p2i(oopmap_metadata_header + i), *(oopmap_metadata_header+i));
-  //   }
-  //   assert (*oopmap_metadata_header == 0x49, "oopmap_metadata_header: %x pc: " INTPTR_FORMAT " (" INTPTR_FORMAT ")", *oopmap_metadata_header, p2i(pc()), p2i(raw_pc()));
-
-  //   long oopmap_metadata = *((long*)(oopmap_metadata_header + 2));
-  //   if (oopmap_metadata != 1234) {
-  //     tty->print_cr("wrong oopmap_metadata");
-  //     print_on(tty);
-  //     for (int i=0; i<10; i++) tty->print_cr("$$ " INTPTR_FORMAT ": %x", p2i(oopmap_metadata_header + i), *(oopmap_metadata_header+i));
-  //   }
-  //   assert (oopmap_metadata == 1234, "oopmap_metadata: %ld pc: " INTPTR_FORMAT " (" INTPTR_FORMAT ")", oopmap_metadata, p2i(pc()), p2i(raw_pc()));
-  // }
-}
-
 BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result) {
   assert(is_interpreted_frame(), "interpreted frame expected");
   Method* method = interpreter_frame_method();

@@ -640,32 +640,21 @@ CodeBlob* CodeCache::find_blob_unsafe(void* start) {
   return NULL;
 }
 
-CodeBlob* CodeCache::find_blob_fast(void* pc) {
-  NativePostCallNop* nop = nativePostCallNop_at((address) pc);
-  if (nop != NULL) {
-    CodeBlob* cb;
-    if (nop->displacement() != 0) {
-      int offset = (nop->displacement() & 0xffffff);
-      cb = (CodeBlob*) ((address) pc - offset);
-    } else {
-      cb = CodeCache::find_blob(pc);
-      int oopmap_slot = cb->oop_maps()->find_slot_for_offset((intptr_t) pc - (intptr_t) cb->code_begin());
-      intptr_t cbaddr = (intptr_t) cb;
-      intptr_t offset = ((intptr_t) pc) - cbaddr;
+CodeBlob* CodeCache::patch_nop(NativePostCallNop* nop, void* pc, int& slot) {
+  CodeBlob* cb = CodeCache::find_blob(pc);
+  int oopmap_slot = cb->oop_maps()->find_slot_for_offset((intptr_t) pc - (intptr_t) cb->code_begin());
+  intptr_t cbaddr = (intptr_t) cb;
+  intptr_t offset = ((intptr_t) pc) - cbaddr;
 
-      if (((oopmap_slot & 0xff) == oopmap_slot) && ((offset & 0xffffff) == offset)) {
-        jint value = (oopmap_slot << 24) | (jint) offset;
-        nop->patch(value);
-      } else {
-        log_debug(codecache)("failed to encode %d %d", oopmap_slot, (int) offset);
-      }
-    }
-    assert(cb != NULL, "must be");
-    return cb;
+  if (((oopmap_slot & 0xff) == oopmap_slot) && ((offset & 0xffffff) == offset)) {
+    jint value = (oopmap_slot << 24) | (jint) offset;
+    nop->patch(value);
+    slot = oopmap_slot;
   } else {
-    CodeBlob* cb = CodeCache::find_blob(pc);
-    return cb;
+    slot = -1;
+    log_debug(codecache)("failed to encode %d %d", oopmap_slot, (int) offset);
   }
+  return cb;
 }
 
 nmethod* CodeCache::find_nmethod(void* start) {

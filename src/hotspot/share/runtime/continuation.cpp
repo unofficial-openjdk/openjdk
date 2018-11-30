@@ -25,6 +25,7 @@
 #include "precompiled.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "classfile/vmSymbols.hpp"
+#include "code/codeCache.inline.hpp"
 #include "code/compiledMethod.inline.hpp"
 #include "code/scopeDesc.hpp"
 #include "code/vmreg.inline.hpp"
@@ -172,8 +173,14 @@ static long java_tid(JavaThread* thread) {
 
 class ContinuationCodeBlobLookup {
 public:
+  enum { has_oopmap_lookup = true };
+
   static CodeBlob* find_blob(address pc) {
     return CodeCache::find_blob_fast(pc);
+  }
+
+  static CodeBlob* find_blob_and_oopmap(address pc, int& slot) {
+    return CodeCache::find_blob_and_oopmap(pc, slot);
   }
 };
 
@@ -727,17 +734,14 @@ ContMirror::ContMirror(JavaThread* thread, oop cont)
 }
 
 void ContMirror::read() {
-  log_trace(jvmcont)("Reading continuation object:");
 
   _entrySP = java_lang_Continuation::entrySP(_cont);
   _entryFP = java_lang_Continuation::entryFP(_cont);
   _entryPC = java_lang_Continuation::entryPC(_cont);
-  log_trace(jvmcont)("\tentrySP: " INTPTR_FORMAT " entryFP: " INTPTR_FORMAT " entryPC: " INTPTR_FORMAT, p2i(_entrySP), p2i(_entryFP), p2i(_entryPC));
 
   _sp = java_lang_Continuation::sp(_cont);
   _fp = java_lang_Continuation::fp(_cont);
   _pc = (address)java_lang_Continuation::pc(_cont);
-  log_trace(jvmcont)("\tsp: %d fp: %ld 0x%lx pc: " INTPTR_FORMAT, _sp, _fp, _fp, p2i(_pc));
 
   _stack = java_lang_Continuation::stack(_cont);
   if (_stack != NULL) {
@@ -748,51 +752,58 @@ void ContMirror::read() {
     _hstack = NULL;
   }
   _max_size = java_lang_Continuation::maxSize(_cont);
-  log_trace(jvmcont)("\tstack: " INTPTR_FORMAT " hstack: " INTPTR_FORMAT ", stack_length: %d max_size: " SIZE_FORMAT, p2i((oopDesc*)_stack), p2i(_hstack), _stack_length, _max_size);
 
   _ref_stack = java_lang_Continuation::refStack(_cont);
   _ref_sp = java_lang_Continuation::refSP(_cont);
-  log_trace(jvmcont)("\tref_stack: " INTPTR_FORMAT " ref_sp: %d", p2i((oopDesc*)_ref_stack), _ref_sp);
 
   _flags = java_lang_Continuation::flags(_cont);
-  log_trace(jvmcont)("\tflags: %d", _flags);
 
   _num_frames = java_lang_Continuation::numFrames(_cont);
-  log_trace(jvmcont)("\tnum_frames: %d", _num_frames);
 
   _num_interpreted_frames = java_lang_Continuation::numInterpretedFrames(_cont);
-  log_trace(jvmcont)("\tnum_interpreted_frames: %d", _num_interpreted_frames);
+
+  if (log_is_enabled(Trace, jvmcont)) {
+    log_trace(jvmcont)("Reading continuation object:");
+    log_trace(jvmcont)("\tentrySP: " INTPTR_FORMAT " entryFP: " INTPTR_FORMAT " entryPC: " INTPTR_FORMAT, p2i(_entrySP), p2i(_entryFP), p2i(_entryPC));
+    log_trace(jvmcont)("\tsp: %d fp: %ld 0x%lx pc: " INTPTR_FORMAT, _sp, _fp, _fp, p2i(_pc));
+    log_trace(jvmcont)("\tstack: " INTPTR_FORMAT " hstack: " INTPTR_FORMAT ", stack_length: %d max_size: " SIZE_FORMAT, p2i((oopDesc*)_stack), p2i(_hstack), _stack_length, _max_size);
+    log_trace(jvmcont)("\tref_stack: " INTPTR_FORMAT " ref_sp: %d", p2i((oopDesc*)_ref_stack), _ref_sp);
+    log_trace(jvmcont)("\tflags: %d", _flags);
+    log_trace(jvmcont)("\tnum_frames: %d", _num_frames);
+    log_trace(jvmcont)("\tnum_interpreted_frames: %d", _num_interpreted_frames);
+  }
 }
 
 void ContMirror::write() {
-  log_trace(jvmcont)("Writing continuation object:");
+  if (log_is_enabled(Trace, jvmcont)) {
+    log_trace(jvmcont)("Writing continuation object:");
+    log_trace(jvmcont)("\tsp: %d fp: %ld 0x%lx pc: " INTPTR_FORMAT, _sp, _fp, _fp, p2i(_pc));
+    log_trace(jvmcont)("\tentrySP: " INTPTR_FORMAT " entryFP: " INTPTR_FORMAT " entryPC: " INTPTR_FORMAT, p2i(_entrySP), p2i(_entryFP), p2i(_entryPC));
+    log_trace(jvmcont)("\tmax_size: " SIZE_FORMAT, _max_size);
+    log_trace(jvmcont)("\tref_sp: %d", _ref_sp);
+    log_trace(jvmcont)("\tflags: %d", _flags);
+    log_trace(jvmcont)("\tnum_frames: %d", _num_frames);
+    log_trace(jvmcont)("\tnum_interpreted_frames: %d", _num_interpreted_frames);
+    log_trace(jvmcont)("\tend write");
+  }
 
-  log_trace(jvmcont)("\tsp: %d fp: %ld 0x%lx pc: " INTPTR_FORMAT, _sp, _fp, _fp, p2i(_pc));
   java_lang_Continuation::set_sp(_cont, _sp);
   java_lang_Continuation::set_fp(_cont, _fp);
   java_lang_Continuation::set_pc(_cont, _pc);
 
-  log_trace(jvmcont)("\tentrySP: " INTPTR_FORMAT " entryFP: " INTPTR_FORMAT " entryPC: " INTPTR_FORMAT, p2i(_entrySP), p2i(_entryFP), p2i(_entryPC));
   java_lang_Continuation::set_entrySP(_cont, _entrySP);
   java_lang_Continuation::set_entryFP(_cont, _entryFP);
   java_lang_Continuation::set_entryPC(_cont, _entryPC);
 
-  log_trace(jvmcont)("\tmax_size: " SIZE_FORMAT, _max_size);
   java_lang_Continuation::set_maxSize(_cont, (jint)_max_size);
 
-  log_trace(jvmcont)("\tref_sp: %d", _ref_sp);
   java_lang_Continuation::set_refSP(_cont, _ref_sp);
 
   java_lang_Continuation::set_flags(_cont, _flags);
-  log_trace(jvmcont)("\tflags: %d", _flags);
 
   java_lang_Continuation::set_numFrames(_cont, _num_frames);
-  log_trace(jvmcont)("\tnum_frames: %d", _num_frames);
 
   java_lang_Continuation::set_numInterpretedFrames(_cont, _num_interpreted_frames);
-  log_trace(jvmcont)("\tnum_interpreted_frames: %d", _num_interpreted_frames);
-
-  log_trace(jvmcont)("\tend write");
 }
 
 bool ContMirror::is_empty() {
@@ -816,8 +827,11 @@ inline void ContMirror::set_last_frame(hframe& f) {
     set_fp(0);
     set_pc(NULL);
   }
-  log_trace(jvmcont)("set_last_frame cont sp: %d fp: 0x%lx pc: " INTPTR_FORMAT " interpreted: %d flag: %d", sp(), fp(), p2i(pc()), f.is_interpreted_frame(), is_flag(FLAG_LAST_FRAME_INTERPRETED));
-  if (log_is_enabled(Trace, jvmcont)) f.print_on(*this, tty);
+
+  if (log_is_enabled(Trace, jvmcont)) {
+    log_trace(jvmcont)("set_last_frame cont sp: %d fp: 0x%lx pc: " INTPTR_FORMAT " interpreted: %d flag: %d", sp(), fp(), p2i(pc()), f.is_interpreted_frame(), is_flag(FLAG_LAST_FRAME_INTERPRETED));
+    f.print_on(*this, tty);
+  }
 }
 
 inline int ContMirror::stack_index(void* p) const {
@@ -843,7 +857,8 @@ void ContMirror::copy_to_stack(void* from, void* to, int size) {
   //assert (write_stack_index(to) == _wsp + to_index(METADATA_SIZE), "to: %d wsp: %d", write_stack_index(to), _wsp);
 
   if (Continuation::PERFTEST_LEVEL >= 25) {
-    Copy::conjoint_memory_atomic(from, to, size); // Copy::disjoint_words((HeapWord*)from, (HeapWord*)to, size/wordSize); // 
+    memcpy(to, from, size);
+    //Copy::conjoint_memory_atomic(from, to, size); // Copy::disjoint_words((HeapWord*)from, (HeapWord*)to, size/wordSize); // 
   }
 
   _e_size += size;
@@ -857,7 +872,8 @@ void ContMirror::copy_from_stack(void* from, void* to, int size) {
   assert (stack_index(from) >= 0, "");
   assert (to_index(stack(), (address)from + size) <= stack_length(), "");
 
-  Copy::conjoint_memory_atomic(from, to, size);
+  memcpy(to, from, size);
+  //Copy::conjoint_memory_atomic(from, to, size);
 
   _e_size += size;
 }
@@ -1587,9 +1603,10 @@ static inline frame sender_for_compiled_frame(frame& f, intptr_t** link_addr, Co
     sender_pc = cont.entryPC();
   }
 
-  CodeBlob* sender_cb = ContinuationCodeBlobLookup::find_blob(sender_pc);
+  int slot = 0;
+  CodeBlob* sender_cb = ContinuationCodeBlobLookup::find_blob_and_oopmap(sender_pc, slot);
   return sender_cb != NULL 
-   ? frame(sender_sp, sender_sp, *link_addr, sender_pc, sender_cb)
+   ? frame(sender_sp, sender_sp, *link_addr, sender_pc, sender_cb, slot == -1 ? NULL : sender_cb->oop_map_for_slot(slot, sender_pc))
    : frame(sender_sp, sender_sp, *link_addr, sender_pc);
 }
 
@@ -1701,7 +1718,6 @@ private:
   int _fp_index;
 
   bool _is_last;
-
   bool is_last()  { return _is_last;  } // this is only true after returning from the recursive call
 
 public:
@@ -2033,28 +2049,13 @@ public:
     return result;
   }
 
-  bool cmp(int* a, int* b, int size) {
-    bool result = true;
-    for (int i = 0; i < size; ++i) {
-      if (a[i] != b[i]) {
-        tty->print_cr("%d: %d %d", i, a[i], b[i]);
-        result = false;
-      }
-    }
-    return result;
-  }
+  void finish(bool empty, frame& f) {
+    hframe orig_top_frame = _mirror.last_frame(); // must be done before committing the changes
 
-  void commit() {
     assert (_wsp <= _mirror.sp() - to_index(METADATA_SIZE), "wsp: %d sp - to_index(METADATA_SIZE): %d", _wsp, _mirror.sp() - to_index(METADATA_SIZE));
     assert (_wsp == _top.sp() - to_index(METADATA_SIZE), "wsp: %d top sp - to_index(METADATA_SIZE): %d", _wsp, _top.sp() - to_index(METADATA_SIZE));
     _mirror.set_last_frame(_top);
     _mirror.set_refSP(_wref_sp);
-  }
-
-  void finish(bool empty, frame& f) {
-    hframe orig_top_frame = _mirror.last_frame(); // must be done before committing the changes
-
-    commit();
 
     f = entry_frame();
 
@@ -2075,19 +2076,19 @@ public:
       assert (_bottom.sender(_mirror).is_empty(), "");
     } else {
       _bottom.patch_callee(_mirror, orig_top_frame);
-
       assert (_bottom.sender(_mirror) == orig_top_frame, "");
     }
 
-    log_trace(jvmcont)("last h-frame:");
-    if (log_is_enabled(Trace, jvmcont)) _bottom.print(_mirror);
+    if (log_is_enabled(Trace, jvmcont)) {
+      log_trace(jvmcont)("last h-frame:");
+      _bottom.print(_mirror);
+    }
 
-    log_trace(jvmcont)("top_hframe after (freeze):");
-    if (log_is_enabled(Trace, jvmcont)) _mirror.last_frame().print_on(_mirror, tty);
+    if (log_is_enabled(Trace, jvmcont)) {
+      log_trace(jvmcont)("top_hframe after (freeze):");
+      _mirror.last_frame().print_on(_mirror, tty);
+    }
 
-    DEBUG_ONLY(address ret_pc =  return_pc(f, f.is_interpreted_frame());)
-
-    // assert (strcmp(method_name(new_top.method(_mirror)), YIELD_SIG) == 0, "name: %s", method_name(new_top.method(_mirror)));  // not true if yield is not @DontInline
     assert (_mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED) == _mirror.last_frame().is_interpreted_frame(), "flag: %d is_interpreted: %d", _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED), _mirror.last_frame().is_interpreted_frame());
   }
 };
@@ -2102,16 +2103,18 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
   ContMirror cont(thread, oopCont);
   cont.read();
 
-  LogStreamHandle(Trace, jvmcont) st;
-
-  DEBUG_ONLY(log_debug(jvmcont)("Freeze ### #" INTPTR_FORMAT, cont.hash()));
+#ifdef ASSERT
+  log_debug(jvmcont)("Freeze ### #" INTPTR_FORMAT, cont.hash());
   log_trace(jvmcont)("Freeze 0000 sp: " INTPTR_FORMAT " fp: " INTPTR_FORMAT " pc: " INTPTR_FORMAT, p2i(f.sp()), p2i(f.fp()), p2i(f.pc()));
   log_trace(jvmcont)("Freeze 1111 sp: %d fp: 0x%lx pc: " INTPTR_FORMAT, cont.sp(), cont.fp(), p2i(cont.pc()));
+#endif
 
   intptr_t* bottom = cont.entrySP(); // (bottom is highest address; stacks grow down)
   intptr_t* top = f.sp();
 
+#ifdef ASSERT
   log_trace(jvmcont)("QQQ AAAAA bottom: " INTPTR_FORMAT " top: " INTPTR_FORMAT " size: " SIZE_FORMAT, p2i(bottom), p2i(top), pointer_delta(bottom, top, sizeof(address)));
+#endif
 
   if (Continuation::PERFTEST_LEVEL <= 13) return freeze_ok;
 
@@ -2126,7 +2129,7 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
   if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
 
   fc.finish(empty, f);
-  
+
   cont.write();
 
   // notify JVMTI
@@ -2170,7 +2173,6 @@ JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
 
   log_debug(jvmcont)("~~~~~~~~~ freeze");
   log_trace(jvmcont)("fi->sp: " INTPTR_FORMAT " fi->fp: " INTPTR_FORMAT " fi->pc: " INTPTR_FORMAT, p2i(fi->sp), p2i(fi->fp), p2i(fi->pc));
-  ContinuationCodeBlobLookup lookup;
 
   // set_anchor(thread, fi); // DEBUG
   print_frames(thread);
@@ -2191,6 +2193,12 @@ JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
 
   RegisterMap map(thread, false, false, false);
   map.set_include_argument_oops(false);
+
+  NativePostCallNop* nop = nativePostCallNop_at(fi->pc);
+  if (nop == NULL) {
+    log_info(jvmcont)("no nop at freeze entry");
+  }
+
   // Note: if the doYield stub does not have its own frame, we may need to consider deopt here, especially if yield is inlinable
   frame f = thread->last_frame(); // this is the doYield stub frame. last_frame is set up by the call_VM infrastructure // <---- CodeCache::find_blob is expensive
   // f.print_on(tty);

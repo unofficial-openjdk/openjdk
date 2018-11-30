@@ -26,7 +26,10 @@
 #define CPU_X86_VM_FRAME_X86_INLINE_HPP
 
 #include "code/codeCache.hpp"
+#include "code/codeCache.inline.hpp"
 #include "code/vmreg.inline.hpp"
+#include "compiler/oopMap.inline.hpp"
+#include "runtime/sharedRuntime.hpp"
 
 // Inline functions for Intel frames:
 
@@ -77,6 +80,17 @@ inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address
   setup(pc);
 }
 
+inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc, CodeBlob* cb, const ImmutableOopMap* oop_map) {
+  _sp = sp;
+  _unextended_sp = unextended_sp;
+  _fp = fp;
+  _pc = pc;
+  assert(pc != NULL, "no pc?");
+  _cb = cb;
+  _oop_map = oop_map;
+  setup(pc);
+}
+
 inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc) {
   _sp = sp;
   _unextended_sp = unextended_sp;
@@ -99,7 +113,7 @@ inline void frame::setup(address pc) {
            "original PC must be in the main code section of the the compiled method (or must be immediately following it)");
     _deopt_state = is_deoptimized;
   } else {
-    if (_cb->is_deoptimization_stub()) {
+    if (_cb == SharedRuntime::deopt_blob()) {
       _deopt_state = is_deoptimized;
     } else {
       _deopt_state = not_deoptimized;
@@ -372,6 +386,20 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
     return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc, sender_cb);
   }
   return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc);
+}
+
+inline const ImmutableOopMap* frame::get_oop_map() const {
+  if (_cb == NULL) return NULL;
+  if (_cb->oop_maps() != NULL) {
+    NativePostCallNop* nop = nativePostCallNop_at(_pc);
+    if (nop != NULL && nop->displacement() != 0) {
+      int slot = ((nop->displacement() >> 24) & 0xff);
+      return _cb->oop_map_for_slot(slot, _pc);
+    }
+    const ImmutableOopMap* oop_map = OopMapSet::find_map(this);
+    return oop_map;
+  }
+  return NULL;
 }
 
 #endif // CPU_X86_VM_FRAME_X86_INLINE_HPP
