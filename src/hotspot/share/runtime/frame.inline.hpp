@@ -46,6 +46,11 @@ inline bool frame::is_entry_frame() const {
   return StubRoutines::returns_to_call_stub(pc());
 }
 
+inline bool frame::is_deoptimized_frame() const {
+  assert(_deopt_state != unknown, "not answerable");
+  return _deopt_state == is_deoptimized;
+}
+
 inline bool frame::is_stub_frame() const {
   return StubRoutines::is_stub_code(pc()) || (_cb != NULL && _cb->is_adapter_blob());
 }

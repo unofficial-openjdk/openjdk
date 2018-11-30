@@ -75,6 +75,7 @@
 class ExceptionCache;
 class KlassDepChange;
 class OopClosure;
+class NativePostCallNop;
 
 class CodeCache : AllStatic {
   friend class VMStructs;
@@ -129,6 +130,7 @@ class CodeCache : AllStatic {
 
   // Make private to prevent unsafe calls.  Not all CodeBlob*'s are embedded in a CodeHeap.
   static bool contains(CodeBlob *p) { fatal("don't call me!"); return false; }
+  static CodeBlob* patch_nop(NativePostCallNop* nop, void* pc, int& slot);
 
  public:
   // Initialization
@@ -159,6 +161,7 @@ class CodeCache : AllStatic {
   static CodeBlob* find_blob(void* start);              // Returns the CodeBlob containing the given address
   static CodeBlob* find_blob_unsafe(void* start);       // Same as find_blob but does not fail if looking up a zombie method
   static CodeBlob* find_blob_fast(void* start);         // Returns the CodeBlob containing the given address
+  static CodeBlob* find_blob_and_oopmap(void* start, int& slot);         // Returns the CodeBlob containing the given address
   static nmethod*  find_nmethod(void* start);           // Returns the nmethod containing the given address
   static CompiledMethod* find_compiled(void* start);
 

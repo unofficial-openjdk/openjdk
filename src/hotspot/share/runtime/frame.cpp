@@ -192,10 +192,6 @@ void frame::set_pc_preserve_deopt(address   newpc) {
 bool frame::is_ignored_frame() const {
   return false;  // FIXME: some LambdaForm frames should be ignored
 }
-bool frame::is_deoptimized_frame() const {
-  assert(_deopt_state != unknown, "not answerable");
-  return _deopt_state == is_deoptimized;
-}
 
 bool frame::is_native_frame() const {
   return (_cb != NULL &&
