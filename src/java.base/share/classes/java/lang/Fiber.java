@@ -294,8 +294,8 @@ public class Fiber<V> {
         assert Thread.currentCarrierThread().getFiber() == null;
 
         // set state to ST_RUNNING
-        boolean started = stateCompareAndSet(ST_STARTED, ST_RUNNABLE);
-        if (!started) {
+        boolean firstRun = stateCompareAndSet(ST_STARTED, ST_RUNNABLE);
+        if (!firstRun) {
             // continue on this carrier thread if fiber was parked
             if (stateCompareAndSet(ST_PARKED, ST_RUNNABLE)) {
                 parkPermitGetAndSet(false);  // consume parking permit
@@ -304,7 +304,7 @@ public class Fiber<V> {
             }
         }
 
-        mount(started);
+        mount(firstRun);
         try {
             cont.run();
         } finally {
@@ -321,7 +321,7 @@ public class Fiber<V> {
      * Mounts this fiber. This method must be invoked before the continuation
      * is run or continued. It binds the fiber to the current carrier thread.
      */
-    private void mount(boolean started) {
+    private void mount(boolean firstRun) {
         Thread thread = Thread.currentCarrierThread();
 
         // sets the carrier thread
@@ -335,9 +335,8 @@ public class Fiber<V> {
         assert thread.getFiber() == null;
         thread.setFiber(this);
 
-        if (notifyJvmtiEvents) {
-            if (started)
-                notifyFiberStarted(thread, this);
+        if (firstRun && notifyJvmtiEvents) {
+            notifyFiberStarted(thread, this);
             notifyFiberMount(thread, this);
         }
     }
@@ -533,6 +532,11 @@ public class Fiber<V> {
 
         // continued
         assert stateGet() == ST_RUNNABLE;
+
+        // notify JVMTI mount event here so that stack is avaiable to agents
+        if (notifyJvmtiEvents) {
+            notifyFiberMount(Thread.currentCarrierThread(), this);
+        }
     }
 
     /**
