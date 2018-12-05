@@ -144,6 +144,12 @@ inline oop java_lang_Continuation::target(oop ref) {
 inline oop java_lang_Continuation::parent(oop ref) {
   return ref->obj_field(_parent_offset);
 }
+inline oop java_lang_Continuation::yieldInfo(oop ref) {
+  return ref->obj_field(_yieldInfo_offset);
+}
+inline void java_lang_Continuation::set_yieldInfo(oop ref, oop value) {
+  ref->obj_field_put(_yieldInfo_offset, value);
+}
 inline typeArrayOop java_lang_Continuation::stack(oop ref) {
   oop a = ref->obj_field(_stack_offset);
   return (typeArrayOop)a;

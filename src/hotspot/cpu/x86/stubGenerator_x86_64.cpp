@@ -5648,6 +5648,7 @@ RuntimeStub* generate_cont_doYield() {
     __ lea(fi, Address(rsp, wordSize)); // skip return address
     __ movptr(c_rarg3, rbp);
 
+    // __ stop("FFFFF");
     __ enter();
 
     // // return address and rbp are already in place
@@ -5661,8 +5662,12 @@ RuntimeStub* generate_cont_doYield() {
     __ post_call_nop(); // this must be exactly after the pc value that is pushed into the frame info, we use this nop for fast CodeBlob lookup
 
     if (ContPerfTest > 5) {
-    __ set_last_Java_frame(rsp, rbp, the_pc); // may be unnecessary. also, consider MacroAssembler::call_VM_leaf_base
-    __ call_VM(noreg, CAST_FROM_FN_PTR(address, Continuation::freeze), fi, false); // do NOT check exceptions; they'll get forwarded to the caller
+    // if (from_java) {
+      __ set_last_Java_frame(rsp, rbp, the_pc); // may be unnecessary. also, consider MacroAssembler::call_VM_leaf_base
+      __ call_VM(noreg, CAST_FROM_FN_PTR(address, Continuation::freeze), fi, false); // do NOT check exceptions; they'll get forwarded to the caller
+    // } else {
+    //   __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::freeze_C), fi);
+    // }
     }
 
     Label pinned;
@@ -5698,6 +5703,32 @@ RuntimeStub* generate_cont_doYield() {
     return stub;
   }
 
+  address generate_cont_jump_from_safepoint() {
+    StubCodeMark mark(this, "StubRoutines","Continuation jump from safepoint");
+
+    Register fi = rbx;
+
+    address start = __ pc();
+
+    __ get_thread(r15_thread);
+    __ reset_last_Java_frame(true); // false would be fine, too, I guess
+
+    __ lea(fi, Address(r15_thread, JavaThread::cont_frame_offset()));
+    __ movptr(rdx, Address(fi, wordSize*0)); // pc
+    __ movptr(rbp, Address(fi, wordSize*1)); // fp
+    __ movptr(rbp, Address(rbp, 0)); // fp is indirect. See Continuation::freeze for an explanation.
+    __ movptr(rsp, Address(fi, wordSize*2)); // sp
+
+    __ xorq(rax, rax);
+    __ movptr(Address(fi, wordSize*0), rax); // pc
+    __ movptr(Address(fi, wordSize*1), rax); // fp
+    __ movptr(Address(fi, wordSize*2), rax); // sp
+
+    __ jmp(rdx);
+
+    return start;
+  }
+
   // c_rarg1 - sp
   // c_rarg2 - fp
   // c_rarg3 - pc
@@ -5714,6 +5745,8 @@ RuntimeStub* generate_cont_doYield() {
   }
 
   address generate_cont_thaw(bool return_barrier, bool exception) {
+    assert (return_barrier || !exception, "must be");
+
     address start = __ pc();
 
     // TODO: Handle Valhalla return types. May require generating different return barriers.
@@ -5725,7 +5758,7 @@ RuntimeStub* generate_cont_doYield() {
       // __ lea(rsp, Address(rsp, wordSize)); // pop return address. if we don't do this, we get a drift, where the bottom-most frozen frame continuously grows
     }
 
-    Label thaw_fail;
+    Label thaw_success;
     __ movptr(fi, rsp);
     if (return_barrier) {
       __ push(rax); __ push_d(xmm0); // preserve possible return value from a method returning to the return barrier
@@ -5738,7 +5771,16 @@ RuntimeStub* generate_cont_doYield() {
       __ xorq(rax, rax);
     }
     __ testq(rax, rax);           // rax contains the size of the frames to thaw, 0 if overflow or no more frames
-    __ jcc(Assembler::zero, thaw_fail);
+    __ jcc(Assembler::notZero, thaw_success);
+
+    pop_FrameInfo(_masm, fi, rbp, rbx);
+    if (return_barrier) {
+      __ pop_d(xmm0); __ pop(rax); // restore return value (no safepoint in the call to thaw, so even an oop return value should be OK)
+    } 
+    __ movptr(rsp, fi); // we're now on the yield frame (which is in an address above us b/c rsp has been pushed down)
+    __ jmp(rbx); // a jump to StubRoutines::throw_StackOverflowError_entry
+
+    __ bind(thaw_success);
 
     pop_FrameInfo(_masm, fi, rbp, c_rarg3); // c_rarg3 would still be our return address
     if (return_barrier) {
@@ -5753,18 +5795,36 @@ RuntimeStub* generate_cont_doYield() {
     __ movl(c_rarg1, return_barrier);
     __ movl(c_rarg2, exception);
     __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::thaw), fi, c_rarg1, c_rarg2);
-    if (!return_barrier) {
-      __ movl(rax, 0); // return 0 (success) from doYield
-    } 
     if (exception) {
       __ movptr(rdx, rax); // rdx must contain the original pc in the case of exception
     }
-    __ bind(thaw_fail);
     pop_FrameInfo(_masm, fi, rbp, rbx);
     if (return_barrier) {
       __ pop_d(xmm0); __ pop(rax); // restore return value (no safepoint in the call to thaw, so even an oop return value should be OK)
+    } 
+
+    __ movptr(rsp, fi); // we're now on the yield frame (which is in an address above us b/c rsp has been pushed down)
+
+    if (!return_barrier) {
+      // This is necessary for forced yields, as the return addres (in rbx) is captured in a call_VM, and skips the restoration of rbcp and locals
+      // ... but it does no harm even for ordinary yields
+      // TODO: use InterpreterMacroAssembler
+      static const Register _locals_register = LP64_ONLY(r14) NOT_LP64(rdi);
+      static const Register _bcp_register    = LP64_ONLY(r13) NOT_LP64(rsi);
+
+      Label not_interpreter;
+      __ testq(rax, rax); // rax is true iff we're jumping into the interpreter
+      __ jcc(Assembler::zero, not_interpreter);
+
+      // see InterpreterMacroAssembler::restore_bcp/restore_locals
+      __ movptr(_bcp_register,    Address(rbp, frame::interpreter_frame_bcp_offset    * wordSize));
+      __ movptr(_locals_register, Address(rbp, frame::interpreter_frame_locals_offset * wordSize));
+
+      __ bind(not_interpreter);
+
+      __ movl(rax, 0); // return 0 (success) from doYield
     }
-    __ movptr(rsp, fi); // we're now on the yield frame (which is above us b/c rsp has been pushed down)
+
     __ jmp(rbx);
 
     return start;
@@ -6071,6 +6131,7 @@ RuntimeStub* generate_cont_doYield() {
     StubRoutines::_cont_returnBarrierExc = generate_cont_returnBarrier_exception();
     StubRoutines::_cont_doYield_stub = generate_cont_doYield();
     StubRoutines::_cont_doYield    = StubRoutines::_cont_doYield_stub->entry_point();
+    StubRoutines::_cont_jump_from_sp = generate_cont_jump_from_safepoint();
     StubRoutines::_cont_jump       = generate_cont_jump();
     StubRoutines::_cont_getSP      = generate_cont_getSP();
     StubRoutines::_cont_getPC      = generate_cont_getPC();

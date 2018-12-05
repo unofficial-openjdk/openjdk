@@ -32,6 +32,7 @@
 #include "memory/allocation.hpp"
 #include "oops/oop.hpp"
 #include "prims/jvmtiExport.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/frame.hpp"
 #include "runtime/globals.hpp"
 #include "runtime/handshake.hpp"
@@ -911,6 +912,7 @@ class JavaThread: public Thread {
   friend class VMStructs;
   friend class JVMCIVMStructs;
   friend class WhiteBox;
+  friend class Continuation;
  private:
   JavaThread*    _next;                          // The next thread in the Threads list
   bool           _on_thread_list;                // Is set when this JavaThread is added to the Threads list
@@ -1124,6 +1126,9 @@ class JavaThread: public Thread {
   // _frames_to_pop_failed_realloc frames, the ones that reference
   // failed reallocations.
   int _frames_to_pop_failed_realloc;
+
+  bool _cont_yield; // a continuation yield is in progress
+  FrameInfo _cont_frame;
 
 #ifndef PRODUCT
   int _jmp_ring_index;
@@ -1400,6 +1405,7 @@ class JavaThread: public Thread {
     return x;
   }
 
+  bool is_cont_force_yield() { return _cont_frame.pc != NULL; }
   // Are any async conditions present?
   bool has_async_condition() { return (_special_runtime_exit_condition != _no_async_condition); }
 
@@ -1421,7 +1427,7 @@ class JavaThread: public Thread {
     // we have checked is_external_suspend(), we will recheck its value
     // under SR_lock in java_suspend_self().
     return (_special_runtime_exit_condition != _no_async_condition) ||
-            is_external_suspend() || is_trace_suspend();
+            is_external_suspend() || is_trace_suspend() || is_cont_force_yield();
   }
 
   void set_pending_unsafe_access_error()          { _special_runtime_exit_condition = _async_unsafe_access_error; }
@@ -1735,6 +1741,8 @@ class JavaThread: public Thread {
   static ByteSize should_post_on_exceptions_flag_offset() {
     return byte_offset_of(JavaThread, _should_post_on_exceptions_flag);
   }
+
+  static ByteSize cont_frame_offset()         { return byte_offset_of(JavaThread, _cont_frame); }
 
   // Returns the jni environment for this thread
   JNIEnv* jni_environment()                      { return &_jni_environment; }

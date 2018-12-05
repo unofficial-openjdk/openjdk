@@ -25,8 +25,6 @@
 #ifndef SHARE_VM_RUNTIME_CONTINUATION_HPP
 #define SHARE_VM_RUNTIME_CONTINUATION_HPP
 
-#include "classfile/javaClasses.hpp"
-#include "classfile/javaClasses.inline.hpp"
 #include "runtime/globals.hpp"
 
 #define CONT_FULL_STACK (!UseNewCode)
@@ -55,13 +53,15 @@ public:
 
 class Continuation : AllStatic {
 public:
+  static int freeze0(JavaThread* thread, FrameInfo* fi, bool safepoint_yield);
   static int freeze(JavaThread* thread, FrameInfo* fi);
   static int prepare_thaw(FrameInfo* fi, bool return_barrier);
   static address thaw(FrameInfo* fi, bool return_barrier, bool exception);
+  static int try_force_yield(JavaThread* thread, oop cont);
 
   static bool is_continuation_entry_frame(const frame& f, const RegisterMap* map);
   static bool is_cont_bottom_frame(const frame& f);
-  static bool is_return_barrier_entry(const address pc) { return pc == StubRoutines::cont_returnBarrier(); }
+  static bool is_return_barrier_entry(const address pc);
   static bool is_frame_in_continuation(JavaThread* thread, const frame& f);
   static address fix_continuation_bottom_sender(const frame* callee, RegisterMap* map, address pc);
 
@@ -77,7 +77,7 @@ public:
   static Method* interpreter_frame_method(const frame& fr, const RegisterMap* map);
   static address interpreter_frame_bcp(const frame& fr, const RegisterMap* map);
 
-  static inline oop continuation_scope(oop cont) { return cont != NULL ? java_lang_Continuation::scope(cont) : (oop)NULL; }
+  static oop continuation_scope(oop cont);
   static bool is_scope_bottom(oop cont_scope, const frame& fr, const RegisterMap* map);
   
   static int PERFTEST_LEVEL;

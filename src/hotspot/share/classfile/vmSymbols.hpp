@@ -382,6 +382,7 @@
   template(getStacks_name,                            "getStacks")                                \
   template(onPinned_name,                             "onPinned0")                                \
   template(scope_name,                                "scope")                                    \
+  template(yieldInfo_name,                            "yieldInfo")                                \
   template(entrySP_name,                              "entrySP")                                  \
   template(entryFP_name,                              "entryFP")                                  \
   template(entryPC_name,                              "entryPC")                                  \
