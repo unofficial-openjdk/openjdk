@@ -1597,6 +1597,9 @@ void JavaThread::initialize() {
   _cached_monitor_info = NULL;
   _parker = Parker::Allocate(this);
 
+  _cont_yield = false;
+  _cont_frame = (FrameInfo){0, 0, 0};
+
 #ifndef PRODUCT
   _jmp_ring_index = 0;
   for (int ji = 0; ji < jump_ring_buffer_size; ji++) {
@@ -2237,6 +2240,10 @@ void JavaThread::handle_special_runtime_exit_condition(bool check_asyncs) {
 
   if (check_asyncs) {
     check_and_handle_async_exceptions();
+  }
+
+  if (is_cont_force_yield()) {
+    StubRoutines::cont_jump_from_sp_C()();
   }
 
   JFR_ONLY(SUSPEND_THREAD_CONDITIONAL(this);)

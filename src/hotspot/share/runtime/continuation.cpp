@@ -145,6 +145,7 @@ static inline int to_bytes(int x)    { return x << 2; } // stack is int[]
 #define METADATA_ELEMENTS (METADATA_SIZE / ELEM_SIZE)
 
 static const unsigned char FLAG_LAST_FRAME_INTERPRETED = 1;
+static const unsigned char FLAG_SAFEPOINT_YIELD = 1 << 1;
 
 
 // static inline HFrameMetadata* metadata(intptr_t* hsp) {
@@ -1334,6 +1335,11 @@ static void patch_return_pc(frame& f, address pc, bool is_interpreted) {
   log_trace(jvmcont)("patched return_pc: " INTPTR_FORMAT, p2i(pc));
 }
 
+static void patch_pc(frame& f, address pc) {
+  address* pc_addr = &(((address*) f.sp())[-1]); // x86-specific
+  *pc_addr = pc;
+}
+
 // static void patch_interpreted_bci(frame& f, int bci) {
 //   f.interpreter_frame_set_bcp(f.interpreter_frame_method()->bcp_from(bci));
 // }
@@ -1471,8 +1477,9 @@ protected:
 
 #ifdef ASSERT // this section adds substantial overhead
     VMReg reg;
-    assert(offset >= 0 || p == _fr->saved_link_address(_map),
-      "offset: %d reg: %s", offset, (reg = find_register_spilled_here(p, _map), reg != NULL ? reg->name() : "NONE")); // calle-saved register can only be rbp
+    // The following is not true for the sender of the safepoint stub
+    // assert(offset >= 0 || p == _fr->saved_link_address(_map),
+    //   "offset: %d reg: %s", offset, (reg = find_register_spilled_here(p, _map), reg != NULL ? reg->name() : "NONE")); // calle-saved register can only be rbp
     reg = find_register_spilled_here(p, _map); // expensive operation
     if (reg != NULL) log_trace(jvmcont)("reg: %s", reg->name());
     log_trace(jvmcont)("p: " INTPTR_FORMAT " offset: %d %s", p2i(p), offset, p == _fr->saved_link_address(_map) ? "(link)" : "");
@@ -1655,7 +1662,8 @@ class CompiledFreezeOopFn: public ContOopBase {
       log_trace(jvmcont)("Setting reverse oop index at " INTPTR_FORMAT " (offset: %d) : %d (length: %d)", p2i(hloc), offset, oop_reverse_index, _refStack_length);
       assert(offset < 32768, "");
     } else {
-      assert (p == (T*)_fr->saved_link_address(_map), "");
+      // The following is not true for the sender of the safepoint stub
+      // assert (p == (T*)_fr->saved_link_address(_map), "");
       _fc->set_oop_fp_index(oop_reverse_index);
       log_trace(jvmcont)("Setting reverse oop index in callerinfo (offset: %d) : %d (length: %d)", offset, oop_reverse_index, _refStack_length);
     }
@@ -1902,7 +1910,15 @@ public:
     hframe hf = _mirror.new_hframe<true>(hsp, (hsp + (long)(f.fp() - vsp)), f.pc(), NULL, true);
     save_bounding_hframe(hf, is_first);
 
-    relativize(vfp, hfp, frame::interpreter_frame_last_sp_offset);
+    assert ((*(vfp + frame::interpreter_frame_last_sp_offset) != 0) || (f.unextended_sp() == f.sp()), 
+      "*(vfp + frame::interpreter_frame_last_sp_offset): %p f.unextended_sp(): %p f.sp(): %p",
+      (void*)*(vfp + frame::interpreter_frame_last_sp_offset), f.unextended_sp(), f.sp());
+
+    if (*(vfp + frame::interpreter_frame_last_sp_offset) == 0) {
+      *(hfp + frame::interpreter_frame_last_sp_offset) = 0;
+    } else {
+      relativize(vfp, hfp, frame::interpreter_frame_last_sp_offset);
+    }
     relativize(vfp, hfp, frame::interpreter_frame_initial_sp_offset); // == block_top == block_bottom
     relativize(vfp, hfp, frame::interpreter_frame_locals_offset);
 
@@ -1924,8 +1940,9 @@ public:
     return freeze_ok;
   }
 
+  template <bool stub>
   res_freeze freeze_compiled_stackframe(frame& f, intptr_t** callee_link_address, hframe& caller, bool is_first) {
-    if (is_compiled_frame_owning_locks(_mirror.thread(), &_map, f)) {
+    if (!stub && is_compiled_frame_owning_locks(_mirror.thread(), &_map, f)) {
       return freeze_pinned_monitor;
     }
 
@@ -1952,7 +1969,9 @@ public:
     assert (fsize1 == fsize, "");
 #endif
 
-    f.cb()->as_compiled_method()->inc_on_continuation_stack();
+    if (!stub) {
+      f.cb()->as_compiled_method()->inc_on_continuation_stack();
+    }
 
     intptr_t* hsp = freeze_raw_frame(vsp, fsize);
 
@@ -1973,7 +1992,11 @@ public:
 
     update_map_with_saved_link(&_map, callee_link_address);
 
-    freeze_oops<FreezeCompiledOops>(f, vsp, hsp, oops); // must be called after patch, as patch uses the previous freeze_oop data
+    if (!stub) {
+      freeze_oops<FreezeCompiledOops>(f, vsp, hsp, oops); // must be called after patch, as patch uses the previous freeze_oop data
+    } else {
+      _has_fp_oop = false;
+    }
 
     caller = hf;
 
@@ -2030,18 +2053,18 @@ public:
 
     _frames++;
     res_freeze result;
-    bool is_compiled = f.is_compiled_frame();
-    if (is_compiled) {
+    if (f.is_compiled_frame()) {
       if (f.oop_map() == NULL) {
         return freeze_pinned_native; // special native frame
       }
-      result = freeze_compiled_stackframe(f, callee_link_address, caller, is_first);
-    } else {
-      bool is_interpreted = f.is_interpreted_frame();
-      if (!is_interpreted) {
-        return freeze_pinned_native;
-      }
+      result = freeze_compiled_stackframe<false>(f, callee_link_address, caller, is_first);
+    } else if (f.is_interpreted_frame()) {
       result = freeze_interpreted_stackframe(f, caller, is_first);
+    } else if (f.cb()->is_safepoint_stub()) {
+      assert (is_first, "");
+      result = freeze_compiled_stackframe<true>(f, callee_link_address, caller, is_first);
+    } else {
+      return freeze_pinned_native;
     }
 
     if (_is_last) _is_last = false;
@@ -2094,7 +2117,7 @@ public:
 };
 
 // freezes all frames of a single continuation
-static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f, RegisterMap& map) {
+static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f, RegisterMap& map, bool safepoint_yield) {
   assert (oopCont != NULL, "");
 
   log_trace(jvmcont)("Freeze ___ cont: " INTPTR_FORMAT, p2i((oopDesc*)oopCont));
@@ -2130,6 +2153,8 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 
   fc.finish(empty, f);
 
+  cont.set_flag(FLAG_SAFEPOINT_YIELD, safepoint_yield);
+
   cont.write();
 
   // notify JVMTI
@@ -2158,11 +2183,11 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 // it must set Continuation.stackSize
 // sets Continuation.fp/sp to relative indices
 //
-// In: fi->pc, fi->sp, fi->fp all point to the current (topmost) frame to freeze (the yield frame)
+// In: fi->pc, fi->sp, fi->fp all point to the current (topmost) frame to freeze (the yield frame); THESE VALUES ARE CURRENTLY UNUSED
 // Out: fi->pc, fi->sp, fi->fp all point to the run frame (entry's caller)
 //      unless freezing has failed, in which case fi->pc = 0
 //      However, fi->fp points to the _address_ on the stack of the entry frame's link to its caller (so *(fi->fp) is the fp)
-JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
+int Continuation::freeze0(JavaThread* thread, FrameInfo* fi, bool safepoint_yield) {
   callgrind();
   Continuation::PERFTEST_LEVEL = ContPerfTest;
 
@@ -2171,9 +2196,12 @@ JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
     return freeze_ok;
   }
 
+  assert (!thread->_cont_yield, "");
+  thread->_cont_yield = true;
   log_debug(jvmcont)("~~~~~~~~~ freeze");
   log_trace(jvmcont)("fi->sp: " INTPTR_FORMAT " fi->fp: " INTPTR_FORMAT " fi->pc: " INTPTR_FORMAT, p2i(fi->sp), p2i(fi->fp), p2i(fi->pc));
-
+  assert (thread->thread_state() == _thread_in_vm, "");
+  
   // set_anchor(thread, fi); // DEBUG
   print_frames(thread);
 
@@ -2185,6 +2213,7 @@ JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
   if (thread->has_pending_exception()) {
     fi->fp = NULL; fi->sp = NULL; fi->pc = NULL;
     log_trace(jvmcont)("=== end of freeze (fail 0)");
+    thread->_cont_yield = false;
     return freeze_exception;
   }
 
@@ -2201,20 +2230,34 @@ JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
 
   // Note: if the doYield stub does not have its own frame, we may need to consider deopt here, especially if yield is inlinable
   frame f = thread->last_frame(); // this is the doYield stub frame. last_frame is set up by the call_VM infrastructure // <---- CodeCache::find_blob is expensive
-  // f.print_on(tty);
-
   frame::update_map_with_saved_link(&map, link_address(f));
-  f = f.frame_sender<ContinuationCodeBlobLookup>(&map); // LOOKUP // this is the yield frame
 
-  assert (f.pc() == fi->pc, "");
+  if (!safepoint_yield) {
+    assert (StubRoutines::cont_doYield_stub()->contains(f.pc()), "must be");
+    f = f.frame_sender<ContinuationCodeBlobLookup>(&map); // LOOKUP // this is the yield frame
+    assert (f.pc() == fi->pc, "");
+  } else { // safepoint yield
+    f.set_fp(f.real_fp()); // Instead of this, maybe in ContMirror::set_last_frame always use the real_fp?
+    if (Interpreter::contains(f.pc())) {
+      log_trace(jvmcont)("INTERPRETER SAFEPOINT");
+      // f.set_sp(f.sp() - 1); // state pushed to the stack
+    } else {
+      log_trace(jvmcont)("COMPILER SAFEPOINT");
+      assert (f.cb()->is_safepoint_stub(), "must be");
+      assert (f.oop_map() != NULL, "must be");
+      f.oop_map()->update_register_map(&f, &map); // we have callee-save registers in this case
+    }
+  }
+  
   // The following doesn't work because fi->fp can contain an oop, that a GC doesn't know about when walking.
   // frame::update_map_with_saved_link(&map, (intptr_t **)&fi->fp);
   // frame f(fi->sp, fi->fp, fi->pc); // the yield frame
 
-  res_freeze res = freeze_continuation(thread, cont, f, map); // changes f
+  res_freeze res = freeze_continuation(thread, cont, f, map, safepoint_yield); // changes f
   if (res != freeze_ok) {
     fi->fp = NULL; fi->sp = NULL; fi->pc = NULL;
     log_trace(jvmcont)("=== end of freeze (fail)");
+    thread->_cont_yield = false;
     return res;
   }
 
@@ -2248,9 +2291,61 @@ JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
   log_debug(jvmcont)("ENTRY: sp: " INTPTR_FORMAT " fp: " INTPTR_FORMAT " pc: " INTPTR_FORMAT, p2i(fi->sp), p2i(fi->fp), p2i(fi->pc));
   log_debug(jvmcont)("=== End of freeze");
 
+  thread->_cont_yield = false;
   return 0;
+}
+
+JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
+  return freeze0(thread, fi, false);
 JRT_END
 
+typedef int (*DoYieldStub)(int scopes);
+
+int Continuation::try_force_yield(JavaThread* thread, oop cont) {
+
+  oop innermost = get_continuation(thread);
+  oop scope = NULL;
+  for (oop c = innermost; c != NULL; c = java_lang_Continuation::parent(c)) {
+    if (c == cont) {
+      scope = java_lang_Continuation::scope(c);
+      break;
+    }
+  }
+  if (scope == NULL) {
+    return -1; // no continuation
+  }
+  if (thread->_cont_yield) {
+    return -2; // during yield
+  }
+  if (innermost != cont) {
+    java_lang_Continuation::set_yieldInfo(cont, scope);
+  }
+  
+// #ifdef ASSERT
+//   tty->print_cr("FREEZING:");
+//   frame lf = thread->last_frame();
+//   lf.print_on(tty);
+//   tty->print_cr("");
+//   const ImmutableOopMap* oopmap = lf.oop_map();
+//   if (oopmap != NULL) {
+//     oopmap->print();
+//     tty->print_cr("");
+//   } else {
+//     tty->print_cr("oopmap: NULL");
+//   }
+//   tty->print_cr("*&^*&#^$*&&@(#*&@(#&*(*@#&*(&@#$^*(&#$(*&#@$(*&#($*&@#($*&$(#*$");
+// #endif
+  // TODO: save return value
+
+  FrameInfo fi;
+  int res = freeze0(thread, &fi, true); // CAST_TO_FN_PTR(DoYieldStub, StubRoutines::cont_doYield_C())(-1);
+  if (res == 0) { // success
+    thread->_cont_frame = fi;
+    frame last = thread->last_frame();
+    patch_pc(last, StubRoutines::cont_jump_from_sp()); // reinstates rbpc and rlocals for the sake of the interpreter
+  }
+  return res;
+}
 ///////////////
 
 class ThawOopFn: public ContOopBase {
@@ -2308,11 +2403,17 @@ static frame thaw_interpreted_frame(ContMirror& cont, hframe& hf, intptr_t* vsp,
   intptr_t* hfp = cont.stack_address(hf.fp());
   intptr_t* vfp = vsp + (hfp - hsp);
 
-  derelativize(vfp, frame::interpreter_frame_last_sp_offset);
+  bool safepoint_stub = false;
+  if (*(hfp + frame::interpreter_frame_last_sp_offset) == 0) {
+      *(vfp + frame::interpreter_frame_last_sp_offset) = 0;
+      safepoint_stub = true; // the last yield was forced and called in a safepoint
+  } else {
+    derelativize(vfp, frame::interpreter_frame_last_sp_offset);
+  }
   derelativize(vfp, frame::interpreter_frame_initial_sp_offset); // == block_top == block_bottom
   derelativize(vfp, frame::interpreter_frame_locals_offset);
 
-  intptr_t* unextended_sp = *(intptr_t**)(vfp + frame::interpreter_frame_last_sp_offset);
+  intptr_t* unextended_sp = safepoint_stub ? vsp : *(intptr_t**)(vfp + frame::interpreter_frame_last_sp_offset);
   frame f(vsp, unextended_sp, vfp, hf.pc());
 
   patch_sender_sp(f, sender.unextended_sp()); // derelativize(vfp, frame::interpreter_frame_sender_sp_offset);
@@ -2320,9 +2421,7 @@ static frame thaw_interpreted_frame(ContMirror& cont, hframe& hf, intptr_t* vsp,
   assert (*(intptr_t**)(vfp + frame::interpreter_frame_locals_offset) < frame_top(sender), "sender top: " INTPTR_FORMAT " locals: " INTPTR_FORMAT,
     p2i(frame_top(sender)), p2i(*(intptr_t**)(vfp + frame::interpreter_frame_locals_offset)));
 
-  if (!f.is_interpreted_frame_valid(cont.thread())) {
-    assert(f.is_interpreted_frame_valid(cont.thread()), "invalid thawed frame");
-  }
+  assert(f.is_interpreted_frame_valid(cont.thread()), "invalid thawed frame");
 
   cont.dec_num_frames();
   cont.dec_num_interpreted_frames();
@@ -2352,7 +2451,8 @@ static frame thaw_compiled_frame(ContMirror& cont, hframe& hf, intptr_t* vsp, fr
   intptr_t* hsp = cont.stack_address(hf.sp());
   cont.copy_from_stack(hsp, vsp, hf.size(cont));
 
-  hf.cb()->as_compiled_method()->dec_on_continuation_stack();
+  if (!hf.cb()->is_safepoint_stub())
+    hf.cb()->as_compiled_method()->dec_on_continuation_stack();
 
   frame f(vsp, (intptr_t*)hf.fp(), hf.pc());
 
@@ -2415,7 +2515,7 @@ static void thaw_oops(ContMirror& cont, frame& f, int oop_index, int num_oops, v
   log_trace(jvmcont)("Done walking oops");
 }
 
-static frame thaw_frame(ContMirror& cont, hframe& hf, int oop_index, frame& sender, bool &deoptimized) {
+static frame thaw_frame(ContMirror& cont, hframe& hf, int oop_index, frame& sender, bool &deoptimized, hframe* callee_safepoint_stub) {
   log_trace(jvmcont)("=============================");
 
   if (log_is_enabled(Trace, jvmcont)) hf.print(cont);
@@ -2493,10 +2593,11 @@ static frame thaw_frame(ContMirror& cont, hframe& hf, int oop_index, frame& send
 
   RegisterMap map(cont.thread(), true, false, false);
   map.set_include_argument_oops(false);
+  // map is only passed to thaw_compiled_frame for use in deoptimize, which uses it only for biased locks; we may not need deoptimize there at all -- investigate
 
   bool is_interpreted = hf.is_interpreted_frame();
   frame f = is_interpreted ? thaw_interpreted_frame(cont, hf, vsp, sender)
-                                      :    thaw_compiled_frame(cont, hf, vsp, sender, map, deoptimized);
+                           : thaw_compiled_frame(cont, hf, vsp, sender, map, deoptimized);
 
   patch_link(f, sender.fp(), is_interpreted);
   patch_return_pc(f, ret_pc, is_interpreted);
@@ -2509,6 +2610,21 @@ static frame thaw_frame(ContMirror& cont, hframe& hf, int oop_index, frame& send
 
   assert (!is_entry_frame(cont, sender) || sender.fp() == cont.entryFP(), "sender.fp: " INTPTR_FORMAT " entryFP: " INTPTR_FORMAT, p2i(sender.fp()), p2i(cont.entryFP()));
 
+  frame calleef;
+  if (callee_safepoint_stub != NULL) {
+    // A safepoint stub is the only case we encounter callee-saved registers (aside from rbp). We therefore thaw that frame
+    // before thawing the oops in its sender, as the oops will need to be written to that stub frame.
+    log_trace(jvmcont)("THAWING SAFEPOINT STUB");
+    hframe callee = *callee_safepoint_stub;
+    const int callee_fsize = callee.uncompressed_size(cont) != 0 ? callee.uncompressed_size(cont) : callee.size(cont);
+    const address callee_bottom = (address) f.sp();
+    intptr_t* callee_vsp = (intptr_t*)(callee_bottom - callee_fsize);
+    cont.sub_size(callee_fsize);
+
+    calleef = thaw_compiled_frame(cont, callee, callee_vsp, f, map, deoptimized);
+    calleef.oop_map()->update_register_map(&f, &map);
+    log_trace(jvmcont)("THAWING OOPS FOR SENDER OF SAFEPOINT STUB");
+  }
   // assert (oop_index == hf.ref_sp(), "");
   thaw_oops(cont, f, oop_index, hf.num_oops(cont), f.sp(), map, is_interpreted ? NULL : f.oop_map());
 
@@ -2517,10 +2633,14 @@ static frame thaw_frame(ContMirror& cont, hframe& hf, int oop_index, frame& send
   print_vframe(f, &dmap);
 #endif
 
+  if (callee_safepoint_stub != NULL) {
+    return calleef;
+  }
+
   return f;
 }
 
-static frame thaw_frames(ContMirror& cont, hframe hf, int oop_index, int num_frames, int& count, int &last_oop_index, hframe& last_frame, bool& deoptimized) {
+static frame thaw_frames(ContMirror& cont, hframe hf, int oop_index, int num_frames, int& count, int &last_oop_index, hframe& last_frame, bool& deoptimized, hframe* callee_safepoint_stub) {
   if (num_frames == 0 || hf.is_empty()) {
     frame entry(cont.entrySP(), cont.entryFP(), cont.entryPC());
     log_trace(jvmcont)("Found entry:");
@@ -2539,10 +2659,18 @@ static frame thaw_frames(ContMirror& cont, hframe hf, int oop_index, int num_fra
     return entry;
   }
 
+  bool is_safepoint_stub = false;
+  if (/*is_first &&*/ hf.cb() != NULL && hf.cb()->is_safepoint_stub()) {
+    log_trace(jvmcont)("Found safepoint stub");
+    is_safepoint_stub = true;
+    assert (hf.num_oops(cont) == 0, "must be");
+  }
+
   // assert (oop_index == hf.ref_sp(), "oop_index: %d hf.ref_sp(): %d", oop_index, hf.ref_sp());
   hframe hsender = hf.sender(cont);
-  frame sender = thaw_frames(cont, hsender, oop_index + hf.num_oops(cont), num_frames - 1, count, last_oop_index, last_frame, deoptimized);
-  frame f = thaw_frame(cont, hf, oop_index, sender, deoptimized);
+  frame sender = thaw_frames(cont, hsender, oop_index + hf.num_oops(cont), num_frames - 1, count, last_oop_index, last_frame, deoptimized, is_safepoint_stub ? &hf : NULL);
+  // In the case of a safepoint stub, the above line, called on the stub's sender, actually returns the safepoint stub after thawing it.
+  frame f = is_safepoint_stub ? sender : thaw_frame(cont, hf, oop_index, sender, deoptimized, callee_safepoint_stub);
 
   assert ((count == 0) == is_entry_frame(cont, sender), "");
   assert (hf.is_bottom(cont) <= last_frame.is_empty(), "hf.is_bottom(cont): %d last_frame.is_empty(): %d ", hf.is_bottom(cont), last_frame.is_empty());
@@ -2639,7 +2767,7 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
   int last_oop_index = 0;
   hframe last_frame;
   bool deoptimized = false;
-  frame top = thaw_frames(cont, hf, cont.refSP(), num_frames, frame_count, last_oop_index, last_frame, deoptimized);
+  frame top = thaw_frames(cont, hf, cont.refSP(), num_frames, frame_count, last_oop_index, last_frame, deoptimized, NULL);
   cont.set_last_frame(last_frame);
   // assert (last_oop_index == cont.refSP(), "");
   cont.set_refSP(last_oop_index);
@@ -2811,7 +2939,7 @@ JRT_LEAF(address, Continuation::thaw(FrameInfo* fi, bool return_barrier, bool ex
     fi->pc = SharedRuntime::raw_exception_handler_for_return_address(JavaThread::current(), fi->pc);
     return ret;
   } else
-    return NULL;
+    return reinterpret_cast<address>(Interpreter::contains(fi->pc)); // really only necessary in the case of continuing from a forced yield
 JRT_END
 
 bool Continuation::is_continuation_entry_frame(const frame& f, const RegisterMap* map) {
@@ -2832,6 +2960,10 @@ bool Continuation::is_continuation_entry_frame(const frame& f, const RegisterMap
 // The continuation object can be extracted from the thread.
 bool Continuation::is_cont_bottom_frame(const frame& f) {
   return is_return_barrier_entry(return_pc(f, f.is_interpreted_frame()));
+}
+
+bool Continuation::is_return_barrier_entry(const address pc) { 
+  return pc == StubRoutines::cont_returnBarrier(); 
 }
 
 static oop find_continuation_for_frame(JavaThread* thread, intptr_t* const sp) {
@@ -3046,6 +3178,9 @@ address Continuation::interpreter_frame_bcp(const frame& fr, const RegisterMap* 
   return method->bcp_from(bcp);
 }
 
+oop Continuation::continuation_scope(oop cont) { 
+  return cont != NULL ? java_lang_Continuation::scope(cont) : (oop)NULL; 
+}
 ///// DEBUGGING
 
 static void print_oop(void *p, oop obj, outputStream* st) {
@@ -3141,7 +3276,7 @@ static void print_vframe(frame f, const RegisterMap* map, outputStream* st) {
 }
 
 static void print_frames(JavaThread* thread, outputStream* st) {
-  if (st != NULL && !log_is_enabled(Trace, jvmcont) ) return;
+  if (st != NULL && !log_is_enabled(Trace, jvmcont)) return;
   if (st == NULL) st = tty;
 
   if (true) {
@@ -3229,11 +3364,53 @@ JVM_ENTRY(void, CONT_Clean(JNIEnv* env, jobject jcont)) {
 }
 JVM_END
 
+JVM_ENTRY(jint, CONT_TryForceYield(JNIEnv* env, jobject jcont, jobject jthread)) {
+  JavaThread* thread = JavaThread::thread_from_jni_environment(env);
+
+  guarantee(ThreadLocalHandshakes, "ThreadLocalHandshakes disabled");
+  guarantee(SafepointMechanism::uses_thread_local_poll(), "ThreadLocalHandshakes disabled");
+
+  class ForceYieldClosure : public ThreadClosure {
+    jobject _jcont;
+    jint _result;
+
+    void do_thread(Thread* th) {
+      assert(th->is_Java_thread(), "sanity");
+      JavaThread* thread = (JavaThread*)th;
+      
+      oop oopCont = JNIHandles::resolve_non_null(_jcont);
+      _result = Continuation::try_force_yield(thread, oopCont);
+    }
+
+  public:
+    ForceYieldClosure(jobject jcont) : _jcont(jcont), _result(-1) {}
+    jint result() const { return _result; }
+  };
+  ForceYieldClosure fyc(jcont);
+
+  // tty->print_cr("TRY_FORCE_YIELD0");
+  // thread->print();
+  // tty->print_cr("");
+
+  if (true) {
+    oop thread_oop = JNIHandles::resolve(jthread);
+    if (thread_oop != NULL) {
+      JavaThread* target = java_lang_Thread::thread(thread_oop);
+      Handshake::execute(&fyc, target);
+    }
+  } else {
+    Handshake::execute(&fyc);
+  }
+  return fyc.result();
+}
+JVM_END
+
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod CONT_methods[] = {
-    {CC"clean0",           CC"()V",        FN_PTR(CONT_Clean)},
+    {CC"clean0",           CC"()V",                   FN_PTR(CONT_Clean)},
+    {CC"tryForceYield",    CC"(Ljava/lang/Thread;)I", FN_PTR(CONT_TryForceYield)},
 };
 
 void CONT_RegisterNativeMethods(JNIEnv *env, jclass cls) {

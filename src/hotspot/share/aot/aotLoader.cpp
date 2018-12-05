@@ -29,6 +29,7 @@
 #include "jvmci/jvmciRuntime.hpp"
 #include "memory/allocation.inline.hpp"
 #include "oops/method.hpp"
+#include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/os.hpp"
 #include "runtime/timerTrace.hpp"

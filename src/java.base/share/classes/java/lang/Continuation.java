@@ -47,6 +47,7 @@ public class Continuation {
     private static final boolean DEBUG = TRACE | isEmptyOrTrue("java.lang.Continuation.debug");
 
     private static final byte FLAG_LAST_FRAME_INTERPRETED = 1;
+    private static final byte FLAG_SAFEPOINT_YIELD = 1 << 1;
     private static final int METADATA_SIZE = 2;
     private static final int WATERMARK_THRESHOLD = 10;
     private static final VarHandle MOUNTED;
@@ -663,6 +664,16 @@ public class Continuation {
     }
 
     private native void clean0();
+
+    /**
+     * TBD
+     * @param thread TBD
+     * @return TBD
+     */
+    public int forceYield(Thread thread) {
+        return tryForceYield(thread);
+    }
+    private native int tryForceYield(Thread thread);
 
     // native methods
     private static native void registerNatives();

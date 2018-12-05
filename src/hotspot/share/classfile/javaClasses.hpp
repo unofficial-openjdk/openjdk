@@ -981,6 +981,7 @@ class java_lang_Continuation: AllStatic {
   static int _scope_offset;
   static int _target_offset;
   static int _parent_offset;
+  static int _yieldInfo_offset;
   static int _entrySP_offset;
   static int _entryFP_offset;
   static int _entryPC_offset;
@@ -1003,6 +1004,8 @@ class java_lang_Continuation: AllStatic {
   static inline oop scope(oop ref);
   static inline oop target(oop ref);
   static inline oop parent(oop ref);
+  static inline oop yieldInfo(oop ref);
+  static inline void set_yieldInfo(oop ref, oop value);
   static inline typeArrayOop stack(oop ref);
   static inline objArrayOop refStack(oop ref);
   static inline void set_stack(oop obj, oop value);

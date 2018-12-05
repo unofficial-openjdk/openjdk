@@ -179,6 +179,7 @@ address StubRoutines::_safefetchN_continuation_pc        = NULL;
 
 RuntimeStub* StubRoutines::_cont_doYield_stub = NULL;
 address StubRoutines::_cont_doYield       = NULL;
+address StubRoutines::_cont_jump_from_sp  = NULL;
 address StubRoutines::_cont_jump          = NULL;
 address StubRoutines::_cont_thaw          = NULL;
 address StubRoutines::_cont_returnBarrier = NULL;

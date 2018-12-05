@@ -210,6 +210,7 @@ class StubRoutines: AllStatic {
 
   static RuntimeStub* _cont_doYield_stub;
   static address _cont_doYield;
+  static address _cont_jump_from_sp;
   static address _cont_jump;
   static address _cont_thaw;
   static address _cont_returnBarrier;
@@ -394,14 +395,18 @@ class StubRoutines: AllStatic {
   static address dlibm_tan_cot_huge()  { return _dlibm_tan_cot_huge; }
   static address dtan()                { return _dtan; }
 
+  typedef void (*cont_jump_from_sp_t)();
+
   static RuntimeStub* cont_doYield_stub() { return _cont_doYield_stub; }
   static address cont_doYield()        { return _cont_doYield; }
+  static address cont_jump_from_sp()   { return _cont_jump_from_sp; }
   static address cont_jump()           { return _cont_jump; }
   static address cont_thaw()           { return _cont_thaw; }
   static address cont_returnBarrier()  { return _cont_returnBarrier; }
   static address cont_returnBarrierExc(){return _cont_returnBarrierExc; }
   static address cont_getSP()          { return _cont_getSP; }
   static address cont_getPC()          { return _cont_getPC; }
+  static cont_jump_from_sp_t  cont_jump_from_sp_C() { return CAST_TO_FN_PTR(cont_jump_from_sp_t, _cont_jump_from_sp); }
 
 
   static address select_fill_function(BasicType t, bool aligned, const char* &name);

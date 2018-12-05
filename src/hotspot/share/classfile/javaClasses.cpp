@@ -4094,6 +4094,7 @@ int java_lang_Continuation::_numFrames_offset;
 int java_lang_Continuation::_numInterpretedFrames_offset;
 int java_lang_Continuation::_refStack_offset;
 int java_lang_Continuation::_parent_offset;
+int java_lang_Continuation::_yieldInfo_offset;
 int java_lang_Continuation::_entrySP_offset;
 int java_lang_Continuation::_entryFP_offset;
 int java_lang_Continuation::_entryPC_offset;
@@ -4257,6 +4258,7 @@ void java_lang_AssertionStatusDirectives::set_deflt(oop o, bool val) {
   macro(_scope_offset,     k, vmSymbols::scope_name(),     continuationscope_signature, false); \
   macro(_target_offset,    k, vmSymbols::target_name(),    runnable_signature,          false); \
   macro(_parent_offset,    k, vmSymbols::parent_name(),    continuation_signature,      false); \
+  macro(_yieldInfo_offset, k, vmSymbols::yieldInfo_name(), object_signature,            false); \
   macro(_stack_offset,     k, vmSymbols::stack_name(),     int_array_signature,         false); \
   macro(_maxSize_offset,   k, vmSymbols::maxSize_name(),   int_signature,               false); \
   macro(_refStack_offset,  k, vmSymbols::refStack_name(),  object_array_signature,      false); \
