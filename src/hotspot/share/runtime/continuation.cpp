@@ -2223,20 +2223,18 @@ int Continuation::freeze0(JavaThread* thread, FrameInfo* fi, bool safepoint_yiel
   RegisterMap map(thread, false, false, false);
   map.set_include_argument_oops(false);
 
-  NativePostCallNop* nop = nativePostCallNop_at(fi->pc);
-  if (nop == NULL) {
-    log_info(jvmcont)("no nop at freeze entry");
-  }
-
   // Note: if the doYield stub does not have its own frame, we may need to consider deopt here, especially if yield is inlinable
   frame f = thread->last_frame(); // this is the doYield stub frame. last_frame is set up by the call_VM infrastructure // <---- CodeCache::find_blob is expensive
   frame::update_map_with_saved_link(&map, link_address(f));
+  NativePostCallNop* nop;
 
   if (!safepoint_yield) {
+    nop = nativePostCallNop_at(fi->pc);
     assert (StubRoutines::cont_doYield_stub()->contains(f.pc()), "must be");
     f = f.frame_sender<ContinuationCodeBlobLookup>(&map); // LOOKUP // this is the yield frame
     assert (f.pc() == fi->pc, "");
   } else { // safepoint yield
+    nop = NULL;
     f.set_fp(f.real_fp()); // Instead of this, maybe in ContMirror::set_last_frame always use the real_fp?
     if (Interpreter::contains(f.pc())) {
       log_trace(jvmcont)("INTERPRETER SAFEPOINT");
@@ -2248,7 +2246,10 @@ int Continuation::freeze0(JavaThread* thread, FrameInfo* fi, bool safepoint_yiel
       f.oop_map()->update_register_map(&f, &map); // we have callee-save registers in this case
     }
   }
-  
+  if (nop == NULL) {
+    log_info(jvmcont)("no nop at freeze entry");
+  }
+
   // The following doesn't work because fi->fp can contain an oop, that a GC doesn't know about when walking.
   // frame::update_map_with_saved_link(&map, (intptr_t **)&fi->fp);
   // frame f(fi->sp, fi->fp, fi->pc); // the yield frame
