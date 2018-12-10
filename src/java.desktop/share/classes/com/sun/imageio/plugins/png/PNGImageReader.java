@@ -468,7 +468,7 @@ public class PNGImageReader extends ImageReader {
         String text;
         pos = stream.getStreamPosition();
         int textLength = (int)(chunkStart + chunkLength - pos);
-        if (textLength <= 0) {
+        if (textLength < 0) {
             throw new IIOException("iTXt chunk length is not proper");
         }
         byte[] b = new byte[textLength];
@@ -571,7 +571,7 @@ public class PNGImageReader extends ImageReader {
     private void parse_tEXt_chunk(int chunkLength) throws IOException {
         String keyword = readNullTerminatedString("ISO-8859-1", 80);
         int textLength = chunkLength - keyword.length() - 1;
-        if (textLength <= 0) {
+        if (textLength < 0) {
             throw new IIOException("tEXt chunk length is not proper");
         }
         metadata.tEXt_keyword.add(keyword);
@@ -669,7 +669,7 @@ public class PNGImageReader extends ImageReader {
     private void parse_zTXt_chunk(int chunkLength) throws IOException {
         String keyword = readNullTerminatedString("ISO-8859-1", 80);
         int textLength = chunkLength - keyword.length() - 2;
-        if (textLength <= 0) {
+        if (textLength < 0) {
             throw new IIOException("zTXt chunk length is not proper");
         }
         metadata.zTXt_keyword.add(keyword);
@@ -749,7 +749,8 @@ public class PNGImageReader extends ImageReader {
             loop: while (true) {
                 int chunkLength = stream.readInt();
                 int chunkType = stream.readInt();
-                int chunkCRC;
+                // Initialize chunkCRC, value assigned has no significance
+                int chunkCRC = -1;
 
                 // verify the chunk length
                 if (chunkLength < 0) {
@@ -757,10 +758,20 @@ public class PNGImageReader extends ImageReader {
                 };
 
                 try {
-                    stream.mark();
-                    stream.seek(stream.getStreamPosition() + chunkLength);
-                    chunkCRC = stream.readInt();
-                    stream.reset();
+                    /*
+                     * As per PNG specification all chunks should have
+                     * 4 byte CRC. But there are some images where
+                     * CRC is not present/corrupt for IEND chunk.
+                     * And these type of images are supported by other
+                     * decoders. So as soon as we hit chunk type
+                     * for IEND chunk stop reading metadata.
+                     */
+                    if (chunkType != IEND_TYPE) {
+                        stream.mark();
+                        stream.seek(stream.getStreamPosition() + chunkLength);
+                        chunkCRC = stream.readInt();
+                        stream.reset();
+                    }
                 } catch (IOException e) {
                     throw new IIOException("Invalid chunk length " + chunkLength);
                 }
@@ -1163,8 +1174,7 @@ public class PNGImageReader extends ImageReader {
         // same bit depth as the source data
         boolean adjustBitDepths = false;
         int[] outputSampleSize = imRas.getSampleModel().getSampleSize();
-        int numBands = outputSampleSize.length;
-        for (int b = 0; b < numBands; b++) {
+        for (int b = 0; b < inputBands; b++) {
             if (outputSampleSize[b] != bitDepth) {
                 adjustBitDepths = true;
                 break;
@@ -1177,8 +1187,8 @@ public class PNGImageReader extends ImageReader {
         if (adjustBitDepths) {
             int maxInSample = (1 << bitDepth) - 1;
             int halfMaxInSample = maxInSample/2;
-            scale = new int[numBands][];
-            for (int b = 0; b < numBands; b++) {
+            scale = new int[inputBands][];
+            for (int b = 0; b < inputBands; b++) {
                 int maxOutSample = (1 << outputSampleSize[b]) - 1;
                 scale[b] = new int[maxInSample + 1];
                 for (int s = 0; s <= maxInSample; s++) {
@@ -1304,7 +1314,7 @@ public class PNGImageReader extends ImageReader {
 
                         passRow.getPixel(newSrcX, 0, ps);
                         if (adjustBitDepths) {
-                            for (int b = 0; b < numBands; b++) {
+                            for (int b = 0; b < inputBands; b++) {
                                 ps[b] = scale[b][ps[b]];
                             }
                         }

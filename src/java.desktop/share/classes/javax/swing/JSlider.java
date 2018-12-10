@@ -56,7 +56,7 @@ import java.beans.PropertyChangeListener;
  * <p>
  * For further information and examples see
  * <a
- href="http://docs.oracle.com/javase/tutorial/uiswing/components/slider.html">How to Use Sliders</a>,
+ href="https://docs.oracle.com/javase/tutorial/uiswing/components/slider.html">How to Use Sliders</a>,
  * a section in <em>The Java Tutorial.</em>
  * <p>
  * <strong>Warning:</strong> Swing is not thread safe. For more
@@ -335,7 +335,7 @@ public class JSlider extends JComponent implements SwingConstants, Accessible {
     /**
      * Returns the name of the L&amp;F class that renders this component.
      *
-     * @return "SliderUI"
+     * @return the string "SliderUI"
      * @see JComponent#getUIClassID
      * @see UIDefaults#getUI
      */

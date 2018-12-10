@@ -29,6 +29,7 @@
 #include "code/codeHeapState.hpp"
 #include "code/compiledIC.hpp"
 #include "code/dependencies.hpp"
+#include "code/dependencyContext.hpp"
 #include "code/icBuffer.hpp"
 #include "code/nmethod.hpp"
 #include "code/pcDesc.hpp"
@@ -957,6 +958,19 @@ void CodeCache::increment_unloading_cycle() {
   }
 }
 
+CodeCache::UnloadingScope::UnloadingScope(BoolObjectClosure* is_alive)
+  : _is_unloading_behaviour(is_alive)
+{
+  IsUnloadingBehaviour::set_current(&_is_unloading_behaviour);
+  increment_unloading_cycle();
+  DependencyContext::cleaning_start();
+}
+
+CodeCache::UnloadingScope::~UnloadingScope() {
+  IsUnloadingBehaviour::set_current(NULL);
+  DependencyContext::cleaning_end();
+}
+
 void CodeCache::verify_oops() {
   MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   VerifyOopClosure voc;
@@ -1414,8 +1428,7 @@ void CodeCache::report_codemem_full(int code_blob_type, bool print) {
     }
 
     if (heap->full_count() == 0) {
-      LogTarget(Debug, codecache) lt;
-      if (lt.is_enabled()) {
+      if (PrintCodeHeapAnalytics) {
         CompileBroker::print_heapinfo(tty, "all", "4096"); // details, may be a lot!
       }
     }

@@ -29,6 +29,7 @@
 #include "classfile/metadataOnStackMark.hpp"
 #include "classfile/moduleEntry.hpp"
 #include "classfile/packageEntry.hpp"
+#include "code/dependencyContext.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
@@ -582,7 +583,6 @@ void ClassLoaderDataGraph::clean_module_and_package_info() {
 }
 
 void ClassLoaderDataGraph::purge() {
-  assert_locked_or_safepoint(ClassLoaderDataGraph_lock);
   ClassLoaderData* list = _unloading;
   _unloading = NULL;
   ClassLoaderData* next = list;
@@ -597,6 +597,7 @@ void ClassLoaderDataGraph::purge() {
     Metaspace::purge();
     set_metaspace_oom(false);
   }
+  DependencyContext::purge_dependency_contexts();
 }
 
 int ClassLoaderDataGraph::resize_if_needed() {

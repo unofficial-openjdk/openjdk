@@ -1052,7 +1052,8 @@ void nmethod::make_unloaded() {
   // recorded in instanceKlasses get flushed.
   // Since this work is being done during a GC, defer deleting dependencies from the
   // InstanceKlass.
-  assert(Universe::heap()->is_gc_active(), "should only be called during gc");
+  assert(Universe::heap()->is_gc_active() || Thread::current()->is_ConcurrentGC_thread(),
+         "should only be called during gc");
   flush_dependencies(/*delete_immediately*/false);
 
   // Break cycle between nmethod & method
@@ -1094,7 +1095,8 @@ void nmethod::make_unloaded() {
   }
 
   // Make the class unloaded - i.e., change state and notify sweeper
-  assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint");
+  assert(SafepointSynchronize::is_at_safepoint() || Thread::current()->is_ConcurrentGC_thread(),
+         "must be at safepoint");
 
   // Unregister must be done before the state change
   Universe::heap()->unregister_nmethod(this);
@@ -1371,8 +1373,8 @@ oop nmethod::oop_at(int index) const {
 // notifies instanceKlasses that are reachable
 
 void nmethod::flush_dependencies(bool delete_immediately) {
-  assert_locked_or_safepoint(CodeCache_lock);
-  assert(Universe::heap()->is_gc_active() != delete_immediately,
+  DEBUG_ONLY(bool called_by_gc = Universe::heap()->is_gc_active() || Thread::current()->is_ConcurrentGC_thread();)
+  assert(called_by_gc != delete_immediately,
   "delete_immediately is false if and only if we are called during GC");
   if (!has_flushed_dependencies()) {
     set_has_flushed_dependencies();
@@ -1380,7 +1382,12 @@ void nmethod::flush_dependencies(bool delete_immediately) {
       if (deps.type() == Dependencies::call_site_target_value) {
         // CallSite dependencies are managed on per-CallSite instance basis.
         oop call_site = deps.argument_oop(0);
-        MethodHandles::remove_dependent_nmethod(call_site, this);
+        if (delete_immediately) {
+          assert_locked_or_safepoint(CodeCache_lock);
+          MethodHandles::remove_dependent_nmethod(call_site, this);
+        } else {
+          MethodHandles::clean_dependency_context(call_site);
+        }
       } else {
         Klass* klass = deps.context_type();
         if (klass == NULL) {
@@ -1388,11 +1395,12 @@ void nmethod::flush_dependencies(bool delete_immediately) {
         }
         // During GC delete_immediately is false, and liveness
         // of dependee determines class that needs to be updated.
-        if (delete_immediately || klass->is_loader_alive()) {
-          // The GC defers deletion of this entry, since there might be multiple threads
-          // iterating over the _dependencies graph. Other call paths are single-threaded
-          // and may delete it immediately.
-          InstanceKlass::cast(klass)->remove_dependent_nmethod(this, delete_immediately);
+        if (delete_immediately) {
+          assert_locked_or_safepoint(CodeCache_lock);
+          InstanceKlass::cast(klass)->remove_dependent_nmethod(this);
+        } else if (klass->is_loader_alive()) {
+          // The GC may clean dependency contexts concurrently and in parallel.
+          InstanceKlass::cast(klass)->clean_dependency_context();
         }
       }
     }
@@ -1566,14 +1574,44 @@ bool nmethod::is_unloading() {
   if (state_is_unloading) {
     return true;
   }
-  if (state_unloading_cycle == CodeCache::unloading_cycle()) {
+  uint8_t current_cycle = CodeCache::unloading_cycle();
+  if (state_unloading_cycle == current_cycle) {
     return false;
   }
 
   // The IsUnloadingBehaviour is responsible for checking if there are any dead
   // oops in the CompiledMethod, by calling oops_do on it.
-  state_unloading_cycle = CodeCache::unloading_cycle();
-  state_is_unloading = IsUnloadingBehaviour::current()->is_unloading(this);
+  state_unloading_cycle = current_cycle;
+
+  if (is_zombie()) {
+    // Zombies without calculated unloading epoch are never unloading due to GC.
+
+    // There are no races where a previously observed is_unloading() nmethod
+    // suddenly becomes not is_unloading() due to here being observed as zombie.
+
+    // With STW unloading, all is_alive() && is_unloading() nmethods are unlinked
+    // and unloaded in the safepoint. That makes races where an nmethod is first
+    // observed as is_alive() && is_unloading() and subsequently observed as
+    // is_zombie() impossible.
+
+    // With concurrent unloading, all references to is_unloading() nmethods are
+    // first unlinked (e.g. IC caches and dependency contexts). Then a global
+    // handshake operation is performed with all JavaThreads before finally
+    // unloading the nmethods. The sweeper never converts is_alive() && is_unloading()
+    // nmethods to zombies; it waits for them to become is_unloaded(). So before
+    // the global handshake, it is impossible for is_unloading() nmethods to
+    // racingly become is_zombie(). And is_unloading() is calculated for all is_alive()
+    // nmethods before taking that global handshake, meaning that it will never
+    // be recalculated after the handshake.
+
+    // After that global handshake, is_unloading() nmethods are only observable
+    // to the iterators, and they will never trigger recomputation of the cached
+    // is_unloading_state, and hence may not suffer from such races.
+
+    state_is_unloading = false;
+  } else {
+    state_is_unloading = IsUnloadingBehaviour::current()->is_unloading(this);
+  }
 
   state = IsUnloadingState::create(state_is_unloading, state_unloading_cycle);
 
@@ -2920,6 +2958,10 @@ void nmethod::clear_speculation_log() {
 }
 
 void nmethod::maybe_invalidate_installed_code() {
+  if (!is_compiled_by_jvmci()) {
+    return;
+  }
+
   assert(Patching_lock->is_locked() ||
          SafepointSynchronize::is_at_safepoint(), "should be performed under a lock for consistency");
   oop installed_code = JNIHandles::resolve(_jvmci_installed_code);

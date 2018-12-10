@@ -723,6 +723,9 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
           "Print the code cache memory usage each time a method is "        \
           "compiled")                                                       \
                                                                             \
+  diagnostic(bool, PrintCodeHeapAnalytics, false,                           \
+          "Print code heap usage statistics on exit and on full condition") \
+                                                                            \
   diagnostic(bool, PrintStubCode, false,                                    \
           "Print generated stub code")                                      \
                                                                             \
@@ -2591,7 +2594,7 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
   develop(bool, VerifyMetaspace, false,                                     \
           "Verify metaspace on chunk movements.")                           \
                                                                             \
-  diagnostic(bool, ShowRegistersOnAssert, false,                            \
+  diagnostic(bool, ShowRegistersOnAssert, true,                             \
           "On internal errors, include registers in error report.")         \
                                                                             \
   experimental(bool, UseSwitchProfiling, true,                              \

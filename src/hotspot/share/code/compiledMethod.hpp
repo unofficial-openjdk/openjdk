@@ -178,6 +178,9 @@ protected:
   CompiledMethod(Method* method, const char* name, CompilerType type, int size, int header_size, CodeBuffer* cb, int frame_complete_offset, int frame_size, OopMapSet* oop_maps, bool caller_must_gc_arguments);
 
 public:
+  // Only used by unit test.
+  CompiledMethod() {}
+
   template<typename T>
   T* gc_data() const                              { return reinterpret_cast<T*>(_gc_data); }
   template<typename T>
