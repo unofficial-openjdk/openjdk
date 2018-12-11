@@ -35,7 +35,7 @@ import java.util.concurrent.*;
 public class FiberTest {
     private static final String agentLib = "FiberTest";
 
-    static final int MSG_COUNT = 1000*1000;
+    static final int MSG_COUNT = 10*1000;
     static final SynchronousQueue<String> QUEUE = new SynchronousQueue<>();
 
     static final Runnable PRODUCER = () -> {
@@ -55,12 +55,10 @@ public class FiberTest {
     };
 
     public static void test1() throws Exception {
-        Fiber f1 = new Fiber(PRODUCER);
-        Fiber f2 = new Fiber(CONSUMER);
-        f1.schedule();
-        f2.schedule();
-        f1.await();
-        f2.await();
+        Fiber f1 = Fiber.schedule(PRODUCER);
+        Fiber f2 = Fiber.schedule(CONSUMER);
+        f1.awaitTermination();
+        f2.awaitTermination();
     }
 
     void runTest() throws Exception {
