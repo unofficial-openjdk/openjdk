@@ -105,7 +105,7 @@ inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address
 inline void frame::setup(address pc) {
   adjust_unextended_sp();
 
-  assert(_cb != NULL, "");
+  assert(_cb != NULL, "pc: " INTPTR_FORMAT, p2i(pc));
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
   if (original_pc != NULL) {
     _pc = original_pc;
