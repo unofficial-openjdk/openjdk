@@ -376,6 +376,7 @@ bool vmIntrinsics::preserves_state(vmIntrinsics::ID id) {
   case vmIntrinsics::_Continuation_doContinue:
   case vmIntrinsics::_Continuation_doYield:
   case vmIntrinsics::_Continuation_jump:
+  case vmIntrinsics::_Continuation_getSP:
   case vmIntrinsics::_updateCRC32:
   case vmIntrinsics::_updateBytesCRC32:
   case vmIntrinsics::_updateByteBufferCRC32:
@@ -539,6 +540,7 @@ bool vmIntrinsics::is_disabled_by_flags(vmIntrinsics::ID id) {
     case vmIntrinsics::_Continuation_doContinue:
     case vmIntrinsics::_Continuation_doYield:
     case vmIntrinsics::_Continuation_jump:
+    case vmIntrinsics::_Continuation_getSP:
       break;
     default:
       return true;
