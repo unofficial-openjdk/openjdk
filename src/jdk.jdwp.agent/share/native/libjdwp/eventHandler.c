@@ -268,7 +268,7 @@ eventHandlerRestricted_iterator(EventIndex ei,
 
 /* BREAKPOINT, METHOD_ENTRY and SINGLE_STEP events are covered by
  * the co-location of events policy. Of these three co-located
- * events, METHOD_ENTRY is  always reported first and BREAKPOINT
+ * events, METHOD_ENTRY is always reported first and BREAKPOINT
  * is always reported last. Here are the possible combinations and
  * their order:
  *
@@ -548,6 +548,12 @@ event_callback(JNIEnv *env, EventInfo *evinfo)
     LOG_MISC(("event_callback(): ei=%s", eventText(evinfo->ei)));
     log_debugee_location("event_callback()", evinfo->thread, evinfo->method, evinfo->location);
 
+    /* fiber fixme: litte hack to ignore THREAD_START events while we are creating a fiber
+     * helper thread. The need for this will eventually go away. */
+    if (gdata->ignoreEvents) {
+        return;
+    }
+
     /* We want to preserve any current exception that might get
      * wiped out during event handling (e.g. JNI calls). We have
      * to rely on space for the local reference on the current
@@ -595,14 +601,27 @@ event_callback(JNIEnv *env, EventInfo *evinfo)
     thread = evinfo->thread;
     if (thread != NULL) {
         /*
+         * Convert the thread to a fiber if one is running and has not already 
+         * been set, which is the case for fiber related JVMTI events.
+         *
+         * fiber fixme: This allocates a localref. We need a WITH_LOCAL_REFS somewhere
+         * for this. Suggestion would be to wrap all of event_callback() in one.
+         */
+        jthread fiber = evinfo->fiber;
+        if (fiber == NULL) {
+            fiber = getThreadFiber(thread);
+            evinfo->fiber = fiber;
+        }
+
+        /*
          * Record the fact that we're entering an event
          * handler so that thread operations (status, interrupt,
          * stop) can be done correctly and so that thread
          * resources can be allocated.  This must be done before
          * grabbing any locks.
          */
-        eventBag = threadControl_onEventHandlerEntry(eventSessionID,
-                                 evinfo->ei, thread, currentException);
+        eventBag = threadControl_onEventHandlerEntry(
+            eventSessionID, evinfo->ei, thread, fiber, currentException);
         if ( eventBag == NULL ) {
             jboolean invoking;
             do {
@@ -636,13 +655,22 @@ event_callback(JNIEnv *env, EventInfo *evinfo)
     {
         HandlerNode *node;
         char        *classname;
+        EventIndex   ei = evinfo->ei;
+        
+        /* We want the fiber scheduled/terminated events to mimic thread start/end events */
+        if (ei == EI_FIBER_SCHEDULED) {
+            ei = EI_THREAD_START;
+        }
+        if (ei == EI_FIBER_TERMINATED) {
+            ei = EI_THREAD_END;
+        }
 
         /* We must keep track of all classes prepared to know what's unloaded */
         if (evinfo->ei == EI_CLASS_PREPARE) {
             classTrack_addPreparedClass(env, evinfo->clazz);
         }
 
-        node = getHandlerChain(evinfo->ei)->first;
+        node = getHandlerChain(ei)->first;
         classname = getClassname(evinfo->clazz);
 
         while (node != NULL) {
@@ -1294,6 +1322,108 @@ cbVMDeath(jvmtiEnv *jvmti_env, JNIEnv *env)
     LOG_MISC(("END cbVMDeath"));
 }
 
+/* Event callback for JVMTI_EVENT_FIBER_SCHEDULED */
+static void JNICALL
+cbFiberScheduled(jvmtiEnv *jvmti_env, JNIEnv *env,
+                 jthread thread, jthread fiber)
+{
+    EventInfo info;
+
+    LOG_CB(("cbFiberScheduled: thread=%p", thread));
+    tty_message("cbFiberScheduled: thread=%p", thread);
+
+    /* 
+     * Now would be a good time to cache the ThreadGroup for fibers (carrier threads)
+     * if we haven't already.
+     * 
+     * fiber fixme: the is kind of a hack. What happens if custom
+     * scheduler uses carrier threads in multple group? What if as a result of this a
+     * Fiber can move between thread groups? We should have a dedicated
+     * thread group for all fibers, or allow a fiber to set its ThreadGroup.
+     */
+    if (gdata->fiberThreadGroup == NULL) {
+        jvmtiThreadInfo info;
+        jvmtiError error;
+
+        (void)memset(&info, 0, sizeof(info));
+        error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadInfo)
+            (gdata->jvmti, thread, &info);
+      
+        if (error != JVMTI_ERROR_NONE) {
+            EXIT_ERROR(error, "could not get fiber ThreadGroup");
+        } else {
+            debugMonitorEnter(callbackBlock); /* fiber fixme: any monitor will do, but there probably is a better choice. */
+            /* Make sure there wasn't a race before setting. saveGlobalRef() will assert if the
+             * target is not NULL. */
+            if (gdata->fiberThreadGroup == NULL) {
+                saveGlobalRef(env, info.thread_group, &gdata->fiberThreadGroup);
+            }
+            debugMonitorExit(callbackBlock);
+        }
+    }
+
+    BEGIN_CALLBACK() {
+        (void)memset(&info,0,sizeof(info));
+        info.ei         = EI_FIBER_SCHEDULED;
+        info.thread     = thread;
+        info.fiber      = fiber;
+        event_callback(env, &info);
+    } END_CALLBACK();
+
+    LOG_MISC(("END cbFiberScheduled"));
+}
+
+/* Event callback for JVMTI_EVENT_FIBER_TERMINATED */
+static void JNICALL
+cbFiberTerminated(jvmtiEnv *jvmti_env, JNIEnv *env,
+                  jthread thread, jthread fiber)
+{
+    EventInfo info;
+
+    LOG_CB(("cbFiberTerminated: thread=%p", thread));
+    tty_message("cbFiberTerminated: thread=%p", thread);
+
+    BEGIN_CALLBACK() {
+        (void)memset(&info,0,sizeof(info));
+        info.ei         = EI_FIBER_TERMINATED;
+        info.thread     = thread;
+        info.fiber      = fiber;
+        event_callback(env, &info);
+    } END_CALLBACK();
+
+    LOG_MISC(("END cbFiberTerminated"));
+}
+/* Event callback for JVMTI_EVENT_FIBER_MOUNT */
+static void JNICALL
+cbFiberMount(jvmtiEnv *jvmti_env, JNIEnv *env,
+             jthread thread, jthread fiber)
+{
+    EventInfo info;
+
+    LOG_CB(("cbFiberMount: thread=%p", thread));
+    tty_message("cbFiberMount: thread=%p", thread);
+
+    threadControl_mountFiber(fiber, thread);
+
+    LOG_MISC(("END cbFiberMount"));
+}
+
+/* Event callback for JVMTI_EVENT_FIBER_UNMOUNT */
+static void JNICALL
+cbFiberUnmount(jvmtiEnv *jvmti_env, JNIEnv *env,
+               jthread thread, jthread fiber)
+{
+    EventInfo info;
+
+    LOG_CB(("cbFiberUnmount: thread=%p", thread));
+    tty_message("cbFiberUnmount: thread=%p", thread);
+
+    threadControl_unmountFiber(fiber, thread);
+
+    LOG_MISC(("END cbFiberUnmount"));
+}
+
+
 /**
  * Delete this handler (do not delete permanent handlers):
  * Deinsert handler from active list,
@@ -1482,6 +1612,26 @@ eventHandler_initialize(jbyte sessionID)
     if (error != JVMTI_ERROR_NONE) {
         EXIT_ERROR(error,"Can't enable garbage collection finish events");
     }
+    error = threadControl_setEventMode(JVMTI_ENABLE,
+                                       EI_FIBER_SCHEDULED, NULL);
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error,"Can't enable fiber scheduled events");
+    }
+    error = threadControl_setEventMode(JVMTI_ENABLE,
+                                       EI_FIBER_TERMINATED, NULL);
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error,"Can't enable fiber terminated events");
+    }
+    error = threadControl_setEventMode(JVMTI_ENABLE,
+                                       EI_FIBER_MOUNT, NULL);
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error,"Can't enable fiber mount events");
+    }
+    error = threadControl_setEventMode(JVMTI_ENABLE,
+                                       EI_FIBER_UNMOUNT, NULL);
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error,"Can't enable fiber unmount events");
+    }
 
     (void)memset(&(gdata->callbacks),0,sizeof(gdata->callbacks));
     /* Event callback for JVMTI_EVENT_SINGLE_STEP */
@@ -1524,6 +1674,14 @@ eventHandler_initialize(jbyte sessionID)
     gdata->callbacks.VMDeath                    = &cbVMDeath;
     /* Event callback for JVMTI_EVENT_GARBAGE_COLLECTION_FINISH */
     gdata->callbacks.GarbageCollectionFinish    = &cbGarbageCollectionFinish;
+    /* Event callback for JVMTI_EVENT_FIBER_SCHEDULED */
+    gdata->callbacks.FiberScheduled             = &cbFiberScheduled;
+    /* Event callback for JVMTI_EVENT_FIBER_TERMINATED */
+    gdata->callbacks.FiberTerminated            = &cbFiberTerminated;
+    /* Event callback for JVMTI_EVENT_FIBER_MOUNT */
+    gdata->callbacks.FiberMount                 = &cbFiberMount;
+    /* Event callback for JVMTI_EVENT_FIBER_UNMOUNT */
+    gdata->callbacks.FiberUnmount               = &cbFiberUnmount;
 
     error = JVMTI_FUNC_PTR(gdata->jvmti,SetEventCallbacks)
                 (gdata->jvmti, &(gdata->callbacks), sizeof(gdata->callbacks));

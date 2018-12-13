@@ -39,6 +39,8 @@
  * If the ei field is non-zero, then one of the possible
  * co-located events has been posted and the other fields describe
  * the event's location.
+ *
+ * See comment above deferEventReport() for an explanation of co-located events.
  */
 typedef struct CoLocatedEventInfo_ {
     EventIndex ei;
@@ -63,27 +65,30 @@ typedef struct CoLocatedEventInfo_ {
  */
 typedef struct ThreadNode {
     jthread thread;
-    unsigned int toBeResumed : 1;
-    unsigned int pendingInterrupt : 1;
-    unsigned int isDebugThread : 1;
-    unsigned int suspendOnStart : 1;
-    unsigned int isStarted : 1;
+    unsigned int toBeResumed : 1;      /* true if VM.suspend() succeeded in suspending this thread. */
+    unsigned int pendingInterrupt : 1; /* true if thread is interrupted while handling an event. */
+    unsigned int isDebugThread : 1;    /* true if this is one of our debug agent threads. */
+    unsigned int suspendOnStart : 1;   /* true for new threads if we are currently in a VM.suspend(). */
+    unsigned int isStarted : 1;        /* THREAD_START or FIBER_SCHEDULED event received. */
+    unsigned int is_fiber : 1;
     unsigned int popFrameEvent : 1;
     unsigned int popFrameProceed : 1;
     unsigned int popFrameThread : 1;
-    EventIndex current_ei;
-    jobject pendingStop;
+    EventIndex current_ei; /* Used to determine if we are currently handling an event on this thread. */
+    jobject pendingStop;   /* Object we are throwing to stop the thread (ThreadReferenceImpl.stop). */
     jint suspendCount;
     jint resumeFrameDepth; /* !=0 => This thread is in a call to Thread.resume() */
     jvmtiEventMode instructionStepMode;
     StepRequest currentStep;
     InvokeRequest currentInvoke;
-    struct bag *eventBag;
-    CoLocatedEventInfo cleInfo;
+    struct bag *eventBag;       /* Accumulation of JDWP events to be sent as a reply. */
+    CoLocatedEventInfo cleInfo; /* See comment above deferEventReport() for an explanation. */
+    jthread fiberHelperThread;  /* Temporary thread created for mounting fiber on to get stack trace. */
     struct ThreadNode *next;
     struct ThreadNode *prev;
-    jlong frameGeneration;
-    struct ThreadList *list;  /* Tells us what list this thread is in */
+    jlong frameGeneration;    /* used to generate a unique frameID. Incremented whenever existing frameID
+                                 needs to be invalidated, such as when the thread is resumed. */
+    struct ThreadList *list;  /* Tells us what list this thread is in. */
 } ThreadNode;
 
 static jint suspendAllCount;
@@ -118,6 +123,7 @@ static jvmtiError threadControl_removeDebugThread(jthread thread);
  */
 static ThreadList runningThreads;
 static ThreadList otherThreads;
+static ThreadList runningFibers; /* Fibers we have seen. */
 
 #define MAX_DEBUG_THREADS 10
 static int debugThreadCount;
@@ -218,14 +224,32 @@ nonTlsSearch(JNIEnv *env, ThreadList *list, jthread thread)
 }
 
 /*
- * These functions maintain the linked list of currently running threads.
+ * These functions maintain the linked list of currently running threads and fibers.
  * All assume that the threadLock is held before calling.
- * If list==NULL, search both lists.
+ */
+
+
+/*
+ * Search for a thread on the list. If list==NULL, search all lists.
  */
 static ThreadNode *
 findThread(ThreadList *list, jthread thread)
 {
     ThreadNode *node;
+    JNIEnv *env = getEnv();
+
+    if (list == NULL || list == &runningFibers) {
+        /*
+         * Search for a fiber.
+         * fiber fixme: this needs to be done a lot faster. Maybe some sort of TLS for fibers is needed.
+         * Otherwise we'll need something like a hashlist front end to the runningFibers list so
+         * we can do quick lookups.
+         */
+        ThreadNode *node = nonTlsSearch(env, &runningFibers, thread);
+        if (node != NULL || list == &runningFibers) {
+            return node;
+        }
+    }    
 
     /* Get thread local storage for quick thread -> node access */
     node = getThreadLocalStorage(thread);
@@ -234,9 +258,6 @@ findThread(ThreadList *list, jthread thread)
      *   any threads that we could match.
      */
     if ( node == NULL ) {
-        JNIEnv *env;
-
-        env = getEnv();
         if ( list != NULL ) {
             node = nonTlsSearch(env, list, thread);
         } else {
@@ -303,6 +324,7 @@ insertThread(JNIEnv *env, ThreadList *list, jthread thread)
 {
     ThreadNode *node;
     struct bag *eventBag;
+    jboolean is_fiber = (list == &runningFibers);
 
     node = findThread(list, thread);
     if (node == NULL) {
@@ -333,7 +355,7 @@ insertThread(JNIEnv *env, ThreadList *list, jthread thread)
         /*
          * Remember if it is a debug thread
          */
-        if (threadControl_isDebugThread(node->thread)) {
+        if (!is_fiber && threadControl_isDebugThread(node->thread)) {
             node->isDebugThread = JNI_TRUE;
         } else if (suspendAllCount > 0){
             /*
@@ -345,6 +367,7 @@ insertThread(JNIEnv *env, ThreadList *list, jthread thread)
             node->suspendOnStart = JNI_TRUE;
         }
         node->current_ei = 0;
+        node->is_fiber = is_fiber;
         node->instructionStepMode = JVMTI_DISABLE;
         node->eventBag = eventBag;
         addNode(list, node);
@@ -353,7 +376,9 @@ insertThread(JNIEnv *env, ThreadList *list, jthread thread)
          *   Some threads may not be in a state that allows setting of TLS,
          *   which is ok, see findThread, it deals with threads without TLS set.
          */
-        setThreadLocalStorage(node->thread, (void*)node);
+        if (!is_fiber) {
+            setThreadLocalStorage(node->thread, (void*)node);
+        }
     }
 
     return node;
@@ -370,7 +395,9 @@ clearThread(JNIEnv *env, ThreadNode *node)
         (void)threadControl_removeDebugThread(node->thread);
     }
     /* Clear out TLS on this thread (just a cleanup action) */
-    setThreadLocalStorage(node->thread, NULL);
+    if (!node->is_fiber) {
+        setThreadLocalStorage(node->thread, NULL);
+    }
     tossGlobalRef(env, &(node->thread));
     bagDestroyBag(node->eventBag);
     jvmtiDeallocate(node);
@@ -570,6 +597,7 @@ threadControl_initialize(void)
     suspendAllCount = 0;
     runningThreads.first = NULL;
     otherThreads.first = NULL;
+    runningFibers.first = NULL;
     debugThreadCount = 0;
     threadLock = debugMonitorCreate("JDWP Thread Lock");
     if (gdata->threadClass==NULL) {
@@ -656,6 +684,9 @@ handleAppResumeCompletion(JNIEnv *env, EventInfo *evinfo,
     ThreadNode *node;
     jthread     thread;
 
+    /* fiber fixme: it's unclear how this is used and if anything special needs to be done for fibers. */
+    JDI_ASSERT(!evinfo->matchesFiber);
+
     thread = evinfo->thread;
 
     debugMonitorEnter(threadLock);
@@ -737,6 +768,9 @@ handleAppResumeBreakpoint(JNIEnv *env, EventInfo *evinfo,
                           HandlerNode *handlerNode,
                           struct bag *eventBag)
 {
+    /* fiber fixme: it's unclear how this is used and if anything special needs to be done for fibers. */
+    JDI_ASSERT(!evinfo->matchesFiber);
+
     jthread resumer = evinfo->thread;
     jthread resumee = getResumee(resumer);
 
@@ -1049,6 +1083,7 @@ commonSuspend(JNIEnv *env, jthread thread, jboolean deferred)
 {
     ThreadNode *node;
 
+    /* fiber fixme: fix this for fibers. */
     /*
      * If the thread is not between its start and end events, we should
      * still suspend it. To keep track of things, add the thread
@@ -1434,17 +1469,28 @@ threadControl_suspendCount(jthread thread, jint *count)
 {
     jvmtiError  error;
     ThreadNode *node;
+    jboolean is_fiber = isFiber(thread);
 
     debugMonitorEnter(threadLock);
 
-    node = findThread(&runningThreads, thread);
-    if (node == NULL) {
-        node = findThread(&otherThreads, thread);
+    if (is_fiber) {
+        node = findThread(&runningFibers, thread);
+    } else {
+        node = findThread(&runningThreads, thread);
+        if (node == NULL) {
+            node = findThread(&otherThreads, thread);
+        }
     }
 
     error = JVMTI_ERROR_NONE;
     if (node != NULL) {
         *count = node->suspendCount;
+        /* fiber fixme: We can't actually suspend a fiber yet, but suspendAll() effectively does this.
+         * This makes the debugger think a fiber is suspended after it does a VM.suspend(), although
+         * this isn't bullet proof. */
+        if (is_fiber) {
+            *count += suspendAllCount;
+        }
     } else {
         /*
          * If the node is in neither list, the debugger never suspended
@@ -1558,6 +1604,19 @@ threadControl_suspendAll(void)
     return error;
 }
 
+/* fiber fixme: this also needs to be called if we ever resume a fiber. */
+static jvmtiError
+resumeFiberHelperThread(JNIEnv *env, ThreadNode *node, void *ignored)
+{
+    jvmtiError error = JVMTI_ERROR_NONE;
+    if (node->fiberHelperThread != NULL) {
+        error = JVMTI_FUNC_PTR(gdata->jvmti,ResumeThread)
+            (gdata->jvmti, node->fiberHelperThread);
+        tossGlobalRef(env, &node->fiberHelperThread);
+    }
+    return error;
+}
+
 static jvmtiError
 resumeHelper(JNIEnv *env, ThreadNode *node, void *ignored)
 {
@@ -1581,6 +1640,13 @@ threadControl_resumeAll(void)
 
     eventHandler_lock(); /* for proper lock order */
     debugMonitorEnter(threadLock);
+
+    /* Resume any helper threads that were created so we could get a Fiber's stack trace. */
+    if (runningFibers.first != NULL) {
+        error = enumerateOverThreadList(env, &runningFibers,
+                                        resumeFiberHelperThread, NULL);
+        sleep(1);  /* Give all the helper threads a chance to exit. */
+    }
 
     /*
      * Resume only those threads that the debugger has suspended. All
@@ -2031,9 +2097,11 @@ checkForPopFrameEvents(JNIEnv *env, EventIndex ei, jthread thread)
 }
 
 struct bag *
-threadControl_onEventHandlerEntry(jbyte sessionID, EventIndex ei, jthread thread, jobject currentException)
+threadControl_onEventHandlerEntry(jbyte sessionID, EventIndex ei,
+                                  jthread thread, jthread fiber, jobject currentException)
 {
     ThreadNode *node;
+    ThreadNode *fiberNode;
     JNIEnv     *env;
     struct bag *eventBag;
     jthread     threadToSuspend;
@@ -2080,9 +2148,22 @@ threadControl_onEventHandlerEntry(jbyte sessionID, EventIndex ei, jthread thread
         node = insertThread(env, &runningThreads, thread);
     }
 
+    /* If this is the first time we've seen this fiber, then add it to the list. */
+    if (fiber == NULL) {
+        fiberNode = NULL;
+    } else {
+        fiberNode = findThread(&runningFibers, fiber);
+        if (fiberNode == NULL) {
+            fiberNode = insertThread(env, &runningFibers, fiber);
+        }
+    }
+
     if (ei == EI_THREAD_START) {
         node->isStarted = JNI_TRUE;
         processDeferredEventModes(env, thread, node);
+    }
+    if (ei == EI_FIBER_SCHEDULED) {
+        fiberNode->isStarted = JNI_TRUE;
     }
 
     node->current_ei = ei;
@@ -2184,27 +2265,44 @@ threadControl_applicationThreadStatus(jthread thread,
     ThreadNode *node;
     jvmtiError  error;
     jint        state;
+    jboolean    is_fiber = isFiber(thread);
 
     log_debugee_location("threadControl_applicationThreadStatus()", thread, NULL, 0);
 
     debugMonitorEnter(threadLock);
 
-    error = threadState(thread, &state);
-    *pstatus = map2jdwpThreadStatus(state);
-    *statusFlags = map2jdwpSuspendStatus(state);
+    if (!is_fiber) {
+        error = threadState(thread, &state);
+        *pstatus = map2jdwpThreadStatus(state);
+        *statusFlags = map2jdwpSuspendStatus(state);
 
-    if (error == JVMTI_ERROR_NONE) {
-        node = findThread(&runningThreads, thread);
-        if ((node != NULL) && HANDLING_EVENT(node)) {
-            /*
-             * While processing an event, an application thread is always
-             * considered to be running even if its handler happens to be
-             * cond waiting on an internal debugger monitor, etc.
-             *
-             * Leave suspend status untouched since it is not possible
-             * to distinguish debugger suspends from app suspends.
-             */
-            *pstatus = JDWP_THREAD_STATUS(RUNNING);
+        if (error == JVMTI_ERROR_NONE) {
+            node = findThread(&runningThreads, thread);
+            if ((node != NULL) && HANDLING_EVENT(node)) {
+                /*
+                 * While processing an event, an application thread is always
+                 * considered to be running even if its handler happens to be
+                 * cond waiting on an internal debugger monitor, etc.
+                 *
+                 * Leave suspend status untouched since it is not possible
+                 * to distinguish debugger suspends from app suspends.
+                 */
+                *pstatus = JDWP_THREAD_STATUS(RUNNING);
+            }
+        }
+    } else {
+        error = JVMTI_ERROR_NONE;
+        *pstatus = JDWP_THREAD_STATUS(RUNNING);
+        *statusFlags = 0;
+        /* fiber fixme: this needs to be fixed in order to support resuming indvidual fibers
+         * that were suspended with VM.suspend(), but resumed with ThreadReference.resume(). */
+        if (suspendAllCount > 0) {
+            *statusFlags = JDWP_SUSPEND_STATUS(SUSPENDED);
+        } else {
+            node = findThread(&runningFibers, thread);
+            if (node->suspendCount > 0) {
+                *statusFlags = JDWP_SUSPEND_STATUS(SUSPENDED);
+            }
         }
     }
 
@@ -2397,6 +2495,7 @@ threadControl_reset(void)
     debugMonitorEnter(threadLock);
     (void)enumerateOverThreadList(env, &runningThreads, resetHelper, NULL);
     (void)enumerateOverThreadList(env, &otherThreads, resetHelper, NULL);
+    (void)enumerateOverThreadList(env, &runningFibers, resetHelper, NULL);
 
     removeResumed(env, &otherThreads);
 
@@ -2443,6 +2542,55 @@ threadControl_setEventMode(jvmtiEventMode mode, EventIndex ei, jthread thread)
 
         debugMonitorEnter(threadLock);
         {
+            if (isFiber(thread)) {
+                /* fiber fixme: Getting the carrier thread here is just a hack. It does not work if
+                 * the fiber is not mounted, and even if mounted, does not result in the correct
+                 * behaviour if the fiber changes carrier threads. If the carrier thread is
+                 * NULL we need to defer all the code below, most notably
+                 * threadSetEventNotificationMode(), until after the fiber is mounted. We also need
+                 * to call threadSetEventNotificationMode() each time there is an unmount or mount
+                 * since the thread that needs notifications will change as the fiber moves
+                 * between carrier threads. The best way to manage this might be to move
+                 * HandlerNodes for unmounted fibers onto a linked list hanging off the fiber's
+                 * ThreadNode. But that also complicates finding HandlerNodes. For example,
+                 * when a breakpoint is cleared, we call eventHandler_freeByID(), which would
+                 * need to also search every fiber for the handler. The other choice is to
+                 * keep handlers where they are now (off the array of handler chains), but
+                 * for every mount/unmount, search all the handlers in all the chains for
+                 * ones that are for the mounting/unmounting fiber. This could be slow,
+                 * although generally speaking we don't have many HandlerNodes because
+                 * they are generated indirectly by the debugger as users do things
+                 * like set breakpoints.
+                 * A hybrid appraoch might be best. Keep the handler chains as they are now,
+                 * but also have each fiber maintain a list of its handler nodes for faster
+                 * handling during mount/unmount.
+                 *
+                 * And it should also be noted here that if the carrier thread is null, the
+                 * findThread() call ends up returning the current thread, and then 
+                 * threadSetEventNotificationMode() is called with a NULL thread, resulting
+                 * in the event being enabled on all threads. This bug actually has the 
+                 * desireable affect of making breakpoints that are filtered on an unmounted
+                 * fiber work as expected, because all the carrier threads get the breakpoint
+                 * event enabled. However, for some odd reason it also works as expected if
+                 * the fiber is already mounted. I expected that the breakpoint event would only
+                 * be enabled on the carrier thread in that case, and therefore if the fiber
+                 * was moved to a different carrier thread, you would stop getting breakpoints
+                 * until it moved back to the original carrier thread. That's not the case for some
+                 * reason, and I'm see the breakpoints no matter what carrier thread the fiber
+                 * runs on. It turns out that the agent installs a global breakpoint for
+                 * Thread.resume(), so global breakpoints are always enabled.
+                 * See handleAppResumeBreakpoint.
+                 *
+                 * It also should be noted that this does not cause a problem for single stepping
+                 * because:
+                 *  - There is at most one single step HandlerNode per thread.
+                 *  - Fiber mount/unmount events result explicitly dooing the proper
+                 *    enabling/disabling of the JVMTI single step event on the carrier thread.
+                 * There is a potential issue with initiating a StepRequest on and unmounted
+                 * fiber. See the fixme comment in stepControl_beginStep.
+                 */ 
+                thread = getFiberThread(thread);
+            }
             node = findThread(&runningThreads, thread);
             if ((node == NULL) || (!node->isStarted)) {
                 JNIEnv *env;
@@ -2498,4 +2646,222 @@ threadControl_getFrameGeneration(jthread thread)
     debugMonitorExit(threadLock);
 
     return frameGeneration;
+}
+
+jthread *threadControl_allFibers(jint *numFibers)
+{
+    JNIEnv *env;
+    ThreadNode *node;
+    jthread* fibers;
+
+    env = getEnv();
+    debugMonitorEnter(threadLock);
+
+    /* Count the number of fibers */
+    /* fiber fixme: we should keep a running total so no counting is needed. */
+    *numFibers = 0;
+    for (node = runningFibers.first; node != NULL; node = node->next) {
+        (*numFibers)++;
+    }
+
+    /* Allocate and fill in the fibers array. */
+    fibers = jvmtiAllocate(*numFibers * sizeof(jthread*));
+    if (fibers != NULL) {
+        int i = 0;
+        for (node = runningFibers.first; node != NULL;  node = node->next) {
+            fibers[i++] = node->thread;
+        }
+    }
+
+    debugMonitorExit(threadLock);
+
+    return fibers;
+}
+
+jthread threadControl_getFiberCarrierOrHelperThread(jthread fiber) {
+    {
+        /* fiber fixme: caller needs to deal with local ref allocation.*/
+        /* get the carrier thread that the fiber is running on */
+        jthread carrier_thread = getFiberThread(fiber);
+        if (carrier_thread != NULL) {
+            return carrier_thread;
+        } else {
+            jthread helperThread = threadControl_getFiberHelperThread(fiber);
+            if (helperThread == NULL) {
+                /* fiber fixme: we failed to get the helper thread, probably because the fiber
+                 * is currently in the PARKING state. Still need a solution for this. Fix
+                 * all callers too.
+                 */
+                tty_message("threadControl_getFiberCarrierOrHelperThread: threadControl_getFiberHelperThread() failed");
+            }
+            return helperThread;
+        }
+    }
+}
+
+jthread threadControl_getFiberHelperThread(jthread fiber) {
+    JNIEnv *env;
+    ThreadNode *fiberNode;
+    jthread helperThread;
+
+    debugMonitorEnter(threadLock);
+
+    fiberNode = findThread(&runningFibers, fiber);
+    if (fiberNode->fiberHelperThread != NULL) {
+        goto done;
+    }
+
+    env = getEnv();
+
+    /*
+     * We need to mount the fiber on a helper thread. This is done by calling
+     * Fiber.tryMountAndSuspend(), which will create a helper thread for us,
+     * mount the fiber on the thread, suspend the thread, and then return the thread.
+     *
+     * This helper thread is disposed of by resumeFiberHelperThread(), which currently
+     * is done by threadControl_resumeAll().
+     *
+     * Disable all event handling while doing this, since we don't want to deal
+     * with any incoming THREAD_START event.
+     */ 
+    gdata->ignoreEvents = JNI_TRUE;
+    helperThread = JNI_FUNC_PTR(env,CallObjectMethod)
+        (env, fiber, gdata->fiberTryMountAndSuspend);
+    gdata->ignoreEvents = JNI_FALSE;
+
+    if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
+        JNI_FUNC_PTR(env,ExceptionClear)(env);
+        goto done;
+    }
+
+    if (helperThread != NULL) {
+        saveGlobalRef(env, helperThread, &(fiberNode->fiberHelperThread));
+    }
+
+ done:
+    debugMonitorExit(threadLock);
+    return fiberNode->fiberHelperThread;
+}
+
+void threadControl_mountFiber(jthread fiber, jthread thread) {
+    debugMonitorEnter(threadLock);
+    {
+        JNIEnv *env = getEnv();
+        ThreadNode *fiberNode;
+        ThreadNode *threadNode;
+
+        fiberNode = findThread(&runningFibers, fiber);
+        JDI_ASSERT(fiberNode != NULL);
+        JDI_ASSERT(fiberNode->isStarted);
+        JDI_ASSERT(bagSize(fiberNode->eventBag) == 0);
+
+        threadNode = findThread(&runningThreads, thread);
+        JDI_ASSERT(threadNode != NULL);
+        JDI_ASSERT(threadNode->isStarted);
+        JDI_ASSERT(bagSize(threadNode->eventBag) == 0);
+
+        /* Move the single step state from the fiberNode to threadNode, but only if we aren't
+         * already single stepping on the carrier thread. */
+        if (!threadNode->currentStep.pending) {
+            /* Copy fiber currentStep struct to carrier thread. */
+            memcpy(&threadNode->currentStep, &fiberNode->currentStep, sizeof(fiberNode->currentStep));
+
+            /* Enable JVMTI single step on the carrier thread if necessary. */
+            if (fiberNode->instructionStepMode == JVMTI_ENABLE) {
+                stepControl_enableStepping(thread);
+                threadNode->instructionStepMode = JVMTI_ENABLE;
+            }
+
+            /* Restore NotifyFramePop. */
+            {
+                jvmtiError error;
+                jint depth;
+                /* NotifyFramePop was originally called with a depth of 0 to indicate the current
+                 * frame. However, frames have been pushed since then, so we need to adjust the
+                 * depth to get to the right frame.
+                 *
+                 * fromStackDepth represents the number of frames on the stack when the STEP_OVER
+                 * was started. NotifyFramePop was called on the method that was entered. To
+                 * account for new frames pushed since then, we subtract fromStackDepth from
+                 * the current number of frames. The presents the frame where the STEP_OVER was
+                 * done, but since we want one frame below this point, we also subtract one.
+                 *
+                 * fiber fixme: When doing a STEP_OVER of a method call, NotifyFramePop is not always
+                 * done for the callee because it might be a native method. It's not clear to me how
+                 * this situation gets handled. Needs investigation. 
+                 */
+                depth = getThreadFrameCount(thread) - fiberNode->currentStep.fromStackDepth;
+                depth--; /* We actually want the frame one below the adjusted fromStackDepth. */
+                error = JVMTI_FUNC_PTR(gdata->jvmti,NotifyFramePop)(gdata->jvmti, thread, depth);
+                if (error == JVMTI_ERROR_DUPLICATE) {
+                    error = JVMTI_ERROR_NONE;
+                    /* Already being notified, continue without error */
+                } else if (error != JVMTI_ERROR_NONE) {
+                    EXIT_ERROR(error, "NotifyFramePop failed during mountFiber");
+                }
+            }
+   
+            /* Enable events */
+            threadControl_setEventMode(JVMTI_ENABLE, EI_EXCEPTION_CATCH, thread);
+            threadControl_setEventMode(JVMTI_ENABLE, EI_FRAME_POP, thread);
+            if (threadNode->currentStep.methodEnterHandlerNode != NULL) {
+                threadControl_setEventMode(JVMTI_ENABLE, EI_METHOD_ENTRY, thread);
+            }
+        }
+
+        /* Always clear the fiber single step state, regardless of what we've done above. */
+        fiberNode->instructionStepMode = JVMTI_DISABLE;
+        memset(&fiberNode->currentStep, 0, sizeof(fiberNode->currentStep));
+    }
+    debugMonitorExit(threadLock);
+}
+
+
+void threadControl_unmountFiber(jthread fiber, jthread thread) {
+    /* fiber fixme: need to figure out what to do with these 4 ThreadNode fields:
+       unsigned int popFrameEvent : 1;
+       unsigned int popFrameProceed : 1;
+       unsigned int popFrameThread : 1;
+       InvokeRequest currentInvoke;
+    */
+
+    debugMonitorEnter(threadLock);
+    {
+        JNIEnv *env = getEnv();
+        ThreadNode *fiberNode;
+        ThreadNode *threadNode;
+
+        fiberNode = findThread(&runningFibers, fiber);
+        JDI_ASSERT(fiberNode != NULL);
+        JDI_ASSERT(fiberNode->isStarted);
+        JDI_ASSERT(bagSize(fiberNode->eventBag) == 0);
+
+        threadNode = findThread(&runningThreads, thread);
+        JDI_ASSERT(threadNode != NULL);
+        JDI_ASSERT(threadNode->isStarted);
+        JDI_ASSERT(bagSize(threadNode->eventBag) == 0);
+
+        /* If we are single stepping the fiber, not the carrier thread, then move the single step
+         * state to the fiberNode. */
+        if (threadNode->currentStep.is_fiber) {
+            /* Clean up JVMTI SINGLE_STEP state. */
+            if (threadNode->instructionStepMode == JVMTI_ENABLE) {
+                stepControl_disableStepping(thread);
+                threadNode->instructionStepMode = JVMTI_DISABLE;
+                fiberNode->instructionStepMode = JVMTI_ENABLE;
+            }
+   
+            /* Disable events */
+            threadControl_setEventMode(JVMTI_DISABLE, EI_EXCEPTION_CATCH, thread);
+            threadControl_setEventMode(JVMTI_DISABLE, EI_FRAME_POP, thread);
+            if (threadNode->currentStep.methodEnterHandlerNode != NULL) {
+                threadControl_setEventMode(JVMTI_DISABLE, EI_METHOD_ENTRY, thread);
+            }
+
+            /* Copy currentStep struct. */
+            memcpy(&fiberNode->currentStep, &threadNode->currentStep, sizeof(threadNode->currentStep));
+            memset(&threadNode->currentStep, 0, sizeof(threadNode->currentStep));
+        }
+    }
+    debugMonitorExit(threadLock);
 }

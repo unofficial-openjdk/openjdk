@@ -32,20 +32,6 @@
 
 static jrawMonitorID stepLock;
 
-static jint
-getFrameCount(jthread thread)
-{
-    jint count = 0;
-    jvmtiError error;
-
-    error = JVMTI_FUNC_PTR(gdata->jvmti,GetFrameCount)
-                    (gdata->jvmti, thread, &count);
-    if (error != JVMTI_ERROR_NONE) {
-        EXIT_ERROR(error, "getting frame count");
-    }
-    return count;
-}
-
 /*
  * Most enabling/disabling of JVMTI events happens implicitly through
  * the inserting and freeing of handlers for those events. Stepping is
@@ -84,6 +70,14 @@ disableStepping(jthread thread)
     if (error != JVMTI_ERROR_NONE) {
         EXIT_ERROR(error, "disabling single step");
     }
+}
+
+void stepControl_enableStepping(jthread thread) {
+  enableStepping(thread);
+}
+
+void stepControl_disableStepping(jthread thread) {
+  disableStepping(thread);
 }
 
 static jvmtiError
@@ -173,7 +167,7 @@ initState(JNIEnv *env, jthread thread, StepRequest *step)
     step->fromLine = -1;
     step->fromNative = JNI_FALSE;
     step->frameExited = JNI_FALSE;
-    step->fromStackDepth = getFrameCount(thread);
+    step->fromStackDepth = getThreadFrameCount(thread);
 
     if (step->fromStackDepth <= 0) {
         /*
@@ -281,7 +275,7 @@ handleFramePopEvent(JNIEnv *env, EventInfo *evinfo,
         jint fromDepth;
         jint afterPopDepth;
 
-        currentDepth = getFrameCount(thread);
+        currentDepth = getThreadFrameCount(thread);
         fromDepth = step->fromStackDepth;
         afterPopDepth = currentDepth-1;
 
@@ -380,7 +374,7 @@ handleExceptionCatchEvent(JNIEnv *env, EventInfo *evinfo,
          *  Determine where we are on the call stack relative to where
          *  we started.
          */
-        jint currentDepth = getFrameCount(thread);
+        jint currentDepth = getThreadFrameCount(thread);
         jint fromDepth = step->fromStackDepth;
 
         LOG_STEP(("handleExceptionCatchEvent: fromDepth=%d, currentDepth=%d",
@@ -509,7 +503,7 @@ completeStep(JNIEnv *env, jthread thread, StepRequest *step)
 }
 
 jboolean
-stepControl_handleStep(JNIEnv *env, jthread thread,
+stepControl_handleStep(JNIEnv *env, jthread thread, jthread fiber, jboolean matchesFiber,
                        jclass clazz, jmethodID method)
 {
     jboolean completed = JNI_FALSE;
@@ -536,6 +530,9 @@ stepControl_handleStep(JNIEnv *env, jthread thread,
 
     LOG_STEP(("stepControl_handleStep: thread=%p", thread));
 
+    /* Make sure the StepRequest is in agreement as to whether or not we are stepping in a fiber. */
+    JDI_ASSERT(step->is_fiber == matchesFiber);
+
     /*
      * We never filter step into instruction. It's always over on the
      * first step event.
@@ -561,7 +558,7 @@ stepControl_handleStep(JNIEnv *env, jthread thread,
      *  Determine where we are on the call stack relative to where
      *  we started.
      */
-    currentDepth = getFrameCount(thread);
+    currentDepth = getThreadFrameCount(thread);
     fromDepth = step->fromStackDepth;
 
     if (fromDepth > currentDepth) {
@@ -597,7 +594,7 @@ stepControl_handleStep(JNIEnv *env, jthread thread,
                 step->methodEnterHandlerNode =
                     eventHandler_createInternalThreadOnly(
                                        EI_METHOD_ENTRY,
-                                       handleMethodEnterEvent, thread);
+                                       handleMethodEnterEvent, matchesFiber ? fiber : thread);
                 if (step->methodEnterHandlerNode == NULL) {
                     EXIT_ERROR(AGENT_ERROR_INVALID_EVENT_TYPE,
                                 "installing event method enter handler");
@@ -724,7 +721,7 @@ stepControl_resetRequest(jthread thread)
 }
 
 static void
-initEvents(jthread thread, StepRequest *step)
+initEvents(jthread thread, jthread filter_thread, StepRequest *step)
 {
     /* Need to install frame pop handler and exception catch handler when
      * single-stepping is enabled (i.e. step-into or step-over/step-out
@@ -738,11 +735,11 @@ initEvents(jthread thread, StepRequest *step)
         step->catchHandlerNode = eventHandler_createInternalThreadOnly(
                                      EI_EXCEPTION_CATCH,
                                      handleExceptionCatchEvent,
-                                     thread);
+                                     filter_thread);
         step->framePopHandlerNode = eventHandler_createInternalThreadOnly(
                                         EI_FRAME_POP,
                                         handleFramePopEvent,
-                                        thread);
+                                        filter_thread);
 
         if (step->catchHandlerNode == NULL ||
             step->framePopHandlerNode == NULL) {
@@ -785,19 +782,51 @@ initEvents(jthread thread, StepRequest *step)
 }
 
 jvmtiError
-stepControl_beginStep(JNIEnv *env, jthread thread, jint size, jint depth,
+stepControl_beginStep(JNIEnv *env, jthread filter_thread,  jint size, jint depth,
                       HandlerNode *node)
 {
     StepRequest *step;
     jvmtiError error;
     jvmtiError error2;
+    jthread thread;
+    jboolean is_fiber;
 
-    LOG_STEP(("stepControl_beginStep: thread=%p,size=%d,depth=%d",
-                        thread, size, depth));
+    /* filter_thread could be a fiber. Get the carrier thread it is mounted on. */
+    is_fiber = isFiber(filter_thread);
+    if (is_fiber) {
+        thread = getFiberThread(filter_thread);
+        /* fiber fixme: Although very unlikely to ever happen given how debuggers work, it is
+         * possible for the StepRequest to have been made on an unmounted fiber. For now,
+         * just assert that this isn't happening. To support it, we need rework the code below
+         * to defer thread related actions until the fiber is mounted.
+         */
+        JDI_ASSERT(thread != NULL);
+    }  else {
+        thread = filter_thread;
+    }
+
+    LOG_STEP(("stepControl_beginStep: filter_thread=%p,thread=%p,size=%d,depth=%d",
+              filter_thread, thread, size, depth));
 
     eventHandler_lock(); /* for proper lock order */
     stepControl_lock();
 
+    /* fiber fixme: we should consider getting the StepRequest from the fiber instead of the thread.
+     * That way we don't need to copy back and forth in threadControl_mountFiber and
+     * threadControl_unmountFiber. It would require some additional changes in the step event 
+     * support to always pass the fiber to threadControl_getStepRequest(). We also need to 
+     * deal with node->instructionStepMode, referenceing the fiber copy when appropriate. Note
+     * this will get tricky if you try to single step in both the fiber and thread. With the
+     * current impl, if you single step in the fiber first, hit a breakpoint while stepping over
+     * a method call, and then switch to the carrier thread and start to single step there,
+     * that will clear out the fiber single stepping. If we get the StepRequest
+     * from the fiber instead, it won't automatically clear out the fiber single stepping
+     * when you start single stepping in the carrier thread, but it won't work as expected either
+     * because JVMTI single stepping on the carrier thread will be disabled once the single
+     * step is complete. We'd need to detect that we were single stepping on the fiber and
+     * keep JVMTI single stepping enabled, or we need to clear the single stepping state of
+     * the fiber.
+     */
     step = threadControl_getStepRequest(thread);
     if (step == NULL) {
         error = AGENT_ERROR_INVALID_THREAD;
@@ -815,13 +844,14 @@ stepControl_beginStep(JNIEnv *env, jthread thread, jint size, jint depth,
              */
             step->granularity = size;
             step->depth = depth;
+            step->is_fiber = is_fiber;
             step->catchHandlerNode = NULL;
             step->framePopHandlerNode = NULL;
             step->methodEnterHandlerNode = NULL;
             step->stepHandlerNode = node;
             error = initState(env, thread, step);
             if (error == JVMTI_ERROR_NONE) {
-                initEvents(thread, step);
+                initEvents(thread, filter_thread, step);
             }
             /* false means it is not okay to unblock the commandLoop thread */
             error2 = threadControl_resumeThread(thread, JNI_FALSE);
@@ -887,6 +917,10 @@ stepControl_endStep(jthread thread)
     eventHandler_lock(); /* for proper lock order */
     stepControl_lock();
 
+    if (isFiber(thread)) {
+        thread = getFiberThread(thread);
+        JDI_ASSERT(thread != NULL);
+    }
     step = threadControl_getStepRequest(thread);
     if (step != NULL) {
         clearStep(thread, step);

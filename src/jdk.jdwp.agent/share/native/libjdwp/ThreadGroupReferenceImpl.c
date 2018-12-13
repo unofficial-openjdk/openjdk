@@ -25,6 +25,7 @@
 
 #include "util.h"
 #include "ThreadGroupReferenceImpl.h"
+#include "threadControl.h"
 #include "inStream.h"
 #include "outStream.h"
 
@@ -89,6 +90,7 @@ children(PacketInputStream *in, PacketOutputStream *out)
 {
      JNIEnv *env;
      jthreadGroup group;
+     jboolean is_fiber_group;
 
      env = getEnv();
 
@@ -97,29 +99,47 @@ children(PacketInputStream *in, PacketOutputStream *out)
          return JNI_TRUE;
      }
 
-     WITH_LOCAL_REFS(env, 1) {
+     is_fiber_group = isSameObject(env, group, gdata->fiberThreadGroup);
 
-         jvmtiError error;
+     WITH_LOCAL_REFS(env, 2) {
+
+         jvmtiError error = JVMTI_ERROR_NONE;
          jint threadCount;
+         jint fiberCount = 0;
          jint groupCount;
          jthread *theThreads;
+         jthread *theFibers = NULL;
          jthread *theGroups;
 
-         error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadGroupChildren)(gdata->jvmti, group,
+         if (is_fiber_group) {
+             /* Get all the Fibers so we can return them. */
+             theFibers = threadControl_allFibers(&fiberCount);
+             if (theFibers == NULL && fiberCount != 0) {
+                 error = JVMTI_ERROR_OUT_OF_MEMORY;
+             }
+         } 
+
+         if (error == JVMTI_ERROR_NONE) {
+             /* Get all the threads in this group so we can return them. */
+             error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadGroupChildren)(gdata->jvmti, group,
                                               &threadCount,&theThreads,
                                               &groupCount, &theGroups);
+         }
+
          if (error != JVMTI_ERROR_NONE) {
              outStream_setError(out, map2jdwpError(error));
          } else {
-
              int i;
 
              /* Squish out all of the debugger-spawned threads */
              threadCount = filterDebugThreads(theThreads, threadCount);
 
-             (void)outStream_writeInt(out, threadCount);
+             (void)outStream_writeInt(out, threadCount + fiberCount);
              for (i = 0; i < threadCount; i++) {
                  (void)outStream_writeObjectRef(env, out, theThreads[i]);
+             }
+             for (i = 0; i < fiberCount; i++) {
+                 (void)outStream_writeObjectRef(env, out, theFibers[i]);
              }
              (void)outStream_writeInt(out, groupCount);
              for (i = 0; i < groupCount; i++) {
@@ -128,6 +148,7 @@ children(PacketInputStream *in, PacketOutputStream *out)
 
              jvmtiDeallocate(theGroups);
              jvmtiDeallocate(theThreads);
+             jvmtiDeallocate(theFibers);
          }
 
      } END_WITH_LOCAL_REFS(env);

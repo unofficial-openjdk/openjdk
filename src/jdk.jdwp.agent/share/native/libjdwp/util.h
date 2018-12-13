@@ -81,6 +81,8 @@ typedef struct {
     jboolean modifiedUtf8;
     jboolean quiet;
 
+    jboolean ignoreEvents;
+
     /* Debug flags (bit mask) */
     int      debugflags;
 
@@ -90,17 +92,21 @@ typedef struct {
     char * options;
 
     jclass              classClass;
+    jclass              fiberClass;
     jclass              threadClass;
     jclass              threadGroupClass;
     jclass              classLoaderClass;
     jclass              stringClass;
     jclass              systemClass;
+    jmethodID           fiberToString;
+    jmethodID           fiberTryMountAndSuspend;
     jmethodID           threadConstructor;
     jmethodID           threadSetDaemon;
     jmethodID           threadResume;
     jmethodID           systemGetProperty;
     jmethodID           setProperty;
     jthreadGroup        systemThreadGroup;
+    jthreadGroup        fiberThreadGroup;
     jobject             agent_properties;
 
     jint                cachedJvmtiVersion;
@@ -160,7 +166,12 @@ typedef enum {
         EI_MONITOR_WAITED       = 18,
         EI_VM_INIT              = 19,
         EI_VM_DEATH             = 20,
-        EI_max                  = 20
+        EI_FIBER_SCHEDULED      = 21,
+        EI_FIBER_TERMINATED     = 22,
+        EI_FIBER_MOUNT          = 23,
+        EI_FIBER_UNMOUNT        = 24,
+
+        EI_max                  = 24
 } EventIndex;
 
 /* Agent errors that might be in a jvmtiError for JDWP or internal.
@@ -201,6 +212,10 @@ typedef struct {
 
     EventIndex  ei;
     jthread     thread;
+    jthread     fiber;        /* NULL if not running on a fiber. */
+    jboolean    matchesFiber; /* true if the matching HandlerNode specified a fiber that matched,
+                                 or the HandlerNode specified no thread and the event came in on a
+                                 carrier thread running a fiber. */
     jclass      clazz;
     jmethodID   method;
     jlocation   location;
@@ -325,6 +340,7 @@ jvmtiError classLoader(jclass, jobject *);
  */
 JNIEnv *getEnv(void);
 jboolean isClass(jobject object);
+jboolean isFiber(jobject object);
 jboolean isThread(jobject object);
 jboolean isThreadGroup(jobject object);
 jboolean isString(jobject object);
@@ -367,6 +383,11 @@ jvmtiError isMethodSynthetic(jmethodID, jboolean*);
 jvmtiError isFieldSynthetic(jclass, jfieldID, jboolean*);
 
 jboolean isSameObject(JNIEnv *env, jobject o1, jobject o2);
+
+jthread  getThreadFiber(jthread thread);
+jthread  getFiberThread(jthread fiber);
+
+jint getThreadFrameCount(jthread thread);
 
 jint objectHashCode(jobject);
 

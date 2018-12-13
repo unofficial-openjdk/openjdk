@@ -36,6 +36,7 @@ typedef struct {
 
     /* State */
     jboolean pending;
+    jboolean is_fiber;       /* we are stepping in a fiber */
     jboolean frameExited;    /* for depth == STEP_OVER or STEP_OUT */
     jboolean fromNative;
     jint fromStackDepth;     /* for all but STEP_INTO STEP_INSTRUCTION */
@@ -54,7 +55,7 @@ typedef struct {
 void stepControl_initialize(void);
 void stepControl_reset(void);
 
-jboolean stepControl_handleStep(JNIEnv *env, jthread thread,
+jboolean stepControl_handleStep(JNIEnv *env, jthread thread, jthread fiber, jboolean matchesFiber,
                                 jclass clazz, jmethodID method);
 
 jvmtiError stepControl_beginStep(JNIEnv *env, jthread thread,
@@ -63,6 +64,9 @@ jvmtiError stepControl_endStep(jthread thread);
 
 void stepControl_clearRequest(jthread thread, StepRequest *step);
 void stepControl_resetRequest(jthread thread);
+
+void stepControl_enableStepping(jthread thread);
+void stepControl_disableStepping(jthread thread);
 
 void stepControl_lock(void);
 void stepControl_unlock(void);

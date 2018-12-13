@@ -178,6 +178,7 @@ util_initialize(JNIEnv *env)
 
         jvmtiError error;
         jclass localClassClass;
+        jclass localFiberClass;
         jclass localThreadClass;
         jclass localThreadGroupClass;
         jclass localClassLoaderClass;
@@ -191,9 +192,12 @@ util_initialize(JNIEnv *env)
         jthreadGroup *groups;
         jthreadGroup localSystemThreadGroup;
 
+        gdata->ignoreEvents = JNI_FALSE;
+
         /* Find some standard classes */
 
         localClassClass         = findClass(env,"java/lang/Class");
+        localFiberClass         = findClass(env,"java/lang/Fiber");
         localThreadClass        = findClass(env,"java/lang/Thread");
         localThreadGroupClass   = findClass(env,"java/lang/ThreadGroup");
         localClassLoaderClass   = findClass(env,"java/lang/ClassLoader");
@@ -204,6 +208,7 @@ util_initialize(JNIEnv *env)
         /* Save references */
 
         saveGlobalRef(env, localClassClass,       &(gdata->classClass));
+        saveGlobalRef(env, localFiberClass,       &(gdata->fiberClass));
         saveGlobalRef(env, localThreadClass,      &(gdata->threadClass));
         saveGlobalRef(env, localThreadGroupClass, &(gdata->threadGroupClass));
         saveGlobalRef(env, localClassLoaderClass, &(gdata->classLoaderClass));
@@ -212,6 +217,10 @@ util_initialize(JNIEnv *env)
 
         /* Find some standard methods */
 
+        gdata->fiberToString =
+                getMethod(env, gdata->fiberClass, "toString", "()Ljava/lang/String;");
+        gdata->fiberTryMountAndSuspend =
+                getMethod(env, gdata->fiberClass, "tryMountAndSuspend", "()Ljava/lang/Thread;");
         gdata->threadConstructor =
                 getMethod(env, gdata->threadClass,
                     "<init>", "(Ljava/lang/ThreadGroup;Ljava/lang/String;)V");
@@ -307,6 +316,12 @@ specificTypeKey(JNIEnv *env, jobject object)
         return JDWP_TAG(OBJECT);
     } else if (JNI_FUNC_PTR(env,IsInstanceOf)(env, object, gdata->stringClass)) {
         return JDWP_TAG(STRING);
+    } else if (JNI_FUNC_PTR(env,IsInstanceOf)(env, object, gdata->fiberClass)) {
+        /* We don't really need to check if it's an instance of a Fiber class since
+         * that would get detected below, but this is a bit faster. At one point
+         * it was thought that we would need to return THREAD here instead of OBJECT,
+         * but that's not the case. */
+        return JDWP_TAG(OBJECT);
     } else if (JNI_FUNC_PTR(env,IsInstanceOf)(env, object, gdata->threadClass)) {
         return JDWP_TAG(THREAD);
     } else if (JNI_FUNC_PTR(env,IsInstanceOf)(env, object, gdata->threadGroupClass)) {
@@ -601,14 +616,22 @@ sharedInvoke(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    /*
-     * Request the invoke. If there are no errors in the request,
-     * the interrupting thread will actually do the invoke and a
-     * reply will be generated subsequently, so we don't reply here.
-     */
-    error = invoker_requestInvoke(invokeType, (jbyte)options, inStream_id(in),
-                                  thread, clazz, method,
-                                  instance, arguments, argumentCount);
+    /* Don't try this with unmounted fibers. */
+    if (isFiber(thread)) {
+        thread = getFiberThread(thread);
+    }
+    if (thread == NULL) {
+        error = JVMTI_ERROR_THREAD_NOT_SUSPENDED;
+    } else {
+        /*
+         * Request the invoke. If there are no errors in the request,
+         * the interrupting thread will actually do the invoke and a
+         * reply will be generated subsequently, so we don't reply here.
+         */
+        error = invoker_requestInvoke(invokeType, (jbyte)options, inStream_id(in),
+                                      thread, clazz, method,
+                                      instance, arguments, argumentCount);
+    }
     if (error != JVMTI_ERROR_NONE) {
         outStream_setError(out, map2jdwpError(error));
         if ( arguments != NULL ) {
@@ -822,6 +845,62 @@ fieldSignature(jclass clazz, jfieldID field,
         jvmtiDeallocate(generic_signature);
     }
     return error;
+}
+
+/**
+ * Return fiber that is running on specified thread (must be inside a WITH_LOCAL_REFS)
+ */
+jthread
+getThreadFiber(jthread thread)
+{
+    jthread fiber;
+    jvmtiError error;
+
+    if ( thread == NULL ) {
+        return NULL;
+    }
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadFiber)
+        (gdata->jvmti, thread, &fiber);
+    if ( error != JVMTI_ERROR_NONE ) {
+        EXIT_ERROR(error,"Error calling GetThreadFiber()");
+        return JNI_FALSE;
+    }
+    return fiber;
+}
+
+/**
+ * Return thread that specified fiber is running on (must be inside a WITH_LOCAL_REFS)
+ */
+jthread
+getFiberThread(jthread fiber)
+{
+    jthread thread;
+    jvmtiError error;
+
+    if ( fiber == NULL ) {
+        return NULL;
+    }
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetFiberThread)
+        (gdata->jvmti, fiber, &thread);
+    if ( error != JVMTI_ERROR_NONE ) {
+        EXIT_ERROR(error,"Error calling GetFiberThread()");
+        return JNI_FALSE;
+    }
+    return thread;
+}
+
+jint
+getThreadFrameCount(jthread thread)
+{
+    jint count = 0;
+    jvmtiError error;
+
+    error = JVMTI_FUNC_PTR(gdata->jvmti,GetFrameCount)
+                    (gdata->jvmti, thread, &count);
+    if (error != JVMTI_ERROR_NONE) {
+        EXIT_ERROR(error, "getting frame count");
+    }
+    return count;
 }
 
 JNIEnv *
@@ -1586,6 +1665,13 @@ isClass(jobject object)
 }
 
 jboolean
+isFiber(jobject object)
+{
+    JNIEnv *env = getEnv();
+    return JNI_FUNC_PTR(env,IsInstanceOf)(env, object, gdata->fiberClass);
+}
+
+jboolean
 isThread(jobject object)
 {
     JNIEnv *env = getEnv();
@@ -1965,6 +2051,10 @@ eventIndexInit(void)
     index2jvmti[EI_MONITOR_WAITED     -EI_min] = JVMTI_EVENT_MONITOR_WAITED;
     index2jvmti[EI_VM_INIT            -EI_min] = JVMTI_EVENT_VM_INIT;
     index2jvmti[EI_VM_DEATH           -EI_min] = JVMTI_EVENT_VM_DEATH;
+    index2jvmti[EI_FIBER_SCHEDULED    -EI_min] = JVMTI_EVENT_FIBER_SCHEDULED;
+    index2jvmti[EI_FIBER_TERMINATED   -EI_min] = JVMTI_EVENT_FIBER_TERMINATED;
+    index2jvmti[EI_FIBER_MOUNT        -EI_min] = JVMTI_EVENT_FIBER_MOUNT;
+    index2jvmti[EI_FIBER_UNMOUNT      -EI_min] = JVMTI_EVENT_FIBER_UNMOUNT;
 
     index2jdwp[EI_SINGLE_STEP         -EI_min] = JDWP_EVENT(SINGLE_STEP);
     index2jdwp[EI_BREAKPOINT          -EI_min] = JDWP_EVENT(BREAKPOINT);
@@ -1986,6 +2076,13 @@ eventIndexInit(void)
     index2jdwp[EI_MONITOR_WAITED      -EI_min] = JDWP_EVENT(MONITOR_WAITED);
     index2jdwp[EI_VM_INIT             -EI_min] = JDWP_EVENT(VM_INIT);
     index2jdwp[EI_VM_DEATH            -EI_min] = JDWP_EVENT(VM_DEATH);
+    /* Just map FIBER_SCHEDULED/TERMINATED to THREAD_START/END. */
+    index2jdwp[EI_FIBER_SCHEDULED     -EI_min] = JDWP_EVENT(THREAD_START);
+    index2jdwp[EI_FIBER_TERMINATED    -EI_min] = JDWP_EVENT(THREAD_END);
+    /* fiber fixme: these don't actually map to anything in JDWP. Need a way to make them
+     * produce an error if referenced. */
+    index2jdwp[EI_FIBER_MOUNT         -EI_min] = -1;
+    index2jdwp[EI_FIBER_UNMOUNT       -EI_min] = -1;
 }
 
 jdwpEvent
@@ -2111,6 +2208,16 @@ jvmti2EventIndex(jvmtiEvent kind)
             return EI_VM_INIT;
         case JVMTI_EVENT_VM_DEATH:
             return EI_VM_DEATH;
+        /* fiber events */
+        case JVMTI_EVENT_FIBER_SCHEDULED:
+            return EI_FIBER_SCHEDULED;
+        case JVMTI_EVENT_FIBER_TERMINATED:
+            return EI_FIBER_TERMINATED;
+        case JVMTI_EVENT_FIBER_MOUNT:
+            return EI_FIBER_MOUNT;
+        case JVMTI_EVENT_FIBER_UNMOUNT:
+            return EI_FIBER_UNMOUNT;
+
         default:
             EXIT_ERROR(AGENT_ERROR_INVALID_INDEX,"JVMTI to EventIndex mapping");
             break;

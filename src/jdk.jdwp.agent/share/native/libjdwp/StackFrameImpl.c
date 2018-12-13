@@ -248,6 +248,15 @@ getValues(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
+    if (isFiber(thread)) {
+        thread = threadControl_getFiberCarrierOrHelperThread(thread);
+        if (thread == NULL) {
+            /* fiber fixme: we failed to get the helper thread. Just return 0 locals. */
+            (void)outStream_writeInt(out, 0);
+            return JNI_TRUE;
+        }
+    }
+
     (void)outStream_writeInt(out, variableCount);
     for (i = 0; (i < variableCount) && !outStream_error(out); i++) {
         jint slot;
@@ -448,6 +457,7 @@ popFrames(PacketInputStream *in, PacketOutputStream *out)
     }
 
     fnum = getFrameNumber(frame);
+    /* fiber fixme: add fiber support */
     error = threadControl_popFrames(thread, fnum);
     if (error != JVMTI_ERROR_NONE) {
         serror = map2jdwpError(error);

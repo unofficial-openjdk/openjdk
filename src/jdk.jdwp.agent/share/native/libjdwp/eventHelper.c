@@ -286,14 +286,26 @@ void eventHelper_releaseEvents(void)
 static void
 writeSingleStepEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
-    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    /*
+     * Write the fiber ref if the event matched a fiber filter, or if the event was not
+     * filtered by thread, and came in on a carrier thread running a fiber. In either
+     * case evinfo->matchesFiber will be true.
+     */
+    jthread thread = (evinfo->matchesFiber ? evinfo->fiber : evinfo->thread);
+    (void)outStream_writeObjectRef(env, out, thread);
     writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
 }
 
 static void
 writeBreakpointEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
-    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    /*
+     * Write the fiber ref if the event matched a fiber filter, or if the event was not
+     * filtered by thread, and came in on a carrier thread running a fiber. In either
+     * case evinfo->matchesFiber will be true.
+     */
+    jthread thread = (evinfo->matchesFiber ? evinfo->fiber : evinfo->thread);
+    (void)outStream_writeObjectRef(env, out, thread);
     writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
 }
 
@@ -347,6 +359,12 @@ static void
 writeThreadEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
     (void)outStream_writeObjectRef(env, out, evinfo->thread);
+}
+
+static void
+writeFiberEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
+{
+    (void)outStream_writeObjectRef(env, out, evinfo->fiber);
 }
 
 static void
@@ -433,6 +451,13 @@ handleEventCommandSingle(JNIEnv *env, PacketOutputStream *out,
         case EI_THREAD_START:
         case EI_THREAD_END:
             writeThreadEvent(env, out, evinfo);
+            break;
+        case EI_FIBER_SCHEDULED:
+        case EI_FIBER_TERMINATED:
+            /* Note that when we wrote the evinfo->ei byte above, it was mapped to an EI_THREAD_XXX event
+             * by eventIndex2jdwp(), so we didn't actually write the FIBER ei byte.
+             */
+            writeFiberEvent(env, out, evinfo);
             break;
         case EI_CLASS_LOAD:
         case EI_CLASS_PREPARE:
@@ -813,9 +838,11 @@ static void
 saveEventInfoRefs(JNIEnv *env, EventInfo *evinfo)
 {
     jthread *pthread;
+    jthread *pfiber;
     jclass *pclazz;
     jobject *pobject;
     jthread thread;
+    jthread fiber;
     jclass clazz;
     jobject object;
     char sig;
@@ -827,6 +854,12 @@ saveEventInfoRefs(JNIEnv *env, EventInfo *evinfo)
         thread = *pthread;
         *pthread = NULL;
         saveGlobalRef(env, thread, pthread);
+    }
+    if ( evinfo->fiber != NULL ) {
+        pfiber = &(evinfo->fiber);
+        fiber = *pfiber;
+        *pfiber = NULL;
+        saveGlobalRef(env, fiber, pfiber);
     }
     if ( evinfo->clazz != NULL ) {
         pclazz = &(evinfo->clazz);
@@ -890,6 +923,9 @@ tossEventInfoRefs(JNIEnv *env, EventInfo *evinfo)
     char sig;
     if ( evinfo->thread != NULL ) {
         tossGlobalRef(env, &(evinfo->thread));
+    }
+    if ( evinfo->fiber != NULL ) {
+        tossGlobalRef(env, &(evinfo->fiber));
     }
     if ( evinfo->clazz != NULL ) {
         tossGlobalRef(env, &(evinfo->clazz));
@@ -1043,12 +1079,12 @@ eventHelper_reportEvents(jbyte sessionID, struct bag *eventBag)
 
 void
 eventHelper_recordEvent(EventInfo *evinfo, jint id, jbyte suspendPolicy,
-                         struct bag *eventBag)
+                        struct bag *eventBag)
 {
     JNIEnv *env = getEnv();
     CommandSingle *command = bagAdd(eventBag);
     if (command == NULL) {
-        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"badAdd(eventBag)");
+        EXIT_ERROR(AGENT_ERROR_OUT_OF_MEMORY,"bagAdd(eventBag)");
     }
 
     command->singleKind = COMMAND_SINGLE_EVENT;

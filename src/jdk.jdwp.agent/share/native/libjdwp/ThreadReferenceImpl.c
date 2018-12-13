@@ -49,24 +49,48 @@ name(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    WITH_LOCAL_REFS(env, 1) {
+    WITH_LOCAL_REFS(env, 3) {
+        jboolean is_fiber = isFiber(thread);
+        if (!is_fiber) {
+            /* Get the thread name */
+            jvmtiThreadInfo info;
+            jvmtiError error;
 
-        jvmtiThreadInfo info;
-        jvmtiError error;
+            (void)memset(&info, 0, sizeof(info));
+            error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadInfo)
+                (gdata->jvmti, thread, &info);
 
-        (void)memset(&info, 0, sizeof(info));
+            if (error != JVMTI_ERROR_NONE) {
+                outStream_setError(out, map2jdwpError(error));
+            } else {
+                (void)outStream_writeString(out, info.name);
+            }
 
-        error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadInfo)
-                                (gdata->jvmti, thread, &info);
-
-        if (error != JVMTI_ERROR_NONE) {
-            outStream_setError(out, map2jdwpError(error));
+            if ( info.name != NULL )
+                jvmtiDeallocate(info.name);
         } else {
-            (void)outStream_writeString(out, info.name);
-        }
+            /* Use Fiber.toString() instead of the Thread name. */
+            jstring fiberName = JNI_FUNC_PTR(env,CallObjectMethod)
+                (env, thread, gdata->fiberToString);
+            if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
+                JNI_FUNC_PTR(env,ExceptionClear)(env);
+                fiberName = NULL;
+            }
 
-        if ( info.name != NULL )
-            jvmtiDeallocate(info.name);
+            if (fiberName == NULL) {
+                (void)outStream_writeString(out, "<UNKNOWN FIBER>");
+            } else {
+                const char *utf;
+                /* Get the UTF8 encoding for this fiberName string. */
+                utf = JNI_FUNC_PTR(env,GetStringUTFChars)(env, fiberName, NULL);
+                if (!(*env)->ExceptionCheck(env)) {
+                    (void)outStream_writeString(out, (char*)utf);
+                    JNI_FUNC_PTR(env,ReleaseStringUTFChars)(env, fiberName, utf);
+                } else {
+                    (void)outStream_writeString(out, "<UNKNOWN FIBER>");
+                }
+            }
+        }
 
     } END_WITH_LOCAL_REFS(env);
 
@@ -78,6 +102,7 @@ suspend(PacketInputStream *in, PacketOutputStream *out)
 {
     jvmtiError error;
     jthread thread;
+    /* fiber fixme: add fiber support */
 
     thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
@@ -100,6 +125,7 @@ resume(PacketInputStream *in, PacketOutputStream *out)
 {
     jvmtiError error;
     jthread thread;
+    /* fiber fixme: add fiber support */
 
     thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
@@ -170,44 +196,64 @@ threadGroup(PacketInputStream *in, PacketOutputStream *out)
 
         jvmtiThreadInfo info;
         jvmtiError error;
-
-        (void)memset(&info, 0, sizeof(info));
-
-        error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadInfo)
-                                (gdata->jvmti, thread, &info);
-
-        if (error != JVMTI_ERROR_NONE) {
-            outStream_setError(out, map2jdwpError(error));
+        jboolean is_fiber = isFiber(thread);
+        
+        if (is_fiber) {
+            /* If it's a fiber, use the well known thread group for Fibers. */
+            JDI_ASSERT(gdata->fiberThreadGroup != NULL);
+            (void)outStream_writeObjectRef(env, out, gdata->fiberThreadGroup);
         } else {
-            (void)outStream_writeObjectRef(env, out, info.thread_group);
-        }
+            (void)memset(&info, 0, sizeof(info));
+            error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadInfo)
+                                      (gdata->jvmti, thread, &info);
 
-        if ( info.name!=NULL )
-            jvmtiDeallocate(info.name);
+            if (error != JVMTI_ERROR_NONE) {
+                outStream_setError(out, map2jdwpError(error));
+            } else {
+                (void)outStream_writeObjectRef(env, out, info.thread_group);
+            }
+
+            if ( info.name!=NULL )
+                jvmtiDeallocate(info.name);
+        }
 
     } END_WITH_LOCAL_REFS(env);
 
     return JNI_TRUE;
 }
 
-static jboolean
+/*
+ * Validate that the thread or fiber is suspended, and returns a thread that can
+ * be used for stack operations, even for unmounted fibers.
+ */
+static jthread
 validateSuspendedThread(PacketOutputStream *out, jthread thread)
 {
     jvmtiError error;
     jint count;
+    jthread result = thread;
 
     error = threadControl_suspendCount(thread, &count);
     if (error != JVMTI_ERROR_NONE) {
         outStream_setError(out, map2jdwpError(error));
-        return JNI_FALSE;
+        return NULL;
     }
 
     if (count == 0) {
         outStream_setError(out, JDWP_ERROR(THREAD_NOT_SUSPENDED));
-        return JNI_FALSE;
+        return NULL;
     }
 
-    return JNI_TRUE;
+    if (isFiber(thread)) {
+        /* Make sure the Fiber is mounted on a thread that we can do stack operations on. */
+        result = threadControl_getFiberCarrierOrHelperThread(thread);
+        if (result == NULL) {
+            /* fiber fixme: this should never happen once we get proper unmounted fiber supported. */
+            (void)outStream_writeInt(out, 0);
+        }
+    }
+
+    return result;
 }
 
 static jboolean
@@ -222,10 +268,12 @@ frames(PacketInputStream *in, PacketOutputStream *out)
     jint startIndex;
     jint length;
     jvmtiFrameInfo* frames;
+    jthread originalThread;
 
     env = getEnv();
 
     thread = inStream_readThreadRef(env, in);
+    originalThread = thread;
     if (inStream_error(in)) {
         return JNI_TRUE;
     }
@@ -243,7 +291,8 @@ frames(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    if (!validateSuspendedThread(out, thread)) {
+    thread = validateSuspendedThread(out, thread);
+    if (thread == NULL) {
         return JNI_TRUE;
     }
 
@@ -297,7 +346,7 @@ frames(PacketInputStream *in, PacketOutputStream *out)
             error = methodClass(frames[index].method, &clazz);
 
             if (error == JVMTI_ERROR_NONE) {
-                FrameID frame = createFrameID(thread, index + startIndex);
+                FrameID frame = createFrameID(originalThread, index + startIndex);
                 outStream_writeFrameID(out, frame);
                 writeCodeLocation(out, clazz, frames[index].method,
                                   frames[index].location);
@@ -330,7 +379,8 @@ getFrameCount(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    if (!validateSuspendedThread(out, thread)) {
+    thread = validateSuspendedThread(out, thread);
+    if (thread == NULL) {
         return JNI_TRUE;
     }
 
@@ -363,7 +413,8 @@ ownedMonitors(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    if (!validateSuspendedThread(out, thread)) {
+    thread = validateSuspendedThread(out, thread);
+    if (thread == NULL) {
         return JNI_TRUE;
     }
 
@@ -412,7 +463,8 @@ currentContendedMonitor(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    if (!validateSuspendedThread(out, thread)) {
+    thread = validateSuspendedThread(out, thread);
+    if (thread == NULL) {
         return JNI_TRUE;
     }
 
@@ -459,6 +511,12 @@ stop(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
+    /* fiber fixme: add fiber support */
+    if (isFiber(thread)) {
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
+        return JNI_TRUE;
+    }
+
     error = threadControl_stop(thread, throwable);
     if (error != JVMTI_ERROR_NONE) {
         outStream_setError(out, map2jdwpError(error));
@@ -478,6 +536,12 @@ interrupt(PacketInputStream *in, PacketOutputStream *out)
     }
 
     if (threadControl_isDebugThread(thread)) {
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
+        return JNI_TRUE;
+    }
+
+    /* fiber fixme: add fiber support */
+    if (isFiber(thread)) {
         outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }
@@ -532,7 +596,8 @@ ownedMonitorsWithStackDepth(PacketInputStream *in, PacketOutputStream *out)
         return JNI_TRUE;
     }
 
-    if (!validateSuspendedThread(out, thread)) {
+    thread = validateSuspendedThread(out, thread);
+    if (thread == NULL) {
         return JNI_TRUE;
     }
 
@@ -584,6 +649,12 @@ forceEarlyReturn(PacketInputStream *in, PacketOutputStream *out)
     }
 
     if (threadControl_isDebugThread(thread)) {
+        outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
+        return JNI_TRUE;
+    }
+
+    /* fiber fixme: add fiber support */
+    if (isFiber(thread)) {
         outStream_setError(out, JDWP_ERROR(INVALID_THREAD));
         return JNI_TRUE;
     }

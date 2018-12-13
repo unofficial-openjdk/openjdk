@@ -258,7 +258,7 @@ inStream_readThreadRef(JNIEnv *env, PacketInputStream *stream)
          */
         return NULL;
     }
-    if (!isThread(object)) {
+    if (!isThread(object) && !isFiber(object)) {
         stream->error = JDWP_ERROR(INVALID_THREAD);
         return NULL;
     }

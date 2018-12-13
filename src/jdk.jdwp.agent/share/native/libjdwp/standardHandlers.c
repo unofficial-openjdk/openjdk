@@ -36,6 +36,7 @@
 
 #include "standardHandlers.h"
 
+/* HandlerFunction - Invoked from event_callback() */
 static void
 handleClassPrepare(JNIEnv *env, EventInfo *evinfo,
                    HandlerNode *node,
@@ -75,6 +76,7 @@ handleClassPrepare(JNIEnv *env, EventInfo *evinfo,
                             node->suspendPolicy, eventBag);
 }
 
+/* HandlerFunction - Invoked from event_callback() */
 static void
 handleGarbageCollectionFinish(JNIEnv *env, EventInfo *evinfo,
                   HandlerNode *node,
@@ -83,6 +85,7 @@ handleGarbageCollectionFinish(JNIEnv *env, EventInfo *evinfo,
     JDI_ASSERT_MSG(JNI_FALSE, "Should never call handleGarbageCollectionFinish");
 }
 
+/* HandlerFunction - Invoked from event_callback() */
 static void
 handleFrameEvent(JNIEnv *env, EventInfo *evinfo,
                  HandlerNode *node,
@@ -122,6 +125,7 @@ handleFrameEvent(JNIEnv *env, EventInfo *evinfo,
                                  eventBag);
 }
 
+/* HandlerFunction - Invoked from event_callback() */
 static void
 genericHandler(JNIEnv *env, EventInfo *evinfo,
                HandlerNode *node,
@@ -147,6 +151,10 @@ standardHandlers_defaultHandler(EventIndex ei)
         case EI_MONITOR_CONTENDED_ENTERED:
         case EI_MONITOR_WAIT:
         case EI_MONITOR_WAITED:
+        case EI_FIBER_SCHEDULED:
+        case EI_FIBER_TERMINATED:
+        case EI_FIBER_MOUNT:
+        case EI_FIBER_UNMOUNT:
             return &genericHandler;
 
         case EI_CLASS_PREPARE:

@@ -53,6 +53,7 @@ typedef struct LocationFilter {
 
 typedef struct ThreadFilter {
     jthread thread;
+    jboolean is_fiber; /* true if the filter thread is actually a fiber. */
 } ThreadFilter;
 
 typedef struct CountFilter {
@@ -82,6 +83,7 @@ typedef struct StepFilter {
     jint size;
     jint depth;
     jthread thread;
+    jboolean is_fiber; /* true if the step filter thread is actually a fiber. */
 } StepFilter;
 
 typedef struct MatchFilter {
@@ -358,6 +360,29 @@ eventInstance(EventInfo *evinfo)
     return object;
 }
 
+static jboolean
+matchesThreadOrFiber(JNIEnv* env,
+                     jthread thread, jthread fiber,
+                     jthread filterThread, jboolean filter_is_fiber,
+                     jboolean* matchesFiber)
+{
+    jboolean matchesThread = JNI_FALSE;
+    *matchesFiber = JNI_FALSE;
+
+    /*
+     * First check if it matches the fiber. If not, then check if it
+     * matches the thread. Only one of matchesFiber and matchesThread 
+     * will be set true, with the fiber check coming first. true is returned
+     * if either matches, false otherwise.
+     */
+    if (filter_is_fiber) {
+        *matchesFiber = isSameObject(env, fiber, filterThread);
+    } else {
+        matchesThread = isSameObject(env, thread, filterThread);
+    }
+    return matchesThread || *matchesFiber;
+}
+
 /*
  * Determine if this event is interesting to this handler.
  * Do so by checking each of the handler's filters.
@@ -366,6 +391,9 @@ eventInstance(EventInfo *evinfo)
  * Anyone modifying this function should check
  * eventFilterRestricted_passesUnloadFilter and
  * eventFilter_predictFiltering as well.
+ *
+ * evinfo->matchesFiber will be set if the handler matched based on
+ * the fiber specified in the evinfo.
  *
  * If shouldDelete is returned true, a count filter has expired
  * and the corresponding node should be deleted.
@@ -378,6 +406,7 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
                                    jboolean *shouldDelete)
 {
     jthread thread;
+    jthread fiber;
     jclass clazz;
     jmethodID method;
     Filter *filter = FILTERS_ARRAY(node);
@@ -385,8 +414,10 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
 
     *shouldDelete = JNI_FALSE;
     thread = evinfo->thread;
+    fiber = evinfo->fiber;
     clazz = evinfo->clazz;
     method = evinfo->method;
+    evinfo->matchesFiber = fiber != NULL; /* Assume it matches the fiber. Will be cleared below if not. */
 
     /*
      * Suppress most events if they happen in debug threads
@@ -401,7 +432,9 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
     for (i = 0; i < FILTER_COUNT(node); ++i, ++filter) {
         switch (filter->modifier) {
             case JDWP_REQUEST_MODIFIER(ThreadOnly):
-                if (!isSameObject(env, thread, filter->u.ThreadOnly.thread)) {
+                if (!matchesThreadOrFiber(env, thread, fiber,
+                                          filter->u.ThreadOnly.thread, filter->u.ThreadOnly.is_fiber,
+                                          &evinfo->matchesFiber)) {
                     return JNI_FALSE;
                 }
                 break;
@@ -508,13 +541,15 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
         }
 
         case JDWP_REQUEST_MODIFIER(Step):
-                if (!isSameObject(env, thread, filter->u.Step.thread)) {
-                    return JNI_FALSE;
-                }
-                if (!stepControl_handleStep(env, thread, clazz, method)) {
-                    return JNI_FALSE;
-                }
-                break;
+            if (!matchesThreadOrFiber(env, thread, fiber,
+                                      filter->u.Step.thread, filter->u.Step.is_fiber,
+                                      &evinfo->matchesFiber)) {
+                return JNI_FALSE;
+            }
+            if (!stepControl_handleStep(env, thread, fiber, evinfo->matchesFiber, clazz, method)) {
+                return JNI_FALSE;
+            }
+            break;
 
           case JDWP_REQUEST_MODIFIER(SourceNameMatch): {
               char* desiredNamePattern = filter->u.SourceNameOnly.sourceNamePattern;
@@ -741,6 +776,9 @@ eventFilter_setThreadOnlyFilter(HandlerNode *node, jint index,
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
     }
 
+    /* The thread we are filtering on might be a fiber. */
+    filter->is_fiber = isFiber(thread);
+
     /* Create a thread ref that will live beyond */
     /* the end of this call */
     saveGlobalRef(env, thread, &(filter->thread));
@@ -928,6 +966,9 @@ eventFilter_setStepFilter(HandlerNode *node, jint index,
     if (NODE_EI(node) != EI_SINGLE_STEP) {
         return AGENT_ERROR_ILLEGAL_ARGUMENT;
     }
+
+    /* The thread we are filtering on might be a fiber. */
+    filter->is_fiber = isFiber(thread);
 
     /* Create a thread ref that will live beyond */
     /* the end of this call */
@@ -1242,6 +1283,10 @@ enableEvents(HandlerNode *node)
         case EI_VM_DEATH:
         case EI_CLASS_PREPARE:
         case EI_GC_FINISH:
+        case EI_FIBER_SCHEDULED:
+        case EI_FIBER_TERMINATED:
+        case EI_FIBER_MOUNT:
+        case EI_FIBER_UNMOUNT:
             return error;
 
         case EI_FIELD_ACCESS:
@@ -1301,6 +1346,10 @@ disableEvents(HandlerNode *node)
         case EI_VM_DEATH:
         case EI_CLASS_PREPARE:
         case EI_GC_FINISH:
+        case EI_FIBER_SCHEDULED:
+        case EI_FIBER_TERMINATED:
+        case EI_FIBER_MOUNT:
+        case EI_FIBER_UNMOUNT:
             return error;
 
         case EI_FIELD_ACCESS:
