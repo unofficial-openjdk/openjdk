@@ -513,8 +513,8 @@ class java_lang_Fiber : AllStatic {
   }
   static bool is_instance(oop obj);
   static oop carrier_thread(oop fiber);
-  static int notify_jvmti_events_offset_in_bytes();
   static void set_notify_jvmti_events(jboolean enable);
+  static void init_static_notify_jvmti_events();
 };
 
 

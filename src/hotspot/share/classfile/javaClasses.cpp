@@ -1895,8 +1895,6 @@ void java_lang_ThreadGroup::serialize_offsets(SerializeClosure* f) {
 int java_lang_Fiber::static_notify_jvmti_events_offset = 0;
 int java_lang_Fiber::_carrierThread_offset = 0;
 
-int java_lang_Fiber::notify_jvmti_events_offset_in_bytes() { return static_notify_jvmti_events_offset; }
-
 #define FIBER_FIELDS_DO(macro) \
   macro(static_notify_jvmti_events_offset,  k, "notifyJvmtiEvents",  bool_signature, true); \
   macro(_carrierThread_offset,  k, "carrierThread",  thread_signature, false)
@@ -1906,6 +1904,9 @@ static jboolean fiber_notify_jvmti_events = JNI_FALSE;
 void java_lang_Fiber::compute_offsets() {
   InstanceKlass* k = SystemDictionary::Fiber_klass();
   FIBER_FIELDS_DO(FIELD_COMPUTE_OFFSET);
+}
+
+void java_lang_Fiber::init_static_notify_jvmti_events() {
   if (fiber_notify_jvmti_events) {
     InstanceKlass* ik = SystemDictionary::Fiber_klass();
     oop base = ik->static_field_base_raw();
@@ -4499,5 +4500,6 @@ int InjectedField::compute_offset() {
 void javaClasses_init() {
   JavaClasses::compute_offsets();
   JavaClasses::check_offsets();
+  java_lang_Fiber::init_static_notify_jvmti_events();
   FilteredFieldsMap::initialize();  // must be done after computing offsets.
 }
