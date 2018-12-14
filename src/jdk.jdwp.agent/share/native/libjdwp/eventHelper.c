@@ -284,7 +284,7 @@ void eventHelper_releaseEvents(void)
 }
 
 static void
-writeSingleStepEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
+writeThreadOrFiber(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
     /*
      * Write the fiber ref if the event matched a fiber filter, or if the event was not
@@ -293,19 +293,19 @@ writeSingleStepEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
      */
     jthread thread = (evinfo->matchesFiber ? evinfo->fiber : evinfo->thread);
     (void)outStream_writeObjectRef(env, out, thread);
+}
+
+static void
+writeSingleStepEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
+{
+    writeThreadOrFiber(env, out, evinfo);
     writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
 }
 
 static void
 writeBreakpointEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
-    /*
-     * Write the fiber ref if the event matched a fiber filter, or if the event was not
-     * filtered by thread, and came in on a carrier thread running a fiber. In either
-     * case evinfo->matchesFiber will be true.
-     */
-    jthread thread = (evinfo->matchesFiber ? evinfo->fiber : evinfo->thread);
-    (void)outStream_writeObjectRef(env, out, thread);
+    writeThreadOrFiber(env, out, evinfo);
     writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
 }
 
@@ -316,7 +316,7 @@ writeFieldAccessEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 
     fieldClassTag = referenceTypeTag(evinfo->u.field_access.field_clazz);
 
-    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    writeThreadOrFiber(env, out, evinfo);
     writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
     (void)outStream_writeByte(out, fieldClassTag);
     (void)outStream_writeObjectRef(env, out, evinfo->u.field_access.field_clazz);
@@ -333,7 +333,7 @@ writeFieldModificationEvent(JNIEnv *env, PacketOutputStream *out,
 
     fieldClassTag = referenceTypeTag(evinfo->u.field_modification.field_clazz);
 
-    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    writeThreadOrFiber(env, out, evinfo);
     writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
     (void)outStream_writeByte(out, fieldClassTag);
     (void)outStream_writeObjectRef(env, out, evinfo->u.field_modification.field_clazz);
@@ -347,7 +347,7 @@ writeFieldModificationEvent(JNIEnv *env, PacketOutputStream *out,
 static void
 writeExceptionEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
-    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    writeThreadOrFiber(env, out, evinfo);
     writeCodeLocation(out, evinfo->clazz, evinfo->method, evinfo->location);
     (void)outStream_writeObjectTag(env, out, evinfo->object);
     (void)outStream_writeObjectRef(env, out, evinfo->object);
@@ -358,20 +358,14 @@ writeExceptionEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 static void
 writeThreadEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
-    (void)outStream_writeObjectRef(env, out, evinfo->thread);
-}
-
-static void
-writeFiberEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
-{
-    (void)outStream_writeObjectRef(env, out, evinfo->fiber);
+    writeThreadOrFiber(env, out, evinfo);
 }
 
 static void
 writeMonitorEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
 {
     jclass klass;
-    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    writeThreadOrFiber(env, out, evinfo);
     (void)outStream_writeObjectTag(env, out, evinfo->object);
     (void)outStream_writeObjectRef(env, out, evinfo->object);
     if (evinfo->ei == EI_MONITOR_WAIT || evinfo->ei == EI_MONITOR_WAITED) {
@@ -410,7 +404,7 @@ writeClassEvent(JNIEnv *env, PacketOutputStream *out, EventInfo *evinfo)
     }
     status = classStatus(evinfo->clazz);
 
-    (void)outStream_writeObjectRef(env, out, evinfo->thread);
+    writeThreadOrFiber(env, out, evinfo);
     (void)outStream_writeByte(out, classTag);
     (void)outStream_writeObjectRef(env, out, evinfo->clazz);
     (void)outStream_writeString(out, signature);
@@ -457,7 +451,7 @@ handleEventCommandSingle(JNIEnv *env, PacketOutputStream *out,
             /* Note that when we wrote the evinfo->ei byte above, it was mapped to an EI_THREAD_XXX event
              * by eventIndex2jdwp(), so we didn't actually write the FIBER ei byte.
              */
-            writeFiberEvent(env, out, evinfo);
+            writeThreadEvent(env, out, evinfo);
             break;
         case EI_CLASS_LOAD:
         case EI_CLASS_PREPARE:
