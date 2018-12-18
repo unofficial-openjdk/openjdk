@@ -125,6 +125,7 @@ class frame {
   bool equal(frame other) const;
 
   // type testers
+  bool is_empty()                const { return _pc == NULL; }
   bool is_interpreted_frame()    const;
   bool is_java_frame()           const;
   bool is_entry_frame()          const;             // Java frame called from C?

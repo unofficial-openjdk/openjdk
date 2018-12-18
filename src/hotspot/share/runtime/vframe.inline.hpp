@@ -127,6 +127,11 @@ inline void vframeStreamCommon::fill_from_compiled_native_frame() {
 }
 
 inline bool vframeStreamCommon::fill_from_frame() {
+  if (_frame.is_empty()) {
+    _mode = at_end_mode;
+    return true;
+  }
+  
   // Interpreted frame
   if (_frame.is_interpreted_frame()) {
     fill_from_interpreter_frame();
@@ -163,7 +168,7 @@ inline bool vframeStreamCommon::fill_from_frame() {
         // fill_from_compiled_frame handle it.
 
 
-        JavaThreadState state = _thread->thread_state();
+        JavaThreadState state = _thread != NULL ? _thread->thread_state() : _thread_in_Java;
 
         // in_Java should be good enough to test safepoint safety
         // if state were say in_Java_trans then we'd expect that

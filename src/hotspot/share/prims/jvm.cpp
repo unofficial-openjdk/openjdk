@@ -568,7 +568,7 @@ JVM_END
 
 
 JVM_ENTRY(jobject, JVM_CallStackWalk(JNIEnv *env, jobject stackStream, jlong mode,
-                                     jint skip_frames, jobject contScope,
+                                     jint skip_frames, jobject contScope, jobject cont,
                                      jint frame_count, jint start_index, jobjectArray frames))
   JVMWrapper("JVM_CallStackWalk");
   JavaThread* jt = (JavaThread*) THREAD;
@@ -578,6 +578,7 @@ JVM_ENTRY(jobject, JVM_CallStackWalk(JNIEnv *env, jobject stackStream, jlong mod
 
   Handle stackStream_h(THREAD, JNIHandles::resolve_non_null(stackStream));
   Handle contScope_h(THREAD, JNIHandles::resolve(contScope));
+  Handle cont_h(THREAD, JNIHandles::resolve(cont));
   // frames array is a Class<?>[] array when only getting caller reference,
   // and a StackFrameInfo[] array (or derivative) otherwise. It should never
   // be null.
@@ -589,7 +590,7 @@ JVM_ENTRY(jobject, JVM_CallStackWalk(JNIEnv *env, jobject stackStream, jlong mod
     THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(), "not enough space in buffers", NULL);
   }
 
-  oop result = StackWalk::walk(stackStream_h, mode, skip_frames, contScope_h,
+  oop result = StackWalk::walk(stackStream_h, mode, skip_frames, contScope_h, cont_h,
                                frame_count, start_index, frames_array_h, CHECK_NULL);
   return JNIHandles::make_local(env, result);
 JVM_END

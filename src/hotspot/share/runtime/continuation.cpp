@@ -3055,8 +3055,31 @@ bool Continuation::is_scope_bottom(oop cont_scope, const frame& f, const Registe
   oop sc = continuation_scope(cont);
   assert(sc != NULL, "");
 
-  return sc == cont_scope;
+  return oopDesc::equals(sc, cont_scope);
 }
+
+// bool Continuation::is_scope_bottom(oop cont_scope, const frame& f, const RegisterMap* map) {
+//   if (cont_scope == NULL || map->cont() == NULL)
+//     return false;
+
+//   oop sc = continuation_scope(map->cont());
+//   assert(sc != NULL, "");
+//   if (!oopDesc::equals(sc, cont_scope))
+//     return false;
+
+//   ContMirror cont(map->thread(), map->cont());
+//   cont.read();
+
+//   hframe hf = cont.from_frame(f);
+//   hframe sender = hf.sender(cont);
+
+//   // tty->print_cr(">>> is_scope_bottom");
+//   // hf.print_on(cont, tty);
+//   // tty->print_cr(">> sender");
+//   // sender.print_on(cont, tty);
+
+//   return sender.is_empty();
+// }
 
 static frame continuation_top_frame(oop contOop, RegisterMap* map) {
   ContMirror cont(NULL, contOop);
@@ -3072,18 +3095,41 @@ static frame continuation_top_frame(oop contOop, RegisterMap* map) {
 }
 
 static frame continuation_parent_frame(ContMirror& cont, RegisterMap* map) {
-  // The following is commented out because a continuation's entry frame is always on the v-stack
-  // oop parentOop = java_lang_Continuation::parent(cont.mirror());
-  // if (parentOop != NULL)
-  //   return continuation_top_frame(parentOop, map);
+  assert (map->thread() != NULL || cont.entryPC() == NULL, "");
+  if (map->thread() == NULL) { // When a continuation is mounted, its entry frame is always on the v-stack
+    oop parentOop = java_lang_Continuation::parent(cont.mirror());
+    if (parentOop != NULL)
+      return continuation_top_frame(parentOop, map);
+  }
   
+  map->set_cont(map->thread(), NULL);
+  if (cont.entryPC() == NULL) // When we're walking an unmounted continuation and reached the end
+    return frame(); 
+
   frame sender(cont.entrySP(), cont.entryFP(), cont.entryPC());
 
   // tty->print_cr("continuation_parent_frame");
   // print_vframe(sender, map, NULL);
 
-  map->set_cont(map->thread(), NULL);
   return sender;
+}
+
+frame Continuation::last_frame(oop continutation, RegisterMap *map) {
+  assert(map != NULL, "a map must be given");
+  return continuation_top_frame(continutation, map);
+}
+
+bool Continuation::has_last_Java_frame(oop continutation) {
+  return (java_lang_Continuation::sp(continutation) >= 0);
+}
+
+javaVFrame* Continuation::last_java_vframe(oop continutation, RegisterMap *map) {
+  assert(map != NULL, "a map must be given");
+  frame f = last_frame(continutation, map);
+  for (vframe* vf = vframe::new_vframe(&f, map, NULL); vf; vf = vf->sender()) {
+    if (vf->is_java_frame()) return javaVFrame::cast(vf);
+  }
+  return NULL;
 }
 
 frame Continuation::top_frame(const frame& callee, RegisterMap* map) {
@@ -3128,6 +3174,7 @@ public:
 
 // *grossly* inefficient
 static bool is_oop_in_compiler_frame(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes) {
+  assert (fr.is_compiled_frame(), "");
   const ImmutableOopMap* oop_map = fr.oop_map();
   IsOopClosure ioc(usp_offset_in_bytes);
   oop_map->all_do(&fr, OopMapValue::oop_value | OopMapValue::narrowoop_value, &ioc);
@@ -3152,8 +3199,12 @@ address Continuation::oop_address(objArrayOop ref_stack, address stack_address) 
   return p;
 }
 
-// if oop, it is narrow iff UseCompressedOops
 address Continuation::usp_offset_to_location(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes) {
+  return usp_offset_to_location(fr, map, usp_offset_in_bytes, is_oop_in_compiler_frame(fr, map, usp_offset_in_bytes));
+}
+
+// if oop, it is narrow iff UseCompressedOops
+address Continuation::usp_offset_to_location(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes, bool is_oop) {
   assert (fr.is_compiled_frame(), "");
   ContMirror cont(map->thread(), map->cont());
   cont.read();
@@ -3162,7 +3213,8 @@ address Continuation::usp_offset_to_location(const frame& fr, const RegisterMap*
   intptr_t* hsp = cont.stack_address(hf.sp());
   address loc = (address)hsp + usp_offset_in_bytes;
 
-  return is_oop_in_compiler_frame(fr, map, usp_offset_in_bytes) ? oop_address(cont.refStack(), loc) : loc;
+  assert (is_oop == is_oop_in_compiler_frame(fr, map, usp_offset_in_bytes), "must be");
+  return is_oop ? oop_address(cont.refStack(), loc) : loc;
 }
 
 address Continuation::interpreter_frame_expression_stack_at(const frame& fr, const RegisterMap* map, const InterpreterOopMap& oop_mask, int index) {
@@ -3408,7 +3460,7 @@ JVM_ENTRY(void, CONT_Clean(JNIEnv* env, jobject jcont)) {
 }
 JVM_END
 
-JVM_ENTRY(jint, CONT_TryForceYield(JNIEnv* env, jobject jcont, jobject jthread)) {
+JVM_ENTRY(jint, CONT_TryForceYield0(JNIEnv* env, jobject jcont, jobject jthread)) {
   JavaThread* thread = JavaThread::thread_from_jni_environment(env);
 
   guarantee(ThreadLocalHandshakes, "ThreadLocalHandshakes disabled");
@@ -3454,7 +3506,7 @@ JVM_END
 
 static JNINativeMethod CONT_methods[] = {
     {CC"clean0",           CC"()V",                   FN_PTR(CONT_Clean)},
-    {CC"tryForceYield",    CC"(Ljava/lang/Thread;)I", FN_PTR(CONT_TryForceYield)},
+    {CC"tryForceYield0",   CC"(Ljava/lang/Thread;)I", FN_PTR(CONT_TryForceYield0)},
 };
 
 void CONT_RegisterNativeMethods(JNIEnv *env, jclass cls) {

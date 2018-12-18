@@ -44,12 +44,13 @@ private:
   };
 
   JavaThread*           _thread;
+  Handle                _continuation;
   jlong                 _anchor;
 
 protected:
   void fill_stackframe(Handle stackFrame, const methodHandle& method, TRAPS);
 public:
-  BaseFrameStream(JavaThread* thread) : _thread(thread), _anchor(0L) {}
+  BaseFrameStream(JavaThread* thread, Handle continuation) : _thread(thread), _continuation(continuation), _anchor(0L) {}
 
   virtual void    next()=0;
   virtual bool    at_end()=0;
@@ -79,8 +80,9 @@ class JavaFrameStream : public BaseFrameStream {
 private:
   vframeStream          _vfst;
   bool                  _need_method_info;
+
 public:
-  JavaFrameStream(JavaThread* thread, int mode, Handle cont_scope);
+  JavaFrameStream(JavaThread* thread, int mode, Handle cont_scope, Handle cont);
 
   void next();
   bool at_end()    { return _vfst.at_end(); }
@@ -109,10 +111,7 @@ private:
                                                  TRAPS);
   static objArrayHandle values_to_object_array(StackValueCollection* values, TRAPS);
 public:
-  LiveFrameStream(JavaThread* thread, RegisterMap* rm, Handle cont_scope)
-   : BaseFrameStream(thread), _cont_scope(cont_scope) {
-    _jvf = thread->last_java_vframe(rm);
-  }
+  LiveFrameStream(JavaThread* thread, RegisterMap* rm, Handle cont_scope, Handle cont);
 
   void next()      { _jvf = _jvf->java_sender(); }
   bool at_end()    { return _jvf == NULL || Continuation::is_scope_bottom(_cont_scope(), _jvf->fr(), _jvf->register_map()); }
@@ -148,7 +147,7 @@ public:
   static inline bool use_frames_array(int mode) {
     return (mode & JVM_STACKWALK_FILL_CLASS_REFS_ONLY) == 0;
   }
-  static oop walk(Handle stackStream, jlong mode, int skip_frames, Handle cont_scope,
+  static oop walk(Handle stackStream, jlong mode, int skip_frames, Handle cont_scope, Handle cont,
                   int frame_count, int start_index, objArrayHandle frames_array,
                   TRAPS);
 

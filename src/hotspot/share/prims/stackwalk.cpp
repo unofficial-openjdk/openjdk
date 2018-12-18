@@ -59,9 +59,32 @@ bool BaseFrameStream::cleanup_magic_on_exit(objArrayHandle frames_array) {
   return ok;
 }
 
-JavaFrameStream::JavaFrameStream(JavaThread* thread, int mode, Handle cont_scope)
-  : BaseFrameStream(thread), _vfst(thread, cont_scope) {
+// static inline Handle continuation_of(Handle cont_or_scope) {
+//   return (cont_or_scope.not_null() && cont_or_scope()->is_a(SystemDictionary::Continuation_klass()))
+//             ? cont_or_scope
+//             : Handle();
+// }
+
+// static inline Handle continuationScope_of(JavaThread* thread, Handle cont_or_scope) {
+//   if (cont_or_scope.is_null() || cont_or_scope()->is_a(SystemDictionary::ContinuationScope_klass()))
+//     return cont_or_scope;
+//   assert (cont_or_scope()->is_a(SystemDictionary::Continuation_klass()), "must be");
+//   return Handle(thread, Continuation::continuation_scope(cont_or_scope()));
+// }
+
+JavaFrameStream::JavaFrameStream(JavaThread* thread, int mode, Handle cont_scope, Handle cont)
+  : BaseFrameStream(thread, cont), 
+   _vfst(cont.is_null()
+      ? vframeStream(thread, cont_scope)
+      : vframeStream(cont, cont_scope)) {
   _need_method_info = StackWalk::need_method_info(mode);
+}
+
+LiveFrameStream::LiveFrameStream(JavaThread* thread, RegisterMap* rm, Handle cont_scope, Handle cont)
+   : BaseFrameStream(thread, cont), _cont_scope(cont_scope) {
+     
+    _jvf = cont.is_null() ? thread->last_java_vframe(rm)
+                          : Continuation::last_java_vframe(cont(), rm);
 }
 
 void JavaFrameStream::next() { _vfst.next();}
@@ -337,7 +360,7 @@ void LiveFrameStream::fill_live_stackframe(Handle stackFrame,
 //
 // Returns Object returned from AbstractStackWalker::doStackWalk call.
 //
-oop StackWalk::walk(Handle stackStream, jlong mode, int skip_frames, Handle cont_scope, 
+oop StackWalk::walk(Handle stackStream, jlong mode, int skip_frames, Handle cont_scope, Handle cont, 
                     int frame_count, int start_index, objArrayHandle frames_array,
                     TRAPS) {
   ResourceMark rm(THREAD);
@@ -353,11 +376,11 @@ oop StackWalk::walk(Handle stackStream, jlong mode, int skip_frames, Handle cont
   if (live_frame_info(mode)) {
     assert (use_frames_array(mode), "Bad mode for get live frame");
     RegisterMap regMap(jt, true, true);
-    LiveFrameStream stream(jt, &regMap, cont_scope);
+    LiveFrameStream stream(jt, &regMap, cont_scope, cont);
     return fetchFirstBatch(stream, stackStream, mode, skip_frames, frame_count,
                            start_index, frames_array, THREAD);
   } else {
-    JavaFrameStream stream(jt, mode, cont_scope);
+    JavaFrameStream stream(jt, mode, cont_scope, cont);
     return fetchFirstBatch(stream, stackStream, mode, skip_frames, frame_count,
                            start_index, frames_array, THREAD);
   }

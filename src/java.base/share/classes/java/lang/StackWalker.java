@@ -293,10 +293,11 @@ public final class StackWalker {
     private final static StackWalker DEFAULT_WALKER =
         new StackWalker(DEFAULT_EMPTY_OPTION);
 
+    private final Continuation continuation;
+    private final ContinuationScope contScope;
     private final Set<Option> options;
     private final ExtendedOption extendedOption;
     private final int estimateDepth;
-    private final ContinuationScope contScope;
     final boolean retainClassRef; // cached for performance
 
     /**
@@ -470,23 +471,30 @@ public final class StackWalker {
 
     // ----- private constructors ------
     private StackWalker(EnumSet<Option> options) {
-        this(options, 0, null, null);
+        this(options, 0, null, null, null);
     }
     private StackWalker(EnumSet<Option> options, ContinuationScope contScope) {
-        this(options, 0, null, contScope);
+        this(options, 0, null, contScope, null);
+    }
+    private StackWalker(EnumSet<Option> options, ContinuationScope contScope, Continuation continuation) {
+        this(options, 0, null, contScope, continuation);
     }
     private StackWalker(EnumSet<Option> options, int estimateDepth) {
-        this(options, estimateDepth, null, null);
+        this(options, estimateDepth, null, null, null);
     }
     private StackWalker(EnumSet<Option> options, int estimateDepth, ContinuationScope contScope) {
-        this(options, estimateDepth, null, contScope);
+        this(options, estimateDepth, null, contScope, null);
     }
-    private StackWalker(EnumSet<Option> options, int estimateDepth, ExtendedOption extendedOption, ContinuationScope contScope) {
+    private StackWalker(EnumSet<Option> options, int estimateDepth, ContinuationScope contScope, Continuation continuation) {
+        this(options, estimateDepth, null, contScope, continuation);
+    }
+    private StackWalker(EnumSet<Option> options, int estimateDepth, ExtendedOption extendedOption, ContinuationScope contScope, Continuation continuation) {
         this.options = options;
         this.estimateDepth = estimateDepth;
         this.extendedOption = extendedOption;
         this.retainClassRef = hasOption(Option.RETAIN_CLASS_REFERENCE);
         this.contScope = contScope;
+        this.continuation = continuation;
     }
 
     private static void checkPermission(Set<Option> options) {
@@ -678,7 +686,13 @@ public final class StackWalker {
     static StackWalker newInstance(Set<Option> options, ExtendedOption extendedOption, ContinuationScope contScope) {
         EnumSet<Option> optionSet = toEnumSet(options);
         checkPermission(optionSet);
-        return new StackWalker(optionSet, 0, extendedOption, contScope);
+        return new StackWalker(optionSet, 0, extendedOption, contScope, null);
+    }
+
+    static StackWalker newInstance(Set<Option> options, ExtendedOption extendedOption, ContinuationScope contScope, Continuation continuation) {
+        EnumSet<Option> optionSet = toEnumSet(options);
+        checkPermission(optionSet);
+        return new StackWalker(optionSet, 0, extendedOption, contScope, continuation);
     }
 
     int estimateDepth() {
@@ -695,5 +709,9 @@ public final class StackWalker {
 
     ContinuationScope getContScope() {
         return contScope;
+    }
+
+    Continuation getContinuation() {
+        return continuation;
     }
 }
