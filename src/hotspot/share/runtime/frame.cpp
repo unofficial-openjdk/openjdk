@@ -98,7 +98,7 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
 
 void RegisterMap::set_cont(Thread* thread, oop cont) {
   // tty->print_cr("set_cont: %d", cont != NULL);
-  _cont = cont != NULL ? Handle(thread, cont) : Handle();
+  _cont = cont != NULL ? Handle(thread != NULL ? thread : Thread::current(), cont) : Handle();
 }
 
 void RegisterMap::clear() {

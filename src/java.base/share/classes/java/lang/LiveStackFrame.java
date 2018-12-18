@@ -200,4 +200,30 @@ interface LiveStackFrame extends StackFrame {
         }
         return StackWalker.newInstance(options, LOCALS_AND_OPERANDS, contScope);
     }
+
+    /**
+     * Gets a {@code StackWalker} instance with the given options specifying
+     * the stack frame information it can access, and which will traverse at most
+     * the given {@code maxDepth} number of stack frames.  If no option is
+     * specified, this {@code StackWalker} obtains the method name and
+     * the class name with all
+     * {@linkplain StackWalker.Option#SHOW_HIDDEN_FRAMES hidden frames} skipped.
+     * The returned {@code StackWalker} can get locals and operands.
+     *
+     * @param options stack walk {@link StackWalker.Option options}
+     * @param continuation the continuation to walk
+     *
+     * @throws SecurityException if the security manager is present and
+     * it denies access to {@code RuntimePermission("liveStackFrames")}; or
+     * or if the given {@code options} contains
+     * {@link StackWalker.Option#RETAIN_CLASS_REFERENCE Option.RETAIN_CLASS_REFERENCE}
+     * and it denies access to {@code RuntimePermission("getStackWalkerWithClassReference")}.
+     */
+    public static StackWalker getStackWalker(Set<StackWalker.Option> options, ContinuationScope contScope, Continuation continuation) {
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            sm.checkPermission(new RuntimePermission("liveStackFrames"));
+        }
+        return StackWalker.newInstance(options, LOCALS_AND_OPERANDS, contScope, continuation);
+    }
 }

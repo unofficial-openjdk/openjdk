@@ -88,6 +88,7 @@ vframe* vframe::new_vframe(const frame* f, const RegisterMap* reg_map, JavaThrea
 vframe* vframe::sender() const {
   RegisterMap temp_map = *register_map();
   assert(is_top(), "just checking");
+  if (_fr.is_empty()) return NULL;
   if (_fr.is_entry_frame() && _fr.is_first_frame()) return NULL;
   frame s = _fr.real_sender(&temp_map);
   if (s.is_first_frame()) return NULL;
@@ -496,6 +497,23 @@ vframeStream::vframeStream(JavaThread* thread, Handle continuation_scope, bool s
   }
 
   _frame = _thread->last_frame();
+  while (!fill_from_frame()) {
+    _frame = _frame.sender(&_reg_map);
+  }
+}
+
+vframeStream::vframeStream(Handle continuation, Handle continuation_scope) 
+ : vframeStreamCommon(RegisterMap(NULL, false, true)) {
+
+  _stop_at_java_call_stub = false;
+  _continuation_scope = continuation_scope;
+  
+  if (!Continuation::has_last_Java_frame(continuation())) {
+    _mode = at_end_mode;
+    return;
+  }
+
+  _frame = Continuation::last_frame(continuation(), &_reg_map);
   while (!fill_from_frame()) {
     _frame = _frame.sender(&_reg_map);
   }

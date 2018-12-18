@@ -127,6 +127,7 @@ final class StackStreamFactory {
         protected FrameBuffer<? extends T> frameBuffer;
         protected long anchor;
         protected final ContinuationScope contScope;
+        protected final Continuation continuation;
 
         // buffers to fill in stack frame information
         protected AbstractStackWalker(StackWalker walker, int mode) {
@@ -139,6 +140,7 @@ final class StackStreamFactory {
             this.maxDepth = maxDepth;
             this.depth = 0;
             this.contScope = walker.getContScope();
+            this.continuation = walker.getContinuation();
         }
 
         private int toStackWalkMode(StackWalker walker, int mode) {
@@ -238,6 +240,8 @@ final class StackStreamFactory {
          */
         final R walk() {
             checkState(NEW);
+            Continuation cont = walker.getContinuation();
+            if (cont != null) cont.mount();
             try {
                 // VM will need to stablize the stack before walking.  It will invoke
                 // the AbstractStackWalker::doStackWalk method once it fetches the first batch.
@@ -245,6 +249,7 @@ final class StackStreamFactory {
                 return beginStackWalk();
             } finally {
                 close();  // done traversal; close the stream
+                if (cont != null) cont.unmount();
             }
         }
 
@@ -369,7 +374,8 @@ final class StackStreamFactory {
             // initialize buffers for VM to fill the stack frame info
             initFrameBuffer();
 
-            return callStackWalk(mode, 0, contScope,
+            return callStackWalk(mode, 0, 
+                                 contScope, continuation,
                                  frameBuffer.curBatchFrameCount(),
                                  frameBuffer.startIndex(),
                                  frameBuffer.frames());
@@ -407,13 +413,16 @@ final class StackStreamFactory {
          *
          * @param mode        mode of stack walking
          * @param skipframes  number of frames to be skipped before filling the frame buffer.
+         * @param contScope   the continuation scope to walk.
+         * @param continuation the continuation to walk, or {@code null} if walking a thread.
          * @param batchSize   the batch size, max. number of elements to be filled in the frame buffers.
          * @param startIndex  start index of the frame buffers to be filled.
          * @param frames      Either a Class<?> array, if mode is {@link #FILL_CLASS_REFS_ONLY}
          *                    or a {@link StackFrameInfo} (or derivative) array otherwise.
          * @return            Result of AbstractStackWalker::doStackWalk
          */
-        private native R callStackWalk(long mode, int skipframes, ContinuationScope contScope,
+        private native R callStackWalk(long mode, int skipframes, 
+                                       ContinuationScope contScope, Continuation continuation,
                                        int batchSize, int startIndex,
                                        T[] frames);
 

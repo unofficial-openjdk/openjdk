@@ -51,7 +51,7 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
       ? reg_map->location(VMRegImpl::as_VMReg(loc.register_number()))
       // Else value was directly saved on the stack. The frame's original stack pointer,
       // before any extension by its callee (due to Compiler1 linkage on SPARC), must be used.
-      : reg_map->cont() != NULL ? Continuation::usp_offset_to_location(*fr, reg_map, loc.stack_offset())
+      : reg_map->cont() != NULL ? Continuation::usp_offset_to_location(*fr, reg_map, loc.stack_offset(), loc.type() == Location::oop || loc.type() == Location::narrowoop)
       : ((address)fr->unextended_sp()) + loc.stack_offset();
     assert(reg_map->thread()->is_in_usable_stack(value_addr), INTPTR_FORMAT, p2i(value_addr)); 
 

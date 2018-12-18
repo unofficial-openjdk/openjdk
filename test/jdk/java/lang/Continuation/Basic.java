@@ -68,6 +68,9 @@ public class Basic {
         while (!cont.isDone()) {
             cont.run();
             System.gc();
+
+            List<String> frames = cont.stackWalker().walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
+            assertEquals(frames, Arrays.asList("yield0", "yield", "bar", "foo", "lambda$test1$0", "enter0"));
         }
         assertEquals(res.get(), 247);
     }

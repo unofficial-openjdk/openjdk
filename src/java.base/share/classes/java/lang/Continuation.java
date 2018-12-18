@@ -32,7 +32,10 @@ import jdk.internal.vm.annotation.ForceInline;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -145,6 +148,57 @@ public class Continuation {
 
     /**
      * TBD
+     * @return TBD
+     */
+    public StackWalker stackWalker() {
+        return stackWalker(EnumSet.noneOf(StackWalker.Option.class));
+    }
+
+    /**
+     * TBD
+     * @param option TBD
+     * @return TBD
+     */
+    public StackWalker stackWalker(StackWalker.Option option) {
+        return stackWalker(EnumSet.of(Objects.requireNonNull(option)));
+    }
+
+    /**
+     * TBD
+     * @param options TBD
+     * @return TBD
+     */
+    public StackWalker stackWalker(Set<StackWalker.Option> options) {
+        return stackWalker(options, this.scope);
+    }
+
+    private StackWalker stackWalker(Set<StackWalker.Option> options, ContinuationScope scope) {
+        if (scope != null) {
+            // verify the given scope exists in this continuation
+            Continuation c;
+            for (c = this; c != null; c = c.parent) {
+                if (c.scope == scope)
+                    break;
+            }
+            if (c.scope != scope)
+                scope = this.scope; // throw new IllegalArgumentException("Continuation " + this + " not in scope " + scope); -- don't throw exception to have the same behavior as no continuation
+        } else {
+            scope = this.scope;
+        }
+        return StackWalker.newInstance(options, null, scope, this);
+    }
+
+    void mount() {
+        if (!compareAndSetMounted(false, true))
+            throw new IllegalStateException("Mounted!!!!");
+    }
+
+    void unmount() {
+        setMounted(false);
+    }
+    
+    /**
+     * TBD
      */
     // @DontInline
     public final void run() {
@@ -154,8 +208,7 @@ public class Continuation {
                 System.out.println("++++++++++++++++++++++++++++++");
             }
 
-            if (!compareAndSetMounted(false, true))
-                throw new IllegalStateException("Mounted!!!!");
+            mount();
 
             if (done)
                 throw new IllegalStateException("Continuation terminated");
@@ -185,7 +238,7 @@ public class Continuation {
                 if (reset) { maxSize = origMaxSize; sp = origSP; fp = origFP; pc = origPC; refSP = origRefSP; } // perftest only
                 postYieldCleanup(origRefSP);
 
-                setMounted(false);
+                unmount();
                 } catch (Throwable e) { e.printStackTrace(); System.exit(1); }
                 assert !hasLeak() : "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
             }
@@ -671,9 +724,9 @@ public class Continuation {
      * @return TBD
      */
     public int forceYield(Thread thread) {
-        return tryForceYield(thread);
+        return tryForceYield0(thread);
     }
-    private native int tryForceYield(Thread thread);
+    private native int tryForceYield0(Thread thread);
 
     // native methods
     private static native void registerNatives();
