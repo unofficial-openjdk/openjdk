@@ -115,7 +115,8 @@ public class Fiber<V> {
     private static final short ST_PARKING  = 3;
     private static final short ST_PARKED   = 4;
     private static final short ST_PINNED   = 5;
-    private static final short ST_TERMINATED = 99;
+    private static final short ST_WALKINGSTACK = 64;
+    private static final short ST_TERMINATED   = 99;
     private volatile short state;
 
     // park/unpark and await support
@@ -933,6 +934,7 @@ public class Fiber<V> {
                 return Thread.State.RUNNABLE;  // not yet waiting
             case ST_PARKED:
             case ST_PINNED:
+            case ST_WALKINGSTACK:
                 return Thread.State.WAITING;
             case ST_TERMINATED:
                 return Thread.State.TERMINATED;
@@ -1129,21 +1131,24 @@ public class Fiber<V> {
     }
 
     /**
-     * Returns the stack trace for this fiber if it not mounted. If the fiber
-     * is mounted then null is returned.
+     * Returns the stack trace for this fiber if it parked (not mounted) or
+     * null if not in the parked state.
      */
     private StackTraceElement[] tryGetStackTrace() {
-        class CaptureStack implements Runnable {
-            StackTraceElement[] stack;
-            public void run() {
-                stack = STACK_WALKER.walk(s -> s.skip(1)  // skip this frame
-                        .map(StackFrame::toStackTraceElement)
-                        .toArray(StackTraceElement[]::new));
+        if (stateCompareAndSet(ST_PARKED, ST_WALKINGSTACK)) {
+            try {
+                return cont.stackWalker()
+                        .walk(s -> s.map(StackFrame::toStackTraceElement)
+                                    .toArray(StackTraceElement[]::new));
+            } finally {
+                int oldState = stateGetAndSet(ST_PARKED);
+                assert oldState == ST_WALKINGSTACK;
+
+                // fiber may have been unparked while obtaining the stack so we
+                // unpark to avoid a lost unpark. This will appear as a spurious
+                // (but harmless) wakeup
+                unpark();
             }
-        }
-        CaptureStack capture = new CaptureStack();
-        if (tryRun(capture)) {
-            return capture.stack;
         } else {
             short state = stateGet();
             if (state == ST_NEW || state == ST_TERMINATED) {
