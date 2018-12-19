@@ -77,6 +77,10 @@ typedef struct {
     volatile jboolean vmDead; /* Once VM is dead it stays that way - don't put in init */
     jboolean assertOn;
     jboolean assertFatal;
+    jboolean fibersSupported;      /* If true, debugging support for fibers is enabled.*/
+    jboolean notifyDebuggerOfAllFibers; /* If true, the debugger will be notified of all known fibers.
+                                         * If false the debugger is only notified of fibers for which
+                                         * certain events have been received. */
     jboolean doerrorexit;
     jboolean modifiedUtf8;
     jboolean quiet;

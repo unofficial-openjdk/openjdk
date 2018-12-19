@@ -41,7 +41,8 @@ jboolean eventFilterRestricted_passesFilter(JNIEnv *env,
                                             char *classname,
                                             EventInfo *evinfo,
                                             HandlerNode *node,
-                                            jboolean *shouldDelete);
+                                            jboolean *shouldDelete,
+                                            jboolean filterOnly);
 jboolean eventFilterRestricted_passesUnloadFilter(JNIEnv *env,
                                                   char *classname,
                                                   HandlerNode *node,

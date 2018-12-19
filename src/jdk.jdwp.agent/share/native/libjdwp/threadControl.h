@@ -40,8 +40,7 @@ void threadControl_onDisconnect(void);
 
 jvmtiError threadControl_popFrames(jthread thread, FrameNumber fnum);
 
-struct bag *threadControl_onEventHandlerEntry(jbyte sessionID,
-                  EventIndex ei, jthread thread, jthread fiber, jobject currentException);
+struct bag *threadControl_onEventHandlerEntry(jbyte sessionID, EventInfo *evinfo, jobject currentException);
 void threadControl_onEventHandlerExit(EventIndex ei, jthread thread, struct bag *);
 
 
@@ -78,6 +77,8 @@ jlong threadControl_getFrameGeneration(jthread thread);
 jthread *threadControl_allFibers(jint *numFibers);
 jthread threadControl_getFiberCarrierOrHelperThread(jthread fiber);
 jthread threadControl_getFiberHelperThread(jthread fiber);
+void threadControl_addFiber(jthread fiber);
+jboolean threadControl_isKnownFiber(jthread fiber);
 
 void threadControl_unmountFiber(jthread fiber, jthread thread);
 void threadControl_mountFiber(jthread fiber, jthread thread);

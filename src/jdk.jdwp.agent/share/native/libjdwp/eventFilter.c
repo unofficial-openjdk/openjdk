@@ -360,11 +360,56 @@ eventInstance(EventInfo *evinfo)
     return object;
 }
 
+/*
+ * Return true if this an event that we prefer to deliver on the fiber if it arrived on a carrier thread.
+ */
+static jboolean
+preferDeliverEventOnFiber(EventIndex ei)
+{
+    /* Determine if this is an event that should be delivered on the fiber.*/
+    switch(ei) {
+        case EI_SINGLE_STEP:
+        case EI_BREAKPOINT:
+        case EI_EXCEPTION:
+        case EI_EXCEPTION_CATCH:
+        case EI_THREAD_START:
+        case EI_THREAD_END:
+        case EI_FIELD_ACCESS:
+        case EI_FIELD_MODIFICATION:
+        case EI_MONITOR_CONTENDED_ENTER:
+        case EI_MONITOR_CONTENDED_ENTERED:
+        case EI_FIBER_TERMINATED:
+        case EI_FIBER_SCHEDULED:
+            return JNI_TRUE;
+        case EI_CLASS_PREPARE:
+            return JNI_TRUE;
+        /* Not delivering the following events on fibers helps keep down the number of
+         * fibers we need to notify the debugger about. */
+        case EI_FRAME_POP:
+        case EI_GC_FINISH:
+        case EI_CLASS_LOAD:
+        case EI_METHOD_ENTRY:
+        case EI_METHOD_EXIT:
+        case EI_MONITOR_WAIT:
+        case EI_MONITOR_WAITED:
+        case EI_VM_DEATH:
+            return gdata->notifyDebuggerOfAllFibers; /* Only deliver on fiber if notifying of all fibers. */
+        case EI_FIBER_MOUNT:     /* Not passed to event_callback(). */
+        case EI_FIBER_UNMOUNT:   /* Not passed to event_callback(). */
+            EXIT_ERROR(AGENT_ERROR_INVALID_EVENT_TYPE, "invalid event index");
+            break;
+        default:
+            EXIT_ERROR(AGENT_ERROR_INVALID_EVENT_TYPE, "unknown event index");
+            break;
+    }
+    return JNI_FALSE;
+}
+
 static jboolean
 matchesThreadOrFiber(JNIEnv* env,
                      jthread thread, jthread fiber,
                      jthread filterThread, jboolean filter_is_fiber,
-                     jboolean* matchesFiber)
+                     jboolean *matchesFiber)
 {
     jboolean matchesThread = JNI_FALSE;
     *matchesFiber = JNI_FALSE;
@@ -397,13 +442,17 @@ matchesThreadOrFiber(JNIEnv* env,
  *
  * If shouldDelete is returned true, a count filter has expired
  * and the corresponding node should be deleted.
+ *
+ * If filterOnly is true, then we don't perform any actions that may
+ * change the state of the filter or the debugging state of the thread.
  */
 jboolean
 eventFilterRestricted_passesFilter(JNIEnv *env,
                                    char *classname,
                                    EventInfo *evinfo,
                                    HandlerNode *node,
-                                   jboolean *shouldDelete)
+                                   jboolean *shouldDelete,
+                                   jboolean filterOnly)
 {
     jthread thread;
     jthread fiber;
@@ -411,6 +460,7 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
     jmethodID method;
     Filter *filter = FILTERS_ARRAY(node);
     int i;
+    jboolean mustDeliverEventOnFiber = JNI_FALSE;
 
     *shouldDelete = JNI_FALSE;
     thread = evinfo->thread;
@@ -437,6 +487,7 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
                                           &evinfo->matchesFiber)) {
                     return JNI_FALSE;
                 }
+                mustDeliverEventOnFiber = evinfo->matchesFiber;
                 break;
 
             case JDWP_REQUEST_MODIFIER(ClassOnly):
@@ -509,6 +560,12 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
             }
             case JDWP_REQUEST_MODIFIER(Count): {
                 JDI_ASSERT(filter->u.Count.count > 0);
+                if (filterOnly) {
+                    /* Don't decrement the counter. */
+                    if (filter->u.Count.count > 1) {
+                        return JNI_FALSE;
+                    }
+                }
                 if (--filter->u.Count.count > 0) {
                     return JNI_FALSE;
                 }
@@ -546,8 +603,17 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
                                       &evinfo->matchesFiber)) {
                 return JNI_FALSE;
             }
-            if (!stepControl_handleStep(env, thread, fiber, evinfo->matchesFiber, clazz, method)) {
-                return JNI_FALSE;
+            mustDeliverEventOnFiber = evinfo->matchesFiber;
+            /*
+             * Don't call handleStep() if filterOnly is true. It's too complicated to see if the step
+             * would be completed without actually changing the state, so we just assume it will be.
+             * No harm can come from this since the fiber is already a known one, and that's the
+             * only reason this "filterOnly" request is being made.
+             */
+            if (!filterOnly) {
+                if (!stepControl_handleStep(env, thread, fiber, evinfo->matchesFiber, clazz, method)) {
+                    return JNI_FALSE;
+                }
             }
             break;
 
@@ -580,6 +646,10 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
             EXIT_ERROR(AGENT_ERROR_ILLEGAL_ARGUMENT,"Invalid filter modifier");
             return JNI_FALSE;
         }
+    }
+    /* Update matchesFiber based on whether or not we prefer to deliver this event on the fiber. */
+    if (evinfo->matchesFiber && !mustDeliverEventOnFiber) {
+        evinfo->matchesFiber = preferDeliverEventOnFiber(evinfo->ei);
     }
     return JNI_TRUE;
 }

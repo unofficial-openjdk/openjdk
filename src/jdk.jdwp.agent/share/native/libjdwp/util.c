@@ -856,6 +856,7 @@ getThreadFiber(jthread thread)
     jthread fiber;
     jvmtiError error;
 
+    JDI_ASSERT(gdata->fibersSupported);
     if ( thread == NULL ) {
         return NULL;
     }
@@ -877,6 +878,7 @@ getFiberThread(jthread fiber)
     jthread thread;
     jvmtiError error;
 
+    JDI_ASSERT(gdata->fibersSupported);
     if ( fiber == NULL ) {
         return NULL;
     }

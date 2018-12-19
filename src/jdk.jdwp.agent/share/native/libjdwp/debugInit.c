@@ -872,6 +872,7 @@ printUsage(void)
  "onthrow=<exception name>         debug on throw                    none\n"
  "onuncaught=y|n                   debug on any uncaught?            n\n"
  "timeout=<timeout value>          for listen/attach in milliseconds n\n"
+ "fibers=y|n|all                   support for debugging fibers      y\n"
  "mutf8=y|n                        output modified utf-8             n\n"
  "quiet=y|n                        control over terminal messages    n\n"));
 
@@ -1017,6 +1018,10 @@ parseOptions(char *options)
     gdata->assertFatal  = DEFAULT_ASSERT_FATAL;
     logfile             = DEFAULT_LOGFILE;
 
+    /* Set fiber debugging level. */
+    gdata->fibersSupported = JNI_TRUE;
+    gdata->notifyDebuggerOfAllFibers = JNI_FALSE;
+
     /* Options being NULL will end up being an error. */
     if (options == NULL) {
         options = "";
@@ -1118,6 +1123,23 @@ parseOptions(char *options)
                 goto syntax_error;
             }
             currentTransport->timeout = atol(current);
+            current += strlen(current) + 1;
+        } else if (strcmp(buf, "fibers") == 0) {
+            if (!get_tok(&str, current, (int)(end - current), ',')) {
+                goto syntax_error;
+            }
+            if (strcmp(current, "y") == 0) {
+                gdata->fibersSupported = JNI_TRUE;
+                gdata->notifyDebuggerOfAllFibers = JNI_FALSE;
+            } else if (strcmp(current, "all") == 0) {
+                gdata->fibersSupported = JNI_TRUE;
+                gdata->notifyDebuggerOfAllFibers = JNI_TRUE;
+            } else if (strcmp(current, "n") == 0) {
+                gdata->fibersSupported = JNI_FALSE;
+                gdata->notifyDebuggerOfAllFibers = JNI_FALSE;
+            } else {
+                goto syntax_error;
+            }
             current += strlen(current) + 1;
         } else if (strcmp(buf, "launch") == 0) {
             /*LINTED*/

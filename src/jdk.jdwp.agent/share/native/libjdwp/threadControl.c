@@ -379,6 +379,10 @@ insertThread(JNIEnv *env, ThreadList *list, jthread thread)
         if (!is_fiber) {
             setThreadLocalStorage(node->thread, (void*)node);
         }
+
+        if (is_fiber) {
+            node->isStarted = JNI_TRUE; /* Fibers are considered started by default. */
+        }
     }
 
     return node;
@@ -1645,7 +1649,6 @@ threadControl_resumeAll(void)
     if (runningFibers.first != NULL) {
         error = enumerateOverThreadList(env, &runningFibers,
                                         resumeFiberHelperThread, NULL);
-        sleep(1);  /* Give all the helper threads a chance to exit. */
     }
 
     /*
@@ -2097,15 +2100,15 @@ checkForPopFrameEvents(JNIEnv *env, EventIndex ei, jthread thread)
 }
 
 struct bag *
-threadControl_onEventHandlerEntry(jbyte sessionID, EventIndex ei,
-                                  jthread thread, jthread fiber, jobject currentException)
+threadControl_onEventHandlerEntry(jbyte sessionID, EventInfo *evinfo, jobject currentException)
 {
     ThreadNode *node;
-    ThreadNode *fiberNode;
     JNIEnv     *env;
     struct bag *eventBag;
     jthread     threadToSuspend;
     jboolean    consumed;
+    EventIndex  ei = evinfo->ei;
+    jthread     thread = evinfo->thread;
 
     env             = getEnv();
     threadToSuspend = NULL;
@@ -2148,22 +2151,9 @@ threadControl_onEventHandlerEntry(jbyte sessionID, EventIndex ei,
         node = insertThread(env, &runningThreads, thread);
     }
 
-    /* If this is the first time we've seen this fiber, then add it to the list. */
-    if (fiber == NULL) {
-        fiberNode = NULL;
-    } else {
-        fiberNode = findThread(&runningFibers, fiber);
-        if (fiberNode == NULL) {
-            fiberNode = insertThread(env, &runningFibers, fiber);
-        }
-    }
-
     if (ei == EI_THREAD_START) {
         node->isStarted = JNI_TRUE;
         processDeferredEventModes(env, thread, node);
-    }
-    if (ei == EI_FIBER_SCHEDULED) {
-        fiberNode->isStarted = JNI_TRUE;
     }
 
     node->current_ei = ei;
@@ -2743,6 +2733,23 @@ jthread threadControl_getFiberHelperThread(jthread fiber) {
     return fiberNode->fiberHelperThread;
 }
 
+jboolean threadControl_isKnownFiber(jthread fiber) {
+    ThreadNode *fiberNode;
+    debugMonitorEnter(threadLock);
+    fiberNode = findThread(&runningFibers, fiber);
+    debugMonitorExit(threadLock);
+    return fiberNode != NULL;
+}
+
+void
+threadControl_addFiber(jthread fiber)
+{
+    ThreadNode *fiberNode;
+    debugMonitorEnter(threadLock);
+    fiberNode = insertThread(getEnv(), &runningFibers, fiber);
+    debugMonitorExit(threadLock);
+}
+
 void threadControl_mountFiber(jthread fiber, jthread thread) {
     debugMonitorEnter(threadLock);
     {
@@ -2751,6 +2758,12 @@ void threadControl_mountFiber(jthread fiber, jthread thread) {
         ThreadNode *threadNode;
 
         fiberNode = findThread(&runningFibers, fiber);
+        if (!gdata->notifyDebuggerOfAllFibers && fiberNode == NULL) {
+            /* This is not a fiber we are tracking. */
+            debugMonitorExit(threadLock);
+            return;
+        }
+
         JDI_ASSERT(fiberNode != NULL);
         JDI_ASSERT(fiberNode->isStarted);
         JDI_ASSERT(bagSize(fiberNode->eventBag) == 0);
@@ -2832,6 +2845,12 @@ void threadControl_unmountFiber(jthread fiber, jthread thread) {
         ThreadNode *threadNode;
 
         fiberNode = findThread(&runningFibers, fiber);
+        if (!gdata->notifyDebuggerOfAllFibers && fiberNode == NULL) {
+            /* This is not a fiber we are tracking. */
+            debugMonitorExit(threadLock);
+            return;
+        }
+
         JDI_ASSERT(fiberNode != NULL);
         JDI_ASSERT(fiberNode->isStarted);
         JDI_ASSERT(bagSize(fiberNode->eventBag) == 0);
