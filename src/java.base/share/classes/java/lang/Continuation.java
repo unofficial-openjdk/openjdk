@@ -55,6 +55,22 @@ public class Continuation {
     private static final int WATERMARK_THRESHOLD = 10;
     private static final VarHandle MOUNTED;
 
+    /** Reason for pinning */
+    public enum Pinned { 
+        /** Native frame on stack */ NATIVE,
+        /** Monitor held */          MONITOR }
+    /** Preemption attempt result */
+    public enum PreemptStatus { 
+        /** Success */                                                      SUCCESS(null), 
+        /** Permanent failure: continuation alreay yielding */              PERM_FAIL_YIELDING(null), 
+        /** Permanent failure: continuation not mounted on the thread */    PERM_FAIL_NOT_MOUNTED(null), 
+        /** Transient failure: continuation pinned due to native frame */   TRANSIENT_FAIL_PINNED_NATIVE(Pinned.NATIVE), 
+        /** Transient failure: continuation pinned due to a held monitor */ TRANSIENT_FAIL_PINNED_MONITOR(Pinned.MONITOR);
+
+        final Pinned pinned;
+        private PreemptStatus(Pinned reason) { this.pinned = reason; }
+        Pinned pinned() { return pinned; }
+    }
 
     private static Thread currentCarrierThread() {
         return Thread.currentThread();
@@ -74,6 +90,7 @@ public class Continuation {
     private final ContinuationScope scope;
     private Runnable target;
     private Continuation parent; // null for native stack
+    private Continuation child; // non-null when we're yielded in a child continuation
 
     // The content of the stack arrays is extremely security-sensitive. Writing can lead to arbitrary code execution, and reading can leak sensitive data
     private int[] stack = null; // grows down
@@ -172,20 +189,42 @@ public class Continuation {
         return stackWalker(options, this.scope);
     }
 
-    private StackWalker stackWalker(Set<StackWalker.Option> options, ContinuationScope scope) {
-        if (scope != null) {
-            // verify the given scope exists in this continuation
-            Continuation c;
-            for (c = this; c != null; c = c.parent) {
-                if (c.scope == scope)
-                    break;
-            }
-            if (c.scope != scope)
-                scope = this.scope; // throw new IllegalArgumentException("Continuation " + this + " not in scope " + scope); -- don't throw exception to have the same behavior as no continuation
-        } else {
-            scope = this.scope;
-        }
-        return StackWalker.newInstance(options, null, scope, this);
+    /**
+     * TBD
+     * @param options TBD
+     * @param scope TBD
+     * @return TBD
+     */
+    public StackWalker stackWalker(Set<StackWalker.Option> options, ContinuationScope scope) {
+        // if (scope != null) {
+        //     // verify the given scope exists in this continuation
+        //     Continuation c;
+        //     for (c = innermost(); c != null; c = c.parent) {
+        //         if (c.scope == scope)
+        //             break;
+        //     }
+        //     if (c.scope != scope)
+        //         scope = this.scope; // throw new IllegalArgumentException("Continuation " + this + " not in scope " + scope); -- don't throw exception to have the same behavior as no continuation
+        // } else {
+        //     scope = this.scope;
+        // }
+        return StackWalker.newInstance(options, null, scope, innermost());
+    }
+
+    /**
+     * TBD
+     * @return TBD
+     * @throws IllegalStateException if the continuation is mounted
+     */
+    public StackTraceElement[] getStackTrace() {
+        return stackWalker().walk(s -> s.map(StackWalker.StackFrame::toStackTraceElement).toArray(StackTraceElement[]::new));
+    }
+
+    private Continuation innermost() {
+        Continuation c = this;
+        while (c.child != null)
+            c = c.child;
+        return c;
     }
 
     void mount() {
@@ -234,6 +273,8 @@ public class Continuation {
                 if (TRACE) System.out.println("run (after) sp: " + sp + " refSP: " + refSP + " maxSize: " + maxSize);
 
                 currentCarrierThread().setContinuation(this.parent);
+                if (parent != null)
+                    parent.child = null;
 
                 if (reset) { maxSize = origMaxSize; sp = origSP; fp = origFP; pc = origPC; refSP = origRefSP; } // perftest only
                 postYieldCleanup(origRefSP);
@@ -250,7 +291,9 @@ public class Continuation {
                 this.yieldInfo = null;
                 return;
             } else {
+                parent.child = this;
                 parent.yield0((ContinuationScope)yieldInfo, this);
+                parent.child = null;
             }
         }
     }
@@ -288,10 +331,13 @@ public class Continuation {
 
     /**
      * TBD
-     * @param scope TBD
+     * 
+     * @param scope The {@link ContinuationScope} to yield
+     * @return {@code true} for success; {@code false} for failure
+     * @throws IllegalStateException if not currently in the given {@code scope},
      */
     // @DontInline
-    public static void yield(ContinuationScope scope) {
+    public static boolean yield(ContinuationScope scope) {
         Continuation cont = currentCarrierThread().getContinuation();
         Continuation c;
         int scopes = 0;
@@ -301,10 +347,10 @@ public class Continuation {
         if (c == null)
             throw new IllegalStateException("Not in scope " + scope);
 
-        cont.yield0(scope, null);
+        return cont.yield0(scope, null);
     }
 
-    private void yield0(ContinuationScope scope, Continuation child) {
+    private boolean yield0(ContinuationScope scope, Continuation child) {
         if (TRACE) System.out.println(this + " yielding on scope " + scope + ". child: " + child);
         if (scope != this.scope)
             this.yieldInfo = scope;
@@ -345,6 +391,7 @@ public class Continuation {
         }
         assert yieldInfo == null;
         assert reset || !hasLeak() : "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
+        return res == 0;
         } catch (Throwable t) {
             t.printStackTrace();
             throw t;
@@ -372,14 +419,23 @@ public class Continuation {
 
     private void onPinned0(int reason) {
         if (TRACE) System.out.println("PINNED " + this + " reason: " + reason);
-        onPinned(reason);
+        onPinned(pinnedReason(reason));
+    }
+
+    private static Pinned pinnedReason(int reason) {
+        switch (reason) {
+            case 1: return Pinned.NATIVE;
+            case 2: return Pinned.MONITOR;
+            default:
+                throw new AssertionError("Unknown pinned reason: " + reason);
+        }
     }
 
     /**
      * TBD
      * @param reason TBD
      */
-    protected void onPinned(int reason) {
+    protected void onPinned(Pinned reason) {
         if (DEBUG)
             System.out.println("PINNED! " + reason);
         throw new IllegalStateException("Pinned: " + reason);
@@ -723,10 +779,22 @@ public class Continuation {
      * @param thread TBD
      * @return TBD
      */
-    public int forceYield(Thread thread) {
-        return tryForceYield0(thread);
+    public PreemptStatus tryPreempt(Thread thread) {
+        return preemptStatus(tryForceYield0(thread));
     }
+
     private native int tryForceYield0(Thread thread);
+
+    private static PreemptStatus preemptStatus(int status) {
+        switch (status) {
+            case  0: return PreemptStatus.SUCCESS;
+            case -1: return PreemptStatus.PERM_FAIL_NOT_MOUNTED;
+            case -2: return PreemptStatus.PERM_FAIL_YIELDING;
+            case  1: return PreemptStatus.TRANSIENT_FAIL_PINNED_NATIVE;
+            case  2: return PreemptStatus.TRANSIENT_FAIL_PINNED_MONITOR;
+            default: throw new AssertionError("Unknown status: " + status);
+        }
+    }
 
     // native methods
     private static native void registerNatives();

@@ -3098,13 +3098,17 @@ static frame continuation_parent_frame(ContMirror& cont, RegisterMap* map) {
   assert (map->thread() != NULL || cont.entryPC() == NULL, "");
   if (map->thread() == NULL) { // When a continuation is mounted, its entry frame is always on the v-stack
     oop parentOop = java_lang_Continuation::parent(cont.mirror());
-    if (parentOop != NULL)
+    if (parentOop != NULL) {
+      // tty->print_cr("continuation_parent_frame: parent");
       return continuation_top_frame(parentOop, map);
+    }
   }
   
   map->set_cont(map->thread(), NULL);
-  if (cont.entryPC() == NULL) // When we're walking an unmounted continuation and reached the end
+  if (cont.entryPC() == NULL) { // When we're walking an unmounted continuation and reached the end
+    // tty->print_cr("continuation_parent_frame: no more");
     return frame(); 
+  }
 
   frame sender(cont.entrySP(), cont.entryFP(), cont.entryPC());
 
