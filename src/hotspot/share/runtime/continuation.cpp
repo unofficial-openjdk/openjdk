@@ -1607,10 +1607,10 @@ static void set_anchor(JavaThread* thread, FrameInfo* fi) {
   print_vframe(thread->last_frame());
 }
 
-static void set_anchor(ContMirror& cont) {
-  FrameInfo fi = { cont.entryPC(), cont.entryFP(), cont.entrySP() };
-  set_anchor(cont.thread(), &fi);
-}
+// static void set_anchor(ContMirror& cont) {
+//   FrameInfo fi = { cont.entryPC(), cont.entryFP(), cont.entrySP() };
+//   set_anchor(cont.thread(), &fi);
+// }
 
 static inline void clear_anchor(JavaThread* thread) {
   thread->frame_anchor()->clear();
