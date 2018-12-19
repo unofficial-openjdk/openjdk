@@ -522,9 +522,12 @@ public class Fiber<V> {
         }
 
         // yield until continued on a carrier thread
+        boolean yielded = false;
         boolean retry;
         do {
-            Continuation.yield(FIBER_SCOPE);
+            if (Continuation.yield(FIBER_SCOPE)) {
+                yielded = true;
+            }
             if (retry = (carrierThread == null)) {
                 Runnable hook = this.afterContinueTask;
                 if (hook != null) hook.run();
@@ -534,8 +537,8 @@ public class Fiber<V> {
         // continued
         assert stateGet() == ST_RUNNABLE;
 
-        // notify JVMTI mount event here so that stack is avaiable to agents
-        if (notifyJvmtiEvents) {
+        // notify JVMTI mount event here so that stack is available to agents
+        if (yielded && notifyJvmtiEvents) {
             notifyFiberMount(Thread.currentCarrierThread(), this);
         }
     }
