@@ -396,6 +396,7 @@ oop StackWalk::fetchFirstBatch(BaseFrameStream& stream, Handle stackStream,
     Klass* abstractStackWalker_klass = SystemDictionary::AbstractStackWalker_klass();
     while (!stream.at_end()) {
       InstanceKlass* ik = stream.method()->method_holder();
+      // XXXXXX skip stackWalker frames XXXXXXX
       if (ik != stackWalker_klass &&
             ik != abstractStackWalker_klass && ik->super() != abstractStackWalker_klass)  {
         break;

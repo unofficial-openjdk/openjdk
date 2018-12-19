@@ -170,7 +170,7 @@ public class Fiber<V> {
         this.scheduler = scheduler;
         this.cont = new Continuation(FIBER_SCOPE, target) {
             @Override
-            protected void onPinned(int reason) { yieldFailed(); }
+            protected void onPinned(Continuation.Pinned reason) { yieldFailed(); }
         };
         this.runContinuation = this::runContinuation;
 

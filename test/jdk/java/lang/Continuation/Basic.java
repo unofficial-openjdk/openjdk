@@ -27,13 +27,14 @@
 * @run testng Basic
 * @run testng/othervm -Xint Basic
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Basic
-* @run testng/othervm -XX:+UseParallelGC -XX:-TieredCompilation -Xcomp Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -Xcomp -XX:+UseNewCode Basic
-* @run testng/othervm -XX:+UseParallelGC -XX:TieredStopAtLevel=3 -Xcomp Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode Basic
 *
 * @summary Basic tests for java.lang.Continuation
 */
+
+// * @run testng/othervm -XX:+UseParallelGC -XX:-TieredCompilation -Xcomp Basic
+// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -Xcomp -XX:+UseNewCode Basic
+// * @run testng/othervm -XX:+UseParallelGC -XX:TieredStopAtLevel=3 -Xcomp Basic
+// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode Basic
 
 // * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp Basic
 // * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp -XX:+UseNewCode Basic
@@ -47,12 +48,14 @@ import org.testng.annotations.DataProvider;
 import static org.testng.Assert.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Test
 public class Basic {
     static final ContinuationScope FOO = new ContinuationScope() {};
     
     public void test1() {
+        System.out.println("test1");
         final AtomicInteger res = new AtomicInteger(0);
         Continuation cont = new Continuation(FOO, ()-> {
             double r = 0;
@@ -141,6 +144,7 @@ public class Basic {
     }
     
     public void testException1() {
+        System.out.println("testException1");
         Continuation cont = new Continuation(FOO, ()-> {
             double r = 0;
             for (int k = 1; k < 20; k++) {
@@ -166,6 +170,7 @@ public class Basic {
     }
 
     public void testManyArgs() {
+        System.out.println("testManyArgs");
         final AtomicInteger res = new AtomicInteger(0);
         Continuation cont = new Continuation(FOO, ()-> {
             double r = 0;
@@ -219,19 +224,20 @@ public class Basic {
     }
     
     public void testPinnedMonitor() {
-        final AtomicInteger res = new AtomicInteger(0);
+        System.out.println("testPinnedMonitor");
+        final AtomicReference<Continuation.Pinned> res = new AtomicReference<>();
         
         Continuation cont = new Continuation(FOO, ()-> {
             syncFoo(1);
         }) {
             @Override
-            protected void onPinned(int reason) {
+            protected void onPinned(Continuation.Pinned reason) {
                 res.set(reason);
             }
         };
         
         cont.run();
-        assertEquals(res.get(), 2);
+        assertEquals(res.get(), Continuation.Pinned.MONITOR);
     }
     
     static double syncFoo(int a) {
@@ -245,19 +251,20 @@ public class Basic {
     }
     
     public void testPinnedNative() {
-        final AtomicInteger res = new AtomicInteger(0);
+        System.out.println("testPinnedNative");
+        final AtomicReference<Continuation.Pinned> res = new AtomicReference<>();
         
         Continuation cont = new Continuation(FOO, ()-> {
             nativeFoo(1);
         }) {
             @Override
-            protected void onPinned(int reason) {
+            protected void onPinned(Continuation.Pinned reason) {
                 res.set(reason);
             }
         };
         
         cont.run();
-        assertEquals(res.get(), 1);
+        assertEquals(res.get(), Continuation.Pinned.NATIVE);
     }
     
     static double nativeFoo(int a) {
