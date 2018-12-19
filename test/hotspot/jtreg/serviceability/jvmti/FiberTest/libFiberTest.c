@@ -197,8 +197,8 @@ FiberScheduled(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber) {
   if (err != JVMTI_ERROR_NONE) {
     (*jni)->FatalError(jni, "FiberScheduled event handler: failed during JVMTI GetThreadFiber call");
   }
-  if (mounted_fiber != NULL) {
-    (*jni)->FatalError(jni, "FiberScheduled event handler: JVMTI GetThreadFiber failed to return NULL fiber");
+  if (mounted_fiber != fiber) {
+    (*jni)->FatalError(jni, "FiberScheduled event handler: JVMTI GetThreadFiber failed to return proper fiber");
   }
 
   unlock_events();
