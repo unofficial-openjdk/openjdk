@@ -123,8 +123,8 @@ private:
   volatile size_t _items_count;
   volatile size_t _uncleaned_items_count;
 
-  double get_load_factor();
-  double get_dead_factor();
+  double get_load_factor() const;
+  double get_dead_factor() const;
 
   void check_concurrent_work();
   void trigger_concurrent_work();
@@ -169,6 +169,7 @@ private:
 
   void try_rehash_table();
   bool do_rehash();
+  inline void update_needs_rehash(bool rehash);
 
 public:
   // The symbol table

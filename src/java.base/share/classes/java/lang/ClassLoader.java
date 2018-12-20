@@ -1119,7 +1119,7 @@ public abstract class ClassLoader {
 
     // true if the name is null or has the potential to be a valid binary name
     private boolean checkName(String name) {
-        if ((name == null) || (name.length() == 0))
+        if ((name == null) || (name.isEmpty()))
             return true;
         if ((name.indexOf('/') != -1) || (name.charAt(0) == '['))
             return false;
@@ -2430,7 +2430,7 @@ public abstract class ClassLoader {
             if (!load0(name, isBuiltin)) return false;
 
             // register the class loader for cleanup when unloaded
-            // built class loaders are never unloaded
+            // builtin class loaders are never unloaded
             ClassLoader loader = fromClass.getClassLoader();
             if (loader != null &&
                 loader != getBuiltinPlatformClassLoader() &&

@@ -324,6 +324,8 @@ class LibraryCallKit : public GraphKit {
   bool inline_montgomerySquare();
   bool inline_vectorizedMismatch();
   bool inline_fma(vmIntrinsics::ID id);
+  bool inline_character_compare(vmIntrinsics::ID id);
+  bool inline_fp_min_max(vmIntrinsics::ID id);
 
   bool inline_profileBoolean();
   bool inline_isCompileConstant();
@@ -887,6 +889,18 @@ bool LibraryCallKit::try_to_inline(int predicate) {
     return inline_continuation_jump();
   case vmIntrinsics::_Continuation_runLevel:
     return inline_continuation_runLevel();
+
+  case vmIntrinsics::_isDigit:
+  case vmIntrinsics::_isLowerCase:
+  case vmIntrinsics::_isUpperCase:
+  case vmIntrinsics::_isWhitespace:
+    return inline_character_compare(intrinsic_id());
+
+  case vmIntrinsics::_maxF:
+  case vmIntrinsics::_minF:
+  case vmIntrinsics::_maxD:
+  case vmIntrinsics::_minD:
+    return inline_fp_min_max(intrinsic_id());
 
   default:
     // If you get here, it may be that someone has added a new intrinsic
@@ -4485,7 +4499,7 @@ JVMState* LibraryCallKit::arraycopy_restore_alloc_state(AllocateArrayNode* alloc
         for (MergeMemStream mms(merged_memory(), mem->as_MergeMem()); mms.next_non_empty2(); ) {
           Node* n = mms.memory();
           if (n != mms.memory2() && !(n->is_Proj() && n->in(0) == alloc->initialization())) {
-            assert(n->is_Store(), "what else?");
+            assert(n->is_Store() || n->Opcode() == Op_ShenandoahWBMemProj, "what else?");
             no_interfering_store = false;
             break;
           }
@@ -4494,7 +4508,7 @@ JVMState* LibraryCallKit::arraycopy_restore_alloc_state(AllocateArrayNode* alloc
         for (MergeMemStream mms(merged_memory()); mms.next_non_empty(); ) {
           Node* n = mms.memory();
           if (n != mem && !(n->is_Proj() && n->in(0) == alloc->initialization())) {
-            assert(n->is_Store(), "what else?");
+            assert(n->is_Store() || n->Opcode() == Op_ShenandoahWBMemProj, "what else?");
             no_interfering_store = false;
             break;
           }
@@ -6637,6 +6651,68 @@ bool LibraryCallKit::inline_fma(vmIntrinsics::ID id) {
     fatal_unexpected_iid(id);  break;
   }
   set_result(result);
+  return true;
+}
+
+bool LibraryCallKit::inline_character_compare(vmIntrinsics::ID id) {
+  // argument(0) is receiver
+  Node* codePoint = argument(1);
+  Node* n = NULL;
+
+  switch (id) {
+    case vmIntrinsics::_isDigit :
+      n = new DigitNode(control(), codePoint);
+      break;
+    case vmIntrinsics::_isLowerCase :
+      n = new LowerCaseNode(control(), codePoint);
+      break;
+    case vmIntrinsics::_isUpperCase :
+      n = new UpperCaseNode(control(), codePoint);
+      break;
+    case vmIntrinsics::_isWhitespace :
+      n = new WhitespaceNode(control(), codePoint);
+      break;
+    default:
+      fatal_unexpected_iid(id);
+  }
+
+  set_result(_gvn.transform(n));
+  return true;
+}
+
+//------------------------------inline_fp_min_max------------------------------
+bool LibraryCallKit::inline_fp_min_max(vmIntrinsics::ID id) {
+  Node *a = NULL;
+  Node *b = NULL;
+  Node *n = NULL;
+  switch (id) {
+  case vmIntrinsics::_maxF:
+  case vmIntrinsics::_minF:
+    assert(callee()->signature()->size() == 2, "minF/maxF has 2 parameters of size 1 each.");
+    a = argument(0);
+    b = argument(1);
+    break;
+  case vmIntrinsics::_maxD:
+  case vmIntrinsics::_minD:
+    assert(callee()->signature()->size() == 4, "minD/maxD has 2 parameters of size 2 each.");
+    a = round_double_node(argument(0));
+    b = round_double_node(argument(2));
+    break;
+  default:
+    fatal_unexpected_iid(id);
+    break;
+  }
+  if (a->is_Con() || b->is_Con()) {
+    return false;
+  }
+  switch (id) {
+  case vmIntrinsics::_maxF:  n = new MaxFNode(a, b);  break;
+  case vmIntrinsics::_minF:  n = new MinFNode(a, b);  break;
+  case vmIntrinsics::_maxD:  n = new MaxDNode(a, b);  break;
+  case vmIntrinsics::_minD:  n = new MinDNode(a, b);  break;
+  default:  fatal_unexpected_iid(id);  break;
+  }
+  set_result(_gvn.transform(n));
   return true;
 }
 

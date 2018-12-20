@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -279,8 +279,6 @@ public class CheckGraalIntrinsics extends GraalTest {
                             "java/lang/Math.fma(DDD)D",
                             // HotSpot MacroAssembler-based intrinsic
                             "java/lang/Math.fma(FFF)F",
-                            // Emit pause instruction if os::is_MP()
-                            "java/lang/Thread.onSpinWait()V",
                             // Just check if the argument is a compile time constant
                             "java/lang/invoke/MethodHandleImpl.isCompileConstant(Ljava/lang/Object;)Z",
                             // Some logic and a runtime call
@@ -376,6 +374,14 @@ public class CheckGraalIntrinsics extends GraalTest {
                             "jdk/jfr/internal/JVM.getEventWriter()Ljava/lang/Object;");
         }
 
+        if (isJDK12OrHigher()) {
+            add(toBeInvestigated,
+                            "java/lang/CharacterDataLatin1.isDigit(I)Z",
+                            "java/lang/CharacterDataLatin1.isLowerCase(I)Z",
+                            "java/lang/CharacterDataLatin1.isUpperCase(I)Z",
+                            "java/lang/CharacterDataLatin1.isWhitespace(I)Z");
+        }
+
         if (!config.inlineNotify()) {
             add(ignore, "java/lang/Object.notify()V");
         }
@@ -419,6 +425,7 @@ public class CheckGraalIntrinsics extends GraalTest {
                                     "jdk/internal/misc/Unsafe.getAndSet" + oopName + "(Ljava/lang/Object;JLjava/lang/Object;)Ljava/lang/Object;");
                 }
                 add(toBeInvestigated,
+                                "java/lang/Thread.onSpinWait()V",
                                 "jdk/internal/misc/Unsafe.getCharUnaligned(Ljava/lang/Object;J)C",
                                 "jdk/internal/misc/Unsafe.getIntUnaligned(Ljava/lang/Object;J)I",
                                 "jdk/internal/misc/Unsafe.getLongUnaligned(Ljava/lang/Object;J)J",

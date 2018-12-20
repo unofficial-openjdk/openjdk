@@ -321,7 +321,7 @@ jdk.jshell_COPY += .jsh .properties
 
 ################################################################################
 
-jdk.internal.le_COPY += .properties
+jdk.internal.le_COPY += .properties .caps .txt
 
 ################################################################################
 
@@ -481,7 +481,6 @@ jdk.internal.vm.compiler_EXCLUDES += \
     org.graalvm.compiler.processor \
     org.graalvm.compiler.replacements.jdk12.test \
     org.graalvm.compiler.replacements.jdk9.test \
-    org.graalvm.compiler.replacements.jdk9_11.test \
     org.graalvm.compiler.replacements.processor \
     org.graalvm.compiler.replacements.test \
     org.graalvm.compiler.serviceprovider.processor \

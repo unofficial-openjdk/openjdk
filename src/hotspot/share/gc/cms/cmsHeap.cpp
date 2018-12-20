@@ -24,12 +24,12 @@
 
 #include "precompiled.hpp"
 #include "gc/cms/cmsCardTable.hpp"
+#include "gc/cms/cmsVMOperations.hpp"
 #include "gc/cms/compactibleFreeListSpace.hpp"
 #include "gc/cms/concurrentMarkSweepGeneration.hpp"
 #include "gc/cms/concurrentMarkSweepThread.hpp"
 #include "gc/cms/cmsHeap.hpp"
 #include "gc/cms/parNewGeneration.hpp"
-#include "gc/cms/vmCMSOperations.hpp"
 #include "gc/shared/genCollectedHeap.hpp"
 #include "gc/shared/genMemoryPools.hpp"
 #include "gc/shared/genOopClosures.inline.hpp"
@@ -70,18 +70,23 @@ CMSHeap::CMSHeap(GenCollectorPolicy *policy) :
                      Generation::ParNew,
                      Generation::ConcurrentMarkSweep,
                      "ParNew:CMS"),
+    _workers(NULL),
     _eden_pool(NULL),
     _survivor_pool(NULL),
     _old_pool(NULL) {
-  _workers = new WorkGang("GC Thread", ParallelGCThreads,
-                          /* are_GC_task_threads */true,
-                          /* are_ConcurrentGC_threads */false);
-  _workers->initialize_workers();
 }
 
 jint CMSHeap::initialize() {
   jint status = GenCollectedHeap::initialize();
   if (status != JNI_OK) return status;
+
+  _workers = new WorkGang("GC Thread", ParallelGCThreads,
+                          /* are_GC_task_threads */true,
+                          /* are_ConcurrentGC_threads */false);
+  if (_workers == NULL) {
+    return JNI_ENOMEM;
+  }
+  _workers->initialize_workers();
 
   // If we are running CMS, create the collector responsible
   // for collecting the CMS generations.

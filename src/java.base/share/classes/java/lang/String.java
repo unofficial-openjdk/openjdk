@@ -28,6 +28,9 @@ package java.lang;
 import java.io.ObjectStreamField;
 import java.io.UnsupportedEncodingException;
 import java.lang.annotation.Native;
+import java.lang.invoke.MethodHandles;
+import java.lang.constant.Constable;
+import java.lang.constant.ConstantDesc;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +38,7 @@ import java.util.Comparator;
 import java.util.Formatter;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Spliterator;
 import java.util.StringJoiner;
 import java.util.function.Function;
@@ -127,7 +131,8 @@ import static java.util.function.Predicate.not;
  */
 
 public final class String
-    implements java.io.Serializable, Comparable<String>, CharSequence {
+    implements java.io.Serializable, Comparable<String>, CharSequence,
+               Constable, ConstantDesc {
 
     /**
      * The value is used for character storage.
@@ -1938,8 +1943,7 @@ public final class String
      *          characters followed by the string argument's characters.
      */
     public String concat(String str) {
-        int olen = str.length();
-        if (olen == 0) {
+        if (str.isEmpty()) {
             return this;
         }
         if (coder() == str.coder()) {
@@ -1951,6 +1955,7 @@ public final class String
             return new String(buf, coder);
         }
         int len = length();
+        int olen = str.length();
         byte[] buf = StringUTF16.newBytesFor(len + olen);
         getBytes(buf, 0, UTF16);
         str.getBytes(buf, len, UTF16);
@@ -2311,7 +2316,7 @@ public final class String
             // Construct result
             int resultSize = list.size();
             if (limit == 0) {
-                while (resultSize > 0 && list.get(resultSize - 1).length() == 0) {
+                while (resultSize > 0 && list.get(resultSize - 1).isEmpty()) {
                     resultSize--;
                 }
             }
@@ -3538,4 +3543,30 @@ public final class String
         throw new IllegalArgumentException(
             format("Not a valid Unicode code point: 0x%X", codePoint));
     }
+
+    /**
+     * Returns an {@link Optional} containing the nominal descriptor for this
+     * instance, which is the instance itself.
+     *
+     * @return an {@link Optional} describing the {@linkplain String} instance
+     * @since 12
+     */
+    @Override
+    public Optional<String> describeConstable() {
+        return Optional.of(this);
+    }
+
+    /**
+     * Resolves this instance as a {@link ConstantDesc}, the result of which is
+     * the instance itself.
+     *
+     * @param lookup ignored
+     * @return the {@linkplain String} instance
+     * @since 12
+     */
+    @Override
+    public String resolveConstantDesc(MethodHandles.Lookup lookup) {
+        return this;
+    }
+
 }

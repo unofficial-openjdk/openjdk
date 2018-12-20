@@ -361,12 +361,11 @@ public:
 
   // Inline cache support for class unloading and nmethod unloading
  private:
-  void cleanup_inline_caches_impl(bool unloading_occurred, bool clean_all);
+  bool cleanup_inline_caches_impl(bool unloading_occurred, bool clean_all);
+
  public:
-  void cleanup_inline_caches(bool clean_all) {
-    // Serial version used by sweeper and whitebox test
-    cleanup_inline_caches_impl(false, clean_all);
-  }
+  // Serial version used by sweeper and whitebox test
+  void cleanup_inline_caches(bool clean_all);
 
   virtual void clear_inline_caches();
   void clear_ic_stubs();
@@ -399,7 +398,7 @@ public:
   address oops_reloc_begin() const;
 
  private:
-  void static clean_ic_if_metadata_is_dead(CompiledIC *ic);
+  bool static clean_ic_if_metadata_is_dead(CompiledIC *ic);
 
   void clean_ic_stubs();
 
@@ -409,8 +408,8 @@ public:
 
   virtual bool is_unloading() = 0;
 
-  void unload_nmethod_caches(bool class_unloading_occurred);
-  virtual void do_unloading(bool unloading_occurred) { }
+  bool unload_nmethod_caches(bool class_unloading_occurred);
+  virtual void do_unloading(bool unloading_occurred) = 0;
 
   void inc_on_continuation_stack();
   void dec_on_continuation_stack();

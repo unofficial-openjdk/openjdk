@@ -79,12 +79,12 @@ public class RFC822Name implements GeneralNameInterface
      * @throws IOException if name is not valid
      */
     public void parseName(String name) throws IOException {
-        if (name == null || name.length() == 0) {
+        if (name == null || name.isEmpty()) {
             throw new IOException("RFC822Name may not be null or empty");
         }
         // See if domain is a valid domain name
         String domain = name.substring(name.indexOf('@')+1);
-        if (domain.length() == 0) {
+        if (domain.isEmpty()) {
             throw new IOException("RFC822Name may not end with @");
         } else {
             //An RFC822 NameConstraint could start with a ., although
@@ -246,7 +246,7 @@ public class RFC822Name implements GeneralNameInterface
             subtree=subtree.substring(atNdx+1);
         }
 
-        /* count dots in dnsname, adding one if dnsname preceded by @ */
+        /* count dots in DNSName, adding one if DNSName preceded by @ */
         for (; subtree.lastIndexOf('.') >= 0; i++) {
             subtree=subtree.substring(0,subtree.lastIndexOf('.'));
         }

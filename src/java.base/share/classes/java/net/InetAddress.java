@@ -1009,7 +1009,7 @@ class InetAddress implements java.io.Serializable {
                         + " not found ");
             }
 
-            if ((host == null) || (host.equals("")) || (host.equals(" "))) {
+            if ((host == null) || (host.isEmpty()) || (host.equals(" "))) {
                 throw new UnknownHostException("Requested address "
                         + addrString
                         + " resolves to an invalid entry in hosts file "
@@ -1046,7 +1046,7 @@ class InetAddress implements java.io.Serializable {
                         hostEntry = removeComments(hostEntry);
                         if (hostEntry.contains(host)) {
                             addrStr = extractHostAddr(hostEntry, host);
-                            if ((addrStr != null) && (!addrStr.equals(""))) {
+                            if ((addrStr != null) && (!addrStr.isEmpty())) {
                                 addr = createAddressByteArray(addrStr);
                                 if (inetAddresses == null) {
                                     inetAddresses = new ArrayList<>(1);
@@ -1187,7 +1187,7 @@ class InetAddress implements java.io.Serializable {
      */
     public static InetAddress getByAddress(String host, byte[] addr)
         throws UnknownHostException {
-        if (host != null && host.length() > 0 && host.charAt(0) == '[') {
+        if (host != null && !host.isEmpty() && host.charAt(0) == '[') {
             if (host.charAt(host.length()-1) == ']') {
                 host = host.substring(1, host.length() -1);
             }
@@ -1301,7 +1301,7 @@ class InetAddress implements java.io.Serializable {
     private static InetAddress[] getAllByName(String host, InetAddress reqAddr)
         throws UnknownHostException {
 
-        if (host == null || host.length() == 0) {
+        if (host == null || host.isEmpty()) {
             InetAddress[] ret = new InetAddress[1];
             ret[0] = impl.loopbackAddress();
             return ret;

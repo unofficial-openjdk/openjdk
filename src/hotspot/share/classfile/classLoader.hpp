@@ -55,13 +55,12 @@ public:
   virtual bool is_jar_file() const = 0;
   virtual const char* name() const = 0;
   virtual JImageFile* jimage() const = 0;
+  virtual void close_jimage() = 0;
   // Constructor
   ClassPathEntry() : _next(NULL) {}
   // Attempt to locate file_name through this class path entry.
   // Returns a class file parsing stream if successfull.
   virtual ClassFileStream* open_stream(const char* name, TRAPS) = 0;
-  // Debugging
-  NOT_PRODUCT(virtual void compile_the_world(Handle loader, TRAPS) = 0;)
 };
 
 class ClassPathDirEntry: public ClassPathEntry {
@@ -72,11 +71,10 @@ class ClassPathDirEntry: public ClassPathEntry {
   bool is_jar_file() const { return false;  }
   const char* name() const { return _dir; }
   JImageFile* jimage() const { return NULL; }
+  void close_jimage() {}
   ClassPathDirEntry(const char* dir);
   virtual ~ClassPathDirEntry() {}
   ClassFileStream* open_stream(const char* name, TRAPS);
-  // Debugging
-  NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
 };
 
 
@@ -102,13 +100,12 @@ class ClassPathZipEntry: public ClassPathEntry {
   bool is_jar_file() const { return true;  }
   const char* name() const { return _zip_name; }
   JImageFile* jimage() const { return NULL; }
+  void close_jimage() {}
   ClassPathZipEntry(jzfile* zip, const char* zip_name, bool is_boot_append);
   virtual ~ClassPathZipEntry();
   u1* open_entry(const char* name, jint* filesize, bool nul_terminate, TRAPS);
   ClassFileStream* open_stream(const char* name, TRAPS);
   void contents_do(void f(const char* name, void* context), void* context);
-  // Debugging
-  NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
 };
 
 
@@ -123,12 +120,10 @@ public:
   bool is_open() const { return _jimage != NULL; }
   const char* name() const { return _name == NULL ? "" : _name; }
   JImageFile* jimage() const { return _jimage; }
+  void close_jimage();
   ClassPathImageEntry(JImageFile* jimage, const char* name);
   virtual ~ClassPathImageEntry();
   ClassFileStream* open_stream(const char* name, TRAPS);
-
-  // Debugging
-  NOT_PRODUCT(void compile_the_world(Handle loader, TRAPS);)
 };
 
 // ModuleClassPathList contains a linked list of ClassPathEntry's
@@ -342,6 +337,7 @@ class ClassLoader: AllStatic {
   // Modular java runtime image is present vs. a build with exploded modules
   static bool has_jrt_entry() { return (_jrt_entry != NULL); }
   static ClassPathEntry* get_jrt_entry() { return _jrt_entry; }
+  static void close_jrt_image();
 
   // Add a module's exploded directory to the boot loader's exploded module build list
   static void add_to_exploded_build_list(Symbol* module_name, TRAPS);
@@ -447,17 +443,6 @@ class ClassLoader: AllStatic {
 
   // Debugging
   static void verify()              PRODUCT_RETURN;
-
-  // Force compilation of all methods in all classes in bootstrap class path (stress test)
-#ifndef PRODUCT
- protected:
-  static int _compile_the_world_class_counter;
-  static int _compile_the_world_method_counter;
- public:
-  static void compile_the_world();
-  static void compile_the_world_in(char* name, Handle loader, TRAPS);
-  static int  compile_the_world_counter() { return _compile_the_world_class_counter; }
-#endif //PRODUCT
 };
 
 // PerfClassTraceTime is used to measure time for class loading related events.

@@ -25,11 +25,11 @@
 
 package jdk.jfr.consumer;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 
@@ -37,7 +37,7 @@ import jdk.jfr.Timespan;
 import jdk.jfr.Timestamp;
 import jdk.jfr.ValueDescriptor;
 import jdk.jfr.internal.PrivateAccess;
-import jdk.jfr.internal.cmd.PrettyWriter;
+import jdk.jfr.internal.tool.PrettyWriter;
 
 /**
  * A complex data type that consists of one or more fields.
@@ -726,6 +726,9 @@ public class RecordedObject {
 
     private Duration getDuration(long timespan, String name) throws InternalError {
         ValueDescriptor v = getValueDescriptor(descriptors, name, null);
+        if (timespan == Long.MIN_VALUE) {
+            return Duration.ofSeconds(Long.MIN_VALUE, 0);
+        }
         Timespan ts = v.getAnnotation(Timespan.class);
         if (ts != null) {
             switch (ts.value()) {
@@ -797,13 +800,16 @@ public class RecordedObject {
                 return getInstant(Short.toUnsignedLong((Byte) u), name);
             }
         }
-        throw newIllegalArgumentException(name, "java,time.Instant");
+        throw newIllegalArgumentException(name, "java.time.Instant");
     }
 
     private Instant getInstant(long timestamp, String name) {
         ValueDescriptor v = getValueDescriptor(descriptors, name, null);
         Timestamp ts = v.getAnnotation(Timestamp.class);
         if (ts != null) {
+            if (timestamp == Long.MIN_VALUE) {
+                return Instant.MIN;
+            }
             switch (ts.value()) {
             case Timestamp.MILLISECONDS_SINCE_EPOCH:
                 return Instant.ofEpochMilli(timestamp);
@@ -872,18 +878,23 @@ public class RecordedObject {
     final public String toString() {
         StringWriter s = new StringWriter();
         PrettyWriter p = new PrettyWriter(new PrintWriter(s));
-        try {
-            if (this instanceof RecordedEvent) {
-                p.print((RecordedEvent) this);
-            } else {
-                p.print(this, "");
-            }
-
-        } catch (IOException e) {
-            // Ignore, should not happen with StringWriter
+        p.setStackDepth(5);
+        if (this instanceof RecordedEvent) {
+            p.print((RecordedEvent) this);
+        } else {
+            p.print(this, "");
         }
-        p.flush();
+        p.flush(true);
         return s.toString();
+    }
+
+    // package private for now. Used by EventWriter
+    OffsetDateTime getOffsetDateTime(String name) {
+        Instant instant = getInstant(name);
+        if (instant.equals(Instant.MIN)) {
+            return OffsetDateTime.MIN;
+        }
+        return OffsetDateTime.ofInstant(getInstant(name), timeConverter.getZoneOffset());
     }
 
     private static IllegalArgumentException newIllegalArgumentException(String name, String typeName) {

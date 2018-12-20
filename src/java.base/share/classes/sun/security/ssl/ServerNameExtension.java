@@ -82,9 +82,15 @@ final class ServerNameExtension {
                                                     // +2: Name length
         final List<SNIServerName> serverNames;
 
+        /*
+         * Note: For the unmodifiable collection we are creating new
+         * collections as inputs to avoid potential deep nesting of
+         * unmodifiable collections that can cause StackOverflowErrors
+         * (see JDK-6323374).
+         */
         private CHServerNamesSpec(List<SNIServerName> serverNames) {
-            this.serverNames =
-                    Collections.<SNIServerName>unmodifiableList(serverNames);
+            this.serverNames = Collections.<SNIServerName>unmodifiableList(
+                    new ArrayList<>(serverNames));
         }
 
         private CHServerNamesSpec(ByteBuffer buffer) throws IOException {
@@ -289,8 +295,7 @@ final class ServerNameExtension {
             try {
                 spec = new CHServerNamesSpec(buffer);
             } catch (IOException ioe) {
-                shc.conContext.fatal(Alert.UNEXPECTED_MESSAGE, ioe);
-                return;     // fatal() always throws, make the compiler happy.
+                throw shc.conContext.fatal(Alert.UNEXPECTED_MESSAGE, ioe);
             }
 
             // Update the context.
@@ -308,7 +313,7 @@ final class ServerNameExtension {
                     }
                 } else {
                     // We do not reject client without SNI extension currently.
-                    shc.conContext.fatal(Alert.UNRECOGNIZED_NAME,
+                    throw shc.conContext.fatal(Alert.UNRECOGNIZED_NAME,
                             "Unrecognized server name indication");
                 }
             } else {
@@ -477,13 +482,13 @@ final class ServerNameExtension {
             CHServerNamesSpec spec = (CHServerNamesSpec)
                     chc.handshakeExtensions.get(CH_SERVER_NAME);
             if (spec == null) {
-                chc.conContext.fatal(Alert.UNEXPECTED_MESSAGE,
+                throw chc.conContext.fatal(Alert.UNEXPECTED_MESSAGE,
                     "Unexpected ServerHello server_name extension");
             }
 
             // Parse the extension.
             if (buffer.remaining() != 0) {
-                chc.conContext.fatal(Alert.UNEXPECTED_MESSAGE,
+                throw chc.conContext.fatal(Alert.UNEXPECTED_MESSAGE,
                     "Invalid ServerHello server_name extension");
             }
 
@@ -564,13 +569,13 @@ final class ServerNameExtension {
             CHServerNamesSpec spec = (CHServerNamesSpec)
                     chc.handshakeExtensions.get(CH_SERVER_NAME);
             if (spec == null) {
-                chc.conContext.fatal(Alert.UNEXPECTED_MESSAGE,
+                throw chc.conContext.fatal(Alert.UNEXPECTED_MESSAGE,
                     "Unexpected EncryptedExtensions server_name extension");
             }
 
             // Parse the extension.
             if (buffer.remaining() != 0) {
-                chc.conContext.fatal(Alert.UNEXPECTED_MESSAGE,
+                throw chc.conContext.fatal(Alert.UNEXPECTED_MESSAGE,
                     "Invalid EncryptedExtensions server_name extension");
             }
 

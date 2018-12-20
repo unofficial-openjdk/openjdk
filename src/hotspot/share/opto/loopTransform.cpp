@@ -2289,9 +2289,9 @@ Node* PhaseIdealLoop::add_range_check_predicate(IdealLoopTree* loop, CountedLoop
   register_new_node(opaque_bol, predicate_proj);
   IfNode* new_iff = NULL;
   if (overflow) {
-    new_iff = new IfNode(predicate_proj, bol, PROB_MAX, COUNT_UNKNOWN);
+    new_iff = new IfNode(predicate_proj, opaque_bol, PROB_MAX, COUNT_UNKNOWN);
   } else {
-    new_iff = new RangeCheckNode(predicate_proj, bol, PROB_MAX, COUNT_UNKNOWN);
+    new_iff = new RangeCheckNode(predicate_proj, opaque_bol, PROB_MAX, COUNT_UNKNOWN);
   }
   register_control(new_iff, loop->_parent, predicate_proj);
   Node* iffalse = new IfFalseNode(new_iff);
@@ -2795,7 +2795,13 @@ void IdealLoopTree::adjust_loop_exit_prob( PhaseIdealLoop *phase ) {
              (bol->in(1)->Opcode() == Op_CompareAndSwapI ) ||
              (bol->in(1)->Opcode() == Op_CompareAndSwapL ) ||
              (bol->in(1)->Opcode() == Op_CompareAndSwapP ) ||
-             (bol->in(1)->Opcode() == Op_CompareAndSwapN )))
+             (bol->in(1)->Opcode() == Op_CompareAndSwapN ) ||
+             (bol->in(1)->Opcode() == Op_ShenandoahCompareAndExchangeP ) ||
+             (bol->in(1)->Opcode() == Op_ShenandoahCompareAndExchangeN ) ||
+             (bol->in(1)->Opcode() == Op_ShenandoahWeakCompareAndSwapP ) ||
+             (bol->in(1)->Opcode() == Op_ShenandoahWeakCompareAndSwapN ) ||
+             (bol->in(1)->Opcode() == Op_ShenandoahCompareAndSwapP ) ||
+             (bol->in(1)->Opcode() == Op_ShenandoahCompareAndSwapN )))
           return;               // Allocation loops RARELY take backedge
         // Find the OTHER exit path from the IF
         Node* ex = iff->proj_out(1-test_con);
