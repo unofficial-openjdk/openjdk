@@ -79,7 +79,7 @@
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/signature.hpp"
 #include "runtime/thread.inline.hpp"
-#include "runtime/vm_operations.hpp"
+#include "runtime/vmOperations.hpp"
 #include "services/memTracker.hpp"
 #include "services/runtimeService.hpp"
 #include "utilities/defaultStream.hpp"
@@ -437,8 +437,9 @@ JNI_ENTRY(jclass, jni_FindClass(JNIEnv *env, const char *name))
   // If we were the first invocation of jni_FindClass, we enable compilation again
   // rather than just allowing invocation counter to overflow and decay.
   // Controlled by flag DelayCompilationDuringStartup.
-  if (first_time && !CompileTheWorld)
+  if (first_time) {
     CompilationPolicy::completed_vm_startup();
+  }
 
   return result;
 JNI_END
@@ -822,9 +823,7 @@ JNI_QUICK_ENTRY(jboolean, jni_IsSameObject(JNIEnv *env, jobject r1, jobject r2))
 
   HOTSPOT_JNI_ISSAMEOBJECT_ENTRY(env, r1, r2);
 
-  oop a = JNIHandles::resolve(r1);
-  oop b = JNIHandles::resolve(r2);
-  jboolean ret = oopDesc::equals(a, b) ? JNI_TRUE : JNI_FALSE;
+  jboolean ret = JNIHandles::is_same_object(r1, r2) ? JNI_TRUE : JNI_FALSE;
 
   HOTSPOT_JNI_ISSAMEOBJECT_RETURN(ret);
   return ret;
@@ -3969,8 +3968,6 @@ static jint JNI_CreateJavaVM_inner(JavaVM **vm, void **penv, void *args) {
     post_thread_start_event(thread);
 
 #ifndef PRODUCT
-    // Check if we should compile all classes on bootclasspath
-    if (CompileTheWorld) ClassLoader::compile_the_world();
     if (ReplayCompiles) ciReplay::replay(thread);
 
     // Some platforms (like Win*) need a wrapper around these test

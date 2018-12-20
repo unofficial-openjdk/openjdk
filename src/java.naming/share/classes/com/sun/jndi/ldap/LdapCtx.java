@@ -916,7 +916,7 @@ final public class LdapCtx extends ComponentDirContext
         boolean directUpdate) throws NamingException {
 
             // Handle the empty name
-            if (dn.equals("")) {
+            if (dn.isEmpty()) {
                 return attrs;
             }
 
@@ -1272,7 +1272,7 @@ final public class LdapCtx extends ComponentDirContext
         int prefixLast = prefix.size() - 1;
 
         if (name.isEmpty() || prefix.isEmpty() ||
-                name.get(0).equals("") || prefix.get(prefixLast).equals("")) {
+                name.get(0).isEmpty() || prefix.get(prefixLast).isEmpty()) {
             return super.composeName(name, prefix);
         }
 
@@ -1301,9 +1301,9 @@ final public class LdapCtx extends ComponentDirContext
 
     // used by LdapSearchEnumeration
     private static String concatNames(String lesser, String greater) {
-        if (lesser == null || lesser.equals("")) {
+        if (lesser == null || lesser.isEmpty()) {
             return greater;
-        } else if (greater == null || greater.equals("")) {
+        } else if (greater == null || greater.isEmpty()) {
             return lesser;
         } else {
             return (lesser + "," + greater);
@@ -3037,7 +3037,7 @@ final public class LdapCtx extends ComponentDirContext
             }
 
             // extract SLAPD-style referrals from errorMessage
-            if ((res.errorMessage != null) && (!res.errorMessage.equals(""))) {
+            if ((res.errorMessage != null) && (!res.errorMessage.isEmpty())) {
                 res.referrals = extractURLs(res.errorMessage);
             } else {
                 e = new PartialResultException(msg);

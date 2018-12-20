@@ -25,9 +25,11 @@
 
 package java.net;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.spi.URLStreamHandlerProvider;
+import java.nio.file.Path;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Hashtable;
@@ -144,6 +146,27 @@ import sun.security.action.GetPropertyAction;
  * The {@link URLEncoder} and {@link URLDecoder} classes can also be
  * used, but only for HTML form encoding, which is not the same
  * as the encoding scheme defined in RFC2396.
+ *
+ * @apiNote
+ *
+ * Applications working with file paths and file URIs should take great
+ * care to use the appropriate methods to convert between the two.
+ * The {@link Path#of(URI)} factory method and the {@link File#File(URI)}
+ * constructor can be used to create {@link Path} or {@link File}
+ * objects from a file URI. {@link Path#toUri()} and {@link File#toURI()}
+ * can be used to create a {@link URI} from a file path, which can be
+ * converted to URL using {@link URI#toURL()}.
+ * Applications should never try to {@linkplain #URL(String, String, String)
+ * construct} or {@linkplain #URL(String) parse} a {@code URL}
+ * from the direct string representation of a {@code File} or {@code Path}
+ * instance.
+ * <p>
+ * Some components of a URL or URI, such as <i>userinfo</i>, may
+ * be abused to construct misleading URLs or URIs. Applications
+ * that deal with URLs or URIs should take into account
+ * the recommendations advised in <a
+ * href="https://tools.ietf.org/html/rfc3986#section-7">RFC3986,
+ * Section 7, Security Considerations</a>.
  *
  * @author  James Gosling
  * @since 1.0
@@ -1490,7 +1513,7 @@ public final class URL implements java.io.Serializable {
         String ref = (String)gf.get("ref", null);
         int hashCode = gf.get("hashCode", -1);
         if (authority == null
-                && ((host != null && host.length() > 0) || port != -1)) {
+                && ((host != null && !host.isEmpty()) || port != -1)) {
             if (host == null)
                 host = "";
             authority = (port == -1) ? host : host + ":" + port;
@@ -1537,7 +1560,7 @@ public final class URL implements java.io.Serializable {
 
         // Construct authority part
         if (authority == null
-            && ((host != null && host.length() > 0) || port != -1)) {
+            && ((host != null && !host.isEmpty()) || port != -1)) {
             if (host == null)
                 host = "";
             authority = (port == -1) ? host : host + ":" + port;
@@ -1693,7 +1716,7 @@ final class UrlDeserializedState {
 
         // pre-compute length of StringBuffer
         int len = protocol.length() + 1;
-        if (authority != null && authority.length() > 0)
+        if (authority != null && !authority.isEmpty())
             len += 2 + authority.length();
         if (file != null) {
             len += file.length();
@@ -1703,7 +1726,7 @@ final class UrlDeserializedState {
         StringBuilder result = new StringBuilder(len);
         result.append(protocol);
         result.append(":");
-        if (authority != null && authority.length() > 0) {
+        if (authority != null && !authority.isEmpty()) {
             result.append("//");
             result.append(authority);
         }

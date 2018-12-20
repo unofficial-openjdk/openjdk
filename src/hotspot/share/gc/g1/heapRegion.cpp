@@ -26,6 +26,7 @@
 #include "code/nmethod.hpp"
 #include "gc/g1/g1BlockOffsetTable.inline.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
+#include "gc/g1/g1CollectionSet.hpp"
 #include "gc/g1/g1HeapRegionTraceType.hpp"
 #include "gc/g1/g1OopClosures.inline.hpp"
 #include "gc/g1/heapRegion.inline.hpp"
@@ -240,7 +241,8 @@ HeapRegion::HeapRegion(uint hrm_index,
     _containing_set(NULL),
 #endif
     _prev_marked_bytes(0), _next_marked_bytes(0), _gc_efficiency(0.0),
-    _young_index_in_cset(-1), _surv_rate_group(NULL), _age_index(-1),
+    _index_in_opt_cset(G1OptionalCSet::InvalidCSetIndex), _young_index_in_cset(-1),
+    _surv_rate_group(NULL), _age_index(-1),
     _prev_top_at_mark_start(NULL), _next_top_at_mark_start(NULL),
     _recorded_rs_length(0), _predicted_elapsed_time_ms(0)
 {
@@ -875,8 +877,10 @@ void G1ContiguousSpace::object_iterate(ObjectClosure* blk) {
 }
 
 G1ContiguousSpace::G1ContiguousSpace(G1BlockOffsetTable* bot) :
+  _top(NULL),
   _bot_part(bot, this),
-  _par_alloc_lock(Mutex::leaf, "OffsetTableContigSpace par alloc lock", true)
+  _par_alloc_lock(Mutex::leaf, "OffsetTableContigSpace par alloc lock", true),
+  _pre_dummy_top(NULL)
 {
 }
 

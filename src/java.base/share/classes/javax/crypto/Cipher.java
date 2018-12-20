@@ -341,7 +341,7 @@ public class Cipher {
             throw new NoSuchAlgorithmException("Invalid transformation " +
                                            "format:" + transformation);
         }
-        if ((parts[0] == null) || (parts[0].length() == 0)) {
+        if ((parts[0] == null) || (parts[0].isEmpty())) {
             throw new NoSuchAlgorithmException("Invalid transformation:" +
                                    "algorithm not specified-"
                                    + transformation);
@@ -445,10 +445,10 @@ public class Cipher {
         String alg = parts[0];
         String mode = parts[1];
         String pad = parts[2];
-        if ((mode != null) && (mode.length() == 0)) {
+        if ((mode != null) && (mode.isEmpty())) {
             mode = null;
         }
-        if ((pad != null) && (pad.length() == 0)) {
+        if ((pad != null) && (pad.isEmpty())) {
             pad = null;
         }
 
@@ -531,7 +531,7 @@ public class Cipher {
     public static final Cipher getInstance(String transformation)
             throws NoSuchAlgorithmException, NoSuchPaddingException
     {
-        if ((transformation == null) || transformation.equals("")) {
+        if ((transformation == null) || transformation.isEmpty()) {
             throw new NoSuchAlgorithmException("Null or empty transformation");
         }
         List<Transform> transforms = getTransforms(transformation);
@@ -631,10 +631,10 @@ public class Cipher {
             throws NoSuchAlgorithmException, NoSuchProviderException,
             NoSuchPaddingException
     {
-        if ((transformation == null) || transformation.equals("")) {
+        if ((transformation == null) || transformation.isEmpty()) {
             throw new NoSuchAlgorithmException("Null or empty transformation");
         }
-        if ((provider == null) || (provider.length() == 0)) {
+        if ((provider == null) || (provider.isEmpty())) {
             throw new IllegalArgumentException("Missing provider");
         }
         Provider p = Security.getProvider(provider);
@@ -698,7 +698,7 @@ public class Cipher {
                                            Provider provider)
             throws NoSuchAlgorithmException, NoSuchPaddingException
     {
-        if ((transformation == null) || transformation.equals("")) {
+        if ((transformation == null) || transformation.isEmpty()) {
             throw new NoSuchAlgorithmException("Null or empty transformation");
         }
         if (provider == null) {

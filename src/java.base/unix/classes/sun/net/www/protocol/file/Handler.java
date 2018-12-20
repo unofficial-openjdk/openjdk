@@ -75,7 +75,7 @@ public class Handler extends URLStreamHandler {
     public synchronized URLConnection openConnection(URL u, Proxy p)
            throws IOException {
         String host = u.getHost();
-        if (host == null || host.equals("") || host.equals("~") ||
+        if (host == null || host.isEmpty() || host.equals("~") ||
             host.equalsIgnoreCase("localhost")) {
             File file = new File(ParseUtil.decode(u.getPath()));
             return createFileURLConnection(u, file);
@@ -127,9 +127,9 @@ public class Handler extends URLStreamHandler {
          */
         String s1 = u1.getHost();
         String s2 = u2.getHost();
-        if ("localhost".equalsIgnoreCase(s1) && ( s2 == null || "".equals(s2)))
+        if ("localhost".equalsIgnoreCase(s1) && (s2 == null || s2.isEmpty()))
             return true;
-        if ("localhost".equalsIgnoreCase(s2) && ( s1 == null || "".equals(s1)))
+        if ("localhost".equalsIgnoreCase(s2) && (s1 == null || s1.isEmpty()))
             return true;
         return super.hostsEqual(u1, u2);
     }

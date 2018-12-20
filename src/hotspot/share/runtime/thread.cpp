@@ -100,7 +100,7 @@
 #include "runtime/vframeArray.hpp"
 #include "runtime/vframe_hp.hpp"
 #include "runtime/vmThread.hpp"
-#include "runtime/vm_operations.hpp"
+#include "runtime/vmOperations.hpp"
 #include "runtime/vm_version.hpp"
 #include "services/attachListener.hpp"
 #include "services/management.hpp"
@@ -231,6 +231,7 @@ Thread::Thread() {
   set_active_handles(NULL);
   set_free_handle_block(NULL);
   set_last_handle_mark(NULL);
+  DEBUG_ONLY(_missed_ic_stub_refill_mark = NULL);
 
   // This initial value ==> never claimed.
   _oops_do_parity = 0;
@@ -305,15 +306,19 @@ Thread::Thread() {
   }
 #endif // ASSERT
 
-  // Notify the barrier set that a thread is being created. Note that some
-  // threads are created before a barrier set is available. The call to
-  // BarrierSet::on_thread_create() for these threads is therefore deferred
+  // Notify the barrier set that a thread is being created. The initial
+  // thread is created before the barrier set is available.  The call to
+  // BarrierSet::on_thread_create() for this thread is therefore deferred
   // to BarrierSet::set_barrier_set().
   BarrierSet* const barrier_set = BarrierSet::barrier_set();
   if (barrier_set != NULL) {
     barrier_set->on_thread_create(this);
   } else {
-    DEBUG_ONLY(Threads::inc_threads_before_barrier_set();)
+#ifdef ASSERT
+    static bool initial_thread_created = false;
+    assert(!initial_thread_created, "creating thread before barrier set");
+    initial_thread_created = true;
+#endif // ASSERT
   }
 }
 
@@ -3405,7 +3410,6 @@ size_t      JavaThread::_stack_size_at_create = 0;
 
 #ifdef ASSERT
 bool        Threads::_vm_complete = false;
-size_t      Threads::_threads_before_barrier_set = 0;
 #endif
 
 static inline void *prefetch_and_load_ptr(void **addr, intx prefetch_interval) {

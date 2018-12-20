@@ -208,7 +208,7 @@ class Driver {
             }
         }
 
-        if (logFile != null && !logFile.equals("")) {
+        if (logFile != null && !logFile.isEmpty()) {
             if (logFile.equals("-")) {
                 System.setErr(System.out);
             } else {
@@ -246,7 +246,7 @@ class Driver {
             }
             newfile = packfile;
             // The optional second argument is the source JAR file.
-            if (jarfile.equals("")) {
+            if (jarfile.isEmpty()) {
                 // If only one file is given, it is the only JAR.
                 // It serves as both input and output.
                 jarfile = newfile;
@@ -279,7 +279,7 @@ class Driver {
         junpack.properties().putAll(engProps);
         if (doRepack && newfile.equals(jarfile)) {
             String zipc = getZipComment(jarfile);
-            if (verbose && zipc.length() > 0)
+            if (verbose && !zipc.isEmpty())
                 System.out.println(MessageFormat.format(RESOURCE.getString(DriverResource.DETECTED_ZIP_COMMENT), zipc));
             if (zipc.indexOf(Utils.PACK_ZIP_ARCHIVE_MARKER_COMMENT) >= 0) {
                     System.out.println(MessageFormat.format(RESOURCE.getString(DriverResource.SKIP_FOR_REPACKED), jarfile));
@@ -352,7 +352,7 @@ class Driver {
                 if (Utils.isGZIPMagic(Utils.readMagic(inBuf))) {
                     in = new GZIPInputStream(in);
                 }
-                String outfile = newfile.equals("")? jarfile: newfile;
+                String outfile = newfile.isEmpty()? jarfile: newfile;
                 OutputStream fileOut;
                 if (outfile.equals("-"))
                     fileOut = System.out;
@@ -366,7 +366,7 @@ class Driver {
                 // At this point, we have a good jarfile (or newfile, if -r)
             }
 
-            if (!bakfile.equals("")) {
+            if (!bakfile.isEmpty()) {
                         // On success, abort jarfile recovery bracket.
                         new File(bakfile).delete();
                         bakfile = "";
@@ -374,13 +374,13 @@ class Driver {
 
         } finally {
             // Close jarfile recovery bracket.
-            if (!bakfile.equals("")) {
+            if (!bakfile.isEmpty()) {
                 File jarFile = new File(jarfile);
                 jarFile.delete(); // Win32 requires this, see above
                 new File(bakfile).renameTo(jarFile);
             }
             // In all cases, delete temporary *.pack.
-            if (!tmpfile.equals(""))
+            if (!tmpfile.isEmpty())
                 new File(tmpfile).delete();
         }
     }
@@ -552,7 +552,7 @@ class Driver {
             if (words.length == 0)    continue loadOptmap;
             String opt = words[0];
             words[0] = "";  // initial word is not a spec
-            if (opt.length() == 0 && words.length >= 1) {
+            if (opt.isEmpty() && words.length >= 1) {
                 opt = words[1];  // initial "word" is empty due to leading ' '
                 words[1] = "";
             }
@@ -622,7 +622,7 @@ class Driver {
                     switch (specop) {
                     case '+':
                         // + means we want an non-empty val suffix.
-                        ok = (val.length() != 0);
+                        ok = !val.isEmpty();
                         specop = spec.charAt(sidx++);
                         break;
                     case '*':
@@ -641,10 +641,10 @@ class Driver {
                     String specarg = spec.substring(sidx);
                     switch (specop) {
                     case '.':  // terminate the option sequence
-                        resultString = (specarg.length() != 0)? specarg.intern(): opt;
+                        resultString = specarg.isEmpty() ? opt : specarg.intern();
                         break doArgs;
                     case '?':  // abort the option sequence
-                        resultString = (specarg.length() != 0)? specarg.intern(): arg;
+                        resultString = specarg.isEmpty() ? arg : specarg.intern();
                         isError = true;
                         break eachSpec;
                     case '@':  // change the effective opt name
@@ -655,14 +655,14 @@ class Driver {
                         val = "";
                         break;
                     case '!':  // negation option
-                        String negopt = (specarg.length() != 0)? specarg.intern(): opt;
+                        String negopt = specarg.isEmpty() ? opt : specarg.intern();
                         properties.remove(negopt);
                         properties.put(negopt, null);  // leave placeholder
                         didAction = true;
                         break;
                     case '$':  // normal "boolean" option
                         String boolval;
-                        if (specarg.length() != 0) {
+                        if (!specarg.isEmpty()) {
                             // If there is a given spec token, store it.
                             boolval = specarg;
                         } else {

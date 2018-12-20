@@ -152,15 +152,9 @@ jobject JNIHandles::make_weak_global(Handle obj, AllocFailType alloc_failmode) {
 oop JNIHandles::resolve_external_guard(jobject handle) {
   oop result = NULL;
   if (handle != NULL) {
-    result = resolve_impl<true /* external_guard */ >(handle);
+    result = resolve_impl<0 /* decorators */, true /* external_guard */>(handle);
   }
   return result;
-}
-
-oop JNIHandles::resolve_jweak(jweak handle) {
-  assert(handle != NULL, "precondition");
-  assert(is_jweak(handle), "precondition");
-  return NativeAccess<ON_PHANTOM_OOP_REF>::oop_load(jweak_ptr(handle));
 }
 
 bool JNIHandles::is_global_weak_cleared(jweak handle) {
@@ -318,7 +312,7 @@ void JNIHandles::print_on(outputStream* st) {
 class VerifyJNIHandles: public OopClosure {
 public:
   virtual void do_oop(oop* root) {
-    oopDesc::verify(*root);
+    guarantee(oopDesc::is_oop_or_null(RawAccess<>::oop_load(root)), "Invalid oop");
   }
   virtual void do_oop(narrowOop* root) { ShouldNotReachHere(); }
 };
@@ -327,11 +321,7 @@ void JNIHandles::verify() {
   VerifyJNIHandles verify_handle;
 
   oops_do(&verify_handle);
-
-  // JNI weaks are handled concurrently in ZGC, so they can't be verified here
-  if (!UseZGC) {
-    weak_oops_do(&verify_handle);
-  }
+  weak_oops_do(&verify_handle);
 }
 
 // This method is implemented here to avoid circular includes between
