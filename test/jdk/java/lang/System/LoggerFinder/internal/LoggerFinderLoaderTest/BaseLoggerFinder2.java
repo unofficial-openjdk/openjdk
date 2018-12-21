@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,22 +19,21 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#ifndef SHARE_VM_RUNTIME_ARGUMENTS_EXT_HPP
-#define SHARE_VM_RUNTIME_ARGUMENTS_EXT_HPP
+import java.lang.System.Logger;
+import java.lang.System.LoggerFinder;
+import java.util.ServiceConfigurationError;
 
-#include "memory/allocation.hpp"
-#include "runtime/arguments.hpp"
+public class BaseLoggerFinder2 extends LoggerFinder
+        implements LoggerFinderLoaderTest.TestLoggerFinder {
 
-class ArgumentsExt: AllStatic {
-public:
-  // The argument processing extension. Returns true if there is
-  // no additional parsing needed in Arguments::parse() for the option.
-  // Otherwise returns false.
-  static inline bool process_options(const JavaVMOption *option) { return false; }
-  static inline void report_unsupported_options() { }
-};
+    public BaseLoggerFinder2() {
+        throw new ServiceConfigurationError("Should not come here");
+    }
 
-#endif // SHARE_VM_RUNTIME_ARGUMENTS_EXT_HPP
+    @Override
+    public Logger getLogger(String name, Module caller) {
+        throw new ServiceConfigurationError("Should not come here");
+    }
+}
