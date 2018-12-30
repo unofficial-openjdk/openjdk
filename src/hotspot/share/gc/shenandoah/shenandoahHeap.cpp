@@ -778,8 +778,8 @@ public:
     _initializer(initializer) {}
 
 protected:
-  virtual HeapWord* mem_allocate(Allocation& allocation) const {
-    HeapWord* result = MemAllocator::mem_allocate(allocation);
+  virtual HeapWord* mem_allocate(Allocation& allocation, bool try_tlab) const {
+    HeapWord* result = MemAllocator::mem_allocate(allocation, try_tlab);
     // Initialize brooks-pointer
     if (result != NULL) {
       result += ShenandoahBrooksPointer::word_size();
