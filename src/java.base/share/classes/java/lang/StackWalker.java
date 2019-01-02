@@ -677,6 +677,9 @@ public final class StackWalker {
             throw new UnsupportedOperationException("This stack walker " +
                     "does not have RETAIN_CLASS_REFERENCE access");
         }
+        if (continuation != null) {
+            throw new UnsupportedOperationException("This stack walker walks a continuation");
+        }
 
         return StackStreamFactory.makeCallerFinder(this).findCaller();
     }

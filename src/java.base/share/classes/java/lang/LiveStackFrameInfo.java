@@ -42,6 +42,15 @@ final class LiveStackFrameInfo extends StackFrameInfo implements LiveStackFrame 
     private int mode = 0;
 
     @Override
+    protected void clear() {
+        super.clear();
+        monitors = EMPTY_ARRAY;
+        locals = EMPTY_ARRAY;
+        operands = EMPTY_ARRAY;
+        mode = 0;
+    }
+
+    @Override
     public Object[] getMonitors() {
         return monitors;
     }

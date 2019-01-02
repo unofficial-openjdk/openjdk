@@ -75,3 +75,14 @@ JNIEXPORT jint JNICALL Java_java_lang_StackStreamFactory_00024AbstractStackWalke
     return JVM_MoreStackWalk(env, stackstream, mode, anchor, batchSize, 
                              startIndex, frames);
 }
+
+/*
+ * Class:     java_lang_StackStreamFactory_AbstractStackWalker
+ * Method:    setContinuation
+ * Signature: (J[Ljava/lang/Object;Ljava/lang/Continuation;)V
+ */
+JNIEXPORT void JNICALL Java_java_lang_StackStreamFactory_00024AbstractStackWalker_setContinuation
+  (JNIEnv *env, jobject stackstream, jlong anchor, jobjectArray frames, jobject cont)
+{
+  JVM_SetStackWalkContinuation(env, stackstream, anchor, frames, cont);
+}

@@ -69,9 +69,9 @@ public:
   static frame sender_for_interpreter_frame(const frame& callee, RegisterMap* map);
   static frame sender_for_compiled_frame(const frame& callee, RegisterMap* map);
 
-  static bool has_last_Java_frame(oop continutation);
-  static frame last_frame(oop continutation, RegisterMap *map);
-  static javaVFrame* last_java_vframe(oop continutation, RegisterMap *map);
+  static bool has_last_Java_frame(Handle continuation);
+  static frame last_frame(Handle continuation, RegisterMap *map);
+  static javaVFrame* last_java_vframe(Handle continuation, RegisterMap *map);
 
   // access frame data
   static address usp_offset_to_location(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes);

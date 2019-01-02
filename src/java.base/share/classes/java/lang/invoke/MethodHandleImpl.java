@@ -40,6 +40,7 @@ import sun.invoke.util.VerifyType;
 import sun.invoke.util.Wrapper;
 
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1729,6 +1730,11 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
             @Override
             public Object newMemberName() {
                 return new MemberName();
+            }
+
+            @Override
+            public Object newMemberName(Method method) {
+                return new MemberName(method);
             }
 
             @Override

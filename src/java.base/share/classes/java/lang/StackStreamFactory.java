@@ -32,6 +32,8 @@ import java.lang.StackWalker.StackFrame;
 import java.lang.annotation.Native;
 import java.lang.reflect.Method;
 import java.lang.reflect.Constructor;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -127,7 +129,7 @@ final class StackStreamFactory {
         protected FrameBuffer<? extends T> frameBuffer;
         protected long anchor;
         protected final ContinuationScope contScope;
-        protected final Continuation continuation;
+        protected Continuation continuation;
 
         // buffers to fill in stack frame information
         protected AbstractStackWalker(StackWalker walker, int mode) {
@@ -240,8 +242,12 @@ final class StackStreamFactory {
          */
         final R walk() {
             checkState(NEW);
-            Continuation cont = walker.getContinuation();
-            if (cont != null) cont.mount();
+            return continuation != null
+                ? Continuation.wrapWalk(continuation, contScope, this::walkHelper)
+                : walkHelper();
+        }
+
+        private final R walkHelper() {
             try {
                 // VM will need to stablize the stack before walking.  It will invoke
                 // the AbstractStackWalker::doStackWalk method once it fetches the first batch.
@@ -249,7 +255,6 @@ final class StackStreamFactory {
                 return beginStackWalk();
             } finally {
                 close();  // done traversal; close the stream
-                if (cont != null) cont.unmount();
             }
         }
 
@@ -307,6 +312,12 @@ final class StackStreamFactory {
             }
 
             this.anchor = anchor;  // set anchor for this bulk stack frame traversal
+
+            int numFrames = bufEndIndex - bufStartIndex;        
+            if (numFrames > 0 && numFrames < batchSize && continuation != null) {
+                makeContinuationEnterFrame(bufEndIndex);
+                bufEndIndex++;
+            }
             frameBuffer.setBatch(depth, bufStartIndex, bufEndIndex);
 
             // traverse all frames and perform the action on the stack frames, if specified
@@ -318,7 +329,8 @@ final class StackStreamFactory {
          */
         private int getNextBatch() {
             int nextBatchSize = Math.min(maxDepth - depth, getNextBatchSize());
-            if (!frameBuffer.isActive() || nextBatchSize <= 0) {
+
+            if (!frameBuffer.isActive() || nextBatchSize <= 0 || (frameBuffer.isAtBottom() && !hasMoreContinuations())) {
                 if (isDebug) {
                     System.out.format("  more stack walk done%n");
                 }
@@ -326,7 +338,24 @@ final class StackStreamFactory {
                 return 0;
             }
 
-            return fetchStackFrames(nextBatchSize);
+            if (frameBuffer.isAtBottom() && hasMoreContinuations()) {
+                setContinuation(continuation.getParent());
+            }
+
+            int numFrames = fetchStackFrames(nextBatchSize);
+            if (numFrames == 0 && !hasMoreContinuations()) {
+                frameBuffer.freeze(); // done stack walking
+            }
+            return numFrames;
+        }
+
+        private boolean hasMoreContinuations() {
+            return continuation != null && continuation.getScope() != contScope && continuation.getParent() != null;
+        }
+
+        private void setContinuation(Continuation cont) {
+            this.continuation = cont;
+            setContinuation(anchor, frameBuffer.frames(), cont);
         }
 
         /*
@@ -398,14 +427,25 @@ final class StackStreamFactory {
                 System.out.format("  more stack walk requesting %d got %d to %d frames%n",
                                   batchSize, frameBuffer.startIndex(), endIndex);
             }
+
             int numFrames = endIndex - startIndex;
-            if (numFrames == 0) {
-                frameBuffer.freeze(); // done stack walking
-            } else {
+
+            if (numFrames < batchSize && continuation != null) {
+                makeContinuationEnterFrame(endIndex);
+                endIndex++;
+                numFrames++;
+            }
+
+            if (numFrames > 0) {
                 frameBuffer.setBatch(depth, startIndex, endIndex);
             }
             return numFrames;
         }
+
+        /**
+         * Create a synthetic frame for {@code Continuation.enter}.
+         */
+        protected abstract void makeContinuationEnterFrame(int index);
 
         /**
          * Begins stack walking.  This method anchors this frame and invokes
@@ -441,6 +481,8 @@ final class StackStreamFactory {
         private native int fetchStackFrames(long mode, long anchor,
                                             int batchSize, int startIndex,
                                             T[] frames);
+
+        private native void setContinuation(long anchor, T[] frames, Continuation cont);
     }
 
     /*
@@ -508,6 +550,22 @@ final class StackStreamFactory {
             final Class<?> at(int index) {
                 return stackFrames[index].declaringClass();
             }
+        }
+
+        @Override
+        protected final void makeContinuationEnterFrame(int index) {
+            PrivilegedAction<Method> pa = () -> {
+                try {
+                    return Continuation.class.getDeclaredMethod("enter");
+                } catch(NoSuchMethodException | SecurityException e) {
+                    throw new AssertionError(e);
+                }
+            };
+            Method enter = AccessController.doPrivileged(pa);
+            StackFrameInfo sfi = frameBuffer.frames()[index];
+            sfi.clear();
+            sfi.setMemberName(enter);
+            sfi.setBCI((short)-1);
         }
 
         final Function<? super Stream<StackFrame>, ? extends T> function;  // callback
@@ -716,6 +774,11 @@ final class StackStreamFactory {
         protected int getNextBatchSize() {
             return MIN_BATCH_SIZE;
         }
+
+        @Override
+        protected final void makeContinuationEnterFrame(int index) {
+            throw new InternalError("should not reach here");
+        }
     }
 
     static final class LiveStackInfoTraverser<T> extends StackFrameTraverser<T> {
@@ -892,7 +955,15 @@ final class StackStreamFactory {
          * it is done for traversal.  All stack frames have been traversed.
          */
         final boolean isActive() {
-            return origin > 0 && (fence == 0 || origin < fence || fence == currentBatchSize);
+            return origin > 0; //  && (fence == 0 || origin < fence || fence == currentBatchSize);
+        }
+
+        /*
+         * Tests if this frame buffer is at the end of the stack
+         * and all frames have been traversed.
+         */
+        final boolean isAtBottom() {
+            return origin > 0 && origin >= fence && fence < currentBatchSize;
         }
 
         /**
