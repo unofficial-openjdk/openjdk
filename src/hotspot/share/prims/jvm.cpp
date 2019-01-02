@@ -601,7 +601,6 @@ JVM_ENTRY(jint, JVM_MoreStackWalk(JNIEnv *env, jobject stackStream, jlong mode, 
                                   jint frame_count, jint start_index, 
                                   jobjectArray frames))
   JVMWrapper("JVM_MoreStackWalk");
-  JavaThread* jt = (JavaThread*) THREAD;
 
   // frames array is a Class<?>[] array when only getting caller reference,
   // and a StackFrameInfo[] array (or derivative) otherwise. It should never
@@ -617,6 +616,17 @@ JVM_ENTRY(jint, JVM_MoreStackWalk(JNIEnv *env, jobject stackStream, jlong mode, 
   Handle stackStream_h(THREAD, JNIHandles::resolve_non_null(stackStream));
   return StackWalk::fetchNextBatch(stackStream_h, mode, anchor, frame_count, 
                                   start_index, frames_array_h, THREAD);
+JVM_END
+
+JVM_ENTRY(void, JVM_SetStackWalkContinuation(JNIEnv *env, jobject stackStream, jlong anchor, jobjectArray frames, jobject cont))
+    JVMWrapper("JVM_SetStackWalkContinuation");
+
+    objArrayOop fa = objArrayOop(JNIHandles::resolve_non_null(frames));
+    objArrayHandle frames_array_h(THREAD, fa);
+    Handle stackStream_h(THREAD, JNIHandles::resolve_non_null(stackStream));
+    Handle cont_h(THREAD, JNIHandles::resolve_non_null(cont));
+
+    StackWalk::setContinuation(stackStream_h, anchor, frames_array_h, cont_h, THREAD);
 JVM_END
 
 // java.lang.Object ///////////////////////////////////////////////

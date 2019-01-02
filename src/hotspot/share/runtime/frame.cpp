@@ -77,6 +77,7 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
   _walk_cont     = map->_walk_cont;
 
   _cont = map->_cont;
+
   pd_initialize_from(map);
   if (update_map()) {
     for(int i = 0; i < location_valid_size; i++) {
@@ -98,7 +99,7 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
 
 void RegisterMap::set_cont(Thread* thread, oop cont) {
   // tty->print_cr("set_cont: %d", cont != NULL);
-  _cont = cont != NULL ? Handle(thread != NULL ? thread : Thread::current(), cont) : Handle();
+  set_cont(cont != NULL ? Handle(thread != NULL ? thread : Thread::current(), cont) : Handle());
 }
 
 void RegisterMap::clear() {
@@ -111,6 +112,7 @@ void RegisterMap::clear() {
   } else {
     pd_initialize();
   }
+  _cont = Handle();
 }
 
 #ifndef PRODUCT

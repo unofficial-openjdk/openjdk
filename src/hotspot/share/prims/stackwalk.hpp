@@ -60,6 +60,9 @@ public:
 
   virtual void    fill_frame(int index, objArrayHandle  frames_array,
                              const methodHandle& method, TRAPS)=0;
+  
+  Handle continuation() { return _continuation; }
+  virtual void set_continuation(Handle cont);
 
   void setup_magic_on_entry(objArrayHandle frames_array);
   bool check_magic(objArrayHandle frames_array);
@@ -92,6 +95,8 @@ public:
 
   void fill_frame(int index, objArrayHandle  frames_array,
                   const methodHandle& method, TRAPS);
+
+  void set_continuation(Handle cont);
 };
 
 class LiveFrameStream : public BaseFrameStream {
@@ -101,6 +106,7 @@ private:
     MODE_COMPILED    = 0x02
   };
 
+  RegisterMap*          _map;
   javaVFrame*           _jvf;
   Handle                _cont_scope;
 
@@ -121,6 +127,8 @@ public:
 
   void fill_frame(int index, objArrayHandle  frames_array,
                   const methodHandle& method, TRAPS);
+
+  void set_continuation(Handle cont);
 };
 
 class StackWalk : public AllStatic {
@@ -158,5 +166,8 @@ public:
   static jint fetchNextBatch(Handle stackStream, jlong mode, jlong magic,
                              int frame_count, int start_index,
                              objArrayHandle frames_array, TRAPS);
+
+  static void setContinuation(Handle stackStream, jlong magic, objArrayHandle frames_array, 
+                              Handle cont, TRAPS);
 };
 #endif // SHARE_VM_PRIMS_STACKWALK_HPP

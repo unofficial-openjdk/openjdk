@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 /**
  * TBD
@@ -69,7 +70,11 @@ public class Continuation {
 
         final Pinned pinned;
         private PreemptStatus(Pinned reason) { this.pinned = reason; }
-        Pinned pinned() { return pinned; }
+        /** 
+         * TBD
+         * @return TBD
+         **/
+        public Pinned pinned() { return pinned; }
     }
 
     private static Thread currentCarrierThread() {
@@ -87,8 +92,13 @@ public class Continuation {
         }
     }
 
-    private final ContinuationScope scope;
     private Runnable target;
+
+    /* While the native JVM code is aware that every continuation has a scope, it is, for the most part,
+     * oblivious to the continuation hierarchy. The only time this hierarchy is traversed in native code
+     * is when a hierarchy of continuations is mounted on the native stack.
+     */
+    private final ContinuationScope scope;
     private Continuation parent; // null for native stack
     private Continuation child; // non-null when we're yielded in a child continuation
 
@@ -149,6 +159,14 @@ public class Continuation {
     @Override
     public String toString() {
         return super.toString() + " scope: " + scope;
+    }
+
+    ContinuationScope getScope() {
+        return scope;
+    }
+
+    Continuation getParent() {
+        return parent;
     }
 
     /**
@@ -220,6 +238,22 @@ public class Continuation {
         return stackWalker().walk(s -> s.map(StackWalker.StackFrame::toStackTraceElement).toArray(StackTraceElement[]::new));
     }
 
+    /// Support for StackWalker
+    static <R> R wrapWalk(Continuation inner, ContinuationScope scope, Supplier<R> walk) {
+        try {
+            for (Continuation c = inner; c != null && c.scope != scope; c = c.parent)
+                c.mount();
+
+            // if (!inner.isStarted())
+            //     throw new IllegalStateException("Continuation not started");
+                
+            return walk.get();
+        } finally {
+            for (Continuation c = inner; c != null && c.scope != scope; c = c.parent)
+                c.unmount();
+        }
+    }
+
     private Continuation innermost() {
         Continuation c = this;
         while (c.child != null)
@@ -227,12 +261,12 @@ public class Continuation {
         return c;
     }
 
-    void mount() {
+    private void mount() {
         if (!compareAndSetMounted(false, true))
             throw new IllegalStateException("Mounted!!!!");
     }
 
-    void unmount() {
+    private void unmount() {
         setMounted(false);
     }
     
@@ -307,7 +341,7 @@ public class Continuation {
         // This method runs in the "entry frame".
         // A yield jumps to this method's caller as if returning from this method.
         try {
-            if (stack == null || sp >= stack.length) { // is this the first run? (at this point we know !done)
+            if (!isStarted()) { // is this the first run? (at this point we know !done)
                 if (TRACE)
                     System.out.println("ENTERING " + id());
                 this.entrySP = getSP();
@@ -327,6 +361,10 @@ public class Continuation {
     @DontInline
     private void enter0() {
         target.run();
+    }
+
+    private boolean isStarted() {
+        return stack != null && sp < stack.length;
     }
 
     /**

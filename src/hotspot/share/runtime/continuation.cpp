@@ -2340,10 +2340,11 @@ JRT_END
 
 typedef int (*DoYieldStub)(int scopes);
 
+// called in a safepoint
 int Continuation::try_force_yield(JavaThread* thread, oop cont) {
-
-  oop innermost = get_continuation(thread);
+  // this is the only place where we traverse the continuatuion hierarchy in native code, as it needs to be done in a safepoint
   oop scope = NULL;
+  oop innermost = get_continuation(thread);
   for (oop c = innermost; c != NULL; c = java_lang_Continuation::parent(c)) {
     if (c == cont) {
       scope = java_lang_Continuation::scope(c);
@@ -2356,7 +2357,7 @@ int Continuation::try_force_yield(JavaThread* thread, oop cont) {
   if (thread->_cont_yield) {
     return -2; // during yield
   }
-  if (innermost != cont) {
+  if (!oopDesc::equals(innermost, cont)) {
     java_lang_Continuation::set_yieldInfo(cont, scope);
   }
   
@@ -3090,19 +3091,22 @@ static frame continuation_top_frame(oop contOop, RegisterMap* map) {
 
   // tty->print_cr("continuation_top_frame");
   
-  map->set_cont(map->thread(), contOop);
+  if (!oopDesc::equals(map->cont(), contOop))
+    map->set_cont(map->thread(), contOop);
+
   return hf.to_frame(cont);
 }
 
 static frame continuation_parent_frame(ContMirror& cont, RegisterMap* map) {
   assert (map->thread() != NULL || cont.entryPC() == NULL, "");
-  if (map->thread() == NULL) { // When a continuation is mounted, its entry frame is always on the v-stack
-    oop parentOop = java_lang_Continuation::parent(cont.mirror());
-    if (parentOop != NULL) {
-      // tty->print_cr("continuation_parent_frame: parent");
-      return continuation_top_frame(parentOop, map);
-    }
-  }
+
+  // if (map->thread() == NULL) { // When a continuation is mounted, its entry frame is always on the v-stack
+  //   oop parentOop = java_lang_Continuation::parent(cont.mirror());
+  //   if (parentOop != NULL) {
+  //     // tty->print_cr("continuation_parent_frame: parent");
+  //     return continuation_top_frame(parentOop, map);
+  //   }
+  // }
   
   map->set_cont(map->thread(), NULL);
   if (cont.entryPC() == NULL) { // When we're walking an unmounted continuation and reached the end
@@ -3118,18 +3122,19 @@ static frame continuation_parent_frame(ContMirror& cont, RegisterMap* map) {
   return sender;
 }
 
-frame Continuation::last_frame(oop continutation, RegisterMap *map) {
+frame Continuation::last_frame(Handle continuation, RegisterMap *map) {
   assert(map != NULL, "a map must be given");
-  return continuation_top_frame(continutation, map);
+  map->set_cont(continuation);
+  return continuation_top_frame(continuation(), map);
 }
 
-bool Continuation::has_last_Java_frame(oop continutation) {
-  return (java_lang_Continuation::sp(continutation) >= 0);
+bool Continuation::has_last_Java_frame(Handle continuation) {
+  return java_lang_Continuation::pc(continuation()) != NULL;
 }
 
-javaVFrame* Continuation::last_java_vframe(oop continutation, RegisterMap *map) {
+javaVFrame* Continuation::last_java_vframe(Handle continuation, RegisterMap *map) {
   assert(map != NULL, "a map must be given");
-  frame f = last_frame(continutation, map);
+  frame f = last_frame(continuation, map);
   for (vframe* vf = vframe::new_vframe(&f, map, NULL); vf; vf = vf->sender()) {
     if (vf->is_java_frame()) return javaVFrame::cast(vf);
   }

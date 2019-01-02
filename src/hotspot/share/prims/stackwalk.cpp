@@ -59,6 +59,14 @@ bool BaseFrameStream::cleanup_magic_on_exit(objArrayHandle frames_array) {
   return ok;
 }
 
+void BaseFrameStream::set_continuation(Handle cont) {
+  // ensure that the lifetime of the handle is that of the entire walk
+  // This actually also sets a copy of the handle in the RegisterMap,
+  // but that's OK, because we want them to be the same, anyway.
+  // (although we don't rely on this sharing, and set the other copy again)
+  *(_continuation.raw_value()) = cont(); 
+}
+
 // static inline Handle continuation_of(Handle cont_or_scope) {
 //   return (cont_or_scope.not_null() && cont_or_scope()->is_a(SystemDictionary::Continuation_klass()))
 //             ? cont_or_scope
@@ -76,15 +84,28 @@ JavaFrameStream::JavaFrameStream(JavaThread* thread, int mode, Handle cont_scope
   : BaseFrameStream(thread, cont), 
    _vfst(cont.is_null()
       ? vframeStream(thread, cont_scope)
-      : vframeStream(cont, cont_scope)) {
+      : vframeStream(cont)) {
   _need_method_info = StackWalk::need_method_info(mode);
 }
 
 LiveFrameStream::LiveFrameStream(JavaThread* thread, RegisterMap* rm, Handle cont_scope, Handle cont)
    : BaseFrameStream(thread, cont), _cont_scope(cont_scope) {
      
+    _map = rm;
     _jvf = cont.is_null() ? thread->last_java_vframe(rm)
-                          : Continuation::last_java_vframe(cont(), rm);
+                          : Continuation::last_java_vframe(cont, rm);
+}
+
+void JavaFrameStream::set_continuation(Handle cont) {
+  BaseFrameStream::set_continuation(cont);
+
+  _vfst = vframeStream(continuation()); // we must not use the handle argument (lifetime; see BaseFrameStream::set_continuation)
+}
+
+void LiveFrameStream::set_continuation(Handle cont) {
+  BaseFrameStream::set_continuation(cont);
+
+  _jvf = Continuation::last_java_vframe(continuation(), _map); // we must not use the handle argument (lifetime; see BaseFrameStream::set_continuation)
 }
 
 void JavaFrameStream::next() { _vfst.next();}
@@ -396,7 +417,6 @@ oop StackWalk::fetchFirstBatch(BaseFrameStream& stream, Handle stackStream,
     Klass* abstractStackWalker_klass = SystemDictionary::AbstractStackWalker_klass();
     while (!stream.at_end()) {
       InstanceKlass* ik = stream.method()->method_holder();
-      // XXXXXX skip stackWalker frames XXXXXXX
       if (ik != stackWalker_klass &&
             ik != abstractStackWalker_klass && ik->super() != abstractStackWalker_klass)  {
         break;
@@ -519,4 +539,19 @@ jint StackWalk::fetchNextBatch(Handle stackStream, jlong mode, jlong magic,
     }
   }
   return end_index;
+}
+
+void StackWalk::setContinuation(Handle stackStream, jlong magic, objArrayHandle frames_array, Handle cont, TRAPS) {
+  JavaThread* jt = (JavaThread*)THREAD;
+
+  if (frames_array.is_null()) {
+    THROW_MSG(vmSymbols::java_lang_NullPointerException(), "frames_array is NULL");
+  }
+
+  BaseFrameStream* existing_stream = BaseFrameStream::from_current(jt, magic, frames_array);
+  if (existing_stream == NULL) {
+    THROW_MSG(vmSymbols::java_lang_InternalError(), "doStackWalk: corrupted buffers");
+  }
+
+  existing_stream->set_continuation(cont);
 }
