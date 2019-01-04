@@ -446,7 +446,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
                 ? (timed ? MAX_TIMED_SPINS : MAX_UNTIMED_SPINS)
                 : 0;
             for (;;) {
-                if (t != null && t.isInterrupted())
+                if ((t != null && t.isInterrupted()) || Fiber.cancelled())
                     s.tryCancel();
                 SNode m = s.match;
                 if (m != null)
@@ -751,7 +751,7 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
                 ? (timed ? MAX_TIMED_SPINS : MAX_UNTIMED_SPINS)
                 : 0;
             for (;;) {
-                if (t != null && t.isInterrupted())
+                if ((t != null && t.isInterrupted()) || Fiber.cancelled())
                     s.tryCancel(e);
                 Object x = s.item;
                 if (x != e)

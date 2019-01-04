@@ -829,13 +829,13 @@ public class Basic {
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNull3() {
         Runnable task = () -> { };
-        Fiber.schedule(null, task);
+        Fiber.schedule((Executor)null, task);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNull4() {
         Callable<String> task = () -> "foo";
-        Fiber.schedule(null, task);
+        Fiber.schedule((Executor)null, task);
     }
 
     @Test(expectedExceptions = { NullPointerException.class })

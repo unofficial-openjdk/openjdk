@@ -160,6 +160,23 @@ public class NioChannels {
     }
 
     /**
+     * Fiber cancelled while blocked in SocketChannel.read
+     */
+    public void testSocketChannelReadCancel() {
+        test(() -> {
+            try (var connection = new Connection()) {
+                SocketChannel sc = connection.channel1();
+                var fiber = Fiber.current().orElseThrow();
+                ScheduledCanceller.schedule(fiber, DELAY);
+                try {
+                    int n = sc.read(ByteBuffer.allocate(100));
+                    throw new RuntimeException("read returned " + n);
+                } catch (IOException expected) { }
+            }
+        });
+    }
+
+    /**
      * SocketChannel close while Fiber blocked in write
      */
     public void testSocketChannelWriteAsyncClose() {
@@ -180,7 +197,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber interrupted while blocked in SocketChannel.read
+     * Fiber interrupted while blocked in SocketChannel.write
      */
     public void testSocketChannelWriteInterrupt() {
         test(() -> {
@@ -195,6 +212,27 @@ public class NioChannels {
                         bb.clear();
                     }
                 } catch (ClosedByInterruptException expected) { }
+            }
+        });
+    }
+
+    /**
+     * Fiber cancelled while blocked in SocketChannel.write
+     */
+    public void testSocketChannelWritCeancel() {
+        test(() -> {
+            try (var connection = new Connection()) {
+                SocketChannel sc = connection.channel1();
+                var fiber = Fiber.current().orElseThrow();
+                ScheduledCanceller.schedule(fiber, DELAY);
+                try {
+                    ByteBuffer bb = ByteBuffer.allocate(100*10024);
+                    for (;;) {
+                        int n = sc.write(bb);
+                        assertTrue(n > 0);
+                        bb.clear();
+                    }
+                } catch (IOException expected) { }
             }
         });
     }
@@ -264,6 +302,25 @@ public class NioChannels {
                     sc.close();
                     throw new RuntimeException("connection accepted???");
                 } catch (ClosedByInterruptException expected) { }
+            }
+        });
+    }
+
+    /**
+     * Fiber cancelled while blocked in ServerSocketChannel.accept
+     */
+    public void testServerSocketChannelAcceptCancel() {
+        test(() -> {
+            try (var ssc = ServerSocketChannel.open()) {
+                InetAddress lh = InetAddress.getLocalHost();
+                ssc.bind(new InetSocketAddress(lh, 0));
+                var fiber = Fiber.current().orElseThrow();
+                ScheduledCanceller.schedule(fiber, DELAY);
+                try {
+                    SocketChannel sc = ssc.accept();
+                    sc.close();
+                    throw new RuntimeException("connection accepted???");
+                } catch (IOException expected) { }
             }
         });
     }
@@ -345,6 +402,24 @@ public class NioChannels {
                     dc.receive(ByteBuffer.allocate(100));
                     throw new RuntimeException("receive returned");
                 } catch (ClosedByInterruptException expected) { }
+            }
+        });
+    }
+
+    /**
+     * Fiber cancelled while blocked in DatagramChannel.receive
+     */
+    public void testDatagramhannelReceiveCancel() {
+        test(() -> {
+            try (DatagramChannel dc = DatagramChannel.open()) {
+                InetAddress lh = InetAddress.getLocalHost();
+                dc.bind(new InetSocketAddress(lh, 0));
+                var fiber = Fiber.current().orElseThrow();
+                ScheduledCanceller.schedule(fiber, DELAY);
+                try {
+                    dc.receive(ByteBuffer.allocate(100));
+                    throw new RuntimeException("receive returned");
+                } catch (IOException expected) { }
             }
         });
     }
@@ -450,6 +525,23 @@ public class NioChannels {
     }
 
     /**
+     * Fiber cancelled while blocked in Pipe.SourceChannel read
+     */
+    public void testPipeReadCancel() {
+        test(() -> {
+            Pipe p = Pipe.open();
+            try (Pipe.SourceChannel source = p.source()) {
+                var fiber = Fiber.current().orElseThrow();
+                ScheduledCanceller.schedule(fiber, DELAY);
+                try {
+                    int n = source.read(ByteBuffer.allocate(100));
+                    throw new RuntimeException("read returned " + n);
+                } catch (IOException expected) { }
+            }
+        });
+    }
+
+    /**
      * Pipe.SinkChannel close while Fiber blocked in write
      */
     public void testPipeWriteAsyncClose() {
@@ -489,6 +581,26 @@ public class NioChannels {
         });
     }
 
+    /**
+     * Fiber cancelled while blocked in Pipe.SinkChannel write
+     */
+    public void testPipeWriteCancel() {
+        test(() -> {
+            Pipe p = Pipe.open();
+            try (Pipe.SinkChannel sink = p.sink()) {
+                var fiber = Fiber.current().orElseThrow();
+                ScheduledCanceller.schedule(fiber, DELAY);
+                try {
+                    ByteBuffer bb = ByteBuffer.allocate(100*10024);
+                    for (;;) {
+                        int n = sink.write(bb);
+                        assertTrue(n > 0);
+                        bb.clear();
+                    }
+                } catch (IOException expected) { }
+            }
+        });
+    }
 
     // -- supporting classes --
 
@@ -564,6 +676,31 @@ public class NioChannels {
 
         static void schedule(Thread thread, long delay) {
             new Thread(new ScheduledInterrupter(thread, delay)).start();
+        }
+    }
+
+    /**
+     * Cancel a fiber after a delay
+     */
+    static class ScheduledCanceller implements Runnable {
+        private final Fiber fiber;
+        private final long delay;
+
+        ScheduledCanceller(Fiber fiber, long delay) {
+            this.fiber = fiber;
+            this.delay = delay;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(delay);
+                fiber.cancel();
+            } catch (Exception e) { }
+        }
+
+        static void schedule(Fiber fiber, long delay) {
+            new Thread(new ScheduledCanceller(fiber, delay)).start();
         }
     }
 
