@@ -843,7 +843,7 @@ C2V_VMENTRY(jobject, getStackTraceElement, (JNIEnv*, jobject, jobject jvmci_meth
   HandleMark hm;
 
   methodHandle method = CompilerToVM::asMethod(jvmci_method);
-  oop element = java_lang_StackTraceElement::create(method, bci, CHECK_NULL);
+  oop element = java_lang_StackTraceElement::create(method, bci, Handle(), CHECK_NULL);
   return JNIHandles::make_local(THREAD, element);
 C2V_END
 

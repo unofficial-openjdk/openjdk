@@ -537,6 +537,7 @@ StackFrameInfo::StackFrameInfo(javaVFrame* jvf, bool with_lock_info) {
   _bci = jvf->bci();
   _class_holder = _method->method_holder()->klass_holder();
   _locked_monitors = NULL;
+  _cont_scope_name = jvf->continuation() != NULL ? java_lang_ContinuationScope::name(java_lang_Continuation::scope(jvf->continuation())) : NULL;
   if (with_lock_info) {
     ResourceMark rm;
     GrowableArray<MonitorInfo*>* list = jvf->locked_monitors();
@@ -560,6 +561,7 @@ void StackFrameInfo::oops_do(OopClosure* f) {
     }
   }
   f->do_oop(&_class_holder);
+  f->do_oop(&_cont_scope_name);
 }
 
 void StackFrameInfo::metadata_do(void f(Metadata*)) {
@@ -681,7 +683,8 @@ Handle ThreadStackTrace::allocate_fill_stack_trace_element_array(TRAPS) {
   for (int j = 0; j < _depth; j++) {
     StackFrameInfo* frame = _frames->at(j);
     methodHandle mh(THREAD, frame->method());
-    oop element = java_lang_StackTraceElement::create(mh, frame->bci(), CHECK_NH);
+    Handle contScopeNameH(THREAD, frame->cont_scope_name());
+    oop element = java_lang_StackTraceElement::create(mh, frame->bci(), contScopeNameH, CHECK_NH);
     backtrace->obj_at_put(j, element);
   }
   return backtrace;

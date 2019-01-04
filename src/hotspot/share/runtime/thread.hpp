@@ -1857,6 +1857,8 @@ class JavaThread: public Thread {
   }
   javaVFrame* last_java_vframe(RegisterMap* reg_map);
 
+  oop last_continuation();
+  
   // Returns method at 'depth' java or native frames down the stack
   // Used for security checks
   Klass* security_get_caller_class(int depth);

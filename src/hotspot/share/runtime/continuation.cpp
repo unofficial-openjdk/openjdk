@@ -161,7 +161,7 @@ static inline int to_index(void* base, void* ptr) {
 }
 
 static oop get_continuation(JavaThread* thread) {
-  return java_lang_Thread::continuation(thread->threadObj());
+  return thread->last_continuation();
 }
 
 static long java_tid(JavaThread* thread) {
@@ -2346,7 +2346,7 @@ int Continuation::try_force_yield(JavaThread* thread, oop cont) {
   oop scope = NULL;
   oop innermost = get_continuation(thread);
   for (oop c = innermost; c != NULL; c = java_lang_Continuation::parent(c)) {
-    if (c == cont) {
+    if (oopDesc::equals(c, cont)) {
       scope = java_lang_Continuation::scope(c);
       break;
     }
@@ -2357,10 +2357,16 @@ int Continuation::try_force_yield(JavaThread* thread, oop cont) {
   if (thread->_cont_yield) {
     return -2; // during yield
   }
-  if (!oopDesc::equals(innermost, cont)) {
+  if (!oopDesc::equals(innermost, cont)) { // we have nested continuations
+    // make sure none of the continuations in the hierarchy are pinned
+    // for (oop c = innermost; c != NULL && !oopDesc::equals(c, cont); c = java_lang_Continuation::parent(c)) {
+    //   if ()
+    //     return PINNED;
+    // }
+
     java_lang_Continuation::set_yieldInfo(cont, scope);
   }
-  
+
 // #ifdef ASSERT
 //   tty->print_cr("FREEZING:");
 //   frame lf = thread->last_frame();

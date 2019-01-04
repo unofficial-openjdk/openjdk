@@ -48,6 +48,14 @@ inline void vframeStreamCommon::next() {
 
   // handle general case
   do {
+    if (_cont.not_null() && Continuation::is_continuation_entry_frame(_frame, &_reg_map)) {
+      *(_cont.raw_value()) = java_lang_Continuation::parent(_cont());
+    }
+    if (Continuation::is_scope_bottom(_continuation_scope(), _frame, &_reg_map)) {
+      _mode = at_end_mode;
+      break;
+    }
+
     _prev_frame = _frame;
     _frame = _frame.sender(&_reg_map);
   } while (!fill_from_frame());
@@ -63,10 +71,15 @@ inline vframeStream::vframeStream(JavaThread* thread, bool stop_at_java_call_stu
   }
 
   _frame = _thread->last_frame();
+  oop cont = _thread->last_continuation();
   while (!fill_from_frame()) {
+    if (cont != (oop)NULL && Continuation::is_continuation_entry_frame(_frame, &_reg_map)) {
+      cont = java_lang_Continuation::parent(cont);
+    }
     _prev_frame = _frame;
     _frame = _frame.sender(&_reg_map);
   }
+  _cont = Handle(thread, cont);
 }
 
 inline bool vframeStreamCommon::fill_in_compiled_inlined_sender() {
@@ -141,10 +154,6 @@ inline bool vframeStreamCommon::fill_from_frame() {
   // Interpreted frame
   if (_frame.is_interpreted_frame()) {
     fill_from_interpreter_frame();
-
-    if (Continuation::is_scope_bottom(_continuation_scope(), _frame, &_reg_map))
-      _mode = at_end_mode;
-
     return true;
   }
 
@@ -206,9 +215,6 @@ inline bool vframeStreamCommon::fill_from_frame() {
         decode_offset = pc_desc->scope_decode_offset();
       }
       fill_from_compiled_frame(decode_offset);
-
-      if (Continuation::is_scope_bottom(_continuation_scope(), _frame, &_reg_map))
-        _mode = at_end_mode;
 
       _vframe_id = 0;
     }
