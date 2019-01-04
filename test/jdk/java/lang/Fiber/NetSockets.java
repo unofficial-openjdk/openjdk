@@ -148,6 +148,43 @@ public class NetSockets {
         });
     }
 
+    /**
+     * Cancel a fiber blocked in read
+     */
+    public void testSocketReadCancel() {
+        test(() -> {
+            try (var connection = new Connection()) {
+                var fiber = Fiber.current().orElseThrow();
+                ScheduledCanceller.schedule(fiber, DELAY);
+                Socket s = connection.socket1();
+                try {
+                    int n = s.getInputStream().read();
+                    throw new RuntimeException("read returned " + n);
+                } catch (SocketException expected) { }
+            }
+        });
+    }
+
+    /**
+     * Cancel a fiber blocked in write
+     */
+    public void testSocketWriteCancel() {
+        test(() -> {
+            try (var connection = new Connection()) {
+                var fiber = Fiber.current().orElseThrow();
+                ScheduledCanceller.schedule(fiber, DELAY);
+                Socket s = connection.socket1();
+                try {
+                    byte[] ba = new byte[100*10024];
+                    OutputStream out = s.getOutputStream();
+                    for (;;) {
+                        out.write(ba);
+                    }
+                } catch (SocketException expected) { }
+            }
+        });
+    }
+
 
     // -- supporting classes --
 
@@ -262,6 +299,31 @@ public class NetSockets {
 
         static void schedule(Socket s, byte[] ba, long delay) {
             new Thread(new ScheduledWriter(s, ba, delay)).start();
+        }
+    }
+
+    /**
+     * Cancel a fiber after a delay
+     */
+    static class ScheduledCanceller implements Runnable {
+        private final Fiber fiber;
+        private final long delay;
+
+        ScheduledCanceller(Fiber fiber, long delay) {
+            this.fiber = fiber;
+            this.delay = delay;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(delay);
+                fiber.cancel();
+            } catch (Exception e) { }
+        }
+
+        static void schedule(Fiber fiber, long delay) {
+            new Thread(new ScheduledCanceller(fiber, delay)).start();
         }
     }
 }

@@ -111,10 +111,18 @@ public class SocketStreams implements Closeable {
             Poller.register(strand, fdVal, event);
             if (isOpen()) {
                 try {
+                    if (Fiber.cancelled()) {
+                        // throw IOException for now
+                        throw new SocketException("I/O operation cancelled");
+                    }
                     if (nanos == 0) {
                         Strands.parkFiber();
                     } else {
                         Strands.parkFiber(nanos);
+                    }
+                    if (Fiber.cancelled()) {
+                        // throw IOException for now
+                        throw new SocketException("I/O operation cancelled");
                     }
                 } finally{
                     Poller.deregister(strand, fdVal, event);

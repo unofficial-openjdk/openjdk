@@ -33,6 +33,7 @@ import java.security.AccessControlContext;
 import java.security.PrivilegedAction;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -294,6 +295,9 @@ class Thread implements Runnable {
     @HotSpotIntrinsicCandidate
     private static native Thread currentThread0();
 
+    private Fiber<?> fiber;
+    private FiberScope scope;
+
     /**
      * Binds this thread to given Fiber. Once set, Thread.currentThread() will
      * return the Fiber rather than the Thread object for the carrier thread.
@@ -311,7 +315,15 @@ class Thread implements Runnable {
         return fiber;
     }
 
-    private Fiber<?> fiber;
+    FiberScope scope() {
+        assert Thread.currentThread() == this;
+        return scope;
+    }
+
+    void setScope(FiberScope scope) {
+        assert Thread.currentThread() == this;
+        this.scope = scope;
+    }
 
     /**
      * A hint to the scheduler that the current thread is willing to yield
@@ -352,20 +364,29 @@ class Thread implements Runnable {
         if (millis < 0) {
             throw new IllegalArgumentException("timeout value is negative");
         }
-        Fiber<?> f = currentCarrierThread().getFiber();
-        if (f != null) {
+        Fiber<?> fiber = currentCarrierThread().getFiber();
+        if (fiber != null) {
             if (!Fiber.emulateCurrentThread()) {
                 throw new UnsupportedOperationException(
                     "Thread.sleep cannot be used in the context of a fiber");
             }
+
+            Thread shadowThread = fiber.shadowThreadOrNull();
+            if (Fiber.cancelled()) {
+                getAndClearInterrupt(shadowThread);
+                throw new InterruptedException();
+            }
+
             long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
             do {
                 long startTime = System.nanoTime();
                 Fiber.parkNanos(nanos);
-                // check if park interrupted by Thread.interrupt
-                Thread t = f.shadowThreadOrNull();
-                if (t != null && t.getAndClearInterrupt())
+
+                // check if park interrupted by Thread.interrupt or cancel
+                if (getAndClearInterrupt(shadowThread) || Fiber.cancelled()) {
                     throw new InterruptedException();
+                }
+
                 nanos -= System.nanoTime() - startTime;
             } while (nanos > 0);
         } else {
@@ -375,6 +396,7 @@ class Thread implements Runnable {
     }
 
     private static native void sleep0(long millis) throws InterruptedException;
+
 
     /**
      * Causes the currently executing thread to sleep (temporarily cease
@@ -1163,6 +1185,14 @@ class Thread implements Runnable {
      */
     boolean getAndClearInterrupt() {
         return isInterrupted(true);
+    }
+
+    private static boolean getAndClearInterrupt(Thread thread) {
+        if (thread != null) {
+            return thread.getAndClearInterrupt();
+        } else {
+            return false;
+        }
     }
 
     /**

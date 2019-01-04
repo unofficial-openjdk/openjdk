@@ -87,10 +87,18 @@ public interface SelChImpl extends Channel {
             Poller.register(strand, getFDVal(), event);
             if (isOpen()) {
                 try {
+                    if (Fiber.cancelled()) {
+                        // throw IOException for now, will be replaced later with close
+                        throw new IOException("I/O operation cancelled");
+                    }
                     if (nanos == 0) {
                         Strands.parkFiber();
                     } else {
                         Strands.parkFiber(nanos);
+                    }
+                    if (Fiber.cancelled()) {
+                        // throw IOException for now, will be replaced later with close
+                        throw new IOException("I/O operation cancelled");
                     }
                 } finally {
                     Poller.deregister(strand, getFDVal(), event);
