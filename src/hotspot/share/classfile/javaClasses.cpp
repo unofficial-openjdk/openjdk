@@ -2022,7 +2022,7 @@ class BacktraceBuilder: public StackObj {
     return names;
   }
   static objArrayOop get_conts(objArrayHandle chunk) {
-    objArrayOop conts = typeArrayOop(chunk->obj_at(trace_conts_offset));
+    objArrayOop conts = objArrayOop(chunk->obj_at(trace_conts_offset));
     assert(conts != NULL, "conts array should be initialized in backtrace");
     return conts;
   }
