@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/javaClasses.inline.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "memory/allocation.hpp"
 #include "memory/heapInspection.hpp"
@@ -537,7 +538,7 @@ StackFrameInfo::StackFrameInfo(javaVFrame* jvf, bool with_lock_info) {
   _bci = jvf->bci();
   _class_holder = _method->method_holder()->klass_holder();
   _locked_monitors = NULL;
-  _cont_scope_name = jvf->continuation() != NULL ? java_lang_ContinuationScope::name(java_lang_Continuation::scope(jvf->continuation())) : NULL;
+  _cont_scope_name = (jvf->continuation() != NULL) ? java_lang_ContinuationScope::name(java_lang_Continuation::scope(jvf->continuation())) : (oop)NULL;
   if (with_lock_info) {
     ResourceMark rm;
     GrowableArray<MonitorInfo*>* list = jvf->locked_monitors();
