@@ -28,6 +28,7 @@
 #include "classfile/javaClasses.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/frame.inline.hpp"
+#include "runtime/handles.inline.hpp"
 #include "runtime/vframe.hpp"
 
 inline vframeStreamCommon::vframeStreamCommon(JavaThread* thread) : _reg_map(thread, false) {
