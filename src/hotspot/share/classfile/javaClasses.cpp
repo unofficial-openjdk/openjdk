@@ -2438,7 +2438,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope
   for (frame fr = thread->last_frame(); (max_depth == 0 || max_depth != total_count) && !is_last;) {
     Method* method = NULL;
     int bci = 0;
-    oop contScopeName = cont != NULL ? java_lang_ContinuationScope::name(java_lang_Continuation::scope(cont)) : NULL;
+    oop contScopeName = (cont != NULL) ? java_lang_ContinuationScope::name(java_lang_Continuation::scope(cont)) : (oop)NULL;
 
     // Compiled java method case.
     if (decode_offset != 0) {
@@ -2734,7 +2734,7 @@ void java_lang_StackFrameInfo::set_method_and_bci(Handle stackFrame, const metho
   assert((jushort)version == version, "version should be short");
   java_lang_StackFrameInfo::set_version(stackFrame(), (short)version);
 
-  oop contScopeName = cont != NULL ? java_lang_ContinuationScope::name(java_lang_Continuation::scope(cont)): NULL;
+  oop contScopeName = (cont != NULL) ? java_lang_ContinuationScope::name(java_lang_Continuation::scope(cont)) : (oop)NULL;
   java_lang_StackFrameInfo::set_contScopeName(stackFrame(), contScopeName);
 }
 

@@ -26,6 +26,7 @@
 #define SHARE_VM_RUNTIME_VFRAME_INLINE_HPP
 
 #include "classfile/javaClasses.inline.hpp"
+#include "runtime/handles.inline.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/vframe.hpp"
 
