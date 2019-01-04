@@ -29,6 +29,7 @@ import jdk.internal.access.SharedSecrets;
 
 import java.lang.StackWalker.StackFrame;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Method;
 
 class StackFrameInfo implements StackFrame {
     private final byte RETAIN_CLASS_REF = 0x01;
@@ -37,8 +38,10 @@ class StackFrameInfo implements StackFrame {
         SharedSecrets.getJavaLangInvokeAccess();
 
     private final byte flags;
-    private final Object memberName;
-    private final short bci;
+    private Object memberName;
+    private short bci;
+    private String contScopeName;
+
     private volatile StackTraceElement ste;
 
     /*
@@ -55,6 +58,21 @@ class StackFrameInfo implements StackFrame {
     // the capability check
     Class<?> declaringClass() {
         return JLIA.getDeclaringClass(memberName);
+    }
+
+    void setMemberName(Method method) {
+        this.memberName = JLIA.newMemberName(method);
+    }
+
+    void setBCI(short bci) {
+        this.bci = bci;
+    }
+
+    void setContinuationScopeName(String contScopeName) {
+        this.contScopeName = contScopeName;
+    }
+    
+    protected void clear() {
     }
 
     // ----- implementation of StackFrame methods
@@ -113,6 +131,11 @@ class StackFrameInfo implements StackFrame {
     @Override
     public boolean isNativeMethod() {
         return JLIA.isNative(memberName);
+    }
+
+    @Override
+    public java.lang.String getContinuationScopeName() {
+        return contScopeName;
     }
 
     @Override

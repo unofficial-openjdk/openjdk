@@ -82,6 +82,7 @@
   f(java_lang_StackTraceElement) \
   f(java_lang_StackFrameInfo) \
   f(java_lang_LiveStackFrameInfo) \
+  f(java_lang_ContinuationScope) \
   f(java_lang_Continuation) \
   f(java_util_concurrent_locks_AbstractOwnableSynchronizer) \
   //end
@@ -538,8 +539,9 @@ class java_lang_Throwable: AllStatic {
     trace_bcis_offset    = 1,
     trace_mirrors_offset = 2,
     trace_names_offset   = 3,
-    trace_next_offset    = 4,
-    trace_size           = 5,
+    trace_conts_offset   = 4,
+    trace_next_offset    = 5,
+    trace_size           = 6,
     trace_chunk_size     = 32
   };
 
@@ -965,6 +967,19 @@ class java_lang_ref_SoftReference: public java_lang_ref_Reference {
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 };
 
+// Interface to java.lang.ContinuationScope objects
+class java_lang_ContinuationScope: AllStatic {
+  friend class JavaClasses;
+ private:
+  static int _name_offset;
+
+  static void compute_offsets();
+ public:
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
+
+  static inline oop name(oop ref);
+};
+  
 // Interface to java.lang.Continuation objects
 class java_lang_Continuation: AllStatic {
   friend class JavaClasses;
@@ -1440,6 +1455,7 @@ class java_lang_StackTraceElement: AllStatic {
   static int methodName_offset;
   static int fileName_offset;
   static int lineNumber_offset;
+  static int contScope_offset;
 
   // Setters
   static void set_classLoaderName(oop element, oop value);
@@ -1450,13 +1466,14 @@ class java_lang_StackTraceElement: AllStatic {
   static void set_fileName(oop element, oop value);
   static void set_lineNumber(oop element, int value);
   static void set_declaringClassObject(oop element, oop value);
+  static void set_contScopeName(oop element, oop value);
 
  public:
   // Create an instance of StackTraceElement
-  static oop create(const methodHandle& method, int bci, TRAPS);
+  static oop create(const methodHandle& method, int bci, Handle contScope, TRAPS);
 
   static void fill_in(Handle element, InstanceKlass* holder, const methodHandle& method,
-                      int version, int bci, Symbol* name, TRAPS);
+                      int version, int bci, Symbol* name, Handle contScopeName, TRAPS);
 
   static void compute_offsets();
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
@@ -1492,15 +1509,17 @@ private:
   static int _memberName_offset;
   static int _bci_offset;
   static int _version_offset;
+  static int _contScopeName_offset;
 
   static Method* get_method(Handle stackFrame, InstanceKlass* holder, TRAPS);
 
 public:
   // Setters
-  static void set_method_and_bci(Handle stackFrame, const methodHandle& method, int bci, TRAPS);
+  static void set_method_and_bci(Handle stackFrame, const methodHandle& method, int bci, oop cont, TRAPS);
   static void set_bci(oop info, int value);
 
   static void set_version(oop info, short value);
+  static void set_contScopeName(oop info, oop value);
 
   static void compute_offsets();
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;

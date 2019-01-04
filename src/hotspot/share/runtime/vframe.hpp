@@ -74,6 +74,7 @@ class vframe: public ResourceObj {
   frame*             frame_pointer() { return &_fr;       }
   const RegisterMap* register_map() const { return &_reg_map; }
   JavaThread*        thread()       const { return _thread;   }
+  oop                continuation() const { return _reg_map.cont(); }
 
   // Returns the sender vframe
   virtual vframe* sender() const;
@@ -292,6 +293,7 @@ class vframeStreamCommon : StackObj {
   // Cached information
   Method* _method;
   int       _bci;
+  Handle   _cont; // the current frame's continuation
 
   // Should VM activations be ignored or not
   bool _stop_at_java_call_stub;
@@ -319,6 +321,7 @@ class vframeStreamCommon : StackObj {
   int bci() const { return _bci; }
   inline intptr_t* frame_id() const;
   address frame_pc() const { return _frame.pc(); }
+  oop continuation() const { return _cont(); }
 
   CodeBlob*          cb()         const { return _frame.cb();  }
   CompiledMethod*   nm()         const {
@@ -357,7 +360,7 @@ class vframeStream : public vframeStreamCommon {
   // top_frame may not be at safepoint, start with sender
   vframeStream(JavaThread* thread, frame top_frame, bool stop_at_java_call_stub = false);
 
-  vframeStream(Handle continuation, Handle continuation_scope);
+  vframeStream(Handle continuation);
 };
 
 #endif // SHARE_VM_RUNTIME_VFRAME_HPP

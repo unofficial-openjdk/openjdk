@@ -26,6 +26,7 @@
 package jdk.internal.access;
 
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Method;
 import java.util.Map;
 
 public interface JavaLangInvokeAccess {
@@ -33,6 +34,11 @@ public interface JavaLangInvokeAccess {
      * Create a new MemberName instance. Used by {@code StackFrameInfo}.
      */
     Object newMemberName();
+
+    /**
+     * Create a new MemberName instance. Used by {@code StackFrameInfo}.
+     */
+    Object newMemberName(Method method);
 
     /**
      * Returns the name for the given MemberName. Used by {@code StackFrameInfo}.

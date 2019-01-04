@@ -98,7 +98,7 @@ public class Basic {
         walker = StackWalker.getInstance(FOO);
         frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
 
-        assertEquals(frames, Arrays.asList("bar", "foo", "lambda$test1$0", "enter0"));
+        assertEquals(frames, Arrays.asList("bar", "foo", "lambda$test1$0", "enter0", "enter"));
 
         long r = b+1;
         return "" + r;

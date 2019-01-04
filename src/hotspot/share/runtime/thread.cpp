@@ -3313,6 +3313,9 @@ javaVFrame* JavaThread::last_java_vframe(RegisterMap *reg_map) {
   return NULL;
 }
 
+oop JavaThread::last_continuation() {
+  return java_lang_Thread::continuation(threadObj());
+}
 
 Klass* JavaThread::security_get_caller_class(int depth) {
   vframeStream vfst(this);

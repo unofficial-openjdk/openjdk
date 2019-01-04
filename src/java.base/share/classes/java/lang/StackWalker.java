@@ -225,6 +225,16 @@ public final class StackWalker {
         public boolean isNativeMethod();
 
         /**
+         * Returns the name of the {@link ContinuationScope} of the continuation 
+         * (if any) in which this frame exists.
+         * 
+         * @return the name of the {@link ContinuationScope} of the continuation 
+         *         in which this frame exists or {@code null} if this frame is 
+         *         not in a continuation.
+         */
+        public String getContinuationScopeName();
+
+        /**
          * Gets a {@code StackTraceElement} for this stack frame.
          *
          * @return {@code StackTraceElement} for this stack frame.
@@ -676,6 +686,9 @@ public final class StackWalker {
         if (!retainClassRef) {
             throw new UnsupportedOperationException("This stack walker " +
                     "does not have RETAIN_CLASS_REFERENCE access");
+        }
+        if (continuation != null) {
+            throw new UnsupportedOperationException("This stack walker walks a continuation");
         }
 
         return StackStreamFactory.makeCallerFinder(this).findCaller();

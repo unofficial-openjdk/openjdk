@@ -134,6 +134,7 @@ class RegisterMap : public StackObj {
   JavaThread *thread() const { return _thread; }
   oop  cont()          const { return _cont(); }
   void set_cont(Thread* thread, oop cont);
+  void set_cont(Handle cont) {  _cont = cont; }
   bool update_map()    const { return _update_map; }
   bool walk_cont()     const { return _walk_cont; }
   bool validate_oops() const { return _validate_oops; }

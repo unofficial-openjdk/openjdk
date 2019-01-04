@@ -45,11 +45,29 @@ public class ContinuationScope {
      * A constructor providing no name is available to subclasses.
      */
     protected ContinuationScope() {
-        this.name = null;
+        this.name = getClass().getName();
+    }
+
+    /**
+     * Returns this scope's name.
+     * @return this scope's name
+     */
+    public final String getName() {
+        return name;
     }
 
     @Override
-    public String toString() {
-        return name != null ? name : getClass().getName();
+    public final String toString() {
+        return name;
+    }
+
+    @Override
+    public final int hashCode() {
+        return super.hashCode();
+    }
+
+    @Override
+    public final boolean equals(Object obj) {
+        return super.equals(obj);
     }
 }
