@@ -814,8 +814,12 @@ public class Continuation {
 
     /**
      * TBD
+     * Subclasses may throw an {@link UnsupportedOperationException}, but this does not prevent
+     * the continuation from being preempted on a parent scope.
+     * 
      * @param thread TBD
      * @return TBD
+     * @throws UnsupportedOperationException if this continuation does not support preemption
      */
     public PreemptStatus tryPreempt(Thread thread) {
         return preemptStatus(tryForceYield0(thread));

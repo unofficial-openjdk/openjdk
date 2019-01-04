@@ -89,11 +89,17 @@ JavaFrameStream::JavaFrameStream(JavaThread* thread, int mode, Handle cont_scope
 }
 
 LiveFrameStream::LiveFrameStream(JavaThread* thread, RegisterMap* rm, Handle cont_scope, Handle cont)
-   : BaseFrameStream(thread, cont), _cont_scope(cont_scope) {
+   : BaseFrameStream(thread, cont), _cont_scope(cont_scope),
+    _cont(cont.not_null() ? cont : Handle(thread, thread->last_continuation())) {
      
     _map = rm;
-    _jvf = cont.is_null() ? thread->last_java_vframe(rm)
-                          : Continuation::last_java_vframe(cont, rm);
+    if (cont.is_null()) {
+      _jvf  = thread->last_java_vframe(rm);
+      // _cont = Handle(thread, thread->last_continuation());
+    } else {
+      _jvf  = Continuation::last_java_vframe(cont, rm);
+      // _cont = cont;
+    }
 }
 
 void JavaFrameStream::set_continuation(Handle cont) {
@@ -106,9 +112,22 @@ void LiveFrameStream::set_continuation(Handle cont) {
   BaseFrameStream::set_continuation(cont);
 
   _jvf = Continuation::last_java_vframe(continuation(), _map); // we must not use the handle argument (lifetime; see BaseFrameStream::set_continuation)
+  _cont = cont;
 }
 
-void JavaFrameStream::next() { _vfst.next();}
+void JavaFrameStream::next() { _vfst.next(); }
+
+void LiveFrameStream::next() { 
+  if (_cont.not_null() && Continuation::is_continuation_entry_frame(_jvf->fr(), _jvf->register_map())) {
+    *(_cont.raw_value()) = java_lang_Continuation::parent(_cont());
+  }
+  
+  if (Continuation::is_scope_bottom(_cont_scope(), _jvf->fr(), _jvf->register_map())) {
+    _jvf = NULL;
+  } else {
+    _jvf = _jvf->java_sender();
+  }
+}
 
 // Returns the BaseFrameStream for the current stack being traversed.
 //
@@ -330,7 +349,7 @@ objArrayHandle LiveFrameStream::monitors_to_object_array(GrowableArray<MonitorIn
 
 // Fill StackFrameInfo with bci and initialize memberName
 void BaseFrameStream::fill_stackframe(Handle stackFrame, const methodHandle& method, TRAPS) {
-  java_lang_StackFrameInfo::set_method_and_bci(stackFrame, method, bci(), THREAD);
+  java_lang_StackFrameInfo::set_method_and_bci(stackFrame, method, bci(), cont(), THREAD);
 }
 
 // Fill LiveStackFrameInfo with locals, monitors, and expressions

@@ -57,6 +57,7 @@ public:
 
   virtual Method* method()=0;
   virtual int     bci()=0;
+  virtual oop     cont()=0; // returns the current continuation (even when walking a thread)
 
   virtual void    fill_frame(int index, objArrayHandle  frames_array,
                              const methodHandle& method, TRAPS)=0;
@@ -92,6 +93,7 @@ public:
 
   Method* method() { return _vfst.method(); }
   int bci()        { return _vfst.bci(); }
+  oop cont()       { return _vfst.continuation(); }
 
   void fill_frame(int index, objArrayHandle  frames_array,
                   const methodHandle& method, TRAPS);
@@ -106,9 +108,11 @@ private:
     MODE_COMPILED    = 0x02
   };
 
+  Handle                _cont_scope;  // the delimitation of this walk
+
   RegisterMap*          _map;
   javaVFrame*           _jvf;
-  Handle                _cont_scope;
+  Handle                _cont; // the current continuation
 
   void fill_live_stackframe(Handle stackFrame, const methodHandle& method, TRAPS);
   static oop create_primitive_slot_instance(StackValueCollection* values,
@@ -119,11 +123,12 @@ private:
 public:
   LiveFrameStream(JavaThread* thread, RegisterMap* rm, Handle cont_scope, Handle cont);
 
-  void next()      { _jvf = _jvf->java_sender(); }
-  bool at_end()    { return _jvf == NULL || Continuation::is_scope_bottom(_cont_scope(), _jvf->fr(), _jvf->register_map()); }
+  void next();
+  bool at_end()    { return _jvf == NULL; }
 
   Method* method() { return _jvf->method(); }
   int bci()        { return _jvf->bci(); }
+  oop cont()       { return _jvf->continuation(); }
 
   void fill_frame(int index, objArrayHandle  frames_array,
                   const methodHandle& method, TRAPS);

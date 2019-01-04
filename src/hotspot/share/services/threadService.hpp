@@ -287,6 +287,7 @@ class StackFrameInfo : public CHeapObj<mtInternal> {
  private:
   Method*             _method;
   int                 _bci;
+  oop                 _cont_scope_name;
   GrowableArray<oop>* _locked_monitors; // list of object monitors locked by this frame
   // We need to save the mirrors in the backtrace to keep the class
   // from being unloaded while we still have this stack trace.
@@ -300,8 +301,9 @@ class StackFrameInfo : public CHeapObj<mtInternal> {
       delete _locked_monitors;
     }
   };
-  Method*   method() const       { return _method; }
-  int       bci()    const       { return _bci; }
+  Method*   method() const          { return _method; }
+  int       bci()    const          { return _bci; }
+  oop       cont_scope_name() const { return _cont_scope_name; }
   void      oops_do(OopClosure* f);
   void      metadata_do(void f(Metadata*));
 

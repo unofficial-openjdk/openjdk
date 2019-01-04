@@ -499,9 +499,14 @@ vframeStream::vframeStream(JavaThread* thread, Handle continuation_scope, bool s
   }
 
   _frame = _thread->last_frame();
+  oop cont = _thread->last_continuation();
   while (!fill_from_frame()) {
+    if (cont != (oop)NULL && Continuation::is_continuation_entry_frame(_frame, &_reg_map)) {
+      cont = java_lang_Continuation::parent(cont);
+    }
     _frame = _frame.sender(&_reg_map);
   }
+  _cont = Handle(thread, cont);
 }
 
 vframeStream::vframeStream(Handle continuation) 
@@ -516,6 +521,7 @@ vframeStream::vframeStream(Handle continuation)
   }
 
   _frame = Continuation::last_frame(continuation, &_reg_map);
+  _cont = continuation;
   while (!fill_from_frame()) {
     _frame = _frame.sender(&_reg_map);
   }

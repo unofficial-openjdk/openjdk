@@ -66,6 +66,7 @@ public final class StackTraceElement implements java.io.Serializable {
     private String declaringClass;
     private String methodName;
     private String fileName;
+    private String contScopeName;
     private int    lineNumber;
     private byte   format = 0; // Default to show all
 
@@ -353,11 +354,21 @@ public final class StackTraceElement implements java.io.Serializable {
         }
         s = s.isEmpty() ? declaringClass : s + "/" + declaringClass;
 
-        return s + "." + methodName + "(" +
+        s = s + "." + methodName + "(" +
              (isNativeMethod() ? "Native Method)" :
               (fileName != null && lineNumber >= 0 ?
                fileName + ":" + lineNumber + ")" :
                 (fileName != null ?  ""+fileName+")" : "Unknown Source)")));
+
+        if (contScopeName != null && isContinuationEntry()) {
+            s = s + " " + contScopeName;
+        }
+
+        return s;
+    }
+
+    private boolean isContinuationEntry() {
+        return declaringClass.equals(Continuation.class.getName()) && methodName.equals("enter");
     }
 
     /**
@@ -398,7 +409,8 @@ public final class StackTraceElement implements java.io.Serializable {
             e.declaringClass.equals(declaringClass) &&
             e.lineNumber == lineNumber &&
             Objects.equals(methodName, e.methodName) &&
-            Objects.equals(fileName, e.fileName);
+            Objects.equals(fileName, e.fileName) &&
+            Objects.equals(contScopeName, e.contScopeName);
     }
 
     /**
@@ -410,6 +422,7 @@ public final class StackTraceElement implements java.io.Serializable {
         result = 31*result + Objects.hashCode(moduleName);
         result = 31*result + Objects.hashCode(moduleVersion);
         result = 31*result + Objects.hashCode(fileName);
+        result = 31*result + Objects.hashCode(contScopeName);
         result = 31*result + lineNumber;
         return result;
     }
