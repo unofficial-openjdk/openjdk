@@ -1177,7 +1177,7 @@ class SocketChannelImpl
 
     // -- Native methods --
 
-    private static native int checkConnect(FileDescriptor fd, boolean block)
+    static native int checkConnect(FileDescriptor fd, boolean block)
         throws IOException;
 
     private static native int sendOutOfBandData(FileDescriptor fd, byte data)

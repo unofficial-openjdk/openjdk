@@ -30,6 +30,7 @@ import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
@@ -59,9 +60,11 @@ public class SocketStreams implements Closeable {
 
     // The stateLock is needed when changing state
     private final Object stateLock = new Object();
-    private static final int ST_CONNECTED = 0;
-    private static final int ST_CLOSING = 1;
-    private static final int ST_CLOSED = 2;
+    private static final int ST_UNCONNECTED = 0;
+    private static final int ST_CONNECTING = 1;
+    private static final int ST_CONNECTED = 2;
+    private static final int ST_CLOSING = 3;
+    private static final int ST_CLOSED = 4;
     private volatile int state;  // need stateLock to change
 
     // protected by stateLock
@@ -78,10 +81,17 @@ public class SocketStreams implements Closeable {
     /**
      * Creates a SocketStreams to wrap the given file description.
      */
-    public SocketStreams(Closeable parent, FileDescriptor fd) throws IOException {
+    public SocketStreams(Closeable parent,
+                         FileDescriptor fd,
+                         boolean connected) throws IOException {
         this.parent = Objects.requireNonNull(parent);
         this.fd = fd;
         this.fdVal = IOUtil.fdVal(fd);
+        if (connected) {
+            synchronized (stateLock) {
+                this.state = ST_CONNECTED;
+            }
+        }
         IOUtil.configureBlocking(fd, false);
     }
 
@@ -89,15 +99,27 @@ public class SocketStreams implements Closeable {
      * Returns true if the socket is open.
      */
     private boolean isOpen() {
-        return state == ST_CONNECTED;
+        return state < ST_CLOSING;
     }
 
     /**
      * Closes a SocketException if the socket is not open.
      */
     private void ensureOpen() throws SocketException {
-        if (state > ST_CONNECTED)
+        if (state >= ST_CLOSED)
             throw new SocketException("socket closed");
+    }
+
+    /**
+     * Closes a SocketException if the socket is not open and connected.
+     */
+    private void ensureOpenAndConnected() throws SocketException {
+        int state = this.state;
+        if (state < ST_CONNECTED) {
+            throw new SocketException("not connected");
+        } else if (state > ST_CONNECTED) {
+            throw new SocketException("socket closed");
+        }
     }
 
     /**
@@ -140,13 +162,50 @@ public class SocketStreams implements Closeable {
     }
 
     /**
+     * Marks the beginning of a connect operation that might block.
+     *
+     * @throws SocketException if the socket is closed or already conneced
+     */
+    private void beginConnect() throws IOException {
+        synchronized (stateLock) {
+            int state = this.state;
+            if (state > ST_CONNECTED) {
+                throw new SocketException("socket closed");
+            } else if (state != ST_UNCONNECTED) {
+                throw new SocketException("already connected");
+            }
+            this.state = ST_CONNECTING;
+            readerThread = NativeThread.current();
+        }
+    }
+
+    /**
+     * Marks the end of a connect operation that may have blocked.
+     *
+     * @throws SocketException is the socket is closed
+     */
+    private void endConnect(boolean completed) throws IOException {
+        synchronized (stateLock) {
+            readerThread = 0;
+            int state = this.state;
+            if (state == ST_CLOSING)
+                stateLock.notifyAll();
+            if (completed && state == ST_CONNECTING) {
+                this.state = ST_CONNECTED;
+            } else if (!completed && state >= ST_CLOSING) {
+                throw new SocketException("socket closed");
+            }
+        }
+    }
+
+    /**
      * Marks the beginning of a read operation that might block.
      *
-     * @throws SocketException if the socket is closed
+     * @throws SocketException if the socket is closed or not connected
      */
     private void beginRead() throws SocketException {
         synchronized (stateLock) {
-            ensureOpen();
+            ensureOpenAndConnected();
             readerThread = NativeThread.current();
         }
     }
@@ -170,11 +229,11 @@ public class SocketStreams implements Closeable {
     /**
      * Marks the beginning of a write operation that might block.
      *
-     * @throws SocketException if the socket is closed
+     * @throws SocketException if the socket is closed or not connected
      */
     private void beginWrite() throws SocketException {
         synchronized (stateLock) {
-            ensureOpen();
+            ensureOpenAndConnected();
             writerThread = NativeThread.current();
         }
     }
@@ -192,6 +251,55 @@ public class SocketStreams implements Closeable {
                 stateLock.notifyAll();
             if (!completed && state > ST_CONNECTED)
                 throw new SocketException("socket closed");
+        }
+    }
+
+    /**
+     * Connect the socket to the given address/port.
+     *
+     * @throws IOException if the socket is closed or an I/O occurs
+     * @throws SocketTimeoutException if the connect timeout elapses
+     */
+    public void connect(InetAddress address, int port, long millis) throws IOException {
+        readLock.lock();
+        try {
+            writeLock.lock();
+            try {
+                boolean connected = false;
+                try {
+                    beginConnect();
+                    int n = Net.connect(fd, address, port);
+                    if (n == IOStatus.UNAVAILABLE && isOpen()) {
+                        long nanos = NANOSECONDS.convert(millis, MILLISECONDS);
+                        if (nanos > 0) {
+                            // connect with timeout
+                            do {
+                                long startTime = System.nanoTime();
+                                park(Net.POLLOUT, nanos);
+                                n = SocketChannelImpl.checkConnect(fd, false);
+                                if (n == IOStatus.UNAVAILABLE) {
+                                    nanos -= System.nanoTime() - startTime;
+                                    if (nanos <= 0)
+                                        throw new SocketTimeoutException();
+                                }
+                            } while (n == IOStatus.UNAVAILABLE && isOpen());
+                        } else {
+                            // connect, no timeout
+                            do {
+                                park(Net.POLLOUT, 0);
+                                n = SocketChannelImpl.checkConnect(fd, false);
+                            } while (n == IOStatus.UNAVAILABLE && isOpen());
+                        }
+                    }
+                    connected = (n > 0) && isOpen();
+                } finally {
+                    endConnect(connected);
+                }
+            } finally {
+                writeLock.unlock();
+            }
+        } finally {
+            readLock.unlock();
         }
     }
 
@@ -253,11 +361,9 @@ public class SocketStreams implements Closeable {
             beginWrite();
             try {
                 n = IOUtil.write(fd, dst, -1, nd);
-                if (n == IOStatus.UNAVAILABLE && isOpen()) {
-                    do {
-                        park(Net.POLLOUT, 0);
-                        n = IOUtil.write(fd, dst, -1, nd);
-                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                while (n == IOStatus.UNAVAILABLE && isOpen()) {
+                    park(Net.POLLOUT, 0);
+                    n = IOUtil.write(fd, dst, -1, nd);
                 }
                 return n;
             } finally {
@@ -274,7 +380,7 @@ public class SocketStreams implements Closeable {
     private int available() throws IOException {
         readLock.lock();
         try {
-            ensureOpen();
+            ensureOpenAndConnected();
             if (isInputClosed) {
                 return 0;
             } else {

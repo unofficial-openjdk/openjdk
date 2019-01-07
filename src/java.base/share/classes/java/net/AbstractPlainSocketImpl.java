@@ -393,32 +393,31 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
      */
 
     synchronized void doConnect(InetAddress address, int port, int timeout) throws IOException {
+        SocketStreams socketStreams;
         synchronized (fdLock) {
             if (!closePending && (socket == null || !socket.isBound())) {
                 NetHooks.beforeTcpConnect(fd, address, port);
             }
-        }
-        try {
-            acquireFD();
-            try {
-                socketConnect(address, port, timeout);
-                /* socket may have been closed during poll/select */
-                synchronized (fdLock) {
-                    if (closePending) {
-                        throw new SocketException ("Socket closed");
-                    }
-                }
-                // If we have a ref. to the Socket, then sets the flags
-                // created, bound & connected to true.
-                // This is normally done in Socket.connect() but some
-                // subclasses of Socket may call impl.connect() directly!
-                if (socket != null) {
-                    socket.setBound();
-                    socket.setConnected();
-                }
-            } finally {
-                releaseFD();
+
+            socketStreams = this.socketStreams;
+            if (socketStreams == null) {
+                this.socketStreams = new SocketStreams(socket, fd, false).readTimeout(timeout);
+                socketStreams = this.socketStreams;
             }
+        }
+
+        try {
+            socketStreams.connect(address, port, timeout);
+
+            // If we have a ref. to the Socket, then sets the flags
+            // created, bound & connected to true.
+            // This is normally done in Socket.connect() but some
+            // subclasses of Socket may call impl.connect() directly!
+            if (socket != null) {
+                socket.setBound();
+                socket.setConnected();
+            }
+
         } catch (IOException e) {
             close();
             throw SocketExceptions.of(e, new InetSocketAddress(address, port));
@@ -476,7 +475,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
             if (shut_rd)
                 throw new IOException("Socket input is shutdown");
             if (socketStreams == null)
-                socketStreams = new SocketStreams(socket, fd).readTimeout(timeout);
+                socketStreams = new SocketStreams(socket, fd, true).readTimeout(timeout);
             return socketStreams.inputStream();
         }
     }
@@ -495,7 +494,7 @@ abstract class AbstractPlainSocketImpl extends SocketImpl {
             if (shut_wr)
                 throw new IOException("Socket output is shutdown");
             if (socketStreams == null)
-                socketStreams = new SocketStreams(socket, fd).readTimeout(timeout);
+                socketStreams = new SocketStreams(socket, fd, true).readTimeout(timeout);
             return socketStreams.outputStream();
         }
     }

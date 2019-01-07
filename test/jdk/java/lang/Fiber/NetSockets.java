@@ -48,6 +48,26 @@ public class NetSockets {
     }
 
     /**
+     * Cancel a fiber in connect
+     */
+    public void testSocketConnectCancel1() {
+        test(() -> {
+            try (var listener = new ServerSocket()) {
+                listener.bind(new InetSocketAddress( InetAddress.getLocalHost(), 0));
+                Fiber.current().map(Fiber::cancel);
+                Socket s = new Socket();
+                try {
+                    s.connect(listener.getLocalSocketAddress());
+                    assertTrue(false);
+                } catch (IOException expected) {
+                } finally {
+                    s.close();
+                }
+            }
+        });
+    }
+
+    /**
      * Socket read/write, no blocking
      */
     public void testSocketReadWrite1() {
