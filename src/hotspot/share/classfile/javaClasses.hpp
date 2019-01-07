@@ -1485,7 +1485,7 @@ private:
   static int _memberName_offset;
   static int _bci_offset;
   static int _version_offset;
-  static int _contScopeName_offset;
+  static int _contScope_offset;
 
   static Method* get_method(Handle stackFrame, InstanceKlass* holder, TRAPS);
 
@@ -1495,7 +1495,7 @@ public:
   static void set_bci(oop info, int value);
 
   static void set_version(oop info, short value);
-  static void set_contScopeName(oop info, oop value);
+  static void set_contScope(oop info, oop value);
 
   static void compute_offsets();
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;

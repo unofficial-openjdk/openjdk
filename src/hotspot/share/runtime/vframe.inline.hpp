@@ -51,13 +51,20 @@ inline void vframeStreamCommon::next() {
 
   // handle general case
   do {
+    assert (_continuation_scope.is_null() || _cont.not_null(), "must be");
     if (_cont.not_null() && Continuation::is_continuation_entry_frame(_frame, &_reg_map)) {
+      oop cont = _cont();
+      oop scope = java_lang_Continuation::scope(cont);
+
       *(_cont.raw_value()) = java_lang_Continuation::parent(_cont());
+
+      if (_continuation_scope.not_null() && oopDesc::equals(scope, _continuation_scope())) {
+        Continuation::is_frame_in_continuation(_frame, cont); // assert (Continuation::is_scope_bottom(_continuation_scope(), _frame, &_reg_map), "must be");
+        _mode = at_end_mode;
+        break;
+      }
     }
-    if (Continuation::is_scope_bottom(_continuation_scope(), _frame, &_reg_map)) {
-      _mode = at_end_mode;
-      break;
-    }
+    assert (!Continuation::is_scope_bottom(_continuation_scope(), _frame, &_reg_map), "");
 
     _prev_frame = _frame;
     _frame = _frame.sender(&_reg_map);

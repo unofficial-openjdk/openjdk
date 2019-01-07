@@ -2397,12 +2397,19 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope
       bci = stream.read_bci();
     } else {
       if (fr.is_first_frame()) break;
-      if (Continuation::is_scope_bottom(contScope(), fr, &map)) 
-        is_last = true;
 
+      assert (contScope.is_null() || cont != NULL, "must be");
       if (cont != NULL && Continuation::is_continuation_entry_frame(fr, &map)) {
+        oop scope = java_lang_Continuation::scope(cont);
+        if (contScope.not_null() && oopDesc::equals(scope, contScope())) {
+          assert (Continuation::is_frame_in_continuation(fr, cont), "must be"); // assert (Continuation::is_scope_bottom(contScope(), fr, &map), "must be");
+          is_last = true;
+        }
         cont = java_lang_Continuation::parent(cont);
+      } else {
+        assert (!Continuation::is_scope_bottom(contScope(), fr, &map), "");
       }
+
       address pc = fr.pc();
       if (fr.is_interpreted_frame()) {
         address bcp;
@@ -2683,8 +2690,8 @@ void java_lang_StackFrameInfo::set_method_and_bci(Handle stackFrame, const metho
   assert((jushort)version == version, "version should be short");
   java_lang_StackFrameInfo::set_version(stackFrame(), (short)version);
 
-  oop contScopeName = (cont != NULL) ? java_lang_ContinuationScope::name(java_lang_Continuation::scope(cont)) : (oop)NULL;
-  java_lang_StackFrameInfo::set_contScopeName(stackFrame(), contScopeName);
+  oop contScope = cont != NULL ? java_lang_Continuation::scope(cont) : (oop)NULL;
+  java_lang_StackFrameInfo::set_contScope(stackFrame(), contScope);
 }
 
 void java_lang_StackFrameInfo::to_stack_trace_element(Handle stackFrame, Handle stack_trace_element, TRAPS) {
@@ -2693,7 +2700,8 @@ void java_lang_StackFrameInfo::to_stack_trace_element(Handle stackFrame, Handle 
   Klass* clazz = java_lang_Class::as_Klass(java_lang_invoke_MemberName::clazz(mname()));
   InstanceKlass* holder = InstanceKlass::cast(clazz);
   Method* method = java_lang_StackFrameInfo::get_method(stackFrame, holder, CHECK);
-  Handle contScopeName(THREAD, stackFrame->obj_field(java_lang_StackFrameInfo::_contScopeName_offset));
+  oop contScope = stackFrame->obj_field(java_lang_StackFrameInfo::_contScope_offset);
+  Handle contScopeName(THREAD, contScope != (oop)NULL ? java_lang_ContinuationScope::name(contScope) : NULL);
 
   short version = stackFrame->short_field(_version_offset);
   short bci = stackFrame->short_field(_bci_offset);
@@ -2702,9 +2710,9 @@ void java_lang_StackFrameInfo::to_stack_trace_element(Handle stackFrame, Handle 
 }
 
 #define STACKFRAMEINFO_FIELDS_DO(macro) \
-  macro(_memberName_offset,     k, "memberName",    object_signature, false); \
-  macro(_bci_offset,            k, "bci",           short_signature,  false); \
-  macro(_contScopeName_offset,  k, "contScopeName", string_signature, false)
+  macro(_memberName_offset,     k, "memberName", object_signature,            false); \
+  macro(_bci_offset,            k, "bci",        short_signature,             false); \
+  macro(_contScope_offset,      k, "contScope",  continuationscope_signature, false)
 
 void java_lang_StackFrameInfo::compute_offsets() {
   InstanceKlass* k = SystemDictionary::StackFrameInfo_klass();
@@ -4113,7 +4121,7 @@ int java_lang_StackTraceElement::contScope_offset;
 int java_lang_StackFrameInfo::_memberName_offset;
 int java_lang_StackFrameInfo::_bci_offset;
 int java_lang_StackFrameInfo::_version_offset;
-int java_lang_StackFrameInfo::_contScopeName_offset;
+int java_lang_StackFrameInfo::_contScope_offset;
 int java_lang_LiveStackFrameInfo::_monitors_offset;
 int java_lang_LiveStackFrameInfo::_locals_offset;
 int java_lang_LiveStackFrameInfo::_operands_offset;
@@ -4196,8 +4204,8 @@ void java_lang_StackFrameInfo::set_bci(oop element, int value) {
   element->int_field_put(_bci_offset, value);
 }
 
-void java_lang_StackFrameInfo::set_contScopeName(oop element, oop value) {
-  element->obj_field_put(_contScopeName_offset, value);
+void java_lang_StackFrameInfo::set_contScope(oop element, oop value) {
+  element->obj_field_put(_contScope_offset, value);
 }
 
 void java_lang_LiveStackFrameInfo::set_monitors(oop element, oop value) {

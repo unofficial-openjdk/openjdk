@@ -3043,6 +3043,10 @@ address Continuation::fix_continuation_bottom_sender(const frame* callee, Regist
 //   return f;
 // }
 
+bool Continuation::is_frame_in_continuation(const frame& f, oop cont) {
+  return java_lang_Continuation::entrySP(cont) < f.sp();
+}
+
 bool Continuation::is_frame_in_continuation(JavaThread* thread, const frame& f) {
   return find_continuation_for_frame(thread, f.sp()) != NULL;
 }

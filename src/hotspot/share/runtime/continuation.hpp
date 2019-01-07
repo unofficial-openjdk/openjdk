@@ -62,6 +62,7 @@ public:
   static bool is_continuation_entry_frame(const frame& f, const RegisterMap* map);
   static bool is_cont_bottom_frame(const frame& f);
   static bool is_return_barrier_entry(const address pc);
+  static bool is_frame_in_continuation(const frame& f, oop cont);
   static bool is_frame_in_continuation(JavaThread* thread, const frame& f);
   static address fix_continuation_bottom_sender(const frame* callee, RegisterMap* map, address pc);
 

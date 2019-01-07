@@ -40,7 +40,7 @@ class StackFrameInfo implements StackFrame {
     private final byte flags;
     private Object memberName;
     private short bci;
-    private String contScopeName;
+    private ContinuationScope contScope;
 
     private volatile StackTraceElement ste;
 
@@ -68,8 +68,8 @@ class StackFrameInfo implements StackFrame {
         this.bci = bci;
     }
 
-    void setContinuationScopeName(String contScopeName) {
-        this.contScopeName = contScopeName;
+    void setContinuationScope(ContinuationScope contScope) {
+        this.contScope = contScope;
     }
     
     protected void clear() {
@@ -135,7 +135,7 @@ class StackFrameInfo implements StackFrame {
 
     @Override
     public java.lang.String getContinuationScopeName() {
-        return contScopeName;
+        return contScope.getName();
     }
 
     @Override
