@@ -117,16 +117,23 @@ void LiveFrameStream::set_continuation(Handle cont) {
 
 void JavaFrameStream::next() { _vfst.next(); }
 
-void LiveFrameStream::next() { 
+void LiveFrameStream::next() {
+  assert (_cont_scope.is_null() || _cont.not_null(), "must be");
   if (_cont.not_null() && Continuation::is_continuation_entry_frame(_jvf->fr(), _jvf->register_map())) {
-    *(_cont.raw_value()) = java_lang_Continuation::parent(_cont());
+    oop cont = _cont();
+    oop scope = java_lang_Continuation::scope(cont);
+
+    *(_cont.raw_value()) = java_lang_Continuation::parent(cont);
+    
+    if (_cont_scope.not_null() && oopDesc::equals(scope, _cont_scope())) {
+      assert (Continuation::is_frame_in_continuation(_jvf->fr(), cont), "must be"); // assert (Continuation::is_scope_bottom(_cont_scope(), _jvf->fr(), _jvf->register_map()), "must be");
+      _jvf = NULL;
+      return;
+    }
   }
+  assert (!Continuation::is_scope_bottom(_cont_scope(), _jvf->fr(), _jvf->register_map()), "");
   
-  if (Continuation::is_scope_bottom(_cont_scope(), _jvf->fr(), _jvf->register_map())) {
-    _jvf = NULL;
-  } else {
-    _jvf = _jvf->java_sender();
-  }
+  _jvf = _jvf->java_sender();
 }
 
 // Returns the BaseFrameStream for the current stack being traversed.

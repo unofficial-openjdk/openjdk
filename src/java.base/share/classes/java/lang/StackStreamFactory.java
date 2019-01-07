@@ -566,7 +566,7 @@ final class StackStreamFactory {
             sfi.clear();
             sfi.setMemberName(enter);
             sfi.setBCI((short)-1);
-            sfi.setContinuationScopeName(continuation.getScope().getName());
+            sfi.setContinuationScope(continuation.getScope());
         }
 
         final Function<? super Stream<StackFrame>, ? extends T> function;  // callback
