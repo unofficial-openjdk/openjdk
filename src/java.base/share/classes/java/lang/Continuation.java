@@ -59,12 +59,15 @@ public class Continuation {
     /** Reason for pinning */
     public enum Pinned { 
         /** Native frame on stack */ NATIVE,
-        /** Monitor held */          MONITOR }
+        /** Monitor held */          MONITOR,
+        /** In critical section */   CRITICAL_SECTION }
     /** Preemption attempt result */
     public enum PreemptStatus { 
         /** Success */                                                      SUCCESS(null), 
+        /** Permanent failure */                                            PERM_FAIL_UNSUPPORTED(null), 
         /** Permanent failure: continuation alreay yielding */              PERM_FAIL_YIELDING(null), 
         /** Permanent failure: continuation not mounted on the thread */    PERM_FAIL_NOT_MOUNTED(null), 
+        /** Transient failure: continuation pinned due to a held CS */      TRANSIENT_FAIL_PINNED_CRITICAL_SECTION(Pinned.CRITICAL_SECTION),
         /** Transient failure: continuation pinned due to native frame */   TRANSIENT_FAIL_PINNED_NATIVE(Pinned.NATIVE), 
         /** Transient failure: continuation pinned due to a held monitor */ TRANSIENT_FAIL_PINNED_MONITOR(Pinned.MONITOR);
 
@@ -75,6 +78,29 @@ public class Continuation {
          * @return TBD
          **/
         public Pinned pinned() { return pinned; }
+    }
+
+    private static PreemptStatus preemptStatus(int status) {
+        switch (status) {
+            case -5: return PreemptStatus.PERM_FAIL_UNSUPPORTED;
+            case  0: return PreemptStatus.SUCCESS;
+            case -1: return PreemptStatus.PERM_FAIL_NOT_MOUNTED;
+            case -2: return PreemptStatus.PERM_FAIL_YIELDING;
+            case  1: return PreemptStatus.TRANSIENT_FAIL_PINNED_CRITICAL_SECTION;
+            case  2: return PreemptStatus.TRANSIENT_FAIL_PINNED_NATIVE;
+            case  3: return PreemptStatus.TRANSIENT_FAIL_PINNED_MONITOR;
+            default: throw new AssertionError("Unknown status: " + status);
+        }
+    }
+
+    private static Pinned pinnedReason(int reason) {
+        switch (reason) {
+            case 1: return Pinned.CRITICAL_SECTION;
+            case 2: return Pinned.NATIVE;
+            case 3: return Pinned.MONITOR;
+            default:
+                throw new AssertionError("Unknown pinned reason: " + reason);
+        }
     }
 
     private static Thread currentCarrierThread() {
@@ -115,6 +141,8 @@ public class Continuation {
     private boolean done;
     private volatile boolean mounted = false;
     private Object yieldInfo;
+
+    private short cs; // critical section semaphore
 
     private boolean reset = false; // perftest only
 
@@ -460,15 +488,6 @@ public class Continuation {
         onPinned(pinnedReason(reason));
     }
 
-    private static Pinned pinnedReason(int reason) {
-        switch (reason) {
-            case 1: return Pinned.NATIVE;
-            case 2: return Pinned.MONITOR;
-            default:
-                throw new AssertionError("Unknown pinned reason: " + reason);
-        }
-    }
-
     /**
      * TBD
      * @param reason TBD
@@ -498,6 +517,49 @@ public class Continuation {
     private boolean isFlag(byte flag) {
         return (flags & flag) != 0;
     }
+
+    /**
+     * Pins the current continuation (enters a critical section).
+     * This increments an internal semaphore that, when greater than 0, pins the continuation.
+     */
+    public static void pin() {
+        Continuation cont = currentCarrierThread().getContinuation();
+        if (cont != null) {
+            assert cont.cs >= 0;
+            if (cont.cs == Short.MAX_VALUE)
+                throw new IllegalStateException("Too many pins");
+            cont.cs++;
+        }
+    }
+
+    /**
+     * Unpins the current continuation (exits a critical section).
+     * This decrements an internal semaphore that, when equal 0, unpins the current continuation
+     * if pinne with {@link #pin()}.
+     */
+    public static void unpin() {
+        Continuation cont = currentCarrierThread().getContinuation();
+        if (cont != null) {
+            assert cont.cs >= 0;
+            if (cont.cs == 0)
+                throw new IllegalStateException("Not pinned");
+            cont.cs--;
+        }
+    }
+
+    /**
+     * Tests whether the given scope is pinned. 
+     * This method is slow.
+     * 
+     * @param scope the continuation scope
+     * @return {@code} true if we're in the give scope and are pinned; {@code false otherwise}
+     */
+    public static boolean isPinned(ContinuationScope scope) {
+        int res = isPinned0(scope);
+        return res != 0;
+    }
+
+    static private native int isPinned0(ContinuationScope scope);
 
     private void clean() {
         if (!isStackEmpty())
@@ -822,21 +884,14 @@ public class Continuation {
      * @throws UnsupportedOperationException if this continuation does not support preemption
      */
     public PreemptStatus tryPreempt(Thread thread) {
-        return preemptStatus(tryForceYield0(thread));
+        PreemptStatus res = preemptStatus(tryForceYield0(thread));
+        if (res == PreemptStatus.PERM_FAIL_UNSUPPORTED) {
+            throw new UnsupportedOperationException("Thread-local handshakes disabled");
+        }
+        return res;
     }
 
     private native int tryForceYield0(Thread thread);
-
-    private static PreemptStatus preemptStatus(int status) {
-        switch (status) {
-            case  0: return PreemptStatus.SUCCESS;
-            case -1: return PreemptStatus.PERM_FAIL_NOT_MOUNTED;
-            case -2: return PreemptStatus.PERM_FAIL_YIELDING;
-            case  1: return PreemptStatus.TRANSIENT_FAIL_PINNED_NATIVE;
-            case  2: return PreemptStatus.TRANSIENT_FAIL_PINNED_MONITOR;
-            default: throw new AssertionError("Unknown status: " + status);
-        }
-    }
 
     // native methods
     private static native void registerNatives();

@@ -356,9 +356,10 @@ intptr_t* hframe::interpreter_frame_expression_stack_at(ContMirror& cont, int of
 // freeze result
 enum res_freeze {
   freeze_ok = 0,
-  freeze_pinned_native = 1,
-  freeze_pinned_monitor = 2,
-  freeze_exception = 3
+  freeze_pinned_cs = 1,
+  freeze_pinned_native = 2,
+  freeze_pinned_monitor = 3,
+  freeze_exception = 4
 };
 
 // struct oopLoc {
@@ -1435,11 +1436,11 @@ static inline intptr_t* frame_bottom(frame &f) { // exclusive this will be copie
   return f.is_interpreted_frame() ? interpreted_frame_bottom(f) : compiled_frame_bottom(f);
 }
 
-static bool is_interpreted_frame_owning_locks(frame& f) {
+static bool is_interpreted_frame_owning_locks(const frame& f) {
   return f.interpreter_frame_monitor_end() < f.interpreter_frame_monitor_begin();
 }
 
-static bool is_compiled_frame_owning_locks(JavaThread* thread, RegisterMap* map, frame& f) {
+static bool is_compiled_frame_owning_locks(JavaThread* thread, const RegisterMap* map, const frame& f) {
   if (!DetectLocksInCompiledFrames)
     return false;
   nmethod* nm = f.cb()->as_nmethod();
@@ -2170,6 +2171,11 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
   log_trace(jvmcont)("Freeze 1111 sp: %d fp: 0x%lx pc: " INTPTR_FORMAT, cont.sp(), cont.fp(), p2i(cont.pc()));
 #endif
 
+  if (java_lang_Continuation::cs(oopCont) > 0) {
+    log_debug(jvmcont)("PINNED due to critical section");
+    return freeze_pinned_cs;
+  }
+
   intptr_t* bottom = cont.entrySP(); // (bottom is highest address; stacks grow down)
   intptr_t* top = f.sp();
 
@@ -2193,6 +2199,7 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 
   cont.set_flag(FLAG_SAFEPOINT_YIELD, safepoint_yield);
 
+  cont.set_entryPC(0);
   cont.write();
 
   // notify JVMTI
@@ -2338,10 +2345,66 @@ JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
   return freeze0(thread, fi, false);
 JRT_END
 
+static res_freeze is_pinned(const frame& f, const RegisterMap* map) {
+  if (f.is_interpreted_frame()) {
+    if (is_interpreted_frame_owning_locks(f)) 
+      return freeze_pinned_monitor;
+  } else if (f.is_compiled_frame()) {
+    if (is_compiled_frame_owning_locks(map->thread(), map, f)) 
+      return freeze_pinned_monitor;
+  } else {
+    return freeze_pinned_native;
+  }
+  return freeze_ok;
+}
+
+static res_freeze is_pinned0(JavaThread* thread, oop cont_scope, bool safepoint_yield) {
+  oop cont = get_continuation(thread);
+  if (cont == (oop)NULL) {
+    return freeze_ok;
+  }
+  if (java_lang_Continuation::cs(cont) > 0)
+    return freeze_pinned_cs;
+
+  RegisterMap map(thread, false, false, false); // should first argument be true?
+  map.set_include_argument_oops(false);
+  frame f = thread->last_frame();
+
+  if (!safepoint_yield) {
+    f = f.frame_sender<ContinuationCodeBlobLookup>(&map); // LOOKUP // this is the yield frame
+  } else { // safepoint yield
+    f.set_fp(f.real_fp()); // Instead of this, maybe in ContMirror::set_last_frame always use the real_fp?
+    if (!Interpreter::contains(f.pc())) {
+      assert (f.cb()->is_safepoint_stub(), "must be");
+      assert (f.oop_map() != NULL, "must be");
+      f.oop_map()->update_register_map(&f, &map); // we have callee-save registers in this case
+    }
+  }
+
+  while(true) {
+    res_freeze res = is_pinned(f, &map);
+    if (res != freeze_ok)
+      return res;
+    
+    f = f.frame_sender<ContinuationCodeBlobLookup>(&map);
+    if (!Continuation::is_frame_in_continuation(f, cont)) {
+      oop scope = java_lang_Continuation::scope(cont);
+      if (oopDesc::equals(scope, cont_scope))
+        break; 
+      cont = java_lang_Continuation::parent(cont);
+      if (cont == (oop)NULL)
+        break;
+      if (java_lang_Continuation::cs(cont) > 0)
+        return freeze_pinned_cs;
+    }
+  }
+  return freeze_ok;
+}
+
 typedef int (*DoYieldStub)(int scopes);
 
 // called in a safepoint
-int Continuation::try_force_yield(JavaThread* thread, oop cont) {
+int Continuation::try_force_yield(JavaThread* thread, const oop cont) {
   // this is the only place where we traverse the continuatuion hierarchy in native code, as it needs to be done in a safepoint
   oop scope = NULL;
   oop innermost = get_continuation(thread);
@@ -2359,10 +2422,9 @@ int Continuation::try_force_yield(JavaThread* thread, oop cont) {
   }
   if (!oopDesc::equals(innermost, cont)) { // we have nested continuations
     // make sure none of the continuations in the hierarchy are pinned
-    // for (oop c = innermost; c != NULL && !oopDesc::equals(c, cont); c = java_lang_Continuation::parent(c)) {
-    //   if ()
-    //     return PINNED;
-    // }
+    res_freeze res_pinned = is_pinned0(thread, java_lang_Continuation::scope(cont), true);
+    if (res_pinned != freeze_ok)
+      return res_pinned;
 
     java_lang_Continuation::set_yieldInfo(cont, scope);
   }
@@ -3044,7 +3106,7 @@ address Continuation::fix_continuation_bottom_sender(const frame* callee, Regist
 // }
 
 bool Continuation::is_frame_in_continuation(const frame& f, oop cont) {
-  return java_lang_Continuation::entrySP(cont) < f.sp();
+  return java_lang_Continuation::entrySP(cont) >= f.sp();
 }
 
 bool Continuation::is_frame_in_continuation(JavaThread* thread, const frame& f) {
@@ -3065,7 +3127,6 @@ bool Continuation::is_scope_bottom(oop cont_scope, const frame& f, const Registe
 
   oop sc = continuation_scope(cont);
   assert(sc != NULL, "");
-
   return oopDesc::equals(sc, cont_scope);
 }
 
@@ -3108,7 +3169,7 @@ static frame continuation_top_frame(oop contOop, RegisterMap* map) {
 }
 
 static frame continuation_parent_frame(ContMirror& cont, RegisterMap* map) {
-  assert (map->thread() != NULL || cont.entryPC() == NULL, "");
+  assert (map->thread() != NULL || cont.entryPC() == NULL, "map->thread() == NULL: %d cont.entryPC() == NULL: %d", map->thread() == NULL, cont.entryPC() == NULL);
 
   // if (map->thread() == NULL) { // When a continuation is mounted, its entry frame is always on the v-stack
   //   oop parentOop = java_lang_Continuation::parent(cont.mirror());
@@ -3479,11 +3540,18 @@ JVM_ENTRY(void, CONT_Clean(JNIEnv* env, jobject jcont)) {
 }
 JVM_END
 
+JVM_ENTRY(jint, CONT_isPinned0(JNIEnv* env, jobject cont_scope)) {
+  JavaThread* thread = JavaThread::thread_from_jni_environment(env);
+  return is_pinned0(thread, JNIHandles::resolve(cont_scope), false);
+}
+JVM_END
+
 JVM_ENTRY(jint, CONT_TryForceYield0(JNIEnv* env, jobject jcont, jobject jthread)) {
   JavaThread* thread = JavaThread::thread_from_jni_environment(env);
 
-  guarantee(ThreadLocalHandshakes, "ThreadLocalHandshakes disabled");
-  guarantee(SafepointMechanism::uses_thread_local_poll(), "ThreadLocalHandshakes disabled");
+  if (!ThreadLocalHandshakes || !SafepointMechanism::uses_thread_local_poll()) {
+    return -5;
+  }
 
   class ForceYieldClosure : public ThreadClosure {
     jobject _jcont;
@@ -3524,8 +3592,9 @@ JVM_END
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &f)
 
 static JNINativeMethod CONT_methods[] = {
-    {CC"clean0",           CC"()V",                   FN_PTR(CONT_Clean)},
-    {CC"tryForceYield0",   CC"(Ljava/lang/Thread;)I", FN_PTR(CONT_TryForceYield0)},
+    {CC"clean0",           CC"()V",                              FN_PTR(CONT_Clean)},
+    {CC"tryForceYield0",   CC"(Ljava/lang/Thread;)I",            FN_PTR(CONT_TryForceYield0)},
+    {CC"isPinned0",        CC"(Ljava/lang/ContinuationScope;)I", FN_PTR(CONT_isPinned0)},
 };
 
 void CONT_RegisterNativeMethods(JNIEnv *env, jclass cls) {

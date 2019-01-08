@@ -222,6 +222,9 @@ inline unsigned char java_lang_Continuation::flags(oop ref) {
 inline void java_lang_Continuation::set_flags(oop ref, unsigned char flags) {
   ref->byte_field_put(_flags_offset, (jbyte)flags);
 }
+inline jshort java_lang_Continuation::cs(oop ref) {
+  return ref->short_field(_cs_offset);
+}
 inline bool java_lang_Continuation::is_reset(oop ref) {
   return ref->bool_field(_reset_offset);
 }

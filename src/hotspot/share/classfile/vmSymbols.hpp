@@ -395,6 +395,7 @@
   template(fp_name,                                   "fp")                                       \
   template(sp_name,                                   "sp")                                       \
   template(pc_name,                                   "pc")                                       \
+  template(cs_name,                                   "cs")                                       \
   template(refStack_name,                             "refStack")                                 \
   template(refSP_name,                                "refSP")                                    \
   template(get_name,                                  "get")                                      \

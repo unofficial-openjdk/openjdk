@@ -73,7 +73,7 @@ public class Basic {
             System.gc();
 
             List<String> frames = cont.stackWalker().walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
-            assertEquals(frames, Arrays.asList("yield0", "yield", "bar", "foo", "lambda$test1$0", "enter0"));
+            assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "bar", "foo", "lambda$test1$0", "enter0", "enter"));
         }
         assertEquals(res.get(), 247);
     }
@@ -165,7 +165,7 @@ public class Basic {
             // System.out.println(Arrays.toString(stes));
             assertEquals(stes[0].getMethodName(), "barThrow");
             assertEquals(stes[stes.length - 1].getClassName(), "java.lang.Continuation");
-            assertEquals(stes[stes.length - 1].getMethodName(), "enter0");
+            assertEquals(stes[stes.length - 1].getMethodName(), "enter");
         }
     }
 
@@ -232,6 +232,7 @@ public class Basic {
         }) {
             @Override
             protected void onPinned(Continuation.Pinned reason) {
+                assert Continuation.isPinned(FOO);
                 res.set(reason);
             }
         };
@@ -271,10 +272,52 @@ public class Basic {
         try {
             long x = 8;
             String s = "yyy";
-            String r = (String)Basic.class.getDeclaredMethod("bar2", long.class).invoke(null, 1L);
+            String r = (String)Basic.class.getDeclaredMethod("nativeBar", long.class).invoke(null, 1L);
             return Integer.parseInt(r)+1;
         } catch (Exception e) {
             throw new AssertionError(e);
         }
+    }
+
+    static String nativeBar(long b) {
+        double x = 9.99;
+        String s = "zzz";
+        assert Continuation.isPinned(FOO);
+        boolean res = Continuation.yield(FOO);
+        assert res == false;
+
+        long r = b+1;
+        return "" + r;
+    }
+
+    public void testPinnedCriticalSection() {
+        System.out.println("testPinnedCriticalSection");
+        final AtomicReference<Continuation.Pinned> res = new AtomicReference<>();
+        
+        Continuation cont = new Continuation(FOO, ()-> {
+            csFoo(1);
+        }) {
+            @Override
+            protected void onPinned(Continuation.Pinned reason) {
+                res.set(reason);
+            }
+        };
+        
+        cont.run();
+        assertEquals(res.get(), Continuation.Pinned.CRITICAL_SECTION);
+    }
+
+    static double csFoo(int a) {
+        long x = 8;
+        String s = "yyy";
+        String r;
+        Continuation.pin();
+        try {
+            assert Continuation.isPinned(FOO);
+            r = bar2(a + 1);
+        } finally {
+            Continuation.unpin();
+        }
+        return Integer.parseInt(r)+1;
     }
 }
