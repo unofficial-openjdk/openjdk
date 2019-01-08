@@ -2453,8 +2453,10 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope
       if (cont != NULL && Continuation::is_continuation_entry_frame(fr, &map)) {
         oop scope = java_lang_Continuation::scope(cont);
         if (contScope.not_null() && oopDesc::equals(scope, contScope())) {
-          assert (Continuation::is_frame_in_continuation(fr, cont), "must be"); // assert (Continuation::is_scope_bottom(contScope(), fr, &map), "must be");
+          assert (Continuation::is_scope_bottom(contScope(), fr, &map), "must be");
           is_last = true;
+        } else {
+          assert (Continuation::is_frame_in_continuation(fr, cont), "must be");
         }
         cont = java_lang_Continuation::parent(cont);
       } else {
@@ -4153,6 +4155,7 @@ int java_lang_Continuation::_fp_offset;
 int java_lang_Continuation::_sp_offset;
 int java_lang_Continuation::_pc_offset;
 int java_lang_Continuation::_refSP_offset;
+int java_lang_Continuation::_cs_offset;
 int java_lang_Continuation::_flags_offset;
 int java_lang_Continuation::_reset_offset;
 int java_lang_ClassLoader::parent_offset;
@@ -4348,6 +4351,7 @@ void java_lang_ContinuationScope::serialize_offsets(SerializeClosure* f) {
   macro(_pc_offset,        k, vmSymbols::pc_name(),        long_signature,              false); \
   macro(_refSP_offset,     k, vmSymbols::refSP_name(),     int_signature,               false); \
   macro(_flags_offset,     k, vmSymbols::flags_name(),     byte_signature,              false); \
+  macro(_cs_offset,        k, vmSymbols::cs_name(),        short_signature,             false); \
   macro(_reset_offset,     k, vmSymbols::reset_name(),     bool_signature,              false); \
   macro(_numFrames_offset, k, vmSymbols::numFrames_name(), short_signature,             false); \
   macro(_numInterpretedFrames_offset, k, vmSymbols::numInterpretedFrames_name(), short_signature, false);
