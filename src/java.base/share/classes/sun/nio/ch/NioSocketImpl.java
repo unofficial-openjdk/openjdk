@@ -29,7 +29,17 @@ import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ProtocolFamily;
+import java.net.SocketAddress;
+import java.net.SocketException;
+import java.net.SocketImpl;
+import java.net.SocketOption;
+import java.net.SocketTimeoutException;
+import java.net.StandardProtocolFamily;
+import java.net.StandardSocketOptions;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashSet;
@@ -41,10 +51,12 @@ import java.util.concurrent.locks.ReentrantLock;
 import jdk.internal.misc.Strands;
 import sun.net.NetHooks;
 import sun.net.ResourceManager;
+import sun.net.ext.ExtendedSocketOptions;
 import sun.net.util.SocketExceptions;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static sun.net.ext.ExtendedSocketOptions.SOCK_STREAM;
 
 /**
  * NIO based SocketImpl.
@@ -52,8 +64,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * This implementation attempts to be compatible with legacy PlainSocketImpl,
  * including throwing exceptions that are not specified by SocketImpl.
  *
- * This implementation is not yet integrated with the Cleaner mechanism. It
- * also does not support extended socket options at this time.
+ * This implementation is not yet integrated with the Cleaner mechanism.
  */
 
 public class NioSocketImpl extends SocketImpl {
@@ -687,14 +698,12 @@ public class NioSocketImpl extends SocketImpl {
 
     @Override
     protected Set<SocketOption<?>> supportedOptions() {
-        if (Net.isReusePortAvailable()) {
-            Set<SocketOption<?>> options = new HashSet<>();
-            options.addAll(super.supportedOptions());
+        Set<SocketOption<?>> options = new HashSet<>();
+        options.addAll(super.supportedOptions());
+        options.addAll(ExtendedSocketOptions.options(SOCK_STREAM));
+        if (Net.isReusePortAvailable())
             options.add(StandardSocketOptions.SO_REUSEPORT);
-            return Collections.unmodifiableSet(options);
-        } else {
-            return super.supportedOptions();
-        }
+        return Collections.unmodifiableSet(options);
     }
 
     private boolean booleanValue(Object value, String desc) throws SocketException {
@@ -710,11 +719,11 @@ public class NioSocketImpl extends SocketImpl {
     }
 
     @Override
-    public void setOption(int name, Object value) throws SocketException {
+    public void setOption(int opt, Object value) throws SocketException {
         synchronized (stateLock) {
             ensureOpen();
             try {
-                switch (name) {
+                switch (opt) {
                 case SO_LINGER: {
                     if (!(value instanceof Integer) && !(value instanceof Boolean))
                         throw new SocketException("Bad value for SO_LINGER");
@@ -787,7 +796,7 @@ public class NioSocketImpl extends SocketImpl {
                     break;
                 }
                 default:
-                    throw new SocketException("Unknown option " + name);
+                    throw new SocketException("Unknown option " + opt);
                 }
             } catch (IOException ioe) {
                 throw new SocketException(ioe.getMessage());
@@ -796,11 +805,11 @@ public class NioSocketImpl extends SocketImpl {
     }
 
     @Override
-    public Object getOption(int name) throws SocketException {
+    public Object getOption(int opt) throws SocketException {
         synchronized (stateLock) {
             ensureOpen();
             try {
-                switch (name) {
+                switch (opt) {
                 case SO_TIMEOUT:
                     return timeout;
                 case TCP_NODELAY:
@@ -828,10 +837,44 @@ public class NioSocketImpl extends SocketImpl {
                         throw new UnsupportedOperationException("SO_REUSEPORT not supported");
                     return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_REUSEPORT);
                 default:
-                    throw new SocketException("Unknown option " + name);
+                    throw new SocketException("Unknown option " + opt);
                 }
             } catch (IOException ioe) {
                 throw new SocketException(ioe.getMessage());
+            }
+        }
+    }
+
+    @Override
+    protected <T> void setOption(SocketOption<T> opt, T value) throws IOException {
+        synchronized (stateLock) {
+            ensureOpen();
+            if (supportedOptions().contains(opt)) {
+                ExtendedSocketOptions extended = ExtendedSocketOptions.getInstance();
+                if (extended.isOptionSupported(opt)) {
+                    extended.setOption(fd, opt, value);
+                } else {
+                    super.setOption(opt, value);
+                }
+            } else {
+                throw new UnsupportedOperationException(opt.name());
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <T> T getOption(SocketOption<T> opt) throws IOException {
+        synchronized (stateLock) {
+            ensureOpen();
+            if (supportedOptions().contains(opt)) {
+                ExtendedSocketOptions extended = ExtendedSocketOptions.getInstance();
+                if (extended.isOptionSupported(opt)) {
+                    return (T) extended.getOption(fd, opt);
+                } else {
+                    return super.getOption(opt);
+                }
+            } else {
+                throw new UnsupportedOperationException(opt.name());
             }
         }
     }
