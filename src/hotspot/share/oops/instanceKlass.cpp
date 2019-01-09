@@ -1199,14 +1199,6 @@ GrowableArray<Klass*>* InstanceKlass::compute_secondary_supers(int num_extra_slo
   }
 }
 
-bool InstanceKlass::compute_is_subtype_of(Klass* k) {
-  if (k->is_interface()) {
-    return implements_interface(k);
-  } else {
-    return Klass::compute_is_subtype_of(k);
-  }
-}
-
 bool InstanceKlass::implements_interface(Klass* k) const {
   if (this == k) return true;
   assert(k->is_interface(), "should be an interface class");
