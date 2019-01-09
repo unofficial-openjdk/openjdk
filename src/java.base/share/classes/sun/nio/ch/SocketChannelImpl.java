@@ -1180,7 +1180,7 @@ class SocketChannelImpl
     static native int checkConnect(FileDescriptor fd, boolean block)
         throws IOException;
 
-    private static native int sendOutOfBandData(FileDescriptor fd, byte data)
+    static native int sendOutOfBandData(FileDescriptor fd, byte data)
         throws IOException;
 
     static {

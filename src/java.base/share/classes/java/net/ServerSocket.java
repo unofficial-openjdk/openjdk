@@ -27,6 +27,7 @@ package java.net;
 
 import jdk.internal.access.JavaNetSocketAccess;
 import jdk.internal.access.SharedSecrets;
+import sun.nio.ch.NioSocketImpl;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -296,7 +297,7 @@ class ServerSocket implements java.io.Closeable {
         } else {
             // No need to do a checkOldImpl() here, we know it's an up to date
             // SocketImpl!
-            impl = new SocksSocketImpl();
+            impl = new NioSocketImpl();
         }
         if (impl != null)
             impl.setServerSocket(this);
@@ -554,7 +555,9 @@ class ServerSocket implements java.io.Closeable {
             si.address = new InetAddress();
             si.fd = new FileDescriptor();
             getImpl().accept(si);
-            SocketCleanable.register(si.fd);   // raw fd has been set
+
+            // FIXME: disable Cleaner for now
+            //SocketCleanable.register(si.fd);   // raw fd has been set
 
             SecurityManager security = System.getSecurityManager();
             if (security != null) {

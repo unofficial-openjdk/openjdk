@@ -34,6 +34,7 @@ import java.security.PrivilegedExceptionAction;
 import java.security.PrivilegedAction;
 import java.util.Set;
 import java.util.Collections;
+import sun.nio.ch.NioSocketImpl;
 
 /**
  * This class implements client sockets (also called just
@@ -143,7 +144,7 @@ class Socket implements java.io.Closeable {
         } else {
             if (p == Proxy.NO_PROXY) {
                 if (factory == null) {
-                    impl = new PlainSocketImpl();
+                    impl = new NioSocketImpl();
                     impl.setSocket(this);
                 } else
                     setImpl();
@@ -502,7 +503,7 @@ class Socket implements java.io.Closeable {
         } else {
             // No need to do a checkOldImpl() here, we know it's an up to date
             // SocketImpl!
-            impl = new SocksSocketImpl();
+            impl = new NioSocketImpl();
         }
         if (impl != null)
             impl.setSocket(this);
@@ -907,18 +908,26 @@ class Socket implements java.io.Closeable {
             throw new SocketException("Socket is not connected");
         if (isInputShutdown())
             throw new SocketException("Socket input is shutdown");
-        InputStream is = null;
-        try {
-            is = AccessController.doPrivileged(
-                new PrivilegedExceptionAction<>() {
-                    public InputStream run() throws IOException {
-                        return impl.getInputStream();
-                    }
-                });
-        } catch (java.security.PrivilegedActionException e) {
-            throw (IOException) e.getException();
-        }
-        return is;
+        // wrap the input stream so that the close method closes this socket
+        InputStream in = impl.getInputStream();
+        return new InputStream() {
+            @Override
+            public int read() throws IOException {
+                return in.read();
+            }
+            @Override
+            public int read(byte b[], int off, int len) throws IOException {
+                return in.read(b, off, len);
+            }
+            @Override
+            public int available() throws IOException {
+                return in.available();
+            }
+            @Override
+            public void close() throws IOException {
+                Socket.this.close();
+            }
+        };
     }
 
     /**
@@ -946,18 +955,22 @@ class Socket implements java.io.Closeable {
             throw new SocketException("Socket is not connected");
         if (isOutputShutdown())
             throw new SocketException("Socket output is shutdown");
-        OutputStream os = null;
-        try {
-            os = AccessController.doPrivileged(
-                new PrivilegedExceptionAction<>() {
-                    public OutputStream run() throws IOException {
-                        return impl.getOutputStream();
-                    }
-                });
-        } catch (java.security.PrivilegedActionException e) {
-            throw (IOException) e.getException();
-        }
-        return os;
+        // wrap the output stream so that the close method closes this socket
+        OutputStream out = impl.getOutputStream();
+        return new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                out.write(b);
+            }
+            @Override
+            public void write(byte b[], int off, int len) throws IOException {
+                out.write(b, off, len);
+            }
+            @Override
+            public void close() throws IOException {
+                Socket.this.close();
+            }
+        };
     }
 
     /**

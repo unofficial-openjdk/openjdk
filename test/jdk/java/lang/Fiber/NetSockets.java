@@ -205,6 +205,67 @@ public class NetSockets {
         });
     }
 
+    /**
+     * ServerSocket accept, no blocking
+     */
+    public void testServerSocketCAccept1() {
+        test(() -> {
+            try (var listener = new ServerSocket(0)) {
+                var socket1 = new Socket(listener.getInetAddress(), listener.getLocalPort());
+                // accept should not block
+                var socket2 = listener.accept();
+                socket1.close();
+                socket2.close();
+            }
+        });
+    }
+
+    /**
+     * Fiber blocks in ServerSocket.accept
+     */
+    public void testServerSocketAccept2() {
+        test(() -> {
+            try (var listener = new ServerSocket(0)) {
+                var socket1 = new Socket();
+                ScheduledConnector.schedule(socket1, listener.getLocalSocketAddress(), DELAY);
+                // accept will block
+                var socket2 = listener.accept();
+                socket1.close();
+                socket2.close();
+            }
+        });
+    }
+
+    /**
+     * ServerSocket close while Fiber blocked in accept
+     */
+    public void testServerSocketAcceptAsyncClose() {
+        test(() -> {
+            try (var listener = new ServerSocket(0)) {
+                ScheduledCloser.schedule(listener, DELAY);
+                try {
+                    listener.accept().close();
+                    throw new RuntimeException("connection accepted???");
+                } catch (SocketException expected) { }
+            }
+        });
+    }
+
+    /**
+     * Fiber cancelled while blocked in ServerSocket.accept
+     */
+    public void testServerSocketAcceptCancel() {
+        test(() -> {
+            try (var listener = new ServerSocket(0)) {
+                var fiber = Fiber.current().orElseThrow();
+                ScheduledCanceller.schedule(fiber, DELAY);
+                try {
+                    listener.accept().close();
+                    throw new RuntimeException("connection accepted???");
+                } catch (SocketException expected) { }
+            }
+        });
+    }
 
     // -- supporting classes --
 
@@ -319,6 +380,33 @@ public class NetSockets {
 
         static void schedule(Socket s, byte[] ba, long delay) {
             new Thread(new ScheduledWriter(s, ba, delay)).start();
+        }
+    }
+
+    /**
+     * Establish a connection to a socket address after a delay
+     */
+    static class ScheduledConnector implements Runnable {
+        private final Socket socket;
+        private final SocketAddress address;
+        private final long delay;
+
+        ScheduledConnector(Socket socket, SocketAddress address, long delay) {
+            this.socket = socket;
+            this.address = address;
+            this.delay = delay;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(delay);
+                socket.connect(address);
+            } catch (Exception e) { }
+        }
+
+        static void schedule(Socket socket, SocketAddress address, long delay) {
+            new Thread(new ScheduledConnector(socket, address, delay)).start();
         }
     }
 

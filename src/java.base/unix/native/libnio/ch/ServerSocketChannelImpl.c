@@ -74,7 +74,7 @@ Java_sun_nio_ch_ServerSocketChannelImpl_initIDs(JNIEnv *env, jclass c)
 }
 
 JNIEXPORT jint JNICALL
-Java_sun_nio_ch_ServerSocketChannelImpl_accept0(JNIEnv *env, jobject this,
+Java_sun_nio_ch_ServerSocketChannelImpl_accept0(JNIEnv *env, jclass clazz,
                                                 jobject ssfdo, jobject newfdo,
                                                 jobjectArray isaa)
 {
