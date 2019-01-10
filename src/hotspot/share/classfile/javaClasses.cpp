@@ -2435,7 +2435,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope
   bool skip_hidden = !ShowHiddenFrames;
   bool is_last = false;
   oop cont = thread->last_continuation();
-  for (frame fr = thread->last_frame(); (max_depth == 0 || max_depth != total_count) && !is_last;) {
+  for (frame fr = thread->last_frame(); max_depth == 0 || max_depth != total_count;) {
     Method* method = NULL;
     int bci = 0;
     oop contScopeName = (cont != NULL) ? java_lang_ContinuationScope::name(java_lang_Continuation::scope(cont)) : (oop)NULL;
@@ -2457,8 +2457,8 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope
           is_last = true;
         } else {
           assert (Continuation::is_frame_in_continuation(fr, cont), "must be");
+          cont = java_lang_Continuation::parent(cont);
         }
-        cont = java_lang_Continuation::parent(cont);
       } else {
         assert (!Continuation::is_scope_bottom(contScope(), fr, &map), "");
       }
@@ -2535,6 +2535,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope
 
     bt.push(method, bci, contScopeName, CHECK);
     total_count++;
+    if (is_last) break;
   }
 
   log_info(stacktrace)("%s, %d", throwable->klass()->external_name(), total_count);

@@ -63,6 +63,10 @@ public:
 
 bool ClosureIsUnloadingBehaviour::is_unloading(CompiledMethod* cm) const {
   if (cm->is_nmethod()) {
+    if (cm->as_nmethod()->is_on_continuation_stack() > 0) {
+      return false; // TODO eosterlund: Maybe the right fix is to return true, but instead of making it make_unloaded() make it make_not_entrant() instead. Or something like that.
+    }
+
     IsCompiledMethodUnloadingOopClosure cl(_cl);
     static_cast<nmethod*>(cm)->oops_do(&cl);
     return cl.is_unloading();
