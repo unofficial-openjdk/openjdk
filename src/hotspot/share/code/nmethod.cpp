@@ -1635,10 +1635,6 @@ void nmethod::do_unloading(bool unloading_occurred) {
   assert(!is_zombie() && !is_unloaded(),
          "should not call follow on zombie or unloaded nmethod");
 
-  if (is_on_continuation_stack() > 0) {
-    return;
-  }
-
   if (is_unloading()) {
     make_unloaded();
   } else {
