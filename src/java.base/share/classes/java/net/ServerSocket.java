@@ -297,7 +297,7 @@ class ServerSocket implements java.io.Closeable {
         } else {
             // No need to do a checkOldImpl() here, we know it's an up to date
             // SocketImpl!
-            impl = new NioSocketImpl();
+            impl = new NioSocketImpl(true);
         }
         if (impl != null)
             impl.setServerSocket(this);
@@ -555,9 +555,6 @@ class ServerSocket implements java.io.Closeable {
             si.address = new InetAddress();
             si.fd = new FileDescriptor();
             getImpl().accept(si);
-
-            // FIXME: disable Cleaner for now
-            //SocketCleanable.register(si.fd);   // raw fd has been set
 
             SecurityManager security = System.getSecurityManager();
             if (security != null) {

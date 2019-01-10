@@ -144,7 +144,7 @@ class Socket implements java.io.Closeable {
         } else {
             if (p == Proxy.NO_PROXY) {
                 if (factory == null) {
-                    impl = new NioSocketImpl();
+                    impl = new NioSocketImpl(false);
                     impl.setSocket(this);
                 } else
                     setImpl();
@@ -503,7 +503,7 @@ class Socket implements java.io.Closeable {
         } else {
             // No need to do a checkOldImpl() here, we know it's an up to date
             // SocketImpl!
-            impl = new NioSocketImpl();
+            impl = new NioSocketImpl(false);
         }
         if (impl != null)
             impl.setSocket(this);

@@ -101,7 +101,7 @@ class ServerSocketChannelImpl
     ServerSocketChannelImpl(SelectorProvider sp) throws IOException {
         super(sp);
 
-        FileDescriptor fd = Net.socket(true);
+        FileDescriptor fd = Net.serverSocket(true);
         try {
             IOUtil.configureBlocking(fd, false);
         } catch (IOException ioe) {
