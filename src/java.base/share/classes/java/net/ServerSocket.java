@@ -543,37 +543,37 @@ class ServerSocket implements java.io.Closeable {
      * @spec JSR-51
      */
     protected final void implAccept(Socket s) throws IOException {
-        SocketImpl si = null;
-        try {
-            if (s.impl == null)
-              s.setImpl();
-            else {
-                s.impl.reset();
+        // create a new impl for the new connection
+        SocketImpl si = Socket.createImpl();
+        getImpl().accept(si);
+        SecurityManager sm = System.getSecurityManager();
+        if (sm != null) {
+            try {
+                sm.checkAccept(si.getInetAddress().getHostAddress(), si.getPort());
+            } catch (SecurityException e) {
+                si.close();
+                throw e;
             }
-            si = s.impl;
-            s.impl = null;
-            si.address = new InetAddress();
-            si.fd = new FileDescriptor();
-            getImpl().accept(si);
-
-            SecurityManager security = System.getSecurityManager();
-            if (security != null) {
-                security.checkAccept(si.getInetAddress().getHostAddress(),
-                                     si.getPort());
-            }
-        } catch (IOException e) {
-            if (si != null)
-                si.reset();
-            s.impl = si;
-            throw e;
-        } catch (SecurityException e) {
-            if (si != null)
-                si.reset();
-            s.impl = si;
-            throw e;
         }
-        s.impl = si;
+
+        // copy the timeout from the old impl to the new impl
+        SocketImpl previous = s.impl;
+        if (previous != null) {
+            int timeout = (int) previous.getOption(SocketOptions.SO_TIMEOUT);
+            if (timeout != 0) {
+                si.setOption(SocketOptions.SO_TIMEOUT, timeout);
+            }
+        }
+
+        // replace the impl, eagerly closing the old impl to ensure any
+        // resources are released
+        s.setImpl(si);
         s.postAccept();
+        if (previous != null) {
+            try {
+                previous.close();
+            } catch (IOException ignore) { }
+        }
     }
 
     /**

@@ -492,6 +492,20 @@ class Socket implements java.io.Closeable {
         });
     }
 
+    static SocketImpl createImpl() {
+        SocketImplFactory factory = Socket.factory;
+        if (factory != null) {
+            return factory.createSocketImpl();
+        } else {
+            return new NioSocketImpl(false);
+        }
+    }
+
+    void setImpl(SocketImpl si) {
+         impl = si;
+         impl.setSocket(this);
+    }
+
     /**
      * Sets impl to the system-default type of SocketImpl.
      * @since 1.4
@@ -508,7 +522,6 @@ class Socket implements java.io.Closeable {
         if (impl != null)
             impl.setSocket(this);
     }
-
 
     /**
      * Get the {@code SocketImpl} attached to this socket, creating

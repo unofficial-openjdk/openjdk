@@ -132,9 +132,9 @@ public class NioSocketImpl extends SocketImpl {
     private void ensureOpenAndConnected() throws SocketException {
         int state = this.state;
         if (state < ST_CONNECTED)
-            throw new SocketException("not connected");
+            throw new SocketException("Not connected");
         if (state > ST_CONNECTED)
-            throw new SocketException("socket closed");
+            throw new SocketException("Socket closed");
     }
 
     /**
@@ -529,14 +529,15 @@ public class NioSocketImpl extends SocketImpl {
             throw new UnsupportedOperationException("SocketImpl type not supported");
         NioSocketImpl si = (NioSocketImpl) obj;
 
+        // accept a connection
+        FileDescriptor newfd = new FileDescriptor();
+        InetSocketAddress[] isaa = new InetSocketAddress[1];
         readLock.lock();
         try {
-            InetSocketAddress[] isaa = new InetSocketAddress[1];
-
             int n = 0;
             try {
                 FileDescriptor fd = beginAccept();
-                n = ServerSocketChannelImpl.accept0(fd, si.fd, isaa);
+                n = ServerSocketChannelImpl.accept0(fd, newfd, isaa);
                 if (n == IOStatus.UNAVAILABLE && isOpen()) {
                     long nanos = NANOSECONDS.convert(timeout, TimeUnit.MILLISECONDS);
                     if (nanos > 0) {
@@ -544,7 +545,7 @@ public class NioSocketImpl extends SocketImpl {
                         do {
                             long startTime = System.nanoTime();
                             park(fd, Net.POLLIN, nanos);
-                            n = ServerSocketChannelImpl.accept0(fd, si.fd, isaa);
+                            n = ServerSocketChannelImpl.accept0(fd, newfd, isaa);
                             if (n == IOStatus.UNAVAILABLE) {
                                 nanos -= System.nanoTime() - startTime;
                                 if (nanos <= 0)
@@ -555,7 +556,7 @@ public class NioSocketImpl extends SocketImpl {
                         // accept, no timeout
                         do {
                             park(fd, Net.POLLIN, 0);
-                            n = ServerSocketChannelImpl.accept0(fd, si.fd, isaa);
+                            n = ServerSocketChannelImpl.accept0(fd, newfd, isaa);
                         } while (n == IOStatus.UNAVAILABLE && isOpen());
                     }
                 }
@@ -563,25 +564,30 @@ public class NioSocketImpl extends SocketImpl {
                 endAccept(n > 0);
                 assert IOStatus.check(n);
             }
-
-            // set fields in SocketImpl
-            synchronized (si.stateLock) {
-
-                try {
-                    IOUtil.configureBlocking(si.fd, false);
-                } catch (IOException ioe) {
-                    nd.close(si.fd);
-                    throw ioe;
-                }
-                si.stream = true;
-                si.closer = FileDescriptorCloser.create(si);
-                si.localport = Net.localAddress(si.fd).getPort();
-                si.address = isaa[0].getAddress();
-                si.port = isaa[0].getPort();
-                si.state = ST_CONNECTED;
-            }
         } finally {
             readLock.unlock();
+        }
+
+        // set non-blocking and get local address
+        InetSocketAddress localAddress;
+        try {
+            localAddress = Net.localAddress(newfd);
+            IOUtil.configureBlocking(newfd, false);
+        } catch (IOException ioe) {
+            nd.close(newfd);
+            throw ioe;
+        }
+
+        // set the fields
+        InetSocketAddress remoteAddress = isaa[0];
+        synchronized (si.stateLock) {
+            si.fd = newfd;
+            si.stream = true;
+            si.closer = FileDescriptorCloser.create(si);
+            si.localport = localAddress.getPort();
+            si.address = remoteAddress.getAddress();
+            si.port = remoteAddress.getPort();
+            si.state = ST_CONNECTED;
         }
     }
 
@@ -671,9 +677,16 @@ public class NioSocketImpl extends SocketImpl {
         boolean interrupted = false;
 
         synchronized (stateLock) {
-            if (state > ST_CONNECTED)
+            int state = this.state;
+            if (state >= ST_CLOSING)
                 return;
-            state = ST_CLOSING;
+            if (state == ST_NEW) {
+                // stillborn
+                this.state = ST_CLOSED;
+                return;
+            }
+            this.state = ST_CLOSING;
+            assert fd != null && closer != null;
 
             // unpark and wait for fibers to complete I/O operations
             if (NativeThread.isFiber(readerThread) ||
@@ -717,7 +730,7 @@ public class NioSocketImpl extends SocketImpl {
             try {
                 closer.run();
             } finally {
-                state = ST_CLOSED;
+                this.state = ST_CLOSED;
             }
         }
 
