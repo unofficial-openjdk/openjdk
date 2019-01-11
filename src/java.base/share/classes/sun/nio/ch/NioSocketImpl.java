@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ProtocolFamily;
@@ -43,6 +44,9 @@ import java.net.StandardProtocolFamily;
 import java.net.StandardSocketOptions;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.security.AccessController;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
@@ -66,7 +70,19 @@ import static sun.net.ext.ExtendedSocketOptions.SOCK_STREAM;
  * NIO based SocketImpl.
  *
  * This implementation attempts to be compatible with legacy PlainSocketImpl,
- * including throwing exceptions that are not specified by SocketImpl.
+ * including behavior and exceptions that are not specified by SocketImpl.
+ *
+ * The underlying socket used by this SocketImpl is initially configured
+ * blocking. If a connect, accept or read is attempted with a timeout, or a
+ * fiber invokes a blocking operation, then the socket is changed to non-blocking
+ * mode. When in non-blocking mode, operations that don't complete immediately
+ * will poll the socket when invoked on a thread, or park when invoked on a
+ * fiber.
+ *
+ * Behavior differences to examine:
+ * 1. "Connection reset" handling differs to PlainSocketImpl for cases where
+ * an application continues to call read or available after a reset.
+ * 2. Bounds checks on SocketInputStream/SocketOutputStream throws AIOOBE.
  */
 
 public class NioSocketImpl extends SocketImpl {
@@ -75,11 +91,13 @@ public class NioSocketImpl extends SocketImpl {
     // true if this is a SocketImpl for a ServerSocket
     private final boolean server;
 
-    // Lock held when reading or writing
+    // Lock held when reading, accepting or connecting
     private final ReentrantLock readLock = new ReentrantLock();
+
+    // Lock held when writing or connecting
     private final ReentrantLock writeLock = new ReentrantLock();
 
-    // The stateLock is needed when changing state
+    // The stateLock for read/changing state
     private final Object stateLock = new Object();
     private static final int ST_NEW = 0;
     private static final int ST_UNCONNECTED = 1;
@@ -92,6 +110,9 @@ public class NioSocketImpl extends SocketImpl {
     // set by SocketImpl.create, protected by stateLock
     private boolean stream;
     private FileDescriptorCloser closer;
+
+    // lazily set to true when the socket is configured non-blocking
+    private volatile boolean nonBlocking;
 
     // used by connect/read/write/accept, protected by stateLock
     private long readerThread;
@@ -106,6 +127,7 @@ public class NioSocketImpl extends SocketImpl {
 
     /**
      * Creates a instance of this SocketImpl.
+     * @param server true if this is a SocketImpl for a ServerSocket
      */
     public NioSocketImpl(boolean server) {
         this.server = server;
@@ -119,7 +141,7 @@ public class NioSocketImpl extends SocketImpl {
     }
 
     /**
-     * Closes a SocketException if the socket is not open.
+     * Throws SocketException if the socket is not open.
      */
     private void ensureOpen() throws SocketException {
         if (state >= ST_CLOSING)
@@ -127,7 +149,7 @@ public class NioSocketImpl extends SocketImpl {
     }
 
     /**
-     * Closes a SocketException if the socket is not open and connected.
+     * Throws SocketException if the socket is not open and connected.
      */
     private void ensureOpenAndConnected() throws SocketException {
         int state = this.state;
@@ -138,9 +160,10 @@ public class NioSocketImpl extends SocketImpl {
     }
 
     /**
-     * Disables the current thread or fiber for scheduling purposes until this
-     * socket is ready for I/O, or asynchronously closed, for up to the
-     * specified waiting time, unless the permit is available.
+     * Disables the current thread or fiber for scheduling purposes until the
+     * given file descriptor is ready for I/O, or asynchronously closed, for up
+     * to the specified waiting time.
+     * @throws IOException if an I/O error occurs of the fiber is cancelled
      */
     private void park(FileDescriptor fd, int event, long nanos) throws IOException {
         Object strand = Strands.currentStrand();
@@ -162,7 +185,7 @@ public class NioSocketImpl extends SocketImpl {
                         // throw SocketException for now
                         throw new SocketException("I/O operation cancelled");
                     }
-                } finally{
+                } finally {
                     Poller.deregister(strand, fdVal, event);
                 }
             }
@@ -174,6 +197,22 @@ public class NioSocketImpl extends SocketImpl {
                 millis = MILLISECONDS.convert(nanos, NANOSECONDS);
             }
             Net.poll(fd, event, millis);
+        }
+    }
+
+    /**
+     * Ensures that the socket is configured non-blocking when the current
+     * strand is a fiber or a timeout is specified.
+     * @throws IOException if there is an I/O error changing the blocking mode
+     */
+    private void maybeConfigureNonBlocking(FileDescriptor fd, int timeout)
+        throws IOException
+    {
+        assert readLock.isHeldByCurrentThread() || writeLock.isHeldByCurrentThread();
+        if (!nonBlocking
+                && (timeout > 0 || Strands.currentStrand() instanceof Fiber)) {
+            IOUtil.configureBlocking(fd, false);
+            nonBlocking = true;
         }
     }
 
@@ -216,13 +255,17 @@ public class NioSocketImpl extends SocketImpl {
             int n = 0;
             FileDescriptor fd = beginRead();
             try {
-                if (isInputClosed)
+                if (isInputClosed) {
                     return IOStatus.EOF;
+                }
+                int timeout = this.timeout;
+                maybeConfigureNonBlocking(fd, timeout);
                 n = IOUtil.read(fd, dst, -1, nd);
-                if (n == IOStatus.UNAVAILABLE && isOpen()) {
-                    long nanos = NANOSECONDS.convert(timeout, TimeUnit.MILLISECONDS);
-                    if (nanos > 0) {
+                if (statusImpliesRetry(n) && isOpen()) {
+                    if (timeout > 0) {
                         // read with timeout
+                        assert nonBlocking;
+                        long nanos = NANOSECONDS.convert(timeout, TimeUnit.MILLISECONDS);
                         do {
                             long startTime = System.nanoTime();
                             park(fd, Net.POLLIN, nanos);
@@ -238,7 +281,7 @@ public class NioSocketImpl extends SocketImpl {
                         do {
                             park(fd, Net.POLLIN, 0);
                             n = IOUtil.read(fd, dst, -1, nd);
-                        } while (n == IOStatus.UNAVAILABLE && isOpen());
+                        } while (statusImpliesRetry(n) && isOpen());
                     }
                 }
                 return n;
@@ -288,8 +331,9 @@ public class NioSocketImpl extends SocketImpl {
             int n = 0;
             FileDescriptor fd = beginWrite();
             try {
+                maybeConfigureNonBlocking(fd, 0);
                 n = IOUtil.write(fd, dst, -1, nd);
-                while (n == IOStatus.UNAVAILABLE && isOpen()) {
+                while (statusImpliesRetry(n) && isOpen()) {
                     park(fd, Net.POLLOUT, 0);
                     n = IOUtil.write(fd, dst, -1, nd);
                 }
@@ -320,7 +364,6 @@ public class NioSocketImpl extends SocketImpl {
                 } else {
                     fd = Net.socket(stream);
                 }
-                IOUtil.configureBlocking(fd, false);
             } catch (IOException ioe) {
                 if (!stream)
                     ResourceManager.afterUdpClose();
@@ -391,7 +434,7 @@ public class NioSocketImpl extends SocketImpl {
      * @throws UnknownHostException if the InetSocketAddress is not resolved
      * @throws IOException if the connection cannot be established
      */
-    private void implConnect(SocketAddress remote, long millis) throws IOException {
+    private void implConnect(SocketAddress remote, int millis) throws IOException {
         if (!(remote instanceof InetSocketAddress))
             throw new IllegalArgumentException("Unsupported address type");
         InetSocketAddress isa = (InetSocketAddress) remote;
@@ -410,13 +453,15 @@ public class NioSocketImpl extends SocketImpl {
                 writeLock.lock();
                 try {
                     boolean connected = false;
+                    FileDescriptor fd = beginConnect(address, port);
                     try {
-                        FileDescriptor fd = beginConnect(address, port);
+                        maybeConfigureNonBlocking(fd, millis);
                         int n = Net.connect(fd, address, port);
-                        if (n == IOStatus.UNAVAILABLE && isOpen()) {
-                            long nanos = NANOSECONDS.convert(millis, MILLISECONDS);
-                            if (nanos > 0) {
+                        if (statusImpliesRetry(n) && isOpen()) {
+                            if (millis > 0) {
                                 // connect with timeout
+                                assert nonBlocking;
+                                long nanos = NANOSECONDS.convert(millis, MILLISECONDS);
                                 do {
                                     long startTime = System.nanoTime();
                                     park(fd, Net.POLLOUT, nanos);
@@ -432,7 +477,7 @@ public class NioSocketImpl extends SocketImpl {
                                 do {
                                     park(fd, Net.POLLOUT, 0);
                                     n = SocketChannelImpl.checkConnect(fd, false);
-                                } while (n == IOStatus.UNAVAILABLE && isOpen());
+                                } while (statusImpliesRetry(n) && isOpen());
                             }
                         }
                         connected = (n > 0) && isOpen();
@@ -495,7 +540,7 @@ public class NioSocketImpl extends SocketImpl {
      * Marks the beginning of an accept operation that might block.
      * @throws SocketException if the socket is closed
      */
-    private FileDescriptor beginAccept() throws  SocketException {
+    private FileDescriptor beginAccept() throws SocketException {
         synchronized (stateLock) {
             ensureOpen();
             if (!stream)
@@ -524,24 +569,23 @@ public class NioSocketImpl extends SocketImpl {
     }
 
     @Override
-    protected void accept(SocketImpl obj) throws IOException {
-        if (!(obj instanceof NioSocketImpl))
-            throw new UnsupportedOperationException("SocketImpl type not supported");
-        NioSocketImpl si = (NioSocketImpl) obj;
-
+    protected void accept(SocketImpl si) throws IOException {
         // accept a connection
         FileDescriptor newfd = new FileDescriptor();
         InetSocketAddress[] isaa = new InetSocketAddress[1];
         readLock.lock();
         try {
             int n = 0;
+            FileDescriptor fd = beginAccept();
             try {
-                FileDescriptor fd = beginAccept();
+                int timeout = this.timeout;
+                maybeConfigureNonBlocking(fd, timeout);
                 n = ServerSocketChannelImpl.accept0(fd, newfd, isaa);
-                if (n == IOStatus.UNAVAILABLE && isOpen()) {
-                    long nanos = NANOSECONDS.convert(timeout, TimeUnit.MILLISECONDS);
-                    if (nanos > 0) {
+                if (statusImpliesRetry(n) && isOpen()) {
+                    if (timeout > 0) {
                         // accept with timeout
+                        assert nonBlocking;
+                        long nanos = NANOSECONDS.convert(timeout, TimeUnit.MILLISECONDS);
                         do {
                             long startTime = System.nanoTime();
                             park(fd, Net.POLLIN, nanos);
@@ -557,7 +601,7 @@ public class NioSocketImpl extends SocketImpl {
                         do {
                             park(fd, Net.POLLIN, 0);
                             n = ServerSocketChannelImpl.accept0(fd, newfd, isaa);
-                        } while (n == IOStatus.UNAVAILABLE && isOpen());
+                        } while (statusImpliesRetry(n) && isOpen());
                     }
                 }
             } finally {
@@ -568,11 +612,11 @@ public class NioSocketImpl extends SocketImpl {
             readLock.unlock();
         }
 
-        // set non-blocking and get local address
+        // get local address and configure accepted socket to blocking mode
         InetSocketAddress localAddress;
         try {
             localAddress = Net.localAddress(newfd);
-            IOUtil.configureBlocking(newfd, false);
+            IOUtil.configureBlocking(newfd, true);
         } catch (IOException ioe) {
             nd.close(newfd);
             throw ioe;
@@ -580,19 +624,44 @@ public class NioSocketImpl extends SocketImpl {
 
         // set the fields
         InetSocketAddress remoteAddress = isaa[0];
-        synchronized (si.stateLock) {
-            si.fd = newfd;
-            si.stream = true;
-            si.closer = FileDescriptorCloser.create(si);
-            si.localport = localAddress.getPort();
-            si.address = remoteAddress.getAddress();
-            si.port = remoteAddress.getPort();
-            si.state = ST_CONNECTED;
+        if (si instanceof NioSocketImpl) {
+            NioSocketImpl nsi = (NioSocketImpl) si;
+            synchronized (nsi.stateLock) {
+                nsi.fd = newfd;
+                nsi.stream = true;
+                nsi.closer = FileDescriptorCloser.create(nsi);
+                nsi.localport = localAddress.getPort();
+                nsi.address = remoteAddress.getAddress();
+                nsi.port = remoteAddress.getPort();
+                nsi.state = ST_CONNECTED;
+            }
+        } else {
+            // foreign SocketImpl, patch the known fields
+            PrivilegedExceptionAction<Void> pa = () -> {
+                setSocketImplField(si, "fd", newfd);
+                setSocketImplField(si, "localport", localAddress.getPort());
+                setSocketImplField(si, "address", remoteAddress.getAddress());
+                setSocketImplField(si, "port", remoteAddress.getPort());
+                return null;
+            };
+            try {
+                AccessController.doPrivileged(pa);
+            } catch (PrivilegedActionException pae) {
+                throw new InternalError(pae);
+            }
         }
     }
 
+    private void setSocketImplField(SocketImpl si, String name, Object value)
+        throws Exception
+    {
+        Field field = SocketImpl.class.getDeclaredField(name);
+        field.setAccessible(true);
+        field.set(si, value);
+    }
+
     @Override
-    protected InputStream getInputStream() throws IOException {
+    protected InputStream getInputStream() {
         return new InputStream() {
             private volatile boolean eof;
             @Override
@@ -628,7 +697,7 @@ public class NioSocketImpl extends SocketImpl {
     }
 
     @Override
-    protected OutputStream getOutputStream() throws IOException {
+    protected OutputStream getOutputStream() {
         return new OutputStream() {
             @Override
             public void write(int b) throws IOException {
@@ -792,9 +861,7 @@ public class NioSocketImpl extends SocketImpl {
                     int i = intValue(value, "IP_TOS");
                     if (i < 0 || i > 255)
                         throw new IllegalArgumentException("Invalid IP_TOS value");
-                    ProtocolFamily family = Net.isIPv6Available() ?
-                        StandardProtocolFamily.INET6 : StandardProtocolFamily.INET;
-                    Net.setSocketOption(fd, family, StandardSocketOptions.IP_TOS, i);
+                    Net.setSocketOption(fd, protocolFamily(), StandardSocketOptions.IP_TOS, i);
                     break;
                 }
                 case TCP_NODELAY: {
@@ -870,9 +937,7 @@ public class NioSocketImpl extends SocketImpl {
                 case SO_RCVBUF:
                     return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_RCVBUF);
                 case IP_TOS:
-                    ProtocolFamily family = Net.isIPv6Available() ?
-                            StandardProtocolFamily.INET6 : StandardProtocolFamily.INET;
-                    return Net.getSocketOption(fd, family, StandardSocketOptions.IP_TOS);
+                    return Net.getSocketOption(fd, protocolFamily(), StandardSocketOptions.IP_TOS);
                 case SO_KEEPALIVE:
                     return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_KEEPALIVE);
                 case SO_REUSEPORT:
@@ -966,11 +1031,14 @@ public class NioSocketImpl extends SocketImpl {
         writeLock.lock();
         try {
             int n = 0;
+            FileDescriptor fd = beginWrite();
             try {
-                FileDescriptor fd = beginWrite();
-                n = SocketChannelImpl.sendOutOfBandData(fd, (byte) data);
+                maybeConfigureNonBlocking(fd, 0);
+                do {
+                    n = SocketChannelImpl.sendOutOfBandData(fd, (byte) data);
+                } while (n == IOStatus.INTERRUPTED && isOpen());
                 if (n == IOStatus.UNAVAILABLE) {
-                    throw new RuntimeException("not implemented");
+                    throw new RuntimeException("not implemented yet");
                 }
             } finally {
                 endWrite(n > 0);
@@ -1031,6 +1099,28 @@ public class NioSocketImpl extends SocketImpl {
         }
     }
 
+    /**
+     * Returns true if the error code is UNAVAILABLE or INTERRUPTED, the
+     * error codes to indicate that an I/O operation should be retried.
+     */
+    private static boolean statusImpliesRetry(int n) {
+        return n == IOStatus.UNAVAILABLE || n == IOStatus.INTERRUPTED;
+    }
+
+    /**
+     * Returns the socket protocol family
+     */
+    private static ProtocolFamily protocolFamily() {
+        if (Net.isIPv6Available()) {
+            return StandardProtocolFamily.INET6;
+        } else {
+            return StandardProtocolFamily.INET;
+        }
+    }
+
+    /**
+     * Returns the native file descriptor
+     */
     private static int fdVal(FileDescriptor fd) {
         int fdVal = SharedSecrets.getJavaIOFileDescriptorAccess().get(fd);
         assert fdVal == IOUtil.fdVal(fd);

@@ -566,7 +566,7 @@ class ServerSocket implements java.io.Closeable {
         }
 
         // replace the impl, eagerly closing the old impl to ensure any
-        // resources are released
+        // resources can be released early
         s.setImpl(si);
         s.postAccept();
         if (previous != null) {
