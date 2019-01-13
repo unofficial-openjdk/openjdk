@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,22 +19,22 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
- *
  */
 
-#ifndef SHARE_VM_RUNTIME_ARGUMENTS_EXT_HPP
-#define SHARE_VM_RUNTIME_ARGUMENTS_EXT_HPP
+#include "precompiled.hpp"
+#include "gc/z/zArguments.hpp"
+#include "runtime/globals.hpp"
+#include "runtime/globals_extension.hpp"
+#include "utilities/debug.hpp"
 
-#include "memory/allocation.hpp"
-#include "runtime/arguments.hpp"
-
-class ArgumentsExt: AllStatic {
-public:
-  // The argument processing extension. Returns true if there is
-  // no additional parsing needed in Arguments::parse() for the option.
-  // Otherwise returns false.
-  static inline bool process_options(const JavaVMOption *option) { return false; }
-  static inline void report_unsupported_options() { }
-};
-
-#endif // SHARE_VM_RUNTIME_ARGUMENTS_EXT_HPP
+void ZArguments::initialize_platform() {
+  // The C2 barrier slow path expects vector registers to be least
+  // 16 bytes wide, which is the minimum width available on all
+  // x86-64 systems. However, the user could have speficied a lower
+  // number on the command-line, in which case we print a warning
+  // and raise it to 16.
+  if (MaxVectorSize < 16) {
+    warning("ZGC requires MaxVectorSize to be at least 16");
+    FLAG_SET_DEFAULT(MaxVectorSize, 16);
+  }
+}
