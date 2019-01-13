@@ -379,6 +379,74 @@ public class NioSocketImpl extends SocketImpl {
     }
 
     /**
+     * For use by ServerSocket to set the state and other fields after a
+     * connection is accepted by a ServerSocket using a custom SocketImpl.
+     * The protected fields defined by SocketImpl should be set.
+     */
+    public void postCustomAccept() {
+        synchronized (stateLock) {
+            assert state == ST_NEW;
+            assert fd.valid() && localport != 0 && address != null && port != 0;
+            stream = true;
+            closer = FileDescriptorCloser.create(this);
+            state = ST_CONNECTED;
+        }
+    }
+
+    /**
+     * For use by ServerSocket to copy the state from this connected SocketImpl
+     * to a target SocketImpl. If the target SocketImpl is not a newly created
+     * SocketImpl then it is first closed to release any resources. The target
+     * SocketImpl becomes the owner of the file descriptor, this SocketImpl
+     * is marked as closed and should be discarded.
+     */
+    public void copyTo(SocketImpl si) {
+        if (si instanceof NioSocketImpl) {
+            NioSocketImpl nsi = (NioSocketImpl) si;
+            synchronized (nsi.stateLock) {
+                if (nsi.state != ST_NEW) {
+                    try {
+                        nsi.close();
+                    } catch (IOException ignore) { }
+                }
+                synchronized (this.stateLock) {
+                    // this SocketImpl should be connected
+                    assert state == ST_CONNECTED && fd.valid()
+                        && localport != 0 && address != null && port != 0;
+
+                    // copy fields
+                    nsi.fd = this.fd;
+                    nsi.stream = this.stream;
+                    nsi.closer = FileDescriptorCloser.create(nsi);
+                    nsi.localport = this.localport;
+                    nsi.address = this.address;
+                    nsi.port = this.port;
+                    nsi.state = ST_CONNECTED;
+
+                    // disable closer to prevent GC'ing of this impl from
+                    // closing the file descriptor
+                    this.closer.disable();
+                    this.state = ST_CLOSED;
+                }
+            }
+        } else {
+            synchronized (this.stateLock) {
+                // this SocketImpl should be connected
+                assert state == ST_CONNECTED && fd.valid()
+                        && localport != 0 && address != null && port != 0;
+
+                // set fields in foreign impl
+                setSocketImplFields(si, fd, localport, address, port);
+
+                // disable closer to prevent GC'ing of this impl from
+                // closing the file descriptor
+                this.closer.disable();
+                this.state = ST_CLOSED;
+            }
+        }
+    }
+
+    /**
      * Marks the beginning of a connect operation that might block.
      * @throws SocketException if the socket is closed or already connected
      */
@@ -636,28 +704,12 @@ public class NioSocketImpl extends SocketImpl {
                 nsi.state = ST_CONNECTED;
             }
         } else {
-            // foreign SocketImpl, patch the known fields
-            PrivilegedExceptionAction<Void> pa = () -> {
-                setSocketImplField(si, "fd", newfd);
-                setSocketImplField(si, "localport", localAddress.getPort());
-                setSocketImplField(si, "address", remoteAddress.getAddress());
-                setSocketImplField(si, "port", remoteAddress.getPort());
-                return null;
-            };
-            try {
-                AccessController.doPrivileged(pa);
-            } catch (PrivilegedActionException pae) {
-                throw new InternalError(pae);
-            }
+            // set fields in foreign impl
+            setSocketImplFields(si, newfd,
+                                localAddress.getPort(),
+                                remoteAddress.getAddress(),
+                                remoteAddress.getPort());
         }
-    }
-
-    private void setSocketImplField(SocketImpl si, String name, Object value)
-        throws Exception
-    {
-        Field field = SocketImpl.class.getDeclaredField(name);
-        field.setAccessible(true);
-        field.set(si, value);
     }
 
     @Override
@@ -1097,6 +1149,10 @@ public class NioSocketImpl extends SocketImpl {
                 }
             }
         }
+
+        boolean disable() {
+            return CLOSED.compareAndSet(this, false, true);
+        }
     }
 
     /**
@@ -1125,5 +1181,36 @@ public class NioSocketImpl extends SocketImpl {
         int fdVal = SharedSecrets.getJavaIOFileDescriptorAccess().get(fd);
         assert fdVal == IOUtil.fdVal(fd);
         return fdVal;
+    }
+
+    /**
+     * Sets the SocketImpl fields to the given values.
+     */
+    private static void setSocketImplFields(SocketImpl si,
+                                            FileDescriptor fd,
+                                            int localport,
+                                            InetAddress address,
+                                            int port)
+    {
+        PrivilegedExceptionAction<Void> pa = () -> {
+            setSocketImplField(si, "fd", fd);
+            setSocketImplField(si, "localport", localport);
+            setSocketImplField(si, "address", address);
+            setSocketImplField(si, "port", port);
+            return null;
+        };
+        try {
+            AccessController.doPrivileged(pa);
+        } catch (PrivilegedActionException pae) {
+            throw new InternalError(pae);
+        }
+    }
+
+    private static void setSocketImplField(SocketImpl si, String name, Object value)
+        throws Exception
+    {
+        Field field = SocketImpl.class.getDeclaredField(name);
+        field.setAccessible(true);
+        field.set(si, value);
     }
 }

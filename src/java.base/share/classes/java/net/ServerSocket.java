@@ -543,36 +543,77 @@ class ServerSocket implements java.io.Closeable {
      * @spec JSR-51
      */
     protected final void implAccept(Socket s) throws IOException {
-        // create a new impl for the new connection
-        SocketImpl si = Socket.createImpl();
-        getImpl().accept(si);
+        SocketImpl impl = getImpl();
+        SocketImpl si = s.impl;
+
+        // Socket does not have a SocketImpl
+        if (si == null) {
+            // create a SocketImpl and accept the connection
+            si = Socket.createImpl();
+            impl.accept(si);
+            securityCheckAccept(si);
+
+            // a custom impl has accepted the connection with a NIO SocketImpl
+            if (!(impl instanceof NioSocketImpl) && (si instanceof NioSocketImpl)) {
+                ((NioSocketImpl) si).postCustomAccept();
+            }
+
+            // bind Socket to the SocketImpl and update socket state
+            s.setImpl(si);
+            s.postAccept();
+            return;
+        }
+
+        // ServerSocket or Socket is using NIO SocketImpl
+        if (impl instanceof NioSocketImpl || si instanceof NioSocketImpl) {
+            // not implemented yet
+            if (impl instanceof NioSocketImpl && impl.getClass() != NioSocketImpl.class)
+                throw new UnsupportedOperationException();
+            if (si instanceof NioSocketImpl && si.getClass() != NioSocketImpl.class)
+                throw new UnsupportedOperationException();
+
+            // accept connection via new SocketImpl
+            NioSocketImpl nsi = new NioSocketImpl(false);
+            impl.accept(nsi);
+            securityCheckAccept(nsi);
+
+            // copy state to the existing SocketImpl and update socket state
+            nsi.copyTo(si);
+            s.postAccept();
+            return;
+        }
+
+        // ServerSocket and Socket bound to custom SocketImpls
+        s.impl = null; // break connection to impl
+        boolean completed = false;
+        try {
+            si.reset();
+            si.fd = new FileDescriptor();
+            si.address = new InetAddress();
+            impl.accept(si);
+            securityCheckAccept(si);
+            completed = true;
+        } finally {
+            if (!completed)
+                si.reset();
+            s.impl = si;  // restore connection to impl
+        }
+        s.postAccept();
+    }
+
+    /**
+     * Invokes the security manager's checkAccept method. If the permission
+     * check fails then it closes the SocketImpl.
+     */
+    private void securityCheckAccept(SocketImpl si) throws IOException {
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             try {
                 sm.checkAccept(si.getInetAddress().getHostAddress(), si.getPort());
-            } catch (SecurityException e) {
+            } catch (SecurityException se) {
                 si.close();
-                throw e;
+                throw se;
             }
-        }
-
-        // copy the timeout from the old impl to the new impl
-        SocketImpl previous = s.impl;
-        if (previous != null) {
-            int timeout = (int) previous.getOption(SocketOptions.SO_TIMEOUT);
-            if (timeout != 0) {
-                si.setOption(SocketOptions.SO_TIMEOUT, timeout);
-            }
-        }
-
-        // replace the impl, eagerly closing the old impl to ensure any
-        // resources can be released early
-        s.setImpl(si);
-        s.postAccept();
-        if (previous != null) {
-            try {
-                previous.close();
-            } catch (IOException ignore) { }
         }
     }
 
