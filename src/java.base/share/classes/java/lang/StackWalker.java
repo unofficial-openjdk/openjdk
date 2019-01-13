@@ -232,7 +232,9 @@ public final class StackWalker {
          *         in which this frame exists or {@code null} if this frame is 
          *         not in a continuation.
          */
-        public String getContinuationScopeName();
+        public default String getContinuationScopeName() {
+            return null;
+        }
 
         /**
          * Gets a {@code StackTraceElement} for this stack frame.
