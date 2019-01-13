@@ -2704,7 +2704,7 @@ void java_lang_StackFrameInfo::to_stack_trace_element(Handle stackFrame, Handle 
   InstanceKlass* holder = InstanceKlass::cast(clazz);
   Method* method = java_lang_StackFrameInfo::get_method(stackFrame, holder, CHECK);
   oop contScope = stackFrame->obj_field(java_lang_StackFrameInfo::_contScope_offset);
-  Handle contScopeName(THREAD, contScope != (oop)NULL ? java_lang_ContinuationScope::name(contScope) : NULL);
+  Handle contScopeName(THREAD, contScope != (oop)NULL ? java_lang_ContinuationScope::name(contScope) : (oop)NULL);
 
   short version = stackFrame->short_field(_version_offset);
   short bci = stackFrame->short_field(_bci_offset);
