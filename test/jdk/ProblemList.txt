@@ -566,12 +566,6 @@ java/net/DatagramSocket/SendDatagramToBadAddress.java           7143960 macosx-a
 
 java/net/ServerSocket/AcceptInheritHandle.java                  8211854 aix-ppc64
 
-# SOCKS support not integrated yet
-java/net/Socks/SocksProxyVersion.java                           0000000 generic-all
-java/net/Socks/SocksV4Test.java                                 0000000 generic-all
-java/net/Socks/SocksIPv6Test.java                               0000000 generic-all
-java/net/Socket/SocksConnectTimeout.java                        0000000 generic-all
-
 java/net/Inet6Address/B6206527.java                             8216417 macosx-all
 java/net/ipv6tests/B6521014.java                                8216417 macosx-all
 

@@ -569,8 +569,6 @@ class ServerSocket implements java.io.Closeable {
             // not implemented yet
             if (impl instanceof NioSocketImpl && impl.getClass() != NioSocketImpl.class)
                 throw new UnsupportedOperationException();
-            if (si instanceof NioSocketImpl && si.getClass() != NioSocketImpl.class)
-                throw new UnsupportedOperationException();
 
             // accept connection via new SocketImpl
             NioSocketImpl nsi = new NioSocketImpl(false);
