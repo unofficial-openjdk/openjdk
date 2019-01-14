@@ -83,13 +83,13 @@ public class SocksProxyVersion implements Runnable {
         // SOCKS V4
         System.setProperty("socksProxyVersion", Integer.toString(4));
         this.expected = 4;
-        //check(new Socket(), addr, port);
+        check(new Socket(), addr, port);
         check(new Socket(proxy), addr, port);
 
         // SOCKS V5
         System.setProperty("socksProxyVersion", Integer.toString(5));
         this.expected = 5;
-        //check(new Socket(), addr, port);
+        check(new Socket(), addr, port);
         check(new Socket(proxy), addr, port);
     }
 

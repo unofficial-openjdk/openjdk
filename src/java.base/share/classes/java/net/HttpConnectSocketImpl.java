@@ -26,13 +26,13 @@
 package java.net;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import sun.nio.ch.NioSocketImpl;
 
 /**
  * Basic SocketImpl that relies on the internal HTTP protocol handler
@@ -43,7 +43,7 @@ import java.util.Set;
  * @since 1.8
  */
 
-/*package*/ class HttpConnectSocketImpl extends SocketImpl {
+/*package*/ class HttpConnectSocketImpl extends NioSocketImpl {
 
     private static final String httpURLClazzStr =
                                   "sun.net.www.protocol.http.HttpURLConnection";
@@ -78,12 +78,8 @@ import java.util.Set;
         }
     }
 
-    HttpConnectSocketImpl(String server, int port) {
-        this.server = server;
-        this.port = port;
-    }
-
     HttpConnectSocketImpl(Proxy proxy) {
+        super(false);
         SocketAddress a = proxy.address();
         if ( !(a instanceof InetSocketAddress) )
             throw new IllegalArgumentException("Unsupported address type");
@@ -91,13 +87,6 @@ import java.util.Set;
         InetSocketAddress ad = (InetSocketAddress) a;
         server = ad.getHostString();
         port = ad.getPort();
-    }
-
-    @Override
-    protected void create(boolean stream) throws IOException {
-        if (!stream) {
-            throw new IOException("datagram socket not supported");
-        }
     }
 
     @Override
@@ -137,7 +126,7 @@ import java.util.Set;
 
         // update the Sockets impl to the impl from the http Socket
         SocketImpl si = httpSocket.impl;
-        this.getSocket().setImpl(si);
+        ((SocketImpl) this).getSocket().setImpl(si);
 
         // best effort is made to try and reset options previously set
         Set<Map.Entry<Integer,Object>> options = optionsMap.entrySet();
@@ -149,63 +138,14 @@ import java.util.Set;
     }
 
     @Override
-    protected void bind(InetAddress host, int port) throws IOException {
-        throw new IOException("unable to bind HTTP proxy client to local address");
-    }
-
-    @Override
-    protected void listen(int backlog) throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    protected void accept(SocketImpl s) throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    protected InputStream getInputStream() throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    protected OutputStream getOutputStream() throws IOException {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    protected int available() throws IOException {
-        return 0;
-    }
-
-    @Override
-    protected void close() throws IOException {
-    }
-
-    @Override
     public void setOption(int opt, Object val) throws SocketException {
-        // set option on temporary socket to test that option/value are valid
-        try (Socket s = new Socket()) {
-            s.getImpl().setOption(opt, val);
-        } catch (IOException ioe) {
-            throw new SocketException(ioe.getMessage());
-        }
+        super.setOption(opt, val);
+
+        if (external_address != null)
+            return;  // we're connected, just return
 
         // store options so that they can be re-applied to the impl after connect
         optionsMap.put(opt, val);
-    }
-
-    @Override
-    public Object getOption(int opt) throws SocketException {
-        Object value = optionsMap.get(opt);
-        if (value != null)
-            return value;
-        // get option value from temporary socket to test that option is valid
-        try (Socket s = new Socket()) {
-            return s.getImpl().getOption(opt);
-        } catch (IOException ioe) {
-            throw new SocketException(ioe.getMessage());
-        }
     }
 
     private Socket privilegedDoTunnel(final String urlString,
@@ -231,7 +171,7 @@ import java.util.Set;
         URL destURL = new URL(urlString);
         HttpURLConnection conn = (HttpURLConnection) destURL.openConnection(proxy);
         conn.setConnectTimeout(connectTimeout);
-        Object value = optionsMap.get(SocketOptions.SO_TIMEOUT);
+        Object value = getOption(SocketOptions.SO_TIMEOUT);
         if (value != null) {
             Integer timeout = (Integer) value;
             conn.setReadTimeout(timeout);
@@ -268,10 +208,5 @@ import java.util.Set;
             return external_address.getPort();
         else
             return super.getPort();
-    }
-
-    @Override
-    protected void sendUrgentData(int data) {
-        throw new UnsupportedOperationException();
     }
 }

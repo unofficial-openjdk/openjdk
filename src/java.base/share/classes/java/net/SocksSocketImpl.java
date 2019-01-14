@@ -55,9 +55,8 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
     /* true if the Proxy has been set programmatically */
     private boolean applicationSetProxy;  /* false */
 
-
-    SocksSocketImpl(boolean server) {
-        super(server);
+    SocksSocketImpl() {
+        super(false);
     }
 
     SocksSocketImpl(Proxy proxy) {
@@ -932,8 +931,6 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
      *               connection.
      */
     protected void acceptFrom(SocketImpl s, InetSocketAddress saddr) throws IOException {
-        if (true) throw new RuntimeException("Should not get here");
-
         if (cmdsock == null) {
             // Not a Socks ServerSocket.
             return;

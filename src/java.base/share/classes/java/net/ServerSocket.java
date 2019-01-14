@@ -551,11 +551,14 @@ class ServerSocket implements java.io.Closeable {
             // create a SocketImpl and accept the connection
             si = Socket.createImpl();
             impl.accept(si);
-            securityCheckAccept(si);
 
-            // a custom impl has accepted the connection with a NIO SocketImpl
-            if (!(impl instanceof NioSocketImpl) && (si instanceof NioSocketImpl)) {
-                ((NioSocketImpl) si).postCustomAccept();
+            try {
+                // a custom impl has accepted the connection with a NIO SocketImpl
+                if (!(impl instanceof NioSocketImpl) && (si instanceof NioSocketImpl)) {
+                    ((NioSocketImpl) si).postCustomAccept();
+                }
+            } finally {
+                securityCheckAccept(si);  // closes si if permission check fails
             }
 
             // bind Socket to the SocketImpl and update socket state
@@ -566,14 +569,14 @@ class ServerSocket implements java.io.Closeable {
 
         // ServerSocket or Socket is using NIO SocketImpl
         if (impl instanceof NioSocketImpl || si instanceof NioSocketImpl) {
-            // not implemented yet
+            // not implemented
             if (impl instanceof NioSocketImpl && impl.getClass() != NioSocketImpl.class)
                 throw new UnsupportedOperationException();
 
             // accept connection via new SocketImpl
             NioSocketImpl nsi = new NioSocketImpl(false);
             impl.accept(nsi);
-            securityCheckAccept(nsi);
+            securityCheckAccept(nsi);  // closes si if permission check fails
 
             // copy state to the existing SocketImpl and update socket state
             nsi.copyTo(si);
@@ -589,7 +592,7 @@ class ServerSocket implements java.io.Closeable {
             si.fd = new FileDescriptor();
             si.address = new InetAddress();
             impl.accept(si);
-            securityCheckAccept(si);
+            securityCheckAccept(si);  // closes si if permission check fails
             completed = true;
         } finally {
             if (!completed)

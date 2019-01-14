@@ -83,6 +83,8 @@ import static sun.net.ext.ExtendedSocketOptions.SOCK_STREAM;
  * 1. "Connection reset" handling differs to PlainSocketImpl for cases where
  * an application continues to call read or available after a reset.
  * 2. Bounds checks on SocketInputStream/SocketOutputStream throws AIOOBE.
+ * 3. SocketInputStream/SocketOutputStream limit I/O buffer size to 128K.
+ * 4. Solaris specific SO_FLOW_SLA option not implemented yet.
  */
 
 public class NioSocketImpl extends SocketImpl {
@@ -383,10 +385,11 @@ public class NioSocketImpl extends SocketImpl {
      * connection is accepted by a ServerSocket using a custom SocketImpl.
      * The protected fields defined by SocketImpl should be set.
      */
-    public void postCustomAccept() {
+    public void postCustomAccept() throws IOException {
         synchronized (stateLock) {
             assert state == ST_NEW;
             assert fd.valid() && localport != 0 && address != null && port != 0;
+            IOUtil.configureBlocking(fd, true);
             stream = true;
             closer = FileDescriptorCloser.create(this);
             state = ST_CONNECTED;
@@ -870,15 +873,15 @@ public class NioSocketImpl extends SocketImpl {
         return Collections.unmodifiableSet(options);
     }
 
-    private boolean booleanValue(Object value, String desc) throws SocketException {
+    private boolean booleanValue(Object value, String desc) {
         if (!(value instanceof Boolean))
-            throw new SocketException("Bad value for " + desc);
+            throw new IllegalArgumentException("Bad value for " + desc);
         return (boolean) value;
     }
 
-    private int intValue(Object value, String desc) throws SocketException {
+    private int intValue(Object value, String desc) {
         if (!(value instanceof Integer))
-            throw new SocketException("Bad value for " + desc);
+            throw new IllegalArgumentException("Bad value for " + desc);
         return (int) value;
     }
 
@@ -889,15 +892,12 @@ public class NioSocketImpl extends SocketImpl {
             try {
                 switch (opt) {
                 case SO_LINGER: {
-                    if (!(value instanceof Integer) && !(value instanceof Boolean))
-                        throw new SocketException("Bad value for SO_LINGER");
-                    int i = 0;
-                    if (value instanceof Integer) {
-                        i = ((Integer) value).intValue();
-                        if (i < 0)
-                            i = Integer.valueOf(-1);
-                        if (i > 65535)
-                            i = Integer.valueOf(65535);
+                    int i;
+                    if (value instanceof Boolean) {
+                        // maintain compatibility with PlainSocketImpl
+                        i = 0;
+                    } else {
+                        i = intValue(value, "SO_LINGER");
                     }
                     Net.setSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_LINGER, i);
                     break;
@@ -911,8 +911,6 @@ public class NioSocketImpl extends SocketImpl {
                 }
                 case IP_TOS: {
                     int i = intValue(value, "IP_TOS");
-                    if (i < 0 || i > 255)
-                        throw new IllegalArgumentException("Invalid IP_TOS value");
                     Net.setSocketOption(fd, protocolFamily(), StandardSocketOptions.IP_TOS, i);
                     break;
                 }
@@ -923,15 +921,11 @@ public class NioSocketImpl extends SocketImpl {
                 }
                 case SO_SNDBUF: {
                     int i = intValue(value, "SO_SNDBUF");
-                    if (i < 0)
-                        throw new SocketException("bad parameter for SO_SNDBUF");
                     Net.setSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_SNDBUF, i);
                     break;
                 }
                 case SO_RCVBUF: {
                     int i = intValue(value, "SO_RCVBUF");
-                    if (i < 0)
-                        throw new SocketException("bad parameter for SO_RCVBUF");
                     Net.setSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_RCVBUF, i);
                     break;
                 }

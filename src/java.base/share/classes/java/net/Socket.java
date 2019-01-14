@@ -497,7 +497,7 @@ class Socket implements java.io.Closeable {
         if (factory != null) {
             return factory.createSocketImpl();
         } else {
-            return new NioSocketImpl(false);
+            return new SocksSocketImpl();
         }
     }
 
@@ -517,7 +517,7 @@ class Socket implements java.io.Closeable {
         } else {
             // No need to do a checkOldImpl() here, we know it's an up to date
             // SocketImpl!
-            impl = new NioSocketImpl(false);
+            impl = new SocksSocketImpl();
         }
         if (impl != null)
             impl.setSocket(this);
@@ -1128,7 +1128,7 @@ class Socket implements java.io.Closeable {
      * Tests if {@link SocketOptions#SO_OOBINLINE SO_OOBINLINE} is enabled.
      *
      * @return a {@code boolean} indicating whether or not
-     *         {@link SocketOptions#SO_OOBINLINE SO_OOBINLINE}is enabled.
+     *         {@link SocketOptions#SO_OOBINLINE SO_OOBINLINE} is enabled.
      *
      * @exception SocketException if there is an error
      * in the underlying protocol, such as a TCP error.
