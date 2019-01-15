@@ -341,6 +341,8 @@ public class Continuation {
                 if (reset) { maxSize = origMaxSize; sp = origSP; fp = origFP; pc = origPC; refSP = origRefSP; } // perftest only
                 postYieldCleanup(origRefSP);
 
+                this.entryPC = 0; // cannot be done in native code, as a safpoint on the transition back to Java may want to walk the stack (with the still-mounted continuation)
+
                 unmount();
                 } catch (Throwable e) { e.printStackTrace(); System.exit(1); }
                 assert !hasLeak() : "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);

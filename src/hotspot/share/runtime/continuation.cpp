@@ -2199,7 +2199,6 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 
   cont.set_flag(FLAG_SAFEPOINT_YIELD, safepoint_yield);
 
-  cont.set_entryPC(0);
   cont.write();
 
   // notify JVMTI
@@ -3091,6 +3090,7 @@ static address get_entry_pc_past_barrier(JavaThread* thread, const frame& f) {
   assert (cont != NULL, "");
   address pc = java_lang_Continuation::entryPC(cont);
   // log_trace(jvmcont)("YEYEYEYEYEYEYEEYEY: " INTPTR_FORMAT, p2i(pc));
+  assert (pc != NULL, "");
   return pc;
 }
 
