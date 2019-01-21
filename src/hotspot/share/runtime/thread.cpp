@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1675,6 +1675,8 @@ void JavaThread::initialize() {
     SafepointMechanism::initialize_header(this);
   }
 
+  _class_to_be_initialized = NULL;
+
   pd_initialize();
 }
 
@@ -2673,8 +2675,7 @@ void JavaThread::remove_stack_guard_pages() {
 }
 
 void JavaThread::enable_stack_reserved_zone() {
-  assert(_stack_guard_state != stack_guard_unused, "must be using guard pages.");
-  assert(_stack_guard_state != stack_guard_enabled, "already enabled");
+  assert(_stack_guard_state == stack_guard_reserved_disabled, "inconsistent state");
 
   // The base notation is from the stack's point of view, growing downward.
   // We need to adjust it to work correctly with guard_memory()
@@ -2692,11 +2693,10 @@ void JavaThread::enable_stack_reserved_zone() {
 }
 
 void JavaThread::disable_stack_reserved_zone() {
-  assert(_stack_guard_state != stack_guard_unused, "must be using guard pages.");
-  assert(_stack_guard_state != stack_guard_reserved_disabled, "already disabled");
+  assert(_stack_guard_state == stack_guard_enabled, "inconsistent state");
 
   // Simply return if called for a thread that does not use guard pages.
-  if (_stack_guard_state == stack_guard_unused) return;
+  if (_stack_guard_state != stack_guard_enabled) return;
 
   // The base notation is from the stack's point of view, growing downward.
   // We need to adjust it to work correctly with guard_memory()
@@ -3732,16 +3732,16 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // Timing (must come after argument parsing)
   TraceTime timer("Create VM", TRACETIME_LOG(Info, startuptime));
 
+  // Initialize the os module after parsing the args
+  jint os_init_2_result = os::init_2();
+  if (os_init_2_result != JNI_OK) return os_init_2_result;
+
 #ifdef CAN_SHOW_REGISTERS_ON_ASSERT
   // Initialize assert poison page mechanism.
   if (ShowRegistersOnAssert) {
     initialize_assert_poison();
   }
 #endif // CAN_SHOW_REGISTERS_ON_ASSERT
-
-  // Initialize the os module after parsing the args
-  jint os_init_2_result = os::init_2();
-  if (os_init_2_result != JNI_OK) return os_init_2_result;
 
   SafepointMechanism::initialize();
 

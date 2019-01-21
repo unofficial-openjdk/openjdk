@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@
 #include "AccessBridgePackages.h"               // for debugging only
 #include <windows.h>
 #include <malloc.h>
+#include <new>
 
 DEBUG_CODE(extern HWND theDialogWindow);
 extern "C" {
@@ -46,6 +47,9 @@ AccessBridgeQueueElement::AccessBridgeQueueElement(char *buf, int size) {
     next = (AccessBridgeQueueElement *) 0;
     previous = (AccessBridgeQueueElement *) 0;
     buffer = (char *) malloc(bufsize);
+    if (buffer == NULL) {
+        throw std::bad_alloc();
+    }
     memcpy(buffer, buf, bufsize);
 }
 
@@ -84,17 +88,17 @@ AccessBridgeMessageQueue::getEventsWaiting() {
  */
 QueueReturns
 AccessBridgeMessageQueue::add(AccessBridgeQueueElement *element) {
-    PrintDebugString("  in AccessBridgeMessageQueue::add()");
-    PrintDebugString("    queue size = %d", size);
+    PrintDebugString("[INFO]:   in AccessBridgeMessageQueue::add()");
+    PrintDebugString("[INFO]:     queue size = %d", size);
 
     QueueReturns returnVal = cElementPushedOK;
     if (queueLocked) {
-        PrintDebugString("    queue was locked; returning cQueueInUse!");
+        PrintDebugString("[WARN]:     queue was locked; returning cQueueInUse!");
         return cQueueInUse;
     }
     queueLocked = TRUE;
     {
-        PrintDebugString("    adding element to queue!");
+        PrintDebugString("[INFO]:     adding element to queue!");
         if (end == (AccessBridgeQueueElement *) 0) {
             if (start == (AccessBridgeQueueElement *) 0 && size == 0) {
                 start = element;
@@ -114,7 +118,7 @@ AccessBridgeMessageQueue::add(AccessBridgeQueueElement *element) {
         }
     }
     queueLocked = FALSE;
-    PrintDebugString("    returning from AccessBridgeMessageQueue::add()");
+    PrintDebugString("[INFO]:     returning from AccessBridgeMessageQueue::add()");
     return returnVal;
 }
 
@@ -125,17 +129,17 @@ AccessBridgeMessageQueue::add(AccessBridgeQueueElement *element) {
  */
 QueueReturns
 AccessBridgeMessageQueue::remove(AccessBridgeQueueElement **element) {
-    PrintDebugString("  in AccessBridgeMessageQueue::remove()");
-    PrintDebugString("    queue size = %d", size);
+    PrintDebugString("[INFO]:   in AccessBridgeMessageQueue::remove()");
+    PrintDebugString("[INFO]:     queue size = %d", size);
 
     QueueReturns returnVal = cMoreMessages;
     if (queueLocked) {
-        PrintDebugString("    queue was locked; returning cQueueInUse!");
+        PrintDebugString("[WARN]:     queue was locked; returning cQueueInUse!");
         return cQueueInUse;
     }
     queueLocked = TRUE;
     {
-        PrintDebugString("    removing element from queue!");
+        PrintDebugString("[INFO]:     removing element from queue!");
         if (size > 0) {
             if (start != (AccessBridgeQueueElement *) 0) {
                 *element = start;
@@ -157,7 +161,7 @@ AccessBridgeMessageQueue::remove(AccessBridgeQueueElement **element) {
         }
     }
     queueLocked = FALSE;
-    PrintDebugString("    returning from AccessBridgeMessageQueue::remove()");
+    PrintDebugString("[INFO]:     returning from AccessBridgeMessageQueue::remove()");
     return returnVal;
 }
 

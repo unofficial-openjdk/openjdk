@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,16 @@
  *
  */
 
-#ifndef SHARE_VM_GC_G1_DIRTYCARDQUEUE_HPP
-#define SHARE_VM_GC_G1_DIRTYCARDQUEUE_HPP
+#ifndef SHARE_GC_G1_DIRTYCARDQUEUE_HPP
+#define SHARE_GC_G1_DIRTYCARDQUEUE_HPP
 
 #include "gc/shared/ptrQueue.hpp"
 #include "memory/allocation.hpp"
 
 class FreeIdSet;
 class DirtyCardQueueSet;
+class JavaThread;
+class Monitor;
 
 // A closure class for processing card table entries.  Note that we don't
 // require these closure objects to be stack-allocated.
@@ -162,4 +164,4 @@ public:
 
 };
 
-#endif // SHARE_VM_GC_G1_DIRTYCARDQUEUE_HPP
+#endif // SHARE_GC_G1_DIRTYCARDQUEUE_HPP
