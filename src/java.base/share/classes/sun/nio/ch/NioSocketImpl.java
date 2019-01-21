@@ -120,8 +120,11 @@ public class NioSocketImpl extends SocketImpl {
     private long readerThread;
     private long writerThread;
 
-    // read or accept timeout in millis, protected by stateLock
-    private int timeout;
+    // true is SO_REUSEADDR is emulated
+    private boolean isReuseAddress;
+
+    // read or accept timeout in millis
+    private volatile int timeout;
 
     // flags to indicate if the connection is shutdown for input and output
     private volatile boolean isInputClosed;
@@ -590,10 +593,11 @@ public class NioSocketImpl extends SocketImpl {
                 throw new SocketException("Already bound");
             NetHooks.beforeTcpBind(fd, host, port);
             Net.bind(fd, host, port);
-            InetSocketAddress localAddress = Net.localAddress(fd);
-
-            address = localAddress.getAddress();
-            localport = localAddress.getPort();
+            // set the address field to the address specified to the method to
+            // keep compatibility with PlainSocketImpl. When binding to 0.0.0.0
+            // then the actual local address will be ::0 when IPv6 is enabled.
+            address = host;
+            localport = Net.localAddress(fd).getPort();
         }
     }
 
@@ -812,6 +816,14 @@ public class NioSocketImpl extends SocketImpl {
             this.state = ST_CLOSING;
             assert fd != null && closer != null;
 
+            // shutdown output when linger interval not set
+            try {
+                var SO_LINGER = StandardSocketOptions.SO_LINGER;
+                if ((int) Net.getSocketOption(fd, Net.UNSPEC, SO_LINGER) != 0) {
+                    Net.shutdown(fd, Net.SHUT_WR);
+                }
+            } catch (IOException ignore) { }
+
             // unpark and wait for fibers to complete I/O operations
             if (NativeThread.isFiber(readerThread) ||
                     NativeThread.isFiber(writerThread)) {
@@ -894,8 +906,11 @@ public class NioSocketImpl extends SocketImpl {
                 case SO_LINGER: {
                     int i;
                     if (value instanceof Boolean) {
-                        // maintain compatibility with PlainSocketImpl
-                        i = 0;
+                        boolean b = booleanValue(value, "SO_LINGER");
+                        if (b) {
+                            throw new IllegalArgumentException("SO_LINGER not be set to true");
+                        }
+                        i = -1;
                     } else {
                         i = intValue(value, "SO_LINGER");
                     }
@@ -941,7 +956,11 @@ public class NioSocketImpl extends SocketImpl {
                 }
                 case SO_REUSEADDR: {
                     boolean b = booleanValue(value, "SO_REUSEADDR");
-                    Net.setSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_REUSEADDR, b);
+                    if (Net.useExclusiveBind()) {
+                        isReuseAddress = b;
+                    } else {
+                        Net.setSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_REUSEADDR, b);
+                    }
                     break;
                 }
                 case SO_REUSEPORT: {
@@ -972,10 +991,20 @@ public class NioSocketImpl extends SocketImpl {
                     return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.TCP_NODELAY);
                 case SO_OOBINLINE:
                     return Net.getSocketOption(fd, Net.UNSPEC, ExtendedSocketOption.SO_OOBINLINE);
-                case SO_LINGER:
-                    return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_LINGER);
+                case SO_LINGER: {
+                    int i = (int) Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_LINGER);
+                    if (i == -1) {
+                        return Boolean.FALSE;
+                    } else {
+                        return i;
+                    }
+                }
                 case SO_REUSEADDR:
-                    return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_REUSEADDR);
+                    if (Net.useExclusiveBind()) {
+                        return isReuseAddress;
+                    } else {
+                        return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_REUSEADDR);
+                    }
                 case SO_BINDADDR:
                     return Net.localAddress(fd).getAddress();
                 case SO_SNDBUF:
