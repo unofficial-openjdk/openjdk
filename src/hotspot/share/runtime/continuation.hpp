@@ -51,6 +51,8 @@ public:
   static void print_statistics();
 };
 
+class javaVFrame;
+
 class Continuation : AllStatic {
 public:
   static int freeze0(JavaThread* thread, FrameInfo* fi, bool safepoint_yield);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@
 #include "runtime/os.hpp"
 #include "runtime/safepointVerifiers.hpp"
 #include "runtime/sharedRuntime.hpp"
+#include "utilities/sizes.hpp"
 #include "utilities/xmlstream.hpp"
 
 #include <stdio.h>
@@ -84,7 +85,7 @@ oop AOTCompiledMethod::oop_at(int index) const {
   }
   // The entry is string which we need to resolve.
   const char* meta_name = _heap->get_name_at((int)meta);
-  int klass_len = build_u2_from((address)meta_name);
+  int klass_len = Bytes::get_Java_u2((address)meta_name);
   const char* klass_name = meta_name + 2;
   // Quick check the current method's holder.
   Klass* k = _method->method_holder();
@@ -94,7 +95,7 @@ oop AOTCompiledMethod::oop_at(int index) const {
     // Search klass in got cells in DSO which have this compiled method.
     k = _heap->get_klass_from_got(klass_name, klass_len, _method);
   }
-  int method_name_len = build_u2_from((address)klass_name + klass_len);
+  int method_name_len = Bytes::get_Java_u2((address)klass_name + klass_len);
   guarantee(method_name_len == 0, "only klass is expected here");
   meta = ((intptr_t)k) | 1;
   *entry = (Metadata*)meta; // Should be atomic on x64
@@ -116,7 +117,7 @@ Metadata* AOTCompiledMethod::metadata_at(int index) const {
     }
     // The entry is string which we need to resolve.
     const char* meta_name = _heap->get_name_at((int)meta);
-    int klass_len = build_u2_from((address)meta_name);
+    int klass_len = Bytes::get_Java_u2((address)meta_name);
     const char* klass_name = meta_name + 2;
     // Quick check the current method's holder.
     Klass* k = _method->method_holder();
@@ -128,7 +129,7 @@ Metadata* AOTCompiledMethod::metadata_at(int index) const {
       k = _heap->get_klass_from_got(klass_name, klass_len, _method);
       klass_matched = false;
     }
-    int method_name_len = build_u2_from((address)klass_name + klass_len);
+    int method_name_len = Bytes::get_Java_u2((address)klass_name + klass_len);
     if (method_name_len == 0) { // Array or Klass name only?
       meta = ((intptr_t)k) | 1;
       *entry = (Metadata*)meta; // Should be atomic on x64
@@ -136,7 +137,7 @@ Metadata* AOTCompiledMethod::metadata_at(int index) const {
     } else { // Method
       // Quick check the current method's name.
       Method* m = _method;
-      int signature_len = build_u2_from((address)klass_name + klass_len + 2 + method_name_len);
+      int signature_len = Bytes::get_Java_u2((address)klass_name + klass_len + 2 + method_name_len);
       int full_len = 2 + klass_len + 2 + method_name_len + 2 + signature_len;
       if (!klass_matched || memcmp(_name, meta_name, full_len) != 0) { // Does not match?
         Thread* thread = Thread::current();

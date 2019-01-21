@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_CLASSFILE_VMSYMBOLS_HPP
-#define SHARE_VM_CLASSFILE_VMSYMBOLS_HPP
+#ifndef SHARE_CLASSFILE_VMSYMBOLS_HPP
+#define SHARE_CLASSFILE_VMSYMBOLS_HPP
 
 #include "classfile/moduleEntry.hpp"
 #include "jfr/support/jfrIntrinsics.hpp"
@@ -455,6 +455,7 @@
   template(static_oop_field_count_name,               "static_oop_field_count")                   \
   template(protection_domain_name,                    "protection_domain")                        \
   template(signers_name,                              "signers_name")                             \
+  template(source_file_name,                          "source_file")                              \
   template(loader_data_name,                          "loader_data")                              \
   template(vmdependencies_name,                       "vmdependencies")                           \
   template(last_cleanup_name,                         "last_cleanup")                             \
@@ -1710,4 +1711,4 @@ public:
   static bool is_intrinsic_available(vmIntrinsics::ID id);
 };
 
-#endif // SHARE_VM_CLASSFILE_VMSYMBOLS_HPP
+#endif // SHARE_CLASSFILE_VMSYMBOLS_HPP

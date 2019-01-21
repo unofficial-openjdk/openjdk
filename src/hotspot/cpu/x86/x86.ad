@@ -2925,11 +2925,11 @@ instruct MoveVecX2Leg(legVecX dst, vecX src) %{
   match(Set dst src);
   format %{ "movdqu $dst,$src\t! load vector (16 bytes)" %}
   ins_encode %{
-    if (UseAVX < 2 || VM_Version::supports_avx512vl()) {
-      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } else {
+    if (UseAVX > 2 && !VM_Version::supports_avx512vl()) {
       int vector_len = 2;
       __ evmovdquq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    } else {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
   %}
   ins_pipe( fpu_reg_reg );
@@ -2940,11 +2940,11 @@ instruct MoveLeg2VecX(vecX dst, legVecX src) %{
   match(Set dst src);
   format %{ "movdqu $dst,$src\t! load vector (16 bytes)" %}
   ins_encode %{
-    if (UseAVX < 2 || VM_Version::supports_avx512vl()) {
-      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } else {
+    if (UseAVX > 2 && !VM_Version::supports_avx512vl()) {
       int vector_len = 2;
       __ evmovdquq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    } else {
+      __ movdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
   %}
   ins_pipe( fpu_reg_reg );
@@ -2967,11 +2967,11 @@ instruct MoveVecY2Leg(legVecY dst, vecY src) %{
   match(Set dst src);
   format %{ "vmovdqu $dst,$src\t! load vector (32 bytes)" %}
   ins_encode %{
-    if (UseAVX < 2 || VM_Version::supports_avx512vl()) {
-      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } else {
+    if (UseAVX > 2 && !VM_Version::supports_avx512vl()) {
       int vector_len = 2;
       __ evmovdquq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    } else {
+      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
   %}
   ins_pipe( fpu_reg_reg );
@@ -2982,11 +2982,11 @@ instruct MoveLeg2VecY(vecY dst, legVecY src) %{
   match(Set dst src);
   format %{ "vmovdqu $dst,$src\t! load vector (32 bytes)" %}
   ins_encode %{
-    if (UseAVX < 2 || VM_Version::supports_avx512vl()) {
-      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
-    } else {
+    if (UseAVX > 2 && !VM_Version::supports_avx512vl()) {
       int vector_len = 2;
       __ evmovdquq($dst$$XMMRegister, $src$$XMMRegister, vector_len);
+    } else {
+      __ vmovdqu($dst$$XMMRegister, $src$$XMMRegister);
     }
   %}
   ins_pipe( fpu_reg_reg );
@@ -9937,6 +9937,7 @@ instruct vmuladdadd4S2I_reg(vecD dst, vecD src1, vecD src2) %{
     __ evpdpwssd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
+  ins_cost(10);
 %}
 
 instruct vmuladdadd8S4I_reg(vecX dst, vecX src1, vecX src2) %{
@@ -9948,6 +9949,7 @@ instruct vmuladdadd8S4I_reg(vecX dst, vecX src1, vecX src2) %{
     __ evpdpwssd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
+  ins_cost(10);
 %}
 
 instruct vmuladdadd16S8I_reg(vecY dst, vecY src1, vecY src2) %{
@@ -9959,6 +9961,7 @@ instruct vmuladdadd16S8I_reg(vecY dst, vecY src1, vecY src2) %{
     __ evpdpwssd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
+  ins_cost(10);
 %}
 
 instruct vmuladdadd32S16I_reg(vecZ dst, vecZ src1, vecZ src2) %{
@@ -9970,6 +9973,7 @@ instruct vmuladdadd32S16I_reg(vecZ dst, vecZ src1, vecZ src2) %{
     __ evpdpwssd($dst$$XMMRegister, $src1$$XMMRegister, $src2$$XMMRegister, vector_len);
   %}
   ins_pipe( pipe_slow );
+  ins_cost(10);
 %}
 
 // --------------------------------- PopCount --------------------------------------

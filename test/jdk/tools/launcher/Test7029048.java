@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,10 +21,11 @@
  * questions.
  */
 
-/*
+/**
  * @test
  * @bug 7029048
  * @summary Checks for LD_LIBRARY_PATH on *nixes
+ * @library /test/lib
  * @compile -XDignore.symbol.file ExecutionEnvironment.java Test7029048.java
  * @run main Test7029048
  */
@@ -59,13 +60,10 @@ public class Test7029048 extends TestHelper {
     private static final File srcLibjvmSo = new File(srcServerDir, LIBJVM);
 
     private static final File dstLibDir = new File("lib");
-    private static final File dstLibArchDir =
-            new File(dstLibDir, getJreArch());
-
-    private static final File dstServerDir = new File(dstLibArchDir, "server");
+    private static final File dstServerDir = new File(dstLibDir, "server");
     private static final File dstServerLibjvm = new File(dstServerDir, LIBJVM);
 
-    private static final File dstClientDir = new File(dstLibArchDir, "client");
+    private static final File dstClientDir = new File(dstLibDir, "client");
     private static final File dstClientLibjvm = new File(dstClientDir, LIBJVM);
 
     private static final Map<String, String> env = new HashMap<>();

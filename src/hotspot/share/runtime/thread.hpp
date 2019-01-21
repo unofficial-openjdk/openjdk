@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_RUNTIME_THREAD_HPP
-#define SHARE_VM_RUNTIME_THREAD_HPP
+#ifndef SHARE_RUNTIME_THREAD_HPP
+#define SHARE_RUNTIME_THREAD_HPP
 
 #include "jni.h"
 #include "code/compiledMethod.hpp"
@@ -68,6 +68,7 @@ class ThreadStatistics;
 class ConcurrentLocksDump;
 class ParkEvent;
 class Parker;
+class MonitorInfo;
 
 class ciEnv;
 class CompileThread;
@@ -75,7 +76,10 @@ class CompileLog;
 class CompileTask;
 class CompileQueue;
 class CompilerCounters;
+
 class vframeArray;
+class vframe;
+class javaVFrame;
 
 class DeoptResourceMark;
 class jvmtiDeferredLocalVariableSet;
@@ -86,8 +90,7 @@ class ICRefillVerifier;
 class IdealGraphPrinter;
 
 class Metadata;
-template <class T, MEMFLAGS F> class ChunkedList;
-typedef ChunkedList<Metadata*, mtInternal> MetadataOnStackBuffer;
+class ResourceArea;
 
 DEBUG_ONLY(class ResourceMark;)
 
@@ -2099,6 +2102,16 @@ class JavaThread: public Thread {
   bool is_attaching_via_jni() const { return _jni_attach_state == _attaching_via_jni; }
   bool has_attached_via_jni() const { return is_attaching_via_jni() || _jni_attach_state == _attached_via_jni; }
   inline void set_done_attaching_via_jni();
+
+  // Stack dump assistance:
+  // Track the class we want to initialize but for which we have to wait
+  // on its init_lock() because it is already being initialized.
+  void set_class_to_be_initialized(InstanceKlass* k);
+  InstanceKlass* class_to_be_initialized() const;
+
+private:
+  InstanceKlass* _class_to_be_initialized;
+
 };
 
 // Inline implementation of JavaThread::current
@@ -2340,4 +2353,4 @@ class SignalHandlerMark: public StackObj {
 };
 
 
-#endif // SHARE_VM_RUNTIME_THREAD_HPP
+#endif // SHARE_RUNTIME_THREAD_HPP

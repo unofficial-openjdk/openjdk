@@ -21,8 +21,8 @@
  *
  */
 
-#ifndef SHARE_VM_GC_SHENANDOAH_SHENANDOAHSTRINGDEDUP_HPP
-#define SHARE_VM_GC_SHENANDOAH_SHENANDOAHSTRINGDEDUP_HPP
+#ifndef SHARE_GC_SHENANDOAH_SHENANDOAHSTRINGDEDUP_HPP
+#define SHARE_GC_SHENANDOAH_SHENANDOAHSTRINGDEDUP_HPP
 
 #include "classfile/javaClasses.inline.hpp"
 #include "gc/shared/stringdedup/stringDedup.hpp"
@@ -42,9 +42,6 @@ public:
   static void parallel_oops_do(OopClosure* cl, uint worker_id);
   static void oops_do_slow(OopClosure* cl);
 
-  // Parallel cleanup string dedup queues/table
-  static void parallel_cleanup();
-
   static inline bool is_candidate(oop obj) {
     return java_lang_String::is_instance_inlined(obj) &&
            java_lang_String::value(obj) != NULL;
@@ -56,4 +53,4 @@ private:
 
 };
 
-#endif // SHARE_VM_GC_SHENANDOAH_SHENANDOAHSTRINGDEDUP_HPP
+#endif // SHARE_GC_SHENANDOAH_SHENANDOAHSTRINGDEDUP_HPP
