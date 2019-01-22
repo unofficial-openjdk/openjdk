@@ -516,6 +516,7 @@ java/beans/XMLEncoder/Test6570354.java 8015593 macosx-all
 
 java/lang/StringCoding/CheckEncodings.sh                        7008363 generic-all
 java/lang/ProcessHandle/InfoTest.java                           8211847 aix-ppc64
+java/lang/invoke/LFCaching/LFMultiThreadCachingTest.java        8151492 generic-all
 
 ############################################################################
 
@@ -835,8 +836,6 @@ tools/pack200/CommandLineTests.java                             8059906 generic-
 
 com/sun/jdi/RepStep.java                                        8043571 generic-all
 
-com/sun/jdi/sde/SourceDebugExtensionTest.java                   8158066 windows-all
-
 com/sun/jdi/NashornPopFrameTest.java                            8187143 generic-all
 
 ############################################################################
@@ -877,3 +876,4 @@ javax/rmi/ssl/SSLSocketParametersTest.sh                        8162906 generic-
 # jdk_jfr
 
 jdk/jfr/event/io/TestInstrumentation.java                       8202142    generic-all
+jdk/jfr/event/runtime/TestShutdownEvent.java                    8217345    generic-all
