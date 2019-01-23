@@ -40,7 +40,6 @@ import sun.nio.ch.NioSocketImpl;
 
 /**
  * SOCKS (V4 & V5) TCP socket implementation (RFC 1928).
- * This is a subclass of NioSocketImpl.
  * Note this class should <b>NOT</b> be public.
  */
 
@@ -1065,16 +1064,6 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
             return external_address.getPort();
         else
             return super.getPort();
-    }
-
-    @Override
-    protected int getLocalPort() {
-        if (((SocketImpl) this).socket != null)
-            return super.getLocalPort();
-        if (external_address != null)
-            return external_address.getPort();
-        else
-            return super.getLocalPort();
     }
 
     @Override

@@ -922,25 +922,32 @@ class Socket implements java.io.Closeable {
         if (isInputShutdown())
             throw new SocketException("Socket input is shutdown");
         // wrap the input stream so that the close method closes this socket
-        InputStream in = impl.getInputStream();
-        return new InputStream() {
-            @Override
-            public int read() throws IOException {
-                return in.read();
-            }
-            @Override
-            public int read(byte b[], int off, int len) throws IOException {
-                return in.read(b, off, len);
-            }
-            @Override
-            public int available() throws IOException {
-                return in.available();
-            }
-            @Override
-            public void close() throws IOException {
-                Socket.this.close();
-            }
-        };
+        return new SocketInputStream(this, impl.getInputStream());
+    }
+
+    private static class SocketInputStream extends InputStream {
+        private final Socket parent;
+        private final InputStream in;
+        SocketInputStream(Socket parent, InputStream in) {
+            this.parent = parent;
+            this.in = in;
+        }
+        @Override
+        public int read() throws IOException {
+            return in.read();
+        }
+        @Override
+        public int read(byte b[], int off, int len) throws IOException {
+            return in.read(b, off, len);
+        }
+        @Override
+        public int available() throws IOException {
+            return in.available();
+        }
+        @Override
+        public void close() throws IOException {
+            parent.close();
+        }
     }
 
     /**
@@ -969,21 +976,28 @@ class Socket implements java.io.Closeable {
         if (isOutputShutdown())
             throw new SocketException("Socket output is shutdown");
         // wrap the output stream so that the close method closes this socket
-        OutputStream out = impl.getOutputStream();
-        return new OutputStream() {
-            @Override
-            public void write(int b) throws IOException {
-                out.write(b);
-            }
-            @Override
-            public void write(byte b[], int off, int len) throws IOException {
-                out.write(b, off, len);
-            }
-            @Override
-            public void close() throws IOException {
-                Socket.this.close();
-            }
-        };
+        return new SocketOutputStream(this, impl.getOutputStream());
+    }
+
+    private static class SocketOutputStream extends OutputStream {
+        private final Socket parent;
+        private final OutputStream out;
+        SocketOutputStream(Socket parent, OutputStream out) {
+            this.parent = parent;
+            this.out = out;
+        }
+        @Override
+        public void write(int b) throws IOException {
+            out.write(b);
+        }
+        @Override
+        public void write(byte b[], int off, int len) throws IOException {
+            out.write(b, off, len);
+        }
+        @Override
+        public void close() throws IOException {
+            parent.close();
+        }
     }
 
     /**

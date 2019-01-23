@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -310,6 +310,12 @@ public class Net {
     static final ExtendedSocketOptions extendedOptions =
             ExtendedSocketOptions.getInstance();
 
+    static void setSocketOption(FileDescriptor fd, SocketOption<?> name, Object value)
+        throws IOException
+    {
+        setSocketOption(fd, Net.UNSPEC, name, value);
+    }
+
     static void setSocketOption(FileDescriptor fd, ProtocolFamily family,
                                 SocketOption<?> name, Object value)
         throws IOException
@@ -370,6 +376,12 @@ public class Net {
         boolean mayNeedConversion = (family == UNSPEC);
         boolean isIPv6 = (family == StandardProtocolFamily.INET6);
         setIntOption0(fd, mayNeedConversion, key.level(), key.name(), arg, isIPv6);
+    }
+
+    static Object getSocketOption(FileDescriptor fd, SocketOption<?> name)
+        throws IOException
+    {
+        return getSocketOption(fd, Net.UNSPEC, name);
     }
 
     static Object getSocketOption(FileDescriptor fd, ProtocolFamily family,
@@ -521,17 +533,40 @@ public class Net {
                                              int level, int opt, int arg, boolean isIPv6)
         throws IOException;
 
-    static native int poll(FileDescriptor fd, int events, long millis)
+    static native int poll(FileDescriptor fd, int events, long timeout)
         throws IOException;
 
     static int pollNow(FileDescriptor fd, int events) throws IOException {
         return poll(fd, events, 0);
     }
 
+    /**
+     * Polls a connecting socket to test if the connection has been established.
+     *
+     * @apiNote This method is public to allow it be used by code in jdk.sctp.
+     *
+     * @param timeout the timeout to wait; 0 to not wait, -1 to wait indefinitely
+     * @return 1 if connected, 0 if not connected, or IOS_INTERRUPTED
+     */
+    public static native int pollConnect(FileDescriptor fd, long timeout)
+        throws IOException;
+
+    static int pollConnectNow(FileDescriptor fd) throws IOException {
+        return pollConnect(fd, 0);
+    }
+
+    /**
+     * Return the number of bytes in the socket input buffer.
+     */
     static native int available(FileDescriptor fd) throws IOException;
 
-    // -- Multicast support --
+    /**
+     * Send one byte of urgent data (MSG_OOB) on the socket.
+     */
+    static native int sendOOB(FileDescriptor fd, byte data) throws IOException;
 
+
+    // -- Multicast support --
 
     /**
      * Join IPv4 multicast group

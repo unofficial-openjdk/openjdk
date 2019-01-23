@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,7 +65,7 @@ class SocketChannelImpl
     implements SelChImpl
 {
     // Used to make native read and write calls
-    private static NativeDispatcher nd;
+    private static final NativeDispatcher nd = new SocketDispatcher();
 
     // Our file descriptor object
     private final FileDescriptor fd;
@@ -541,7 +541,7 @@ class SocketChannelImpl
             try {
                 beginWrite(blocking);
 
-                n = sendOutOfBandData(fd, b);
+                n = Net.sendOOB(fd, b);
                 if (n == IOStatus.UNAVAILABLE && blocking) {
                     throw new RuntimeException("not implemented");
                 }
@@ -717,8 +717,8 @@ class SocketChannelImpl
                         if (n == IOStatus.UNAVAILABLE && blocking) {
                             do {
                                 park(Net.POLLOUT);
-                                n = checkConnect(fd, false);
-                            } while (n == IOStatus.UNAVAILABLE && isOpen());
+                                n = Net.pollConnectNow(fd);
+                            } while (n == 0 && isOpen());
                         }
                         connected = (n > 0) && isOpen();
                     } finally {
@@ -797,12 +797,12 @@ class SocketChannelImpl
                     boolean connected = false;
                     try {
                         beginFinishConnect(blocking);
-                        int n = checkConnect(fd, false);
-                        if (n == IOStatus.UNAVAILABLE && blocking) {
+                        int n = Net.pollConnectNow(fd);
+                        if (n == 0 && blocking) {
                             do {
                                 park(Net.POLLOUT);
-                                n = checkConnect(fd, false);
-                            } while (n == IOStatus.UNAVAILABLE && isOpen());
+                                n = Net.pollConnectNow(fd);
+                            } while (n == 0 && isOpen());
                         }
                         connected = (n > 0) && isOpen();
                     } finally {
@@ -1172,19 +1172,4 @@ class SocketChannelImpl
         sb.append(']');
         return sb.toString();
     }
-
-
-    // -- Native methods --
-
-    static native int checkConnect(FileDescriptor fd, boolean block)
-        throws IOException;
-
-    static native int sendOutOfBandData(FileDescriptor fd, byte data)
-        throws IOException;
-
-    static {
-        IOUtil.load();
-        nd = new SocketDispatcher();
-    }
-
 }

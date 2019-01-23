@@ -64,7 +64,6 @@ import sun.net.util.SocketExceptions;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static sun.net.ext.ExtendedSocketOptions.SOCK_STREAM;
 
 /**
  * NIO based SocketImpl.
@@ -80,15 +79,16 @@ import static sun.net.ext.ExtendedSocketOptions.SOCK_STREAM;
  * fiber.
  *
  * Behavior differences to examine:
- * 1. "Connection reset" handling differs to PlainSocketImpl for cases where
+ * "Connection reset" handling differs to PlainSocketImpl for cases where
  * an application continues to call read or available after a reset.
- * 2. Bounds checks on SocketInputStream/SocketOutputStream throws AIOOBE.
- * 3. SocketInputStream/SocketOutputStream limit I/O buffer size to 128K.
- * 4. Solaris specific SO_FLOW_SLA option not implemented yet.
  */
 
 public class NioSocketImpl extends SocketImpl {
     private static final NativeDispatcher nd = new SocketDispatcher();
+
+    // The maximum number of bytes to read/write per syscall to avoid needing
+    // a huge buffer from the temporary buffer cache
+    private static final int MAX_BUFFER_SIZE = 128 * 1024;
 
     // true if this is a SocketImpl for a ServerSocket
     private final boolean server;
@@ -120,7 +120,7 @@ public class NioSocketImpl extends SocketImpl {
     private long readerThread;
     private long writerThread;
 
-    // true is SO_REUSEADDR is emulated
+    // used when SO_REUSEADDR is emulated
     private boolean isReuseAddress;
 
     // read or accept timeout in millis
@@ -166,11 +166,11 @@ public class NioSocketImpl extends SocketImpl {
 
     /**
      * Disables the current thread or fiber for scheduling purposes until the
-     * given file descriptor is ready for I/O, or asynchronously closed, for up
-     * to the specified waiting time.
+     * socket is ready for I/O or asynchronously closed, for up to the specified
+     * waiting time.
      * @throws IOException if an I/O error occurs of the fiber is cancelled
      */
-    private void park(FileDescriptor fd, int event, long nanos) throws IOException {
+    private void park(int event, long nanos) throws IOException {
         Object strand = Strands.currentStrand();
         if (PollerProvider.available() && (strand instanceof Fiber)) {
             int fdVal = fdVal(fd);
@@ -203,6 +203,15 @@ public class NioSocketImpl extends SocketImpl {
             }
             Net.poll(fd, event, millis);
         }
+    }
+
+    /**
+     * Disables the current thread for scheduling purposes until the socket is
+     * ready for I/O or asynchronously closed.
+     * @throws IOException if an I/O error occurs
+     */
+    private void park(int event) throws IOException {
+        park(event, 0);
     }
 
     /**
@@ -273,18 +282,18 @@ public class NioSocketImpl extends SocketImpl {
                         long nanos = NANOSECONDS.convert(timeout, TimeUnit.MILLISECONDS);
                         do {
                             long startTime = System.nanoTime();
-                            park(fd, Net.POLLIN, nanos);
+                            park(Net.POLLIN, nanos);
                             n = IOUtil.read(fd, dst, -1, nd);
                             if (n == IOStatus.UNAVAILABLE) {
                                 nanos -= System.nanoTime() - startTime;
                                 if (nanos <= 0)
-                                    throw new SocketTimeoutException();
+                                    throw new SocketTimeoutException("read timeout");
                             }
                         } while (n == IOStatus.UNAVAILABLE && isOpen());
                     } else {
                         // read, no timeout
                         do {
-                            park(fd, Net.POLLIN, 0);
+                            park(Net.POLLIN);
                             n = IOUtil.read(fd, dst, -1, nd);
                         } while (statusImpliesRetry(n) && isOpen());
                     }
@@ -339,7 +348,7 @@ public class NioSocketImpl extends SocketImpl {
                 maybeConfigureNonBlocking(fd, 0);
                 n = IOUtil.write(fd, dst, -1, nd);
                 while (statusImpliesRetry(n) && isOpen()) {
-                    park(fd, Net.POLLOUT, 0);
+                    park(Net.POLLOUT);
                     n = IOUtil.write(fd, dst, -1, nd);
                 }
                 return n;
@@ -361,7 +370,7 @@ public class NioSocketImpl extends SocketImpl {
             assert state == ST_NEW;
             if (!stream)
                 ResourceManager.beforeUdpCreate();
-            FileDescriptor fd = null;
+            FileDescriptor fd;
             try {
                 if (server) {
                     assert stream;
@@ -372,8 +381,6 @@ public class NioSocketImpl extends SocketImpl {
             } catch (IOException ioe) {
                 if (!stream)
                     ResourceManager.afterUdpClose();
-                if (fd != null)
-                    nd.close(fd);
                 throw ioe;
             }
             this.fd = fd;
@@ -409,12 +416,13 @@ public class NioSocketImpl extends SocketImpl {
     public void copyTo(SocketImpl si) {
         if (si instanceof NioSocketImpl) {
             NioSocketImpl nsi = (NioSocketImpl) si;
+            if (nsi.state != ST_NEW) {
+                try {
+                    nsi.close();
+                } catch (IOException ignore) { }
+            }
             synchronized (nsi.stateLock) {
-                if (nsi.state != ST_NEW) {
-                    try {
-                        nsi.close();
-                    } catch (IOException ignore) { }
-                }
+                assert nsi.state == ST_NEW || nsi.state == ST_CLOSED;
                 synchronized (this.stateLock) {
                     // this SocketImpl should be connected
                     assert state == ST_CONNECTED && fd.valid()
@@ -538,20 +546,20 @@ public class NioSocketImpl extends SocketImpl {
                                 long nanos = NANOSECONDS.convert(millis, MILLISECONDS);
                                 do {
                                     long startTime = System.nanoTime();
-                                    park(fd, Net.POLLOUT, nanos);
-                                    n = SocketChannelImpl.checkConnect(fd, false);
-                                    if (n == IOStatus.UNAVAILABLE) {
+                                    park(Net.POLLOUT, nanos);
+                                    n = Net.pollConnectNow(fd);
+                                    if (n == 0) {
                                         nanos -= System.nanoTime() - startTime;
                                         if (nanos <= 0)
-                                            throw new SocketTimeoutException();
+                                            throw new SocketTimeoutException("connect timeout");
                                     }
-                                } while (n == IOStatus.UNAVAILABLE && isOpen());
+                                } while (n == 0 && isOpen());
                             } else {
                                 // connect, no timeout
                                 do {
-                                    park(fd, Net.POLLOUT, 0);
-                                    n = SocketChannelImpl.checkConnect(fd, false);
-                                } while (statusImpliesRetry(n) && isOpen());
+                                    park(Net.POLLOUT);
+                                    n = Net.pollConnectNow(fd);
+                                } while (n == 0 && isOpen());
                             }
                         }
                         connected = (n > 0) && isOpen();
@@ -663,18 +671,18 @@ public class NioSocketImpl extends SocketImpl {
                         long nanos = NANOSECONDS.convert(timeout, TimeUnit.MILLISECONDS);
                         do {
                             long startTime = System.nanoTime();
-                            park(fd, Net.POLLIN, nanos);
+                            park(Net.POLLIN, nanos);
                             n = ServerSocketChannelImpl.accept0(fd, newfd, isaa);
                             if (n == IOStatus.UNAVAILABLE) {
                                 nanos -= System.nanoTime() - startTime;
                                 if (nanos <= 0)
-                                    throw new SocketTimeoutException();
+                                    throw new SocketTimeoutException("accept timeout");
                             }
                         } while (n == IOStatus.UNAVAILABLE && isOpen());
                     } else {
                         // accept, no timeout
                         do {
-                            park(fd, Net.POLLIN, 0);
+                            park(Net.POLLIN);
                             n = ServerSocketChannelImpl.accept0(fd, newfd, isaa);
                         } while (statusImpliesRetry(n) && isOpen());
                     }
@@ -737,11 +745,19 @@ public class NioSocketImpl extends SocketImpl {
                 } else if (len == 0) {
                     return 0;
                 } else {
-                    ByteBuffer dst = ByteBuffer.wrap(b, off, len);
-                    int n = NioSocketImpl.this.read(dst);
-                    if (n == -1)
-                        eof = true;
-                    return n;
+                    try {
+                        // read up to MAX_BUFFER_SIZE bytes
+                        int size = Math.min(len, MAX_BUFFER_SIZE);
+                        ByteBuffer dst = ByteBuffer.wrap(b, off, size);
+                        int n = NioSocketImpl.this.read(dst);
+                        if (n == -1)
+                            eof = true;
+                        return n;
+                    } catch (SocketTimeoutException e) {
+                        throw e;
+                    } catch (IOException ioe) {
+                        throw new SocketException(ioe.getMessage());
+                    }
                 }
             }
             @Override
@@ -767,9 +783,19 @@ public class NioSocketImpl extends SocketImpl {
             public void write(byte b[], int off, int len) throws IOException {
                 Objects.checkFromIndexSize(off, len, b.length);
                 if (len > 0) {
-                    ByteBuffer src = ByteBuffer.wrap(b, off, len);
-                    while (src.hasRemaining()) {
-                        NioSocketImpl.this.write(src);
+                    try {
+                        ByteBuffer src = ByteBuffer.wrap(b, off, len);
+                        int end = src.limit();
+                        int pos;
+                        // write up to MAX_BUFFER_SIZE bytes at a time
+                        while ((pos = src.position()) < end) {
+                            int size = Math.min((end - pos), MAX_BUFFER_SIZE);
+                            src.limit(pos + size);
+                            NioSocketImpl.this.write(src);
+                        }
+                    assert src.limit() == end && src.remaining() == 0;
+                    } catch (IOException ioe) {
+                        throw new SocketException(ioe.getMessage());
                     }
                 }
             }
@@ -819,7 +845,7 @@ public class NioSocketImpl extends SocketImpl {
             // shutdown output when linger interval not set
             try {
                 var SO_LINGER = StandardSocketOptions.SO_LINGER;
-                if ((int) Net.getSocketOption(fd, Net.UNSPEC, SO_LINGER) != 0) {
+                if ((int) Net.getSocketOption(fd, SO_LINGER) != 0) {
                     Net.shutdown(fd, Net.SHUT_WR);
                 }
             } catch (IOException ignore) { }
@@ -879,7 +905,11 @@ public class NioSocketImpl extends SocketImpl {
     protected Set<SocketOption<?>> supportedOptions() {
         Set<SocketOption<?>> options = new HashSet<>();
         options.addAll(super.supportedOptions());
-        options.addAll(ExtendedSocketOptions.options(SOCK_STREAM));
+        if (server) {
+            options.addAll(ExtendedSocketOptions.serverSocketOptions());
+        } else {
+            options.addAll(ExtendedSocketOptions.clientSocketOptions());
+        }
         if (Net.isReusePortAvailable())
             options.add(StandardSocketOptions.SO_REUSEPORT);
         return Collections.unmodifiableSet(options);
@@ -904,17 +934,14 @@ public class NioSocketImpl extends SocketImpl {
             try {
                 switch (opt) {
                 case SO_LINGER: {
+                    // the value is "false" to disable, or linger interval to enable
                     int i;
-                    if (value instanceof Boolean) {
-                        boolean b = booleanValue(value, "SO_LINGER");
-                        if (b) {
-                            throw new IllegalArgumentException("SO_LINGER not be set to true");
-                        }
+                    if (value instanceof Boolean && ((boolean) value) == false) {
                         i = -1;
                     } else {
                         i = intValue(value, "SO_LINGER");
                     }
-                    Net.setSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_LINGER, i);
+                    Net.setSocketOption(fd, StandardSocketOptions.SO_LINGER, i);
                     break;
                 }
                 case SO_TIMEOUT: {
@@ -926,32 +953,36 @@ public class NioSocketImpl extends SocketImpl {
                 }
                 case IP_TOS: {
                     int i = intValue(value, "IP_TOS");
-                    Net.setSocketOption(fd, protocolFamily(), StandardSocketOptions.IP_TOS, i);
+                    if (stream && Net.isIPv6Available()) {
+                        // IP_TOS is not specified for stream sockets when IPv6 enabled
+                    } else {
+                        Net.setSocketOption(fd, family(), StandardSocketOptions.IP_TOS, i);
+                    }
                     break;
                 }
                 case TCP_NODELAY: {
                     boolean b = booleanValue(value, "TCP_NODELAY");
-                    Net.setSocketOption(fd, Net.UNSPEC, StandardSocketOptions.TCP_NODELAY, b);
+                    Net.setSocketOption(fd, StandardSocketOptions.TCP_NODELAY, b);
                     break;
                 }
                 case SO_SNDBUF: {
                     int i = intValue(value, "SO_SNDBUF");
-                    Net.setSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_SNDBUF, i);
+                    Net.setSocketOption(fd, StandardSocketOptions.SO_SNDBUF, i);
                     break;
                 }
                 case SO_RCVBUF: {
                     int i = intValue(value, "SO_RCVBUF");
-                    Net.setSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_RCVBUF, i);
+                    Net.setSocketOption(fd, StandardSocketOptions.SO_RCVBUF, i);
                     break;
                 }
                 case SO_KEEPALIVE: {
                     boolean b = booleanValue(value, "SO_KEEPALIVE");
-                    Net.setSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_KEEPALIVE, b);
+                    Net.setSocketOption(fd, StandardSocketOptions.SO_KEEPALIVE, b);
                     break;
                 }
                 case SO_OOBINLINE: {
                     boolean b = booleanValue(value, "SO_OOBINLINE");
-                    Net.setSocketOption(fd, Net.UNSPEC, ExtendedSocketOption.SO_OOBINLINE, b);
+                    Net.setSocketOption(fd, ExtendedSocketOption.SO_OOBINLINE, b);
                     break;
                 }
                 case SO_REUSEADDR: {
@@ -959,7 +990,7 @@ public class NioSocketImpl extends SocketImpl {
                     if (Net.useExclusiveBind()) {
                         isReuseAddress = b;
                     } else {
-                        Net.setSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_REUSEADDR, b);
+                        Net.setSocketOption(fd, StandardSocketOptions.SO_REUSEADDR, b);
                     }
                     break;
                 }
@@ -967,7 +998,7 @@ public class NioSocketImpl extends SocketImpl {
                     if (!Net.isReusePortAvailable())
                         throw new UnsupportedOperationException("SO_REUSEPORT not supported");
                     boolean b = booleanValue(value, "SO_REUSEPORT");
-                    Net.setSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_REUSEPORT, b);
+                    Net.setSocketOption(fd, StandardSocketOptions.SO_REUSEPORT, b);
                     break;
                 }
                 default:
@@ -988,11 +1019,12 @@ public class NioSocketImpl extends SocketImpl {
                 case SO_TIMEOUT:
                     return timeout;
                 case TCP_NODELAY:
-                    return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.TCP_NODELAY);
+                    return Net.getSocketOption(fd, StandardSocketOptions.TCP_NODELAY);
                 case SO_OOBINLINE:
-                    return Net.getSocketOption(fd, Net.UNSPEC, ExtendedSocketOption.SO_OOBINLINE);
+                    return Net.getSocketOption(fd, ExtendedSocketOption.SO_OOBINLINE);
                 case SO_LINGER: {
-                    int i = (int) Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_LINGER);
+                    // return "false" when disabled, linger interval when enabled
+                    int i = (int) Net.getSocketOption(fd, StandardSocketOptions.SO_LINGER);
                     if (i == -1) {
                         return Boolean.FALSE;
                     } else {
@@ -1003,22 +1035,27 @@ public class NioSocketImpl extends SocketImpl {
                     if (Net.useExclusiveBind()) {
                         return isReuseAddress;
                     } else {
-                        return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_REUSEADDR);
+                        return Net.getSocketOption(fd, StandardSocketOptions.SO_REUSEADDR);
                     }
                 case SO_BINDADDR:
                     return Net.localAddress(fd).getAddress();
                 case SO_SNDBUF:
-                    return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_SNDBUF);
+                    return Net.getSocketOption(fd, StandardSocketOptions.SO_SNDBUF);
                 case SO_RCVBUF:
-                    return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_RCVBUF);
+                    return Net.getSocketOption(fd, StandardSocketOptions.SO_RCVBUF);
                 case IP_TOS:
-                    return Net.getSocketOption(fd, protocolFamily(), StandardSocketOptions.IP_TOS);
+                    if (stream && Net.isIPv6Available()) {
+                        // IP_TOS is not specified for stream sockets when IPv6 enabled
+                        return 0;
+                    } else {
+                        return Net.getSocketOption(fd, family(), StandardSocketOptions.IP_TOS);
+                    }
                 case SO_KEEPALIVE:
-                    return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_KEEPALIVE);
+                    return Net.getSocketOption(fd, StandardSocketOptions.SO_KEEPALIVE);
                 case SO_REUSEPORT:
                     if (!Net.isReusePortAvailable())
                         throw new UnsupportedOperationException("SO_REUSEPORT not supported");
-                    return Net.getSocketOption(fd, Net.UNSPEC, StandardSocketOptions.SO_REUSEPORT);
+                    return Net.getSocketOption(fd, StandardSocketOptions.SO_REUSEPORT);
                 default:
                     throw new SocketException("Unknown option " + opt);
                 }
@@ -1110,7 +1147,7 @@ public class NioSocketImpl extends SocketImpl {
             try {
                 maybeConfigureNonBlocking(fd, 0);
                 do {
-                    n = SocketChannelImpl.sendOutOfBandData(fd, (byte) data);
+                    n = Net.sendOOB(fd, (byte) data);
                 } while (n == IOStatus.INTERRUPTED && isOpen());
                 if (n == IOStatus.UNAVAILABLE) {
                     throw new RuntimeException("not implemented yet");
@@ -1189,7 +1226,7 @@ public class NioSocketImpl extends SocketImpl {
     /**
      * Returns the socket protocol family
      */
-    private static ProtocolFamily protocolFamily() {
+    private static ProtocolFamily family() {
         if (Net.isIPv6Available()) {
             return StandardProtocolFamily.INET6;
         } else {
