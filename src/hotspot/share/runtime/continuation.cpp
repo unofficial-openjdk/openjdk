@@ -420,6 +420,8 @@ private:
   bool grow_stack(int new_size);
   bool grow_ref_stack(int nr_oops);
 
+  inline void post_safepoint(Handle conth);
+
 public:
   ContMirror(JavaThread* thread, oop cont);
 
@@ -469,7 +471,6 @@ public:
   int refSP() { return _ref_sp; }
   void set_refSP(int refSP) { log_trace(jvmcont)("set_refSP: %d", refSP); _ref_sp = refSP; }
 
-  typeArrayOop stack(int size);
   inline int stack_index(void* p) const;
   inline intptr_t* stack_address(int i) const;
 
@@ -606,6 +607,7 @@ bool hframe::is_bottom(const ContMirror& cont) const {
 
 inline intptr_t* hframe::real_fp(const ContMirror& cont) const {
   assert (!_is_interpreted, "interpreted");
+  assert (cb() != NULL, "must be");
   return index_address(cont, _sp) + cb()->frame_size();
 }
 
@@ -695,6 +697,7 @@ inline void hframe::patch_callee(ContMirror& cont, hframe& sender) {
 
 hframe hframe::sender(ContMirror& cont) {
   // assert (_length == cont.stack_length(), "");
+  assert (size(cont) > 1, "size: %lu", size(cont));
   address sender_pc = return_pc(cont);
   bool is_sender_interpreted = Interpreter::contains(sender_pc);
   int sender_sp = _sp + to_index(size(cont) + METADATA_SIZE);
@@ -879,6 +882,13 @@ void ContMirror::copy_from_stack(void* from, void* to, int size) {
   _e_size += size;
 }
 
+inline void ContMirror::post_safepoint(Handle conth) {
+  _cont = conth();  // reload oop
+  _ref_stack = java_lang_Continuation::refStack(_cont);
+  _stack = java_lang_Continuation::stack(_cont);
+  _hstack = (int*)_stack->base(T_INT);
+}
+
 /* try to allocate an array from the tlab, if it doesn't work allocate one using the allocate
  * method. In the later case we might have done a safepoint and need to reload our oops */
 oop ContMirror::raw_allocate(Klass* klass, const size_t size_in_words, const size_t elements, bool zero) {
@@ -890,9 +900,7 @@ oop ContMirror::raw_allocate(Klass* klass, const size_t size_in_words, const siz
     HandleMark hm(_thread);
     Handle conth(_thread, _cont);
     oop result = allocator.allocate(/* use_tlab */ false);
-    _cont = conth();  // reload oop after java call
-    _stack = java_lang_Continuation::stack(_cont);
-    _ref_stack = java_lang_Continuation::refStack(_cont);
+    post_safepoint(conth);
     return result;
   }
 
@@ -1117,7 +1125,9 @@ void ContMirror::allocate_stacks(int size, int oops, int frames) {
   assert(_pc == java_lang_Continuation::pc(_cont), "_pc: " INTPTR_FORMAT "  this.pc: " INTPTR_FORMAT "",  p2i(_pc), p2i(java_lang_Continuation::pc(_cont)));
   assert(_sp == java_lang_Continuation::sp(_cont), "_sp: %d  this.sp: %d",  _sp, java_lang_Continuation::sp(_cont));
   assert(_fp == java_lang_Continuation::fp(_cont), "_fp: %lu  this.fp: " JLONG_FORMAT " %d %d", _fp, java_lang_Continuation::fp(_cont), Interpreter::contains(_pc), is_flag(FLAG_LAST_FRAME_INTERPRETED));
-
+  assert (oopDesc::equals(_stack, java_lang_Continuation::stack(_cont)), "");
+  assert (_stack->base(T_INT) == _hstack, "");
+  
   if (!thread()->has_pending_exception()) return;
 
   assert (to_bytes(_stack_length) >= size, "sanity check: stack_size: %d size: %d", to_bytes(_stack_length), size);
@@ -1137,17 +1147,14 @@ void ContMirror::allocate_stacks_in_java(int size, int oops, int frames) {
   args.push_int(oops);
   args.push_int(frames);
   JavaValue result(T_VOID);
-  JavaCalls::call_virtual(&result, SystemDictionary::Continuation_klass(), vmSymbols::getStacks_name(), vmSymbols::continuationGetStacks_signature(), &args, _thread);
-  _cont = conth();  // reload oop after java call
+  JavaCalls::call_virtual(&result, SystemDictionary::Continuation_klass(), vmSymbols::getStacks_name(), vmSymbols::continuationGetStacks_signature(), &args, _thread); 
+  post_safepoint(conth); // reload oop after java call
 
-  _stack = java_lang_Continuation::stack(_cont);
   _sp    = java_lang_Continuation::sp(_cont);
   _fp    = java_lang_Continuation::fp(_cont);
-  _ref_stack = java_lang_Continuation::refStack(_cont);
   _ref_sp    = java_lang_Continuation::refSP(_cont);
 
   _stack_length = _stack->length();
-  _hstack = (int*)_stack->base(T_INT);
   /* We probably should handle OOM? */
 }
 
@@ -2628,11 +2635,6 @@ static frame thaw_frame(ContMirror& cont, hframe& hf, int oop_index, frame& send
   if (log_is_enabled(Trace, jvmcont)) hf.print(cont);
 
   const int fsize = hf.uncompressed_size(cont) != 0 ? hf.uncompressed_size(cont) : hf.size(cont);
-  if (fsize > (int)cont.max_size()) {
-    tty->print_cr("PROBLEM");
-    tty->print_cr("fsize: %d max_size: " SIZE_FORMAT, fsize, cont.max_size());
-    hf.print_on(cont, tty);
-  }
   cont.sub_size(fsize);
 
   const address bottom = (address) sender.sp();
@@ -2828,6 +2830,7 @@ static inline int thaw_num_frames(bool return_barrier) {
 // fi->fp current rbp
 // called after preparations (stack overflow check and making room)
 static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_barrier) {
+  // NoSafepointVerifier nsv;
   EventContinuationThaw event;
   ResourceMark rm(thread);
 
