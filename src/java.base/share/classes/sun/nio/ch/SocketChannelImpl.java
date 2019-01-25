@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,6 +52,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
+import jdk.internal.misc.Strands;
 import sun.net.NetHooks;
 import sun.net.ext.ExtendedSocketOptions;
 import sun.net.util.SocketExceptions;
@@ -110,6 +111,9 @@ class SocketChannelImpl
     // Socket adaptor, created on demand
     private Socket socket;
 
+    // lazily set to true when the socket is configured non-blocking
+    private volatile boolean nonBlocking;
+
     // -- End of fields protected by stateLock
 
 
@@ -117,16 +121,7 @@ class SocketChannelImpl
     //
     SocketChannelImpl(SelectorProvider sp) throws IOException {
         super(sp);
-
-        FileDescriptor fd = Net.socket(true);
-        try {
-            IOUtil.configureBlocking(fd, false);
-        } catch (IOException ioe) {
-            nd.close(fd);
-            throw ioe;
-        }
-
-        this.fd = fd;
+        this.fd = Net.socket(true);
         this.fdVal = IOUtil.fdVal(fd);
     }
 
@@ -134,8 +129,6 @@ class SocketChannelImpl
         throws IOException
     {
         super(sp);
-        IOUtil.configureBlocking(fd, false);
-
         this.fd = fd;
         this.fdVal = IOUtil.fdVal(fd);
         if (bound) {
@@ -151,14 +144,6 @@ class SocketChannelImpl
         throws IOException
     {
         super(sp);
-
-        try {
-            IOUtil.configureBlocking(fd, false);
-        } catch (IOException ioe) {
-            nd.close(fd);
-            throw ioe;
-        }
-
         this.fd = fd;
         this.fdVal = IOUtil.fdVal(fd);
         synchronized (stateLock) {
@@ -311,6 +296,19 @@ class SocketChannelImpl
     }
 
     /**
+     * Ensures that the socket is configured non-blocking when the current
+     * strand is a fiber or a timeout is specified.
+     * @throws IOException if there is an I/O error changing the blocking mode
+     */
+    private void maybeConfigureNonBlocking(FileDescriptor fd) throws IOException {
+        assert readLock.isHeldByCurrentThread() || writeLock.isHeldByCurrentThread();
+        if (!nonBlocking && (Strands.currentStrand() instanceof Fiber)) {
+            IOUtil.configureBlocking(fd, false);
+            nonBlocking = true;
+        }
+    }
+
+    /**
      * Marks the beginning of a read operation that might block.
      *
      * @throws ClosedChannelException if the channel is closed
@@ -368,12 +366,13 @@ class SocketChannelImpl
                 if (isInputClosed)
                     return IOStatus.EOF;
 
+                maybeConfigureNonBlocking(fd);
                 n = IOUtil.read(fd, buf, -1, nd);
-                if (n == IOStatus.UNAVAILABLE && blocking) {
+                if (blocking && IOStatus.okayToRetry(n)) {
                     do {
                         park(Net.POLLIN);
                         n = IOUtil.read(fd, buf, -1, nd);
-                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                    } while (IOStatus.okayToRetry(n) && isOpen());
                 }
 
             } finally {
@@ -404,12 +403,13 @@ class SocketChannelImpl
                 if (isInputClosed)
                     return IOStatus.EOF;
 
+                maybeConfigureNonBlocking(fd);
                 n = IOUtil.read(fd, dsts, offset, length, nd);
-                if (n == IOStatus.UNAVAILABLE && blocking) {
+                if (blocking && IOStatus.okayToRetry(n)) {
                     do {
                         park(Net.POLLIN);
                         n = IOUtil.read(fd, dsts, offset, length, nd);
-                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                    } while (IOStatus.okayToRetry(n) && isOpen());
                 }
 
             } finally {
@@ -479,12 +479,13 @@ class SocketChannelImpl
             try {
                 beginWrite(blocking);
 
+                maybeConfigureNonBlocking(fd);
                 n = IOUtil.write(fd, buf, -1, nd);
-                if (n == IOStatus.UNAVAILABLE && blocking) {
+                if (blocking && IOStatus.okayToRetry(n)) {
                     do {
                         park(Net.POLLOUT);
                         n = IOUtil.write(fd, buf, -1, nd);
-                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                    } while (IOStatus.okayToRetry(n) && isOpen());
                 }
 
             } finally {
@@ -511,12 +512,13 @@ class SocketChannelImpl
             try {
                 beginWrite(blocking);
 
+                maybeConfigureNonBlocking(fd);
                 n = IOUtil.write(fd, srcs, offset, length, nd);
-                if (n == IOStatus.UNAVAILABLE && blocking) {
+                if (blocking && IOStatus.okayToRetry(n)) {
                     do {
                         park(Net.POLLOUT);
                         n = IOUtil.write(fd, srcs, offset, length, nd);
-                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                    } while (IOStatus.okayToRetry(n) && isOpen());
                 }
 
             } finally {
@@ -541,8 +543,9 @@ class SocketChannelImpl
             try {
                 beginWrite(blocking);
 
+                maybeConfigureNonBlocking(fd);
                 n = Net.sendOOB(fd, b);
-                if (n == IOStatus.UNAVAILABLE && blocking) {
+                if (blocking && IOStatus.okayToRetry(n)) {
                     throw new RuntimeException("not implemented");
                 }
 
@@ -565,7 +568,10 @@ class SocketChannelImpl
             try {
                 synchronized (stateLock) {
                     ensureOpen();
-                    // do nothing
+                    // no-op if already configured non-blocking for fiber use
+                    if (!nonBlocking) {
+                        IOUtil.configureBlocking(fd, block);
+                    }
                 }
             } finally {
                 writeLock.unlock();
@@ -713,8 +719,9 @@ class SocketChannelImpl
                     boolean connected = false;
                     try {
                         beginConnect(blocking, isa);
+                        maybeConfigureNonBlocking(fd);
                         int n = Net.connect(fd, ia, isa.getPort());
-                        if (n == IOStatus.UNAVAILABLE && blocking) {
+                        if (blocking && IOStatus.okayToRetry(n)) {
                             do {
                                 park(Net.POLLOUT);
                                 n = Net.pollConnectNow(fd);
