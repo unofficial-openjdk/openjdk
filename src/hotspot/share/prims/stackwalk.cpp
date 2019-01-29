@@ -39,6 +39,11 @@
 #include "utilities/globalDefinitions.hpp"
 
 // setup and cleanup actions
+BaseFrameStream::BaseFrameStream(JavaThread* thread, Handle continuation) 
+  : _thread(thread), _continuation(continuation), _anchor(0L) {
+    assert (thread != NULL, "");
+}
+
 void BaseFrameStream::setup_magic_on_entry(objArrayHandle frames_array) {
   frames_array->obj_at_put(magic_pos, _thread->threadObj());
   _anchor = address_value();
@@ -64,7 +69,8 @@ void BaseFrameStream::set_continuation(Handle cont) {
   // This actually also sets a copy of the handle in the RegisterMap,
   // but that's OK, because we want them to be the same, anyway.
   // (although we don't rely on this sharing, and set the other copy again)
-  *(_continuation.raw_value()) = cont(); 
+  tty->print_cr("-- BaseFrameStream::set_continuation: %p", (oopDesc*)cont());
+  *(_continuation.raw_value()) = cont();
 }
 
 // static inline Handle continuation_of(Handle cont_or_scope) {
@@ -97,7 +103,7 @@ LiveFrameStream::LiveFrameStream(JavaThread* thread, RegisterMap* rm, Handle con
       _jvf  = thread->last_java_vframe(rm);
       // _cont = Handle(thread, thread->last_continuation());
     } else {
-      _jvf  = Continuation::last_java_vframe(cont, rm);
+      _jvf  = Continuation::has_last_Java_frame(cont) ? Continuation::last_java_vframe(cont, rm) : NULL;
       // _cont = cont;
     }
 }
@@ -115,7 +121,9 @@ void LiveFrameStream::set_continuation(Handle cont) {
   _cont = cont;
 }
 
-void JavaFrameStream::next() { _vfst.next(); }
+void JavaFrameStream::next() { 
+  _vfst.next(); 
+}
 
 void LiveFrameStream::next() {
   assert (_cont_scope.is_null() || _cont.not_null(), "must be");
@@ -413,6 +421,8 @@ oop StackWalk::walk(Handle stackStream, jlong mode, int skip_frames, Handle cont
                     int frame_count, int start_index, objArrayHandle frames_array,
                     TRAPS) {
   ResourceMark rm(THREAD);
+  HandleMark hm(THREAD); // needed to store a continuation in the RegisterMap
+
   JavaThread* jt = (JavaThread*)THREAD;
   log_debug(stackwalk)("Start walking: mode " JLONG_FORMAT " skip %d frames batch size %d",
                        mode, skip_frames, frame_count);

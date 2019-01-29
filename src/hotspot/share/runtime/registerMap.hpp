@@ -74,6 +74,7 @@ class RegisterMap : public StackObj {
   LocationValidType _location_valid[location_valid_size];
   bool        _include_argument_oops;   // Should include argument_oop marked locations for compiler
   JavaThread* _thread;                  // Reference to current thread
+  bool        _on_hstack;               // Whether we're on the h-stack
   Handle      _cont;                    // The current continuation, if any
   bool        _update_map;              // Tells if the register map need to be
                                         // updated when traversing the stack
@@ -132,12 +133,16 @@ class RegisterMap : public StackObj {
   void set_include_argument_oops(bool f)  { _include_argument_oops = f; }
 
   JavaThread *thread() const { return _thread; }
-  oop  cont()          const { return _cont(); }
-  void set_cont(Thread* thread, oop cont);
-  void set_cont(Handle cont) {  _cont = cont; }
   bool update_map()    const { return _update_map; }
-  bool walk_cont()     const { return _walk_cont; }
   bool validate_oops() const { return _validate_oops; }
+  bool walk_cont()     const { return _walk_cont; }
+
+  oop  cont()          const { return _cont(); }
+  bool in_cont()       const { return _on_hstack; } // Whether we are currently on the hstack
+
+  void set_cont(oop cont);
+  void set_cont(Handle cont);
+  void set_in_cont(bool on_hstack);
 
   void print_on(outputStream* st) const;
   void print() const;

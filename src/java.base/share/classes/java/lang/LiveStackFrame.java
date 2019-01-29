@@ -202,6 +202,18 @@ interface LiveStackFrame extends StackFrame {
     }
 
     /**
+     * Gets {@code StackWalker} of the given unmounted continuation, that can get locals and operands.
+     *
+     * @param continuation the continuation to walk
+     * 
+     * @throws SecurityException if the security manager is present and
+     * denies access to {@code RuntimePermission("liveStackFrames")}
+     */
+    public static StackWalker getStackWalker(Continuation continuation) {
+        return getStackWalker(EnumSet.noneOf(StackWalker.Option.class), continuation.getScope(), continuation);
+    }
+
+    /**
      * Gets a {@code StackWalker} instance with the given options specifying
      * the stack frame information it can access, and which will traverse at most
      * the given {@code maxDepth} number of stack frames.  If no option is
