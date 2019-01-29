@@ -257,16 +257,16 @@ void javaVFrame::print_lock_info_on(outputStream* st, int frame_count) {
 // ------------- interpretedVFrame --------------
 
 u_char* interpretedVFrame::bcp() const {
-    return (register_map()->cont() == NULL)  ? fr().interpreter_frame_bcp() : Continuation::interpreter_frame_bcp(fr(), register_map());
+    return (!register_map()->in_cont())  ? fr().interpreter_frame_bcp() : Continuation::interpreter_frame_bcp(fr(), register_map());
 }
 
 void interpretedVFrame::set_bcp(u_char* bcp) {
-  assert (register_map()->cont() == NULL, ""); // unsupported for now because seems to be unused
+  assert (!register_map()->in_cont(), ""); // unsupported for now because seems to be unused
   fr().interpreter_frame_set_bcp(bcp);
 }
 
 intptr_t* interpretedVFrame::locals_addr_at(int offset) const {
-  assert (register_map()->cont() == NULL, ""); // unsupported for now because seems to be unused
+  assert (!register_map()->in_cont(), ""); // unsupported for now because seems to be unused
   assert(fr().is_interpreted_frame(), "frame should be an interpreted frame");
   return fr().interpreter_frame_local_at(offset);
 }
@@ -274,7 +274,7 @@ intptr_t* interpretedVFrame::locals_addr_at(int offset) const {
 
 GrowableArray<MonitorInfo*>* interpretedVFrame::monitors() const {
   GrowableArray<MonitorInfo*>* result = new GrowableArray<MonitorInfo*>(5);
-  if (register_map()->cont() == NULL) { // no monitors in continuations
+  if (!register_map()->in_cont()) { // no monitors in continuations
     for (BasicObjectLock* current = (fr().previous_monitor_in_interpreter_frame(fr().interpreter_frame_monitor_begin()));
         current >= fr().interpreter_frame_monitor_end();
         current = fr().previous_monitor_in_interpreter_frame(current)) {
@@ -289,7 +289,7 @@ int interpretedVFrame::bci() const {
 }
 
 Method* interpretedVFrame::method() const {
-  return (register_map()->cont() == NULL) ? fr().interpreter_frame_method() : Continuation::interpreter_frame_method(fr(), register_map());
+  return (!register_map()->in_cont()) ? fr().interpreter_frame_method() : Continuation::interpreter_frame_method(fr(), register_map());
 }
 
 static StackValue* create_stack_value_from_oop_map(const RegisterMap* reg_map,
@@ -304,8 +304,8 @@ static StackValue* create_stack_value_from_oop_map(const RegisterMap* reg_map,
   if (oop_mask.is_oop(index)) {
     oop obj = NULL;
     if (addr != NULL) {
-      // obj = (UseCompressedOops && reg_map->cont() != NULL) ? HeapAccess<IS_ARRAY>::oop_load((narrowOop*)addr) : *(oop*)addr;
-      if (UseCompressedOops && reg_map->cont() != NULL)
+      // obj = (UseCompressedOops && reg_map->in_cont()) ? HeapAccess<IS_ARRAY>::oop_load((narrowOop*)addr) : *(oop*)addr;
+      if (UseCompressedOops && reg_map->in_cont())
         obj = HeapAccess<IS_ARRAY>::oop_load((narrowOop*)addr);
       else
         obj = *(oop*)addr;
@@ -341,7 +341,7 @@ static void stack_locals(StackValueCollection* result,
 
   for (int i = 0; i < length; ++i) {
     const intptr_t* addr;
-    if (reg_map->cont() == NULL) {
+    if (!reg_map->in_cont()) {
       addr = fr.interpreter_frame_local_at(i);
       assert(addr >= fr.sp(), "must be inside the frame");
     } else {
@@ -367,7 +367,7 @@ static void stack_expressions(StackValueCollection* result,
 
   for (int i = 0; i < length; ++i) {
     const intptr_t* addr;
-    if (reg_map->cont() == NULL) {
+    if (!reg_map->in_cont()) {
       addr = fr.interpreter_frame_expression_stack_at(i);
       assert(addr != NULL, "invariant");
       if (!is_in_expression_stack(fr, addr)) {

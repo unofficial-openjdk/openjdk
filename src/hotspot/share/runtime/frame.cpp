@@ -54,13 +54,26 @@
 #include "utilities/decoder.hpp"
 #include "utilities/formatBuffer.hpp"
 
-RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool walk_cont, bool validate_oops) {
+RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool walk_cont, bool validate_oops) 
+  : _cont(Handle()) {
   _thread         = thread;
   _update_map     = update_map;
-  clear();
-  debug_only(_update_for_id = NULL;)
   _validate_oops = validate_oops;
   _walk_cont     = walk_cont;
+  clear();
+  debug_only(_update_for_id = NULL;)
+
+  _on_hstack = FALSE;
+  if (walk_cont) {
+    // we allocate the handle now (rather than in set_cont) because sometimes (StackWalker) the handle
+    // must love across HandleMarks
+    if (thread == NULL) {
+      thread = JavaThread::current();
+    }
+    assert (thread != NULL, "");
+    _cont = thread->last_continuation() != NULL ? Handle(thread, thread->last_continuation()) : Handle();
+  }
+
 #ifndef PRODUCT
   for (int i = 0; i < reg_count ; i++ ) _location[i] = NULL;
 #endif /* PRODUCT */
@@ -77,6 +90,7 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
   _walk_cont     = map->_walk_cont;
 
   _cont = map->_cont;
+  _on_hstack = map->_on_hstack;
 
   pd_initialize_from(map);
   if (update_map()) {
@@ -97,9 +111,24 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
   }
 }
 
-void RegisterMap::set_cont(Thread* thread, oop cont) {
-  // tty->print_cr("set_cont: %d", cont != NULL);
-  set_cont(cont != NULL ? Handle(thread != NULL ? thread : Thread::current(), cont) : Handle());
+void RegisterMap::set_in_cont(bool on_hstack) {
+   assert (_walk_cont, ""); 
+   _on_hstack = on_hstack;
+}
+
+void RegisterMap::set_cont(Handle cont) {
+  assert (_walk_cont, "");
+  _cont = cont;
+}
+
+void RegisterMap::set_cont(oop cont) {
+  assert (_walk_cont, "");
+  if (cont != NULL) {
+    assert (_cont.not_null(), "");
+    *(_cont.raw_value()) = cont; // reuse handle. see comment above in the constructor
+  } else {
+    _cont = Handle();
+  }
 }
 
 void RegisterMap::clear() {
@@ -112,7 +141,6 @@ void RegisterMap::clear() {
   } else {
     pd_initialize();
   }
-  _cont = Handle();
 }
 
 #ifndef PRODUCT

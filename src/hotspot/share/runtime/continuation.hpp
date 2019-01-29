@@ -61,6 +61,7 @@ public:
   static address thaw(FrameInfo* fi, bool return_barrier, bool exception);
   static int try_force_yield(JavaThread* thread, oop cont);
 
+  static oop  get_continutation_for_frame(JavaThread* thread, const frame& f);
   static bool is_continuation_entry_frame(const frame& f, const RegisterMap* map);
   static bool is_cont_bottom_frame(const frame& f);
   static bool is_return_barrier_entry(const address pc);
@@ -77,8 +78,12 @@ public:
   static javaVFrame* last_java_vframe(Handle continuation, RegisterMap *map);
 
   // access frame data
+  static bool is_in_usable_stack(address addr, const RegisterMap* map);
   static address usp_offset_to_location(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes);
   static address usp_offset_to_location(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes, bool is_oop);
+  static address reg_to_location(const frame& fr, const RegisterMap* map, VMReg reg);
+  static address reg_to_location(const frame& fr, const RegisterMap* map, VMReg reg, bool is_oop);
+  static address reg_to_location(oop cont, const frame& fr, const RegisterMap* map, VMReg reg, bool is_oop);
   static address interpreter_frame_expression_stack_at(const frame& fr, const RegisterMap* map, const InterpreterOopMap& oop_mask, int index);
   static address interpreter_frame_local_at(const frame& fr, const RegisterMap* map, const InterpreterOopMap& oop_mask, int index);
 
@@ -91,7 +96,7 @@ public:
   static int PERFTEST_LEVEL;
 private:
   // declared here as it's used in friend declarations
-  static address oop_address(objArrayOop ref_stack, address stack_address);
+  static address oop_address(objArrayOop ref_stack, address stack_address, int ref_sp);
 };
 
 void CONT_RegisterNativeMethods(JNIEnv *env, jclass cls);

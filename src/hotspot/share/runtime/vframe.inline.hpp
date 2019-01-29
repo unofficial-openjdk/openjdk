@@ -244,7 +244,7 @@ inline bool vframeStreamCommon::fill_from_frame() {
 inline void vframeStreamCommon::fill_from_interpreter_frame() {
   Method* method;
   address bcp;
-  if (_reg_map.cont() == NULL) {
+  if (!_reg_map.in_cont()) {
     method = _frame.interpreter_frame_method();
     bcp    = _frame.interpreter_frame_bcp();
   } else {

@@ -65,13 +65,15 @@ StackValueCollection* compiledVFrame::locals() const {
 
   // Replace the original values with any stores that have been
   // performed through compiledVFrame::update_locals.
-  GrowableArray<jvmtiDeferredLocalVariableSet*>* list = thread()->deferred_locals();
-  if (list != NULL ) {
-    // In real life this never happens or is typically a single element search
-    for (int i = 0; i < list->length(); i++) {
-      if (list->at(i)->matches(this)) {
-        list->at(i)->update_locals(result);
-        break;
+  if (register_map()->cont() == NULL) { // LOOM TODO
+    GrowableArray<jvmtiDeferredLocalVariableSet*>* list = thread()->deferred_locals();
+    if (list != NULL ) {
+      // In real life this never happens or is typically a single element search
+      for (int i = 0; i < list->length(); i++) {
+        if (list->at(i)->matches(this)) {
+          list->at(i)->update_locals(result);
+          break;
+        }
       }
     }
   }
@@ -145,15 +147,17 @@ StackValueCollection* compiledVFrame::expressions() const {
     result->add(create_stack_value(scv_list->at(i)));
   }
 
-  // Replace the original values with any stores that have been
-  // performed through compiledVFrame::update_stack.
-  GrowableArray<jvmtiDeferredLocalVariableSet*>* list = thread()->deferred_locals();
-  if (list != NULL ) {
-    // In real life this never happens or is typically a single element search
-    for (int i = 0; i < list->length(); i++) {
-      if (list->at(i)->matches(this)) {
-        list->at(i)->update_stack(result);
-        break;
+  if (register_map()->cont() == NULL) { // LOOM TODO
+    // Replace the original values with any stores that have been
+    // performed through compiledVFrame::update_stack.
+    GrowableArray<jvmtiDeferredLocalVariableSet*>* list = thread()->deferred_locals();
+    if (list != NULL ) {
+      // In real life this never happens or is typically a single element search
+      for (int i = 0; i < list->length(); i++) {
+        if (list->at(i)->matches(this)) {
+          list->at(i)->update_stack(result);
+          break;
+        }
       }
     }
   }

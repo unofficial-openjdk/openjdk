@@ -25,11 +25,15 @@
  * @test
  * @summary Functional test for continuations walked with StackWalker's LiveStackFrames
  * @build java.base/java.lang.LiveFrames
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+SafepointALot -XX:+FullGCALot -Xint -XX:+UseNewCode Driver
- * run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+SafepointALot -XX:+FullGCALot -Xint Driver
- * run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+SafepointALot -XX:+FullGCALot -Xcomp Driver
- * run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+SafepointALot -XX:+FullGCALot -Xcomp -XX:+UseNewCode Driver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+SafepointALot -Xint Driver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+SafepointALot -Xint -XX:+UseNewCode Driver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+SafepointALot -XX:-TieredCompilation -Xcomp Driver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+SafepointALot -XX:-TieredCompilation -Xcomp -XX:+UseNewCode Driver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+SafepointALot -XX:+TieredCompilation -XX:TieredStopAtLevel=3 -Xcomp Driver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+SafepointALot -XX:+TieredCompilation -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode Driver
  */
+
+
 public class Driver {
     public static void main(String[] args) {
         java.lang.LiveFrames.main(args);

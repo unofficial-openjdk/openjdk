@@ -51,6 +51,10 @@ public class LiveFrames {
         while (!cont.isDone()) {
             cont.run();
             System.gc();
+
+            System.out.println("^&^ UNMOUNTED");
+            testStackWalk(LiveStackFrame.getStackWalker(cont));
+            System.out.println("^&^ END UNMOUNTED");
         }
     }
     
@@ -73,15 +77,14 @@ public class LiveFrames {
         String s = "zzz";
         Continuation.yield(FOO);
 
-        testStackWalk();
+        testStackWalk(LiveStackFrame.getStackWalker());
 
         long r = b+1;
         return "" + r;
     }
 
-    static void testStackWalk() {
+    static void testStackWalk(StackWalker walker) {
         // StackWalker walker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE);
-        StackWalker walker = LiveStackFrame.getStackWalker();
         System.out.println("^&^ start");
         walker.forEach(f -> {
             try {

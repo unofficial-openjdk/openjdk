@@ -2474,7 +2474,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope
       address pc = fr.pc();
       if (fr.is_interpreted_frame()) {
         address bcp;
-        if (map.cont() == NULL) {
+        if (!map.in_cont()) {
           bcp = fr.interpreter_frame_bcp();
           method = fr.interpreter_frame_method();
         } else {

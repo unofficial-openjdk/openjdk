@@ -39,9 +39,12 @@
 // * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp -XX:+UseNewCode Basic
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import org.testng.annotations.Test;
 import org.testng.annotations.DataProvider;
 import static org.testng.Assert.*;
@@ -84,20 +87,23 @@ public class Basic {
         return Integer.parseInt(r)+1;
     }
     
+    static final int DEPTH = 40;
     static String bar(long b) {
         double x = 9.99;
         String s = "zzz";
         Continuation.yield(FOO);
 
-        StackWalker walker = StackWalker.getInstance();
-        List<String> frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
+        // StackWalker walker = StackWalker.getInstance();
+        // List<String> frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
 
-        assertEquals(frames.subList(0, 7), Arrays.asList("bar", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
+        // assertEquals(frames.subList(0, 7), List.of("bar", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
 
-        walker = StackWalker.getInstance(FOO);
-        frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
+        // walker = StackWalker.getInstance(FOO);
+        // frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
 
-        assertEquals(frames, Arrays.asList("bar", "foo", "lambda$test1$0", "enter0", "enter"));
+        // assertEquals(frames, List.of("bar", "foo", "lambda$test1$0", "enter0", "enter"));
+
+        deep(DEPTH);
 
         long r = b+1;
         return "" + r;
@@ -110,6 +116,32 @@ public class Basic {
 
         long r = b+1;
         return "" + r;
+    }
+
+    static void deep(int depth) {
+        if (depth > 1) {
+            deep(depth-1);
+            return;
+        }
+
+        // System.out.println("--------- DEEP ----------- ");
+        StackWalker walker = StackWalker.getInstance();
+        List<String> frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
+
+        List<String> expected0 = new ArrayList<>();
+        IntStream.range(0, DEPTH).forEach(i -> { expected0.add("deep"); });
+        expected0.addAll(List.of("bar", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
+
+        assertEquals(frames.subList(0, DEPTH + 7), expected0);
+
+        walker = StackWalker.getInstance(FOO);
+        frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
+
+        List<String> expected1 = new ArrayList<>();
+        IntStream.range(0, DEPTH).forEach(i -> { expected1.add("deep"); });
+        expected1.addAll(List.of("bar", "foo", "lambda$test1$0", "enter0", "enter"));
+        assertEquals(frames, expected1);
+        // System.out.println("========== DEEP ============ ");
     }
 
     static class LoomException extends RuntimeException {

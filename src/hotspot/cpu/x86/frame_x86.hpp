@@ -160,7 +160,7 @@
 
   // helper to update a map with callee-saved RBP
   static void update_map_with_saved_link(RegisterMap* map, intptr_t** link_addr);
-  static intptr_t** saved_link_address(RegisterMap* map);
+  static intptr_t** saved_link_address(const RegisterMap* map);
 
   // deoptimization support
   void interpreter_frame_set_last_sp(intptr_t* sp);

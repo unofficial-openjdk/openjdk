@@ -50,7 +50,7 @@ private:
 protected:
   void fill_stackframe(Handle stackFrame, const methodHandle& method, TRAPS);
 public:
-  BaseFrameStream(JavaThread* thread, Handle continuation) : _thread(thread), _continuation(continuation), _anchor(0L) {}
+  BaseFrameStream(JavaThread* thread, Handle continuation);
 
   virtual void    next()=0;
   virtual bool    at_end()=0;

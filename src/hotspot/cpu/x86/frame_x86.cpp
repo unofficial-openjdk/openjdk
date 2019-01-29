@@ -286,7 +286,8 @@ void frame::patch_pc(Thread* thread, address pc) {
 //     tty->print_cr("*pc_addr: " INTPTR_FORMAT, p2i(*pc_addr)); os::print_location(tty, *(intptr_t*)pc_addr);
 //   }
 // #endif
-  assert(_pc == *pc_addr || pc == *pc_addr, "must be (pc: " INTPTR_FORMAT " _pc: " INTPTR_FORMAT " *pc_addr: " INTPTR_FORMAT ")", p2i(pc), p2i(_pc), p2i(*pc_addr));
+  // *pc_addr = 0 in thaw_compiled frame, to disable this assertion, because the callee is not yet on the stack.
+  assert(_pc == *pc_addr || pc == *pc_addr || *pc_addr == 0, "must be (pc: " INTPTR_FORMAT " _pc: " INTPTR_FORMAT " *pc_addr: " INTPTR_FORMAT ")", p2i(pc), p2i(_pc), p2i(*pc_addr));
   *pc_addr = pc;
   _cb = CodeCache::find_blob(pc);
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
@@ -439,14 +440,14 @@ void frame::update_map_with_saved_link(RegisterMap* map, intptr_t** link_addr) {
 #endif // AMD64
 }
 
-intptr_t** frame::saved_link_address(RegisterMap* map) {
+intptr_t** frame::saved_link_address(const RegisterMap* map) {
   return (intptr_t**)map->location(rbp->as_VMReg());
 }
 
 //------------------------------------------------------------------------------
 // frame::sender_for_interpreter_frame
 frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
-  if (map->walk_cont() && map->cont() != NULL) { // already in an h-stack
+  if (map->in_cont()) { // already in an h-stack
     return Continuation::sender_for_interpreter_frame(*this, map);
   }
 
@@ -465,9 +466,9 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
 
   address sender_pc = this->sender_pc();
   if (Continuation::is_return_barrier_entry(sender_pc)) {
-    if (map->walk_cont()) // about to walk into an h-stack
+    if (map->walk_cont()) { // about to walk into an h-stack
       return Continuation::top_frame(*this, map);
-    else
+    } else
       sender_pc = Continuation::fix_continuation_bottom_sender(this, map, sender_pc);
   }
 

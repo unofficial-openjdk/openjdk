@@ -149,6 +149,7 @@ inline frame::frame(intptr_t* sp, intptr_t* fp) {
   } else {
     _deopt_state = not_deoptimized;
   }
+  _oop_map = NULL;
 }
 
 inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc, CodeBlob* cb, bool deopt) {
@@ -159,6 +160,7 @@ inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address
   assert(pc != NULL, "no pc?");
   _cb = cb;
   _deopt_state = deopt ? is_deoptimized : not_deoptimized;
+  _oop_map = NULL;
 }
 
 // Accessors
@@ -332,7 +334,7 @@ template <typename LOOKUP, bool stub>
 frame frame::sender_for_compiled_frame(RegisterMap* map) const {
   assert(map != NULL, "map must be set");
 
-  if (map->walk_cont() && map->cont() != NULL) { // already in an h-stack
+  if (map->in_cont()) { // already in an h-stack
     return Continuation::sender_for_compiled_frame(*this, map);
   }
 

@@ -46,14 +46,28 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
 
     // First find address of value
 
-    address value_addr = loc.is_register()
+    address value_addr;
+    if (!reg_map->in_cont()) {
+      value_addr = loc.is_register()
       // Value was in a callee-save register
-      ? reg_map->location(VMRegImpl::as_VMReg(loc.register_number()))
+        ? reg_map->location(VMRegImpl::as_VMReg(loc.register_number()))
       // Else value was directly saved on the stack. The frame's original stack pointer,
       // before any extension by its callee (due to Compiler1 linkage on SPARC), must be used.
-      : reg_map->cont() != NULL ? Continuation::usp_offset_to_location(*fr, reg_map, loc.stack_offset(), loc.type() == Location::oop || loc.type() == Location::narrowoop)
-      : ((address)fr->unextended_sp()) + loc.stack_offset();
-    assert(reg_map->thread()->is_in_usable_stack(value_addr), INTPTR_FORMAT, p2i(value_addr)); 
+        : ((address)fr->unextended_sp()) + loc.stack_offset();
+
+      assert(reg_map->thread()->is_in_usable_stack(value_addr),  INTPTR_FORMAT, p2i(value_addr)); 
+    } else {
+      if (loc.type() == Location::invalid)
+        return new StackValue();
+      value_addr = loc.is_register()
+      // Value was in a callee-save register
+        ? Continuation::reg_to_location(*fr, reg_map, VMRegImpl::as_VMReg(loc.register_number()), loc.type() == Location::oop || loc.type() == Location::narrowoop)
+      // Else value was directly saved on the stack. The frame's original stack pointer,
+      // before any extension by its callee (due to Compiler1 linkage on SPARC), must be used.
+        : Continuation::usp_offset_to_location(*fr, reg_map, loc.stack_offset(), loc.type() == Location::oop || loc.type() == Location::narrowoop);
+      
+      assert(Continuation::is_in_usable_stack(value_addr, reg_map), INTPTR_FORMAT, p2i(value_addr)); 
+    }
 
     // Then package it right depending on type
     // Note: the transfer of the data is thru a union that contains
@@ -115,7 +129,7 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
     }
 #endif
     case Location::oop: {
-      if (reg_map->cont() != NULL && UseCompressedOops) {
+      if (reg_map->in_cont() && UseCompressedOops) {
         narrowOop noop = *(narrowOop*) value_addr;
         Handle h(Thread::current(), CompressedOops::decode(noop));
         return new StackValue(h);
