@@ -63,7 +63,7 @@ RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool walk_cont, bo
   clear();
   debug_only(_update_for_id = NULL;)
 
-  _on_hstack = FALSE;
+  _on_hstack = false;
   if (walk_cont) {
     // we allocate the handle now (rather than in set_cont) because sometimes (StackWalker) the handle
     // must love across HandleMarks
