@@ -118,7 +118,7 @@ void LiveFrameStream::set_continuation(Handle cont) {
   BaseFrameStream::set_continuation(cont);
 
   _jvf = Continuation::last_java_vframe(continuation(), _map); // we must not use the handle argument (lifetime; see BaseFrameStream::set_continuation)
-  _cont = cont;
+  _cont = continuation(); // *(_cont.raw_value()) = cont(); // preserve handle
 }
 
 void JavaFrameStream::next() { 
