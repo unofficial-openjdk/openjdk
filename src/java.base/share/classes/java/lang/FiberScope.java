@@ -33,11 +33,14 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.BlockingSource;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -69,8 +72,8 @@ import jdk.internal.misc.Strands;
  * <pre>{@code
  *     Fiber<?> fiber1, fiber2;
  *     try (var scope = FiberScope.cancellable()) {
- *         fiber1 = Fiber.schedule(scope, () -> { ... });
- *         fiber1 = Fiber.schedule(scope, () -> { ... });
+ *         fiber1 = scope.schedule(() -> { ... });
+ *         fiber1 = scope.schedule(() -> { ... });
  *     });
  *     assertFalse(fiber1.isAlive());
  *     assertFalse(fiber2.isAlive());
@@ -115,7 +118,7 @@ import jdk.internal.misc.Strands;
  * <pre>{@code
  *     <V> V anyOf(Callable<? extends V>[] tasks) throws Throwable {
  *         try (var scope = FiberScope.cancellable()) {
- *             Arrays.stream(tasks).forEach(task -> Fiber.schedule(scope, task));
+ *             Arrays.stream(tasks).forEach(task -> scope.schedule(task));
  *             try {
  *                 return (V) scope.terminationQueue().take().join();
  *             } catch (CompletionException e) {
@@ -140,7 +143,7 @@ import jdk.internal.misc.Strands;
  * <pre>{@code
  *     <V> V anySuccessful(Callable<? extends V>[] tasks, Instant deadline) throws Throwable {
  *         try (var scope = FiberScope.withDeadline(deadline)) {
- *             Arrays.stream(tasks).forEach(task -> Fiber.schedule(scope, task));
+ *             Arrays.stream(tasks).forEach(task -> scope.schedule(task));
  *             Throwable firstException = null;
  *             while (scope.hasRemaining()) {
  *                 try {
@@ -216,7 +219,7 @@ import jdk.internal.misc.Strands;
  *                 boolean expired = realDeadline.compareTo(Instant.now()) <= 0;
  *                 if (channel == null && !expired && next < addresses.length) {
  *                     var address = addresses[next++];
- *                     Fiber.schedule(scope, () -> SocketChannel.open(address));
+ *                     scope.schedule(() -> SocketChannel.open(address));
  *                 }
  *
  *                 // if the deadline has been reached or there are no more addresses
@@ -309,6 +312,72 @@ public class FiberScope implements AutoCloseable {
      */
     public static FiberScope withTimeout(Duration timeout) {
         return withDeadline(Instant.now().plus(timeout));
+    }
+
+    /**
+     * Creates and schedules a new {@link Fiber fiber} to run the given task.
+     * The fiber is scheduled in this scope with the default scheduler.
+     *
+     * @param task the task to execute
+     * @return the fiber
+     * @throws IllegalCallerException if the caller thread or fiber is not
+     *         executing in the scope
+     */
+    public Fiber<?> schedule(Runnable task) {
+        Fiber<?> fiber = Fiber.newFiber(task);
+        fiber.schedule(this);
+        return fiber;
+    }
+
+    /**
+     * Creates and schedules a new {@link Fiber fiber} to run the given task.
+     * The fiber is scheduled in this scope with the given scheduler.
+     *
+     * @param scheduler the schedule
+     * @param task the task to execute
+     * @return the fiber
+     * @throws IllegalCallerException if the caller thread or fiber is not
+     *         executing in the scope
+     * @throws RejectedExecutionException if the scheduler cannot accept a task
+     */
+    public Fiber<?> schedule(Executor scheduler, Runnable task) {
+        Fiber<?> fiber = Fiber.newFiber(scheduler, task);
+        fiber.schedule(this);
+        return fiber;
+    }
+
+    /**
+     * Creates and schedules a new {@link Fiber fiber} to run the given task.
+     * The fiber is scheduled in this scope with the default scheduler.
+     *
+     * @param task the task to execute
+     * @param <V> the task's result type
+     * @return the fiber
+     * @throws IllegalCallerException if the caller thread or fiber is not
+     *         executing in the scope
+     */
+    public <V> Fiber<V> schedule(Callable<? extends V> task) {
+        Fiber<V> fiber = Fiber.newFiber(task);
+        fiber.schedule(this);
+        return fiber;
+    }
+
+    /**
+     * Creates and schedules a new {@link Fiber fiber} to run the given task.
+     * The fiber is scheduled in this scope with the given scheduler.
+     *
+     * @param scheduler the schedule
+     * @param task the task to execute
+     * @param <V> the task's result type
+     * @return the fiber
+     * @throws IllegalCallerException if the caller thread or fiber is not
+     *         executing in the scope
+     * @throws RejectedExecutionException if the scheduler cannot accept a task
+     */
+    public <V> Fiber<V> schedule(Executor scheduler, Callable<? extends V> task) {
+        Fiber<V> fiber = Fiber.newFiber(scheduler, task);
+        fiber.schedule(this);
+        return fiber;
     }
 
     /**

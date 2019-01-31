@@ -62,7 +62,7 @@ public class Scopes {
     public void testDetached3() {
         FiberScope scope = FiberScope.DETACHED;
         assertFalse(scope.hasRemaining());
-        var fiber = Fiber.schedule(scope, () -> LockSupport.park());
+        var fiber = scope.schedule(() -> LockSupport.park());
         try {
             assertFalse(scope.hasRemaining());
         } finally {
@@ -74,7 +74,7 @@ public class Scopes {
     public void testDetached4() {
         FiberScope scope = FiberScope.DETACHED;
         assertEmpty(scope.fibers());
-        var fiber = Fiber.schedule(scope, () -> LockSupport.park());
+        var fiber = scope.schedule(() -> LockSupport.park());
         try {
             assertEmpty(scope.fibers());
         } finally {
@@ -94,7 +94,7 @@ public class Scopes {
     public void testCancellable1() {
         var ref = new AtomicReference<Fiber<?>>();
         try (var scope = FiberScope.cancellable()) {
-            var fiber = Fiber.schedule(scope, () -> {
+            var fiber = scope.schedule(() -> {
                 Thread.sleep(2000);
                 return null;
             });
@@ -119,7 +119,7 @@ public class Scopes {
     public void testCancellable3() {
         runInFiber(() -> {
             try (var scope = FiberScope.cancellable()) {
-                var child = Fiber.schedule(scope, () -> {
+                var child = scope.schedule(() -> {
                     try {
                         Thread.sleep(60*1000);
                         assertTrue(false);
@@ -138,7 +138,7 @@ public class Scopes {
     public void testCancellable4() {
         try (var scope = FiberScope.cancellable()) {
             assertEmpty(scope.fibers());
-            var fiber = Fiber.schedule(scope, () -> LockSupport.park());
+            var fiber = scope.schedule(() -> LockSupport.park());
             try {
                 assertTrue(scope.fibers().filter(f -> f == fiber).findAny().isPresent());
             } finally {
@@ -155,7 +155,7 @@ public class Scopes {
             var queue = scope.terminationQueue();
             assertFalse(scope.hasRemaining());
             assertTrue(queue.poll() == null);
-            var child = Fiber.schedule(scope, () -> { });
+            var child = scope.schedule(() -> { });
             assertTrue(scope.hasRemaining());
             var fiber = queue.take();
             assertTrue(fiber == child);
@@ -172,7 +172,7 @@ public class Scopes {
     public void testNonCancellable1() {
         var ref = new AtomicReference<Fiber<?>>();
         try (var scope = FiberScope.notCancellable()) {
-            var fiber = Fiber.schedule(scope, () -> {
+            var fiber = scope.schedule(() -> {
                 Thread.sleep(2000);
                 return null;
             });
@@ -197,7 +197,7 @@ public class Scopes {
     public void testNonCancellable3() {
         runInFiber(() -> {
             try (var scope = FiberScope.notCancellable()) {
-                var child = Fiber.schedule(scope, () -> {
+                var child = scope.schedule(() -> {
                     Thread.sleep(1000);
                     assertFalse(Fiber.cancelled());
                     return null;
@@ -213,7 +213,7 @@ public class Scopes {
     public void testNonCancellable4() {
         try (var scope = FiberScope.notCancellable()) {
             assertEmpty(scope.fibers());
-            var fiber = Fiber.schedule(scope, () -> LockSupport.park());
+            var fiber = scope.schedule(() -> LockSupport.park());
             try {
                 assertTrue(scope.fibers().filter(f -> f == fiber).findAny().isPresent());
             } finally {
@@ -230,7 +230,7 @@ public class Scopes {
             var queue = scope.terminationQueue();
             assertFalse(scope.hasRemaining());
             assertTrue(queue.poll() == null);
-            var child = Fiber.schedule(scope, () -> { });
+            var child = scope.schedule(() -> { });
             assertTrue(scope.hasRemaining());
             var fiber = queue.take();
             assertTrue(fiber == child);
@@ -249,7 +249,7 @@ public class Scopes {
         var deadline = Instant.now().plusSeconds(60);
         try (var scope = FiberScope.withDeadline(deadline)) {
             assertTrue(FiberScope.currentDeadline().orElseThrow().equals(deadline));
-            var fiber = Fiber.schedule(scope, () -> {
+            var fiber = scope.schedule(() -> {
                 Thread.sleep(2000);
                 return null;
             });
@@ -278,7 +278,7 @@ public class Scopes {
             var deadline = Instant.now().plusSeconds(60);
             try (var scope = FiberScope.withDeadline(deadline)) {
                 assertTrue(FiberScope.currentDeadline().orElseThrow().equals(deadline));
-                var child = Fiber.schedule(scope, () -> {
+                var child = scope.schedule(() -> {
                     try {
                         Thread.sleep(60*1000);
                         assertTrue(false);
@@ -299,7 +299,7 @@ public class Scopes {
         try (var scope = FiberScope.withDeadline(deadline)) {
             assertTrue(FiberScope.currentDeadline().orElseThrow().equals(deadline));
             assertEmpty(scope.fibers());
-            var fiber = Fiber.schedule(scope, () -> LockSupport.park());
+            var fiber = scope.schedule(() -> LockSupport.park());
             try {
                 assertTrue(scope.fibers().filter(f -> f == fiber).findAny().isPresent());
             } finally {
@@ -318,7 +318,7 @@ public class Scopes {
             var queue = scope.terminationQueue();
             assertFalse(scope.hasRemaining());
             assertTrue(queue.poll() == null);
-            var child = Fiber.schedule(scope, () -> { });
+            var child = scope.schedule(() -> { });
             assertTrue(scope.hasRemaining());
             var fiber = queue.take();
             assertTrue(fiber == child);
@@ -333,7 +333,7 @@ public class Scopes {
     public void testWithDeadline6() {
         var deadline = Instant.now().plusSeconds(1);
         try (var scope = FiberScope.withDeadline(deadline)) {
-            Fiber.schedule(scope, () -> {
+            scope.schedule(() -> {
                 Thread.sleep(60 * 1000);
                 return null;
             });
@@ -352,10 +352,7 @@ public class Scopes {
     public void testWithDeadline8() {
         var deadline = Instant.now().minusSeconds(1);
         try (var scope = FiberScope.withDeadline(deadline)) {
-            try {
-                Fiber.schedule(() -> assertTrue(Fiber.cancelled())).join();
-                assertTrue(false);
-            } catch (CompletionException expected) { }
+            scope.schedule(() -> assertTrue(Fiber.cancelled())).join();
         }
     }
 
@@ -371,7 +368,7 @@ public class Scopes {
     public void testNesting1() {
         runInFiber(() -> {
             try (var outer = FiberScope.cancellable()) {
-                var child = Fiber.schedule(outer, () -> LockSupport.park());
+                var child = outer.schedule(() -> LockSupport.park());
                 try (var inner = FiberScope.cancellable()) {
                     assertFalse(child.isCancelled());
                     Fiber.current().map(Fiber::cancel);
@@ -402,9 +399,9 @@ public class Scopes {
         runInFiber(() -> {
             try (var outer = FiberScope.cancellable()) {
                 var ref = new AtomicReference<Fiber<?>>();
-                Fiber<?> child = Fiber.schedule(outer, () -> {
+                Fiber<?> child = outer.schedule(() -> {
                     try (var inner = FiberScope.cancellable()) {
-                        ref.set(Fiber.schedule(inner, () -> LockSupport.park()));
+                        ref.set(inner.schedule(() -> LockSupport.park()));
                     }
                 });
                 Fiber<?> grandchild = waitForValue(ref);
@@ -427,9 +424,9 @@ public class Scopes {
         runInFiber(() -> {
             try (var outer = FiberScope.cancellable()) {
                 var ref = new AtomicReference<Fiber<?>>();
-                Fiber<?> child = Fiber.schedule(outer, () -> {
+                Fiber<?> child = outer.schedule(() -> {
                     try (var inner = FiberScope.notCancellable()) {
-                        ref.set(Fiber.schedule(inner, () -> LockSupport.park()));
+                        ref.set(inner.schedule(() -> LockSupport.park()));
                     }
                 });
                 Fiber<?> grandchild = waitForValue(ref);
@@ -477,7 +474,7 @@ public class Scopes {
 
 
     void runInFiber(FiberScope scope, Runnable task) {
-        Fiber.schedule(scope, task).join();
+        scope.schedule(task).join();
     }
 
     <T> T waitForValue(AtomicReference<T> ref) {

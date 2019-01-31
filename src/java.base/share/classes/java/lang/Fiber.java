@@ -64,8 +64,8 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * virtual machine rather than the operating system.
  *
  * <p> A {@code Fiber} is created and scheduled in a {@link FiberScope fiber
- * scope} to execute a task by invoking one of the {@link #schedule(FiberScope, Runnable)
- * schedule} methods of this class. A fiber terminates when the task completes
+ * scope} to execute a task by invoking one of the {@link FiberScope#schedule(Runnable)
+ * schedule} methods of that class. A fiber terminates when the task completes
  * execution, either normally or with a exception or error. The {@linkplain
  * #awaitTermination() awaitTermination} method can be used to wait for a fiber
  * to terminate. The {@linkplain #join() join} method also waits for a fiber to
@@ -207,6 +207,22 @@ public class Fiber<V> {
         }
     }
 
+    static Fiber<?> newFiber(Runnable task) {
+        return new Fiber<>(DEFAULT_SCHEDULER, task);
+    }
+
+    static Fiber<?> newFiber(Executor scheduler, Runnable task) {
+        return new Fiber<>(scheduler, task);
+    }
+
+    static <V> Fiber<V> newFiber(Callable<? extends V> task) {
+        return new Fiber<>(DEFAULT_SCHEDULER, task);
+    }
+
+    static <V> Fiber<V> newFiber(Executor scheduler, Callable<? extends V> task) {
+        return new Fiber<>(scheduler, task);
+    }
+
     /**
      * Creates and schedules a new {@code Fiber} to run the given task with the
      * default scheduler.
@@ -219,7 +235,7 @@ public class Fiber<V> {
      * @return the fiber
      */
     public static Fiber<?> schedule(Runnable task) {
-        return new Fiber<>(DEFAULT_SCHEDULER, task).schedule(FiberScope.DETACHED);
+        return FiberScope.DETACHED.schedule(DEFAULT_SCHEDULER, task);
     }
 
     /**
@@ -236,7 +252,7 @@ public class Fiber<V> {
      * @throws RejectedExecutionException if the scheduler cannot accept a task
      */
     public static Fiber<?> schedule(Executor scheduler, Runnable task) {
-        return new Fiber<>(scheduler, task).schedule(FiberScope.DETACHED);
+        return FiberScope.DETACHED.schedule(scheduler, task);
     }
 
     /**
@@ -252,7 +268,7 @@ public class Fiber<V> {
      * @return the fiber
      */
     public static <V> Fiber<V> schedule(Callable<? extends V> task) {
-        return new Fiber<V>(DEFAULT_SCHEDULER, task).schedule(FiberScope.DETACHED);
+        return FiberScope.DETACHED.schedule(task);
     }
 
     /**
@@ -270,78 +286,7 @@ public class Fiber<V> {
      * @throws RejectedExecutionException if the scheduler cannot accept a task
      */
     public static <V> Fiber<V> schedule(Executor scheduler, Callable<? extends V> task) {
-        return new Fiber<V>(scheduler, task).schedule(FiberScope.DETACHED);
-    }
-
-    /**
-     * Creates and schedules a new {@code Fiber} in the given {@link FiberScope
-     * scope} to run the given task. The fiber is scheduled with the default
-     * scheduler.
-     *
-     * @param scope the fiber scope
-     * @param task the task to execute
-     * @return the fiber
-     * @throws IllegalCallerException if the caller thread or fiber is not
-     *         executing in the scope
-     */
-    public static Fiber<?> schedule(FiberScope scope, Runnable task) {
-        return new Fiber<>(DEFAULT_SCHEDULER, task).schedule(scope);
-    }
-
-    /**
-     * Creates and schedules a new {@code Fiber} to run the given task with the
-     * given scheduler given {@link FiberScope fiber scope}. The fiber is
-     * scheduled with the given scheduler.
-     *
-     * @param scope the fiber scope
-     * @param scheduler the scheduler
-     * @param task the task to execute
-     * @return the fiber
-     * @throws RejectedExecutionException if the scheduler cannot accept a task
-     * @throws IllegalCallerException if the caller thread or fiber is not
-     *         executing in the scope
-     */
-    public static Fiber<?> schedule(FiberScope scope,
-                                    Executor scheduler,
-                                    Runnable task) {
-        return new Fiber<>(scheduler, task).schedule(scope);
-    }
-
-    /**
-     * Creates and schedules a new {@code Fiber} in the given {@link FiberScope
-     * scope} to run the given value-returning task. The fiber is scheduled with
-     * the default scheduler.
-     *
-     * @param scope the fiber scope
-     * @param task the task to execute
-     * @param <V> the task's result type
-     * @return the fiber
-     * @throws IllegalCallerException if the caller thread or fiber is not
-     *         executing in the scope
-     */
-    public static <V> Fiber<V> schedule(FiberScope scope, Callable<? extends V> task) {
-        Objects.requireNonNull(scope);
-        return new Fiber<V>(DEFAULT_SCHEDULER, task).schedule(scope);
-    }
-
-    /**
-     * Creates and schedules a new {@code Fiber} in the given {@link FiberScope
-     * scope} to run the given value-returning task. The fiber is scheduled with
-     * the given scheduler.
-     *
-     * @param scope the fiber scope
-     * @param scheduler the scheduler
-     * @param task the task to execute
-     * @param <V> the task's result type
-     * @return the fiber
-     * @throws RejectedExecutionException if the scheduler cannot accept a task
-     * @throws IllegalCallerException if the caller thread or fiber is not
-     *         executing in the scope
-     */
-    public static <V> Fiber<V> schedule(FiberScope scope,
-                                        Executor scheduler,
-                                        Callable<? extends V> task) {
-        return new Fiber<V>(scheduler, task).schedule(scope);
+        return FiberScope.DETACHED.schedule(scheduler, task);
     }
 
     /**
@@ -369,15 +314,15 @@ public class Fiber<V> {
     }
 
     /**
-     * Schedules this {@code Fiber} to execute.
+     * Schedules this {@code Fiber} to execute in the given scope.
      *
      * @return this fiber
-     * @throws RejectedExecutionException if the scheduler cannot accept a task
      * @throws IllegalStateException if the fiber has already been scheduled
      * @throws IllegalCallerException if the caller thread or fiber is not
      *         executing in the scope
+     * @throws RejectedExecutionException if the scheduler cannot accept a task
      */
-    private Fiber<V> schedule(FiberScope scope) {
+    Fiber<V> schedule(FiberScope scope) {
         Objects.requireNonNull(scope);
 
         if (!stateCompareAndSet(ST_NEW, ST_STARTED))
