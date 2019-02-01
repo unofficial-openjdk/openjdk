@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_OPTO_GRAPHKIT_HPP
-#define SHARE_VM_OPTO_GRAPHKIT_HPP
+#ifndef SHARE_OPTO_GRAPHKIT_HPP
+#define SHARE_OPTO_GRAPHKIT_HPP
 
 #include "ci/ciEnv.hpp"
 #include "ci/ciMethodData.hpp"
@@ -830,6 +830,10 @@ class GraphKit : public Phase {
   Node* type_check_receiver(Node* receiver, ciKlass* klass, float prob,
                             Node* *casted_receiver);
 
+  // Inexact type check used for predicted calls.
+  Node* subtype_check_receiver(Node* receiver, ciKlass* klass,
+                               Node** casted_receiver);
+
   // implementation of object creation
   Node* set_output_for_allocation(AllocateNode* alloc,
                                   const TypeOopPtr* oop_type,
@@ -927,4 +931,4 @@ class PreserveReexecuteState: public StackObj {
   ~PreserveReexecuteState();
 };
 
-#endif // SHARE_VM_OPTO_GRAPHKIT_HPP
+#endif // SHARE_OPTO_GRAPHKIT_HPP

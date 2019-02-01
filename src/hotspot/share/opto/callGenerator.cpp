@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,9 +46,17 @@ const TypeFunc* CallGenerator::tf() const {
   return TypeFunc::make(method());
 }
 
-bool CallGenerator::is_inlined_method_handle_intrinsic(JVMState* jvms, ciMethod* callee) {
-  ciMethod* symbolic_info = jvms->method()->get_method_at_bci(jvms->bci());
-  return symbolic_info->is_method_handle_intrinsic() && !callee->is_method_handle_intrinsic();
+bool CallGenerator::is_inlined_method_handle_intrinsic(JVMState* jvms, ciMethod* m) {
+  return is_inlined_method_handle_intrinsic(jvms->method(), jvms->bci(), m);
+}
+
+bool CallGenerator::is_inlined_method_handle_intrinsic(ciMethod* caller, int bci, ciMethod* m) {
+  ciMethod* symbolic_info = caller->get_method_at_bci(bci);
+  return is_inlined_method_handle_intrinsic(symbolic_info, m);
+}
+
+bool CallGenerator::is_inlined_method_handle_intrinsic(ciMethod* symbolic_info, ciMethod* m) {
+  return symbolic_info->is_method_handle_intrinsic() && !m->is_method_handle_intrinsic();
 }
 
 //-----------------------------ParseGenerator---------------------------------
@@ -90,7 +98,6 @@ JVMState* ParseGenerator::generate(JVMState* jvms) {
   // Grab signature for matching/allocation
 #ifdef ASSERT
   if (parser.tf() != (parser.depth() == 1 ? C->tf() : tf())) {
-    MutexLockerEx ml(Compile_lock, Mutex::_no_safepoint_check_flag);
     assert(C->env()->system_dictionary_modification_counter_changed(),
            "Must invalidate if TypeFuncs differ");
   }
@@ -452,7 +459,7 @@ void LateInlineCallGenerator::do_late_inline() {
   C->set_has_loops(C->has_loops() || _inline_cg->method()->has_loops());
   C->env()->notice_inlined_method(_inline_cg->method());
   C->set_inlining_progress(true);
-
+  C->set_do_cleanup(kit.stopped()); // path is dead; needs cleanup
   kit.replace_call(call, result, true);
 }
 
@@ -645,11 +652,13 @@ class PredictedCallGenerator : public CallGenerator {
   CallGenerator* _if_missed;
   CallGenerator* _if_hit;
   float          _hit_prob;
+  bool           _exact_check;
 
 public:
   PredictedCallGenerator(ciKlass* predicted_receiver,
                          CallGenerator* if_missed,
-                         CallGenerator* if_hit, float hit_prob)
+                         CallGenerator* if_hit, bool exact_check,
+                         float hit_prob)
     : CallGenerator(if_missed->method())
   {
     // The call profile data may predict the hit_prob as extreme as 0 or 1.
@@ -661,6 +670,7 @@ public:
     _if_missed          = if_missed;
     _if_hit             = if_hit;
     _hit_prob           = hit_prob;
+    _exact_check        = exact_check;
   }
 
   virtual bool      is_virtual()   const    { return true; }
@@ -675,9 +685,16 @@ CallGenerator* CallGenerator::for_predicted_call(ciKlass* predicted_receiver,
                                                  CallGenerator* if_missed,
                                                  CallGenerator* if_hit,
                                                  float hit_prob) {
-  return new PredictedCallGenerator(predicted_receiver, if_missed, if_hit, hit_prob);
+  return new PredictedCallGenerator(predicted_receiver, if_missed, if_hit,
+                                    /*exact_check=*/true, hit_prob);
 }
 
+CallGenerator* CallGenerator::for_guarded_call(ciKlass* guarded_receiver,
+                                               CallGenerator* if_missed,
+                                               CallGenerator* if_hit) {
+  return new PredictedCallGenerator(guarded_receiver, if_missed, if_hit,
+                                    /*exact_check=*/false, PROB_ALWAYS);
+}
 
 JVMState* PredictedCallGenerator::generate(JVMState* jvms) {
   GraphKit kit(jvms);
@@ -688,8 +705,8 @@ JVMState* PredictedCallGenerator::generate(JVMState* jvms) {
   Node* receiver = kit.argument(0);
   CompileLog* log = kit.C->log();
   if (log != NULL) {
-    log->elem("predicted_call bci='%d' klass='%d'",
-              jvms->bci(), log->identify(_predicted_receiver));
+    log->elem("predicted_call bci='%d' exact='%d' klass='%d'",
+              jvms->bci(), (_exact_check ? 1 : 0), log->identify(_predicted_receiver));
   }
 
   receiver = kit.null_check_receiver_before_call(method());
@@ -701,10 +718,15 @@ JVMState* PredictedCallGenerator::generate(JVMState* jvms) {
   ReplacedNodes replaced_nodes = kit.map()->replaced_nodes();
   replaced_nodes.clone();
 
-  Node* exact_receiver = receiver;  // will get updated in place...
-  Node* slow_ctl = kit.type_check_receiver(receiver,
-                                           _predicted_receiver, _hit_prob,
-                                           &exact_receiver);
+  Node* casted_receiver = receiver;  // will get updated in place...
+  Node* slow_ctl = NULL;
+  if (_exact_check) {
+    slow_ctl = kit.type_check_receiver(receiver, _predicted_receiver, _hit_prob,
+                                       &casted_receiver);
+  } else {
+    slow_ctl = kit.subtype_check_receiver(receiver, _predicted_receiver,
+                                          &casted_receiver);
+  }
 
   SafePointNode* slow_map = NULL;
   JVMState* slow_jvms = NULL;
@@ -729,7 +751,7 @@ JVMState* PredictedCallGenerator::generate(JVMState* jvms) {
   }
 
   // fall through if the instance exactly matches the desired type
-  kit.replace_in_map(receiver, exact_receiver);
+  kit.replace_in_map(receiver, casted_receiver);
 
   // Make the hot call:
   JVMState* new_jvms = _if_hit->generate(kit.sync_jvms());
@@ -889,7 +911,8 @@ CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod*
           const TypeOopPtr* arg_type = arg->bottom_type()->isa_oopptr();
           const Type*       sig_type = TypeOopPtr::make_from_klass(signature->accessing_klass());
           if (arg_type != NULL && !arg_type->higher_equal(sig_type)) {
-            Node* cast_obj = gvn.transform(new CheckCastPPNode(kit.control(), arg, sig_type));
+            const Type* recv_type = arg_type->join_speculative(sig_type); // keep speculative part
+            Node* cast_obj = gvn.transform(new CheckCastPPNode(kit.control(), arg, recv_type));
             kit.set_argument(0, cast_obj);
           }
         }
@@ -901,7 +924,8 @@ CallGenerator* CallGenerator::for_method_handle_inline(JVMState* jvms, ciMethod*
             const TypeOopPtr* arg_type = arg->bottom_type()->isa_oopptr();
             const Type*       sig_type = TypeOopPtr::make_from_klass(t->as_klass());
             if (arg_type != NULL && !arg_type->higher_equal(sig_type)) {
-              Node* cast_obj = gvn.transform(new CheckCastPPNode(kit.control(), arg, sig_type));
+              const Type* narrowed_arg_type = arg_type->join_speculative(sig_type); // keep speculative part
+              Node* cast_obj = gvn.transform(new CheckCastPPNode(kit.control(), arg, narrowed_arg_type));
               kit.set_argument(receiver_skip + j, cast_obj);
             }
           }

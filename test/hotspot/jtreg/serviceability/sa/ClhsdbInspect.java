@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@
  * @summary Test the clhsdb 'inspect' command
  * @requires vm.hasSA
  * @library /test/lib
- * @run main/othervm ClhsdbInspect
+ * @run main/othervm/timeout=480 ClhsdbInspect
  */
 
 import java.util.HashMap;
@@ -56,13 +56,6 @@ public class ClhsdbInspect {
             List<String> cmds = List.of("jstack -v");
 
             String jstackOutput = test.run(theApp.getPid(), cmds, null, null);
-
-            if (jstackOutput == null) {
-                // Output could be null due to attach permission issues
-                // and if we are skipping this.
-                LingeredApp.stopApp(theApp);
-                throw new SkippedException("attach permission issues");
-            }
 
             Map<String, String> tokensMap = new HashMap<>();
             tokensMap.put("(a java.lang.Class for LingeredAppWithLock)",
