@@ -760,20 +760,27 @@ var getJibProfilesProfiles = function (input, common, data) {
     if (testedProfile == null) {
         testedProfile = input.build_os + "-" + input.build_cpu;
     }
+    var testedProfileJDK = testedProfile + ".jdk";
+    var testedProfileTest = ""
+    if (testedProfile.endsWith("-jcov")) {
+        testedProfileTest = testedProfile.substring(0, testedProfile.length - "-jcov".length) + ".test";
+    } else {
+        testedProfileTest = testedProfile + ".test";
+    }
     var testOnlyProfilesPrebuilt = {
         "run-test-prebuilt": {
             target_os: input.build_os,
             target_cpu: input.build_cpu,
             dependencies: [
-                "jtreg", "gnumake", "boot_jdk", "devkit", "jib", testedProfile + ".jdk",
-                testedProfile + ".test"
+                "jtreg", "gnumake", "boot_jdk", "devkit", "jib", "jcov", testedProfileJDK,
+                testedProfileTest
             ],
             src: "src.conf",
             make_args: [ "run-test-prebuilt", "LOG_CMDLINES=true", "JTREG_VERBOSE=fail,error,time" ],
             environment: {
                 "BOOT_JDK": common.boot_jdk_home,
-                "JDK_IMAGE_DIR": input.get(testedProfile + ".jdk", "home_path"),
-                "TEST_IMAGE_DIR": input.get(testedProfile + ".test", "home_path")
+                "JDK_IMAGE_DIR": input.get(testedProfileJDK, "home_path"),
+                "TEST_IMAGE_DIR": input.get(testedProfileTest, "home_path")
             },
             labels: "test"
         }
@@ -854,13 +861,13 @@ var getJibProfilesProfiles = function (input, common, data) {
 var getJibProfilesDependencies = function (input, common) {
 
     var devkit_platform_revisions = {
-        linux_x64: "gcc7.3.0-OEL6.4+1.1",
+        linux_x64: "gcc7.3.0-OEL6.4+1.2",
         macosx_x64: "Xcode9.4-MacOSX10.13+1.0",
         solaris_x64: "SS12u4-Solaris11u1+1.0",
         solaris_sparcv9: "SS12u6-Solaris11u3+1.0",
         windows_x64: "VS2017-15.5.5+1.0",
-        linux_aarch64: "gcc7.3.0-Fedora27+1.1",
-        linux_arm: "gcc7.3.0-Fedora27+1.1"
+        linux_aarch64: "gcc7.3.0-Fedora27+1.2",
+        linux_arm: "gcc7.3.0-Fedora27+1.2"
     };
 
     var devkit_platform = (input.target_cpu == "x86"
@@ -939,6 +946,7 @@ var getJibProfilesDependencies = function (input, common) {
             version: "3.0",
             build_number: "b07",
             file: "bundles/jcov-3_0.zip",
+            environment_name: "JCOV_HOME",
         },
 
         gnumake: {
