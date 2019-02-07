@@ -65,13 +65,14 @@ RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool walk_cont, bo
 
   _on_hstack = false;
   if (walk_cont) {
+    JavaThread* currentThread = JavaThread::current();
     // we allocate the handle now (rather than in set_cont) because sometimes (StackWalker) the handle
     // must love across HandleMarks
     if (thread == NULL) {
-      thread = JavaThread::current();
+      thread = currentThread;
     }
     assert (thread != NULL, "");
-    _cont = thread->last_continuation() != NULL ? Handle(thread, thread->last_continuation()) : Handle();
+    _cont = thread->last_continuation() != NULL ? Handle(currentThread, thread->last_continuation()) : Handle();
   }
 
 #ifndef PRODUCT
