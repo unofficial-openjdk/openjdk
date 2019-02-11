@@ -27,13 +27,14 @@ import java.util.List;
 import java.util.Map;
 
 import jdk.test.lib.apps.LingeredApp;
-import jdk.test.lib.Platform;
 import jdk.test.lib.Utils;
+import jtreg.SkippedException;
 
 /**
  * @test
  * @bug 8190198
  * @bug 8217612
+ * @bug 8217845
  * @summary Test clhsdb flags command
  * @requires vm.hasSA
  * @library /test/lib
@@ -63,6 +64,7 @@ public class ClhsdbFlags {
 
             Map<String, List<String>> expStrMap = new HashMap<>();
             expStrMap.put("flags", List.of(
+                    "command line", "ergonomic", "default",
                     "UnlockDiagnosticVMOptions = true",
                     "MaxFDLimit = false",
                     "MaxJavaStackTraceDepth = 1024",
@@ -82,6 +84,8 @@ public class ClhsdbFlags {
                     "MaxJavaStackTraceDepth = 1024"));
 
             test.run(theApp.getPid(), cmds, expStrMap, null);
+        } catch (SkippedException se) {
+            throw se;
         } catch (Exception ex) {
             throw new RuntimeException("Test ERROR " + ex, ex);
         } finally {
