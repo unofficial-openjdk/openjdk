@@ -435,6 +435,8 @@ public:
   intptr_t* entryFP() { return _entryFP; }
   address   entryPC() { return _entryPC; }
 
+  bool is_mounted() { return _entryPC != NULL; }
+
   void set_entrySP(intptr_t* sp) { _entrySP = sp; }
   void set_entryFP(intptr_t* fp) { _entryFP = fp; }
   void set_entryPC(address pc)   {
@@ -1349,13 +1351,13 @@ static inline bool is_entry_frame(ContMirror& cont, frame& f) {
   return f.sp() == cont.entrySP();
 }
 
-static inline intptr_t** link_address(frame& f, bool is_interpreted) {
+static inline intptr_t** link_address(const frame& f, bool is_interpreted) {
   return is_interpreted
             ? (intptr_t**)(f.fp() + frame::link_offset)
             : (intptr_t**)(f.real_fp() - frame::sender_sp_offset); // x86-specific
 }
 
-static inline intptr_t** link_address(frame& f) {
+static inline intptr_t** link_address(const frame& f) {
   return link_address(f, f.is_interpreted_frame());
 }
 
@@ -1365,7 +1367,7 @@ static inline intptr_t** link_address(frame& f) {
 
 static void patch_link(frame& f, intptr_t* fp, bool is_interpreted) {
   *link_address(f, is_interpreted) = fp;
-  log_trace(jvmcont)("patched link: " INTPTR_FORMAT, p2i(fp));
+  log_trace(jvmcont)("patched link at " INTPTR_FORMAT ": " INTPTR_FORMAT, p2i(link_address(f, is_interpreted)), p2i(fp));
 }
 
 static void patch_sender_sp(frame& f, intptr_t* sp) {
@@ -1634,6 +1636,13 @@ static void set_anchor(JavaThread* thread, FrameInfo* fi) {
   log_trace(jvmcont)("set_anchor:");
   print_vframe(thread->last_frame());
 }
+
+// static void set_anchor(JavaThread* thread, const frame& f) {
+//   JavaFrameAnchor* anchor = thread->frame_anchor();
+//   anchor->set_last_Java_sp(f.sp());
+//   anchor->set_last_Java_fp(f.fp());
+//   anchor->set_last_Java_pc(f.pc());
+// }
 
 // static void set_anchor(ContMirror& cont) {
 //   FrameInfo fi = { cont.entryPC(), cont.entryFP(), cont.entrySP() };
@@ -2828,10 +2837,6 @@ static frame thaw_frames(ContMirror& cont, hframe hf, int oop_index, int num_fra
       log_trace(jvmcont)("Setting return address to return barrier: " INTPTR_FORMAT, p2i(StubRoutines::cont_returnBarrier()));
       patch_return_pc(f, StubRoutines::cont_returnBarrier(), f.is_interpreted_frame());
     }
-    if (hf.is_interpreted_frame()) {
-      log_trace(jvmcont)("Setting entrySP: " INTPTR_FORMAT, p2i(f.sender_sp()));
-      cont.set_entrySP(f.sender_sp()); // consider using a differnt field
-    }
     // else {
     //   if (sender.is_interpreted_frame()) { // unnecessary now, thanks to enter0
     //     // We enter the continuation through an interface call (target.run()), but exit through a virtual call (doContinue())
@@ -3213,7 +3218,7 @@ static frame continuation_top_frame(oop contOop, RegisterMap* map) {
 }
 
 static frame continuation_parent_frame(ContMirror& cont, RegisterMap* map) {
-  assert (map->thread() != NULL || cont.entryPC() == NULL, "map->thread() == NULL: %d cont.entryPC() == NULL: %d", map->thread() == NULL, cont.entryPC() == NULL);
+  assert (map->thread() != NULL || !cont.is_mounted(), "map->thread() == NULL: %d cont.is_mounted(): %d", map->thread() == NULL, cont.is_mounted());
 
   // if (map->thread() == NULL) { // When a continuation is mounted, its entry frame is always on the v-stack
   //   oop parentOop = java_lang_Continuation::parent(cont.mirror());
@@ -3226,7 +3231,7 @@ static frame continuation_parent_frame(ContMirror& cont, RegisterMap* map) {
   map->set_cont(java_lang_Continuation::parent(cont.mirror()));
   map->set_in_cont(false);
 
-  if (cont.entryPC() == NULL) { // When we're walking an unmounted continuation and reached the end
+  if (!cont.is_mounted()) { // When we're walking an unmounted continuation and reached the end
     // tty->print_cr("continuation_parent_frame: no more");
     return frame(); 
   }
@@ -3241,8 +3246,7 @@ static frame continuation_parent_frame(ContMirror& cont, RegisterMap* map) {
 
 frame Continuation::last_frame(Handle continuation, RegisterMap *map) {
   assert(map != NULL, "a map must be given");
-  map->set_cont(continuation);
-  map->set_in_cont(true);
+  map->set_cont(continuation); // set handle
   return continuation_top_frame(continuation(), map);
 }
 
@@ -3261,6 +3265,10 @@ javaVFrame* Continuation::last_java_vframe(Handle continuation, RegisterMap *map
 
 frame Continuation::top_frame(const frame& callee, RegisterMap* map) {
   oop contOop = find_continuation_for_frame(map->thread(), callee.sp());
+  
+  log_trace(jvmcont)("Continuation::top_frame: setting map->last_vstack_fp: " INTPTR_FORMAT, p2i(callee.real_fp()));
+
+  map->set_last_vstack_fp(link_address(callee));
   return continuation_top_frame(contOop, map);
 }
 
@@ -3278,9 +3286,9 @@ static frame sender_for_frame(const frame& callee, RegisterMap* map) {
   if (map->update_map()) {
     if (sender.is_empty()) {
       // we need to return the link address for the entry frame; it is saved in the bottom-most thawed frame
-      // see `cont.set_entrySP(f.sender_sp())` in thaw_frames ; consider using a differnt field
-      log_trace(jvmcont)("sender_for_frame: frame::update_map_with_saved_link: " INTPTR_FORMAT, p2i(cont.entryFP()));
-      frame::update_map_with_saved_link(map, (intptr_t**)cont.entrySP() - frame::sender_sp_offset);
+      intptr_t** fp = (intptr_t**)(map->last_vstack_fp());
+      log_trace(jvmcont)("sender_for_frame: frame::update_map_with_saved_link: " INTPTR_FORMAT, p2i(fp));
+      frame::update_map_with_saved_link(map, fp);
     } else { // if (!sender.is_interpreted_frame())
       void* link_address = hfcallee.link_address();
       int link_index = cont.stack_index(link_address);
@@ -3292,6 +3300,7 @@ static frame sender_for_frame(const frame& callee, RegisterMap* map) {
   if (!sender.is_empty()) {
     return sender.to_frame(cont);
   } else {
+    log_trace(jvmcont)("sender_for_frame: continuation_parent_frame");
     return continuation_parent_frame(cont, map);
   }
 }
