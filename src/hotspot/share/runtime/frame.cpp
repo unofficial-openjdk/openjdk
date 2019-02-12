@@ -64,10 +64,11 @@ RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool walk_cont, bo
   debug_only(_update_for_id = NULL;)
 
   _on_hstack = false;
+  _last_vstack_fp = NULL;
   if (walk_cont) {
-    JavaThread* currentThread = JavaThread::current();
     // we allocate the handle now (rather than in set_cont) because sometimes (StackWalker) the handle
-    // must love across HandleMarks
+    // must live across HandleMarks
+    JavaThread* currentThread = JavaThread::current();
     if (thread == NULL) {
       thread = currentThread;
     }
@@ -92,6 +93,7 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
 
   _cont = map->_cont;
   _on_hstack = map->_on_hstack;
+  _last_vstack_fp = map->_last_vstack_fp;
 
   pd_initialize_from(map);
   if (update_map()) {
@@ -115,6 +117,8 @@ RegisterMap::RegisterMap(const RegisterMap* map) {
 void RegisterMap::set_in_cont(bool on_hstack) {
    assert (_walk_cont, ""); 
    _on_hstack = on_hstack;
+   if (!on_hstack)
+    _last_vstack_fp = NULL;
 }
 
 void RegisterMap::set_cont(Handle cont) {
