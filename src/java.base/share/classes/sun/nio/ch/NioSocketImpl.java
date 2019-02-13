@@ -58,6 +58,7 @@ import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Strands;
 import jdk.internal.ref.CleanerFactory;
 import sun.net.NetHooks;
+import sun.net.PlatformSocketImpl;
 import sun.net.ResourceManager;
 import sun.net.ext.ExtendedSocketOptions;
 import sun.net.util.SocketExceptions;
@@ -83,7 +84,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * an application continues to call read or available after a reset.
  */
 
-public class NioSocketImpl extends SocketImpl {
+public final class NioSocketImpl extends SocketImpl implements PlatformSocketImpl {
     private static final NativeDispatcher nd = new SocketDispatcher();
 
     // The maximum number of bytes to read/write per syscall to avoid needing
@@ -304,7 +305,7 @@ public class NioSocketImpl extends SocketImpl {
                             if (n == IOStatus.UNAVAILABLE) {
                                 nanos -= System.nanoTime() - startTime;
                                 if (nanos <= 0)
-                                    throw new SocketTimeoutException("read timeout");
+                                    throw new SocketTimeoutException("Read timed out");
                             }
                         } while (n == IOStatus.UNAVAILABLE && isOpen());
                     } else {
@@ -586,7 +587,7 @@ public class NioSocketImpl extends SocketImpl {
                                 if (n == 0) {
                                     nanos -= System.nanoTime() - startTime;
                                     if (nanos <= 0)
-                                        throw new SocketTimeoutException("connect timeout");
+                                        throw new SocketTimeoutException("Connect timed out");
                                 }
                             } while (n == 0 && isOpen());
                         } else {
@@ -709,7 +710,7 @@ public class NioSocketImpl extends SocketImpl {
                             if (n == IOStatus.UNAVAILABLE) {
                                 nanos -= System.nanoTime() - startTime;
                                 if (nanos <= 0)
-                                    throw new SocketTimeoutException("accept timeout");
+                                    throw new SocketTimeoutException("Accept timed out");
                             }
                         } while (n == IOStatus.UNAVAILABLE && isOpen());
                     } else {

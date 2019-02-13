@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,11 +30,9 @@ import java.io.OutputStream;
 import java.io.IOException;
 import java.nio.channels.SocketChannel;
 import java.security.AccessController;
-import java.security.PrivilegedExceptionAction;
 import java.security.PrivilegedAction;
 import java.util.Set;
 import java.util.Collections;
-import sun.nio.ch.NioSocketImpl;
 
 /**
  * This class implements client sockets (also called just
@@ -138,13 +136,15 @@ class Socket implements java.io.Closeable {
                     security.checkConnect(epoint.getAddress().getHostAddress(),
                                   epoint.getPort());
             }
-            impl = type == Proxy.Type.SOCKS ? new SocksSocketImpl(p)
-                                            : new HttpConnectSocketImpl(p);
+
+            SocketImpl si = SocketImpl.createPlatformSocketImpl(false);
+            impl = (type == Proxy.Type.SOCKS) ? new SocksSocketImpl(p, si)
+                                              : new HttpConnectSocketImpl(p, si);
             impl.setSocket(this);
         } else {
             if (p == Proxy.NO_PROXY) {
                 if (factory == null) {
-                    impl = new NioSocketImpl(false);
+                    impl = SocketImpl.createPlatformSocketImpl(false);
                     impl.setSocket(this);
                 } else
                     setImpl();
@@ -497,7 +497,7 @@ class Socket implements java.io.Closeable {
         if (factory != null) {
             return factory.createSocketImpl();
         } else {
-            return new SocksSocketImpl();
+            return SocketImpl.createPlatformSocketImpl(false);
         }
     }
 
@@ -515,9 +515,8 @@ class Socket implements java.io.Closeable {
             impl = factory.createSocketImpl();
             checkOldImpl();
         } else {
-            // No need to do a checkOldImpl() here, we know it's an up to date
-            // SocketImpl!
-            impl = new SocksSocketImpl();
+            SocketImpl si = SocketImpl.createPlatformSocketImpl(false);
+            impl = new SocksSocketImpl(si);
         }
         if (impl != null)
             impl.setSocket(this);
@@ -934,7 +933,9 @@ class Socket implements java.io.Closeable {
         }
         @Override
         public int read() throws IOException {
-            return in.read();
+            byte[] a = new byte[1];
+            int n = read(a, 0, 1);
+            return (n > 0) ? (a[0] & 0xff) : -1;
         }
         @Override
         public int read(byte b[], int off, int len) throws IOException {
@@ -988,7 +989,8 @@ class Socket implements java.io.Closeable {
         }
         @Override
         public void write(int b) throws IOException {
-            out.write(b);
+            byte[] a = new byte[] { (byte) b };
+            write(a, 0, 1);
         }
         @Override
         public void write(byte b[], int off, int len) throws IOException {

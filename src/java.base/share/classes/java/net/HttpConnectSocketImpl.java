@@ -25,7 +25,10 @@
 
 package java.net;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -43,7 +46,7 @@ import sun.nio.ch.NioSocketImpl;
  * @since 1.8
  */
 
-/*package*/ class HttpConnectSocketImpl extends NioSocketImpl {
+/*package*/ class HttpConnectSocketImpl extends DelegatingSocketImpl {
 
     private static final String httpURLClazzStr =
                                   "sun.net.www.protocol.http.HttpURLConnection";
@@ -77,9 +80,14 @@ import sun.nio.ch.NioSocketImpl;
             throw new InternalError("Should not reach here", x);
         }
     }
+    HttpConnectSocketImpl(SocketImpl delegate) {
+        super(delegate);
+        this.server = null;
+        throw new InternalError();
+    }
 
-    HttpConnectSocketImpl(Proxy proxy) {
-        super(false);
+    HttpConnectSocketImpl(Proxy proxy, SocketImpl delegate) {
+        super(delegate);
         SocketAddress a = proxy.address();
         if ( !(a instanceof InetSocketAddress) )
             throw new IllegalArgumentException("Unsupported address type");
@@ -97,6 +105,17 @@ import sun.nio.ch.NioSocketImpl;
     @Override
     protected void connect(InetAddress address, int port) throws IOException {
         connect(new InetSocketAddress(address, port), 0);
+    }
+
+    @Override
+    void setSocket(Socket socket) {
+        delegate.socket = socket;
+        super.setSocket(socket);
+    }
+
+    @Override
+    void setServerSocket(ServerSocket socket) {
+        throw new InternalError("should not get here");
     }
 
     @Override
@@ -137,9 +156,25 @@ import sun.nio.ch.NioSocketImpl;
         } catch (IOException x) {  /* gulp! */  }
     }
 
+
+    @Override
+    protected void listen(int backlog) {
+        throw new InternalError("should not get here");
+    }
+
+    @Override
+    protected void accept(SocketImpl s) {
+        throw new InternalError("should not get here");
+    }
+
+    @Override
+    void reset() throws IOException {
+        delegate.reset();
+    }
+
     @Override
     public void setOption(int opt, Object val) throws SocketException {
-        super.setOption(opt, val);
+        delegate.setOption(opt, val);
 
         if (external_address != null)
             return;  // we're connected, just return
@@ -171,9 +206,8 @@ import sun.nio.ch.NioSocketImpl;
         URL destURL = new URL(urlString);
         HttpURLConnection conn = (HttpURLConnection) destURL.openConnection(proxy);
         conn.setConnectTimeout(connectTimeout);
-        Object value = getOption(SocketOptions.SO_TIMEOUT);
-        if (value != null) {
-            Integer timeout = (Integer) value;
+        int timeout = (int) getOption(SocketOptions.SO_TIMEOUT);
+        if (timeout > 0) {
             conn.setReadTimeout(timeout);
         }
         conn.connect();
@@ -199,7 +233,7 @@ import sun.nio.ch.NioSocketImpl;
         if (external_address != null)
             return external_address.getAddress();
         else
-            return super.getInetAddress();
+            return delegate.getInetAddress();
     }
 
     @Override
@@ -207,6 +241,6 @@ import sun.nio.ch.NioSocketImpl;
         if (external_address != null)
             return external_address.getPort();
         else
-            return super.getPort();
+            return delegate.getPort();
     }
 }

@@ -25,11 +25,14 @@
 
 package java.net;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.FileDescriptor;
 import java.util.Set;
+
+import sun.net.PlatformSocketImpl;
+import sun.nio.ch.NioSocketImpl;
 
 /**
  * The abstract class {@code SocketImpl} is a common superclass
@@ -43,6 +46,15 @@ import java.util.Set;
  * @since   1.0
  */
 public abstract class SocketImpl implements SocketOptions {
+
+    /**
+     * Creates a instance of platform's SocketImpl
+     */
+    @SuppressWarnings("unchecked")
+    static <S extends SocketImpl & PlatformSocketImpl> S createPlatformSocketImpl(boolean server) {
+        return (S) new NioSocketImpl(server);
+    }
+
     /**
      * The actual Socket object.
      */

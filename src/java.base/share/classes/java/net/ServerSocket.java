@@ -25,10 +25,6 @@
 
 package java.net;
 
-import jdk.internal.access.JavaNetSocketAccess;
-import jdk.internal.access.SharedSecrets;
-import sun.nio.ch.NioSocketImpl;
-
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -38,6 +34,10 @@ import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.util.Set;
 import java.util.Collections;
+
+import jdk.internal.access.JavaNetSocketAccess;
+import jdk.internal.access.SharedSecrets;
+import sun.net.PlatformSocketImpl;
 
 /**
  * This class implements server sockets. A server socket waits for
@@ -295,9 +295,7 @@ class ServerSocket implements java.io.Closeable {
             impl = factory.createSocketImpl();
             checkOldImpl();
         } else {
-            // No need to do a checkOldImpl() here, we know it's an up to date
-            // SocketImpl!
-            impl = new NioSocketImpl(true);
+            impl = SocketImpl.createPlatformSocketImpl(true);
         }
         if (impl != null)
             impl.setServerSocket(this);
@@ -550,12 +548,12 @@ class ServerSocket implements java.io.Closeable {
         if (si == null) {
             // create a SocketImpl and accept the connection
             si = Socket.createImpl();
+            assert !(si instanceof DelegatingSocketImpl);
             impl.accept(si);
-
             try {
-                // a custom impl has accepted the connection with a NIO SocketImpl
-                if (!(impl instanceof NioSocketImpl) && (si instanceof NioSocketImpl)) {
-                    ((NioSocketImpl) si).postCustomAccept();
+                // a custom impl has accepted the connection with a platform SocketImpl
+                if (!(impl instanceof PlatformSocketImpl) && (si instanceof PlatformSocketImpl)) {
+                    ((PlatformSocketImpl) si).postCustomAccept();
                 }
             } finally {
                 securityCheckAccept(si);  // closes si if permission check fails
@@ -567,16 +565,25 @@ class ServerSocket implements java.io.Closeable {
             return;
         }
 
-        // ServerSocket or Socket is using NIO SocketImpl
-        if (impl instanceof NioSocketImpl || si instanceof NioSocketImpl) {
-            // not implemented
-            if (impl instanceof NioSocketImpl && impl.getClass() != NioSocketImpl.class)
-                throw new UnsupportedOperationException();
+        // Socket has a SOCKS or HTTP SocketImpl
+        if (si instanceof DelegatingSocketImpl) {
+            si = ((DelegatingSocketImpl) si).delegate();
+            assert si instanceof PlatformSocketImpl;
+        }
 
-            // accept connection via new SocketImpl
-            NioSocketImpl nsi = new NioSocketImpl(false);
+        // ServerSocket or Socket (or both) have a platform SocketImpl
+        if (impl instanceof PlatformSocketImpl || si instanceof PlatformSocketImpl) {
+            // create a new platform SocketImpl and accept the connection
+            var nsi = SocketImpl.createPlatformSocketImpl(false);
             impl.accept(nsi);
-            securityCheckAccept(nsi);  // closes si if permission check fails
+            try {
+                // a custom impl has accepted the connection
+                if (!(impl instanceof PlatformSocketImpl)) {
+                    nsi.postCustomAccept();
+                }
+            } finally {
+                securityCheckAccept(nsi);  // closes nsi if permission check fails
+            }
 
             // copy state to the existing SocketImpl and update socket state
             nsi.copyTo(si);

@@ -24,11 +24,14 @@
  */
 package java.net;
 
+import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.BufferedOutputStream;
 import java.security.AccessController;
+import java.util.Objects;
+import java.util.Set;
 
 import jdk.internal.util.StaticProperty;
 import sun.net.SocksProxy;
@@ -41,7 +44,7 @@ import sun.nio.ch.NioSocketImpl;
  * Note this class should <b>NOT</b> be public.
  */
 
-class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
+class SocksSocketImpl extends DelegatingSocketImpl implements SocksConsts {
     private String server = null;
     private int serverPort = DEFAULT_PORT;
     private InetSocketAddress external_address;
@@ -50,12 +53,12 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
     private InputStream cmdIn = null;
     private OutputStream cmdOut = null;
 
-    SocksSocketImpl() {
-        super(false);
+    SocksSocketImpl(SocketImpl delegate) {
+        super(delegate);
     }
 
-    SocksSocketImpl(Proxy proxy) {
-        super(false);
+    SocksSocketImpl(Proxy proxy, SocketImpl delegate) {
+        super(delegate);
         SocketAddress a = proxy.address();
         if (a instanceof InetSocketAddress) {
             InetSocketAddress ad = (InetSocketAddress) a;
@@ -77,7 +80,7 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
     private synchronized void privilegedConnect(final String host,
                                               final int port,
                                               final int timeout)
-         throws IOException
+        throws IOException
     {
         try {
             AccessController.doPrivileged(
@@ -96,7 +99,7 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
 
     private void superConnectServer(String host, int port,
                                     int timeout) throws IOException {
-        super.connect(new InetSocketAddress(host, port), timeout);
+        delegate.connect(new InetSocketAddress(host, port), timeout);
     }
 
     private static int remainingMillis(long deadlineMillis) throws IOException {
@@ -248,6 +251,27 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
         }
     }
 
+    @Override
+    protected void connect(String host, int port) throws IOException {
+        connect(new InetSocketAddress(host, port), 0);
+    }
+
+    @Override
+    protected void connect(InetAddress address, int port) throws IOException {
+        connect(new InetSocketAddress(address, port), 0);
+    }
+
+    @Override
+    void setSocket(Socket soc) {
+        delegate.socket = soc;
+        super.setSocket(soc);
+    }
+
+    @Override
+    void setServerSocket(ServerSocket soc) {
+        throw new InternalError("should not get here");
+    }
+
     /**
      * Connects the Socks Socket to the specified endpoint. It will first
      * connect to the SOCKS proxy and negotiate the access. If the proxy
@@ -299,7 +323,7 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
                 /*
                  * No default proxySelector --> direct connection
                  */
-                super.connect(epoint, remainingMillis(deadlineMillis));
+                delegate.connect(epoint, remainingMillis(deadlineMillis));
                 return;
             }
             URI uri;
@@ -322,13 +346,13 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
             java.util.Iterator<Proxy> iProxy = null;
             iProxy = sel.select(uri).iterator();
             if (iProxy == null || !(iProxy.hasNext())) {
-                super.connect(epoint, remainingMillis(deadlineMillis));
+                delegate.connect(epoint, remainingMillis(deadlineMillis));
                 return;
             }
             while (iProxy.hasNext()) {
                 p = iProxy.next();
                 if (p == null || p.type() != Proxy.Type.SOCKS) {
-                    super.connect(epoint, remainingMillis(deadlineMillis));
+                    delegate.connect(epoint, remainingMillis(deadlineMillis));
                     return;
                 }
 
@@ -518,7 +542,15 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
         external_address = epoint;
     }
 
+    @Override
+    protected void listen(int backlog) {
+        throw new InternalError("should not get here");
+    }
 
+    @Override
+    protected void accept(SocketImpl s) {
+        throw new InternalError("should not get here");
+    }
 
     /**
      * Returns the value of this socket's {@code address} field.
@@ -531,7 +563,7 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
         if (external_address != null)
             return external_address.getAddress();
         else
-            return super.getInetAddress();
+            return delegate.getInetAddress();
     }
 
     /**
@@ -545,7 +577,7 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
         if (external_address != null)
             return external_address.getPort();
         else
-            return super.getPort();
+            return delegate.getPort();
     }
 
     @Override
@@ -553,10 +585,15 @@ class SocksSocketImpl extends NioSocketImpl implements SocksConsts {
         if (cmdsock != null)
             cmdsock.close();
         cmdsock = null;
-        super.close();
+        delegate.close();
     }
 
     private String getUserName() {
         return StaticProperty.userName();
+    }
+
+    @Override
+    void reset() throws IOException {
+        delegate.reset();
     }
 }
