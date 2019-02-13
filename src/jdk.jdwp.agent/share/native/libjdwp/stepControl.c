@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -795,12 +795,13 @@ stepControl_beginStep(JNIEnv *env, jthread filter_thread,  jint size, jint depth
     is_fiber = isFiber(filter_thread);
     if (is_fiber) {
         thread = getFiberThread(filter_thread);
-        /* fiber fixme: Although very unlikely to ever happen given how debuggers work, it is
-         * possible for the StepRequest to have been made on an unmounted fiber. For now,
-         * just assert that this isn't happening. To support it, we need rework the code below
-         * to defer thread related actions until the fiber is mounted.
-         */
-        JDI_ASSERT(thread != NULL);
+        if (thread == NULL) {
+            /* fiber fixme: It is possible for the StepRequest to have been made on an unmounted
+             * fiber, and currently we don't support this. 
+             */
+            LOG_STEP(("stepControl_beginStep: thread is an unmounted fiber(%p)", filter_thread));
+            return JVMTI_ERROR_INVALID_THREAD;
+        }
     }  else {
         thread = filter_thread;
     }

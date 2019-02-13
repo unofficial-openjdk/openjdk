@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,8 +66,10 @@ name(PacketInputStream *in, PacketOutputStream *out)
                 (void)outStream_writeString(out, info.name);
             }
 
-            if ( info.name != NULL )
+            if ( info.name != NULL ) {
+                threadControl_setName(thread, info.name);
                 jvmtiDeallocate(info.name);
+            }
         } else {
             /* Use Fiber.toString() instead of the Thread name. */
             jstring fiberName = JNI_FUNC_PTR(env,CallObjectMethod)
@@ -85,6 +87,7 @@ name(PacketInputStream *in, PacketOutputStream *out)
                 utf = JNI_FUNC_PTR(env,GetStringUTFChars)(env, fiberName, NULL);
                 if (!(*env)->ExceptionCheck(env)) {
                     (void)outStream_writeString(out, (char*)utf);
+                    threadControl_setName(thread, utf);
                     JNI_FUNC_PTR(env,ReleaseStringUTFChars)(env, fiberName, utf);
                 } else {
                     (void)outStream_writeString(out, "<UNKNOWN FIBER>");

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,6 +57,7 @@ InvokeRequest *threadControl_getInvokeRequest(jthread);
 jboolean threadControl_isDebugThread(jthread thread);
 jvmtiError threadControl_addDebugThread(jthread thread);
 
+void threadControl_setName(jthread thread, const char *name);
 jvmtiError threadControl_applicationThreadStatus(jthread thread, jdwpThreadStatus *pstatus, jint *suspendStatus);
 jvmtiError threadControl_interrupt(jthread thread);
 jvmtiError threadControl_stop(jthread thread, jobject throwable);
@@ -76,11 +77,10 @@ jlong threadControl_getFrameGeneration(jthread thread);
 
 jthread *threadControl_allFibers(jint *numFibers);
 jthread threadControl_getFiberCarrierOrHelperThread(jthread fiber);
-jthread threadControl_getFiberHelperThread(jthread fiber);
 void threadControl_addFiber(jthread fiber);
 jboolean threadControl_isKnownFiber(jthread fiber);
 
 void threadControl_unmountFiber(jthread fiber, jthread thread);
-void threadControl_mountFiber(jthread fiber, jthread thread);
+void threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID);
 
 #endif
