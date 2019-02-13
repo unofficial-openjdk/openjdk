@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,9 +59,9 @@ import jdk.internal.misc.Strands;
  * its {@linkplain #close() close} method. A scope can only be exited when all
  * fibers scheduled in the scope have terminated and thus the {@code close}
  * method blocks until all fibers scheduled in the scope have terminated.
- * As a special case, fibers can be scheduled in the {@linkplain #DETACHED
- * DETACHED} scope for cases where fibers are <em>unmanaged</em> or need to
- * <em>outlive</em> the thread or fiber that scheduled them.
+ * As a special case, fibers can be scheduled in the {@linkplain #detached()
+ * detached} scope for cases where fibers are <em>unmanaged</em> or need to
+ * <em>outlive</em> the thread or fiber that schedules them.
  *
  * <p> {@code FiberScope} implements {@linkplain AutoCloseable} so that the
  * try-with-resources statement can be used to ensure that a scope is exited.
@@ -70,13 +70,10 @@ import jdk.internal.misc.Strands;
  * scope terminate.
  *
  * <pre>{@code
- *     Fiber<?> fiber1, fiber2;
  *     try (var scope = FiberScope.cancellable()) {
- *         fiber1 = scope.schedule(() -> { ... });
- *         fiber1 = scope.schedule(() -> { ... });
+ *         scope.schedule(taskOne);
+ *         scope.schedule(taskTwo);
  *     });
- *     assertFalse(fiber1.isAlive());
- *     assertFalse(fiber2.isAlive());
  * }</pre>
  *
  * <p> Fiber scopes support cancellation. Fibers test for cancellation by invoking
@@ -99,12 +96,12 @@ import jdk.internal.misc.Strands;
  * propagates when cancellable scopes are nested. Fiber scopes using deadlines
  * and timeouts may also be nested.
  *
- * <p> A fiber scope has a {@linkplain #terminationQueue() terminationQueue}.
- * Fibers scheduled in a scope are queued when they terminate so that the owner
- * (usually) can obtain the result of the task that the fiber executed.
- * The termination queue can be disabled with the {@linkplain #disableTerminationQueue()
- * disableTerminationQueue} method for cases where results are not needed or
- * where fibers communicate by other means.
+ * <p> {@code FiberScope} defines {@code schedule} methods that allow a {@link
+ * TerminationQueue termination queue} to be specified. A fiber scheduled with
+ * one of these methods is queued to the termination queue when it terminates.
+ * In conjunction with the {@linkplain Fiber#join() join} method, this provides
+ * an easy way to collect the result of tasks executed by fibers (or exceptions
+ * in cases cases where the task terminates with an exception).
  *
  * <p> Unless otherwise noted, passing a {@code null} argument will cause a
  * {@linkplain NullPointerException} to be thrown.
@@ -117,10 +114,11 @@ import jdk.internal.misc.Strands;
  *
  * <pre>{@code
  *     <V> V anyOf(Callable<? extends V>[] tasks) throws Throwable {
+ *         var queue = new FiberScope.TerminationQueue<V>();
  *         try (var scope = FiberScope.cancellable()) {
- *             Arrays.stream(tasks).forEach(task -> scope.schedule(task));
+ *             Arrays.stream(tasks).forEach(task -> scope.schedule(task, queue));
  *             try {
- *                 return (V) scope.terminationQueue().take().join();
+ *                 return queue.take().join();
  *             } catch (CompletionException e) {
  *                 throw e.getCause();
  *             } finally {
@@ -143,11 +141,13 @@ import jdk.internal.misc.Strands;
  * <pre>{@code
  *     <V> V anySuccessful(Callable<? extends V>[] tasks, Instant deadline) throws Throwable {
  *         try (var scope = FiberScope.withDeadline(deadline)) {
- *             Arrays.stream(tasks).forEach(task -> scope.schedule(task));
+ *             var queue = new FiberScope.TerminationQueue<V>();
+ *             Arrays.stream(tasks).forEach(task -> scope.schedule(task, queue));
  *             Throwable firstException = null;
- *             while (scope.hasRemaining()) {
+ *             int remaining = tasks.length;
+ *             while (remaining > 0) {
  *                 try {
- *                     V result = (V) scope.terminationQueue().take().join();
+ *                     V result = queue.take().join();
  *                     // cancel any fibers that are still running
  *                     scope.fibers().forEach(Fiber::cancel);
  *                     return result;
@@ -156,6 +156,7 @@ import jdk.internal.misc.Strands;
  *                         firstException = e.getCause();
  *                     }
  *                 }
+ *                 remaining--;
  *             }
  *             throw firstException;
  *         }
@@ -179,24 +180,26 @@ import jdk.internal.misc.Strands;
  *
  *         SocketChannel channel = null;
  *         Exception exception = null;
+ *         var queue = new FiberScope.TerminationQueue<SocketChannel>();
  *
  *         try (var scope = FiberScope.withDeadline(deadline)) {
  *
  *             // schedule a fiber to connect to the first address
- *             Fiber.schedule(scope, () -> SocketChannel.open(addresses[0]));
- *
- *             int next = 1; // index of next address to try
+ *             scope.schedule(() -> SocketChannel.open(addresses[0]), queue);
  *
  *             var realDeadline = FiberScope.currentDeadline().orElseThrow();
  *             Duration waitTime = staggerInterval;
  *
- *             while (scope.hasRemaining()) {
+ *             int remaining = 1;
+ *             int next = 1; // index of next address to try
+ *             while (remaining > 0) {
  *
  *                 // wait for a timeout or a fiber to terminate
- *                 Fiber<?> fiber = scope.terminationQueue().poll(waitTime);
+ *                 Fiber<SocketChannel> fiber = queue.poll(waitTime);
  *                 if (fiber != null) {
+ *                     remaining--;
  *                     try {
- *                         SocketChannel ch = (SocketChannel) fiber.join();
+ *                         SocketChannel ch = fiber.join();
  *                         if (channel == null) {
  *                             // first successful connection, cancel other attempts
  *                             channel = ch;
@@ -219,7 +222,8 @@ import jdk.internal.misc.Strands;
  *                 boolean expired = realDeadline.compareTo(Instant.now()) <= 0;
  *                 if (channel == null && !expired && next < addresses.length) {
  *                     var address = addresses[next++];
- *                     scope.schedule(() -> SocketChannel.open(address));
+ *                     scope.schedule(() -> SocketChannel.open(address), queue);
+ *                     remaining++;
  *                 }
  *
  *                 // if the deadline has been reached or there are no more addresses
@@ -241,17 +245,80 @@ import jdk.internal.misc.Strands;
  */
 
 public class FiberScope implements AutoCloseable {
+    private static final FiberScope DETACHED = new DetachedFiberScope();
+
     FiberScope() { }
 
     /**
-     * The <em>detached</em> scope. Fibers scheduled in the detached scope can
-     * be {@link Fiber#cancel() cancelled}.
-     * The detached scope does not support a termination queue, {@link #hasRemaining()
-     * hasRemaining} always returns {@code false}, and the {@link #fibers()
-     * fibers} methods always returns an empty stream. This scope cannot be exited,
-     * the {@link #close() close} method always fails.
+     * A termination queue to specify when scheduling a fiber. The fiber is queued
+     * when it terminates. A {@code TerminationQueue} does not define methods to
+     * insert elements, it only define methods to retrieve terminated fibers.
+     *
+     * @apiNote TDB if the FiberScope API should allow arbitrary queues to be
+     * specified. Disallowing arbitrary queues eliminates several concerns that
+     * would otherwise arise with notifications on the carrier thread.
+     *
+     * @param <V> the task result type
      */
-    public static final FiberScope DETACHED = new DetachedFiberScope();
+    public static final class TerminationQueue<V> implements BlockingSource<Fiber<V>> {
+        private final BlockingQueue<Fiber<? extends V>> queue;
+
+        /**
+         * Creates a termination queue.
+         */
+        public TerminationQueue() {
+            this.queue = new LinkedBlockingQueue<>();
+        }
+
+        void put(Fiber<? extends V> fiber) {
+            boolean interrupted = false;
+            boolean done = false;
+            while (!done) {
+                try {
+                    queue.put(fiber);
+                    done = true;
+                } catch (InterruptedException e) {
+                    interrupted = true;
+                }
+            }
+            if (interrupted) {
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Fiber<V> take() throws InterruptedException {
+            return (Fiber<V>) queue.take();
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Fiber<V> poll() {
+            return (Fiber<V>) queue.poll();
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Fiber<V> poll(Duration duration) throws InterruptedException {
+            long nanos = TimeUnit.NANOSECONDS.convert(duration);
+            return (Fiber<V>) queue.poll(nanos, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    /**
+     * Returns the <em>detached</em> scope. This scope cannot be exited, its
+     * {@link #close() close} method always fails. Fibers scheduled in this scope
+     * can be {@link Fiber#cancel() cancelled}.
+     *
+     * @apiNote Naming is an issue here, suggestions include "global" and
+     * "primordial".
+     *
+     * @return the detached scope
+     */
+    public static FiberScope detached() {
+        return DETACHED;
+    }
 
     /**
      * Creates and enters a <em>cancellable</em> scope. The current {@link
@@ -325,7 +392,26 @@ public class FiberScope implements AutoCloseable {
      */
     public Fiber<?> schedule(Runnable task) {
         Fiber<?> fiber = Fiber.newFiber(task);
-        fiber.schedule(this);
+        fiber.schedule(this, null);
+        return fiber;
+    }
+
+    /**
+     * Creates and schedules a new {@link Fiber fiber} to run the given task.
+     * The fiber is scheduled in this scope with the default scheduler and
+     * queued to the given termination queue when it terminates.
+     *
+     * @param task the task to execute
+     * @param queue the termination queue
+     * @return the fiber
+     * @throws IllegalCallerException if the caller thread or fiber is not
+     *         executing in the scope
+     */
+    @SuppressWarnings("unchecked")
+    public Fiber<?> schedule(Runnable task, TerminationQueue<?> queue) {
+        Objects.requireNonNull(queue);
+        Fiber<?> fiber = Fiber.newFiber(task);
+        fiber.schedule(this, (TerminationQueue<Object>) queue);
         return fiber;
     }
 
@@ -342,7 +428,28 @@ public class FiberScope implements AutoCloseable {
      */
     public Fiber<?> schedule(Executor scheduler, Runnable task) {
         Fiber<?> fiber = Fiber.newFiber(scheduler, task);
-        fiber.schedule(this);
+        fiber.schedule(this, null);
+        return fiber;
+    }
+
+    /**
+     * Creates and schedules a new {@link Fiber fiber} to run the given task.
+     * The fiber is scheduled in this scope with the given scheduler and
+     * queued to the given termination queue when it terminates.
+     *
+     * @param scheduler the schedule
+     * @param task the task to execute
+     * @param queue the termination queue
+     * @return the fiber
+     * @throws IllegalCallerException if the caller thread or fiber is not
+     *         executing in the scope
+     * @throws RejectedExecutionException if the scheduler cannot accept a task
+     */
+    @SuppressWarnings("unchecked")
+    public Fiber<?> schedule(Executor scheduler, Runnable task, TerminationQueue<?> queue) {
+        Objects.requireNonNull(queue);
+        Fiber<?> fiber = Fiber.newFiber(scheduler, task);
+        fiber.schedule(this, (TerminationQueue<Object>) queue);
         return fiber;
     }
 
@@ -358,7 +465,26 @@ public class FiberScope implements AutoCloseable {
      */
     public <V> Fiber<V> schedule(Callable<? extends V> task) {
         Fiber<V> fiber = Fiber.newFiber(task);
-        fiber.schedule(this);
+        fiber.schedule(this, null);
+        return fiber;
+    }
+
+    /**
+     * Creates and schedules a new {@link Fiber fiber} to run the given task.
+     * The fiber is scheduled in this scope with the default scheduler and
+     * queued to the given termination queue when it terminates.
+     *
+     * @param task the task to execute
+     * @param queue the termination queue
+     * @param <V> the task's result type
+     * @return the fiber
+     * @throws IllegalCallerException if the caller thread or fiber is not
+     *         executing in the scope
+     */
+    public <V> Fiber<V> schedule(Callable<? extends V> task, TerminationQueue<? super V> queue) {
+        Objects.requireNonNull(queue);
+        Fiber<V> fiber = Fiber.newFiber(task);
+        fiber.schedule(this, queue);
         return fiber;
     }
 
@@ -376,13 +502,35 @@ public class FiberScope implements AutoCloseable {
      */
     public <V> Fiber<V> schedule(Executor scheduler, Callable<? extends V> task) {
         Fiber<V> fiber = Fiber.newFiber(scheduler, task);
-        fiber.schedule(this);
+        fiber.schedule(this, null);
         return fiber;
     }
 
     /**
-     * Exits this scope. This method waits until all fibers scheduled in the
-     * scope have terminated. If the {@link #currentDeadline() current deadline}
+     * Creates and schedules a new {@link Fiber fiber} to run the given task.
+     * The fiber is scheduled in this scope with the given scheduler and
+     * queued to the given termination queue when it terminates.
+     *
+     * @param scheduler the schedule
+     * @param task the task to execute
+     * @param queue the termination queue
+     * @param <V> the task's result type
+     * @return the fiber
+     * @throws IllegalCallerException if the caller thread or fiber is not
+     *         executing in the scope
+     * @throws RejectedExecutionException if the scheduler cannot accept a task
+     */
+    public <V> Fiber<V> schedule(Executor scheduler, Callable<? extends V> task,
+                                 TerminationQueue<? super V> queue) {
+        Objects.requireNonNull(queue);
+        Fiber<V> fiber = Fiber.newFiber(scheduler, task);
+        fiber.schedule(this, queue);
+        return fiber;
+    }
+
+    /**
+     * Closes/exits this scope. This method waits until all fibers scheduled in
+     * the scope have terminated. If the {@link #currentDeadline() current deadline}
      * has expired then {@code CancellationException} is thrown after all fibers
      * scheduled in the scope have terminated.
      *
@@ -401,47 +549,11 @@ public class FiberScope implements AutoCloseable {
     /**
      * Returns a {@code Stream} of the fibers scheduled in this scope that are
      * still {@link Fiber#isAlive() alive}. This method returns an empty
-     * stream for the {@linkplain #DETACHED DETACHED} scope.
+     * stream for the {@linkplain #detached()} detached} scope.
      *
      * @return a stream of the active fibers in the scope
      */
     public Stream<Fiber<?>> fibers() {
-        throw new RuntimeException("not implemented");
-    }
-
-    /**
-     * Returns the queue to retrieve fibers, scheduled in this scope, when they
-     * terminate.
-     *
-     * @return the termination queue
-     * @throws UnsupportedOperationException if this scope is the DETACHED scope.
-     * @see #disableTerminationQueue()
-     */
-    public BlockingSource<Fiber<?>> terminationQueue() {
-        throw new RuntimeException("not implemented");
-    }
-
-    /**
-     * Disables further queuing of fibers, scheduled in this scope, when they
-     * terminate.
-     *
-     * @return this scope
-     * @see #terminationQueue()
-     */
-    public FiberScope disableTerminationQueue() {
-        throw new RuntimeException("not implemented");
-    }
-
-    /**
-     * Returns {@code true} if there there are any fibers scheduled in this scope
-     * that have been not been retrieved from the {@link #terminationQueue()
-     * termination queue}. If this is the {@linkplain #DETACHED DETACHED} scope
-     * then this method returns {@code false}.
-     *
-     * @return {@code true} if there are fibers scheduled in this scope that
-     *         have not been retrieved from the termination queue
-     */
-    public boolean hasRemaining() {
         throw new RuntimeException("not implemented");
     }
 
@@ -512,18 +624,6 @@ class DetachedFiberScope extends FiberScope {
         return Stream.empty();
     }
     @Override
-    public BlockingSource<Fiber<?>> terminationQueue() {
-        throw new UnsupportedOperationException();
-    }
-    @Override
-    public FiberScope disableTerminationQueue() {
-        return this;
-    }
-    @Override
-    public boolean hasRemaining() {
-        return false;
-    }
-    @Override
     FiberScope previous() {
         return null;
     }
@@ -546,11 +646,6 @@ class FiberScopeImpl extends FiberScope {
     private volatile boolean cancelled;
     private volatile boolean expired;
     private final Future<?> canceller;
-
-    // termination queue
-    private final BlockingQueue<Fiber<?>> queue;
-    private final BlockingSource<Fiber<?>> publicQueue;
-    private volatile boolean disableTerminationQueue;
 
     // close/exit support
     private volatile boolean closed;
@@ -600,9 +695,6 @@ class FiberScopeImpl extends FiberScope {
                 this.cancelled = true;
             }
         }
-
-        this.queue = new LinkedBlockingQueue<>();
-        this.publicQueue = new TerminationQueue(queue);
 
         this.closeLock = new ReentrantLock();
         this.closeCondition = closeLock.newCondition();
@@ -675,26 +767,6 @@ class FiberScopeImpl extends FiberScope {
     }
 
     @Override
-    public BlockingSource<Fiber<?>> terminationQueue() {
-        return publicQueue;
-    }
-
-    @Override
-    public FiberScope disableTerminationQueue() {
-        disableTerminationQueue = true;
-        return this;
-    }
-
-    @Override
-    public boolean hasRemaining() {
-        if (queue.isEmpty() && fibers.isEmpty()) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    @Override
     FiberScope previous() {
         return previous;
     }
@@ -742,24 +814,6 @@ class FiberScopeImpl extends FiberScope {
 
     @Override
     void onTerminate(Fiber<?> fiber) {
-        // queue terminated fiber before removing from fibers set to avoid
-        // hasRemaining seeing them both as empty
-        if (!disableTerminationQueue) {
-            boolean interrupted = false;
-            boolean done = false;
-            while (!done) {
-                try {
-                    queue.put(fiber);
-                    done = true;
-                } catch (InterruptedException e) {
-                    interrupted = true;
-                }
-            }
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
-        }
-
         boolean removed = fibers.remove(fiber);
         assert removed;
 
@@ -786,33 +840,13 @@ class FiberScopeImpl extends FiberScope {
     private static ScheduledExecutorService timeoutScheduler() {
         ScheduledThreadPoolExecutor stpe = (ScheduledThreadPoolExecutor)
             Executors.newScheduledThreadPool(1, r ->
-                    AccessController.doPrivileged(new PrivilegedAction<>() {
-                        public Thread run() {
-                            Thread t = new Thread(r);
-                            t.setDaemon(true);
-                            return t;
-                        }}));
+                AccessController.doPrivileged(new PrivilegedAction<>() {
+                    public Thread run() {
+                        Thread t = new Thread(r);
+                        t.setDaemon(true);
+                        return t;
+                    }}));
         stpe.setRemoveOnCancelPolicy(true);
         return stpe;
-    }
-
-    /**
-     * Wraps a BlockingQueue to avoid handing out reference to internal queue
-     */
-    private static class TerminationQueue implements BlockingSource<Fiber<?>> {
-        private final BlockingQueue<Fiber<?>> queue;
-        TerminationQueue(BlockingQueue<Fiber<?>> queue) {
-            this.queue = queue;
-        }
-        public Fiber<?> take() throws InterruptedException {
-            return queue.take();
-        }
-        public Fiber<?> poll() {
-            return queue.poll();
-        }
-        public Fiber<?> poll(Duration duration) throws InterruptedException {
-            long nanos = TimeUnit.NANOSECONDS.convert(duration);
-            return queue.poll(nanos, TimeUnit.NANOSECONDS);
-        }
     }
 }

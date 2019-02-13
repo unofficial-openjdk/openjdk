@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
  */
 package java.lang;
 
+import java.lang.FiberScope.TerminationQueue;
 import java.lang.StackWalker.StackFrame;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -113,8 +114,9 @@ public class Fiber<V> {
     // carrier thread when mounted
     private volatile Thread carrierThread;
 
-    // current scope (read asynchronously by cancel)
+    // current scope and termination queue
     private volatile FiberScope scope;
+    private volatile TerminationQueue<? super V> terminationQueue;
 
     // fiber state
     private static final short ST_NEW      = 0;
@@ -228,14 +230,14 @@ public class Fiber<V> {
      * default scheduler.
      *
      * @apiNote
-     * For now, this method schedules the fiber in the DETACHED scope. This will
+     * For now, this method schedules the fiber in the detached scope. This will
      * be re-visited once there is more experience gained using fiber scopes.
      *
      * @param task the task to execute
      * @return the fiber
      */
     public static Fiber<?> schedule(Runnable task) {
-        return FiberScope.DETACHED.schedule(DEFAULT_SCHEDULER, task);
+        return FiberScope.detached().schedule(DEFAULT_SCHEDULER, task);
     }
 
     /**
@@ -243,7 +245,7 @@ public class Fiber<V> {
      * given scheduler.
      *
      * @apiNote
-     * For now, this method schedules the fiber in the DETACHED scope. This will
+     * For now, this method schedules the fiber in the detached scope. This will
      * be re-visited once there is more experience gained using fiber scopes.
      *
      * @param scheduler the scheduler
@@ -252,7 +254,7 @@ public class Fiber<V> {
      * @throws RejectedExecutionException if the scheduler cannot accept a task
      */
     public static Fiber<?> schedule(Executor scheduler, Runnable task) {
-        return FiberScope.DETACHED.schedule(scheduler, task);
+        return FiberScope.detached().schedule(scheduler, task);
     }
 
     /**
@@ -260,7 +262,7 @@ public class Fiber<V> {
      * task. The {@code Fiber} is scheduled with the default scheduler.
      *
      * @apiNote
-     * For now, this method schedules the fiber in the DETACHED scope. This will
+     * For now, this method schedules the fiber in the detached scope. This will
      * be re-visited once there is more experience gained using fiber scopes.
      *
      * @param task the task to execute
@@ -268,7 +270,7 @@ public class Fiber<V> {
      * @return the fiber
      */
     public static <V> Fiber<V> schedule(Callable<? extends V> task) {
-        return FiberScope.DETACHED.schedule(task);
+        return FiberScope.detached().schedule(task);
     }
 
     /**
@@ -276,7 +278,7 @@ public class Fiber<V> {
      * task. The {@code Fiber} is scheduled with the given scheduler.
      *
      * @apiNote
-     * For now, this method schedules the fiber in the DETACHED scope. This will
+     * For now, this method schedules the fiber in the detached scope. This will
      * be re-visited once there is more experience gained using fiber scopes.
      *
      * @param scheduler the scheduler
@@ -286,7 +288,7 @@ public class Fiber<V> {
      * @throws RejectedExecutionException if the scheduler cannot accept a task
      */
     public static <V> Fiber<V> schedule(Executor scheduler, Callable<? extends V> task) {
-        return FiberScope.DETACHED.schedule(scheduler, task);
+        return FiberScope.detached().schedule(scheduler, task);
     }
 
     /**
@@ -322,13 +324,15 @@ public class Fiber<V> {
      *         executing in the scope
      * @throws RejectedExecutionException if the scheduler cannot accept a task
      */
-    Fiber<V> schedule(FiberScope scope) {
+    Fiber<V> schedule(FiberScope scope, TerminationQueue<? super V> terminationQueue) {
         Objects.requireNonNull(scope);
 
         if (!stateCompareAndSet(ST_NEW, ST_STARTED))
             throw new IllegalStateException("Fiber already scheduled");
 
         this.scope = scope;
+        if (terminationQueue != null)
+            this.terminationQueue = terminationQueue;
         scope.onSchedule(this);
 
         // switch to carrier thread when submitting task. Revisit this when
@@ -453,8 +457,13 @@ public class Fiber<V> {
             notifyFiberTerminated(thread, this);
         }
 
-        // notify scope so it can queue the fiber
-        assert scope != null;
+        // notify termination queue
+        TerminationQueue<? super V> queue = this.terminationQueue;
+        if (queue != null) {
+            queue.put(this);  // can fail with OOME
+        }
+
+        // notify scope
         scope.onTerminate(this);  // can fail with OOME
 
         // notify anyone waiting for this fiber to terminate

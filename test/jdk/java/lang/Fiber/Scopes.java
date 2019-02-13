@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
  * @summary Basic tests for java.lang.FiberScope
  */
 
+import java.lang.FiberScope.TerminationQueue;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.stream.Stream;
@@ -43,36 +44,36 @@ public class Scopes {
 
     // -- detached scope --
 
+    public void testDetached1() throws Exception {
+        var fiber = FiberScope.detached().schedule(() -> "foo");
+        assertTrue(fiber.join().equals("foo"));
+    }
+
+    public void testDetached2() throws Exception {
+        var queue = new TerminationQueue<String>();
+        var fiber = FiberScope.detached().schedule(() -> "foo", queue);
+        assertTrue(queue.take() == fiber);
+        assertTrue(fiber.join().equals("foo"));
+    }
+
+    // the detached scope cannot be exited
+    @Test(expectedExceptions = { IllegalCallerException.class })
+    public void testDetached3() {
+        FiberScope.detached().close();
+    }
+
     // fibers scheduled in the detached scope can be cancelled
-    public void testDetached1() {
-        runInFiber(FiberScope.DETACHED, () -> {
+    public void testDetached4() {
+        runInFiber(FiberScope.detached(), () -> {
             assertFalse(Fiber.cancelled());
             Fiber.current().map(Fiber::cancel);
             assertTrue(Fiber.cancelled());
         });
     }
 
-    // the detached scope does not support a termination queue
-    @Test(expectedExceptions = { UnsupportedOperationException.class })
-    public void testDetached2() {
-        FiberScope.DETACHED.terminationQueue();
-    }
-
-    // The hasRemaining method always returns false for the detached scope
-    public void testDetached3() {
-        FiberScope scope = FiberScope.DETACHED;
-        assertFalse(scope.hasRemaining());
-        var fiber = scope.schedule(() -> LockSupport.park());
-        try {
-            assertFalse(scope.hasRemaining());
-        } finally {
-            LockSupport.unpark(fiber);
-        }
-    }
-
     // The fibers method always returns an empty stream for the detached scope
-    public void testDetached4() {
-        FiberScope scope = FiberScope.DETACHED;
+    public void testDetached5() {
+        FiberScope scope = FiberScope.detached();
         assertEmpty(scope.fibers());
         var fiber = scope.schedule(() -> LockSupport.park());
         try {
@@ -82,16 +83,28 @@ public class Scopes {
         }
     }
 
-    // the detached scope cannot be exited
-    @Test(expectedExceptions = { IllegalCallerException.class })
-    public void testDetached5() {
-        FiberScope.DETACHED.close();
-    }
 
     // -- cancellable scope --
 
+    public void testCancellable1() throws Exception {
+        try (var scope = FiberScope.cancellable()) {
+            var fiber = FiberScope.detached().schedule(() -> "foo");
+            assertTrue(fiber.join().equals("foo"));
+        }
+    }
+
+    public void testCancellable2() throws Exception {
+        var queue = new TerminationQueue<String>();
+        try (var scope = FiberScope.cancellable()) {
+            var fiber = FiberScope.detached().schedule(() -> "foo", queue);
+            assertTrue(queue.take() == fiber);
+            assertFalse(fiber.isAlive());
+            assertTrue(fiber.join().equals("foo"));
+        }
+    }
+
     // close waits until all fibers scheduled in a scope to terminate
-    public void testCancellable1() {
+    public void testCancellable3() {
         var ref = new AtomicReference<Fiber<?>>();
         try (var scope = FiberScope.cancellable()) {
             var fiber = scope.schedule(() -> {
@@ -105,7 +118,7 @@ public class Scopes {
     }
 
     // cancel a fiber in a cancellable scope
-    public void testCancellable2() {
+    public void testCancellable4() {
         runInFiber(() -> {
             try (var scope = FiberScope.cancellable()) {
                 assertFalse(Fiber.cancelled());
@@ -116,7 +129,7 @@ public class Scopes {
     }
 
     // cancel a fiber in a cancellable scope propagates cancellation
-    public void testCancellable3() {
+    public void testCancellable5() {
         runInFiber(() -> {
             try (var scope = FiberScope.cancellable()) {
                 var child = scope.schedule(() -> {
@@ -135,7 +148,7 @@ public class Scopes {
     }
 
     // FiberScope::fibers includes an element for running fibers
-    public void testCancellable4() {
+    public void testCancellable6() {
         try (var scope = FiberScope.cancellable()) {
             assertEmpty(scope.fibers());
             var fiber = scope.schedule(() -> LockSupport.park());
@@ -149,27 +162,28 @@ public class Scopes {
         }
     }
 
-    // test termination queue in cancellable scope
-    public void testCancellable5() throws Exception {
-        try (var scope = FiberScope.cancellable()) {
-            var queue = scope.terminationQueue();
-            assertFalse(scope.hasRemaining());
-            assertTrue(queue.poll() == null);
-            var child = scope.schedule(() -> { });
-            assertTrue(scope.hasRemaining());
-            var fiber = queue.take();
-            assertTrue(fiber == child);
-            assertFalse(fiber.isAlive());
-            assertFalse(scope.hasRemaining());
-            assertTrue(queue.poll() == null);
-        }
-    }
-
 
     // -- non-cancellable scope --
 
+    public void testNonCancellable1() throws Exception {
+        try (var scope = FiberScope.notCancellable()) {
+            var fiber = FiberScope.detached().schedule(() -> "foo");
+            assertTrue(fiber.join().equals("foo"));
+        }
+    }
+
+    public void testNonCancellable2() throws Exception {
+        var queue = new TerminationQueue<String>();
+        try (var scope = FiberScope.notCancellable()) {
+            var fiber = FiberScope.detached().schedule(() -> "foo", queue);
+            assertTrue(queue.take() == fiber);
+            assertFalse(fiber.isAlive());
+            assertTrue(fiber.join().equals("foo"));
+        }
+    }
+
     // close waits until all fibers scheduled in a scope to terminate
-    public void testNonCancellable1() {
+    public void testNonCancellable3() {
         var ref = new AtomicReference<Fiber<?>>();
         try (var scope = FiberScope.notCancellable()) {
             var fiber = scope.schedule(() -> {
@@ -183,7 +197,7 @@ public class Scopes {
     }
 
     // cancel a fiber in a non-cancellable scope
-    public void testNonCancellable2() {
+    public void testNonCancellable4() {
         runInFiber(() -> {
             try (var scope = FiberScope.notCancellable()) {
                 assertFalse(Fiber.cancelled());
@@ -192,9 +206,8 @@ public class Scopes {
             }
         });
     }
-
     // cancel a fiber in a non-cancellable scope
-    public void testNonCancellable3() {
+    public void testNonCancellable5() {
         runInFiber(() -> {
             try (var scope = FiberScope.notCancellable()) {
                 var child = scope.schedule(() -> {
@@ -210,7 +223,7 @@ public class Scopes {
     }
 
     // FiberScope::fibers includes an element for running fibers
-    public void testNonCancellable4() {
+    public void testNonCancellable6() {
         try (var scope = FiberScope.notCancellable()) {
             assertEmpty(scope.fibers());
             var fiber = scope.schedule(() -> LockSupport.park());
@@ -221,22 +234,6 @@ public class Scopes {
                 fiber.join();
             }
             assertEmpty(scope.fibers());
-        }
-    }
-
-    // test termination queue in non-cancellable scope
-    public void testNonCancellable5() throws Exception {
-        try (var scope = FiberScope.cancellable()) {
-            var queue = scope.terminationQueue();
-            assertFalse(scope.hasRemaining());
-            assertTrue(queue.poll() == null);
-            var child = scope.schedule(() -> { });
-            assertTrue(scope.hasRemaining());
-            var fiber = queue.take();
-            assertTrue(fiber == child);
-            assertFalse(fiber.isAlive());
-            assertFalse(scope.hasRemaining());
-            assertTrue(queue.poll() == null);
         }
     }
 
@@ -310,27 +307,9 @@ public class Scopes {
         }
     }
 
-    // test termination queue in cancellable scope
-    public void testWithDeadline5() throws Exception {
-        var deadline = Instant.now().plusSeconds(60);
-        try (var scope = FiberScope.withDeadline(deadline)) {
-            assertTrue(FiberScope.currentDeadline().orElseThrow().equals(deadline));
-            var queue = scope.terminationQueue();
-            assertFalse(scope.hasRemaining());
-            assertTrue(queue.poll() == null);
-            var child = scope.schedule(() -> { });
-            assertTrue(scope.hasRemaining());
-            var fiber = queue.take();
-            assertTrue(fiber == child);
-            assertFalse(fiber.isAlive());
-            assertFalse(scope.hasRemaining());
-            assertTrue(queue.poll() == null);
-        }
-    }
-
     // deadline expires
     @Test(expectedExceptions = { CancellationException.class })
-    public void testWithDeadline6() {
+    public void testWithDeadline5() {
         var deadline = Instant.now().plusSeconds(1);
         try (var scope = FiberScope.withDeadline(deadline)) {
             scope.schedule(() -> {
@@ -342,14 +321,14 @@ public class Scopes {
 
     // deadline in the past
     @Test(expectedExceptions = { CancellationException.class })
-    public void testWithDeadline7() {
+    public void testWithDeadline6() {
         var deadline = Instant.now().minusSeconds(1);
         try (var scope = FiberScope.withDeadline(deadline)) { }
     }
 
     // deadline in the past
     @Test(expectedExceptions = { CancellationException.class })
-    public void testWithDeadline8() {
+    public void testWithDeadline7() {
         var deadline = Instant.now().minusSeconds(1);
         try (var scope = FiberScope.withDeadline(deadline)) {
             scope.schedule(() -> assertTrue(Fiber.cancelled())).join();
@@ -449,22 +428,150 @@ public class Scopes {
     // -- nulls --
 
     @Test(expectedExceptions = { NullPointerException.class })
-    public void testNull1() {
-        FiberScope.withDeadline(null);
+    public void testNull1() throws Exception {
+        try (var scope = FiberScope.cancellable()) {
+            scope.schedule((Runnable) null);
+        }
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
-    public void testNull2() {
-        FiberScope.withTimeout(null);
+    public void testNull2() throws Exception {
+        try (var scope = FiberScope.cancellable()) {
+            var queue = new TerminationQueue<Object>();
+            scope.schedule((Runnable) null, queue);
+        }
     }
 
     @Test(expectedExceptions = { NullPointerException.class })
     public void testNull3() throws Exception {
         try (var scope = FiberScope.cancellable()) {
-            scope.terminationQueue().poll(null);
+            scope.schedule(() -> { }, (TerminationQueue) null);
         }
     }
 
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull4() throws Exception {
+        try (var scope = FiberScope.cancellable()) {
+            scope.schedule((Callable<?>) null);
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull5() throws Exception {
+        try (var scope = FiberScope.cancellable()) {
+            var queue = new TerminationQueue<Object>();
+            scope.schedule((Callable<?>) null, queue);
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull6() throws Exception {
+        try (var scope = FiberScope.cancellable()) {
+            scope.schedule(() -> "foo", (TerminationQueue) null);
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull7() throws Exception {
+        try (var scope = FiberScope.cancellable()) {
+            scope.schedule((Executor) null, () -> { });
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull8() throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        try (var scope = FiberScope.cancellable()) {
+            scope.schedule(pool, (Runnable) null);
+        } finally {
+            pool.shutdown();
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull9() throws Exception {
+        try (var scope = FiberScope.cancellable()) {
+            var queue = new TerminationQueue<Object>();
+            scope.schedule((Executor) null, () -> { }, queue);
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull10() throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        try (var scope = FiberScope.cancellable()) {
+            var queue = new TerminationQueue<Object>();
+            scope.schedule(pool, (Runnable) null, queue);
+        } finally {
+            pool.shutdown();
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull11() throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        try (var scope = FiberScope.cancellable()) {
+            scope.schedule(pool, () -> { }, (TerminationQueue<Object>) null);
+        } finally {
+            pool.shutdown();
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull12() throws Exception {
+        try (var scope = FiberScope.cancellable()) {
+            scope.schedule((Executor) null, () -> "foo");
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull13() throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        try (var scope = FiberScope.cancellable()) {
+            scope.schedule(pool, (Callable<?>) null);
+        } finally {
+            pool.shutdown();
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull14() throws Exception {
+        try (var scope = FiberScope.cancellable()) {
+            var queue = new TerminationQueue<Object>();
+            scope.schedule((Executor) null, () -> "foo", queue);
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull15() throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        try (var scope = FiberScope.cancellable()) {
+            var queue = new TerminationQueue<Object>();
+            scope.schedule(pool, (Callable<?>) null, queue);
+        } finally {
+            pool.shutdown();
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull16() throws Exception {
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        try (var scope = FiberScope.cancellable()) {
+            scope.schedule(pool, () -> "foo", (TerminationQueue<Object>) null);
+        } finally {
+            pool.shutdown();
+        }
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull17() {
+        FiberScope.withDeadline(null);
+    }
+
+    @Test(expectedExceptions = { NullPointerException.class })
+    public void testNull18() {
+        FiberScope.withTimeout(null);
+    }
 
     // -- supporting code --
 
