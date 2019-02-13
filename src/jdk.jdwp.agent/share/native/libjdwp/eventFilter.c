@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -381,10 +381,9 @@ preferDeliverEventOnFiber(EventIndex ei)
         case EI_FIBER_TERMINATED:
         case EI_FIBER_SCHEDULED:
             return JNI_TRUE;
-        case EI_CLASS_PREPARE:
-            return JNI_TRUE;
         /* Not delivering the following events on fibers helps keep down the number of
          * fibers we need to notify the debugger about. */
+        case EI_CLASS_PREPARE:
         case EI_FRAME_POP:
         case EI_GC_FINISH:
         case EI_CLASS_LOAD:
