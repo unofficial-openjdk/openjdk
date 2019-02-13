@@ -977,8 +977,9 @@ public class Fiber<V> {
             future = new CompletableFuture<>() {
                 @Override
                 public boolean cancel(boolean ignored) {
+                    boolean cancelled = super.cancel(ignored);
                     Fiber.this.cancel();
-                    return super.cancel(ignored);
+                    return cancelled;
                 }
             };
             Object previous = FUTURE.compareAndExchange(this, null, future);

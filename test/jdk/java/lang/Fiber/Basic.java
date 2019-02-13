@@ -792,22 +792,29 @@ public class Basic {
         }
     }
 
-    // Future.cancel should set fiber cancel status
-    public void testFuture10() throws Exception {
-        var fiber = Fiber.schedule(() -> LockSupport.park());
+    // Future.cancel
+    public void testFuture3() throws Exception {
+        Fiber<String> fiber = Fiber.schedule(() -> {
+            LockSupport.park();
+            return "foo";
+        });
         Future<?> result = fiber.toFuture();
+
+        // sets cancel status and unpark fiber
         result.cancel(false);
+        assertTrue(fiber.isCancelled());
+
         try {
             result.get();
             assertTrue(false);
         } catch (CancellationException expected) { }
-        // fiber is still alive
-        assertTrue(fiber.isAlive());
-        assertTrue(fiber.isCancelled());
+
+        // fiber returns to completion
+        assertEquals(fiber.join(), "foo");
     }
 
     // Fiber.toFuture should return the same object is called several times
-    public void testToFuture11() {
+    public void testToFuture4() {
         var fiber = Fiber.schedule(() -> "foo");
         var result1 = fiber.toFuture();
         var result2 = fiber.toFuture();
