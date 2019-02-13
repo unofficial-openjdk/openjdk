@@ -463,18 +463,25 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
                         && localport != 0 && address != null && port != 0;
 
                     // copy fields
-                    nsi.fd = this.fd;
                     nsi.stream = this.stream;
-                    nsi.closer = FileDescriptorCloser.create(nsi);
+                    nsi.fd = this.fd;
                     nsi.localport = this.localport;
                     nsi.address = this.address;
                     nsi.port = this.port;
+
+                    // reset fields; do not reset timeout
+                    nsi.nonBlocking = false;
+                    nsi.isInputClosed = false;
+                    nsi.isOutputClosed = false;
+                    nsi.isReuseAddress = false;
                     nsi.state = ST_CONNECTED;
 
-                    // disable closer to prevent GC'ing of this impl from
-                    // closing the file descriptor
+                    // GC'ing of this impl should not close the file descriptor
                     this.closer.disable();
                     this.state = ST_CLOSED;
+
+                    // create new closer to execute when nsi is GC'ed
+                    nsi.closer = FileDescriptorCloser.create(nsi);
                 }
             }
         } else {
