@@ -3,6 +3,8 @@
 JDK=$1
 OPTIONS=${@:2}
 
+JAVA_HOME=${JDK}/jdk mvn clean package
+
 iter=20
 forks=2
 file=jmh.out
