@@ -62,7 +62,11 @@ public class Object {
     @HotSpotIntrinsicCandidate
     public final native void notifyAll();
 
-    public final native void wait(long timeout) throws InterruptedException;
+    private final native void wait0(long timeout) throws InterruptedException;
+
+    public final void wait(long timeout) throws InterruptedException {
+        wait0(timeout);
+    }
 
     public final void wait(long timeout, int nanos) throws InterruptedException {
         if (timeout < 0) {
@@ -78,11 +82,11 @@ public class Object {
             timeout++;
         }
 
-        wait(timeout);
+        wait0(timeout);
     }
 
     public final void wait() throws InterruptedException {
-        wait(0);
+        wait0(0);
     }
 
     /**
