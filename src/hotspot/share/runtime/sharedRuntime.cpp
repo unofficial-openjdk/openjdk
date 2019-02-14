@@ -3200,7 +3200,11 @@ frame SharedRuntime::look_for_reserved_stack_annotated_method(JavaThread* thread
 
   assert(fr.is_java_frame(), "Must start on Java frame");
 
-  while (true) {
+  RegisterMap map(JavaThread::current(), false, true); // don't update; walk continuations
+  for (; !fr.is_first_frame(); fr = fr.sender(&map)) {
+    if (!fr.is_java_frame())
+      continue;
+
     Method* method = NULL;
     bool found = false;
     if (fr.is_interpreted_frame()) {
@@ -3233,11 +3237,6 @@ frame SharedRuntime::look_for_reserved_stack_annotated_method(JavaThread* thread
         event.set_method(method);
         event.commit();
       }
-    }
-    if (fr.is_first_java_frame()) {
-      break;
-    } else {
-      fr = fr.java_sender();
     }
   }
   return activation;
