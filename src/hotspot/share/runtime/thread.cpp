@@ -3386,6 +3386,8 @@ javaVFrame* JavaThread::last_java_vframe(RegisterMap *reg_map) {
 }
 
 oop JavaThread::last_continuation() {
+  if (threadObj() == (oop)NULL) return (oop)NULL; // happens during initialization
+  
   return java_lang_Thread::continuation(threadObj());
 }
 
