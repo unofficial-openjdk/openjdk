@@ -42,8 +42,8 @@
 
 CompiledMethod::CompiledMethod(Method* method, const char* name, CompilerType type, const CodeBlobLayout& layout,
                                int frame_complete_offset, int frame_size, ImmutableOopMapSet* oop_maps,
-                               bool caller_must_gc_arguments)
-  : CodeBlob(name, type, layout, frame_complete_offset, frame_size, oop_maps, caller_must_gc_arguments, true),
+                               bool caller_must_gc_arguments, bool compiled)
+  : CodeBlob(name, type, layout, frame_complete_offset, frame_size, oop_maps, caller_must_gc_arguments, compiled),
     _mark_for_deoptimization_status(not_marked),
     _method(method),
     _gc_data(NULL)
@@ -53,9 +53,9 @@ CompiledMethod::CompiledMethod(Method* method, const char* name, CompilerType ty
 
 CompiledMethod::CompiledMethod(Method* method, const char* name, CompilerType type, int size,
                                int header_size, CodeBuffer* cb, int frame_complete_offset, int frame_size,
-                               OopMapSet* oop_maps, bool caller_must_gc_arguments)
+                               OopMapSet* oop_maps, bool caller_must_gc_arguments, bool compiled)
   : CodeBlob(name, type, CodeBlobLayout((address) this, size, header_size, cb), cb,
-             frame_complete_offset, frame_size, oop_maps, caller_must_gc_arguments, true),
+             frame_complete_offset, frame_size, oop_maps, caller_must_gc_arguments, compiled),
     _mark_for_deoptimization_status(not_marked),
     _method(method),
     _gc_data(NULL)
