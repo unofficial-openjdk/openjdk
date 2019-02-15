@@ -89,7 +89,7 @@ inline vframeStream::vframeStream(JavaThread* thread, bool stop_at_java_call_stu
     _prev_frame = _frame;
     _frame = _frame.sender(&_reg_map);
   }
-  _cont = Handle(thread, cont);
+  _cont = cont != (oop)NULL ? Handle(Thread::current(), cont) : Handle();
 }
 
 inline bool vframeStreamCommon::fill_in_compiled_inlined_sender() {
@@ -170,6 +170,7 @@ inline bool vframeStreamCommon::fill_from_frame() {
   // Compiled frame
 
   if (cb() != NULL && cb()->is_compiled()) {
+    assert (nm()->method() != NULL, "must be");
     if (nm()->is_native_method()) {
       // Do not rely on scopeDesc since the pc might be unprecise due to the _last_native_pc trick.
       fill_from_compiled_native_frame();

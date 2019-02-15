@@ -2492,6 +2492,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope
           continue;
         }
         nm = cb->as_compiled_method();
+        assert (nm->method() != NULL, "must be");
         if (nm->method()->is_native()) {
           method = nm->method();
           bci = 0;
