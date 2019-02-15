@@ -32,12 +32,11 @@ import java.io.*;
  * for read and write operations.
  */
 
-class SocketDispatcher extends NativeDispatcher
-{
+class SocketDispatcher extends NativeDispatcher {
 
-    static {
-        IOUtil.load();
-    }
+    SocketDispatcher() { }
+
+    SocketDispatcher(boolean ignore) { }
 
     int read(FileDescriptor fd, long address, int len) throws IOException {
         return read0(fd, address, len);
@@ -63,7 +62,8 @@ class SocketDispatcher extends NativeDispatcher
         close0(fd);
     }
 
-    //-- Native methods
+    // -- Native methods --
+
     static native int read0(FileDescriptor fd, long address, int len)
         throws IOException;
 
@@ -79,4 +79,8 @@ class SocketDispatcher extends NativeDispatcher
     static native void preClose0(FileDescriptor fd) throws IOException;
 
     static native void close0(FileDescriptor fd) throws IOException;
+
+    static {
+        IOUtil.load();
+    }
 }

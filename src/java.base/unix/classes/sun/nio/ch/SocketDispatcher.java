@@ -34,9 +34,22 @@ import java.io.IOException;
  */
 
 class SocketDispatcher extends NativeDispatcher {
+    private final boolean detectConnectionReset;
+
+    SocketDispatcher(boolean detectConnectionReset) {
+        this.detectConnectionReset = detectConnectionReset;
+    }
+
+    SocketDispatcher() {
+        this(false);
+    }
 
     int read(FileDescriptor fd, long address, int len) throws IOException {
-        return FileDispatcherImpl.read0(fd, address, len);
+        if (detectConnectionReset) {
+            return read0(fd, address, len);
+        } else {
+            return FileDispatcherImpl.read0(fd, address, len);
+        }
     }
 
     long readv(FileDescriptor fd, long address, int len) throws IOException {
@@ -57,5 +70,21 @@ class SocketDispatcher extends NativeDispatcher {
 
     void preClose(FileDescriptor fd) throws IOException {
         FileDispatcherImpl.preClose0(fd);
+    }
+
+    // -- Native methods --
+
+    /**
+     * Reads up to len bytes from a socket with special handling for "connection
+     * reset".
+     *
+     * @throws sun.net.ConnectionResetException if connection reset is detected
+     * @throws IOException if another I/O error occurs
+     */
+    private static native int read0(FileDescriptor fd, long address, int len)
+        throws IOException;
+
+    static {
+        IOUtil.load();
     }
 }

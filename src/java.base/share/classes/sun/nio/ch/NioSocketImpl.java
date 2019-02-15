@@ -57,6 +57,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Strands;
 import jdk.internal.ref.CleanerFactory;
+import sun.net.ConnectionResetException;
 import sun.net.NetHooks;
 import sun.net.PlatformSocketImpl;
 import sun.net.ResourceManager;
@@ -78,14 +79,10 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * mode. When in non-blocking mode, operations that don't complete immediately
  * will poll the socket when invoked on a thread, or park when invoked on a
  * fiber.
- *
- * Behavior differences to examine:
- * "Connection reset" handling differs to PlainSocketImpl for cases where
- * an application continues to call read or available after a reset.
  */
 
 public final class NioSocketImpl extends SocketImpl implements PlatformSocketImpl {
-    private static final NativeDispatcher nd = new SocketDispatcher();
+    private static final NativeDispatcher nd = new SocketDispatcher(true);
 
     // The maximum number of bytes to read/write per syscall to avoid needing
     // a huge buffer from the temporary buffer cache
@@ -130,6 +127,20 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
     // flags to indicate if the connection is shutdown for input and output
     private volatile boolean isInputClosed;
     private volatile boolean isOutputClosed;
+
+    // socket input/output streams
+    private volatile InputStream in;
+    private volatile OutputStream out;
+    private static final VarHandle IN, OUT;
+    static {
+        try {
+            MethodHandles.Lookup l = MethodHandles.lookup();
+            IN = l.findVarHandle(NioSocketImpl.class, "in", InputStream.class);
+            OUT = l.findVarHandle(NioSocketImpl.class, "out", OutputStream.class);
+        } catch (Exception e) {
+            throw new InternalError(e);
+        }
+    }
 
     /**
      * Creates a instance of this SocketImpl.
@@ -770,78 +781,110 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
 
     @Override
     protected InputStream getInputStream() {
-        return new InputStream() {
-            private volatile boolean eof;  // to emulate legacy SocketInputStream
-            @Override
-            public int read() throws IOException {
-                byte[] a = new byte[1];
-                int n = read(a, 0, 1);
-                return (n > 0) ? (a[0] & 0xff) : -1;
+        InputStream in = this.in;
+        if (in == null) {
+            in = new SocketInputStream(this);
+            if (!IN.compareAndSet(this, null, in)) {
+                in = this.in;
             }
-            @Override
-            public int read(byte[] b, int off, int len) throws IOException {
-                Objects.checkFromIndexSize(off, len, b.length);
-                if (eof) {
-                    return -1; // return -1, even if socket is closed
-                } else if (len == 0) {
-                    return 0;  // return 0, even if socket is closed
-                } else {
-                    try {
-                        // read up to MAX_BUFFER_SIZE bytes
-                        int size = Math.min(len, MAX_BUFFER_SIZE);
-                        int n = NioSocketImpl.this.read(b, off, size);
-                        if (n == -1)
-                            eof = true;
-                        return n;
-                    } catch (SocketTimeoutException e) {
-                        throw e;
-                    } catch (IOException ioe) {
-                        throw new SocketException(ioe.getMessage());
-                    }
+        }
+        return in;
+    }
+
+    private static class SocketInputStream extends InputStream {
+        private final NioSocketImpl impl;
+        // EOF or connection reset detected, not thread safe
+        private boolean eof, reset;
+        SocketInputStream(NioSocketImpl impl) {
+            this.impl = impl;
+        }
+        @Override
+        public int read() throws IOException {
+            byte[] a = new byte[1];
+            int n = read(a, 0, 1);
+            return (n > 0) ? (a[0] & 0xff) : -1;
+        }
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            Objects.checkFromIndexSize(off, len, b.length);
+            if (eof) {
+                return -1;
+            } else if (reset) {
+                throw new SocketException("Connection reset");
+            } else if (len == 0) {
+                return 0;
+            } else {
+                try {
+                    // read up to MAX_BUFFER_SIZE bytes
+                    int size = Math.min(len, MAX_BUFFER_SIZE);
+                    int n = impl.read(b, off, size);
+                    if (n == -1)
+                        eof = true;
+                    return n;
+                } catch (ConnectionResetException e) {
+                    reset = true;
+                    throw new SocketException("Connection reset");
+                } catch (SocketTimeoutException e) {
+                    throw e;
+                } catch (IOException ioe) {
+                    throw new SocketException(ioe.getMessage());
                 }
             }
-            @Override
-            public int available() throws IOException {
-                return NioSocketImpl.this.available();
-            }
-            @Override
-            public void close() throws IOException {
-                NioSocketImpl.this.close();
-            }
-        };
+        }
+        @Override
+        public int available() throws IOException {
+            return impl.available();
+        }
+        @Override
+        public void close() throws IOException {
+            impl.close();
+        }
     }
 
     @Override
     protected OutputStream getOutputStream() {
-        return new OutputStream() {
-            @Override
-            public void write(int b) throws IOException {
-                byte[] a = new byte[] { (byte) b };
-                write(a, 0, 1);
+        OutputStream out = this.out;
+        if (out == null) {
+            out = new SocketOutputStream(this);
+            if (!OUT.compareAndSet(this, null, out)) {
+                out = this.out;
             }
-            @Override
-            public void write(byte[] b, int off, int len) throws IOException {
-                Objects.checkFromIndexSize(off, len, b.length);
-                if (len > 0) {
-                    try {
-                        int pos = off;
-                        int end = off + len;
-                        while (pos < end) {
-                            // write up to MAX_BUFFER_SIZE bytes
-                            int size = Math.min((end - pos), MAX_BUFFER_SIZE);
-                            int n = NioSocketImpl.this.write(b, pos, size);
-                            pos += n;
-                        }
-                    } catch (IOException ioe) {
-                        throw new SocketException(ioe.getMessage());
+        }
+        return out;
+    }
+
+    private static class SocketOutputStream extends OutputStream {
+        private final NioSocketImpl impl;
+        SocketOutputStream(NioSocketImpl impl) {
+            this.impl = impl;
+        }
+        @Override
+        public void write(int b) throws IOException {
+            byte[] a = new byte[]{(byte) b};
+            write(a, 0, 1);
+        }
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            Objects.checkFromIndexSize(off, len, b.length);
+            if (len > 0) {
+                try {
+                    int pos = off;
+                    int end = off + len;
+                    while (pos < end) {
+                        // write up to MAX_BUFFER_SIZE bytes
+                        int size = Math.min((end - pos), MAX_BUFFER_SIZE);
+                        int n = impl.write(b, pos, size);
+                        pos += n;
                     }
+                } catch (IOException ioe) {
+                    throw new SocketException(ioe.getMessage());
                 }
             }
-            @Override
-            public void close() throws IOException {
-                NioSocketImpl.this.close();
-            }
-        };
+        }
+        @Override
+        public void close() throws IOException {
+            impl.close();
+        }
     }
 
     @Override
