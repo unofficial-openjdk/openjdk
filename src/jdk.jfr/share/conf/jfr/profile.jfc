@@ -83,6 +83,18 @@
       <setting name="threshold">0 ms</setting>
     </event>
 
+    <event name="jdk.ContinuationFreeze">
+      <setting name="enabled">true</setting>
+      <setting name="stackTrace">false</setting>
+      <setting name="threshold">0 ms</setting>
+    </event>
+
+    <event name="jdk.ContinuationThaw">
+      <setting name="enabled">true</setting>
+      <setting name="stackTrace">false</setting>
+      <setting name="threshold">0 ms</setting>
+    </event>
+
     <event name="jdk.ReservedStackActivation">
       <setting name="enabled">true</setting>
       <setting name="stackTrace">true</setting>
