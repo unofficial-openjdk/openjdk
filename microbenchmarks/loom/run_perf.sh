@@ -3,7 +3,7 @@
 JDK=$1
 OPTIONS=${@:2}
 
-JAVA_HOME=${JDK}/jdk mvn clean package
+JAVA_HOME=${JDK}/jdk mvn clean package || exit 1
 
 iter=20
 forks=2
