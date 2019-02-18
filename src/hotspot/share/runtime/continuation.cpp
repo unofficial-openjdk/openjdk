@@ -1465,7 +1465,20 @@ static inline intptr_t* frame_bottom(frame &f) { // exclusive this will be copie
 }
 
 static bool is_interpreted_frame_owning_locks(const frame& f) {
-  return f.interpreter_frame_monitor_end() < f.interpreter_frame_monitor_begin();
+  assert (f.interpreter_frame_monitor_end() <= f.interpreter_frame_monitor_begin(), "must be");
+  if (f.interpreter_frame_monitor_end() == f.interpreter_frame_monitor_begin())
+    return false;
+
+  for (BasicObjectLock* current = f.previous_monitor_in_interpreter_frame(f.interpreter_frame_monitor_begin());
+        current >= f.interpreter_frame_monitor_end();
+        current = f.previous_monitor_in_interpreter_frame(current)) {
+      
+      oop obj = current->obj();
+      if (obj != NULL) {
+        return true;
+      }
+  }
+  return false;
 }
 
 static bool is_compiled_frame_owning_locks(JavaThread* thread, const RegisterMap* map, const frame& f) {
@@ -1479,21 +1492,18 @@ static bool is_compiled_frame_owning_locks(JavaThread* thread, const RegisterMap
   }
 
   for (ScopeDesc* scope = nm->scope_desc_at(f.pc()); scope != NULL; scope = scope->sender()) {
-    // scope->print_on(tty);
     GrowableArray<MonitorValue*>* mons = scope->monitors();
     if (mons == NULL || mons->is_empty())
       continue;
-    return true;
+
     for (int index = (mons->length()-1); index >= 0; index--) { // see compiledVFrame::monitors()
       MonitorValue* mon = mons->at(index);
       if (mon->eliminated())
-        continue;
+        continue; // TODO: are we fine with this or should we return true?
       ScopeValue* ov = mon->owner();
       StackValue* owner_sv = StackValue::create_stack_value(&f, map, ov); // it is an oop
       oop owner = owner_sv->get_obj()();
       if (owner != NULL) {
-        // tty->print_cr("ZZZ owner:");
-        // owner->print_on(tty);
         return true;
       }
     }

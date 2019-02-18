@@ -24,19 +24,19 @@
 /**
 * @test
 * @summary Basic tests for java.lang.Continuation
-* @run testng Basic
+*
 * @run testng/othervm -Xint Basic
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Basic
-* @run testng/othervm -XX:+UseParallelGC -XX:-TieredCompilation -Xcomp Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -Xcomp -XX:+UseNewCode Basic
-* @run testng/othervm -XX:+UseParallelGC -XX:TieredStopAtLevel=3 -Xcomp Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode Basic
+* @run testng/othervm -XX:-TieredCompilation -Xcomp Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:+UseNewCode Basic
+* @run testng/othervm -XX:TieredStopAtLevel=3 -Xcomp Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode Basic
 *
 * @summary Basic tests for java.lang.Continuation
 */
 
-// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp Basic
-// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+UseParallelGC -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp -XX:+UseNewCode Basic
+// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp Basic
+// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp -XX:+UseNewCode Basic
 
 
 import java.util.ArrayList;
@@ -91,7 +91,9 @@ public class Basic {
     static String bar(long b) {
         double x = 9.99;
         String s = "zzz";
-        Continuation.yield(FOO);
+        boolean res = Continuation.yield(FOO);
+
+        assertEquals(res, true);
 
         // StackWalker walker = StackWalker.getInstance();
         // List<String> frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
@@ -270,6 +272,8 @@ public class Basic {
         
         cont.run();
         assertEquals(res.get(), Continuation.Pinned.MONITOR);
+        boolean isDone = cont.isDone();
+        assertEquals(isDone, true);
     }
     
     static double syncFoo(int a) {
@@ -282,6 +286,36 @@ public class Basic {
         return Integer.parseInt(r)+1;
     }
     
+    public void testNotPinnedMonitor() {
+        System.out.println("testNotPinnedMonitor");
+        final AtomicReference<Continuation.Pinned> res = new AtomicReference<>();
+        
+        Continuation cont = new Continuation(FOO, ()-> {
+            noSyncFoo(1);
+        }) {
+            @Override
+            protected void onPinned(Continuation.Pinned reason) {
+                assert Continuation.isPinned(FOO);
+                res.set(reason);
+            }
+        };
+        
+        cont.run();
+        boolean isDone = cont.isDone();
+        assertEquals(res.get(), null);
+        assertEquals(isDone, false);
+    }
+
+    static double noSyncFoo(int a) {
+        long x = 7;
+        synchronized(FOO) {
+            x += FOO.getClass().getName().contains("FOO") ? 1 : 0;
+        }
+        String s = "yyy";
+        String r = bar2(a + 1);
+        return Integer.parseInt(r)+1;
+    }
+
     public void testPinnedNative() {
         System.out.println("testPinnedNative");
         final AtomicReference<Continuation.Pinned> res = new AtomicReference<>();
