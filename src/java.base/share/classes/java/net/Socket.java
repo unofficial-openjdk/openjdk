@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,8 @@ package java.net;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.nio.channels.SocketChannel;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -73,6 +75,22 @@ class Socket implements java.io.Closeable {
      * Are we using an older SocketImpl?
      */
     private boolean oldImpl = false;
+
+    /**
+     * Socket input/output streams
+     */
+    private volatile InputStream in;
+    private volatile OutputStream out;
+    private static final VarHandle IN, OUT;
+    static {
+        try {
+            MethodHandles.Lookup l = MethodHandles.lookup();
+            IN = l.findVarHandle(Socket.class, "in", InputStream.class);
+            OUT = l.findVarHandle(Socket.class, "out", OutputStream.class);
+        } catch (Exception e) {
+            throw new InternalError(e);
+        }
+    }
 
     /**
      * Creates an unconnected socket, with the
@@ -920,8 +938,15 @@ class Socket implements java.io.Closeable {
             throw new SocketException("Socket is not connected");
         if (isInputShutdown())
             throw new SocketException("Socket input is shutdown");
-        // wrap the input stream so that the close method closes this socket
-        return new SocketInputStream(this, impl.getInputStream());
+        InputStream in = this.in;
+        if (in == null) {
+            // wrap the input stream so that the close method closes this socket
+            in = new SocketInputStream(this, impl.getInputStream());
+            if (!IN.compareAndSet(this, null, in)) {
+                in = this.in;
+            }
+        }
+        return in;
     }
 
     private static class SocketInputStream extends InputStream {
@@ -976,8 +1001,15 @@ class Socket implements java.io.Closeable {
             throw new SocketException("Socket is not connected");
         if (isOutputShutdown())
             throw new SocketException("Socket output is shutdown");
-        // wrap the output stream so that the close method closes this socket
-        return new SocketOutputStream(this, impl.getOutputStream());
+        OutputStream out = this.out;
+        if (out == null) {
+            // wrap the output stream so that the close method closes this socket
+            out = new SocketOutputStream(this, impl.getOutputStream());
+            if (!OUT.compareAndSet(this, null, out)) {
+                out = this.out;
+            }
+        }
+        return out;
     }
 
     private static class SocketOutputStream extends OutputStream {

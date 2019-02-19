@@ -121,26 +121,15 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
     // used when SO_REUSEADDR is emulated
     private boolean isReuseAddress;
 
+    // cached value of IPV6_TCLASS or IP_TOS socket option
+    private int trafficClass;
+
     // read or accept timeout in millis
     private volatile int timeout;
 
     // flags to indicate if the connection is shutdown for input and output
     private volatile boolean isInputClosed;
     private volatile boolean isOutputClosed;
-
-    // socket input/output streams
-    private volatile InputStream in;
-    private volatile OutputStream out;
-    private static final VarHandle IN, OUT;
-    static {
-        try {
-            MethodHandles.Lookup l = MethodHandles.lookup();
-            IN = l.findVarHandle(NioSocketImpl.class, "in", InputStream.class);
-            OUT = l.findVarHandle(NioSocketImpl.class, "out", OutputStream.class);
-        } catch (Exception e) {
-            throw new InternalError(e);
-        }
-    }
 
     /**
      * Creates a instance of this SocketImpl.
@@ -781,110 +770,85 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
 
     @Override
     protected InputStream getInputStream() {
-        InputStream in = this.in;
-        if (in == null) {
-            in = new SocketInputStream(this);
-            if (!IN.compareAndSet(this, null, in)) {
-                in = this.in;
+        return new InputStream() {
+            // EOF or connection reset detected, not thread safe
+            private boolean eof, reset;
+            @Override
+            public int read() throws IOException {
+                byte[] a = new byte[1];
+                int n = read(a, 0, 1);
+                return (n > 0) ? (a[0] & 0xff) : -1;
             }
-        }
-        return in;
-    }
-
-    private static class SocketInputStream extends InputStream {
-        private final NioSocketImpl impl;
-        // EOF or connection reset detected, not thread safe
-        private boolean eof, reset;
-        SocketInputStream(NioSocketImpl impl) {
-            this.impl = impl;
-        }
-        @Override
-        public int read() throws IOException {
-            byte[] a = new byte[1];
-            int n = read(a, 0, 1);
-            return (n > 0) ? (a[0] & 0xff) : -1;
-        }
-        @Override
-        public int read(byte[] b, int off, int len) throws IOException {
-            Objects.checkFromIndexSize(off, len, b.length);
-            if (eof) {
-                return -1;
-            } else if (reset) {
-                throw new SocketException("Connection reset");
-            } else if (len == 0) {
-                return 0;
-            } else {
-                try {
-                    // read up to MAX_BUFFER_SIZE bytes
-                    int size = Math.min(len, MAX_BUFFER_SIZE);
-                    int n = impl.read(b, off, size);
-                    if (n == -1)
-                        eof = true;
-                    return n;
-                } catch (ConnectionResetException e) {
-                    reset = true;
+            @Override
+            public int read(byte[] b, int off, int len) throws IOException {
+                Objects.checkFromIndexSize(off, len, b.length);
+                if (eof) {
+                    return -1;
+                } else if (reset) {
                     throw new SocketException("Connection reset");
-                } catch (SocketTimeoutException e) {
-                    throw e;
-                } catch (IOException ioe) {
-                    throw new SocketException(ioe.getMessage());
+                } else if (len == 0) {
+                    return 0;
+                } else {
+                    try {
+                        // read up to MAX_BUFFER_SIZE bytes
+                        int size = Math.min(len, MAX_BUFFER_SIZE);
+                        int n = NioSocketImpl.this.read(b, off, size);
+                        if (n == -1)
+                            eof = true;
+                        return n;
+                    } catch (ConnectionResetException e) {
+                        reset = true;
+                        throw new SocketException("Connection reset");
+                    } catch (SocketTimeoutException e) {
+                        throw e;
+                    } catch (IOException ioe) {
+                        throw new SocketException(ioe.getMessage());
+                    }
                 }
             }
-        }
-        @Override
-        public int available() throws IOException {
-            return impl.available();
-        }
-        @Override
-        public void close() throws IOException {
-            impl.close();
-        }
+            @Override
+            public int available() throws IOException {
+                return NioSocketImpl.this.available();
+            }
+            @Override
+            public void close() throws IOException {
+                NioSocketImpl.this.close();
+            }
+        };
     }
 
     @Override
     protected OutputStream getOutputStream() {
-        OutputStream out = this.out;
-        if (out == null) {
-            out = new SocketOutputStream(this);
-            if (!OUT.compareAndSet(this, null, out)) {
-                out = this.out;
+        return new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {
+                byte[] a = new byte[]{(byte) b};
+                write(a, 0, 1);
             }
-        }
-        return out;
-    }
-
-    private static class SocketOutputStream extends OutputStream {
-        private final NioSocketImpl impl;
-        SocketOutputStream(NioSocketImpl impl) {
-            this.impl = impl;
-        }
-        @Override
-        public void write(int b) throws IOException {
-            byte[] a = new byte[]{(byte) b};
-            write(a, 0, 1);
-        }
-        @Override
-        public void write(byte[] b, int off, int len) throws IOException {
-            Objects.checkFromIndexSize(off, len, b.length);
-            if (len > 0) {
-                try {
-                    int pos = off;
-                    int end = off + len;
-                    while (pos < end) {
-                        // write up to MAX_BUFFER_SIZE bytes
-                        int size = Math.min((end - pos), MAX_BUFFER_SIZE);
-                        int n = impl.write(b, pos, size);
-                        pos += n;
+            @Override
+            public void write(byte[] b, int off, int len) throws IOException {
+                Objects.checkFromIndexSize(off, len, b.length);
+                if (len > 0) {
+                    try {
+                        int pos = off;
+                        int end = off + len;
+                        while (pos < end) {
+                            // write up to MAX_BUFFER_SIZE bytes
+                            int size = Math.min((end - pos), MAX_BUFFER_SIZE);
+                            int n = NioSocketImpl.this.write(b, pos, size);
+                            pos += n;
+                        }
+                    } catch (IOException ioe) {
+                        throw new SocketException(ioe.getMessage());
                     }
-                } catch (IOException ioe) {
-                    throw new SocketException(ioe.getMessage());
                 }
             }
-        }
-        @Override
-        public void close() throws IOException {
-            impl.close();
-        }
+
+            @Override
+            public void close() throws IOException {
+                NioSocketImpl.this.close();
+            }
+        };
     }
 
     @Override
@@ -996,15 +960,61 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
         return Collections.unmodifiableSet(options);
     }
 
-    private boolean booleanValue(Object value, String desc) {
+    @Override
+    protected <T> void setOption(SocketOption<T> opt, T value) throws IOException {
+        if (!supportedOptions().contains(opt))
+            throw new UnsupportedOperationException("'" + opt + "' not supported");
+        synchronized (stateLock) {
+            ensureOpen();
+            if (opt == StandardSocketOptions.IP_TOS) {
+                // maps to IP_TOS or IPV6_TCLASS
+                int i = (int) value;
+                Net.setSocketOption(fd, family(), opt, i);
+                trafficClass = i;
+            } else if (opt == StandardSocketOptions.SO_REUSEADDR) {
+                boolean b = (boolean) value;
+                if (Net.useExclusiveBind()) {
+                    isReuseAddress = b;
+                } else {
+                    Net.setSocketOption(fd, opt, b);
+                }
+            } else {
+                // option does not need special handling
+                Net.setSocketOption(fd, opt, value);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <T> T getOption(SocketOption<T> opt) throws IOException {
+        if (!supportedOptions().contains(opt))
+            throw new UnsupportedOperationException("'" + opt + "' not supported");
+        synchronized (stateLock) {
+            ensureOpen();
+            if (opt == StandardSocketOptions.IP_TOS) {
+                return (T) Integer.valueOf(trafficClass);
+            } else if (opt == StandardSocketOptions.SO_REUSEADDR) {
+                if (Net.useExclusiveBind()) {
+                    return (T) Boolean.valueOf(isReuseAddress);
+                } else {
+                    return (T) Net.getSocketOption(fd, opt);
+                }
+            } else {
+                // option does not need special handling
+                return (T) Net.getSocketOption(fd, opt);
+            }
+        }
+    }
+
+    private boolean booleanValue(Object value, String desc) throws SocketException {
         if (!(value instanceof Boolean))
-            throw new IllegalArgumentException("Bad value for " + desc);
+            throw new SocketException("Bad value for " + desc);
         return (boolean) value;
     }
 
-    private int intValue(Object value, String desc) {
+    private int intValue(Object value, String desc) throws SocketException {
         if (!(value instanceof Integer))
-            throw new IllegalArgumentException("Bad value for " + desc);
+            throw new SocketException("Bad value for " + desc);
         return (int) value;
     }
 
@@ -1034,11 +1044,8 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
                 }
                 case IP_TOS: {
                     int i = intValue(value, "IP_TOS");
-                    if (stream && Net.isIPv6Available()) {
-                        // IP_TOS is not specified for stream sockets when IPv6 enabled
-                    } else {
-                        Net.setSocketOption(fd, family(), StandardSocketOptions.IP_TOS, i);
-                    }
+                    Net.setSocketOption(fd, family(), StandardSocketOptions.IP_TOS, i);
+                    trafficClass = i;
                     break;
                 }
                 case TCP_NODELAY: {
@@ -1048,11 +1055,15 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
                 }
                 case SO_SNDBUF: {
                     int i = intValue(value, "SO_SNDBUF");
+                    if (i <= 0)
+                        throw new SocketException("SO_SNDBUF <= 0");
                     Net.setSocketOption(fd, StandardSocketOptions.SO_SNDBUF, i);
                     break;
                 }
                 case SO_RCVBUF: {
                     int i = intValue(value, "SO_RCVBUF");
+                    if (i <= 0)
+                        throw new SocketException("SO_RCVBUF <= 0");
                     Net.setSocketOption(fd, StandardSocketOptions.SO_RCVBUF, i);
                     break;
                 }
@@ -1077,7 +1088,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
                 }
                 case SO_REUSEPORT: {
                     if (!Net.isReusePortAvailable())
-                        throw new UnsupportedOperationException("SO_REUSEPORT not supported");
+                        throw new SocketException("SO_REUSEPORT not supported");
                     boolean b = booleanValue(value, "SO_REUSEPORT");
                     Net.setSocketOption(fd, StandardSocketOptions.SO_REUSEPORT, b);
                     break;
@@ -1085,8 +1096,10 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
                 default:
                     throw new SocketException("Unknown option " + opt);
                 }
-            } catch (IOException ioe) {
-                throw new SocketException(ioe.getMessage());
+            } catch (SocketException e) {
+                throw e;
+            } catch (IllegalArgumentException | IOException e) {
+                throw new SocketException(e.getMessage());
             }
         }
     }
@@ -1125,57 +1138,20 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
                 case SO_RCVBUF:
                     return Net.getSocketOption(fd, StandardSocketOptions.SO_RCVBUF);
                 case IP_TOS:
-                    if (stream && Net.isIPv6Available()) {
-                        // IP_TOS is not specified for stream sockets when IPv6 enabled
-                        return 0;
-                    } else {
-                        return Net.getSocketOption(fd, family(), StandardSocketOptions.IP_TOS);
-                    }
+                    return trafficClass;
                 case SO_KEEPALIVE:
                     return Net.getSocketOption(fd, StandardSocketOptions.SO_KEEPALIVE);
                 case SO_REUSEPORT:
                     if (!Net.isReusePortAvailable())
-                        throw new UnsupportedOperationException("SO_REUSEPORT not supported");
+                        throw new SocketException("SO_REUSEPORT not supported");
                     return Net.getSocketOption(fd, StandardSocketOptions.SO_REUSEPORT);
                 default:
                     throw new SocketException("Unknown option " + opt);
                 }
-            } catch (IOException ioe) {
-                throw new SocketException(ioe.getMessage());
-            }
-        }
-    }
-
-    @Override
-    protected <T> void setOption(SocketOption<T> opt, T value) throws IOException {
-        synchronized (stateLock) {
-            ensureOpen();
-            if (supportedOptions().contains(opt)) {
-                ExtendedSocketOptions extended = ExtendedSocketOptions.getInstance();
-                if (extended.isOptionSupported(opt)) {
-                    extended.setOption(fd, opt, value);
-                } else {
-                    super.setOption(opt, value);
-                }
-            } else {
-                throw new UnsupportedOperationException(opt.name());
-            }
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    protected <T> T getOption(SocketOption<T> opt) throws IOException {
-        synchronized (stateLock) {
-            ensureOpen();
-            if (supportedOptions().contains(opt)) {
-                ExtendedSocketOptions extended = ExtendedSocketOptions.getInstance();
-                if (extended.isOptionSupported(opt)) {
-                    return (T) extended.getOption(fd, opt);
-                } else {
-                    return super.getOption(opt);
-                }
-            } else {
-                throw new UnsupportedOperationException(opt.name());
+            } catch (SocketException e) {
+                throw e;
+            } catch (IllegalArgumentException | IOException e) {
+                throw new SocketException(e.getMessage());
             }
         }
     }
