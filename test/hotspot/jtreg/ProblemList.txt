@@ -81,6 +81,7 @@ gc/metaspace/CompressedClassSpaceSizeInJmapHeap.java 8193639 solaris-all
 # :hotspot_runtime
 
 runtime/handshake/HandshakeWalkSuspendExitTest.java 8214174 generic-all
+runtime/NMT/CheckForProperDetailStackTrace.java 8218458 generic-all
 runtime/SharedArchiveFile/SASymbolTableTest.java 8193639 solaris-all
 
 #############################################################################
@@ -94,7 +95,7 @@ serviceability/sa/CDSJMapClstats.java 8193639 solaris-all
 serviceability/sa/ClhsdbField.java 8193639 solaris-all
 serviceability/sa/ClhsdbFindPC.java 8193639,8211767 solaris-all,linux-ppc64le,linux-ppc64
 serviceability/sa/ClhsdbFlags.java 8193639 solaris-all
-serviceability/sa/ClhsdbInspect.java 8193639,8211767,8213457 solaris-all,linux-ppc64le,linux-ppc64,windows-all
+serviceability/sa/ClhsdbInspect.java 8193639,8211767 solaris-all,linux-ppc64le,linux-ppc64
 serviceability/sa/ClhsdbJdis.java 8193639,8211767 solaris-all,linux-ppc64le,linux-ppc64
 serviceability/sa/ClhsdbJhisto.java 8193639,8211767 solaris-all,linux-ppc64le,linux-ppc64
 serviceability/sa/ClhsdbJstack.java 8193639,8211767 solaris-all,linux-ppc64le,linux-ppc64
@@ -163,7 +164,6 @@ vmTestbase/nsk/jdi/BScenarios/hotswap/tc10x001/TestDescription.java 8013728 gene
 vmTestbase/nsk/jdi/EventRequest/setEnabled/setenabled003/TestDescription.java 8066993 generic-all
 vmTestbase/nsk/jdi/VirtualMachine/redefineClasses/redefineclasses021/TestDescription.java 8065773 generic-all
 vmTestbase/nsk/jdi/VirtualMachine/redefineClasses/redefineclasses023/TestDescription.java 8065773 generic-all
-vmTestbase/nsk/jdi/EventQueue/remove_l/remove_l005/TestDescription.java 8068225 generic-all
 
 vmTestbase/metaspace/gc/firstGC_10m/TestDescription.java 8208250 generic-all
 vmTestbase/metaspace/gc/firstGC_50m/TestDescription.java 8208250 generic-all
@@ -173,7 +173,6 @@ vmTestbase/metaspace/gc/firstGC_default/TestDescription.java 8208250 generic-all
 vmTestbase/nsk/jvmti/ResourceExhausted/resexhausted003/TestDescription.java 6606767 generic-all
 vmTestbase/nsk/jvmti/ResourceExhausted/resexhausted004/TestDescription.java 6606767 generic-all
 vmTestbase/nsk/jvmti/scenarios/extension/EX03/ex03t001/TestDescription.java 8173658 generic-all
-vmTestbase/nsk/jvmti/scenarios/sampling/SP06/sp06t003/TestDescription.java 8051349 generic-all
 vmTestbase/nsk/jvmti/AttachOnDemand/attach045/TestDescription.java 8202971 generic-all
 
 vmTestbase/gc/lock/jni/jnilock002/TestDescription.java 8208243,8192647 generic-all
@@ -190,7 +189,7 @@ vmTestbase/vm/mlvm/meth/stress/compiler/sequences/Test.java 8058176 generic-all
 vmTestbase/vm/mlvm/meth/stress/gc/callSequencesDuringGC/Test.java 8058176 generic-all
 vmTestbase/vm/mlvm/meth/stress/java/sequences/Test.java 8058176 generic-all
 vmTestbase/vm/mlvm/meth/stress/jdi/breakpointInCompiledCode/Test.java 8058176 generic-all
-vmTestbase/vm/mlvm/mixed/stress/java/findDeadlock/TestDescription.java 8208278 generic-all
+vmTestbase/vm/mlvm/mixed/stress/java/findDeadlock/TestDescription.java 8208278 macosx-all
 vmTestbase/vm/mlvm/indy/func/jvmti/mergeCP_indy2none_a/TestDescription.java 8013267 generic-all
 vmTestbase/vm/mlvm/indy/func/jvmti/mergeCP_indy2manyDiff_b/TestDescription.java 8013267 generic-all
 vmTestbase/vm/mlvm/indy/func/jvmti/mergeCP_indy2manySame_b/TestDescription.java 8013267 generic-all

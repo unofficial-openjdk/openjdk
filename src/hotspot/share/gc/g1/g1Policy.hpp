@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_GC_G1_G1POLICY_HPP
-#define SHARE_VM_GC_G1_G1POLICY_HPP
+#ifndef SHARE_GC_G1_G1POLICY_HPP
+#define SHARE_GC_G1_G1POLICY_HPP
 
 #include "gc/g1/g1CollectorPolicy.hpp"
 #include "gc/g1/g1CollectorState.hpp"
@@ -44,7 +44,7 @@
 
 class HeapRegion;
 class G1CollectionSet;
-class CollectionSetChooser;
+class G1CollectionSetChooser;
 class G1IHOPControl;
 class G1Analytics;
 class G1SurvivorRegions;
@@ -176,7 +176,7 @@ private:
   double non_young_other_time_ms() const;
   double constant_other_time_ms(double pause_time_ms) const;
 
-  CollectionSetChooser* cset_chooser() const;
+  G1CollectionSetChooser* cset_chooser() const;
 
   // The number of bytes copied during the GC.
   size_t _bytes_copied_during_gc;
@@ -441,4 +441,4 @@ public:
   }
 };
 
-#endif // SHARE_VM_GC_G1_G1POLICY_HPP
+#endif // SHARE_GC_G1_G1POLICY_HPP

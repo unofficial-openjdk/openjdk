@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_CLASSFILE_SYSTEMDICTIONARY_HPP
-#define SHARE_VM_CLASSFILE_SYSTEMDICTIONARY_HPP
+#ifndef SHARE_CLASSFILE_SYSTEMDICTIONARY_HPP
+#define SHARE_CLASSFILE_SYSTEMDICTIONARY_HPP
 
 #include "classfile/classLoader.hpp"
 #include "jvmci/systemDictionary_jvmci.hpp"
@@ -481,7 +481,6 @@ public:
                                                  Symbol* signature,
                                                  Klass* accessing_klass,
                                                  Handle *appendix_result,
-                                                 Handle *method_type_result,
                                                  TRAPS);
   // for a given signature, find the internal MethodHandle method (linkTo* or invokeBasic)
   // (does not ask Java, since this is a low-level intrinsic defined by the JVM)
@@ -544,7 +543,6 @@ public:
                                                      Symbol* name,
                                                      Symbol* type,
                                                      Handle *appendix_result,
-                                                     Handle *method_type_result,
                                                      TRAPS);
 
   // Record the error when the first attempt to resolve a reference from a constant
@@ -703,4 +701,4 @@ private:
   static bool _has_checkPackageAccess;
 };
 
-#endif // SHARE_VM_CLASSFILE_SYSTEMDICTIONARY_HPP
+#endif // SHARE_CLASSFILE_SYSTEMDICTIONARY_HPP

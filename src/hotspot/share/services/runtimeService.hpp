@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_SERVICES_RUNTIMESERVICE_HPP
-#define SHARE_VM_SERVICES_RUNTIMESERVICE_HPP
+#ifndef SHARE_SERVICES_RUNTIMESERVICE_HPP
+#define SHARE_SERVICES_RUNTIMESERVICE_HPP
 
 #include "runtime/perfData.hpp"
 #include "runtime/timer.hpp"
@@ -37,7 +37,9 @@ private:
 
   static TimeStamp _safepoint_timer;
   static TimeStamp _app_timer;
-  static double _last_safepoint_sync_time_sec;
+  static jlong _last_safepoint_sync_time_ns;
+  static jlong _last_safepoint_end_time_ns;
+  static jlong _last_app_time_ns;
 
 public:
   static void init();
@@ -47,15 +49,13 @@ public:
   static jlong safepoint_time_ms();
   static jlong application_time_ms();
 
-  static double last_safepoint_time_sec()      { return _safepoint_timer.seconds(); }
-  static double last_application_time_sec()    { return _app_timer.seconds(); }
-
   // callbacks
   static void record_safepoint_begin() NOT_MANAGEMENT_RETURN;
   static void record_safepoint_synchronized() NOT_MANAGEMENT_RETURN;
   static void record_safepoint_end() NOT_MANAGEMENT_RETURN;
+  static void record_safepoint_epilog(const char* operation_name) NOT_MANAGEMENT_RETURN;
   static void record_application_start() NOT_MANAGEMENT_RETURN;
 
 };
 
-#endif // SHARE_VM_SERVICES_RUNTIMESERVICE_HPP
+#endif // SHARE_SERVICES_RUNTIMESERVICE_HPP

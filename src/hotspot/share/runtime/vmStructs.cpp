@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -332,6 +332,7 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   unchecked_nonstatic_field(Symbol,            _body,                                         sizeof(u1)) /* NOTE: no type */        \
   nonstatic_field(Symbol,                      _body[0],                                      u1)                                    \
   nonstatic_field(TypeArrayKlass,              _max_length,                                   jint)                                  \
+  nonstatic_field(OopHandle,                   _obj,                                          oop*)                                  \
                                                                                                                                      \
   /***********************/                                                                                                          \
   /* Constant Pool Cache */                                                                                                          \
@@ -1299,7 +1300,8 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_oop_type(oop)                                                   \
   declare_oop_type(narrowOop)                                             \
   declare_oop_type(typeArrayOop)                                          \
-  declare_oop_type(OopHandle)                                             \
+                                                                          \
+  declare_toplevel_type(OopHandle)                                        \
                                                                           \
   /*************************************/                                 \
   /* MethodOop-related data structures */                                 \
@@ -1516,6 +1518,10 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   declare_c2_type(MaxNode, AddNode)                                       \
   declare_c2_type(MaxINode, MaxNode)                                      \
   declare_c2_type(MinINode, MaxNode)                                      \
+  declare_c2_type(MaxFNode, MaxNode)                                      \
+  declare_c2_type(MinFNode, MaxNode)                                      \
+  declare_c2_type(MaxDNode, MaxNode)                                      \
+  declare_c2_type(MinDNode, MaxNode)                                      \
   declare_c2_type(StartNode, MultiNode)                                   \
   declare_c2_type(StartOSRNode, StartNode)                                \
   declare_c2_type(ParmNode, ProjNode)                                     \
@@ -2561,7 +2567,21 @@ typedef PaddedEnd<ObjectMonitor>              PaddedObjectMonitor;
   /****************/                                                      \
   /*  VMRegImpl   */                                                      \
   /****************/                                                      \
-  declare_constant(VMRegImpl::stack_slot_size)
+  declare_constant(VMRegImpl::stack_slot_size)                            \
+                                                                          \
+  /******************************/                                        \
+  /*  -XX flags (value origin)  */                                        \
+  /******************************/                                        \
+  declare_constant(JVMFlag::DEFAULT)                                      \
+  declare_constant(JVMFlag::COMMAND_LINE)                                 \
+  declare_constant(JVMFlag::ENVIRON_VAR)                                  \
+  declare_constant(JVMFlag::CONFIG_FILE)                                  \
+  declare_constant(JVMFlag::MANAGEMENT)                                   \
+  declare_constant(JVMFlag::ERGONOMIC)                                    \
+  declare_constant(JVMFlag::ATTACH_ON_DEMAND)                             \
+  declare_constant(JVMFlag::INTERNAL)                                     \
+  declare_constant(JVMFlag::VALUE_ORIGIN_MASK)                            \
+  declare_constant(JVMFlag::ORIG_COMMAND_LINE)
 
 //--------------------------------------------------------------------------------
 // VM_LONG_CONSTANTS

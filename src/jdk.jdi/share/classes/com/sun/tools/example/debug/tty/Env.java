@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,6 +64,10 @@ class Env {
         }
     }
 
+    static void setTraceFlags(int flags) {
+        connection.setTraceFlags(flags);
+    }
+
     static VMConnection connection() {
         return connection;
     }
@@ -108,7 +112,7 @@ class Env {
 
     static private List<String> excludes() {
         if (excludes == null) {
-            setExcludes("java.*, javax.*, sun.*, com.sun.*");
+            setExcludes("java.*, javax.*, sun.*, com.sun.*, jdk.*");
         }
         return excludes;
     }

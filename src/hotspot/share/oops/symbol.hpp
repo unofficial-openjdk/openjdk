@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_OOPS_SYMBOL_HPP
-#define SHARE_VM_OOPS_SYMBOL_HPP
+#ifndef SHARE_OOPS_SYMBOL_HPP
+#define SHARE_OOPS_SYMBOL_HPP
 
 #include "memory/allocation.hpp"
 #include "utilities/exceptions.hpp"
@@ -104,7 +104,6 @@ class ClassLoaderData;
 class Symbol : public MetaspaceObj {
   friend class VMStructs;
   friend class SymbolTable;
-  friend class MoveSymbols;
 
  private:
 
@@ -136,7 +135,6 @@ class Symbol : public MetaspaceObj {
   Symbol(const u1* name, int length, int refcount);
   void* operator new(size_t size, int len, TRAPS) throw();
   void* operator new(size_t size, int len, Arena* arena, TRAPS) throw();
-  void* operator new(size_t size, int len, ClassLoaderData* loader_data, TRAPS) throw();
 
   void  operator delete(void* p);
 
@@ -163,9 +161,6 @@ class Symbol : public MetaspaceObj {
     return ((unsigned)_identity_hash & 0xffff) |
            ((addr_bits ^ (length() << 8) ^ (( _body[0] << 8) | _body[1])) << 16);
   }
-
-  // For symbol table alternate hashing
-  unsigned int new_hash(juint seed);
 
   // Reference counting.  See comments above this class for when to use.
   int refcount() const { return extract_refcount(_length_and_refcount); }
@@ -210,9 +205,6 @@ class Symbol : public MetaspaceObj {
 
   // Tests if the symbol starts with the given prefix.
   int index_of_at(int i, const char* str, int len) const;
-  int index_of_at(int i, const char* str) const {
-    return index_of_at(i, str, (int) strlen(str));
-  }
 
   // Three-way compare for sorting; returns -1/0/1 if receiver is </==/> than arg
   // note that the ordering is not alfabetical
@@ -222,17 +214,12 @@ class Symbol : public MetaspaceObj {
   // allocated in resource area, or in the char buffer provided by caller.
   char* as_C_string() const;
   char* as_C_string(char* buf, int size) const;
-  // Use buf if needed buffer length is <= size.
-  char* as_C_string_flexible_buffer(Thread* t, char* buf, int size) const;
 
   // Returns an escaped form of a Java string.
   char* as_quoted_ascii() const;
 
   // Returns a null terminated utf8 string in a resource array
   char* as_utf8() const { return as_C_string(); }
-  char* as_utf8_flexible_buffer(Thread* t, char* buf, int size) const {
-    return as_C_string_flexible_buffer(t, buf, size);
-  }
 
   jchar* as_unicode(int& length) const;
 
@@ -274,4 +261,4 @@ int Symbol::fast_compare(const Symbol* other) const {
  return (((uintptr_t)this < (uintptr_t)other) ? -1
    : ((uintptr_t)this == (uintptr_t) other) ? 0 : 1);
 }
-#endif // SHARE_VM_OOPS_SYMBOL_HPP
+#endif // SHARE_OOPS_SYMBOL_HPP

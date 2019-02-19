@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,9 @@ CONFIGURE_COMMAND_LINE:=@CONFIGURE_COMMAND_LINE@
 
 # A self-referential reference to this file.
 SPEC:=@SPEC@
+
+# Path to autoconf if overriden by the user, to be used by "make reconfigure"
+AUTOCONF := @AUTOCONF@
 
 # SPACE and COMMA are defined in MakeBase.gmk, but they are also used in
 # some definitions here, and are needed if MakeBase.gmk is not included before
@@ -122,7 +125,12 @@ ORIGINAL_PATH:=@ORIGINAL_PATH@
 ifeq ($(OPENJDK_TARGET_OS), windows)
   # On Windows, the Visual Studio toolchain needs the PATH to be adjusted
   # to include Visual Studio tools (this needs to be in cygwin/msys style).
-  export PATH:=@VS_PATH@
+  ifeq ($(OPENJDK_TARGET_OS_ENV), windows.wsl)
+    export FIXPATH_PATH:=@VS_PATH_WINDOWS@
+    export WSLENV:=$(WSLENV):FIXPATH_PATH:DEBUG_FIXPATH
+  else
+    export PATH:=@VS_PATH@
+  endif
 endif
 
 SYSROOT_CFLAGS := @SYSROOT_CFLAGS@
@@ -482,6 +490,9 @@ CPP:=@FIXPATH@ @CPP@
 # The linker can be gcc or ld on unix systems, or link.exe on windows systems.
 LD:=@FIXPATH@ @LD@
 
+# Linker used by the jaotc tool for AOT compilation.
+LD_JAOTC:=@LD_JAOTC@
+
 # Xcode SDK path
 SDKROOT:=@SDKROOT@
 
@@ -724,6 +735,7 @@ MT:=@FIXPATH@ @MT@
 RC:=@FIXPATH@ @RC@
 DUMPBIN:=@FIXPATH@ @DUMPBIN@
 CYGPATH:=@CYGPATH@
+WSLPATH:=@WSLPATH@
 LDD:=@LDD@
 OTOOL:=@OTOOL@
 READELF:=@READELF@

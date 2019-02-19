@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_OOPS_CPCACHEOOP_INLINE_HPP
-#define SHARE_VM_OOPS_CPCACHEOOP_INLINE_HPP
+#ifndef SHARE_OOPS_CPCACHE_INLINE_HPP
+#define SHARE_OOPS_CPCACHE_INLINE_HPP
 
 #include "oops/cpCache.hpp"
 #include "oops/oopHandle.inline.hpp"
@@ -71,8 +71,8 @@ inline bool ConstantPoolCacheEntry::has_appendix() const {
   return (!is_f1_null()) && (_flags & (1 << has_appendix_shift)) != 0;
 }
 
-inline bool ConstantPoolCacheEntry::has_method_type() const {
-  return (!is_f1_null()) && (_flags & (1 << has_method_type_shift)) != 0;
+inline bool ConstantPoolCacheEntry::has_local_signature() const {
+  return (!is_f1_null()) && (_flags & (1 << has_local_signature_shift)) != 0;
 }
 
 inline intx ConstantPoolCacheEntry::flags_ord() const   { return (intx)OrderAccess::load_acquire(&_flags); }
@@ -99,4 +99,4 @@ inline ConstantPoolCache::ConstantPoolCache(int length,
 
 inline oop ConstantPoolCache::resolved_references() { return _resolved_references.resolve(); }
 
-#endif // SHARE_VM_OOPS_CPCACHEOOP_INLINE_HPP
+#endif // SHARE_OOPS_CPCACHE_INLINE_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_UTILITIES_UTF8_HPP
-#define SHARE_VM_UTILITIES_UTF8_HPP
+#ifndef SHARE_UTILITIES_UTF8_HPP
+#define SHARE_UTILITIES_UTF8_HPP
 
 #include "memory/allocation.hpp"
 
@@ -54,9 +54,11 @@ class UTF8 : AllStatic {
   // converts a utf8 string to quoted ascii
   static void as_quoted_ascii(const char* utf8_str, int utf8_length, char* buf, int buflen);
 
+#ifndef PRODUCT
   // converts a quoted ascii string to utf8 string.  returns the original
   // string unchanged if nothing needs to be done.
   static const char* from_quoted_ascii(const char* quoted_ascii_string);
+#endif
 
   // decodes the current utf8 character, stores the result in value,
   // and returns the end of the current utf8 chararacter.
@@ -116,4 +118,4 @@ class UNICODE : AllStatic {
   template<typename T> static void as_quoted_ascii(const T* base, int length, char* buf, int buflen);
 };
 
-#endif // SHARE_VM_UTILITIES_UTF8_HPP
+#endif // SHARE_UTILITIES_UTF8_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_UTILITIES_DEBUG_HPP
-#define SHARE_VM_UTILITIES_DEBUG_HPP
+#ifndef SHARE_UTILITIES_DEBUG_HPP
+#define SHARE_UTILITIES_DEBUG_HPP
 
 #include "utilities/breakpoint.hpp"
 #include "utilities/compilerWarnings.hpp"
@@ -54,9 +54,6 @@ bool handle_assert_poison_fault(const void* ucVoid, const void* faulting_address
 do {                                                                           \
   if (!(p)) {                                                                  \
     TOUCH_ASSERT_POISON;                                                       \
-    if (is_executing_unit_tests()) {                                           \
-      report_assert_msg(__VA_ARGS__);                                          \
-    }                                                                          \
     report_vm_error(__FILE__, __LINE__, "assert(" #p ") failed", __VA_ARGS__); \
     BREAKPOINT;                                                                \
   }                                                                            \
@@ -157,16 +154,10 @@ void report_vm_error(const char* file, int line, const char* error_msg);
 // ATTRIBUTE_PRINTF works with gcc >= 4.8 and any other compiler.
 void report_vm_error(const char* file, int line, const char* error_msg,
                      const char* detail_fmt, ...) ATTRIBUTE_PRINTF(4, 5);
-#ifdef ASSERT
-void report_assert_msg(const char* msg, ...) ATTRIBUTE_PRINTF(1, 2);
-#endif // ASSERT
 #else
 // GCC < 4.8 warns because of empty format string.  Warning can not be switched off selectively.
 void report_vm_error(const char* file, int line, const char* error_msg,
                      const char* detail_fmt, ...);
-#ifdef ASSERT
-void report_assert_msg(const char* msg, ...);
-#endif // ASSERT
 #endif
 void report_vm_status_error(const char* file, int line, const char* error_msg,
                             int status, const char* detail);
@@ -177,11 +168,6 @@ void report_should_not_call(const char* file, int line);
 void report_should_not_reach_here(const char* file, int line);
 void report_unimplemented(const char* file, int line);
 void report_untested(const char* file, int line, const char* message);
-
-#ifdef ASSERT
-// unit test support
-bool is_executing_unit_tests();
-#endif // ASSERT
 
 void warning(const char* format, ...) ATTRIBUTE_PRINTF(1, 2);
 
@@ -205,4 +191,4 @@ template<> struct STATIC_ASSERT_FAILURE<true> { enum { value = 1 }; };
 // out of memory reporting
 void report_java_out_of_memory(const char* message);
 
-#endif // SHARE_VM_UTILITIES_DEBUG_HPP
+#endif // SHARE_UTILITIES_DEBUG_HPP

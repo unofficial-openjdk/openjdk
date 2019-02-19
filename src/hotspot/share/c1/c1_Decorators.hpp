@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_C1_C1_DECORATORS_HPP
-#define SHARE_VM_C1_C1_DECORATORS_HPP
+#ifndef SHARE_C1_C1_DECORATORS_HPP
+#define SHARE_C1_C1_DECORATORS_HPP
 
 #include "oops/accessDecorators.hpp"
 #include "utilities/globalDefinitions.hpp"
@@ -34,5 +34,7 @@ const DecoratorSet C1_NEEDS_PATCHING = DECORATOR_LAST << 1;
 // Use the C1_MASK_BOOLEAN decorator for boolean accesses where the value
 // needs to be masked.
 const DecoratorSet C1_MASK_BOOLEAN   = DECORATOR_LAST << 2;
+// Use the C1_UNSAFE_ACCESS decorator to mark unsafe accesses.
+const DecoratorSet C1_UNSAFE_ACCESS  = DECORATOR_LAST << 3;
 
-#endif // SHARE_VM_C1_C1_DECORATORS_HPP
+#endif // SHARE_C1_C1_DECORATORS_HPP

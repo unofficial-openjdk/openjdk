@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@
 #include "gc/g1/g1ConcurrentRefine.hpp"
 #include "gc/g1/g1ConcurrentRefineThread.hpp"
 #include "gc/g1/g1ConcurrentMarkThread.inline.hpp"
+#include "gc/g1/g1DirtyCardQueue.hpp"
 #include "gc/g1/g1EvacStats.inline.hpp"
 #include "gc/g1/g1FullCollector.hpp"
 #include "gc/g1/g1GCPhaseTimes.hpp"
@@ -107,7 +108,7 @@ size_t G1CollectedHeap::_humongous_object_threshold_in_words = 0;
 // apply to TLAB allocation, which is not part of this interface: it
 // is done by clients of this interface.)
 
-class RedirtyLoggedCardTableEntryClosure : public CardTableEntryClosure {
+class RedirtyLoggedCardTableEntryClosure : public G1CardTableEntryClosure {
  private:
   size_t _num_dirtied;
   G1CollectedHeap* _g1h;
@@ -124,7 +125,7 @@ class RedirtyLoggedCardTableEntryClosure : public CardTableEntryClosure {
   }
 
  public:
-  RedirtyLoggedCardTableEntryClosure(G1CollectedHeap* g1h) : CardTableEntryClosure(),
+  RedirtyLoggedCardTableEntryClosure(G1CollectedHeap* g1h) : G1CardTableEntryClosure(),
     _num_dirtied(0), _g1h(g1h), _g1_ct(g1h->card_table()) { }
 
   bool do_card_ptr(jbyte* card_ptr, uint worker_i) {
@@ -1811,7 +1812,7 @@ jint G1CollectedHeap::initialize() {
   }
 
   {
-    DirtyCardQueueSet& dcqs = G1BarrierSet::dirty_card_queue_set();
+    G1DirtyCardQueueSet& dcqs = G1BarrierSet::dirty_card_queue_set();
     dcqs.set_process_completed_buffers_threshold(concurrent_refine()->yellow_zone());
     dcqs.set_max_completed_buffers(concurrent_refine()->red_zone());
   }
@@ -1954,19 +1955,18 @@ size_t G1CollectedHeap::unused_committed_regions_in_bytes() const {
   return _hrm->total_free_bytes();
 }
 
-void G1CollectedHeap::iterate_hcc_closure(CardTableEntryClosure* cl, uint worker_i) {
+void G1CollectedHeap::iterate_hcc_closure(G1CardTableEntryClosure* cl, uint worker_i) {
   _hot_card_cache->drain(cl, worker_i);
 }
 
-void G1CollectedHeap::iterate_dirty_card_closure(CardTableEntryClosure* cl, uint worker_i) {
-  DirtyCardQueueSet& dcqs = G1BarrierSet::dirty_card_queue_set();
+void G1CollectedHeap::iterate_dirty_card_closure(G1CardTableEntryClosure* cl, uint worker_i) {
+  G1DirtyCardQueueSet& dcqs = G1BarrierSet::dirty_card_queue_set();
   size_t n_completed_buffers = 0;
   while (dcqs.apply_closure_during_gc(cl, worker_i)) {
     n_completed_buffers++;
   }
+  assert(dcqs.completed_buffers_num() == 0, "Completed buffers exist!");
   g1_policy()->phase_times()->record_thread_work_item(G1GCPhaseTimes::UpdateRS, worker_i, n_completed_buffers, G1GCPhaseTimes::UpdateRSProcessedBuffers);
-  dcqs.clear_n_completed_buffers();
-  assert(!dcqs.completed_buffers_exist_dirty(), "Completed buffers exist!");
 }
 
 // Computes the sum of the storage used by the various regions.
@@ -2324,10 +2324,6 @@ bool G1CollectedHeap::supports_concurrent_phase_control() const {
   return true;
 }
 
-const char* const* G1CollectedHeap::concurrent_phases() const {
-  return _cm_thread->concurrent_phases();
-}
-
 bool G1CollectedHeap::request_concurrent_phase(const char* phase) {
   return _cm_thread->request_concurrent_phase(phase);
 }
@@ -2610,10 +2606,10 @@ void G1CollectedHeap::do_concurrent_mark() {
 size_t G1CollectedHeap::pending_card_num() {
   size_t extra_cards = 0;
   for (JavaThreadIteratorWithHandle jtiwh; JavaThread *curr = jtiwh.next(); ) {
-    DirtyCardQueue& dcq = G1ThreadLocalData::dirty_card_queue(curr);
+    G1DirtyCardQueue& dcq = G1ThreadLocalData::dirty_card_queue(curr);
     extra_cards += dcq.size();
   }
-  DirtyCardQueueSet& dcqs = G1BarrierSet::dirty_card_queue_set();
+  G1DirtyCardQueueSet& dcqs = G1BarrierSet::dirty_card_queue_set();
   size_t buffer_size = dcqs.buffer_size();
   size_t buffer_num = dcqs.completed_buffers_num();
 
@@ -2635,7 +2631,7 @@ class RegisterHumongousWithInCSetFastTestClosure : public HeapRegionClosure {
   size_t _total_humongous;
   size_t _candidate_humongous;
 
-  DirtyCardQueue _dcq;
+  G1DirtyCardQueue _dcq;
 
   bool humongous_region_is_candidate(G1CollectedHeap* g1h, HeapRegion* region) const {
     assert(region->is_starts_humongous(), "Must start a humongous object");
@@ -2919,7 +2915,7 @@ G1CollectedHeap::do_collection_pause_at_safepoint(double target_pause_time_ms) {
 
   // Inner scope for scope based logging, timers, and stats collection
   {
-    EvacuationInfo evacuation_info;
+    G1EvacuationInfo evacuation_info;
 
     if (collector_state()->in_initial_mark_gc()) {
       // We are about to start a marking cycle, so we increment the
@@ -3286,10 +3282,6 @@ public:
 
       _root_processor->evacuate_roots(pss, worker_id);
 
-      // We pass a weak code blobs closure to the remembered set scanning because we want to avoid
-      // treating the nmethods visited to act as roots for concurrent marking.
-      // We only want to make sure that the oops in the nmethods are adjusted with regard to the
-      // objects copied by the current evacuation.
       _g1h->g1_rem_set()->oops_into_collection_set_do(pss, worker_id);
 
       double strong_roots_sec = os::elapsedTime() - start_strong_roots_sec;
@@ -3363,32 +3355,62 @@ void G1CollectedHeap::print_termination_stats(uint worker_id,
 
 void G1CollectedHeap::complete_cleaning(BoolObjectClosure* is_alive,
                                         bool class_unloading_occurred) {
-  uint n_workers = workers()->active_workers();
-
-  G1StringDedupUnlinkOrOopsDoClosure dedup_closure(is_alive, NULL, false);
-  ParallelCleaningTask g1_unlink_task(is_alive, &dedup_closure, n_workers, class_unloading_occurred);
-  workers()->run_task(&g1_unlink_task);
+  uint num_workers = workers()->active_workers();
+  ParallelCleaningTask unlink_task(is_alive, num_workers, class_unloading_occurred, false);
+  workers()->run_task(&unlink_task);
 }
 
-void G1CollectedHeap::partial_cleaning(BoolObjectClosure* is_alive,
-                                       bool process_strings,
-                                       bool process_string_dedup) {
-  if (!process_strings && !process_string_dedup) {
-    // Nothing to clean.
-    return;
+// Clean string dedup data structures.
+// Ideally we would prefer to use a StringDedupCleaningTask here, but we want to
+// record the durations of the phases. Hence the almost-copy.
+class G1StringDedupCleaningTask : public AbstractGangTask {
+  BoolObjectClosure* _is_alive;
+  OopClosure* _keep_alive;
+  G1GCPhaseTimes* _phase_times;
+
+public:
+  G1StringDedupCleaningTask(BoolObjectClosure* is_alive,
+                            OopClosure* keep_alive,
+                            G1GCPhaseTimes* phase_times) :
+    AbstractGangTask("Partial Cleaning Task"),
+    _is_alive(is_alive),
+    _keep_alive(keep_alive),
+    _phase_times(phase_times)
+  {
+    assert(G1StringDedup::is_enabled(), "String deduplication disabled.");
+    StringDedup::gc_prologue(true);
   }
 
-  G1StringDedupUnlinkOrOopsDoClosure dedup_closure(is_alive, NULL, false);
-  StringCleaningTask g1_unlink_task(is_alive, process_string_dedup ? &dedup_closure : NULL, process_strings);
-  workers()->run_task(&g1_unlink_task);
+  ~G1StringDedupCleaningTask() {
+    StringDedup::gc_epilogue();
+  }
+
+  void work(uint worker_id) {
+    StringDedupUnlinkOrOopsDoClosure cl(_is_alive, _keep_alive);
+    {
+      G1GCParPhaseTimesTracker x(_phase_times, G1GCPhaseTimes::StringDedupQueueFixup, worker_id);
+      StringDedupQueue::unlink_or_oops_do(&cl);
+    }
+    {
+      G1GCParPhaseTimesTracker x(_phase_times, G1GCPhaseTimes::StringDedupTableFixup, worker_id);
+      StringDedupTable::unlink_or_oops_do(&cl, worker_id);
+    }
+  }
+};
+
+void G1CollectedHeap::string_dedup_cleaning(BoolObjectClosure* is_alive,
+                                            OopClosure* keep_alive,
+                                            G1GCPhaseTimes* phase_times) {
+  G1StringDedupCleaningTask cl(is_alive, keep_alive, phase_times);
+  workers()->run_task(&cl);
 }
 
 class G1RedirtyLoggedCardsTask : public AbstractGangTask {
  private:
-  DirtyCardQueueSet* _queue;
+  G1DirtyCardQueueSet* _queue;
   G1CollectedHeap* _g1h;
  public:
-  G1RedirtyLoggedCardsTask(DirtyCardQueueSet* queue, G1CollectedHeap* g1h) : AbstractGangTask("Redirty Cards"),
+  G1RedirtyLoggedCardsTask(G1DirtyCardQueueSet* queue, G1CollectedHeap* g1h) : AbstractGangTask("Redirty Cards"),
     _queue(queue), _g1h(g1h) { }
 
   virtual void work(uint worker_id) {
@@ -3409,7 +3431,7 @@ void G1CollectedHeap::redirty_logged_cards() {
   dirty_card_queue_set().reset_for_par_iteration();
   workers()->run_task(&redirty_task);
 
-  DirtyCardQueueSet& dcq = G1BarrierSet::dirty_card_queue_set();
+  G1DirtyCardQueueSet& dcq = G1BarrierSet::dirty_card_queue_set();
   dcq.merge_bufferlists(&dirty_card_queue_set());
   assert(dirty_card_queue_set().completed_buffers_num() == 0, "All should be consumed");
 
@@ -3900,7 +3922,7 @@ void G1CollectedHeap::evacuate_optional_collection_set(G1ParScanThreadStateSet* 
   phase_times->record_optional_evacuation((os::elapsedTime() - start_time_sec) * 1000.0);
 }
 
-void G1CollectedHeap::post_evacuate_collection_set(EvacuationInfo& evacuation_info, G1ParScanThreadStateSet* per_thread_states) {
+void G1CollectedHeap::post_evacuate_collection_set(G1EvacuationInfo& evacuation_info, G1ParScanThreadStateSet* per_thread_states) {
   // Also cleans the card table from temporary duplicate detection information used
   // during UpdateRS/ScanRS.
   g1_rem_set()->cleanup_after_oops_into_collection_set_do();
@@ -3912,11 +3934,6 @@ void G1CollectedHeap::post_evacuate_collection_set(EvacuationInfo& evacuation_in
   // not copied during the pause.
   process_discovered_references(per_thread_states);
 
-  // FIXME
-  // CM's reference processing also cleans up the string table.
-  // Should we do that here also? We could, but it is a serial operation
-  // and could significantly increase the pause time.
-
   G1STWIsAliveClosure is_alive(this);
   G1KeepAliveClosure keep_alive(this);
 
@@ -3924,12 +3941,12 @@ void G1CollectedHeap::post_evacuate_collection_set(EvacuationInfo& evacuation_in
                               g1_policy()->phase_times()->weak_phase_times());
 
   if (G1StringDedup::is_enabled()) {
-    double fixup_start = os::elapsedTime();
+    double string_dedup_time_ms = os::elapsedTime();
 
-    G1StringDedup::unlink_or_oops_do(&is_alive, &keep_alive, true, g1_policy()->phase_times());
+    string_dedup_cleaning(&is_alive, &keep_alive, g1_policy()->phase_times());
 
-    double fixup_time_ms = (os::elapsedTime() - fixup_start) * 1000.0;
-    g1_policy()->phase_times()->record_string_dedup_fixup_time(fixup_time_ms);
+    double string_cleanup_time_ms = (os::elapsedTime() - string_dedup_time_ms) * 1000.0;
+    g1_policy()->phase_times()->record_string_deduplication_time(string_cleanup_time_ms);
   }
 
   if (evacuation_failed()) {
@@ -4034,7 +4051,7 @@ private:
   // be done serially in a single thread.
   class G1SerialFreeCollectionSetClosure : public HeapRegionClosure {
   private:
-    EvacuationInfo* _evacuation_info;
+    G1EvacuationInfo* _evacuation_info;
     const size_t* _surviving_young_words;
 
     // Bytes used in successfully evacuated regions before the evacuation.
@@ -4049,7 +4066,7 @@ private:
 
     FreeRegionList _local_free_list;
   public:
-    G1SerialFreeCollectionSetClosure(EvacuationInfo* evacuation_info, const size_t* surviving_young_words) :
+    G1SerialFreeCollectionSetClosure(G1EvacuationInfo* evacuation_info, const size_t* surviving_young_words) :
       HeapRegionClosure(),
       _evacuation_info(evacuation_info),
       _surviving_young_words(surviving_young_words),
@@ -4203,7 +4220,7 @@ private:
     policy->cset_regions_freed();
   }
 public:
-  G1FreeCollectionSetTask(G1CollectionSet* collection_set, EvacuationInfo* evacuation_info, const size_t* surviving_young_words) :
+  G1FreeCollectionSetTask(G1CollectionSet* collection_set, G1EvacuationInfo* evacuation_info, const size_t* surviving_young_words) :
     AbstractGangTask("G1 Free Collection Set"),
     _collection_set(collection_set),
     _cl(evacuation_info, surviving_young_words),
@@ -4286,7 +4303,7 @@ public:
   }
 };
 
-void G1CollectedHeap::free_collection_set(G1CollectionSet* collection_set, EvacuationInfo& evacuation_info, const size_t* surviving_young_words) {
+void G1CollectedHeap::free_collection_set(G1CollectionSet* collection_set, G1EvacuationInfo& evacuation_info, const size_t* surviving_young_words) {
   _eden.clear();
 
   double free_cset_start_time = os::elapsedTime();
@@ -4318,7 +4335,7 @@ class G1FreeHumongousRegionClosure : public HeapRegionClosure {
  public:
 
   G1FreeHumongousRegionClosure(FreeRegionList* free_region_list) :
-    _free_region_list(free_region_list), _humongous_objects_reclaimed(0), _humongous_regions_reclaimed(0), _freed_bytes(0) {
+    _free_region_list(free_region_list), _proxy_set(NULL), _humongous_objects_reclaimed(0), _humongous_regions_reclaimed(0), _freed_bytes(0) {
   }
 
   virtual bool do_heap_region(HeapRegion* r) {

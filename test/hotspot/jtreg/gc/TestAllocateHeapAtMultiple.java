@@ -21,13 +21,15 @@
  * questions.
  */
 
+package gc;
+
 /* @test TestAllocateHeapAtMultiple.java
  * @key gc
  * @summary Test to check allocation of Java Heap with AllocateHeapAt option. Has multiple sub-tests to cover different code paths.
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  * @requires vm.bits == "64" & vm.gc != "Z" & os.family != "aix"
- * @run main/timeout=360 TestAllocateHeapAtMultiple
+ * @run main/timeout=360 gc.TestAllocateHeapAtMultiple
  */
 
 import jdk.test.lib.JDKToolFinder;
@@ -38,7 +40,7 @@ import java.util.Collections;
 
 public class TestAllocateHeapAtMultiple {
   public static void main(String args[]) throws Exception {
-    ArrayList<String> vmOpts = new ArrayList();
+    ArrayList<String> vmOpts = new ArrayList<>();
     String[] testVmOpts = null;
 
     String test_dir = System.getProperty("test.dir", ".");

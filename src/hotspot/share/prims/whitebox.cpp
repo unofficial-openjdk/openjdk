@@ -59,6 +59,7 @@
 #include "runtime/fieldDescriptor.inline.hpp"
 #include "runtime/flags/jvmFlag.hpp"
 #include "runtime/frame.inline.hpp"
+#include "runtime/handles.inline.hpp"
 #include "runtime/handshake.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/javaCalls.hpp"
@@ -393,32 +394,6 @@ WB_ENTRY(jboolean, WB_SupportsConcurrentGCPhaseControl(JNIEnv* env, jobject o))
   return Universe::heap()->supports_concurrent_phase_control();
 WB_END
 
-WB_ENTRY(jobjectArray, WB_GetConcurrentGCPhases(JNIEnv* env, jobject o))
-  const char* const* phases = Universe::heap()->concurrent_phases();
-  jint nphases = 0;
-  for ( ; phases[nphases] != NULL; ++nphases) ;
-
-  ResourceMark rm(thread);
-  ThreadToNativeFromVM ttn(thread);
-  jclass clazz = env->FindClass(vmSymbols::java_lang_Object()->as_C_string());
-  CHECK_JNI_EXCEPTION_(env, NULL);
-
-  jobjectArray result = env->NewObjectArray(nphases, clazz, NULL);
-  CHECK_JNI_EXCEPTION_(env, NULL);
-
-  // If push fails, return with pending exception.
-  if (env->PushLocalFrame(nphases) < 0) return NULL;
-  for (jint i = 0; i < nphases; ++i) {
-    jstring phase = env->NewStringUTF(phases[i]);
-    CHECK_JNI_EXCEPTION_(env, NULL);
-    env->SetObjectArrayElement(result, i, phase);
-    CHECK_JNI_EXCEPTION_(env, NULL);
-  }
-  env->PopLocalFrame(NULL);
-
-  return result;
-WB_END
-
 WB_ENTRY(jboolean, WB_RequestConcurrentGCPhase(JNIEnv* env, jobject o, jstring name))
   Handle h_name(THREAD, JNIHandles::resolve(name));
   ResourceMark rm;
@@ -717,6 +692,13 @@ WB_ENTRY(jlong, WB_NMTMallocWithPseudoStack(JNIEnv* env, jobject o, jlong size, 
   address pc = (address)(size_t)pseudo_stack;
   NativeCallStack stack(&pc, 1);
   return (jlong)(uintptr_t)os::malloc(size, mtTest, stack);
+WB_END
+
+// Alloc memory with pseudo call stack and specific memory type.
+WB_ENTRY(jlong, WB_NMTMallocWithPseudoStackAndType(JNIEnv* env, jobject o, jlong size, jint pseudo_stack, jint type))
+  address pc = (address)(size_t)pseudo_stack;
+  NativeCallStack stack(&pc, 1);
+  return (jlong)(uintptr_t)os::malloc(size, (MEMFLAGS)type, stack);
 WB_END
 
 // Free the memory allocated by NMTAllocTest
@@ -1562,9 +1544,6 @@ WB_ENTRY(jobjectArray, WB_GetCodeHeapEntries(JNIEnv* env, jobject o, jint blob_t
       blobs.append(stub);
     }
   }
-  if (blobs.length() == 0) {
-    return NULL;
-  }
   ThreadToNativeFromVM ttn(thread);
   jobjectArray result = NULL;
   jclass clazz = env->FindClass(vmSymbols::java_lang_Object()->as_C_string());
@@ -2186,6 +2165,7 @@ static JNINativeMethod methods[] = {
 #if INCLUDE_NMT
   {CC"NMTMalloc",           CC"(J)J",                 (void*)&WB_NMTMalloc          },
   {CC"NMTMallocWithPseudoStack", CC"(JI)J",           (void*)&WB_NMTMallocWithPseudoStack},
+  {CC"NMTMallocWithPseudoStackAndType", CC"(JII)J",   (void*)&WB_NMTMallocWithPseudoStackAndType},
   {CC"NMTFree",             CC"(J)V",                 (void*)&WB_NMTFree            },
   {CC"NMTReserveMemory",    CC"(J)J",                 (void*)&WB_NMTReserveMemory   },
   {CC"NMTAttemptReserveMemoryAt",    CC"(JJ)J",       (void*)&WB_NMTAttemptReserveMemoryAt },
@@ -2350,8 +2330,6 @@ static JNINativeMethod methods[] = {
   {CC"isGCSelected",              CC"(I)Z",           (void*)&WB_IsGCSelected},
   {CC"isGCSelectedErgonomically", CC"()Z",            (void*)&WB_IsGCSelectedErgonomically},
   {CC"supportsConcurrentGCPhaseControl", CC"()Z",     (void*)&WB_SupportsConcurrentGCPhaseControl},
-  {CC"getConcurrentGCPhases",     CC"()[Ljava/lang/String;",
-                                                      (void*)&WB_GetConcurrentGCPhases},
   {CC"requestConcurrentGCPhase0", CC"(Ljava/lang/String;)Z",
                                                       (void*)&WB_RequestConcurrentGCPhase},
   {CC"checkLibSpecifiesNoexecstack", CC"(Ljava/lang/String;)Z",

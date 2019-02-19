@@ -21,6 +21,8 @@
  * questions.
  */
 
+package gc.nvdimm;
+
 /* @test TestAllocateOldGenAtMultiple.java
  * @key gc
  * @summary Test to check allocation of Java Heap with AllocateOldGenAt option. Has multiple sub-tests to cover different code paths.
@@ -29,7 +31,7 @@
  * @library /test/lib
  * @modules java.base/jdk.internal.misc
  * @requires vm.bits == "64"
- * @run main TestAllocateOldGenAtMultiple -XX:+UseG1GC
+ * @run main gc.nvdimm.TestAllocateOldGenAtMultiple -XX:+UseG1GC
  */
 
 import jdk.test.lib.JDKToolFinder;
@@ -40,7 +42,7 @@ import java.util.Collections;
 
 public class TestAllocateOldGenAtMultiple {
   public static void main(String args[]) throws Exception {
-    ArrayList<String> vmOpts = new ArrayList();
+    ArrayList<String> vmOpts = new ArrayList<>();
     String[] testVmOpts = null;
 
     String test_dir = System.getProperty("test.dir", ".");

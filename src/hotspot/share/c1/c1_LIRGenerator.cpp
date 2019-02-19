@@ -1113,7 +1113,7 @@ void LIRGenerator::do_ExceptionObject(ExceptionObject* x) {
   // no moves are created for phi functions at the begin of exception
   // handlers, so assign operands manually here
   for_each_phi_fun(block(), phi,
-                   operand_for_instruction(phi));
+                   if (!phi->is_illegal()) { operand_for_instruction(phi); });
 
   LIR_Opr thread_reg = getThreadPointer();
   __ move_wide(new LIR_Address(thread_reg, in_bytes(JavaThread::exception_oop_offset()), T_OBJECT),
@@ -2161,7 +2161,7 @@ void LIRGenerator::do_UnsafeGetObject(UnsafeGetObject* x) {
   off.load_item();
   src.load_item();
 
-  DecoratorSet decorators = IN_HEAP;
+  DecoratorSet decorators = IN_HEAP | C1_UNSAFE_ACCESS;
 
   if (x->is_volatile()) {
     decorators |= MO_SEQ_CST;
@@ -2195,7 +2195,7 @@ void LIRGenerator::do_UnsafePutObject(UnsafePutObject* x) {
 
   set_no_result(x);
 
-  DecoratorSet decorators = IN_HEAP;
+  DecoratorSet decorators = IN_HEAP | C1_UNSAFE_ACCESS;
   if (type == T_ARRAY || type == T_OBJECT) {
     decorators |= ON_UNKNOWN_OOP_REF;
   }
@@ -2211,7 +2211,7 @@ void LIRGenerator::do_UnsafeGetAndSetObject(UnsafeGetAndSetObject* x) {
   LIRItem off(x->offset(), this);
   LIRItem value(x->value(), this);
 
-  DecoratorSet decorators = IN_HEAP | MO_SEQ_CST;
+  DecoratorSet decorators = IN_HEAP | C1_UNSAFE_ACCESS | MO_SEQ_CST;
 
   if (type == T_ARRAY || type == T_OBJECT) {
     decorators |= ON_UNKNOWN_OOP_REF;

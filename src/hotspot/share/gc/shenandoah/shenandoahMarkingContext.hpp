@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -21,15 +21,13 @@
  *
  */
 
-#ifndef SHARE_VM_GC_SHENANDOAH_SHENANDOAHMARKINGCONTEXT_HPP
-#define SHARE_VM_GC_SHENANDOAH_SHENANDOAHMARKINGCONTEXT_HPP
+#ifndef SHARE_GC_SHENANDOAH_SHENANDOAHMARKINGCONTEXT_HPP
+#define SHARE_GC_SHENANDOAH_SHENANDOAHMARKINGCONTEXT_HPP
 
 #include "gc/shared/markBitMap.hpp"
 #include "memory/allocation.hpp"
 #include "memory/memRegion.hpp"
 #include "oops/oopsHierarchy.hpp"
-
-class HeapWord;
 
 /**
  * Encapsulate a marking bitmap with the top-at-mark-start and top-bitmaps array.
@@ -77,4 +75,4 @@ public:
 
 };
 
-#endif // SHARE_VM_GC_SHENANDOAH_SHENANDOAHMARKINGCONTEXT_HPP
+#endif // SHARE_GC_SHENANDOAH_SHENANDOAHMARKINGCONTEXT_HPP

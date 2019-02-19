@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_OOPS_OOPHANDLE_HPP
-#define SHARE_VM_OOPS_OOPHANDLE_HPP
+#ifndef SHARE_OOPS_OOPHANDLE_HPP
+#define SHARE_OOPS_OOPHANDLE_HPP
 
 #include "oops/oop.hpp"
 
@@ -36,6 +36,7 @@
 // future uses for read barriers.
 
 class OopHandle {
+  friend class VMStructs;
 private:
   oop* _obj;
 
@@ -50,4 +51,4 @@ public:
   oop* ptr_raw() const { return _obj; }
 };
 
-#endif // SHARE_VM_OOPS_OOPHANDLE_HPP
+#endif // SHARE_OOPS_OOPHANDLE_HPP

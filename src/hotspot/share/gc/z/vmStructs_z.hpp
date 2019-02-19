@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,8 +21,8 @@
  * questions.
  */
 
-#ifndef SHARE_VM_GC_Z_VMSTRUCTS_Z_HPP
-#define SHARE_VM_GC_Z_VMSTRUCTS_Z_HPP
+#ifndef SHARE_GC_Z_VMSTRUCTS_Z_HPP
+#define SHARE_GC_Z_VMSTRUCTS_Z_HPP
 
 #include "gc/z/zAddressRangeMap.hpp"
 #include "gc/z/zCollectedHeap.hpp"
@@ -42,6 +42,8 @@ public:
 
   uint32_t* _ZGlobalPhase;
 
+  uint32_t* _ZGlobalSeqNum;
+
   uintptr_t* _ZAddressGoodMask;
   uintptr_t* _ZAddressBadMask;
   uintptr_t* _ZAddressWeakBadMask;
@@ -55,6 +57,7 @@ typedef ZAddressRangeMap<ZPageTableEntry, ZPageSizeMinShift> ZAddressRangeMapFor
 #define VM_STRUCTS_ZGC(nonstatic_field, volatile_nonstatic_field, static_field)                      \
   static_field(ZGlobalsForVMStructs,            _instance_p,          ZGlobalsForVMStructs*)         \
   nonstatic_field(ZGlobalsForVMStructs,         _ZGlobalPhase,        uint32_t*)                     \
+  nonstatic_field(ZGlobalsForVMStructs,         _ZGlobalSeqNum,       uint32_t*)                     \
   nonstatic_field(ZGlobalsForVMStructs,         _ZAddressGoodMask,    uintptr_t*)                    \
   nonstatic_field(ZGlobalsForVMStructs,         _ZAddressBadMask,     uintptr_t*)                    \
   nonstatic_field(ZGlobalsForVMStructs,         _ZAddressWeakBadMask, uintptr_t*)                    \
@@ -67,7 +70,10 @@ typedef ZAddressRangeMap<ZPageTableEntry, ZPageSizeMinShift> ZAddressRangeMapFor
   nonstatic_field(ZHeap,                        _pagetable,           ZPageTable)                    \
                                                                                                      \
   nonstatic_field(ZPage,                        _type,                const uint8_t)                 \
+  nonstatic_field(ZPage,                        _seqnum,              uint32_t)                      \
   nonstatic_field(ZPage,                        _virtual,             const ZVirtualMemory)          \
+  volatile_nonstatic_field(ZPage,               _top,                 uintptr_t)                     \
+  volatile_nonstatic_field(ZPage,               _refcount,            uint32_t)                      \
   nonstatic_field(ZPage,                        _forwarding,          ZForwardingTable)              \
                                                                                                      \
   nonstatic_field(ZPageAllocator,               _physical,            ZPhysicalMemoryManager)        \
@@ -101,6 +107,7 @@ typedef ZAddressRangeMap<ZPageTableEntry, ZPageSizeMinShift> ZAddressRangeMapFor
   declare_constant(ZAddressOffsetShift)                                                              \
   declare_constant(ZAddressOffsetBits)                                                               \
   declare_constant(ZAddressOffsetMask)                                                               \
+  declare_constant(ZAddressOffsetMax)                                                                \
   declare_constant(ZAddressSpaceStart)
 
 #define VM_TYPES_ZGC(declare_type, declare_toplevel_type, declare_integer_type)                      \
@@ -117,4 +124,4 @@ typedef ZAddressRangeMap<ZPageTableEntry, ZPageSizeMinShift> ZAddressRangeMapFor
   declare_toplevel_type(ZForwardingTableEntry)                                                       \
   declare_toplevel_type(ZPhysicalMemoryManager)
 
-#endif // SHARE_VM_GC_Z_VMSTRUCTS_Z_HPP
+#endif // SHARE_GC_Z_VMSTRUCTS_Z_HPP

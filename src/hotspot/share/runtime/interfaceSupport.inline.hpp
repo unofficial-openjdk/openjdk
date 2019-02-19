@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_VM_RUNTIME_INTERFACESUPPORT_INLINE_HPP
-#define SHARE_VM_RUNTIME_INTERFACESUPPORT_INLINE_HPP
+#ifndef SHARE_RUNTIME_INTERFACESUPPORT_INLINE_HPP
+#define SHARE_RUNTIME_INTERFACESUPPORT_INLINE_HPP
 
 #include "runtime/handles.inline.hpp"
 #include "runtime/mutexLocker.hpp"
@@ -283,6 +283,59 @@ class ThreadBlockInVM : public ThreadStateTransition {
   ~ThreadBlockInVM() {
     trans_and_fence(_thread_blocked, _thread_in_vm);
     // We don't need to clear_walkable because it will happen automagically when we return to java
+  }
+};
+
+// Unlike ThreadBlockInVM, this class is designed to avoid certain deadlock scenarios while making
+// transitions inside class Monitor in cases where we need to block for a safepoint or handshake. It
+// receives an extra argument compared to ThreadBlockInVM, the address of a pointer to the monitor we
+// are trying to acquire. This will be used to access and release the monitor if needed to avoid
+// said deadlocks.
+// It works like ThreadBlockInVM but differs from it in two ways:
+// - When transitioning in (constructor), it checks for safepoints without blocking, i.e., calls
+//   back if needed to allow a pending safepoint to continue but does not block in it.
+// - When transitioning back (destructor), if there is a pending safepoint or handshake it releases
+//   the monitor that is only partially acquired.
+class ThreadBlockInVMWithDeadlockCheck : public ThreadStateTransition {
+ private:
+  Monitor** _in_flight_monitor_adr;
+
+  void release_monitor() {
+    assert(_in_flight_monitor_adr != NULL, "_in_flight_monitor_adr should have been set on constructor");
+    Monitor* in_flight_monitor = *_in_flight_monitor_adr;
+    if (in_flight_monitor != NULL) {
+      in_flight_monitor->release_for_safepoint();
+      *_in_flight_monitor_adr = NULL;
+    }
+  }
+ public:
+  ThreadBlockInVMWithDeadlockCheck(JavaThread* thread, Monitor** in_flight_monitor_adr)
+  : ThreadStateTransition(thread), _in_flight_monitor_adr(in_flight_monitor_adr) {
+    // Once we are blocked vm expects stack to be walkable
+    thread->frame_anchor()->make_walkable(thread);
+
+    // All unsafe states are treated the same by the VMThread
+    // so we can skip the _thread_in_vm_trans state here. Since
+    // we don't read poll, it's enough to order the stores.
+    OrderAccess::storestore();
+
+    thread->set_thread_state(_thread_blocked);
+
+    CHECK_UNHANDLED_OOPS_ONLY(_thread->clear_unhandled_oops();)
+  }
+  ~ThreadBlockInVMWithDeadlockCheck() {
+    // Change to transition state
+    _thread->set_thread_state((JavaThreadState)(_thread_blocked_trans));
+
+    InterfaceSupport::serialize_thread_state_with_handler(_thread);
+
+    if (SafepointMechanism::should_block(_thread)) {
+      release_monitor();
+      SafepointMechanism::block_if_requested(_thread);
+    }
+
+    _thread->set_thread_state(_thread_in_vm);
+    CHECK_UNHANDLED_OOPS_ONLY(_thread->clear_unhandled_oops();)
   }
 };
 
@@ -568,4 +621,4 @@ extern "C" {                                                         \
 
 #define JVM_END } }
 
-#endif // SHARE_VM_RUNTIME_INTERFACESUPPORT_INLINE_HPP
+#endif // SHARE_RUNTIME_INTERFACESUPPORT_INLINE_HPP

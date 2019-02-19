@@ -211,7 +211,7 @@ public final class Main {
             STORETYPE, PROVIDERNAME, ADDPROVIDER, PROVIDERCLASS,
             PROVIDERPATH, V, PROTECTED),
         GENKEYPAIR("Generates.a.key.pair",
-            ALIAS, KEYALG, KEYSIZE, CURVENAME, SIGALG, DESTALIAS, DNAME,
+            ALIAS, KEYALG, KEYSIZE, CURVENAME, SIGALG, DNAME,
             STARTDATE, EXT, VALIDITY, KEYPASS, KEYSTORE,
             STOREPASS, STORETYPE, PROVIDERNAME, ADDPROVIDER,
             PROVIDERCLASS, PROVIDERPATH, V, PROTECTED),
@@ -3784,9 +3784,9 @@ public final class Main {
                                  replyCerts.length);
                 tmpCerts[tmpCerts.length-1] = root.snd;
                 replyCerts = tmpCerts;
-                checkWeak(String.format(rb.getString(fromKeyStore ?
-                                            "alias.in.keystore" :
-                                            "alias.in.cacerts"),
+                checkWeak(String.format(fromKeyStore
+                                ? rb.getString("alias.in.keystore")
+                                : rb.getString("alias.in.cacerts"),
                                         root.fst),
                           root.snd);
             }
