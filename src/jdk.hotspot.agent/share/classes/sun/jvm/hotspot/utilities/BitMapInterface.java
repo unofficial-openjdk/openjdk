@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,16 +22,11 @@
  *
  */
 
-#ifndef SHARE_OOPS_ARRAY_INLINE_HPP
-#define SHARE_OOPS_ARRAY_INLINE_HPP
+package sun.jvm.hotspot.utilities;
 
-#include "oops/array.hpp"
-#include "runtime/orderAccess.hpp"
-
-template <typename T>
-inline T Array<T>::at_acquire(const int which) { return OrderAccess::load_acquire(adr_at(which)); }
-
-template <typename T>
-inline void Array<T>::release_at_put(int which, T contents) { OrderAccess::release_store(adr_at(which), contents); }
-
-#endif // SHARE_OOPS_ARRAY_INLINE_HPP
+/** Minimal bitmap interface to support bitmaps spanning more than Integer.MAX_VALUE bits. */
+public interface BitMapInterface {
+  public boolean at(long offset);
+  public void atPut(long offset, boolean value);
+  public void clear();
+}
