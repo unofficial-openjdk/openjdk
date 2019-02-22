@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -19,24 +19,15 @@
  * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
  * or visit www.oracle.com if you need additional information or have any
  * questions.
+ *
  */
 
-#ifndef SHARE_GC_Z_ZSTATTLAB_HPP
-#define SHARE_GC_Z_ZSTATTLAB_HPP
+package sun.jvm.hotspot.gc.shared;
 
-#include "gc/shared/threadLocalAllocBuffer.hpp"
-#include "gc/z/zValue.hpp"
-#include "memory/allocation.hpp"
+import java.util.List;
 
-class ZStatTLAB : public AllStatic {
-private:
-  static ZPerWorker<ThreadLocalAllocStats>* _stats;
+import sun.jvm.hotspot.memory.MemRegion;
 
-public:
-  static void initialize();
-  static void reset();
-  static ThreadLocalAllocStats* get();
-  static void publish();
-};
-
-#endif // SHARE_GC_Z_ZSTATTLAB_HPP
+public interface LiveRegionsProvider {
+  public List<MemRegion> getLiveRegions();
+}
