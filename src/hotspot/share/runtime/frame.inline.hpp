@@ -74,8 +74,9 @@ inline oop* frame::oopmapreg_to_location(VMReg reg, const RegisterMap* reg_map) 
     return (oop *)reg_map->location(reg);
   } else {
     int sp_offset_in_bytes = reg->reg2stack() * VMRegImpl::stack_slot_size;
-    if (reg_map->in_cont())
-      return (oop*)Continuation::usp_offset_to_location(*this, reg_map, sp_offset_in_bytes);
+    if (reg_map->in_cont()) {
+      return reinterpret_cast<oop*>((uintptr_t)Continuation::usp_offset_to_index(*this, reg_map, sp_offset_in_bytes));
+    }
     address usp = (address)unextended_sp();
     assert(reg_map->thread()->is_in_usable_stack(usp), INTPTR_FORMAT, p2i(usp)); 
     return (oop*)(usp + sp_offset_in_bytes);

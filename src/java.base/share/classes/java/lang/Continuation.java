@@ -516,6 +516,14 @@ public class Continuation {
         return done;
     }
 
+    /**
+     * TBD
+     * @return TBD
+     */
+    public boolean isPreempted() {
+        return isFlag(FLAG_SAFEPOINT_YIELD);
+    }
+
     private boolean isFlag(byte flag) {
         return (flags & flag) != 0;
     }

@@ -23,19 +23,21 @@
 
 /**
  * @test
- * @summary Functional test for continuations walked with StackWalker's LiveStackFrames
- * @build java.base/java.lang.LiveFrames
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -Xint Driver
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Driver
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp Driver
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:+UseNewCode Driver
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+TieredCompilation -XX:TieredStopAtLevel=3 -Xcomp Driver
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+TieredCompilation -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode Driver
+ * @summary Functional test for continuations that are preempted and walked with StackWalker's LiveStackFrames
+ * @build java.base/java.lang.PreemptLiveFrames
+ * 
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -Xint PreemptLiveFramesDriver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode PreemptLiveFramesDriver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp PreemptLiveFramesDriver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:+UseNewCode PreemptLiveFramesDriver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+TieredCompilation -XX:TieredStopAtLevel=3 -Xcomp PreemptLiveFramesDriver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+TieredCompilation -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode PreemptLiveFramesDriver
  */
 
 
-public class Driver {
+
+public class PreemptLiveFramesDriver {
     public static void main(String[] args) {
-        java.lang.LiveFrames.main(args);
+        java.lang.PreemptLiveFrames.main(args);
     }
 }

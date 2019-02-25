@@ -79,6 +79,7 @@ public:
 
   // access frame data
   static bool is_in_usable_stack(address addr, const RegisterMap* map);
+  static int usp_offset_to_index(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes);
   static address usp_offset_to_location(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes);
   static address usp_offset_to_location(const frame& fr, const RegisterMap* map, const int usp_offset_in_bytes, bool is_oop);
   static address reg_to_location(const frame& fr, const RegisterMap* map, VMReg reg);
