@@ -31,8 +31,6 @@
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:+UseNewCode Basic
 * @run testng/othervm -XX:TieredStopAtLevel=3 -Xcomp Basic
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode Basic
-*
-* @summary Basic tests for java.lang.Continuation
 */
 
 // * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp Basic
@@ -74,10 +72,13 @@ public class Basic {
             cont.run();
             System.gc();
 
+            assertEquals(cont.isPreempted(), false);
+
             List<String> frames = cont.stackWalker().walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
             assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "bar", "foo", "lambda$test1$0", "enter0", "enter"));
         }
         assertEquals(res.get(), 247);
+        assertEquals(cont.isPreempted(), false);
     }
     
     static double foo(int a) {
