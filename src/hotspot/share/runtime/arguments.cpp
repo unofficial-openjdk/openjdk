@@ -529,6 +529,7 @@ static SpecialFlag const special_jvm_flags[] = {
   { "InitialRAMFraction",           JDK_Version::jdk(10),  JDK_Version::undefined(), JDK_Version::undefined() },
   { "UseMembar",                    JDK_Version::jdk(10), JDK_Version::jdk(12), JDK_Version::undefined() },
   { "CompilationPolicyChoice",      JDK_Version::jdk(13), JDK_Version::jdk(14), JDK_Version::undefined() },
+  { "FailOverToOldVerifier",        JDK_Version::jdk(13), JDK_Version::jdk(14), JDK_Version::undefined() },
 
   // --- Deprecated alias flags (see also aliased_jvm_flags) - sorted by obsolete_in then expired_in:
   { "DefaultMaxRAMFraction",        JDK_Version::jdk(8),  JDK_Version::undefined(), JDK_Version::undefined() },
@@ -2453,9 +2454,15 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
           (is_absolute_path = match_option(option, "-agentpath:", &tail))) {
       if(tail != NULL) {
         const char* pos = strchr(tail, '=');
-        size_t len = (pos == NULL) ? strlen(tail) : pos - tail;
-        char* name = strncpy(NEW_C_HEAP_ARRAY(char, len + 1, mtArguments), tail, len);
-        name[len] = '\0';
+        char* name;
+        if (pos == NULL) {
+          name = os::strdup_check_oom(tail, mtArguments);
+        } else {
+          size_t len = pos - tail;
+          name = NEW_C_HEAP_ARRAY(char, len + 1, mtArguments);
+          memcpy(name, tail, len);
+          name[len] = '\0';
+        }
 
         char *options = NULL;
         if(pos != NULL) {

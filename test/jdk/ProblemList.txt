@@ -556,6 +556,8 @@ java/net/MulticastSocket/SetLoopbackMode.java                   7122846 macosx-a
 
 java/net/MulticastSocket/Test.java                              7145658 macosx-all
 
+java/net/MulticastSocket/SetGetNetworkInterfaceTest.java        8219083 windows-all
+
 java/net/DatagramSocket/SendDatagramToBadAddress.java           7143960 macosx-all
 
 java/net/ServerSocket/AcceptInheritHandle.java                  8211854 aix-ppc64
@@ -868,3 +870,4 @@ javax/rmi/ssl/SSLSocketParametersTest.sh                        8162906 generic-
 # jdk_jfr
 
 jdk/jfr/event/io/TestInstrumentation.java                       8202142    generic-all
+jdk/jfr/api/recording/event/TestPeriod.java                     8215890    generic-all
