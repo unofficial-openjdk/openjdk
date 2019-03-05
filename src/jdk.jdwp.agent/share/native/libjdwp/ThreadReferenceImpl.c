@@ -105,7 +105,6 @@ suspend(PacketInputStream *in, PacketOutputStream *out)
 {
     jvmtiError error;
     jthread thread;
-    /* fiber fixme: add fiber support */
 
     thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
@@ -128,7 +127,6 @@ resume(PacketInputStream *in, PacketOutputStream *out)
 {
     jvmtiError error;
     jthread thread;
-    /* fiber fixme: add fiber support */
 
     thread = inStream_readThreadRef(getEnv(), in);
     if (inStream_error(in)) {
