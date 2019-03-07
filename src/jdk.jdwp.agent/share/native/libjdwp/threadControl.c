@@ -951,7 +951,7 @@ getFiberHelperThread(jthread fiber)
 
     fiberNode = findThread(&runningFibers, fiber);
     if (fiberNode->fiberHelperThread != NULL) {
-        goto done;
+        return fiberNode->fiberHelperThread;
     }
 
     env = getEnv();
@@ -975,15 +975,15 @@ getFiberHelperThread(jthread fiber)
 
     if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
         JNI_FUNC_PTR(env,ExceptionClear)(env);
-        goto done;
+        helperThread = NULL;
     }
 
-    saveGlobalRef(env, helperThread, &(fiberNode->fiberHelperThread));
+    if (helperThread != NULL) {
+        saveGlobalRef(env, helperThread, &(fiberNode->fiberHelperThread));
+        /* Start tracking this fiber as a suspended one. */
+        startTrackingSuspendedFiber(fiberNode);
+    }
 
-    /* Start tracking this fiber as a suspended one. */
-    startTrackingSuspendedFiber(fiberNode);
-
- done:
     return fiberNode->fiberHelperThread;
 }
 
@@ -3030,7 +3030,8 @@ void threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID) {
                 threadNode->instructionStepMode = JVMTI_ENABLE;
             }
 
-            /* Restore NotifyFramePop. */
+            /* Restore NotifyFramePop. This has to be done even if we are already single stepping
+             * on the carrier thread. */
             {
                 jvmtiError error;
                 jint depth;
@@ -3167,7 +3168,7 @@ void threadControl_unmountFiber(jthread fiber, jthread thread) {
                 threadControl_setEventMode(JVMTI_DISABLE, EI_METHOD_ENTRY, thread);
             }
 
-            /* Copy currentStep struct. */
+            /* Copy currentStep struct from the threadNode to the fiberNode and then zero out the threadNode. */
             memcpy(&fiberNode->currentStep, &threadNode->currentStep, sizeof(threadNode->currentStep));
             memset(&threadNode->currentStep, 0, sizeof(threadNode->currentStep));
         }
