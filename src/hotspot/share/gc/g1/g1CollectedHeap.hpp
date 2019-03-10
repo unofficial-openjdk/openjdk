@@ -366,7 +366,7 @@ private:
   G1NewTracer* _gc_tracer_stw;
 
   // The current policy object for the collector.
-  G1Policy* _g1_policy;
+  G1Policy* _policy;
   G1HeapSizingPolicy* _heap_sizing_policy;
 
   G1CollectionSet _collection_set;
@@ -745,7 +745,7 @@ private:
   G1HotCardCache* _hot_card_cache;
 
   // The g1 remembered set of the heap.
-  G1RemSet* _g1_rem_set;
+  G1RemSet* _rem_set;
 
   // A set of cards that cover the objects for which the Rsets should be updated
   // concurrently after the collection.
@@ -950,7 +950,11 @@ public:
   G1CollectorState* collector_state() { return &_collector_state; }
 
   // The current policy object for the collector.
-  G1Policy* g1_policy() const { return _g1_policy; }
+  G1Policy* policy() const { return _policy; }
+  // The remembered set.
+  G1RemSet* rem_set() const { return _rem_set; }
+
+  inline G1GCPhaseTimes* phase_times() const;
 
   HeapRegionManager* hrm() const { return _hrm; }
 
@@ -958,7 +962,6 @@ public:
   G1CollectionSet* collection_set() { return &_collection_set; }
 
   virtual CollectorPolicy* collector_policy() const;
-  virtual G1CollectorPolicy* g1_collector_policy() const;
 
   virtual SoftRefPolicy* soft_ref_policy();
 
@@ -966,9 +969,6 @@ public:
   virtual MemoryUsage memory_usage();
   virtual GrowableArray<GCMemoryManager*> memory_managers();
   virtual GrowableArray<MemoryPool*> memory_pools();
-
-  // The rem set and barrier set.
-  G1RemSet* g1_rem_set() const { return _g1_rem_set; }
 
   // Try to minimize the remembered set.
   void scrub_rem_set();
@@ -1060,6 +1060,11 @@ public:
   // "System.gc".  This probably implies as full a collection as the
   // "CollectedHeap" supports.
   virtual void collect(GCCause::Cause cause);
+
+  // Perform a collection of the heap with the given cause; if the VM operation
+  // fails to execute for any reason, retry only if retry_on_gc_failure is set.
+  // Returns whether this collection actually executed.
+  bool try_collect(GCCause::Cause cause, bool retry_on_gc_failure);
 
   // True iff an evacuation has failed in the most-recent collection.
   bool evacuation_failed() { return _evacuation_failed; }
@@ -1361,6 +1366,7 @@ public:
   // WhiteBox testing support.
   virtual bool supports_concurrent_phase_control() const;
   virtual bool request_concurrent_phase(const char* phase);
+  bool is_heterogeneous_heap() const;
 
   virtual WorkGang* get_safepoint_workers() { return _workers; }
 
