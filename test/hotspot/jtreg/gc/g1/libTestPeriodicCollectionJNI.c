@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,25 +21,50 @@
  * questions.
  */
 
-import java.security.*;
-import javax.net.ssl.*;
+/*
+ * Native support for TestPeriodicCollectionJNI test.
+ */
 
-public class JavaxKeyManagerFactoryImpl extends KeyManagerFactorySpi {
+#include "jni.h"
 
-    public JavaxKeyManagerFactoryImpl () {
-        System.out.println("JavaxKeyManagerFactoryImpl initialized");
+#ifdef WINDOWS
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+static volatile int release_critical = 0;
+
+JNIEXPORT jboolean JNICALL
+Java_gc_g1_TestPeriodicCollectionJNI_blockInNative(JNIEnv* env, jobject obj, jintArray dummy) {
+    void* native_array = (*env)->GetPrimitiveArrayCritical(env, dummy, 0);
+
+    if (native_array == NULL) {
+        return JNI_FALSE;
     }
 
-    protected void engineInit(KeyStore ks, char[] passwd)
-            throws KeyStoreException {
-        System.out.println("JavaxKeyManagerFactoryImpl init'd");
+    while (!release_critical) {
+#ifdef WINDOWS
+        Sleep(1);
+#else
+        usleep(1000);
+#endif
     }
 
-    protected void engineInit(ManagerFactoryParameters spec)
-            throws InvalidAlgorithmParameterException {
-    }
+    (*env)->ReleasePrimitiveArrayCritical(env, dummy, native_array, 0);
 
-    protected KeyManager[] engineGetKeyManagers() {
-        return null;
-    }
+    return JNI_TRUE;
 }
+
+JNIEXPORT void JNICALL Java_gc_g1_TestPeriodicCollectionJNI_unblock(JNIEnv *env, jobject obj)
+{
+    release_critical = 1;
+}
+
+#ifdef __cplusplus
+}
+#endif
