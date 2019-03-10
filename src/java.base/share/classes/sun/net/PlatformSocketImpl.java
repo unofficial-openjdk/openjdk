@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@
  */
 package sun.net;
 
-import java.io.IOException;
 import java.net.SocketImpl;
 
 /**
@@ -32,12 +31,6 @@ import java.net.SocketImpl;
  */
 
 public interface PlatformSocketImpl {
-
-    /**
-     * Invoked by ServerSocket to fix up the SocketImpl state after a connection
-     * is accepted by a custom SocketImpl
-     */
-    void postCustomAccept() throws IOException;
 
     /**
      * Copy the state from this connected SocketImpl to a target SocketImpl. If

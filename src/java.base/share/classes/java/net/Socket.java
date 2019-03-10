@@ -155,17 +155,21 @@ class Socket implements java.io.Closeable {
                                   epoint.getPort());
             }
 
-            SocketImpl si = SocketImpl.createPlatformSocketImpl(false);
-            impl = (type == Proxy.Type.SOCKS) ? new SocksSocketImpl(p, si)
-                                              : new HttpConnectSocketImpl(p, si);
+            // create a SOCKS or HTTP SocketImpl that delegates to a platform SocketImpl
+            SocketImpl delegate = SocketImpl.createPlatformSocketImpl(false);
+            impl = (type == Proxy.Type.SOCKS) ? new SocksSocketImpl(p, delegate)
+                                              : new HttpConnectSocketImpl(p, delegate);
             impl.setSocket(this);
         } else {
             if (p == Proxy.NO_PROXY) {
+                // create a platform or custom SocketImpl for the DIRECT case
+                SocketImplFactory factory = Socket.factory;
                 if (factory == null) {
                     impl = SocketImpl.createPlatformSocketImpl(false);
-                    impl.setSocket(this);
-                } else
-                    setImpl();
+                } else {
+                    impl = factory.createSocketImpl();
+                }
+                impl.setSocket(this);
             } else
                 throw new IllegalArgumentException("Invalid Proxy");
         }
@@ -510,15 +514,6 @@ class Socket implements java.io.Closeable {
         });
     }
 
-    static SocketImpl createImpl() {
-        SocketImplFactory factory = Socket.factory;
-        if (factory != null) {
-            return factory.createSocketImpl();
-        } else {
-            return SocketImpl.createPlatformSocketImpl(false);
-        }
-    }
-
     void setImpl(SocketImpl si) {
          impl = si;
          impl.setSocket(this);
@@ -529,12 +524,14 @@ class Socket implements java.io.Closeable {
      * @since 1.4
      */
     void setImpl() {
+        SocketImplFactory factory = Socket.factory;
         if (factory != null) {
             impl = factory.createSocketImpl();
             checkOldImpl();
         } else {
-            SocketImpl si = SocketImpl.createPlatformSocketImpl(false);
-            impl = new SocksSocketImpl(si);
+            // create a SOCKS SocketImpl that delegates to a platform SocketImpl
+            SocketImpl delegate = SocketImpl.createPlatformSocketImpl(false);
+            impl = new SocksSocketImpl(delegate);
         }
         if (impl != null)
             impl.setSocket(this);
@@ -949,6 +946,13 @@ class Socket implements java.io.Closeable {
         return in;
     }
 
+    /**
+     * An InputStream that delegates read/available operations to an underlying
+     * input stream. The close method is overridden to close the Socket.
+     *
+     * This class is instrumented by Java Flight Recorder (JFR) to get socket
+     * I/O events.
+     */
     private static class SocketInputStream extends InputStream {
         private final Socket parent;
         private final InputStream in;
@@ -1012,6 +1016,13 @@ class Socket implements java.io.Closeable {
         return out;
     }
 
+    /**
+     * An OutputStream that delegates write operations to an underlying output
+     * stream. The close method is overridden to close the Socket.
+     *
+     * This class is instrumented by Java Flight Recorder (JFR) to get socket
+     * I/O events.
+     */
     private static class SocketOutputStream extends OutputStream {
         private final Socket parent;
         private final OutputStream out;
@@ -1718,7 +1729,11 @@ class Socket implements java.io.Closeable {
     /**
      * The factory for all client sockets.
      */
-    private static SocketImplFactory factory = null;
+    private static volatile SocketImplFactory factory;
+
+    static SocketImplFactory socketImplFactory() {
+        return factory;
+    }
 
     /**
      * Sets the client socket implementation factory for the

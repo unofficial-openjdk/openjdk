@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1995, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -291,6 +291,7 @@ class ServerSocket implements java.io.Closeable {
     }
 
     private void setImpl() {
+        SocketImplFactory factory = ServerSocket.factory;
         if (factory != null) {
             impl = factory.createSocketImpl();
             checkOldImpl();
@@ -541,79 +542,90 @@ class ServerSocket implements java.io.Closeable {
      * @spec JSR-51
      */
     protected final void implAccept(Socket s) throws IOException {
-        SocketImpl impl = getImpl();
         SocketImpl si = s.impl;
 
-        // Socket does not have a SocketImpl
+        // Socket has no SocketImpl
         if (si == null) {
-            // create a SocketImpl and accept the connection
-            si = Socket.createImpl();
-            assert !(si instanceof DelegatingSocketImpl);
-            impl.accept(si);
-            try {
-                // a custom impl has accepted the connection with a platform SocketImpl
-                if (!(impl instanceof PlatformSocketImpl) && (si instanceof PlatformSocketImpl)) {
-                    ((PlatformSocketImpl) si).postCustomAccept();
-                }
-            } finally {
-                securityCheckAccept(si);  // closes si if permission check fails
+            // create a platform or custom SocketImpl and accept the connection
+            SocketImplFactory factory = Socket.socketImplFactory();
+            if (factory == null) {
+                si = SocketImpl.createPlatformSocketImpl(false);
+            } else {
+                si = factory.createSocketImpl();
             }
-
+            implAccept(si);
             // bind Socket to the SocketImpl and update socket state
             s.setImpl(si);
             s.postAccept();
             return;
         }
 
-        // Socket has a SOCKS or HTTP SocketImpl
+        // Socket has a SOCKS or HTTP SocketImpl, need delegate
         if (si instanceof DelegatingSocketImpl) {
             si = ((DelegatingSocketImpl) si).delegate();
             assert si instanceof PlatformSocketImpl;
         }
 
-        // ServerSocket or Socket (or both) have a platform SocketImpl
+        // ServerSocket or Socket (or both) have, or delegate to, a platform SocketImpl
         if (impl instanceof PlatformSocketImpl || si instanceof PlatformSocketImpl) {
             // create a new platform SocketImpl and accept the connection
-            var nsi = SocketImpl.createPlatformSocketImpl(false);
-            impl.accept(nsi);
-            try {
-                // a custom impl has accepted the connection
-                if (!(impl instanceof PlatformSocketImpl)) {
-                    nsi.postCustomAccept();
-                }
-            } finally {
-                securityCheckAccept(nsi);  // closes nsi if permission check fails
-            }
-
-            // copy state to the existing SocketImpl and update socket state
-            nsi.copyTo(si);
+            var psi = SocketImpl.createPlatformSocketImpl(false);
+            implAccept(psi);
+            // copy connection/state to the existing SocketImpl and update socket state
+            psi.copyTo(si);
             s.postAccept();
             return;
         }
 
         // ServerSocket and Socket bound to custom SocketImpls
         s.impl = null; // break connection to impl
-        boolean completed = false;
+        si.reset();
         try {
+            implAccept(si);
+        } catch (Exception e) {
             si.reset();
-            si.fd = new FileDescriptor();
-            si.address = new InetAddress();
-            impl.accept(si);
-            securityCheckAccept(si);  // closes si if permission check fails
-            completed = true;
+            throw e;
         } finally {
-            if (!completed)
-                si.reset();
             s.impl = si;  // restore connection to impl
         }
         s.postAccept();
     }
 
     /**
-     * Invokes the security manager's checkAccept method. If the permission
-     * check fails then it closes the SocketImpl.
+     * Accepts a new connection so that the given SocketImpl is connected to
+     * the peer. The SocketImpl and connection are closed if the connection is
+     * denied by the security manager.
+     * @throws IOException if an I/O error occurs
+     * @throws SecurityException if the security manager's checkAccept method fails
      */
-    private void securityCheckAccept(SocketImpl si) throws IOException {
+    private void implAccept(SocketImpl si) throws IOException {
+        assert !(si instanceof DelegatingSocketImpl);
+
+        // A non-platform SocketImpl cannot accept a connection with a platform SocketImpl
+        if (!(impl instanceof PlatformSocketImpl) && (si instanceof PlatformSocketImpl)) {
+            throw new IOException("An instance of " + impl.getClass() +
+                " cannot accept a connection with an instance of " + si.getClass());
+        }
+
+        // custom SocketImpl may expect fd/address objects to be created
+        if (!(si instanceof PlatformSocketImpl)) {
+            si.fd = new FileDescriptor();
+            si.address = new InetAddress();
+        }
+
+        // accept a connection
+        impl.accept(si);
+
+        // sanity check that the fields defined by SocketImpl have been set
+        if (si instanceof PlatformSocketImpl) {
+            var fd = si.fd;
+            if (fd == null || !fd.valid() || si.localport <= 0
+                    || si.address == null || si.port <= 0) {
+                throw new IOException("Invalid accepted state:" + si);
+            }
+        }
+
+        // check permission, close SocketImpl/connection if denied
         SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             try {
@@ -827,7 +839,7 @@ class ServerSocket implements java.io.Closeable {
     /**
      * The factory for all server sockets.
      */
-    private static SocketImplFactory factory = null;
+    private static volatile SocketImplFactory factory;
 
     /**
      * Sets the server socket implementation factory for the

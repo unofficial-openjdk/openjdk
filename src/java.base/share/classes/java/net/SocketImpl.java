@@ -48,7 +48,7 @@ import sun.nio.ch.NioSocketImpl;
 public abstract class SocketImpl implements SocketOptions {
 
     /**
-     * Creates a instance of platform's SocketImpl
+     * Creates an instance of platform's SocketImpl
      */
     @SuppressWarnings("unchecked")
     static <S extends SocketImpl & PlatformSocketImpl> S createPlatformSocketImpl(boolean server) {

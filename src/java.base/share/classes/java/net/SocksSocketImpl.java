@@ -24,24 +24,19 @@
  */
 package java.net;
 
-import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.BufferedOutputStream;
 import java.security.AccessController;
-import java.util.Objects;
-import java.util.Set;
 
 import jdk.internal.util.StaticProperty;
 import sun.net.SocksProxy;
 import sun.net.spi.DefaultProxySelector;
 import sun.net.www.ParseUtil;
-import sun.nio.ch.NioSocketImpl;
 
 /**
  * SOCKS (V4 & V5) TCP socket implementation (RFC 1928).
- * Note this class should <b>NOT</b> be public.
  */
 
 class SocksSocketImpl extends DelegatingSocketImpl implements SocksConsts {
@@ -593,7 +588,7 @@ class SocksSocketImpl extends DelegatingSocketImpl implements SocksConsts {
     }
 
     @Override
-    void reset() throws IOException {
-        delegate.reset();
+    void reset() {
+        throw new InternalError("should not get here");
     }
 }

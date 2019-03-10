@@ -25,23 +25,17 @@
 
 package java.net;
 
-import java.io.FileDescriptor;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import sun.nio.ch.NioSocketImpl;
-
 /**
  * Basic SocketImpl that relies on the internal HTTP protocol handler
- * implementation to perform the HTTP tunneling and authentication. The
- * sockets impl is swapped out and replaced with the socket from the HTTP
- * handler after the tunnel is successfully setup.
+ * implementation to perform the HTTP tunneling and authentication. Once
+ * connected, all socket operations delegate to a platform SocketImpl.
  *
  * @since 1.8
  */
@@ -79,11 +73,6 @@ import sun.nio.ch.NioSocketImpl;
         } catch (ReflectiveOperationException x) {
             throw new InternalError("Should not reach here", x);
         }
-    }
-    HttpConnectSocketImpl(SocketImpl delegate) {
-        super(delegate);
-        this.server = null;
-        throw new InternalError();
     }
 
     HttpConnectSocketImpl(Proxy proxy, SocketImpl delegate) {
@@ -145,7 +134,7 @@ import sun.nio.ch.NioSocketImpl;
 
         // update the Sockets impl to the impl from the http Socket
         SocketImpl si = httpSocket.impl;
-        ((SocketImpl) this).getSocket().setImpl(si);
+        getSocket().setImpl(si);
 
         // best effort is made to try and reset options previously set
         Set<Map.Entry<Integer,Object>> options = optionsMap.entrySet();
@@ -168,8 +157,8 @@ import sun.nio.ch.NioSocketImpl;
     }
 
     @Override
-    void reset() throws IOException {
-        delegate.reset();
+    void reset() {
+        throw new InternalError("should not get here");
     }
 
     @Override
@@ -220,10 +209,14 @@ import sun.nio.ch.NioSocketImpl;
         }
     }
 
-    private void doTunneling(HttpURLConnection conn) {
+    private void doTunneling(HttpURLConnection conn) throws IOException {
         try {
             doTunneling.invoke(conn);
         } catch (ReflectiveOperationException x) {
+            Throwable cause = x.getCause();
+            if (cause instanceof IOException) {
+                throw (IOException) cause;
+            }
             throw new InternalError("Should not reach here", x);
         }
     }
