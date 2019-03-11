@@ -951,7 +951,7 @@ getFiberHelperThread(jthread fiber)
 
     fiberNode = findThread(&runningFibers, fiber);
     if (fiberNode->fiberHelperThread != NULL) {
-        goto done;
+        return fiberNode->fiberHelperThread;
     }
 
     env = getEnv();
@@ -975,16 +975,15 @@ getFiberHelperThread(jthread fiber)
 
     if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
         JNI_FUNC_PTR(env,ExceptionClear)(env);
-        goto done;
+        helperThread = NULL;
     }
 
-    JDI_ASSERT(helperThread != NULL);
-    saveGlobalRef(env, helperThread, &(fiberNode->fiberHelperThread));
+    if (helperThread != NULL) {
+        saveGlobalRef(env, helperThread, &(fiberNode->fiberHelperThread));
+        /* Start tracking this fiber as a suspended one. */
+        startTrackingSuspendedFiber(fiberNode);
+    }
 
-    /* Start tracking this fiber as a suspended one. */
-    startTrackingSuspendedFiber(fiberNode);
-
- done:
     return fiberNode->fiberHelperThread;
 }
 
@@ -3031,7 +3030,8 @@ void threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID) {
                 threadNode->instructionStepMode = JVMTI_ENABLE;
             }
 
-            /* Restore NotifyFramePop. */
+            /* Restore NotifyFramePop. This has to be done even if we are already single stepping
+             * on the carrier thread. */
             {
                 jvmtiError error;
                 jint depth;
@@ -3040,10 +3040,11 @@ void threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID) {
                  * depth to get to the right frame.
                  *
                  * fromStackDepth represents the number of frames on the stack when the STEP_OVER
-                 * was started. NotifyFramePop was called on the method that was entered. To
-                 * account for new frames pushed since then, we subtract fromStackDepth from
-                 * the current number of frames. The presents the frame where the STEP_OVER was
-                 * done, but since we want one frame below this point, we also subtract one.
+                 * was started. NotifyFramePop was called on the method that was entered, which is
+                 * one frame below (fromStackDepth + 1). To account for new frames pushed since
+                 * then, we subtract fromStackDepth from the current number of frames. This
+                 * represents the frame where the STEP_OVER was done, but since we want one
+                 * frame below this point, we also subtract one.
                  *
                  * fiber fixme: When doing a STEP_OVER of a method call, NotifyFramePop is not always
                  * done for the callee because it might be a native method. It's not clear to me how
@@ -3051,12 +3052,35 @@ void threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID) {
                  */
                 depth = getThreadFrameCount(thread) - fiberNode->currentStep.fromStackDepth;
                 depth--; /* We actually want the frame one below the adjusted fromStackDepth. */
-                error = JVMTI_FUNC_PTR(gdata->jvmti,NotifyFramePop)(gdata->jvmti, thread, depth);
-                if (error == JVMTI_ERROR_DUPLICATE) {
-                    error = JVMTI_ERROR_NONE;
-                    /* Already being notified, continue without error */
-                } else if (error != JVMTI_ERROR_NONE) {
-                    EXIT_ERROR(error, "NotifyFramePop failed during mountFiber");
+                if (depth > 1) {
+                    error = JVMTI_FUNC_PTR(gdata->jvmti,NotifyFramePop)(gdata->jvmti, thread, depth);
+                    if (error == JVMTI_ERROR_DUPLICATE) {
+                      error = JVMTI_ERROR_NONE;
+                      /* Already being notified, continue without error */
+                    } else if (error != JVMTI_ERROR_NONE) {
+                      EXIT_ERROR(error, "NotifyFramePop failed during mountFiber");
+                    }
+                } else {
+                    /*
+                     * If the depth is not greater than 1, then that means we were single stepping
+                     * over the Continuation.yield() or Continuation.yield0() call. In this case
+                     * NotifyFramePop is not going to work for us since these frames are destroyed
+                     * (not just unmounted, but actually gone for good). By the time we get this
+                     * mount event, Fiber.maybePark() has already executed a few bytecodes since
+                     * execution resumed after the Continuation.yield() call. So what is probably best
+                     * here is just to enable single stepping again. What the user will noticed is
+                     * jumping from the Continuation.yield() to a point later on in 
+                     * Fiber.maybePark() just after the notifyFiberMount() call.
+                     *
+                     * fixme fibers: If we were notified as soon as the Continuation is run again,
+                     * which we'll need for proper continuation single stepping anyway, then
+                     * we can improve this and resume immediately after the yield() call rather
+                     * than after the notifyFiberMount() call.
+                     */
+                    if (fiberNode->instructionStepMode == JVMTI_DISABLE) {
+                      stepControl_enableStepping(thread);
+                      threadNode->instructionStepMode = JVMTI_ENABLE;
+                    }
                 }
             }
    
@@ -3144,7 +3168,7 @@ void threadControl_unmountFiber(jthread fiber, jthread thread) {
                 threadControl_setEventMode(JVMTI_DISABLE, EI_METHOD_ENTRY, thread);
             }
 
-            /* Copy currentStep struct. */
+            /* Copy currentStep struct from the threadNode to the fiberNode and then zero out the threadNode. */
             memcpy(&fiberNode->currentStep, &threadNode->currentStep, sizeof(threadNode->currentStep));
             memset(&threadNode->currentStep, 0, sizeof(threadNode->currentStep));
         }
