@@ -24,20 +24,9 @@
  */
 package sun.net;
 
-import java.net.SocketImpl;
-
 /**
  * Implemented by the platform's SocketImpl implementations.
  */
 
 public interface PlatformSocketImpl {
-
-    /**
-     * Copy the state from this connected SocketImpl to a target SocketImpl. If
-     * the target SocketImpl is not a newly created SocketImpl then it is first
-     * closed to release any resources. The target SocketImpl becomes the owner
-     * of the file descriptor, this SocketImpl is marked as closed and should
-     * be discarded.
-     */
-    void copyTo(SocketImpl si);
 }

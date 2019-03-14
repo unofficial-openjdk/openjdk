@@ -190,6 +190,15 @@ public abstract class SocketImpl implements SocketOptions {
     protected abstract void close() throws IOException;
 
     /**
+     * Closes this socket, ignoring any IOException that is thrown by close.
+     */
+    void closeQuietly() {
+        try {
+            close();
+        } catch (IOException ignore) { }
+    }
+
+    /**
      * Places the input stream for this socket at "end of stream".
      * Any data sent to this socket is acknowledged and then
      * silently discarded.
@@ -319,6 +328,7 @@ public abstract class SocketImpl implements SocketOptions {
     }
 
     void reset() throws IOException {
+        fd = null;
         address = null;
         port = 0;
         localport = 0;
@@ -453,6 +463,19 @@ public abstract class SocketImpl implements SocketOptions {
         } else {
             throw new UnsupportedOperationException("unsupported option");
         }
+    }
+
+    /**
+     * Attempts to copy socket options from this SocketImpl to a target SocketImpl.
+     * At this time, only the SO_TIMEOUT make sense to copy.
+     */
+    void copyOptionsTo(SocketImpl target) {
+        try {
+            Object timeout = getOption(SocketOptions.SO_TIMEOUT);
+            if (timeout instanceof Integer) {
+                target.setOption(SocketOptions.SO_TIMEOUT, timeout);
+            }
+        } catch (IOException ignore) { }
     }
 
     private static final Set<SocketOption<?>> socketOptions;
