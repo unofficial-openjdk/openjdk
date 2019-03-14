@@ -36,6 +36,7 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -58,6 +59,8 @@ import jdk.internal.misc.InnocuousThread;
 import jdk.internal.misc.Unsafe;
 import sun.security.action.GetPropertyAction;
 
+import static java.lang.StackWalker.Option.RETAIN_CLASS_REFERENCE;
+import static java.lang.StackWalker.Option.SHOW_REFLECT_FRAMES;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -87,6 +90,7 @@ public class Fiber<V> {
     private static final Executor DEFAULT_SCHEDULER = defaultScheduler();
     private static final ScheduledExecutorService UNPARKER = delayedTaskScheduler();
     private static final boolean EMULATE_CURRENT_THREAD = emulateCurrentThreadValue();
+    private static final int TRACE_PINNING_MODE = tracePinningMode();
 
     private static final VarHandle STATE;
     private static final VarHandle PARK_PERMIT;
@@ -180,7 +184,13 @@ public class Fiber<V> {
         this.scheduler = scheduler;
         this.cont = new Continuation(FIBER_SCOPE, target) {
             @Override
-            protected void onPinned(Continuation.Pinned reason) { yieldFailed(); }
+            protected void onPinned(Continuation.Pinned reason) {
+                if (TRACE_PINNING_MODE > 0) {
+                    boolean printAll = (TRACE_PINNING_MODE == 1);
+                    PinnedThreadPrinter.printStackTrace(printAll);
+                }
+                yieldFailed();
+            }
         };
         this.runContinuation = this::runContinuation;
 
@@ -1525,6 +1535,39 @@ public class Fiber<V> {
     }
 
     /**
+     * Helper class to print the fiber stack trace when a carrier thread is
+     * pinned.
+     */
+    private static class PinnedThreadPrinter {
+        static final StackWalker INSTANCE;
+        static {
+            var options = Set.of(SHOW_REFLECT_FRAMES, RETAIN_CLASS_REFERENCE);
+            PrivilegedAction<StackWalker> pa = () -> LiveStackFrame.getStackWalker(options, FIBER_SCOPE);
+            INSTANCE = AccessController.doPrivileged(pa);
+        }
+        /**
+         * Prints a stack trace of the current fiber to the standard output stream.
+         * This method is synchronized to reduce interference in the output.
+         * @param printAll true to print all stack frames, false to only print the
+         *        frames that are native or holding a monitor
+         */
+        static synchronized void printStackTrace(boolean printAll) {
+            System.out.println(Fiber.currentFiber());
+            INSTANCE.forEach(f -> {
+                if (f.getDeclaringClass() != PinnedThreadPrinter.class) {
+                    var ste = f.toStackTraceElement();
+                    int monitorCount = ((LiveStackFrame) f).getMonitors().length;
+                    if (monitorCount > 0 || f.isNativeMethod()) {
+                        System.out.format("    %s <== monitors:%d%n", ste, monitorCount);
+                    } else if (printAll) {
+                        System.out.format("    %s%n", ste);
+                    }
+                }
+            });
+        }
+    }
+
+    /**
      * Returns true if the Thread API is emulated when running in a fiber
      */
     static boolean emulateCurrentThread() {
@@ -1538,5 +1581,21 @@ public class Fiber<V> {
     private static boolean emulateCurrentThreadValue() {
         String value = GetPropertyAction.privilegedGetProperty("jdk.emulateCurrentThread");
         return (value == null) || !value.equalsIgnoreCase("false");
+    }
+
+    /**
+     * Reads the value of the jdk.tracePinning property to determine if stack
+     * traces should be printed when a carrier thread is pinned when a fiber
+     * attempts to park.
+     */
+    private static int tracePinningMode() {
+        String value = GetPropertyAction.privilegedGetProperty("jdk.tracePinnedThreads");
+        if (value != null) {
+            if (value.length() == 0 || "full".equalsIgnoreCase(value))
+                return 1;
+            if ("short".equalsIgnoreCase(value))
+                return 2;
+        }
+        return 0;
     }
 }
