@@ -24,8 +24,8 @@
 #ifndef SHARE_GC_Z_VMSTRUCTS_Z_HPP
 #define SHARE_GC_Z_VMSTRUCTS_Z_HPP
 
-#include "gc/z/zAddressRangeMap.hpp"
 #include "gc/z/zCollectedHeap.hpp"
+#include "gc/z/zGranuleMap.hpp"
 #include "gc/z/zHeap.hpp"
 #include "gc/z/zPageAllocator.hpp"
 #include "gc/z/zPhysicalMemory.hpp"
@@ -52,7 +52,7 @@ public:
   const int* _ZObjectAlignmentSmall;
 };
 
-typedef ZAddressRangeMap<ZPageTableEntry, ZPageSizeMinShift> ZAddressRangeMapForPageTable;
+typedef ZGranuleMap<ZPageTableEntry> ZGranuleMapForPageTable;
 
 #define VM_STRUCTS_ZGC(nonstatic_field, volatile_nonstatic_field, static_field)                      \
   static_field(ZGlobalsForVMStructs,            _instance_p,          ZGlobalsForVMStructs*)         \
@@ -79,18 +79,18 @@ typedef ZAddressRangeMap<ZPageTableEntry, ZPageSizeMinShift> ZAddressRangeMapFor
   nonstatic_field(ZPageAllocator,               _physical,            ZPhysicalMemoryManager)        \
   nonstatic_field(ZPageAllocator,               _used,                size_t)                        \
                                                                                                      \
-  nonstatic_field(ZPageTable,                   _map,                 ZAddressRangeMapForPageTable)  \
+  nonstatic_field(ZPageTable,                   _map,                 ZGranuleMapForPageTable)       \
                                                                                                      \
-  nonstatic_field(ZAddressRangeMapForPageTable, _map,                 ZPageTableEntry* const)        \
+  nonstatic_field(ZGranuleMapForPageTable,      _map,                 ZPageTableEntry* const)        \
                                                                                                      \
-  nonstatic_field(ZVirtualMemory,                _start,              uintptr_t)                     \
-  nonstatic_field(ZVirtualMemory,                _end,                uintptr_t)                     \
+  nonstatic_field(ZVirtualMemory,               _start,               uintptr_t)                     \
+  nonstatic_field(ZVirtualMemory,               _end,                 uintptr_t)                     \
                                                                                                      \
-  nonstatic_field(ZForwardingTable,              _table,              ZForwardingTableEntry*)        \
-  nonstatic_field(ZForwardingTable,              _size,               size_t)                        \
+  nonstatic_field(ZForwardingTable,             _table,               ZForwardingTableEntry*)        \
+  nonstatic_field(ZForwardingTable,             _size,                size_t)                        \
                                                                                                      \
-  nonstatic_field(ZPhysicalMemoryManager,        _max_capacity,       const size_t)                  \
-  nonstatic_field(ZPhysicalMemoryManager,        _capacity,           size_t)
+  nonstatic_field(ZPhysicalMemoryManager,       _max_capacity,        const size_t)                  \
+  nonstatic_field(ZPhysicalMemoryManager,       _capacity,            size_t)
 
 #define VM_INT_CONSTANTS_ZGC(declare_constant, declare_constant_with_value)                          \
   declare_constant(ZPhaseRelocate)                                                                   \
@@ -101,9 +101,9 @@ typedef ZAddressRangeMap<ZPageTableEntry, ZPageSizeMinShift> ZAddressRangeMapFor
   declare_constant(ZObjectAlignmentLargeShift)
 
 #define VM_LONG_CONSTANTS_ZGC(declare_constant)                                                      \
+  declare_constant(ZGranuleSizeShift)                                                                \
   declare_constant(ZPageSizeSmallShift)                                                              \
   declare_constant(ZPageSizeMediumShift)                                                             \
-  declare_constant(ZPageSizeMinShift)                                                                \
   declare_constant(ZAddressOffsetShift)                                                              \
   declare_constant(ZAddressOffsetBits)                                                               \
   declare_constant(ZAddressOffsetMask)                                                               \
@@ -118,7 +118,7 @@ typedef ZAddressRangeMap<ZPageTableEntry, ZPageSizeMinShift> ZAddressRangeMapFor
   declare_toplevel_type(ZPageAllocator)                                                              \
   declare_toplevel_type(ZPageTable)                                                                  \
   declare_toplevel_type(ZPageTableEntry)                                                             \
-  declare_toplevel_type(ZAddressRangeMapForPageTable)                                                \
+  declare_toplevel_type(ZGranuleMapForPageTable)                                                     \
   declare_toplevel_type(ZVirtualMemory)                                                              \
   declare_toplevel_type(ZForwardingTable)                                                            \
   declare_toplevel_type(ZForwardingTableEntry)                                                       \

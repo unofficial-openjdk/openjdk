@@ -278,13 +278,6 @@ public:
   // non-object.
   virtual HeapWord* block_start(const void* addr) const;
 
-  // Requires "addr" to be the start of a chunk, and returns its size.
-  // "addr + size" is required to be the start of a new chunk, or the end
-  // of the active area of the heap. Assumes (and verifies in non-product
-  // builds) that addr is in the allocated part of the heap and is
-  // the start of a chunk.
-  virtual size_t block_size(const HeapWord* addr) const;
-
   // Requires "addr" to be the start of a block, and returns "TRUE" iff
   // the block is an object. Assumes (and verifies in non-product
   // builds) that addr is in the allocated part of the heap and is
@@ -497,6 +490,10 @@ private:
 
   // Save the tops of the spaces in all generations
   void record_gen_tops_before_GC() PRODUCT_RETURN;
+
+  // Return true if we need to perform full collection.
+  bool should_do_full_collection(size_t size, bool full,
+                                 bool is_tlab, GenerationType max_gen) const;
 };
 
 #endif // SHARE_GC_SHARED_GENCOLLECTEDHEAP_HPP

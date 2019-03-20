@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,12 +80,12 @@ ZHeap::ZHeap() :
 }
 
 size_t ZHeap::heap_min_size() const {
-  const size_t aligned_min_size = align_up(InitialHeapSize, ZPageSizeMin);
+  const size_t aligned_min_size = align_up(InitialHeapSize, ZGranuleSize);
   return MIN2(aligned_min_size, heap_max_size());
 }
 
 size_t ZHeap::heap_max_size() const {
-  const size_t aligned_max_size = align_up(MaxHeapSize, ZPageSizeMin);
+  const size_t aligned_max_size = align_up(MaxHeapSize, ZGranuleSize);
   return MIN2(aligned_max_size, ZAddressOffsetMax);
 }
 
@@ -183,11 +183,6 @@ bool ZHeap::is_in(uintptr_t addr) const {
 uintptr_t ZHeap::block_start(uintptr_t addr) const {
   const ZPage* const page = _pagetable.get(addr);
   return page->block_start(addr);
-}
-
-size_t ZHeap::block_size(uintptr_t addr) const {
-  const ZPage* const page = _pagetable.get(addr);
-  return page->block_size(addr);
 }
 
 bool ZHeap::block_is_obj(uintptr_t addr) const {

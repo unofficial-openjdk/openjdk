@@ -242,12 +242,14 @@ public:
 //
 private:
   MemRegion _heap_region;
+  bool      _heap_region_special;
   size_t    _num_regions;
   ShenandoahHeapRegion** _regions;
   ShenandoahRegionIterator _update_refs_iterator;
 
 public:
   inline size_t num_regions() const { return _num_regions; }
+  inline bool is_heap_region_special() { return _heap_region_special; }
 
   inline ShenandoahHeapRegion* const heap_region_containing(const void* addr) const;
   inline size_t heap_region_index_containing(const void* addr) const;
@@ -486,7 +488,7 @@ public:
   ShenandoahFreeSet*         free_set()          const { return _free_set;          }
   ShenandoahConcurrentMark*  concurrent_mark()         { return _scm;               }
   ShenandoahTraversalGC*     traversal_gc()            { return _traversal_gc;      }
-  ShenandoahPacer*           pacer() const             { return _pacer;             }
+  ShenandoahPacer*           pacer()             const { return _pacer;             }
 
   ShenandoahPhaseTimings*    phase_timings()     const { return _phase_timings;     }
   ShenandoahAllocTracker*    alloc_tracker()     const { return _alloc_tracker;     }
@@ -565,7 +567,6 @@ public:
 
   // Used for parsing heap during error printing
   HeapWord* block_start(const void* addr) const;
-  size_t block_size(const HeapWord* addr) const;
   bool block_is_obj(const HeapWord* addr) const;
 
   // Used for native heap walkers: heap dumpers, mostly
@@ -648,6 +649,9 @@ private:
   size_t _bitmap_size;
   size_t _bitmap_regions_per_slice;
   size_t _bitmap_bytes_per_slice;
+
+  bool _bitmap_region_special;
+  bool _aux_bitmap_region_special;
 
   // Used for buffering per-region liveness data.
   // Needed since ShenandoahHeapRegion uses atomics to update liveness.
