@@ -341,7 +341,20 @@ class Thread implements Runnable {
      * concurrency control constructs such as the ones in the
      * {@link java.util.concurrent.locks} package.
      */
-    public static native void yield();
+    public static void yield() {
+        Fiber<?> fiber = currentCarrierThread().getFiber();
+        if (fiber != null) {
+            if (!Fiber.emulateCurrentThread()) {
+                throw new UnsupportedOperationException(
+                    "Thread.yield cannot be used in the context of a fiber");
+            }
+            fiber.yield();
+        } else {
+            yield0();
+        }
+
+    }
+    private static native void yield0();
 
     /**
      * Causes the currently executing thread to sleep (temporarily cease

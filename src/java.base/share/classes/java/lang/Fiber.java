@@ -129,7 +129,8 @@ public class Fiber<V> {
     private static final short ST_PARKING  = 3;
     private static final short ST_PARKED   = 4;
     private static final short ST_PINNED   = 5;
-    private static final short ST_WALKINGSTACK = 64;
+    private static final short ST_YIELDING     = 50;  // Thread.yield
+    private static final short ST_WALKINGSTACK = 51;  // Thread.getStackTrace
     private static final short ST_TERMINATED   = 99;
     private volatile short state;
 
@@ -374,10 +375,10 @@ public class Fiber<V> {
         // set state to ST_RUNNING
         boolean firstRun = stateCompareAndSet(ST_STARTED, ST_RUNNABLE);
         if (!firstRun) {
-            // continue on this carrier thread if fiber was parked
+            // continue on this carrier thread if fiber was parked or it yielded
             if (stateCompareAndSet(ST_PARKED, ST_RUNNABLE)) {
                 parkPermitGetAndSet(false);  // consume parking permit
-            } else {
+            } else if (!stateCompareAndSet(ST_YIELDING, ST_RUNNABLE)) {
                 return;
             }
         }
@@ -440,15 +441,22 @@ public class Fiber<V> {
     }
 
     /**
-     * Invoke after yielding to set the state to ST_PARKED and notify any
-     * threads waiting for the fiber to park.
+     * Invoke after yielding. If parking, sets the state to ST_PARKED and notifies
+     * anyone waiting for the fiber to park.
      */
     private void afterYield() {
-        int oldState = stateGetAndSet(ST_PARKED);
-        assert oldState == ST_PARKING;
+        int s = stateGet();
+        if (s == ST_YIELDING) {
+            // Thread.yield, submit task to continue
+            assert Thread.currentCarrierThread().getFiber() == null;
+            scheduler.execute(runContinuation);
+        } else {
+            int oldState = stateGetAndSet(ST_PARKED);
+            assert oldState == ST_PARKING;
 
-        // signal anyone waiting for this fiber to park
-        signalParking();
+            // signal anyone waiting for this fiber to park
+            signalParking();
+        }
     }
 
     /**
@@ -482,10 +490,15 @@ public class Fiber<V> {
 
     /**
      * Invoked by onPinned when the continuation cannot yield due to a
-     * synchronized or native frame on the continuation stack. This method sets
-     * the fiber state to ST_PINNED and parks the carrier thread.
+     * synchronized or native frame on the continuation stack. If the fiber is
+     * parking then its state is changed to ST_PINNED and carrier thread parks.
      */
     private void yieldFailed() {
+        if (stateGet() == ST_YIELDING) {
+            // nothing to do
+            return;
+        }
+
         // switch to carrier thread
         Thread thread = Thread.currentCarrierThread();
         thread.setFiber(null);
@@ -580,6 +593,7 @@ public class Fiber<V> {
             }
         } else {
             // consume permit when not parking
+            fiber.yield();
             fiber.parkPermitGetAndSet(false);
         }
     }
@@ -698,6 +712,23 @@ public class Fiber<V> {
                 Thread.currentThread().interrupt();
         }
         return s;
+    }
+
+    /**
+     * For use by Thread.yield to yield on the current carrier thread. A no-op
+     * if the continuation is pinned.
+     */
+    void yield() {
+        assert Thread.currentCarrierThread().getFiber() == this;
+        if (!stateCompareAndSet(ST_RUNNABLE, ST_YIELDING)) {
+            throw new InternalError();
+        }
+        if (!Continuation.yield(FIBER_SCOPE)) {
+            // yield failed, restore state and continue
+            if (!stateCompareAndSet(ST_YIELDING, ST_RUNNABLE)) {
+                throw new InternalError();
+            }
+        }
     }
 
     /**
@@ -1053,6 +1084,7 @@ public class Fiber<V> {
                 return Thread.State.NEW;
             case ST_STARTED:
             case ST_RUNNABLE:
+            case ST_YIELDING:
                 Thread t = carrierThread;
                 if (t != null) {
                     // if mounted then return state of carrier thread (although
@@ -1450,7 +1482,9 @@ public class Fiber<V> {
                 parallelism = Runtime.getRuntime().availableProcessors();
             }
             Thread.UncaughtExceptionHandler ueh = (t, e) -> { };
-            boolean asyncMode = Boolean.getBoolean("jdk.defaultScheduler.asyncMode");
+            // use FIFO as default
+            s = System.getProperty("jdk.defaultScheduler.lifo");
+            boolean asyncMode = (s == null) || s.equalsIgnoreCase("false");
             return new ForkJoinPool(parallelism, factory, ueh, asyncMode);
         };
         return AccessController.doPrivileged(pa);

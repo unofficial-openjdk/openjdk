@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Method;
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
 import java.util.concurrent.locks.*;
@@ -1164,6 +1165,30 @@ public class Basic {
         Fiber.schedule(() -> ref.set(Thread.currentThread()));
         Thread t = waitForValue(ref);
         t.join(-1);
+    }
+
+
+    // -- Thread.yield --
+
+    public void testThreadYield() {
+        var list = new CopyOnWriteArrayList<String>();
+        ExecutorService scheduler = Executors.newFixedThreadPool(1);
+        try {
+            Fiber.schedule(scheduler, () -> {
+                list.add("A");
+                Fiber<?> child = Fiber.schedule(() -> {
+                    list.add("B");
+                    Thread.yield();
+                    list.add("B");
+                });
+                Thread.yield();
+                list.add("A");
+                child.join();
+            }).join();
+        } finally {
+            scheduler.shutdown();
+        }
+        assertEquals(list, List.of("A", "B", "A", "B"));
     }
 
 
