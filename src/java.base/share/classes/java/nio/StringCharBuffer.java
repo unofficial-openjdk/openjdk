@@ -37,8 +37,7 @@ class StringCharBuffer                                  // package-private
     StringCharBuffer(CharSequence s, int start, int end) { // package-private
         super(-1, start, end, s.length());
         int n = s.length();
-        if ((start < 0) || (start > n) || (end < start) || (end > n))
-            throw new IndexOutOfBoundsException();
+        Objects.checkFromToIndex(start, end, n);
         str = s;
         this.isReadOnly = true;
     }
@@ -54,8 +53,7 @@ class StringCharBuffer                                  // package-private
 
     @Override
     public CharBuffer slice(int index, int length) {
-        Objects.checkIndex(index, limit() + 1);
-        Objects.checkIndex(length, limit() - index + 1);
+        Objects.checkFromIndexSize(index, length, limit());
         return new StringCharBuffer(str,
                                     -1,
                                     0,

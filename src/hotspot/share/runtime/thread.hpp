@@ -1877,7 +1877,7 @@ class JavaThread: public Thread {
   virtual void nmethods_do(CodeBlobClosure* cf);
 
   // RedefineClasses Support
-  void metadata_do(void f(Metadata*));
+  void metadata_do(MetadataClosure* f);
 
   // Misc. operations
   char* name() const { return (char*)get_thread_name(); }
@@ -2295,7 +2295,7 @@ class Threads: AllStatic {
   static void nmethods_do(CodeBlobClosure* cf);
 
   // RedefineClasses support
-  static void metadata_do(void f(Metadata*));
+  static void metadata_do(MetadataClosure* f);
   static void metadata_handles_do(void f(Metadata*));
 
 #ifdef ASSERT
