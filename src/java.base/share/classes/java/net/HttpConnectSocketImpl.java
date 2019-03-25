@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010, 2013, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -114,13 +114,16 @@ import java.util.Set;
         if (endpoint == null || !(endpoint instanceof InetSocketAddress))
             throw new IllegalArgumentException("Unsupported address type");
         final InetSocketAddress epoint = (InetSocketAddress)endpoint;
-        final String destHost = epoint.isUnresolved() ? epoint.getHostName()
-                                                      : epoint.getAddress().getHostAddress();
+        String destHost = epoint.isUnresolved() ? epoint.getHostName()
+                                                : epoint.getAddress().getHostAddress();
         final int destPort = epoint.getPort();
 
         SecurityManager security = System.getSecurityManager();
         if (security != null)
             security.checkConnect(destHost, destPort);
+
+        if (destHost.contains(":"))
+            destHost = "[" + destHost + "]";
 
         // Connect to the HTTP proxy server
         String urlString = "http://" + destHost + ":" + destPort;

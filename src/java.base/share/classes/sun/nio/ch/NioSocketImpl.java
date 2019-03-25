@@ -82,7 +82,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  */
 
 public final class NioSocketImpl extends SocketImpl implements PlatformSocketImpl {
-    private static final NativeDispatcher nd = new SocketDispatcher(true);
+    private static final NativeDispatcher nd = new SocketDispatcher();
 
     // The maximum number of bytes to read/write per syscall to avoid needing
     // a huge buffer from the temporary buffer cache
@@ -553,37 +553,36 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
     }
 
     /**
-     * Waits for a connection attempt to finish with a timeout.
+     * Waits for a connection attempt to finish with a timeout
      * @throws SocketTimeoutException if the connect timeout elapses
      */
-    private int timedFinishConnect(FileDescriptor fd, int millis) throws IOException {
+    private void timedFinishConnect(FileDescriptor fd, int millis) throws IOException {
         long nanos = NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
         long remainingNanos = nanos;
         long startNanos = System.nanoTime();
-        int n;
+        boolean polled;
         do {
             park(fd, Net.POLLOUT, remainingNanos);
-            n = Net.pollConnectNow(fd);
-            if (n == 0) {
+            polled = Net.pollConnectNow(fd);
+            if (!polled) {
                 remainingNanos = nanos - (System.nanoTime() - startNanos);
                 if (remainingNanos <= 0) {
                     throw new SocketTimeoutException("Connect timed out");
                 }
             }
-        } while (n == 0 && isOpen());
-        return n;
+        } while (!polled && isOpen());
     }
 
     /**
      * Attempts to establish a connection to the given socket address with a
      * timeout. Closes the socket if connection cannot be established.
-     * @throws IllegalArgumentException if the address is not an InetSocketAddress
-     * @throws UnknownHostException if the InetSocketAddress is not resolved
-     * @throws IOException if the connection cannot be established
+     * @throws IOException if the address is not a resolved InetSocketAdress or
+     *         the connection cannot be established
      */
     private void implConnect(SocketAddress remote, int millis) throws IOException {
+        // SocketImpl connect only specifies IOException
         if (!(remote instanceof InetSocketAddress))
-            throw new IllegalArgumentException("Unsupported address type");
+            throw new IOException("Unsupported address type");
         InetSocketAddress isa = (InetSocketAddress) remote;
         if (isa.isUnresolved()) {
             throw new UnknownHostException(isa.getHostName());
@@ -603,19 +602,26 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
                 try {
                     configureNonBlockingIfNeeded(fd, millis);
                     int n = Net.connect(fd, address, port);
-                    if (IOStatus.okayToRetry(n) && isOpen()) {
-                        if (millis > 0) {
-                            // finish connect with timeout
-                            n = timedFinishConnect(fd, millis);
-                        } else {
-                            // finish connect, no timeout
-                            do {
-                                park(fd, Net.POLLOUT);
-                                n = Net.pollConnectNow(fd);
-                            } while (n == 0 && isOpen());
+                    if (isOpen()) {
+                        if (n > 0) {
+                            // connection established
+                            connected = true;
+                        } else if (IOStatus.okayToRetry(n)) {
+                            // not established or interrupted
+                            if (millis > 0) {
+                                // finish connect with timeout
+                                timedFinishConnect(fd, millis);
+                            } else {
+                                // finish connect, no timeout
+                                boolean polled;
+                                do {
+                                    park(fd, Net.POLLOUT);
+                                    polled = Net.pollConnectNow(fd);
+                                } while (!polled && isOpen());
+                            }
+                            connected = isOpen();
                         }
                     }
-                    connected = (n > 0) && isOpen();
                 } finally {
                     endConnect(connected);
                 }
@@ -717,7 +723,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
         int n;
         do {
             park(fd, Net.POLLIN, remainingNanos);
-            n = ServerSocketChannelImpl.accept0(fd, newfd, isaa);
+            n = Net.accept(fd, newfd, isaa);
             if (n == IOStatus.UNAVAILABLE) {
                 remainingNanos = nanos - (System.nanoTime() - startNanos);
                 if (remainingNanos <= 0) {
@@ -746,7 +752,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
             try {
                 int timeout = this.timeout;
                 configureNonBlockingIfNeeded(fd, timeout);
-                n = ServerSocketChannelImpl.accept0(fd, newfd, isaa);
+                n = Net.accept(fd, newfd, isaa);
                 if (IOStatus.okayToRetry(n) && isOpen()) {
                     if (timeout > 0) {
                         // accept with timeout
@@ -755,7 +761,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
                         // accept, no timeout
                         do {
                             park(fd, Net.POLLIN);
-                            n = ServerSocketChannelImpl.accept0(fd, newfd, isaa);
+                            n = Net.accept(fd, newfd, isaa);
                         } while (IOStatus.okayToRetry(n) && isOpen());
                     }
                 }
@@ -844,16 +850,13 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
 
     @Override
     protected int available() throws IOException {
-        readLock.lock();
-        try {
+        synchronized (stateLock) {
             ensureOpenAndConnected();
             if (isInputClosed) {
                 return 0;
             } else {
                 return Net.available(fd);
             }
-        } finally {
-            readLock.unlock();
         }
     }
 
@@ -937,18 +940,39 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
             Thread.currentThread().interrupt();
     }
 
+    // the socket options supported by client and server sockets
+    private static volatile Set<SocketOption<?>> clientSocketOptions;
+    private static volatile Set<SocketOption<?>> serverSocketOptions;
+
     @Override
     protected Set<SocketOption<?>> supportedOptions() {
-        Set<SocketOption<?>> options = new HashSet<>();
-        options.addAll(super.supportedOptions());
-        if (server) {
-            options.addAll(ExtendedSocketOptions.serverSocketOptions());
-        } else {
-            options.addAll(ExtendedSocketOptions.clientSocketOptions());
+        Set<SocketOption<?>> options = (server) ? serverSocketOptions : clientSocketOptions;
+        if (options == null) {
+            options = new HashSet<>();
+            options.add(StandardSocketOptions.SO_RCVBUF);
+            options.add(StandardSocketOptions.SO_REUSEADDR);
+            if (server) {
+                // IP_TOS added for server socket to maintain compatibility
+                options.add(StandardSocketOptions.IP_TOS);
+                options.addAll(ExtendedSocketOptions.serverSocketOptions());
+            } else {
+                options.add(StandardSocketOptions.IP_TOS);
+                options.add(StandardSocketOptions.SO_KEEPALIVE);
+                options.add(StandardSocketOptions.SO_SNDBUF);
+                options.add(StandardSocketOptions.SO_LINGER);
+                options.add(StandardSocketOptions.TCP_NODELAY);
+                options.addAll(ExtendedSocketOptions.clientSocketOptions());
+            }
+            if (Net.isReusePortAvailable())
+                options.add(StandardSocketOptions.SO_REUSEPORT);
+            options = Collections.unmodifiableSet(options);
+            if (server) {
+                serverSocketOptions = options;
+            } else {
+                clientSocketOptions = options;
+            }
         }
-        if (Net.isReusePortAvailable())
-            options.add(StandardSocketOptions.SO_REUSEPORT);
-        return Collections.unmodifiableSet(options);
+        return options;
     }
 
     @Override

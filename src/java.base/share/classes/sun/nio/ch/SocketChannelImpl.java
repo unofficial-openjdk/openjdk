@@ -542,13 +542,11 @@ class SocketChannelImpl
             int n = 0;
             try {
                 beginWrite(blocking);
-
                 maybeConfigureNonBlocking(fd);
                 n = Net.sendOOB(fd, b);
                 if (blocking && IOStatus.okayToRetry(n)) {
-                    throw new RuntimeException("not implemented");
+                    throw new IOException("No buffer space available");
                 }
-
             } finally {
                 endWrite(blocking, n > 0);
                 if (n <= 0 && isOutputClosed)
@@ -721,13 +719,20 @@ class SocketChannelImpl
                         beginConnect(blocking, isa);
                         maybeConfigureNonBlocking(fd);
                         int n = Net.connect(fd, ia, isa.getPort());
-                        if (blocking && IOStatus.okayToRetry(n)) {
-                            do {
-                                park(Net.POLLOUT);
-                                n = Net.pollConnectNow(fd);
-                            } while (n == 0 && isOpen());
+                        if (isOpen()) {
+                            if (n > 0) {
+                                // connection established
+                                connected = true;
+                            } else if (blocking && IOStatus.okayToRetry(n)) {
+                                // not established
+                                boolean polled;
+                                do {
+                                    park(Net.POLLOUT);
+                                    polled = Net.pollConnectNow(fd);
+                                } while (!polled && isOpen());
+                                connected = polled && isOpen();
+                            }
                         }
-                        connected = (n > 0) && isOpen();
                     } finally {
                         endConnect(blocking, connected);
                     }
@@ -804,14 +809,18 @@ class SocketChannelImpl
                     boolean connected = false;
                     try {
                         beginFinishConnect(blocking);
-                        int n = Net.pollConnectNow(fd);
-                        if (n == 0 && blocking) {
-                            do {
-                                park(Net.POLLOUT);
-                                n = Net.pollConnectNow(fd);
-                            } while (n == 0 && isOpen());
+                        boolean polled = Net.pollConnectNow(fd);
+                        if (isOpen()) {
+                            if (polled) {
+                                connected = true;
+                            } else if (blocking) {
+                                do {
+                                    park(Net.POLLOUT);
+                                    polled = Net.pollConnectNow(fd);
+                                } while (!polled && isOpen());
+                                connected = polled && isOpen();
+                            }
                         }
-                        connected = (n > 0) && isOpen();
                     } finally {
                         endFinishConnect(blocking, connected);
                     }

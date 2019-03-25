@@ -23,6 +23,7 @@
 
 #include "precompiled.hpp"
 #include "gc/z/zAddress.inline.hpp"
+#include "gc/z/zGranuleMap.inline.hpp"
 #include "gc/z/zPage.inline.hpp"
 #include "gc/z/zPageTable.inline.hpp"
 #include "runtime/orderAccess.hpp"
@@ -31,65 +32,22 @@
 ZPageTable::ZPageTable() :
     _map() {}
 
-ZPageTableEntry ZPageTable::get_entry(ZPage* page) const {
+void ZPageTable::insert(ZPage* page) {
   const uintptr_t addr = ZAddress::good(page->start());
-  return _map.get(addr);
-}
+  const size_t size = page->size();
 
-void ZPageTable::put_entry(ZPage* page, ZPageTableEntry entry) {
-  // Make sure a newly created page is globally visible before
-  // updating the pagetable.
+  // Make sure a newly created page is
+  // visible before updating the page table.
   OrderAccess::storestore();
 
-  const uintptr_t start = ZAddress::good(page->start());
-  const uintptr_t end = start + page->size();
-  for (uintptr_t addr = start; addr < end; addr += ZGranuleSize) {
-    _map.put(addr, entry);
-  }
-}
-
-void ZPageTable::insert(ZPage* page) {
-  assert(get_entry(page).page() == NULL ||
-         get_entry(page).page() == page, "Invalid entry");
-
-  // Cached pages stays in the pagetable and we must not re-insert
-  // those when they get re-allocated because they might also be
-  // relocating and we don't want to clear their relocating bit.
-  if (get_entry(page).page() == NULL) {
-    ZPageTableEntry entry(page, false /* relocating */);
-    put_entry(page, entry);
-  }
-
-  assert(get_entry(page).page() == page, "Invalid entry");
+  assert(get(addr) == NULL, "Invalid entry");
+  _map.put(addr, size, page);
 }
 
 void ZPageTable::remove(ZPage* page) {
-  assert(get_entry(page).page() == page, "Invalid entry");
+  const uintptr_t addr = ZAddress::good(page->start());
+  const size_t size = page->size();
 
-  ZPageTableEntry entry;
-  put_entry(page, entry);
-
-  assert(get_entry(page).page() == NULL, "Invalid entry");
-}
-
-void ZPageTable::set_relocating(ZPage* page) {
-  assert(get_entry(page).page() == page, "Invalid entry");
-  assert(!get_entry(page).relocating(), "Invalid entry");
-
-  ZPageTableEntry entry(page, true /* relocating */);
-  put_entry(page, entry);
-
-  assert(get_entry(page).page() == page, "Invalid entry");
-  assert(get_entry(page).relocating(), "Invalid entry");
-}
-
-void ZPageTable::clear_relocating(ZPage* page) {
-  assert(get_entry(page).page() == page, "Invalid entry");
-  assert(get_entry(page).relocating(), "Invalid entry");
-
-  ZPageTableEntry entry(page, false /* relocating */);
-  put_entry(page, entry);
-
-  assert(get_entry(page).page() == page, "Invalid entry");
-  assert(!get_entry(page).relocating(), "Invalid entry");
+  assert(get(addr) == page, "Invalid entry");
+  _map.put(addr, size, NULL);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,26 +34,28 @@ import java.io.IOException;
  */
 
 class SocketDispatcher extends NativeDispatcher {
-    private final boolean detectConnectionReset;
+    SocketDispatcher() { }
 
-    SocketDispatcher(boolean detectConnectionReset) {
-        this.detectConnectionReset = detectConnectionReset;
-    }
-
-    SocketDispatcher() {
-        this(false);
-    }
-
+    /**
+     * Reads up to len bytes from a socket with special handling for "connection
+     * reset".
+     *
+     * @throws sun.net.ConnectionResetException if connection reset is detected
+     * @throws IOException if another I/O error occurs
+     */
     int read(FileDescriptor fd, long address, int len) throws IOException {
-        if (detectConnectionReset) {
-            return read0(fd, address, len);
-        } else {
-            return FileDispatcherImpl.read0(fd, address, len);
-        }
+        return read0(fd, address, len);
     }
 
+    /**
+     * Scattering read from a socket into len buffers with special handling for
+     * "connection reset".
+     *
+     * @throws sun.net.ConnectionResetException if connection reset is detected
+     * @throws IOException if another I/O error occurs
+     */
     long readv(FileDescriptor fd, long address, int len) throws IOException {
-        return FileDispatcherImpl.readv0(fd, address, len);
+        return readv0(fd, address, len);
     }
 
     int write(FileDescriptor fd, long address, int len) throws IOException {
@@ -74,14 +76,10 @@ class SocketDispatcher extends NativeDispatcher {
 
     // -- Native methods --
 
-    /**
-     * Reads up to len bytes from a socket with special handling for "connection
-     * reset".
-     *
-     * @throws sun.net.ConnectionResetException if connection reset is detected
-     * @throws IOException if another I/O error occurs
-     */
     private static native int read0(FileDescriptor fd, long address, int len)
+        throws IOException;
+
+    private static native long readv0(FileDescriptor fd, long address, int len)
         throws IOException;
 
     static {

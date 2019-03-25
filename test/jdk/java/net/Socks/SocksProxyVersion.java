@@ -98,7 +98,7 @@ public class SocksProxyVersion implements Runnable {
     {
         try (Socket s = socket) {
             socket.connect(new InetSocketAddress(addr, port));
-        } catch (IOException e) {
+        } catch (SocketException e) {
             // java.net.SocketException: Malformed reply from SOCKS server
             // This exception is OK, since the "server" does not implement
             // the socks protocol. It just verifies the version and closes.

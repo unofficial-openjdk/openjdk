@@ -235,7 +235,7 @@ private:
   virtual oop* oop_addr_at(int index) const { ShouldNotReachHere(); return NULL; }
   virtual Metadata** metadata_addr_at(int index) const { ShouldNotReachHere(); return NULL; }
 
-  virtual void metadata_do(void f(Metadata*));
+  virtual void metadata_do(MetadataClosure* f);
 
   int orig_pc_offset() { return _meta->orig_pc_offset(); }
   
