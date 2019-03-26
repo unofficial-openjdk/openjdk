@@ -129,7 +129,7 @@ public class Fiber<V> {
     private static final short ST_PARKING  = 3;
     private static final short ST_PARKED   = 4;
     private static final short ST_PINNED   = 5;
-    private static final short ST_YIELDING     = 50;  // Thread.yield
+    private static final short ST_YIELDED  = 6;
     private static final short ST_WALKINGSTACK = 51;  // Thread.getStackTrace
     private static final short ST_TERMINATED   = 99;
     private volatile short state;
@@ -378,7 +378,7 @@ public class Fiber<V> {
             // continue on this carrier thread if fiber was parked or it yielded
             if (stateCompareAndSet(ST_PARKED, ST_RUNNABLE)) {
                 parkPermitGetAndSet(false);  // consume parking permit
-            } else if (!stateCompareAndSet(ST_YIELDING, ST_RUNNABLE)) {
+            } else if (!stateCompareAndSet(ST_YIELDED, ST_RUNNABLE)) {
                 return;
             }
         }
@@ -446,16 +446,17 @@ public class Fiber<V> {
      */
     private void afterYield() {
         int s = stateGet();
-        if (s == ST_YIELDING) {
+        if (s == ST_PARKING) {
+            // signal anyone waiting for this fiber to park
+            stateGetAndSet(ST_PARKED);
+            signalParking();
+        } else if (s == ST_RUNNABLE) {
             // Thread.yield, submit task to continue
             assert Thread.currentCarrierThread().getFiber() == null;
+            stateGetAndSet(ST_YIELDED);
             scheduler.execute(runContinuation);
         } else {
-            int oldState = stateGetAndSet(ST_PARKED);
-            assert oldState == ST_PARKING;
-
-            // signal anyone waiting for this fiber to park
-            signalParking();
+            throw new InternalError();
         }
     }
 
@@ -494,7 +495,7 @@ public class Fiber<V> {
      * parking then its state is changed to ST_PINNED and carrier thread parks.
      */
     private void yieldFailed() {
-        if (stateGet() == ST_YIELDING) {
+        if (stateGet() == ST_RUNNABLE) {
             // nothing to do
             return;
         }
@@ -719,16 +720,10 @@ public class Fiber<V> {
      * if the continuation is pinned.
      */
     void yield() {
-        assert Thread.currentCarrierThread().getFiber() == this;
-        if (!stateCompareAndSet(ST_RUNNABLE, ST_YIELDING)) {
-            throw new InternalError();
-        }
-        if (!Continuation.yield(FIBER_SCOPE)) {
-            // yield failed, restore state and continue
-            if (!stateCompareAndSet(ST_YIELDING, ST_RUNNABLE)) {
-                throw new InternalError();
-            }
-        }
+        assert Thread.currentCarrierThread().getFiber() == this
+                && stateGet() == ST_RUNNABLE;
+        Continuation.yield(FIBER_SCOPE);
+        assert stateGet() == ST_RUNNABLE;
     }
 
     /**
@@ -1084,7 +1079,7 @@ public class Fiber<V> {
                 return Thread.State.NEW;
             case ST_STARTED:
             case ST_RUNNABLE:
-            case ST_YIELDING:
+            case ST_YIELDED:
                 Thread t = carrierThread;
                 if (t != null) {
                     // if mounted then return state of carrier thread (although
