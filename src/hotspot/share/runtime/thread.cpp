@@ -3339,7 +3339,7 @@ void JavaThread::print_frame_layout(int depth, bool validate_only) {
   PRESERVE_EXCEPTION_MARK;
   FrameValues values;
   int frame_no = 0;
-  for (StackFrameStream fst(this, false); !fst.is_done(); fst.next()) {
+  for (StackFrameStream fst(this, false, true); !fst.is_done(); fst.next()) {
     fst.current()->describe(values, ++frame_no, fst.register_map());
     if (depth == frame_no) break;
   }
