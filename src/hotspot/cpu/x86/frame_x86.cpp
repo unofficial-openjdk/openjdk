@@ -469,7 +469,7 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
     if (map->walk_cont()) { // about to walk into an h-stack
       return Continuation::top_frame(*this, map);
     } else
-      sender_pc = Continuation::fix_continuation_bottom_sender(this, map, sender_pc);
+      Continuation::fix_continuation_bottom_sender(this, map, &sender_pc, NULL);
   }
 
   return frame(sender_sp, unextended_sp, link(), sender_pc);
@@ -613,7 +613,7 @@ intptr_t* frame::interpreter_frame_tos_at(jint offset) const {
 #ifndef PRODUCT
 
 #define DESCRIBE_FP_OFFSET(name) \
-  values.describe(frame_no, fp() + frame::name##_offset, #name)
+  values.describe(frame_no, fp() + frame::name##_offset, #name, 1)
 
 void frame::describe_pd(FrameValues& values, int frame_no) {
   if (is_interpreted_frame()) {
@@ -626,6 +626,9 @@ void frame::describe_pd(FrameValues& values, int frame_no) {
     DESCRIBE_FP_OFFSET(interpreter_frame_locals);
     DESCRIBE_FP_OFFSET(interpreter_frame_bcp);
     DESCRIBE_FP_OFFSET(interpreter_frame_initial_sp);
+  } else if (is_compiled_frame()) {
+    values.describe(frame_no, real_fp() - return_addr_offset, "return address");
+    values.describe(frame_no, real_fp() - sender_sp_offset,   "saved fp", 2);
 #ifdef AMD64
   } else if (is_entry_frame()) {
     // This could be more descriptive if we use the enum in

@@ -336,7 +336,6 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
   // frame owned by optimizing compiler
   assert(_cb->frame_size() >= 0, "must have non-zero frame size");
   intptr_t* sender_sp = unextended_sp() + _cb->frame_size();
-  intptr_t* unextended_sp = sender_sp;
 
   assert (sender_sp == real_fp(), "sender_sp: " INTPTR_FORMAT " real_fp: " INTPTR_FORMAT, p2i(sender_sp), p2i(real_fp()));
 
@@ -374,10 +373,11 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
     if (map->walk_cont()) { // about to walk into an h-stack 
       return Continuation::top_frame(*this, map);
     } else {
-      sender_pc = Continuation::fix_continuation_bottom_sender(this, map, sender_pc);
+      Continuation::fix_continuation_bottom_sender(this, map, &sender_pc, &sender_sp);
     }
   }
 
+  intptr_t* unextended_sp = sender_sp;
   CodeBlob* sender_cb = LOOKUP::find_blob(sender_pc);
   if (sender_cb != NULL) {
     return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc, sender_cb);

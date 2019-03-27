@@ -67,7 +67,7 @@ public:
   static bool is_return_barrier_entry(const address pc);
   static bool is_frame_in_continuation(const frame& f, oop cont);
   static bool is_frame_in_continuation(JavaThread* thread, const frame& f);
-  static address fix_continuation_bottom_sender(const frame* callee, RegisterMap* map, address pc);
+  static void fix_continuation_bottom_sender(const frame* callee, RegisterMap* map, address* sender_pc, intptr_t** sender_sp);
 
   static frame top_frame(const frame& callee, RegisterMap* map);
   static frame sender_for_interpreter_frame(const frame& callee, RegisterMap* map);
@@ -98,6 +98,7 @@ public:
 private:
   // declared here as it's used in friend declarations
   static address oop_address(objArrayOop ref_stack, address stack_address, int ref_sp);
+  static FrameInfo* get_thread_cont_frame(JavaThread* thread);
 };
 
 void CONT_RegisterNativeMethods(JNIEnv *env, jclass cls);

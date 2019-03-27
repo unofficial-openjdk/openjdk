@@ -1654,6 +1654,7 @@ void JavaThread::initialize() {
   _parker = Parker::Allocate(this);
 
   _cont_yield = false;
+  _cont_preempt = false;
   _cont_frame = (FrameInfo){0, 0, 0};
 
 #ifndef PRODUCT
@@ -3338,8 +3339,8 @@ void JavaThread::print_frame_layout(int depth, bool validate_only) {
   PRESERVE_EXCEPTION_MARK;
   FrameValues values;
   int frame_no = 0;
-  for (StackFrameStream fst(this, false); !fst.is_done(); fst.next()) {
-    fst.current()->describe(values, ++frame_no);
+  for (StackFrameStream fst(this, false, true); !fst.is_done(); fst.next()) {
+    fst.current()->describe(values, ++frame_no, fst.register_map());
     if (depth == frame_no) break;
   }
   if (validate_only) {

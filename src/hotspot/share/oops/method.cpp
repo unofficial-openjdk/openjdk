@@ -1066,6 +1066,8 @@ void Method::link_method(const methodHandle& h_method, TRAPS) {
   // problem we'll make these lazily later.
   (void) make_adapters(h_method, CHECK);
 
+  set_num_stack_arg_slots();
+
   // ONLY USE the h_method now as make_adapter may have blocked
 
 }
@@ -1621,6 +1623,25 @@ void Method::sort_methods(Array<Method*>* methods, bool set_idnums) {
       }
     }
   }
+}
+
+void Method::set_num_stack_arg_slots() {
+  ResourceMark rm;
+  int sizeargs = size_of_parameters();
+  BasicType* sig_bt = NEW_RESOURCE_ARRAY(BasicType, sizeargs);
+  VMRegPair* regs   = NEW_RESOURCE_ARRAY(VMRegPair, sizeargs);
+
+  int sig_index = 0;
+  if (!is_static()) sig_bt[sig_index++] = T_OBJECT; // 'this'
+  for (SignatureStream ss(signature()); !ss.at_return_type(); ss.next()) {
+    BasicType t = ss.type();
+    assert(type2size[t] == 1 || type2size[t] == 2, "size is 1 or 2");
+    sig_bt[sig_index++] = t;
+    if (type2size[t] == 2) sig_bt[sig_index++] = T_VOID;
+  }
+  assert(sig_index == sizeargs, "");
+
+  _num_stack_arg_slots = SharedRuntime::java_calling_convention(sig_bt, regs, sizeargs, false);
 }
 
 //-----------------------------------------------------------------------------------

@@ -33,6 +33,19 @@
 #include "gc/z/zBarrier.inline.hpp"
 #endif
 
+address StackValue::stack_value_address(const frame* fr, const RegisterMap* reg_map, ScopeValue* sv) {
+  if (!sv->is_location() || reg_map->in_cont())
+    return NULL;
+  Location loc = ((LocationValue *)sv)->location();
+  if (loc.type() == Location::invalid)
+    return NULL;
+  address value_addr = loc.is_register()     // see create_stack_value
+      ? reg_map->location(VMRegImpl::as_VMReg(loc.register_number()))
+      : ((address)fr->unextended_sp()) + loc.stack_offset();
+  assert(value_addr == NULL || reg_map->thread()->is_in_usable_stack(value_addr), INTPTR_FORMAT, p2i(value_addr)); 
+  return value_addr;
+}
+
 StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* reg_map, ScopeValue* sv) {
   if (sv->is_location()) {
     // Stack or register value
@@ -55,7 +68,7 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
       // before any extension by its callee (due to Compiler1 linkage on SPARC), must be used.
         : ((address)fr->unextended_sp()) + loc.stack_offset();
 
-      assert(reg_map->thread()->is_in_usable_stack(value_addr),  INTPTR_FORMAT, p2i(value_addr)); 
+      assert(reg_map->thread()->is_in_usable_stack(value_addr), INTPTR_FORMAT, p2i(value_addr));
     } else {
       if (loc.type() == Location::invalid)
         return new StackValue();

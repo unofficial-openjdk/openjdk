@@ -23,7 +23,6 @@
 
 /**
  * @test
- * @run testng Scoped
  * @run testng/othervm -Xint Scoped
  * @run testng/othervm -Xint -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
  * @run testng/othervm -Xcomp Scoped
