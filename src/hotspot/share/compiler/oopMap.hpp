@@ -55,7 +55,7 @@ private:
 
 public:
   // Constants
-  enum { type_bits                = 4,
+  enum { type_bits                = 4, // 5,
          register_bits            = BitsPerShort - type_bits };
 
   enum { type_shift               = 0,
@@ -71,7 +71,8 @@ public:
          oop_value = 1,
          narrowoop_value = 2,
          callee_saved_value = 4,
-         derived_oop_value= 8 };
+         derived_oop_value= 8,
+         /*live_value = 16*/ };
 
   // Constructors
   OopMapValue () { set_value(0); set_content_reg(VMRegImpl::Bad()); }
@@ -104,11 +105,13 @@ public:
   bool is_narrowoop()           { return mask_bits(value(), type_mask_in_place) == narrowoop_value; }
   bool is_callee_saved()      { return mask_bits(value(), type_mask_in_place) == callee_saved_value; }
   bool is_derived_oop()       { return mask_bits(value(), type_mask_in_place) == derived_oop_value; }
+  // bool is_live()              { return mask_bits(value(), type_mask_in_place) == live_value; }
 
   void set_oop()              { set_value((value() & register_mask_in_place) | oop_value); }
   void set_narrowoop()          { set_value((value() & register_mask_in_place) | narrowoop_value); }
   void set_callee_saved()     { set_value((value() & register_mask_in_place) | callee_saved_value); }
   void set_derived_oop()      { set_value((value() & register_mask_in_place) | derived_oop_value); }
+  // void set_live()             { set_value((value() & register_mask_in_place) | live_value); }
 
   VMReg reg() const { return VMRegImpl::as_VMReg(mask_bits(value(), register_mask_in_place) >> register_shift); }
   oop_types type() const      { return (oop_types)mask_bits(value(), type_mask_in_place); }
@@ -252,6 +255,7 @@ class OopMapSet : public ResourceObj {
   // oop == Universe::narrow_oop_base() before passing oops
   // to closures.
 
+  static const ImmutableOopMap* find_map(const CodeBlob* cb, address pc);
   static const ImmutableOopMap* find_map(const frame *fr);
 
   // Iterates through frame for a compiled method

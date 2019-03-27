@@ -75,12 +75,16 @@ char* oopDesc::print_value_string() {
 }
 
 void oopDesc::print_value_on(outputStream* st) const {
-  oop obj = oop(this);
-  if (java_lang_String::is_instance(obj)) {
-    java_lang_String::print(obj, st);
-    print_address_on(st);
+  if (this == NULL) {
+    st->print("NULL");
   } else {
-    klass()->oop_print_value_on(obj, st);
+    oop obj = oop(this);
+    if (java_lang_String::is_instance(obj)) {
+      java_lang_String::print(obj, st);
+      print_address_on(st);
+    } else {
+      klass()->oop_print_value_on(obj, st);
+    }
   }
 }
 

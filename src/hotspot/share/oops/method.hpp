@@ -113,6 +113,8 @@ class Method : public Metadata {
   CompiledMethod* volatile _code;                       // Points to the corresponding piece of native code
   volatile address           _from_interpreted_entry; // Cache of _code ? _adapter->i2c_entry() : _i2i_entry
 
+  int _num_stack_arg_slots;
+  
 #if INCLUDE_AOT && defined(TIERED)
   CompiledMethod* _aot_code;
 #endif
@@ -470,6 +472,9 @@ class Method : public Metadata {
   void link_method(const methodHandle& method, TRAPS);
   // clear entry points. Used by sharing code during dump time
   void unlink_method() NOT_CDS_RETURN;
+
+  // the number of argument reg slots that the compiled method uses on the stack.
+  int num_stack_arg_slots() const { return _num_stack_arg_slots;  };
 
   virtual void metaspace_pointers_do(MetaspaceClosure* iter);
   virtual MetaspaceObj::Type type() const { return MethodType; }
@@ -1005,6 +1010,8 @@ class Method : public Metadata {
   // Inlined elements
   address* native_function_addr() const          { assert(is_native(), "must be native"); return (address*) (this+1); }
   address* signature_handler_addr() const        { return native_function_addr() + 1; }
+
+  void set_num_stack_arg_slots();
 };
 
 

@@ -168,6 +168,7 @@ void OopMap::set_oop(VMReg reg) {
 
 void OopMap::set_value(VMReg reg) {
   // At this time, we don't need value entries in our OopMap.
+  // set_xxx(reg, OopMapValue::live_value, VMRegImpl::Bad());
 }
 
 
@@ -440,15 +441,14 @@ void ImmutableOopMap::update_register_map(const frame *fr, RegisterMap *reg_map)
 #endif // COMPILER2
 }
 
-const ImmutableOopMap* OopMapSet::find_map(const frame *fr) {
-  CodeBlob* cb = fr->cb();
+const ImmutableOopMap* OopMapSet::find_map(const frame *fr) { 
+  return find_map(fr->cb(), fr->pc()); 
+}
+
+const ImmutableOopMap* OopMapSet::find_map(const CodeBlob* cb, address pc) {
   assert(cb != NULL, "no codeblob");
-
-  const ImmutableOopMap* map = cb->oop_map_for_return_address(fr->pc());
-
+  const ImmutableOopMap* map = cb->oop_map_for_return_address(pc);
   assert(map != NULL, "no ptr map found");
-  assert (fr->cb() != NULL, "");
-
   return map;
 }
 
