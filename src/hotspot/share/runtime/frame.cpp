@@ -1495,10 +1495,15 @@ void frame::describe(FrameValues& values, int frame_no, const RegisterMap* reg_m
 //-----------------------------------------------------------------------------------
 // StackFrameStream implementation
 
-StackFrameStream::StackFrameStream(JavaThread *thread, bool update) : _reg_map(thread, update) {
+StackFrameStream::StackFrameStream(JavaThread *thread, bool update, bool allow_missing_reg) : _reg_map(thread, update) {
   assert(thread->has_last_Java_frame(), "sanity check");
   _fr = thread->last_frame();
   _is_done = false;
+#ifndef PRODUCT
+  if (allow_missing_reg) {
+    _reg_map.set_skip_missing(true);
+  }
+#endif
 }
 
 
