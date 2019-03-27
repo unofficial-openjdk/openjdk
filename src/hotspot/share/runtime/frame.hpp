@@ -367,7 +367,7 @@ class frame {
   static void print_C_frame(outputStream* st, char* buf, int buflen, address pc);
 
   // Add annotated descriptions of memory locations belonging to this frame to values
-  void describe(FrameValues& values, int frame_no);
+  void describe(FrameValues& values, int frame_no, const RegisterMap* reg_map=NULL);
 
   // Conversion from a VMReg to physical stack location
   oop* oopmapreg_to_location(VMReg reg, const RegisterMap* reg_map) const;
@@ -380,14 +380,14 @@ class frame {
   void oops_interpreted_arguments_do(Symbol* signature, bool has_receiver, OopClosure* f);
 
   // Iteration of oops
-  void oops_do_internal(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, RegisterMap* map, bool use_interpreter_oop_map_cache);
+  void oops_do_internal(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, const RegisterMap* map, bool use_interpreter_oop_map_cache);
   void oops_entry_do(OopClosure* f, const RegisterMap* map);
   void oops_code_blob_do(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, const RegisterMap* map);
   int adjust_offset(Method* method, int index); // helper for above fn
  public:
   // Memory management
-  void oops_do(OopClosure* f, CodeBlobClosure* cf, RegisterMap* map) { oops_do_internal(f, cf, NULL, map, true); }
-  void oops_do(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, RegisterMap* map) { oops_do_internal(f, cf, df, map, true); }
+  void oops_do(OopClosure* f, CodeBlobClosure* cf, const RegisterMap* map) { oops_do_internal(f, cf, NULL, map, true); }
+  void oops_do(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, const RegisterMap* map) { oops_do_internal(f, cf, df, map, true); }
   void nmethods_do(CodeBlobClosure* cf);
 
   // RedefineClasses support for finding live interpreted methods on the stack

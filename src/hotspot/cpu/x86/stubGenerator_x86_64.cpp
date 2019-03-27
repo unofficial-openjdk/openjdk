@@ -5762,6 +5762,7 @@ RuntimeStub* generate_cont_doYield() {
     __ movptr(Address(fi, wordSize*0), rax); // pc
     __ movptr(Address(fi, wordSize*1), rax); // fp
     __ movptr(Address(fi, wordSize*2), rax); // sp
+    __ movb(Address(r15_thread, JavaThread::cont_preempt_offset()), 0);
 
     __ jmp(rdx);
 
@@ -5795,6 +5796,17 @@ RuntimeStub* generate_cont_doYield() {
     if (!return_barrier) {
       __ pop(c_rarg3); // pop return address. if we don't do this, we get a drift, where the bottom-most frozen frame continuously grows
       // __ lea(rsp, Address(rsp, wordSize)); // pop return address. if we don't do this, we get a drift, where the bottom-most frozen frame continuously grows
+      // write sp to thread->_cont_frame.sp
+      __ lea(fi, Address(r15_thread, JavaThread::cont_frame_offset()));
+      __ movptr(Address(fi, wordSize*2), rsp); // sp
+    } else {
+      Label no_saved_sp;
+      __ lea(fi, Address(r15_thread, JavaThread::cont_frame_offset()));
+      __ movptr(fi, Address(fi, wordSize*2)); // sp
+      __ testq(fi, fi); 
+      __ jcc(Assembler::zero, no_saved_sp);
+      __ movptr(rsp, fi);
+      __ bind(no_saved_sp);
     }
 
     Label thaw_success;

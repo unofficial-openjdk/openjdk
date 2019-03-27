@@ -52,7 +52,6 @@ public class Continuation {
 
     private static final byte FLAG_LAST_FRAME_INTERPRETED = 1;
     private static final byte FLAG_SAFEPOINT_YIELD = 1 << 1;
-    private static final int METADATA_SIZE = 2;
     private static final int WATERMARK_THRESHOLD = 10;
     private static final VarHandle MOUNTED;
 
@@ -345,7 +344,7 @@ public class Continuation {
 
                 unmount();
                 } catch (Throwable e) { e.printStackTrace(); System.exit(1); }
-                assert !hasLeak() : "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
+                assert !hasLeak() : "hasLeak1 " + "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
             }
             // we're now in the parent continuation
 
@@ -451,14 +450,14 @@ public class Continuation {
             }
             if (TRACE) System.out.println(this + " res: " + res);
             this.yieldInfo = null;
-            assert reset || !hasLeak() : "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
+            assert reset || !hasLeak() : "hasLeak2 " + "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
             if (res == 0)
                 onContinue();
             else
                 onPinned0(res);
         }
         assert yieldInfo == null;
-        assert reset || !hasLeak() : "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
+        assert reset || !hasLeak() : "hasLeak3 " + "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
         return res == 0;
         } catch (Throwable t) {
             t.printStackTrace();
@@ -613,12 +612,12 @@ public class Continuation {
 
         if (this.stack == null) {
             this.stack = new int[size];
-            this.sp = stack.length + METADATA_SIZE;
+            this.sp = stack.length;
             if (DEBUG)
                 System.out.println("-- getStack: allocated: " + stack.length + " sp: " + sp );
         } else {
             int oldLength = stack.length;
-            int offset = sp >= 0 ? sp - METADATA_SIZE : oldLength;
+            int offset = sp >= 0 ? sp : oldLength;
             int minLength = (oldLength - offset) + size;
             if (minLength > oldLength) {
                 int newLength = newCapacity(oldLength, minLength);
@@ -676,7 +675,7 @@ public class Continuation {
         if (stack == null || refStack == null)
             return;
 
-        int stackSize = stack.length - (sp - METADATA_SIZE);
+        int stackSize = stack.length - sp;
         int refStackSize = refStack.length - refSP;
         assert sp >= 0;
         assert stackSize >= 0;
@@ -703,7 +702,7 @@ public class Continuation {
         if (DEBUG)
             System.out.println("-- resizeStack0 length: " + stack.length + " sp: " + sp + " fp: " + fp + " newLength: " + newLength);
         int oldLength = stack.length;
-        int offset = sp - METADATA_SIZE;
+        int offset = sp;
         int n = oldLength - offset;
         assert newLength >= n;
         int[] newStack = new int[newLength];
@@ -753,7 +752,7 @@ public class Continuation {
      * temporary testing
      */
     public void something_something_1() {
-        this.sp = stack.length + METADATA_SIZE;
+        this.sp = stack.length;
         this.refSP = refStack.length;
         this.done = false;
 
@@ -916,7 +915,7 @@ public class Continuation {
     }
 
     private boolean isStackEmpty() {
-        return (stack == null) || (sp < 0) || (sp - METADATA_SIZE >= stack.length);
+        return (stack == null) || (sp < 0) || (sp >= stack.length);
     }
 
     private void walkFrames() {

@@ -66,6 +66,8 @@ void OopMapDo<OopFnT, DerivedOopFnT, ValueFilterT>::iterate_oops_do(const frame 
       // be missing?
 #ifdef ASSERT
     if (loc == NULL) {
+      if (reg_map->should_skip_missing())
+        continue;
       VMReg reg = omv.reg();
       tty->print_cr("missing saved register: reg: " INTPTR_FORMAT " %s loc: %p", reg->value(), reg->name(), loc);
       fr->print_on(tty);
@@ -163,6 +165,8 @@ void OopMapDo<OopMapFnT, DerivedOopFnT, ValueFilterT>::walk_derived_pointers1(Oo
   do {
     omv = oms.current();
     oop* loc = fr->oopmapreg_to_location(omv.reg(),reg_map);
+
+    DEBUG_ONLY(if (reg_map->should_skip_missing()) continue;)
     guarantee(loc != NULL, "missing saved register");
     oop *derived_loc = loc;
     oop *base_loc    = fr->oopmapreg_to_location(omv.content_reg(), reg_map);

@@ -83,6 +83,8 @@ class RegisterMap : public StackObj {
   bool        _validate_oops;           // whether to perform valid oop checks in asserts -- used only in the map use for continuation freeze/thaw
   bool        _walk_cont;               // whether to walk frames on a continuation stack
 
+  DEBUG_ONLY(bool  _skip_missing;)     
+
 #ifdef ASSERT
   void check_location_valid();
 #else
@@ -149,6 +151,11 @@ class RegisterMap : public StackObj {
 
   void print_on(outputStream* st) const;
   void print() const;
+
+#ifdef ASSERT
+  void set_skip_missing(bool value) { _skip_missing = value; }
+  bool should_skip_missing() const  { return _skip_missing; }
+#endif
 
   // the following contains the definition of pd_xxx methods
 #include CPU_HEADER(registerMap)

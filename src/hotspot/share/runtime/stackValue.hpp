@@ -107,6 +107,7 @@ class StackValue : public ResourceObj {
     }
   }
 
+  static address     stack_value_address(const frame* fr, const RegisterMap* reg_map, ScopeValue* sv);
   static StackValue* create_stack_value(const frame* fr, const RegisterMap* reg_map, ScopeValue* sv);
   static BasicLock*  resolve_monitor_lock(const frame* fr, Location location);
 

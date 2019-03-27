@@ -1198,6 +1198,7 @@ class JavaThread: public Thread {
   int _frames_to_pop_failed_realloc;
 
   bool _cont_yield; // a continuation yield is in progress
+  bool _cont_preempt;
   FrameInfo _cont_frame;
 
 #ifndef PRODUCT
@@ -1468,7 +1469,7 @@ class JavaThread: public Thread {
     return x;
   }
 
-  bool is_cont_force_yield() { return _cont_frame.pc != NULL; }
+  bool is_cont_force_yield() { return _cont_preempt; }
   // Are any async conditions present?
   bool has_async_condition() { return (_special_runtime_exit_condition != _no_async_condition); }
 
@@ -1806,6 +1807,7 @@ class JavaThread: public Thread {
   }
 
   static ByteSize cont_frame_offset()         { return byte_offset_of(JavaThread, _cont_frame); }
+  static ByteSize cont_preempt_offset()       { return byte_offset_of(JavaThread, _cont_preempt); }
 
   // Returns the jni environment for this thread
   JNIEnv* jni_environment()                      { return &_jni_environment; }
@@ -2069,6 +2071,8 @@ class JavaThread: public Thread {
   static inline void set_stack_size_at_create(size_t value) {
     _stack_size_at_create = value;
   }
+
+  FrameInfo* cont_frame() { return &_cont_frame; }
 
   // Machine dependent stuff
 #include OS_CPU_HEADER(thread)
