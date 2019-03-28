@@ -97,7 +97,8 @@ public:
   static int PERFTEST_LEVEL;
 private:
   // declared here as it's used in friend declarations
-  static address oop_address(objArrayOop ref_stack, address stack_address, int ref_sp);
+  static address oop_address(objArrayOop ref_stack, int ref_sp, int index);
+  static address oop_address(objArrayOop ref_stack, int ref_sp, address stack_address);
   static FrameInfo* get_thread_cont_frame(JavaThread* thread);
 };
 

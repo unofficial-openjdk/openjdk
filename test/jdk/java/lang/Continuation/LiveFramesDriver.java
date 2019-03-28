@@ -25,6 +25,7 @@
  * @test
  * @summary Functional test for continuations walked with StackWalker's LiveStackFrames
  * @build java.base/java.lang.LiveFrames
+ * 
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -Xint LiveFramesDriver
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode LiveFramesDriver
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp LiveFramesDriver

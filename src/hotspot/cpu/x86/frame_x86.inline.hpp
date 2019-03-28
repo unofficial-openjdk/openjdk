@@ -152,10 +152,11 @@ inline frame::frame(intptr_t* sp, intptr_t* fp) {
   _oop_map = NULL;
 }
 
-inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc, CodeBlob* cb, bool deopt) {
-  _sp = sp;
-  _unextended_sp = unextended_sp;
-  _fp = fp;
+inline frame::frame(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool deopt) {
+  _cont_sp._sp = sp;
+  _cont_sp._ref_sp = ref_sp;
+  _unextended_sp = NULL;
+  _fp = (intptr_t*)fp;
   _pc = pc;
   assert(pc != NULL, "no pc?");
   _cb = cb;

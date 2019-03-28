@@ -52,7 +52,13 @@ class JavaCallWrapper;
 class frame {
  private:
   // Instance variables:
-  intptr_t* _sp; // stack pointer (from Thread::last_Java_sp)
+  union {
+    intptr_t* _sp; // stack pointer (from Thread::last_Java_sp)
+    struct {
+      int _sp;
+      int _ref_sp;
+    } _cont_sp;
+  };
   address   _pc; // program counter (the next instruction after the call)
   CodeBlob* _cb; // CodeBlob that "owns" pc
   mutable const ImmutableOopMap* _oop_map; // oop map, for compiled/stubs frames only
@@ -95,6 +101,9 @@ class frame {
 
   intptr_t* sp() const           { return _sp; }
   void set_sp( intptr_t* newsp ) { _sp = newsp; }
+
+  int cont_sp()     const { return _cont_sp._sp; }
+  int cont_ref_sp() const { return _cont_sp._ref_sp; }
 
   CodeBlob* cb() const           { return _cb; }
   const ImmutableOopMap* oop_map() const {
