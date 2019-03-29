@@ -1793,7 +1793,9 @@ class CompiledFreezeOopFn: public ContOopBase {
   int _count;
 
   const address _stub_vsp;
+#ifndef PRODUCT
   const address _stub_hsp;
+#endif
 
  protected:
   template <class T> inline void do_oop_work(T* p) {
@@ -1811,34 +1813,36 @@ class CompiledFreezeOopFn: public ContOopBase {
   #endif
     // is this necessary?
     int offset = verify(p);
-    if (_stub_vsp == NULL && offset < 0) {
+    assert(offset < 32768, "");
+    if (_stub_vsp == NULL && offset < 0) { // rbp could be stored in the callee frame.
       assert (p == (T*)_fr->saved_link_address(_map), "");
-      _fc->set_oop_fp_index((int)badOopVal);
+      _fc->set_oop_fp_index(0xbaba);
     }
 #ifndef PRODUCT
-    address hloc; // address of oop in the (raw) h-stack
-    if (offset >= 0) { // rbp could be stored in the callee frame.
-      hloc = (address)_hsp + offset;
+    else {
+      address hloc = (address)_hsp + offset; // address of oop in the (raw) h-stack
       assert (_cont->in_hstack(hloc), "");
+      assert (*(T*)hloc == *p, "*hloc: " INTPTR_FORMAT " *p: " INTPTR_FORMAT, *(intptr_t*)hloc, *(intptr_t*)p);
+
       log_trace(jvmcont)("Marking oop at " INTPTR_FORMAT " (offset: %d)", p2i(hloc), offset);
-      *(intptr_t*)hloc = badOopVal;
-    } else {
-      if (_stub_vsp != NULL) { // slow path
-        offset = (address)p - _stub_vsp;
-        hloc = _stub_hsp + offset;
-        assert (offset >= 0, "stub vsp: " INTPTR_FORMAT " p: " INTPTR_FORMAT " offset: %d", p2i(_stub_vsp), p2i(p), offset);
-        assert (_cont->in_hstack(hloc), "");
-        log_trace(jvmcont)("Marking oop at " INTPTR_FORMAT " (offset: %d)", p2i(hloc), offset);
-        *(intptr_t*)hloc = badOopVal;
+      memset(hloc, 0xba, sizeof(T)); // we must take care not to write a full word to a narrow oop
+      if (_stub_vsp != NULL && offset < 0) { // slow path
+        int offset0 = (address)p - _stub_vsp;
+        assert (offset0 >= 0, "stub vsp: " INTPTR_FORMAT " p: " INTPTR_FORMAT " offset: %d", p2i(_stub_vsp), p2i(p), offset0);
+        assert (hloc == _stub_hsp + offset0, "");
       }
     }
-  #endif
+#endif
   }
 
  public:
   CompiledFreezeOopFn(ContMirror* cont, FreezeContinuation* fc, frame* fr, void* vsp, void* hsp, RegisterMap* map, int starting_index, intptr_t* stub_vsp, intptr_t* stub_hsp)
    : ContOopBase(cont, fr, map, vsp), _fc(fc), _hsp(hsp), _starting_index(starting_index), _count(0),
-     _stub_vsp((address)stub_vsp), _stub_hsp((address)stub_hsp) { 
+     _stub_vsp((address)stub_vsp)
+#ifndef PRODUCT
+     , _stub_hsp((address)stub_hsp) 
+#endif
+  { 
      assert (cont->in_hstack(hsp), "");
   }
   void do_oop(oop* p)       { do_oop_work(p); }
@@ -1857,25 +1861,22 @@ class CompiledFreezeOopFn: public ContOopBase {
       p2i(derived_loc), p2i((address)*derived_loc), p2i((address)*base_loc), p2i(base_loc), offset);
 
     int hloc_offset = (address)derived_loc - (address)_vsp;
-    intptr_t* hloc;
-    if (hloc_offset >= 0) {
-      hloc = (intptr_t*)((address)_hsp + hloc_offset);
+    if (hloc_offset < 0 && _stub_vsp == NULL) {
+      assert ((intptr_t**)derived_loc == _fr->saved_link_address(_map), "");
+      _fc->set_oop_fp_index(offset);
+      log_trace(jvmcont)("Writing derived pointer offset in fp (offset: %ld, 0x%lx)", offset, offset);
+    } else {
+      intptr_t* hloc = (intptr_t*)((address)_hsp + hloc_offset);
       *hloc = offset;
       log_trace(jvmcont)("Writing derived pointer offset at " INTPTR_FORMAT " (offset: " INTX_FORMAT ", " INTPTR_FORMAT ")", p2i(hloc), offset, offset);
-    } else {
-      if (_stub_vsp != NULL) { // slow path
-        // TODO: can this ever happen? If not, we can do away with _stub_vsp/_stub_hsp
-        hloc_offset = (address)derived_loc - _stub_vsp;
-        assert (hloc_offset >= 0, "hloc_offset: %d", hloc_offset);
-        hloc = (intptr_t*)(_stub_hsp + hloc_offset);
-        *hloc = offset;
-        log_trace(jvmcont)("Writing derived pointer offset at (stub frame) " INTPTR_FORMAT " (offset: " INTX_FORMAT ", " INTPTR_FORMAT ")", p2i(hloc), offset, offset);
-      } else {
-        // TODO: can this ever happen? If not, we can do away with set_oop_fp_index/_has_fp_oop
-        assert ((intptr_t**)derived_loc == _fr->saved_link_address(_map), "");
-        _fc->set_oop_fp_index(offset);
-        log_trace(jvmcont)("Writing derived pointer offset in fp (offset: %ld, 0x%lx)", offset, offset);
+
+#ifdef ASSERT
+      if (_stub_vsp != NULL && hloc_offset < 0) {
+        int hloc_offset0 = (address)derived_loc - _stub_vsp;
+        assert (hloc_offset0 >= 0, "hloc_offset: %d", hloc_offset0);
+        assert(hloc == (intptr_t*)(_stub_hsp + hloc_offset0), "");
       }
+#endif
     }
   }
 };
@@ -3831,7 +3832,9 @@ oop Continuation::continuation_scope(oop cont) {
 ///// DEBUGGING
 
 static void print_oop(void *p, oop obj, outputStream* st) {
-  if (!log_is_enabled(Trace, jvmcont)) return;
+  if (!log_is_enabled(Trace, jvmcont) && st != NULL) return;
+
+  if (st == NULL) st = tty;
 
   st->print_cr(INTPTR_FORMAT ": ", p2i(p));
   if (obj == NULL) {
