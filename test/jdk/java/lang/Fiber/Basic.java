@@ -1170,13 +1170,13 @@ public class Basic {
 
     // -- Thread.yield --
 
-    public void testThreadYield() {
+    public void testThreadYield1() {
         var list = new CopyOnWriteArrayList<String>();
         ExecutorService scheduler = Executors.newFixedThreadPool(1);
         try {
             Fiber.schedule(scheduler, () -> {
                 list.add("A");
-                Fiber<?> child = Fiber.schedule(() -> {
+                Fiber<?> child = Fiber.schedule(scheduler, () -> {
                     list.add("B");
                     Thread.yield();
                     list.add("B");
@@ -1191,6 +1191,27 @@ public class Basic {
         assertEquals(list, List.of("A", "B", "A", "B"));
     }
 
+    public void testThreadYield2() {
+        var list = new CopyOnWriteArrayList<String>();
+        ExecutorService scheduler = Executors.newFixedThreadPool(1);
+        try {
+            Fiber.schedule(scheduler, () -> {
+                list.add("A");
+                Fiber<?> child = Fiber.schedule(scheduler, () -> {
+                    list.add("B");
+                });
+                Object lock = new Object();
+                synchronized (lock) {
+                    Thread.yield();   // pinned so will be a no-op
+                    list.add("A");
+                }
+                child.join();
+            }).join();
+        } finally {
+            scheduler.shutdown();
+        }
+        assertEquals(list, List.of("A", "A", "B"));
+    }
 
     // -- Thread.sleep --
 
