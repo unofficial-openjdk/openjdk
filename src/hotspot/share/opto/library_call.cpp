@@ -2428,7 +2428,7 @@ bool LibraryCallKit::inline_unsafe_access(bool is_store, const BasicType type, c
   }
 
   // Can base be NULL? Otherwise, always on-heap access.
-  bool can_access_non_heap = TypePtr::NULL_PTR->higher_equal(_gvn.type(heap_base_oop));
+  bool can_access_non_heap = TypePtr::NULL_PTR->higher_equal(_gvn.type(base));
 
   if (!can_access_non_heap) {
     decorators |= IN_HEAP;
@@ -6374,6 +6374,9 @@ bool LibraryCallKit::inline_sha_implCompress(vmIntrinsics::ID id) {
   }
   if (state == NULL) return false;
 
+  assert(stubAddr != NULL, "Stub is generated");
+  if (stubAddr == NULL) return false;
+
   // Call the stub.
   Node* call = make_runtime_call(RC_LEAF|RC_NO_FP, OptoRuntime::sha_implCompress_Type(),
                                  stubAddr, stubName, TypePtr::BOTTOM,
@@ -6446,6 +6449,9 @@ bool LibraryCallKit::inline_digestBase_implCompressMB(int predicate) {
     fatal("unknown SHA intrinsic predicate: %d", predicate);
   }
   if (klass_SHA_name != NULL) {
+    assert(stub_addr != NULL, "Stub is generated");
+    if (stub_addr == NULL) return false;
+
     // get DigestBase klass to lookup for SHA klass
     const TypeInstPtr* tinst = _gvn.type(digestBase_obj)->isa_instptr();
     assert(tinst != NULL, "digestBase_obj is not instance???");
