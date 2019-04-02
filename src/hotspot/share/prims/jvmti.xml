@@ -2247,7 +2247,7 @@ jvmtiEnv *jvmti;
     <intro>
     </intro>
 
-    <function id="IsFiber" num="105" since="12">
+    <function id="IsFiber" num="105" since="13">
       <synopsis>Is Fiber</synopsis>
       <description>
         Determines whether a thread object reference represents a fiber.
@@ -2279,7 +2279,7 @@ jvmtiEnv *jvmti;
       </errors>
     </function>
 
-    <function id="GetThreadFiber" num="113" since="12">
+    <function id="GetThreadFiber" num="113" since="13">
       <synopsis>Get Thread Fiber</synopsis>
       <description>
         Get the fiber mounted to the specified thread.
@@ -2309,7 +2309,7 @@ jvmtiEnv *jvmti;
       </errors>
     </function>
 
-    <function id="GetFiberThread" num="117" since="12">
+    <function id="GetFiberThread" num="117" since="13">
       <synopsis>Get Fiber Thread</synopsis>
       <description>
         Get the thread the specified fiber is mounted to.
@@ -10481,7 +10481,7 @@ myInit() {
 	  called and <eventlink id="SampledObjectAlloc"></eventlink> events can be generated.
         </description>
       </capabilityfield>
-      <capabilityfield id="can_support_fibers" since="12">
+      <capabilityfield id="can_support_fibers" since="13">
         <description>
           Can support Fibers.
           If this capability is enabled then the following fiber aware functions can be called:
@@ -12843,7 +12843,7 @@ myInit() {
   </event>
 
  <event label="Fiber Scheduled"
-         id="FiberScheduled" const="JVMTI_EVENT_FIBER_SCHEDULED" filtered="thread" num="87" phase="start">
+         id="FiberScheduled" const="JVMTI_EVENT_FIBER_SCHEDULED" filtered="thread" num="87" phase="start" since="13">
     <description>
       Fiber scheduled events are generated before its initial method executes.
       <p/>
@@ -12880,7 +12880,7 @@ myInit() {
   </event>
 
   <event label="Fiber Terminated"
-         id="FiberTerminated" const="JVMTI_EVENT_FIBER_TERMINATED" filtered="thread" num="88" phase="start">
+         id="FiberTerminated" const="JVMTI_EVENT_FIBER_TERMINATED" filtered="thread" num="88" phase="start" since="13">
     <description>
       Fiber terminated events are generated after its initial method has finished execution.
       <p/>
@@ -12917,7 +12917,7 @@ myInit() {
   </event>
 
   <event label="Fiber Mount"
-         id="FiberMount" const="JVMTI_EVENT_FIBER_MOUNT" filtered="thread" num="89" phase="start">
+         id="FiberMount" const="JVMTI_EVENT_FIBER_MOUNT" filtered="thread" num="89" phase="start" since="13">
     <description>
       Fiber mount events are generated before its method continue to execute on the mounted thread.
       <p/>
@@ -12954,7 +12954,7 @@ myInit() {
   </event>
 
   <event label="Fiber Unmount"
-         id="FiberUnmount" const="JVMTI_EVENT_FIBER_UNMOUNT" filtered="thread" num="90" phase="start">
+         id="FiberUnmount" const="JVMTI_EVENT_FIBER_UNMOUNT" filtered="thread" num="90" phase="start" since="13">
     <description>
       Fiber unmount events are generated when the fiber is about to be unmounted from the carrier thread.
       <p/>
