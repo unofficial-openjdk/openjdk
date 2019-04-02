@@ -1754,7 +1754,10 @@ class InterpretedFreezeOopFn: public ContOopBase {
   }
 };
 
-#ifndef PRODUCT
+static inline void clear_anchor(JavaThread* thread) {
+  thread->frame_anchor()->clear();
+}
+
 static void set_anchor(JavaThread* thread, FrameInfo* fi) {
   JavaFrameAnchor* anchor = thread->frame_anchor();
   anchor->set_last_Java_sp((intptr_t*)fi->sp);
@@ -1778,11 +1781,6 @@ static void set_anchor(JavaThread* thread, FrameInfo* fi) {
 //   FrameInfo fi = { cont.entryPC(), cont.entryFP(), cont.entrySP() };
 //   set_anchor(cont.thread(), &fi);
 // }
-
-static inline void clear_anchor(JavaThread* thread) {
-  thread->frame_anchor()->clear();
-}
-#endif
 
 static const VMReg vmRegRbp = rbp->as_VMReg();
 static const VMReg vmRegRbpNext = vmRegRbp->next();
@@ -2450,7 +2448,7 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
   cont.write();
 
   if (JvmtiExport::should_post_continuation_yield()) {
-   JvmtiExport::post_continuation_yield(JavaThread::current(), num_java_frames(cont));
+    JvmtiExport::post_continuation_yield(JavaThread::current(), num_java_frames(cont));
   }
 
   cont.post_jfr_event(&event);
@@ -3168,8 +3166,9 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
 
   DEBUG_ONLY(log_debug(jvmcont)("THAW ### #" INTPTR_FORMAT, cont.hash()));
 
+  int java_frame_count = -1;
   if (!return_barrier && JvmtiExport::should_post_continuation_run()) {
-   JvmtiExport::post_continuation_run(JavaThread::current(), num_java_frames(cont));
+    java_frame_count = num_java_frames(cont);
   }
 
 // #ifndef PRODUCT
@@ -3254,6 +3253,11 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
   //   jvmti_state->invalidate_cur_stack_depth();
   // }
 
+  if (!return_barrier && JvmtiExport::should_post_continuation_run()) {
+    set_anchor(thread, fi); // ensure thawed frames are visible
+    JvmtiExport::post_continuation_run(JavaThread::current(), java_frame_count);
+    clear_anchor(thread);
+  }
   cont.post_jfr_event(&event);
 
 #ifdef ASSERT
