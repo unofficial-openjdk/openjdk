@@ -41,7 +41,7 @@
 #include "logging/logStream.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
-#include "prims/jvmtiThreadState.hpp"
+#include "prims/jvmtiExport.hpp"
 #include "runtime/continuation.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
@@ -1572,17 +1572,53 @@ static bool is_interpreted_frame_owning_locks(const frame& f) {
   return false;
 }
 
+
+static int num_java_frames(CompiledMethod* cm, address pc) {
+  int count = 0;
+  for (ScopeDesc* scope = cm->scope_desc_at(pc); scope != NULL; scope = scope->sender())
+    count++;
+  return count;
+}
+
+static int num_java_frames(const hframe& f) {
+  return f.is_interpreted_frame() ? 1 : num_java_frames(f.cb()->as_compiled_method(), f.pc());
+}
+
+static int num_java_frames(ContMirror& cont) {
+  int count = 0;
+  for (hframe hf = cont.last_frame(); !hf.is_empty(); hf = hf.sender(cont))
+    count += num_java_frames(hf);
+  return count;
+}
+
+// static int num_java_frames(const frame& f) {
+//   if (f.is_interpreted_frame())
+//     return 1;
+//   else if (f.is_compiled_frame())
+//     return num_java_frames(f.cb()->as_compiled_method(), f.pc());
+//   else
+//     return 0;
+// }
+
+// static int num_java_frames(ContMirror& cont, frame f) {
+//   int count = 0;
+//   RegisterMap map(cont.thread(), false, false, false); // should first argument be true?
+//   for (; f.real_fp() > cont.entrySP(); f = f.frame_sender<ContinuationCodeBlobLookup>(&map))
+//     count += num_java_frames(f);
+//   return count;
+// }
+
 static bool is_compiled_frame_owning_locks(JavaThread* thread, const RegisterMap* map, const frame& f) {
   if (!DetectLocksInCompiledFrames)
     return false;
-  nmethod* nm = f.cb()->as_nmethod();
-  assert (!nm->is_compiled() || !nm->as_compiled_method()->is_native_method(), ""); // ??? See compiledVFrame::compiledVFrame(...) in vframe_hp.cpp
+  CompiledMethod* cm = f.cb()->as_compiled_method();
+  assert (!cm->is_compiled() || !cm->as_compiled_method()->is_native_method(), ""); // ??? See compiledVFrame::compiledVFrame(...) in vframe_hp.cpp
 
-  if (!nm->has_monitors()) {
+  if (!cm->has_monitors()) {
     return false;
   }
 
-  for (ScopeDesc* scope = nm->scope_desc_at(f.pc()); scope != NULL; scope = scope->sender()) {
+  for (ScopeDesc* scope = cm->scope_desc_at(f.pc()); scope != NULL; scope = scope->sender()) {
     GrowableArray<MonitorValue*>* mons = scope->monitors();
     if (mons == NULL || mons->is_empty())
       continue;
@@ -2413,14 +2449,8 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 
   cont.write();
 
-  // notify JVMTI
-  JvmtiThreadState *jvmti_state = thread->jvmti_thread_state();
-  if (jvmti_state != NULL && jvmti_state->is_interp_only_mode()) {
-    jvmti_state->invalidate_cur_stack_depth();
-    // jvmti_state->set_exception_detected();
-    // for (XXX) {
-    //   jvmti_state->decr_cur_stack_depth(); // JvmtiExport::post_method_exit(thread, last_frame.method() XXXX, last_frame.get_frame() XXXXX);
-    // }
+  if (JvmtiExport::should_post_continuation_yield()) {
+   JvmtiExport::post_continuation_yield(JavaThread::current(), num_java_frames(cont));
   }
 
   cont.post_jfr_event(&event);
@@ -3138,6 +3168,10 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
 
   DEBUG_ONLY(log_debug(jvmcont)("THAW ### #" INTPTR_FORMAT, cont.hash()));
 
+  if (!return_barrier && JvmtiExport::should_post_continuation_run()) {
+   JvmtiExport::post_continuation_run(JavaThread::current(), num_java_frames(cont));
+  }
+
 // #ifndef PRODUCT
 //   set_anchor(cont);
 //   print_frames(thread);
@@ -3215,13 +3249,10 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
 
   DEBUG_ONLY(thread->_continuation = oopCont;)
 
-  JvmtiThreadState *jvmti_state = thread->jvmti_thread_state();
-  if (jvmti_state != NULL && jvmti_state->is_interp_only_mode()) {
-    jvmti_state->invalidate_cur_stack_depth();
-    // for (XXX) {
-    //   jvmti_state->incr_cur_stack_depth();
-    // }
-  }
+  // JvmtiThreadState *jvmti_state = thread->jvmti_thread_state();
+  // if (jvmti_state != NULL && jvmti_state->is_interp_only_mode()) {
+  //   jvmti_state->invalidate_cur_stack_depth();
+  // }
 
   cont.post_jfr_event(&event);
 
