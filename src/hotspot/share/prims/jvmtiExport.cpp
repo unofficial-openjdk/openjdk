@@ -1228,6 +1228,8 @@ bool              JvmtiExport::_should_post_fiber_scheduled               = fals
 bool              JvmtiExport::_should_post_fiber_terminated              = false;
 bool              JvmtiExport::_should_post_fiber_mount                   = false;
 bool              JvmtiExport::_should_post_fiber_unmount                 = false;
+bool              JvmtiExport::_should_post_continuation_run              = false;
+bool              JvmtiExport::_should_post_continuation_yield            = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1611,6 +1613,73 @@ void JvmtiExport::post_fiber_unmount(jthread thread, jobject fiber) {
   }
 }
 
+void JvmtiExport::post_continuation_run(jthread thread, jint frames_count) {
+  if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
+  EVT_TRIG_TRACE(JVMTI_EVENT_CONTINUATION_RUN, ("Trg Continuation Run event triggered"));
+
+  JavaThread *cur_thread = JavaThread::current();
+  JvmtiThreadState *state = cur_thread->jvmti_thread_state();
+  if (state == NULL) {
+    return;
+  }
+
+  if (state->is_enabled(JVMTI_EVENT_CONTINUATION_RUN)) {
+    JvmtiEnvThreadStateIterator it(state);
+
+    for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
+      if (ets->is_enabled(JVMTI_EVENT_CONTINUATION_RUN)) {
+        JvmtiEnv *env = ets->get_env();
+        if (env->phase() == JVMTI_PHASE_PRIMORDIAL) {
+          continue;
+        }
+        EVT_TRACE(JVMTI_EVENT_CONTINUATION_RUN, ("Evt Continuation Run event sent"));
+
+        JvmtiThreadEventMark jem(cur_thread);
+        JvmtiJavaThreadEventTransition jet(cur_thread);
+        jvmtiEventContinuationRun callback = env->callbacks()->ContinuationRun;
+        if (callback != NULL) {
+          (*callback)(env->jvmti_external(), jem.jni_env(), thread, frames_count);
+        }
+      }
+    }
+  }
+}
+
+void JvmtiExport::post_continuation_yield(jthread thread, jint frames_count) {
+  if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
+    return;
+  }
+  EVT_TRIG_TRACE(JVMTI_EVENT_CONTINUATION_YIELD, ("Trg Continuation Yield event triggered"));
+
+  JavaThread *cur_thread = JavaThread::current();
+  JvmtiThreadState *state = cur_thread->jvmti_thread_state();
+  if (state == NULL) {
+    return;
+  }
+
+  if (state->is_enabled(JVMTI_EVENT_CONTINUATION_YIELD)) {
+    JvmtiEnvThreadStateIterator it(state);
+
+    for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
+      if (ets->is_enabled(JVMTI_EVENT_CONTINUATION_YIELD)) {
+        JvmtiEnv *env = ets->get_env();
+        if (env->phase() == JVMTI_PHASE_PRIMORDIAL) {
+          continue;
+        }
+        EVT_TRACE(JVMTI_EVENT_CONTINUATION_RUN, ("Evt Continuation Run event sent"));
+
+        JvmtiThreadEventMark jem(cur_thread);
+        JvmtiJavaThreadEventTransition jet(cur_thread);
+        jvmtiEventContinuationYield callback = env->callbacks()->ContinuationYield;
+        if (callback != NULL) {
+          (*callback)(env->jvmti_external(), jem.jni_env(), thread, frames_count);
+        }
+      }
+    }
+  }
+}
 
 void JvmtiExport::post_object_free(JvmtiEnv* env, jlong tag) {
   assert(SafepointSynchronize::is_at_safepoint(), "must be executed at safepoint");

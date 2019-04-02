@@ -10495,6 +10495,14 @@ myInit() {
           <eventlink id="FiberUnmount"></eventlink>.
         </description>
       </capabilityfield>
+      <capabilityfield id="can_support_continuations" since="13">
+        <description>
+          Can support Continuations.
+          and the following continuation aware events can be enabled:
+          <eventlink id="ContinuationRun"></eventlink>.
+          <eventlink id="ContinuationYield"></eventlink>.
+        </description>
+      </capabilityfield>
     </capabilitiestypedef>
 
     <function id="GetPotentialCapabilities" jkernel="yes" phase="onload" num="140">
@@ -12977,6 +12985,80 @@ myInit() {
         <jobject/>
           <description>
             Fiber that is unmounted.
+          </description>
+      </param>
+    </parameters>
+  </event>
+
+  <event label="Continuation Run"
+         id="ContinuationRun" const="JVMTI_EVENT_CONTINUATION_RUN" filtered="thread" num="91" phase="start" since="13">
+    <description>
+      Continuation run events are generated before the continuation is continued execution on current thread.
+      <p/>
+      The event is sent on the <paramlink id="thread"></paramlink> the continuation is about to leave.
+    </description>
+    <origin>new</origin>
+    <capabilities>
+      <required id="can_support_continuations">
+        Can support continuations.
+      </required>
+    </capabilities>
+    <parameters>
+      <param id="jni_env">
+        <outptr>
+          <struct>JNIEnv</struct>
+        </outptr>
+          <description>
+            The JNI environment of the event (current) thread.
+          </description>
+      </param>
+      <param id="thread">
+        <jthread/>
+          <description>
+            Thread the continuation is executed on.
+          </description>
+      </param>
+      <param id="frames_count">
+        <jint min="1"/>
+          <description>
+            Number of frames the continuation is executing.
+          </description>
+      </param>
+    </parameters>
+  </event>
+
+  <event label="Continuation Yield"
+         id="ContinuationYield" const="JVMTI_EVENT_CONTINUATION_YIELD" filtered="thread" num="92" phase="start" since="13">
+    <description>
+      Continuation yield events are generated before the continuation actually yields on current thread.
+      <p/>
+      The event is sent on the <paramlink id="thread"></paramlink> the continuation is about to leave.
+    </description>
+    <origin>new</origin>
+    <capabilities>
+      <required id="can_support_continuations">
+        Can support continuations.
+      </required>
+    </capabilities>
+    <parameters>
+      <param id="jni_env">
+        <outptr>
+          <struct>JNIEnv</struct>
+        </outptr>
+          <description>
+            The JNI environment of the event (current) thread.
+          </description>
+      </param>
+      <param id="thread">
+        <jthread/>
+          <description>
+            Thread the continuation is executed on.
+          </description>
+      </param>
+      <param id="frames_count">
+        <jint min="1"/>
+          <description>
+            Number of frames the continuation is executing.
           </description>
       </param>
     </parameters>

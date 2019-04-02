@@ -130,6 +130,7 @@ jvmtiCapabilities JvmtiManageCapabilities::init_onload_capabilities() {
   jc.can_generate_early_vmstart = 1;
   jc.can_generate_early_class_hook_events = 1;
   jc.can_support_fibers = 1;
+  jc.can_support_continuations = 1;
   return jc;
 }
 
@@ -465,6 +466,8 @@ void JvmtiManageCapabilities:: print(const jvmtiCapabilities* cap) {
     log_trace(jvmti)("can_generate_early_class_hook_events");
   if (cap->can_support_fibers)
     log_trace(jvmti)("can_support_fibers");
+  if (cap->can_support_continuations)
+    log_trace(jvmti)("can_support_continuations");
 }
 
 #endif
