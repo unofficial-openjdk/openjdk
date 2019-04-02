@@ -324,8 +324,8 @@ class JvmtiExport : public AllStatic {
   static void post_thread_start          (JavaThread *thread) NOT_JVMTI_RETURN;
   static void post_thread_end            (JavaThread *thread) NOT_JVMTI_RETURN;
 
-  static void post_continuation_run      (jthread thread, jint frames_count) NOT_JVMTI_RETURN;
-  static void post_continuation_yield    (jthread thread, jint frames_count) NOT_JVMTI_RETURN;
+  static void post_continuation_run      (JavaThread* thread, jint frames_count) NOT_JVMTI_RETURN;
+  static void post_continuation_yield    (JavaThread* thread, jint frames_count) NOT_JVMTI_RETURN;
 
   // Support for java.lang.instrument agent loading.
   static bool _should_post_class_file_load_hook;

@@ -1472,14 +1472,14 @@ void JvmtiExport::post_thread_end(JavaThread *thread) {
   }
 }
 
-void JvmtiExport::post_continuation_run(jthread thread, jint frames_count) {
+void JvmtiExport::post_continuation_run(JavaThread* thread, jint frames_count) {
   if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
     return;
   }
   EVT_TRIG_TRACE(JVMTI_EVENT_CONTINUATION_RUN, ("Trg Continuation Run event triggered"));
 
-  JavaThread *cur_thread = JavaThread::current();
-  JvmtiThreadState *state = cur_thread->jvmti_thread_state();
+  assert (thread == JavaThread::current(), "must be");
+  JvmtiThreadState *state = thread->jvmti_thread_state();
   if (state == NULL) {
     return;
   }
@@ -1495,25 +1495,25 @@ void JvmtiExport::post_continuation_run(jthread thread, jint frames_count) {
         }
         EVT_TRACE(JVMTI_EVENT_CONTINUATION_RUN, ("Evt Continuation Run event sent"));
 
-        JvmtiThreadEventMark jem(cur_thread);
-        JvmtiJavaThreadEventTransition jet(cur_thread);
+        JvmtiThreadEventMark jem(thread);
+        JvmtiJavaThreadEventTransition jet(thread);
         jvmtiEventContinuationRun callback = env->callbacks()->ContinuationRun;
         if (callback != NULL) {
-          (*callback)(env->jvmti_external(), jem.jni_env(), thread, frames_count);
+          (*callback)(env->jvmti_external(), jem.jni_env(), jem.jni_thread(), frames_count);
         }
       }
     }
   }
 }
 
-void JvmtiExport::post_continuation_yield(jthread thread, jint frames_count) {
+void JvmtiExport::post_continuation_yield(JavaThread* thread, jint frames_count) {
   if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
     return;
   }
   EVT_TRIG_TRACE(JVMTI_EVENT_CONTINUATION_YIELD, ("Trg Continuation Yield event triggered"));
 
-  JavaThread *cur_thread = JavaThread::current();
-  JvmtiThreadState *state = cur_thread->jvmti_thread_state();
+  assert (thread == JavaThread::current(), "must be");
+  JvmtiThreadState *state = thread->jvmti_thread_state();
   if (state == NULL) {
     return;
   }
@@ -1529,11 +1529,11 @@ void JvmtiExport::post_continuation_yield(jthread thread, jint frames_count) {
         }
         EVT_TRACE(JVMTI_EVENT_CONTINUATION_RUN, ("Evt Continuation Run event sent"));
 
-        JvmtiThreadEventMark jem(cur_thread);
-        JvmtiJavaThreadEventTransition jet(cur_thread);
+        JvmtiThreadEventMark jem(thread);
+        JvmtiJavaThreadEventTransition jet(thread);
         jvmtiEventContinuationYield callback = env->callbacks()->ContinuationYield;
         if (callback != NULL) {
-          (*callback)(env->jvmti_external(), jem.jni_env(), thread, frames_count);
+          (*callback)(env->jvmti_external(), jem.jni_env(), jem.jni_thread(), frames_count);
         }
       }
     }
