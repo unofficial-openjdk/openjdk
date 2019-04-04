@@ -32,6 +32,7 @@
 #include "logging/logTag.hpp"
 #include "memory/universe.hpp"
 #include "prims/methodHandles.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/flags/jvmFlag.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/icache.hpp"
@@ -84,6 +85,8 @@ void dependencyContext_init();
 bool universe_post_init();  // must happen after compiler_init
 void javaClasses_init();  // must happen after vtable initialization
 void stubRoutines_init2(); // note: StubRoutines need 2-phase init
+
+void continuations_init(); // depends on flags (UseCompressedOops, LoomGenCode) and barrier sets
 
 // Do not disable thread-local-storage, as it is important for some
 // JNI/JVM/JVMTI functions and signal handlers to work properly
@@ -149,6 +152,8 @@ jint init_globals() {
   stubRoutines_init2(); // note: StubRoutines need 2-phase init
   MethodHandles::generate_adapters();
 
+  continuations_init();
+
 #if INCLUDE_NMT
   // Solaris stack is walkable only after stubRoutines are set up.
   // On Other platforms, the stack is always walkable.
@@ -160,6 +165,7 @@ jint init_globals() {
   if (PrintFlagsFinal || PrintFlagsRanges) {
     JVMFlag::printFlags(tty, false, PrintFlagsRanges);
   }
+
 
   return JNI_OK;
 }

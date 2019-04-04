@@ -40,9 +40,16 @@ class objArrayOopDesc : public arrayOopDesc {
   friend class CSetMarkOopClosure;
   friend class G1ParScanPartialArrayClosure;
   friend class Continuation;
+  template <typename T>
+  friend class RawOopWriter;
 
   template <class T> T* obj_at_addr(int index) const;
   template <class T> T* obj_at_addr_raw(int index) const;
+
+public:
+  template <class T> T* obj_at_address(int index) const {
+    return obj_at_addr<T>(index);
+  }
 
   template <class T>
   static ptrdiff_t obj_at_offset(int index) {
@@ -89,6 +96,8 @@ private:
   oop obj_at(int index) const;
 
   void obj_at_put(int index, oop value);
+  template <DecoratorSet ds>
+  void obj_at_put_access(int index, oop value);
 
   oop atomic_compare_exchange_oop(int index, oop exchange_value, oop compare_value);
 

@@ -111,6 +111,12 @@ class RegisterMap : public StackObj {
     return (address) _location[reg->value()];
   }
 
+  void verify(RegisterMap& other) {
+    for (int i = 0; i < reg_count; ++i) {
+      assert(_location[i] == other._location[i], "");
+    }
+  }
+
   void update_location(VMReg reg, address loc) {
     int index = reg->value() / location_valid_type_size;
     assert(0 <= reg->value() && reg->value() < reg_count, "range check");

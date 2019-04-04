@@ -6,7 +6,7 @@ public class FreezeDriver {
         bm.paramCount = 3;
         bm.stackDepth = 5;
 
-        int n = 1000_000;
+        int n = 10_000_000;
 
         System.out.println("Running " + n + " iterations");
         bm.setup();

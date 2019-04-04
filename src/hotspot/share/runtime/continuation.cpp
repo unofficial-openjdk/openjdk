@@ -39,9 +39,10 @@
 #include "interpreter/oopMapCache.hpp"
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
+#include "metaprogramming/conditional.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
-#include "prims/jvmtiExport.hpp"
+#include "prims/jvmtiThreadState.hpp"
 #include "runtime/continuation.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
@@ -49,6 +50,7 @@
 #include "runtime/frame.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/jniHandles.inline.hpp"
+#include "runtime/prefetch.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/vframe_hp.hpp"
 #include "utilities/copy.hpp"
@@ -56,24 +58,12 @@
 #include "utilities/macros.hpp"
 
 #ifdef __has_include
-#  if __has_include(<valgrind/callgrind.h>)
-#    include <valgrind/callgrind.h>
+#  if __has_include(<callgrind.h>)
+#    include <callgrind.h>
 #  endif
 #endif
 #ifdef CALLGRIND_START_INSTRUMENTATION
   static int callgrind_counter = 1;
-  static void callgrind() {
-    if (callgrind_counter != 0) {
-      if (callgrind_counter > 20000) {
-        tty->print_cr("Starting callgrind instrumentation");
-        CALLGRIND_START_INSTRUMENTATION;
-        callgrind_counter = 0;
-      } else
-        callgrind_counter++;
-    }
-  }
-#else
-  static void callgrind() {};
 #endif
 
 // #undef ASSERT
@@ -81,6 +71,7 @@
 // #define assert(p, ...)
 
 int Continuation::PERFTEST_LEVEL = ContPerfTest;
+int Continuations::_flags = 0;
 // Freeze:
 // 5 - no call into C
 // 10 - immediate return from C
@@ -136,6 +127,24 @@ static inline int to_bytes(int x)    { return x << 2; } // stack is int[]
 static const unsigned char FLAG_LAST_FRAME_INTERPRETED = 1;
 static const unsigned char FLAG_SAFEPOINT_YIELD = 1 << 1;
 
+void continuations_init() {
+  Continuations::init();
+}
+
+// freeze result
+enum res_freeze {
+  freeze_ok = 0,
+  freeze_pinned_cs = 1,
+  freeze_pinned_native = 2,
+  freeze_pinned_monitor = 3,
+  freeze_exception = 4
+};
+
+class ContMirror;
+typedef res_freeze (*FreezeContFnT)(JavaThread*, ContMirror&, RegisterMap&, frame&);
+
+static FreezeContFnT cont_freeze = NULL;
+
 // static inline intptr_t* to_haddress(const void* base, const int index) {
 //   return (intptr_t*)((address)base + to_bytes(index));
 // }
@@ -162,7 +171,11 @@ public:
   enum { has_oopmap_lookup = true };
 
   static CodeBlob* find_blob(address pc) {
-    return CodeCache::find_blob_fast(pc);
+    CodeBlob* cb = CodeCache::find_blob_fast(pc);
+    /*Prefetch::read(cb, PrefetchScanIntervalInBytes);
+    Prefetch::read((void*)cb->is_compiled_addr(), PrefetchScanIntervalInBytes);
+    Prefetch::read((void*) ((CompiledMethod*) cb)->deopt_handler_begin_addr(), PrefetchScanIntervalInBytes);*/
+    return cb;
   }
 
   static CodeBlob* find_blob_and_oopmap(address pc, int& slot) {
@@ -198,8 +211,7 @@ private:
 
   void set_codeblob(address pc) {
     if (_cb == NULL && !_is_interpreted) {// compute lazily
-      ContinuationCodeBlobLookup lookup;
-      _cb = lookup.find_blob(_pc);
+      _cb = ContinuationCodeBlobLookup::find_blob(_pc);
       assert(_cb != NULL, "must be valid");
     }
   }
@@ -375,15 +387,6 @@ intptr_t* hframe::interpreter_frame_expression_stack_at(ContMirror& cont, int of
   return &(expression_stack[n]);
 }
 
-// freeze result
-enum res_freeze {
-  freeze_ok = 0,
-  freeze_pinned_cs = 1,
-  freeze_pinned_native = 2,
-  freeze_pinned_monitor = 3,
-  freeze_exception = 4
-};
-
 // struct oopLoc {
 //   bool narrow  : 1;
 //   unsigned long loc : 63;
@@ -426,7 +429,9 @@ private:
 
   ContMirror(const ContMirror& cont); // no copy constructor
 
+public:
   int* stack() const { return _hstack; }
+private:
 
   int ensure_capacity(int old, int min);
 
@@ -515,6 +520,7 @@ public:
 
   hframe from_frame(const frame& f);
 
+  template <typename ConfigT>
   inline int add_oop(oop obj, int index);
   // inline void add_oop_location(oop* p);
   // inline void add_oop_location(narrowOop* p);
@@ -1333,10 +1339,11 @@ void ContMirror::null_ref_stack(int start, int num) {
     _ref_stack->obj_at_put(start + i, NULL);
 }
 
+template <typename ConfigT>
 inline int ContMirror::add_oop(oop obj, int index) {
   assert (index < _ref_sp, "");
   log_trace(jvmcont)("i: %d ", index);
-  _ref_stack->obj_at_put(index, obj);
+  ConfigT::OopWriterT::obj_at_put(_ref_stack, index, obj);
   return index;
 }
 
@@ -1563,7 +1570,7 @@ static bool is_interpreted_frame_owning_locks(const frame& f) {
   for (BasicObjectLock* current = f.previous_monitor_in_interpreter_frame(f.interpreter_frame_monitor_begin());
         current >= f.interpreter_frame_monitor_end();
         current = f.previous_monitor_in_interpreter_frame(current)) {
-      
+
       oop obj = current->obj();
       if (obj != NULL) {
         return true;
@@ -1707,53 +1714,6 @@ public:
   virtual void do_derived_oop(oop *base_loc, oop *derived_loc) { _fn->do_derived_oop(base_loc, derived_loc); }
 };
 
-class InterpretedFreezeOopFn: public ContOopBase {
- public:
-  enum { SkipNull = false };
-
- private:
-  void* const _hsp;
-  int _starting_index;
-  int _count;
-
- protected:
-  template <class T> inline void do_oop_work(T* p) {
-    if (!process(p)) return;
-
-    oop obj = NativeAccess<>::oop_load(p);
-    int index = _cont->add_oop(obj, _starting_index + _count);
-    _count += 1;
-
-  #ifndef PRODUCT
-  #ifdef ASSERT
-    print_oop(p, obj);
-    assert (oopDesc::is_oop_or_null(obj), "invalid oop");
-    log_trace(jvmcont)("narrow: %d", sizeof(T) < wordSize);
-  #endif
-
-    int offset = verify(p);
-    address hloc; // address of oop in the (raw) h-stack
-    assert(offset >= 0, "should be true for interpreted frames");
-    hloc = (address)_hsp + offset;
-    assert (_cont->in_hstack(hloc), "");
-    log_trace(jvmcont)("Marking oop at " INTPTR_FORMAT " (offset: %d)", p2i(hloc), offset);
-    *(intptr_t*)hloc = badOopVal;
-  #endif
-  }
-
- public:
-  InterpretedFreezeOopFn(ContMirror* cont, frame* fr, void* vsp, void* hsp, RegisterMap* map, int starting_index)
-   : ContOopBase(cont, fr, map, vsp), _hsp(hsp), _starting_index(starting_index), _count(0) { 
-     assert (cont->in_hstack(hsp), "");
-  }
-  void do_oop(oop* p)       { do_oop_work(p); }
-  void do_oop(narrowOop* p) { do_oop_work(p); }
-
-  void do_derived_oop(oop *base_loc, oop *derived_loc) {
-    assert(false, "not supported for interpreted frames");
-  }
-};
-
 static inline void clear_anchor(JavaThread* thread) {
   thread->frame_anchor()->clear();
 }
@@ -1769,13 +1729,6 @@ static void set_anchor(JavaThread* thread, FrameInfo* fi) {
   log_trace(jvmcont)("set_anchor:");
   print_vframe(thread->last_frame());
 }
-
-// static void set_anchor(JavaThread* thread, const frame& f) {
-//   JavaFrameAnchor* anchor = thread->frame_anchor();
-//   anchor->set_last_Java_sp(f.sp());
-//   anchor->set_last_Java_fp(f.fp());
-//   anchor->set_last_Java_pc(f.pc());
-// }
 
 // static void set_anchor(ContMirror& cont) {
 //   FrameInfo fi = { cont.entryPC(), cont.entryFP(), cont.entrySP() };
@@ -1814,14 +1767,77 @@ static inline frame sender_for_compiled_frame(frame& f, intptr_t** link_addr, Co
    : frame(sender_sp, sender_sp, *link_addr, sender_pc);
 }
 
+struct FpOopInfo {
+  bool _has_fp_oop; // is fp used to store a derived pointer
+  int _fp_index;    // see CompiledFreezeOopFn::do_derviced_oop
+
+  FpOopInfo() : _has_fp_oop(false), _fp_index(0) {}
+
+  static int flag_offset() { return in_bytes(byte_offset_of(FpOopInfo, _has_fp_oop)); }
+  static int index_offset() { return in_bytes(byte_offset_of(FpOopInfo, _fp_index)); }
+};
+
+template <typename ConfigT>
 class FreezeContinuation {
+
+class InterpretedFreezeOopFn: public ContOopBase {
+ public:
+  enum { SkipNull = false };
+
+ private:
+  void* const _hsp;
+  int _starting_index;
+  int _count;
+
+  int add_oop(oop obj, int index) {
+    return _cont->add_oop<ConfigT>(obj, index);
+  }
+
+ protected:
+  template <class T> inline void do_oop_work(T* p) {
+    if (!process(p)) return;
+
+    oop obj = RawAccess<>::oop_load(p);
+    int index = add_oop(obj, _starting_index + _count);
+    _count += 1;
+
+  #ifndef PRODUCT
+  #ifdef ASSERT
+    print_oop(p, obj);
+    assert (oopDesc::is_oop_or_null(obj), "invalid oop");
+    log_trace(jvmcont)("narrow: %d", sizeof(T) < wordSize);
+  #endif
+
+    int offset = verify(p);
+    address hloc; // address of oop in the (raw) h-stack
+    assert(offset >= 0, "should be true for interpreted frames");
+    hloc = (address)_hsp + offset;
+    assert (_cont->in_hstack(hloc), "");
+    log_trace(jvmcont)("Marking oop at " INTPTR_FORMAT " (offset: %d)", p2i(hloc), offset);
+    *(intptr_t*)hloc = badOopVal;
+  #endif
+  }
+
+ public:
+  InterpretedFreezeOopFn(ContMirror* cont, frame* fr, void* vsp, void* hsp, RegisterMap* map, int starting_index)
+   : ContOopBase(cont, fr, map, vsp), _hsp(hsp), _starting_index(starting_index), _count(0) { 
+     assert (cont->in_hstack(hsp), "");
+  }
+
+  void do_oop(oop* p)       { do_oop_work(p); }
+  void do_oop(narrowOop* p) { do_oop_work(p); }
+
+  void do_derived_oop(oop *base_loc, oop *derived_loc) {
+    assert(false, "not supported for interpreted frames");
+  }
+};
 
 class CompiledFreezeOopFn: public ContOopBase {
  public:
   enum { SkipNull = false };
 
  private:
-  FreezeContinuation* _fc;
+  FreezeContinuation<ConfigT>* _fc;
   void* const _hsp;
   int _starting_index;
   int _count;
@@ -1831,12 +1847,16 @@ class CompiledFreezeOopFn: public ContOopBase {
   const address _stub_hsp;
 #endif
 
+  int add_oop(oop obj, int index) {
+    return _cont->add_oop<ConfigT>(obj, index);
+  }
+
  protected:
   template <class T> inline void do_oop_work(T* p) {
     if (!process(p)) return;
 
-    oop obj = NativeAccess<>::oop_load(p);
-    int index = _cont->add_oop(obj, _starting_index + _count);
+    oop obj = RawAccess<>::oop_load(p); // we are reading off our own stack, Raw should be fine
+    int index = add_oop(obj, _starting_index + _count);
     _count++;
 
   #ifdef ASSERT
@@ -1870,7 +1890,7 @@ class CompiledFreezeOopFn: public ContOopBase {
   }
 
  public:
-  CompiledFreezeOopFn(ContMirror* cont, FreezeContinuation* fc, frame* fr, void* vsp, void* hsp, RegisterMap* map, int starting_index, intptr_t* stub_vsp, intptr_t* stub_hsp)
+  CompiledFreezeOopFn(ContMirror* cont, FreezeContinuation<ConfigT>* fc, frame* fr, void* vsp, void* hsp, RegisterMap* map, int starting_index, intptr_t* stub_vsp, intptr_t* stub_hsp)
    : ContOopBase(cont, fr, map, vsp), _fc(fc), _hsp(hsp), _starting_index(starting_index), _count(0),
      _stub_vsp((address)stub_vsp)
 #ifndef PRODUCT
@@ -1934,8 +1954,7 @@ private:
   frame _entry_frame;
   frame _safepoint_stub;
 
-  bool _has_fp_oop; // is fp used to store a derived pointer
-  int _fp_index;    // see CompiledFreezeOopFn::do_derviced_oop
+  FpOopInfo _fp_oop_info;
 
   bool _is_last;
   bool is_last()  { return _is_last;  } // this is only true after returning from the recursive call
@@ -1944,8 +1963,7 @@ public:
   FreezeContinuation(JavaThread* thread, ContMirror& mirror, RegisterMap& map) : 
     _thread(thread), _mirror(mirror), _bottom_address(mirror.entrySP()), _map(map),
     _oops(0), _size(0), _frames(0), _wsp(0), _wref_sp(0),
-    _has_fp_oop(false), _fp_index(0),
-    _is_last(false) {
+    _fp_oop_info(), _is_last(false) {
   }
 
   int nr_oops() const { return _oops; }
@@ -1955,6 +1973,8 @@ public:
   hframe top_hframe() { return _top; }
   frame entry_frame() { return _entry_frame; }
 
+  int low_array_index() const { return _wref_sp; }
+
   res_freeze freeze(frame f) {
     // assert (map.update_map(), "RegisterMap not set to update");
     assert (!_map.include_argument_oops(), "should be");
@@ -1962,9 +1982,9 @@ public:
 
     res_freeze result = freeze(f, frame::saved_link_address(&_map), caller, 0, 0); // we do update the link address for the first frame in the map
 
-    if (_has_fp_oop) {
+    if (_fp_oop_info._has_fp_oop) {
       assert(!caller.is_interpreted_frame(), "only compiled frames");
-      _top.set_fp(_fp_index);
+      _top.set_fp(_fp_oop_info._fp_index);
     }
 
     return result;
@@ -1980,9 +2000,9 @@ public:
   }
 
   void set_oop_fp_index(int index) {
-    assert(_has_fp_oop == false, "can only have one");
-    _has_fp_oop = true;
-    _fp_index = index;
+    assert(_fp_oop_info._has_fp_oop == false, "can only have one");
+    _fp_oop_info._has_fp_oop = true;
+    _fp_oop_info._fp_index = index;
   }
 
   template <bool stub>
@@ -2025,9 +2045,9 @@ public:
       }
     }
 
-    if (_has_fp_oop) {
+    if (_fp_oop_info._has_fp_oop) {
       assert(!caller.is_interpreted_frame(), "only compiled frames");
-      callee.patch_link(_fp_index);
+      callee.patch_link(_fp_oop_info._fp_index);
     }
 
     if (is_last() && !_mirror.is_empty()) {
@@ -2048,7 +2068,7 @@ public:
 
   class FreezeInterpretedOops {
   public:
-    static int freeze_oops(ContMirror& mirror, FreezeContinuation* fc, frame& f, intptr_t* vsp, intptr_t* hsp, RegisterMap& map, int starting_index, intptr_t* stub_vsp, intptr_t* stub_hsp) {
+    static int freeze_oops(ContMirror& mirror, FreezeContinuation<ConfigT>* fc, frame& f, intptr_t* vsp, intptr_t* hsp, RegisterMap& map, int starting_index, intptr_t* stub_vsp, intptr_t* stub_hsp) {
       InterpretedFreezeOopFn oopFn(&mirror, &f, vsp, hsp, &map, starting_index);
       ForwardingOopClosure<InterpretedFreezeOopFn> oopClosure(&oopFn);
       f.oops_do(&oopClosure, NULL, &oopClosure, &map);
@@ -2058,19 +2078,34 @@ public:
 
   class FreezeCompiledOops {
   public:
-    static int freeze_oops(ContMirror& mirror, FreezeContinuation* fc, frame& f, intptr_t* vsp, intptr_t* hsp, RegisterMap& map, int starting_index, intptr_t* stub_vsp, intptr_t* stub_hsp) {
+    static int freeze_oops(ContMirror& mirror, FreezeContinuation<ConfigT>* fc, frame& f, intptr_t* vsp, intptr_t* hsp, RegisterMap& map, int starting_index, intptr_t* stub_vsp, intptr_t* stub_hsp) {
       const ImmutableOopMap* oopmap = f.oop_map();
       assert(oopmap, "must have");
-      CompiledFreezeOopFn oopFn(&mirror, fc, &f, vsp, hsp, &map, starting_index, stub_vsp, stub_hsp);
+      if (oopmap->num_oops() == 0) {
+        return 0;
+      }
 
-      OopMapDo<CompiledFreezeOopFn, CompiledFreezeOopFn, IncludeAllValues> visitor(&oopFn, &oopFn, false /* no derived table lock */);
-      visitor.oops_do(&f, &map, oopmap);
-      assert (!map.include_argument_oops(), "");
-      // if (map.include_argument_oops()) {
-      //   ForwardingOopClosure<CompiledFreezeOopFn> oopClosure(&oopFn);
-      //   f.cb()->preserve_callee_argument_oops(f, &map, &oopClosure);
-      // }
-      return oopFn.count();
+      typedef int (*FreezeFnT)(address, address, address, address, int, FpOopInfo*);
+
+      address stub = oopmap->freeze_stub();
+      if (ConfigT::allow_stubs && stub == NULL) {
+        oopmap->generate_stub();
+        stub = oopmap->freeze_stub();
+      }
+
+      if (ConfigT::allow_stubs && stub != NULL && stub != (address) oopmap && stub_vsp == NULL) { // need CompressedOops for now
+        FreezeFnT f_fn = (FreezeFnT) stub;
+        typename ConfigT::OopT* addr = mirror.refStack()->obj_at_address<typename ConfigT::OopT>(starting_index);
+        int cnt = f_fn( (address) vsp,  (address) addr, (address) &map, (address) hsp, mirror.refStack()->length() - starting_index, &fc->_fp_oop_info);
+        return cnt;
+      } else {
+        CompiledFreezeOopFn oopFn(&mirror, fc, &f, vsp, hsp, &map, starting_index, stub_vsp, stub_hsp);
+
+        OopMapDo<CompiledFreezeOopFn, CompiledFreezeOopFn, IncludeAllValues> visitor(&oopFn, &oopFn, false /* no derived table lock */);
+        visitor.oops_do(&f, &map, oopmap);
+        assert (!map.include_argument_oops(), "");
+        return oopFn.count();
+      }
     }
   };
 
@@ -2084,7 +2119,7 @@ public:
 
     assert (!_map.include_argument_oops(), "");
 
-    _has_fp_oop = false;
+    _fp_oop_info._has_fp_oop = false;
     int starting_index = _wref_sp - num_oops;
     int frozen = FreezeOops::freeze_oops(_mirror, this, f, vsp, hsp, _map, starting_index, stub_vsp, stub_hsp);
     assert(frozen == num_oops, "frozen: %d num_oops: %d", frozen, num_oops);
@@ -2204,7 +2239,7 @@ public:
               || (caller.is_empty() && !_mirror.is_empty() && _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED))), 
             "Interpreter::contains(hf.return_pc(_mirror)): %d caller.is_empty(): %d _mirror.is_empty(): %d caller.is_interpreted_frame(): %d _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED): %d", 
             Interpreter::contains(hf.return_pc<false>(_mirror)), caller.is_empty(), _mirror.is_empty(), caller.is_interpreted_frame(), _mirror.is_flag(FLAG_LAST_FRAME_INTERPRETED));
-    
+
     bool may_need_alignment = Interpreter::contains(hf.return_pc<false>(_mirror)); // do after fixing return_pc in patch (and/or use equivalent condition above)
 
     intptr_t* stub_vsp = NULL;
@@ -2229,7 +2264,7 @@ public:
         // hf_tmp is now the stub frame
         stub_vsp = compiled_frame_top(_safepoint_stub);
         stub_hsp = _mirror.stack_address(hf_stub.sp());
-        
+
         assert (callee_link_address == link_address(_safepoint_stub, false), "callee_link_address: " INTPTR_FORMAT " link_address(_safepoint_stub): " INTPTR_FORMAT, p2i(callee_link_address), p2i(link_address(_safepoint_stub, false)));
         // update_map_with_saved_link(&_map, link_address(_safepoint_stub, false));
 
@@ -2239,9 +2274,9 @@ public:
       update_map_with_saved_link(&_map, callee_link_address);
       freeze_oops<FreezeCompiledOops>(f, vsp, extended_hsp, oops, stub_vsp, stub_hsp); // must be called after patch, as patch uses the previous freeze_oop data
 
-      assert (stub_vsp == NULL || !_has_fp_oop, "must be"); // if I'm a stub caller, I don't set _has_fp_oop
+      assert (stub_vsp == NULL || !_fp_oop_info._has_fp_oop, "must be"); // if I'm a stub caller, I don't set _has_fp_oop
     } else {
-      _has_fp_oop = false;
+      _fp_oop_info._has_fp_oop = false;
     }
 
     caller = hf;
@@ -2256,6 +2291,15 @@ public:
   }
 
   NOINLINE res_freeze finalize(frame& f) {
+#ifdef CALLGRIND_START_INSTRUMENTATION
+    /*if (_frames == _compiled && callgrind_counter == 1) {
+      callgrind_counter = 2;
+      tty->print_cr("Starting callgrind instrumentation");
+      CALLGRIND_START_INSTRUMENTATION;
+    }
+    */
+#endif
+
     if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
 
     _entry_frame = f;
@@ -2314,7 +2358,7 @@ public:
       result = prepare_freeze_frame<false, false>(f, &fsize, &argsize, &oops, callee_argsize);
       if (result != freeze_ok)
         return result;
-      
+
       res_freeze result = freeze_caller<false>(f, caller, argsize, count); // <----- recursive call
       if (result != freeze_ok)
         return result;
@@ -2326,7 +2370,7 @@ public:
       result = prepare_freeze_frame<true, false>(f, &fsize, &argsize, &oops, callee_argsize);
       if (result != freeze_ok)
         return result;
-      
+
       res_freeze result = freeze_caller<true>(f, caller, 0, count); // <----- recursive call
       if (result != freeze_ok)
         return result;
@@ -2353,7 +2397,9 @@ public:
     return result;
   }
 
-  void finish(bool empty, frame& f) {
+  void finish(bool empty, frame& f, BarrierSet* bs) {
+    ConfigT::OopWriterT::finish(this, bs, _mirror);
+
     hframe orig_top_frame = _mirror.last_frame(); // must be done before committing the changes
 
     assert (_wsp <= _mirror.sp(), "wsp: %d sp: %d", _wsp, _mirror.sp());
@@ -2401,9 +2447,94 @@ public:
   }
 };
 
+template <typename ConfigT>
+class NormalOopWriter {
+public:
+  typedef typename ConfigT::OopT OopT;
+  typedef typename ConfigT::FreezeContinuationT FreezeContinuationT;
+
+  static const bool post_barrier = true;
+
+  static void obj_at_put(objArrayOop array, int index, oop obj) {
+    array->obj_at_put_access<IS_DEST_UNINITIALIZED>(index, obj);
+  }
+
+  static void finish(FreezeContinuationT* fc, BarrierSet* bs, ContMirror& mirror) {
+  }
+};
+
+/*
+template <bool is_stub, bool is_interpreted, typename OopT>
+class Config {
+  typedef OopT OopT;
+  static const bool is_stub = is_stub;
+};
+
+
+template <typename ConfigT>
+class OopW {
+  static void write() {
+    if (ConfigT::is_stub) {
+    }
+  }
+}
+*/
+
+template <typename ConfigT>
+class RawOopWriter {
+public:
+  typedef typename ConfigT::OopT OopT;
+  typedef typename ConfigT::FreezeContinuationT FreezeContinuationT;
+
+  static const bool post_barrier = true;
+
+  static void obj_at_put(objArrayOop array, int index, oop obj) {
+    OopT* addr = array->obj_at_addr<OopT>(index); // depends on UseCompressedOops
+    RawAccess<IS_DEST_UNINITIALIZED>::oop_store(addr, obj);
+  }
+
+  static void finish(FreezeContinuationT* fc, BarrierSet* bs, ContMirror& mirror) {
+    int count = fc->nr_oops();
+    if (count > 0) {
+      ModRefBarrierSet* mbs = barrier_set_cast<ModRefBarrierSet>(bs);
+      HeapWord* start = (HeapWord*) mirror.refStack()->obj_at_addr<OopT>(fc->low_array_index());
+      mbs->write_ref_array(start, count);
+    }
+  }
+};
+
+template <bool compressed_oops, bool post_barrier, bool gen_stubs>
+class FreezeConfig {
+public:
+  typedef FreezeConfig<compressed_oops, post_barrier, gen_stubs> SelfT;
+  typedef typename Conditional<compressed_oops, narrowOop, oop>::type OopT;
+  typedef typename Conditional<post_barrier, RawOopWriter<SelfT>, NormalOopWriter<SelfT> >::type  OopWriterT;
+  typedef FreezeContinuation<SelfT> FreezeContinuationT;
+
+  static const bool allow_stubs = gen_stubs && compressed_oops && post_barrier;
+
+  static res_freeze freeze(JavaThread* thread, ContMirror& mirror, RegisterMap& map, frame& f) {
+    const bool empty = mirror.is_empty();
+
+    FreezeContinuationT fc(thread, mirror, map);
+    res_freeze result = fc.freeze(f);
+    if (result != freeze_ok) {
+      return result;
+    }
+
+    if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
+
+    BarrierSet* bs = BarrierSet::barrier_set();
+    fc.finish(empty, f, bs);
+
+    return freeze_ok;
+  }
+};
+
 // freezes all frames of a single continuation
 static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f, RegisterMap& map, bool safepoint_yield) {
   assert (oopCont != NULL, "");
+
 
   log_trace(jvmcont)("Freeze ___ cont: " INTPTR_FORMAT, p2i((oopDesc*)oopCont));
 
@@ -2431,19 +2562,15 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 
   if (Continuation::PERFTEST_LEVEL <= 13) return freeze_ok;
 
-  const bool empty = cont.is_empty();
-
   cont.set_flag(FLAG_SAFEPOINT_YIELD, safepoint_yield);
 
-  FreezeContinuation fc(thread, cont, map);
-  res_freeze result = fc.freeze(f);
+  res_freeze result = cont_freeze(thread, cont, map, f);
+
   if (result != freeze_ok) {
     return result;
   }
 
   if (Continuation::PERFTEST_LEVEL <= 15) return freeze_ok;
-
-  fc.finish(empty, f);
 
   cont.write();
 
@@ -2472,7 +2599,7 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 //      unless freezing has failed, in which case fi->pc = 0
 //      However, fi->fp points to the _address_ on the stack of the entry frame's link to its caller (so *(fi->fp) is the fp)
 int Continuation::freeze0(JavaThread* thread, FrameInfo* fi, bool safepoint_yield) {
-  callgrind();
+  //callgrind();
   Continuation::PERFTEST_LEVEL = ContPerfTest;
 
   if (PERFTEST_LEVEL <= 10) {
@@ -2841,35 +2968,42 @@ static void thaw_oops(ContMirror& cont, frame& f, int oop_index, int num_oops, v
 
   assert (!map.include_argument_oops(), "");
 
-  intptr_t* tmp_fp = f.fp();
-  frame::update_map_with_saved_link(&map, &tmp_fp);
-
-  // ResourceMark rm(cont.thread()); // apparently, oop-mapping may require resource allocation
-  ThawOopFn oopFn(&cont, &f, oop_index, num_oops, target, &map);
-  ForwardingOopClosure<ThawOopFn> oopClosure(&oopFn);
-  if (oop_map) {
-    OopMapDo<ThawOopFn, ThawOopFn, IncludeAllValues> visitor(&oopFn, &oopFn, false /* no derived table lock */);
-    visitor.oops_do(&f, &map, oop_map);
-    // void frame::oops_do_internal(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, RegisterMap* map, bool use_interpreter_oop_map_cache) {
-    //oop_map->oops_do(&f, &map, &oopClosure, &oopClosure);
-
-    // Preserve potential arguments for a callee. We handle this by dispatching
-    // on the codeblob. For c2i, we do
-    // if (map.include_argument_oops()) {
-    //   f.cb()->preserve_callee_argument_oops(f, &map, &oopClosure);
-    // }
+  if (oop_map != NULL && oop_map->thaw_stub() != NULL && oop_map->thaw_stub() != (address) oop_map) {
+    typedef int (*ThawFnT)(address /* dst */, address /* objArray */, address /* map */);
+    address addr = NULL;
+    if (UseCompressedOops) { // This should be optimized out with use of Config objects
+      addr = (address) cont.refStack()->obj_at_address<narrowOop>(oop_index);
+    } else {
+      addr = (address) cont.refStack()->obj_at_address<oop>(oop_index);
+    }
+    ThawFnT f_fn = (ThawFnT) oop_map->thaw_stub();
+    int cnt = f_fn( (address) target,  (address) addr, (address) f.fp_addr()); // write the link straight into the frame struct
+    assert(cnt == num_oops, "");
   } else {
-    f.oops_do(&oopClosure, NULL, &oopClosure, &map);
-  }
-  log_trace(jvmcont)("count: %d num_oops: %d", oopFn.count(), num_oops);
-  assert(oopFn.count() == num_oops, "closure oop count different.");
-  cont.null_ref_stack(oop_index, num_oops);
+    intptr_t* tmp_fp = f.fp();
+    frame::update_map_with_saved_link(&map, &tmp_fp);
 
-  // Thawing oops may have overwritten the link in the callee if rbp contained an oop (only possible if we're compiled).
-  // This only matters when we're the top frame, as that's the value that will be restored into rbp when we jump to continue.
-  if (tmp_fp != f.fp()) {
-    log_trace(jvmcont)("WHOA link has changed (thaw) f.fp: " INTPTR_FORMAT " link: " INTPTR_FORMAT, p2i(f.fp()), p2i(tmp_fp));
-    f.set_fp(tmp_fp);
+
+    // ResourceMark rm(cont.thread()); // apparently, oop-mapping may require resource allocation
+    ThawOopFn oopFn(&cont, &f, oop_index, num_oops, target, &map);
+    ForwardingOopClosure<ThawOopFn> oopClosure(&oopFn);
+    if (oop_map) {
+      OopMapDo<ThawOopFn, ThawOopFn, IncludeAllValues> visitor(&oopFn, &oopFn, false /* no derived table lock */);
+      visitor.oops_do(&f, &map, oop_map);
+    } else {
+      f.oops_do(&oopClosure, NULL, &oopClosure, &map);
+    }
+
+    log_trace(jvmcont)("count: %d num_oops: %d", oopFn.count(), num_oops);
+    assert(oopFn.count() == num_oops, "closure oop count different.");
+    cont.null_ref_stack(oop_index, num_oops);
+
+    // Thawing oops may have overwritten the link in the callee if rbp contained an oop (only possible if we're compiled).
+    // This only matters when we're the top frame, as that's the value that will be restored into rbp when we jump to continue.
+    if (tmp_fp != f.fp()) {
+      log_trace(jvmcont)("WHOA link has changed (thaw) f.fp: " INTPTR_FORMAT " link: " INTPTR_FORMAT, p2i(f.fp()), p2i(tmp_fp));
+      f.set_fp(tmp_fp);
+    }
   }
 
   log_trace(jvmcont)("Done walking oops");
@@ -2915,6 +3049,7 @@ static frame thaw_frame(ContMirror& cont, hframe& hf, int oop_index, int fsize, 
     is_sender_deopt, sender.is_deoptimized_frame());
   deoptimized = false;
 
+#ifdef ASSERT
   if (is_entry_frame(cont, sender)) {
     // if (hf.return_pc(cont) != cont.entryPC()) {
     //   tty->print_cr("return: " INTPTR_FORMAT " real: " INTPTR_FORMAT " pc: " INTPTR_FORMAT " raw: " INTPTR_FORMAT " entry: " INTPTR_FORMAT, p2i(hf.return_pc(cont)), p2i(real_pc(sender)), p2i(sender.pc()), p2i(sender.raw_pc()), p2i(cont.entryPC()));
@@ -2935,6 +3070,7 @@ static frame thaw_frame(ContMirror& cont, hframe& hf, int oop_index, int fsize, 
     //   is_sender_deopt = true;
     // }
   }
+#endif
 
   // address deopt_ret_pc = NULL;
   // if (is_sender_deopt) {
@@ -3046,7 +3182,7 @@ static frame thaw_frames(ContMirror& cont, hframe hf, int oop_index, int num_fra
   bool is_bottom;
   int fsize, num_oops;
   frame f, sender;
-  
+
   if (interpreted) {
     InterpreterOopMap mask;
     hf.interpreted_frame_oop_map(cont, &mask);
@@ -3248,16 +3384,12 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
 
   DEBUG_ONLY(thread->_continuation = oopCont;)
 
-  // JvmtiThreadState *jvmti_state = thread->jvmti_thread_state();
-  // if (jvmti_state != NULL && jvmti_state->is_interp_only_mode()) {
-  //   jvmti_state->invalidate_cur_stack_depth();
-  // }
-
   if (!return_barrier && JvmtiExport::should_post_continuation_run()) {
     set_anchor(thread, fi); // ensure thawed frames are visible
     JvmtiExport::post_continuation_run(JavaThread::current(), java_frame_count);
     clear_anchor(thread);
   }
+
   cont.post_jfr_event(&event);
 
 #ifdef ASSERT
@@ -3266,6 +3398,7 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
   log_debug(jvmcont)("=== End of thaw");
 #endif
 }
+
 
 // static size_t frames_size(oop cont, int frames) {
 //   size_t size = 0;
@@ -3359,7 +3492,7 @@ JRT_END
 //      fi->pc = the PC " ...
 // JRT_ENTRY(void, Continuation::thaw(JavaThread* thread, FrameInfo* fi, int num_frames))
 JRT_LEAF(address, Continuation::thaw(FrameInfo* fi, bool return_barrier, bool exception))
-  callgrind();
+  //callgrind();
   Continuation::PERFTEST_LEVEL = ContPerfTest;
 
   thaw1(JavaThread::current(), fi, return_barrier);
@@ -4178,4 +4311,50 @@ void CONT_RegisterNativeMethods(JNIEnv *env, jclass cls) {
 // //   static ByteSize jvmci_counters_offset()        { return byte_offset_of(JavaThread, _jvmci_counters); }
 // // #endif // INCLUDE_JVMCI
 // }
+//
 // #endif
+
+class FreezeConfigResolve {
+public:
+
+  static FreezeContFnT resolve() {
+    return resolve_compressed();
+  }
+
+  template <bool use_compressed, bool is_modref, bool gen_code>
+  static FreezeContFnT resolve() {
+    return &FreezeConfig<use_compressed, is_modref, gen_code>::freeze;
+  }
+
+  template <bool use_compressed, bool is_modref>
+  static FreezeContFnT resolve_gencode() {
+    if (LoomGenCode) {
+      return resolve<use_compressed, is_modref, true>();
+    }
+    return resolve<use_compressed, is_modref, false>();
+  }
+
+  template <bool use_compressed>
+  static FreezeContFnT resolve_modref() {
+    BarrierSet* bs = BarrierSet::barrier_set();
+    bool is_modref = bs->is_a(BarrierSet::ModRef);
+
+    if (is_modref) {
+      return resolve_gencode<use_compressed, true>();
+    }
+    return resolve_gencode<use_compressed, false>();
+  }
+
+  static FreezeContFnT resolve_compressed() {
+    if (UseCompressedOops) {
+      return resolve_modref<true>();
+    }
+    return resolve_modref<false>();
+  }
+};
+
+
+void Continuations::init() {
+  cont_freeze = FreezeConfigResolve::resolve();
+}
+
