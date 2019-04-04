@@ -143,6 +143,7 @@ public:
   virtual bool is_method_handles_adapter_blob() const { return false; }
   virtual bool is_aot() const                         { return false; }
   bool is_compiled() const                            { return _is_compiled; }
+  const bool* is_compiled_addr() const                      { return &_is_compiled; }
 
   inline bool is_compiled_by_c1() const    { return _type == compiler_c1; };
   inline bool is_compiled_by_c2() const    { return _type == compiler_c2; };

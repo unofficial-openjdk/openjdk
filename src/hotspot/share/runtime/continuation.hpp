@@ -42,6 +42,8 @@ private:
   static volatile long _exploded_hit;
   static volatile long _nmethod_hit;
   static volatile long _nmethod_miss;
+
+  static int _flags;
 public:
   static void exploded_miss();
   static void exploded_hit();
@@ -49,7 +51,12 @@ public:
   static void nmethod_hit();
 
   static void print_statistics();
+  static void init();
+
+  static int flags() { return _flags; }
 };
+
+void continuations_init();
 
 class javaVFrame;
 
@@ -93,7 +100,7 @@ public:
 
   static oop continuation_scope(oop cont);
   static bool is_scope_bottom(oop cont_scope, const frame& fr, const RegisterMap* map);
-  
+
   static int PERFTEST_LEVEL;
 private:
   // declared here as it's used in friend declarations

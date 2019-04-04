@@ -151,6 +151,7 @@
   // accessors for the instance variables
   // Note: not necessarily the real 'frame pointer' (see real_fp)
   intptr_t*   fp() const { return _fp; }
+  intptr_t**  fp_addr() { return &_fp; } // for use in continuations freezing / thawing
   void set_fp(intptr_t* newfp) { _fp = newfp; }
 
   inline address* sender_pc_addr() const;

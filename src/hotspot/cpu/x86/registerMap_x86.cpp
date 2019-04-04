@@ -49,3 +49,8 @@ address RegisterMap::pd_location(VMReg reg) const {
   }
   return NULL;
 }
+
+
+int RegisterMap::link_offset() { 
+  return in_bytes(byte_offset_of(RegisterMap, _location)) + sizeof(intptr_t*) * rbp->as_VMReg()->value();
+}

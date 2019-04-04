@@ -106,6 +106,7 @@ public:
   bool is_callee_saved()      { return mask_bits(value(), type_mask_in_place) == callee_saved_value; }
   bool is_derived_oop()       { return mask_bits(value(), type_mask_in_place) == derived_oop_value; }
   // bool is_live()              { return mask_bits(value(), type_mask_in_place) == live_value; }
+  bool is_oop_or_narrow()     { return is_oop() || is_narrowoop(); }
 
   void set_oop()              { set_value((value() & register_mask_in_place) | oop_value); }
   void set_narrowoop()          { set_value((value() & register_mask_in_place) | narrowoop_value); }
@@ -149,6 +150,7 @@ class OopMap: public ResourceObj {
   friend class OopMapStream;
   friend class VMStructs;
   friend class OopMapSet;
+  friend class OopMapSort;
  private:
   int  _pc_offset; // offset in the code that this OopMap corresponds to
   int  _omv_count; // number of OopMapValues in the stream
@@ -198,6 +200,7 @@ class OopMap: public ResourceObj {
 
   int heap_size() const;
   void copy_data_to(address addr) const;
+  void copy_and_sort_data_to(address addr) const;
   OopMap* deep_copy();
 
   bool has_derived_pointer() const PRODUCT_RETURN0;
@@ -297,6 +300,8 @@ public:
   ExplodedOopMap(const ImmutableOopMap* oopMap);
   OopMapValue* values(int mask);
   int count(int mask);
+
+  bool has_derived() const { return _nrDerivedValues > 0; }
 };
 
 class ExplodedOopMapStream;
@@ -320,6 +325,8 @@ class ImmutableOopMap {
 #endif
 private:
   ExplodedOopMap* _exploded;
+  mutable address _freeze_stub;
+  mutable address _thaw_stub;
   int _count; // contains the number of entries in this OopMap
   int _num_oops;
 
@@ -330,6 +337,7 @@ public:
   void set_exploded(ExplodedOopMap* exploded) { _exploded = exploded; }
   bool has_exploded() const { return _exploded != NULL; }
   bool has_derived_pointer() const PRODUCT_RETURN0;
+  bool has_derived() const { return _exploded->has_derived(); } // DEBUG rbackman
   int count() const { return _count; }
   int num_oops() const { return _num_oops; }
 #ifdef ASSERT
@@ -343,6 +351,10 @@ public:
   // Printing
   void print_on(outputStream* st) const;
   void print() const { print_on(tty); }
+
+  void generate_stub() const;
+  address freeze_stub() const { return _freeze_stub; }
+  address thaw_stub() const { return _thaw_stub; }
 };
 
 class ImmutableOopMapSet;
@@ -409,7 +421,7 @@ class OopMapStream : public StackObj {
   void find_next();
 
  public:
-  OopMapStream(OopMap* oop_map, int oop_types_mask = OopMapValue::type_mask_in_place);
+  OopMapStream(const OopMap* oop_map, int oop_types_mask = OopMapValue::type_mask_in_place);
   OopMapStream(const ImmutableOopMap* oop_map, int oop_types_mask = OopMapValue::type_mask_in_place);
   bool is_done()                        { if(!_valid_omv) { find_next(); } return !_valid_omv; }
   void next()                           { find_next(); }
