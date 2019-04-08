@@ -2532,7 +2532,7 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
           "Path to the directoy where a temporary file will be created "    \
           "to use as the backing store for Java Heap.")                     \
                                                                             \
-  product(bool, LoomGenCode, true,                                          \
+  product(bool, LoomGenCode, false,                                         \
       "Generate oopmap code")                                               \
                                                                             \
   experimental(ccstr, AllocateOldGenAt, NULL,                               \
