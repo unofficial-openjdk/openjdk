@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ include $(SPEC)
 include MakeBase.gmk
 
 PRODUCT_TARGETS :=
+LEGACY_TARGETS :=
 TEST_TARGETS :=
 DOCS_TARGETS :=
 
@@ -71,7 +72,7 @@ define SetupBundleFileBody
 
   $(BUNDLES_OUTPUTDIR)/$$($1_BUNDLE_NAME): $$($1_FILES)
 	$$(call MakeTargetDir)
-        # If any of the files contain a space in the file name, CacheFind
+        # If any of the files contain a space in the file name, FindFiles
         # will have replaced it with ?. Tar does not accept that so need to
         # switch it back.
 	$$(foreach d, $$($1_BASE_DIRS), \
@@ -146,24 +147,31 @@ endef
 # correct base directories.
 ifeq ($(call isTargetOs, macosx)+$(DEBUG_LEVEL), true+release)
   JDK_IMAGE_DIR := $(JDK_MACOSX_BUNDLE_DIR)
+  JRE_IMAGE_DIR := $(JRE_MACOSX_BUNDLE_DIR)
   JDK_IMAGE_HOMEDIR := $(JDK_MACOSX_CONTENTS_DIR)/Home
+  JRE_IMAGE_HOMEDIR := $(JRE_MACOSX_CONTENTS_DIR)/Home
   JDK_BUNDLE_SUBDIR :=
+  JRE_BUNDLE_SUBDIR :=
 else
   JDK_IMAGE_HOMEDIR := $(JDK_IMAGE_DIR)
+  JRE_IMAGE_HOMEDIR := $(JRE_IMAGE_DIR)
   JDK_BUNDLE_SUBDIR := jdk-$(VERSION_NUMBER)
+  JRE_BUNDLE_SUBDIR := jre-$(VERSION_NUMBER)
   ifneq ($(DEBUG_LEVEL), release)
     JDK_BUNDLE_SUBDIR := $(JDK_BUNDLE_SUBDIR)/$(DEBUG_LEVEL)
+    JRE_BUNDLE_SUBDIR := $(JRE_BUNDLE_SUBDIR)/$(DEBUG_LEVEL)
   endif
 endif
 
 ################################################################################
 
-ifneq ($(filter product-bundles, $(MAKECMDGOALS)), )
-  $(eval $(call FillCacheFind, $(IMAGES_OUTPUTDIR)))
+ifneq ($(filter product-bundles legacy-bundles, $(MAKECMDGOALS)), )
 
   SYMBOLS_EXCLUDE_PATTERN := %.debuginfo %.diz %.pdb %.map
 
-  ALL_JDK_FILES := $(call CacheFind, $(JDK_IMAGE_DIR))
+  # There may be files with spaces in the names, so use ShellFindFiles
+  # explicitly.
+  ALL_JDK_FILES := $(call ShellFindFiles, $(JDK_IMAGE_DIR))
 
   # Create special filter rules when dealing with unzipped .dSYM directories on
   # macosx
@@ -194,9 +202,25 @@ ifneq ($(filter product-bundles, $(MAKECMDGOALS)), )
               $(ALL_JDK_FILES) \
           ) \
       ) \
-      $(call CacheFind, $(SYMBOLS_IMAGE_DIR))
+      $(call FindFiles, $(SYMBOLS_IMAGE_DIR))
 
   TEST_DEMOS_BUNDLE_FILES := $(filter $(JDK_IMAGE_HOMEDIR)/demo/%, $(ALL_JDK_FILES))
+
+  ALL_JRE_FILES := $(call ShellFindFiles, $(JRE_IMAGE_DIR))
+
+  # Create special filter rules when dealing with unzipped .dSYM directories on
+  # macosx
+  ifeq ($(OPENJDK_TARGET_OS), macosx)
+    ifeq ($(ZIP_EXTERNAL_DEBUG_SYMBOLS), false)
+      JRE_SYMBOLS_EXCLUDE_PATTERN := $(addprefix %, \
+          $(call containing, .dSYM/, $(patsubst $(JRE_IMAGE_DIR)/%, %, $(ALL_JRE_FILES))))
+    endif
+  endif
+
+  JRE_BUNDLE_FILES := $(filter-out \
+      $(JRE_SYMBOLS_EXCLUDE_PATTERN) \
+      $(SYMBOLS_EXCLUDE_PATTERN), \
+      $(ALL_JRE_FILES))
 
   $(eval $(call SetupBundleFile, BUILD_JDK_BUNDLE, \
       BUNDLE_NAME := $(JDK_BUNDLE_NAME), \
@@ -207,6 +231,15 @@ ifneq ($(filter product-bundles, $(MAKECMDGOALS)), )
   ))
 
   PRODUCT_TARGETS += $(BUILD_JDK_BUNDLE)
+
+  $(eval $(call SetupBundleFile, BUILD_JRE_BUNDLE, \
+      BUNDLE_NAME := $(JRE_BUNDLE_NAME), \
+      FILES := $(JRE_BUNDLE_FILES), \
+      BASE_DIRS := $(JRE_IMAGE_DIR), \
+      SUBDIR := $(JRE_BUNDLE_SUBDIR), \
+  ))
+
+  LEGACY_TARGETS += $(BUILD_JRE_BUNDLE)
 
   $(eval $(call SetupBundleFile, BUILD_JDK_SYMBOLS_BUNDLE, \
       BUNDLE_NAME := $(JDK_SYMBOLS_BUNDLE_NAME), \
@@ -234,7 +267,7 @@ endif
 ################################################################################
 
 ifneq ($(filter test-bundles, $(MAKECMDGOALS)), )
-  TEST_BUNDLE_FILES := $(call CacheFind, $(TEST_IMAGE_DIR))
+  TEST_BUNDLE_FILES := $(call FindFiles, $(TEST_IMAGE_DIR))
 
   $(eval $(call SetupBundleFile, BUILD_TEST_BUNDLE, \
       BUNDLE_NAME := $(TEST_BUNDLE_NAME), \
@@ -248,7 +281,7 @@ endif
 ################################################################################
 
 ifneq ($(filter docs-bundles, $(MAKECMDGOALS)), )
-  DOCS_BUNDLE_FILES := $(call CacheFind, $(DOCS_IMAGE_DIR))
+  DOCS_BUNDLE_FILES := $(call FindFiles, $(DOCS_IMAGE_DIR))
 
   $(eval $(call SetupBundleFile, BUILD_DOCS_BUNDLE, \
       BUNDLE_NAME := $(DOCS_BUNDLE_NAME), \
@@ -263,7 +296,7 @@ endif
 ################################################################################
 
 ifneq ($(filter jcov-bundles, $(MAKECMDGOALS)), )
-  JCOV_BUNDLE_FILES := $(call CacheFind, $(JCOV_IMAGE_DIR))
+  JCOV_BUNDLE_FILES := $(call FindFiles, $(JCOV_IMAGE_DIR))
 
   $(eval $(call SetupBundleFile, BUILD_JCOV_BUNDLE, \
       BUNDLE_NAME := $(JCOV_BUNDLE_NAME), \
@@ -283,6 +316,7 @@ $(eval $(call IncludeCustomExtension, Bundles.gmk))
 ################################################################################
 
 product-bundles: $(PRODUCT_TARGETS)
+legacy-bundles: $(LEGACY_TARGETS)
 test-bundles: $(TEST_TARGETS)
 docs-bundles: $(DOCS_TARGETS)
 jcov-bundles: $(JCOV_TARGETS)

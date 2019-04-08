@@ -1119,8 +1119,6 @@ public:
     return _hrm->reserved();
   }
 
-  virtual bool is_in_closed_subset(const void* p) const;
-
   G1HotCardCache* g1_hot_card_cache() const { return _hot_card_cache; }
 
   G1CardTable* card_table() const {
@@ -1321,6 +1319,12 @@ public:
 
   // Unregister the given nmethod from the G1 heap.
   virtual void unregister_nmethod(nmethod* nm);
+
+  // No nmethod flushing needed.
+  virtual void flush_nmethod(nmethod* nm) {}
+
+  // No nmethod verification implemented.
+  virtual void verify_nmethod(nmethod* nm) {}
 
   // Free up superfluous code root memory.
   void purge_code_root_memory();

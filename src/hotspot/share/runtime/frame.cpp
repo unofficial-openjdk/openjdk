@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/moduleEntry.hpp"
 #include "code/codeCache.hpp"
 #include "code/scopeDesc.hpp"
 #include "code/vmreg.inline.hpp"

@@ -52,6 +52,7 @@
 #include "utilities/concurrentHashTable.inline.hpp"
 #include "utilities/concurrentHashTableTasks.inline.hpp"
 #include "utilities/macros.hpp"
+#include "utilities/utf8.hpp"
 
 // We prefer short chains of avg 2
 const double PREF_AVG_LIST_LEN = 2.0;
@@ -760,10 +761,6 @@ struct CopyToArchive : StackObj {
       return true;
     }
     unsigned int hash = java_lang_String::hash_code(s);
-    if (hash == 0) {
-      // We do not archive Strings with a 0 hashcode because ......
-      return true;
-    }
 
     java_lang_String::set_hash(s, hash);
     oop new_s = StringTable::create_archived_string(s, Thread::current());
