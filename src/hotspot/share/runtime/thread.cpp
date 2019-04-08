@@ -238,8 +238,8 @@ Thread::Thread() {
   set_last_handle_mark(NULL);
   DEBUG_ONLY(_missed_ic_stub_refill_verifier = NULL);
 
-  // This initial value ==> never claimed.
-  _oops_do_parity = 0;
+  // Initial value of zero ==> never claimed.
+  _threads_do_token = 0;
   _threads_hazard_ptr = NULL;
   _threads_list_ptr = NULL;
   _nested_threads_hazard_ptr_cnt = 0;
@@ -885,16 +885,14 @@ bool Thread::is_interrupted(Thread* thread, bool clear_interrupted) {
 
 
 // GC Support
-bool Thread::claim_oops_do_par_case(int strong_roots_parity) {
-  int thread_parity = _oops_do_parity;
-  if (thread_parity != strong_roots_parity) {
-    jint res = Atomic::cmpxchg(strong_roots_parity, &_oops_do_parity, thread_parity);
-    if (res == thread_parity) {
+bool Thread::claim_par_threads_do(uintx claim_token) {
+  uintx token = _threads_do_token;
+  if (token != claim_token) {
+    uintx res = Atomic::cmpxchg(claim_token, &_threads_do_token, token);
+    if (res == token) {
       return true;
-    } else {
-      guarantee(res == strong_roots_parity, "Or else what?");
-      return false;
     }
+    guarantee(res == claim_token, "invariant");
   }
   return false;
 }
@@ -1291,29 +1289,35 @@ NonJavaThread::NonJavaThread() : Thread(), _next(NULL) {
 NonJavaThread::~NonJavaThread() { }
 
 void NonJavaThread::add_to_the_list() {
-  MutexLockerEx lock(NonJavaThreadsList_lock, Mutex::_no_safepoint_check_flag);
-  _next = _the_list._head;
+  MutexLockerEx ml(NonJavaThreadsList_lock, Mutex::_no_safepoint_check_flag);
+  // Initialize BarrierSet-related data before adding to list.
+  BarrierSet::barrier_set()->on_thread_attach(this);
+  OrderAccess::release_store(&_next, _the_list._head);
   OrderAccess::release_store(&_the_list._head, this);
 }
 
 void NonJavaThread::remove_from_the_list() {
-  MutexLockerEx lock(NonJavaThreadsList_lock, Mutex::_no_safepoint_check_flag);
-  NonJavaThread* volatile* p = &_the_list._head;
-  for (NonJavaThread* t = *p; t != NULL; p = &t->_next, t = *p) {
-    if (t == this) {
-      *p = this->_next;
-      // Wait for any in-progress iterators.  Concurrent synchronize is
-      // not allowed, so do it while holding the list lock.
-      _the_list._protect.synchronize();
-      break;
+  {
+    MutexLockerEx ml(NonJavaThreadsList_lock, Mutex::_no_safepoint_check_flag);
+    // Cleanup BarrierSet-related data before removing from list.
+    BarrierSet::barrier_set()->on_thread_detach(this);
+    NonJavaThread* volatile* p = &_the_list._head;
+    for (NonJavaThread* t = *p; t != NULL; p = &t->_next, t = *p) {
+      if (t == this) {
+        *p = _next;
+        break;
+      }
     }
   }
+  // Wait for any in-progress iterators.  Concurrent synchronize is not
+  // allowed, so do it while holding a dedicated lock.  Outside and distinct
+  // from NJTList_lock in case an iteration attempts to lock it.
+  MutexLockerEx ml(NonJavaThreadsListSync_lock, Mutex::_no_safepoint_check_flag);
+  _the_list._protect.synchronize();
+  _next = NULL;                 // Safe to drop the link now.
 }
 
 void NonJavaThread::pre_run() {
-  // Initialize BarrierSet-related data before adding to list.
-  assert(BarrierSet::barrier_set() != NULL, "invariant");
-  BarrierSet::barrier_set()->on_thread_attach(this);
   add_to_the_list();
 
   // This is slightly odd in that NamedThread is a subclass, but
@@ -1324,8 +1328,6 @@ void NonJavaThread::pre_run() {
 
 void NonJavaThread::post_run() {
   JFR_ONLY(Jfr::on_thread_exit(this);)
-  // Clean up BarrierSet data before removing from list.
-  BarrierSet::barrier_set()->on_thread_detach(this);
   remove_from_the_list();
   // Ensure thread-local-storage is cleared before termination.
   Thread::clear_thread_current();
@@ -1506,7 +1508,7 @@ void WatcherThread::run() {
   {
     MutexLockerEx mu(Terminator_lock, Mutex::_no_safepoint_check_flag);
     _watcher_thread = NULL;
-    Terminator_lock->notify();
+    Terminator_lock->notify_all();
   }
 }
 
@@ -1841,6 +1843,10 @@ void JavaThread::run() {
   // Thread is now sufficiently initialized to be handled by the safepoint code as being
   // in the VM. Change thread state from _thread_new to _thread_in_vm
   ThreadStateTransition::transition_and_fence(this, _thread_new, _thread_in_vm);
+  // Before a thread is on the threads list it is always safe, so after leaving the
+  // _thread_new we should emit a instruction barrier. The distance to modified code
+  // from here is probably far enough, but this is consistent and safe.
+  OrderAccess::cross_modify_fence();
 
   assert(JavaThread::current() == this, "sanity check");
   assert(!Thread::current()->owns_locks(), "sanity check");
@@ -2448,7 +2454,6 @@ int JavaThread::java_suspend_self() {
       this->SR_lock()->wait(Mutex::_no_safepoint_check_flag);
     }
   }
-
   return ret;
 }
 
@@ -2476,6 +2481,9 @@ void JavaThread::java_suspend_self_with_safepoint_check() {
   set_thread_state(_thread_blocked);
   java_suspend_self();
   set_thread_state(state);
+  // Since we are not using a regular thread-state transition helper here,
+  // we must manually emit the instruction barrier after leaving a safe state.
+  OrderAccess::cross_modify_fence();
   InterfaceSupport::serialize_thread_state_with_handler(this);
   if (state != _thread_in_native) {
     SafepointMechanism::block_if_requested(this);
@@ -3479,7 +3487,7 @@ JavaThread* Threads::_thread_list = NULL;
 int         Threads::_number_of_threads = 0;
 int         Threads::_number_of_non_daemon_threads = 0;
 int         Threads::_return_code = 0;
-int         Threads::_thread_claim_parity = 0;
+uintx       Threads::_thread_claim_token = 1; // Never zero.
 size_t      JavaThread::_stack_size_at_create = 0;
 
 #ifdef ASSERT
@@ -3539,14 +3547,14 @@ void Threads::threads_do(ThreadClosure* tc) {
 }
 
 void Threads::possibly_parallel_threads_do(bool is_par, ThreadClosure* tc) {
-  int cp = Threads::thread_claim_parity();
+  uintx claim_token = Threads::thread_claim_token();
   ALL_JAVA_THREADS(p) {
-    if (p->claim_oops_do(is_par, cp)) {
+    if (p->claim_threads_do(is_par, claim_token)) {
       tc->do_thread(p);
     }
   }
   VMThread* vmt = VMThread::vm_thread();
-  if (vmt->claim_oops_do(is_par, cp)) {
+  if (vmt->claim_threads_do(is_par, claim_token)) {
     tc->do_thread(vmt);
   }
 }
@@ -4532,27 +4540,39 @@ void Threads::oops_do(OopClosure* f, CodeBlobClosure* cf) {
   VMThread::vm_thread()->oops_do(f, cf);
 }
 
-void Threads::change_thread_claim_parity() {
-  // Set the new claim parity.
-  assert(_thread_claim_parity >= 0 && _thread_claim_parity <= 2,
-         "Not in range.");
-  _thread_claim_parity++;
-  if (_thread_claim_parity == 3) _thread_claim_parity = 1;
-  assert(_thread_claim_parity >= 1 && _thread_claim_parity <= 2,
-         "Not in range.");
+void Threads::change_thread_claim_token() {
+  if (++_thread_claim_token == 0) {
+    // On overflow of the token counter, there is a risk of future
+    // collisions between a new global token value and a stale token
+    // for a thread, because not all iterations visit all threads.
+    // (Though it's pretty much a theoretical concern for non-trivial
+    // token counter sizes.)  To deal with the possibility, reset all
+    // the thread tokens to zero on global token overflow.
+    struct ResetClaims : public ThreadClosure {
+      virtual void do_thread(Thread* t) {
+        t->claim_threads_do(false, 0);
+      }
+    } reset_claims;
+    Threads::threads_do(&reset_claims);
+    // On overflow, update the global token to non-zero, to
+    // avoid the special "never claimed" initial thread value.
+    _thread_claim_token = 1;
+  }
 }
 
 #ifdef ASSERT
+void assert_thread_claimed(const char* kind, Thread* t, uintx expected) {
+  const uintx token = t->threads_do_token();
+  assert(token == expected,
+         "%s " PTR_FORMAT " has incorrect value " UINTX_FORMAT " != "
+         UINTX_FORMAT, kind, p2i(t), token, expected);
+}
+
 void Threads::assert_all_threads_claimed() {
   ALL_JAVA_THREADS(p) {
-    const int thread_parity = p->oops_do_parity();
-    assert((thread_parity == _thread_claim_parity),
-           "Thread " PTR_FORMAT " has incorrect parity %d != %d", p2i(p), thread_parity, _thread_claim_parity);
+    assert_thread_claimed("Thread", p, _thread_claim_token);
   }
-  VMThread* vmt = VMThread::vm_thread();
-  const int thread_parity = vmt->oops_do_parity();
-  assert((thread_parity == _thread_claim_parity),
-         "VMThread " PTR_FORMAT " has incorrect parity %d != %d", p2i(vmt), thread_parity, _thread_claim_parity);
+  assert_thread_claimed("VMThread", VMThread::vm_thread(), _thread_claim_token);
 }
 #endif // ASSERT
 
