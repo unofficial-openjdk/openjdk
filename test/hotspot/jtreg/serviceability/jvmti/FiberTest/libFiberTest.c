@@ -28,19 +28,54 @@
 extern "C" {
 #endif
 
+#define MAX_WORKER_THREADS 10
+
+typedef struct Tinfo {
+  jboolean just_scheduled;
+  jboolean was_run;
+  jboolean was_yield;
+  char* thr_name;
+} Tinfo;
+
+static const int MAX_EVENTS_TO_PROCESS = 20;
 static jvmtiEnv *jvmti = NULL;
 static jrawMonitorID events_monitor = NULL;
+static Tinfo tinfo[MAX_WORKER_THREADS];
 
-static void lock_events() {
+static void
+lock_events() {
   (*jvmti)->RawMonitorEnter(jvmti, events_monitor);
 }
 
-static void unlock_events() {
+static void
+unlock_events() {
   (*jvmti)->RawMonitorExit(jvmti, events_monitor);
 }
 
+static Tinfo*
+find_tinfo(JNIEnv* jni, char* thr_name) {
+  Tinfo* inf = NULL;
+  int idx = 0;
+
+  // Find slot with named worker thread or empty slot
+  for (; idx < MAX_WORKER_THREADS; idx++) {
+    inf = &tinfo[idx];
+    if (inf->thr_name == NULL) {
+      inf->thr_name = thr_name;
+      break;
+    }
+    if (strcmp(inf->thr_name, thr_name) == 0) {
+      break;
+    }
+  }
+  if (idx >= MAX_WORKER_THREADS) {
+    (*jni)->FatalError(jni, "find_tinfo: found more than 10 worker threads!");
+  }
+  return inf; // return slot
+}
+
 static void
-print_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, char* event_name) {
+print_fiber_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, char* event_name) {
   jvmtiThreadInfo thr_info;
   jvmtiError err = (*jvmti)->GetThreadInfo(jvmti, thread, &thr_info);
 
@@ -49,6 +84,73 @@ print_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, ch
   }
   char* thr_name = (thr_info.name == NULL) ? "<Unnamed thread>" : thr_info.name;
   printf("\n%s event: event thread: %s, fiber: %p\n", event_name, thr_name, fiber);
+  fflush(0);
+
+  Tinfo* inf = find_tinfo(jni, thr_name); // Find slot with named worker thread
+
+  if (strcmp(event_name, "FiberScheduled") == 0) {
+    inf->just_scheduled = JNI_TRUE;
+  }
+  else {
+    if (inf->thr_name == NULL && strcmp(event_name, "FiberTerminated") != 0) {
+      (*jni)->FatalError(jni, "Fiber event: worker thread not found!");
+    }
+    if (strcmp(event_name, "FiberMount") == 0) {
+      if (!inf->just_scheduled) { // There is no ContinuationRun for just scheduled fibers
+        if (inf->was_yield) {
+          (*jni)->FatalError(jni, "FiberMount: event with ContinuationYield before!");
+        }
+        if (!inf->was_run) {
+          (*jni)->FatalError(jni, "FiberMount: event without ContinuationRun before!");
+        }
+      }
+    }
+    if (strcmp(event_name, "FiberUnmount") == 0) {
+      if (inf->just_scheduled) {
+        (*jni)->FatalError(jni, "FiberUnmount: event without FiberMount before!");
+      }
+      if (inf->was_run) {
+        (*jni)->FatalError(jni, "FiberUnmount: event with ContinuationRun before!");
+      }
+      if (!inf->was_yield) {
+        (*jni)->FatalError(jni, "FiberUnmount: event without ContinuationYield before!");
+      }
+    }
+    inf->just_scheduled = JNI_FALSE;
+  }
+  inf->was_run = JNI_FALSE;
+  inf->was_yield = JNI_FALSE;
+}
+
+static void
+print_cont_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_cnt, char* event_name) {
+  static int cont_events_cnt = 0;
+  if (cont_events_cnt++ > MAX_EVENTS_TO_PROCESS) {
+    return; // No need to test all events
+  }
+
+  jvmtiThreadInfo thr_info;
+  jvmtiError err = (*jvmti)->GetThreadInfo(jvmti, thread, &thr_info);
+
+  if (err != JVMTI_ERROR_NONE) {
+    (*jni)->FatalError(jni, "event handler failed during JVMTI GetThreadInfo call");
+  }
+  char* thr_name = (thr_info.name == NULL) ? "<Unnamed thread>" : thr_info.name;
+  printf("\n%s event: event thread: %s, frames count: %d\n", event_name, thr_name, frames_cnt);
+  fflush(0);
+
+  Tinfo* inf = find_tinfo(jni, thr_name); // Find slot with named worker thread
+  if (inf->thr_name == NULL) {
+    (*jni)->FatalError(jni, "Continuation event: worker thread not found!");
+  }
+  if (strcmp(event_name, "ContinuationRun") == 0) {
+    inf->was_run = JNI_TRUE;
+    inf->was_yield = JNI_FALSE;
+  }
+  if (strcmp(event_name, "ContinuationYield") == 0) {
+    inf->was_run = JNI_FALSE;
+    inf->was_yield = JNI_TRUE;
+  }
 }
 
 static void
@@ -167,17 +269,20 @@ test_GetFiberThread(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber,
 
 static void
 processFiberEvent(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, char* event_name) {
-  static int events_cnt = 0;
+  static int fiber_events_cnt = 0;
 
-  if (events_cnt++ > 20 && strcmp(event_name, "FiberTerminated") != 0) {
-    return; // No need to test all events
+  if (strcmp(event_name, "FiberTerminated") != 0 &&
+      strcmp(event_name, "FiberScheduled")  != 0) {
+    if (fiber_events_cnt++ > MAX_EVENTS_TO_PROCESS) {
+      return; // No need to test all events
+    }
   }
 
-  print_event_info(jvmti, jni, thread, fiber, event_name);
+  print_fiber_event_info(jvmti, jni, thread, fiber, event_name);
   test_IsFiber(jvmti, jni, thread, fiber, event_name);
 
-  if (strcmp(event_name, "FiberScheduled") == 0 || strcmp(event_name, "FiberTerminated") == 0) {
-    return; // skip further testing for FiberScheduled and FiberTerminated events
+  if (strcmp(event_name, "FiberTerminated") == 0) {
+    return; // skip further testing as GetThreadFiber can return NULL
   }
 
   test_GetThreadFiber(jvmti, jni, thread, fiber, event_name);
@@ -238,6 +343,20 @@ FiberUnmount(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber) {
   unlock_events();
 }
 
+static void JNICALL
+ContinuationRun(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_count) {
+  lock_events();
+  print_cont_event_info(jvmti, jni, thread, frames_count, "ContinuationRun");
+  unlock_events();
+}
+
+static void JNICALL
+ContinuationYield(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_count) {
+  lock_events();
+  print_cont_event_info(jvmti, jni, thread, frames_count, "ContinuationYield");
+  unlock_events();
+}
+
 extern JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options,
                                            void *reserved) {
   jvmtiEventCallbacks callbacks;
@@ -254,9 +373,12 @@ extern JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options,
   callbacks.FiberTerminated = &FiberTerminated;
   callbacks.FiberMount   = &FiberMount;
   callbacks.FiberUnmount = &FiberUnmount;
+  callbacks.ContinuationRun   = &ContinuationRun;
+  callbacks.ContinuationYield = &ContinuationYield;
 
   memset(&caps, 0, sizeof(caps));
   caps.can_support_fibers = 1;
+  caps.can_support_continuations = 1;
   err = (*jvmti)->AddCapabilities(jvmti, &caps);
   if (err != JVMTI_ERROR_NONE) {
     printf("error in JVMTI AddCapabilities: %d\n", err);
@@ -283,6 +405,16 @@ extern JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options,
   }
 
   err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, JVMTI_EVENT_FIBER_UNMOUNT, NULL);
+  if (err != JVMTI_ERROR_NONE) {
+    printf("error in JVMTI SetEventNotificationMode: %d\n", err);
+  }
+
+  err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, JVMTI_EVENT_CONTINUATION_RUN, NULL);
+  if (err != JVMTI_ERROR_NONE) {
+    printf("error in JVMTI SetEventNotificationMode: %d\n", err);
+  }
+
+  err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, JVMTI_EVENT_CONTINUATION_YIELD, NULL);
   if (err != JVMTI_ERROR_NONE) {
     printf("error in JVMTI SetEventNotificationMode: %d\n", err);
   }
