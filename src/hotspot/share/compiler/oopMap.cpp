@@ -524,13 +524,6 @@ OopMapValue* ExplodedOopMap::copyOopMapValues(const ImmutableOopMap* oopMap, int
 void ImmutableOopMap::generate_stub() const {
   /* The address of the ImmutableOopMap is put into the _freeze_stub and _thaw_stub 
    * if we can't generate the stub for some reason */
-  if (_exploded == NULL) {
-    if (Atomic::cmpxchg((address) this, &_freeze_stub, (address )NULL) == NULL) {
-      Atomic::store((address) this, &_thaw_stub);
-    }
-    return;
-  }
-
   if (_freeze_stub == NULL) {
     OopMapStubGenerator cgen(*this);
     if (Atomic::cmpxchg((address) this, &_freeze_stub, (address) NULL) == NULL) {
@@ -818,9 +811,6 @@ ImmutableOopMap::ImmutableOopMap(const OopMap* oopmap) : _exploded(NULL), _freez
   address addr = data_addr();
   //oopmap->copy_data_to(addr);
   oopmap->copy_and_sort_data_to(addr);
-  if (UseNewCode2 || LoomGenCode) {
-    _exploded = new ExplodedOopMap(this); // leaking memory atm
-  }
 }
 
 #ifdef ASSERT

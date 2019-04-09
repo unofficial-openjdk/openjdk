@@ -1170,10 +1170,6 @@ public:
       _masm->reinit_heapbase();
     }
 
-    if (map.has_derived()) {
-      _masm->push(r11);
-    }
-
     int pos = 0;
     {
       int mask = OopMapValue::oop_value | OopMapValue::narrowoop_value;
@@ -1239,7 +1235,13 @@ public:
     }
 
     {
+      bool derived_init = false;
       for (OopMapStream oms(&map,OopMapValue::derived_oop_value); !oms.is_done(); oms.next()) {
+        if (!derived_init) {
+          _masm->push(r11);
+          derived_init = true;
+        }
+
         OopMapValue omv = oms.current();
         VMReg reg = omv.reg();
         bool derived_is_reg = false;
@@ -1284,11 +1286,11 @@ public:
 
         _masm->bind(L_next);
       }
+      if (derived_init) {
+        _masm->pop(r11);
+      }
     }
 
-    if (map.has_derived()) {
-      _masm->pop(r11);
-    }
     if (UseCompressedOops) {
       _masm->pop(r12);
     }
