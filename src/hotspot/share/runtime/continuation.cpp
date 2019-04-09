@@ -2979,6 +2979,7 @@ static void thaw_oops(ContMirror& cont, frame& f, int oop_index, int num_oops, v
     ThawFnT f_fn = (ThawFnT) oop_map->thaw_stub();
     int cnt = f_fn( (address) target,  (address) addr, (address) f.fp_addr()); // write the link straight into the frame struct
     assert(cnt == num_oops, "");
+    cont.null_ref_stack(oop_index, num_oops);
   } else {
     intptr_t* tmp_fp = f.fp();
     frame::update_map_with_saved_link(&map, &tmp_fp);
