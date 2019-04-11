@@ -1196,6 +1196,7 @@ bool              JvmtiExport::_can_post_field_access                     = fals
 bool              JvmtiExport::_can_post_field_modification               = false;
 bool              JvmtiExport::_can_post_method_entry                     = false;
 bool              JvmtiExport::_can_post_method_exit                      = false;
+bool              JvmtiExport::_can_post_frame_pop                        = false;
 bool              JvmtiExport::_can_pop_frame                             = false;
 bool              JvmtiExport::_can_force_early_return                    = false;
 
@@ -1678,6 +1679,25 @@ void JvmtiExport::post_continuation_yield(JavaThread* thread, jint frames_count)
           (*callback)(env->jvmti_external(), jem.jni_env(), jem.jni_thread(), frames_count);
         }
       }
+    }
+  }
+
+  // Clear frame_pop requests in frames poped by yield
+  if (can_post_frame_pop()) {
+    JvmtiEnvThreadStateIterator it(state);
+    int top_frame_num = state->cur_stack_depth();
+
+    for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
+      if (!ets->has_frame_pops()) {
+        continue;
+      }
+      for (int frame_idx = 0; frame_idx < frames_count; frame_idx++) {
+        int frame_num = top_frame_num - frame_idx;
+        if (ets->is_frame_pop(frame_num)) {
+          // remove the frame's entry
+          ets->clear_frame_pop(frame_num);
+        }
+      } 
     }
   }
 }
