@@ -2574,7 +2574,7 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 
   cont.write();
 
-  if (JvmtiExport::should_post_continuation_yield()) {
+  if (JvmtiExport::should_post_continuation_yield() || JvmtiExport::can_post_frame_pop()) {
     JvmtiExport::post_continuation_yield(JavaThread::current(), num_java_frames(cont));
   }
 
