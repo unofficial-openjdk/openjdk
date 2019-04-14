@@ -476,6 +476,10 @@
   template(module_entry_name,                         "module_entry")                             \
   template(resolved_references_name,                  "<resolved_references>")                    \
   template(init_lock_name,                            "<init_lock>")                              \
+  template(address_size_name,                         "ADDRESS_SIZE0")                            \
+  template(page_size_name,                            "PAGE_SIZE")                                \
+  template(big_endian_name,                           "BIG_ENDIAN")                               \
+  template(use_unaligned_access_name,                 "UNALIGNED_ACCESS")                         \
                                                                                                   \
   /* name symbols needed by intrinsics */                                                         \
   VM_INTRINSICS_DO(VM_INTRINSIC_IGNORE, VM_SYMBOL_IGNORE, template, VM_SYMBOL_IGNORE, VM_ALIAS_IGNORE) \
@@ -1123,6 +1127,9 @@
     do_signature(continuationJump_signature,                         "(JJJ)V")                                                 \
   do_intrinsic(_Continuation_runLevel,    java_lang_Continuation,  runLevel_name,    continuationrunLevel_signature, F_S)      \
     do_alias(continuationrunLevel_signature,                         void_int_signature)                                       \
+                                                                                                                        \
+  /* support for UnsafeConstants */                                                                                     \
+  do_class(jdk_internal_misc_UnsafeConstants,      "jdk/internal/misc/UnsafeConstants")                                 \
                                                                                                                         \
   /* support for Unsafe */                                                                                              \
   do_class(jdk_internal_misc_Unsafe,               "jdk/internal/misc/Unsafe")                                          \
