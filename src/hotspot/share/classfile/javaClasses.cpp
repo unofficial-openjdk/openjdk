@@ -160,6 +160,7 @@ static void compute_offset(int& dest_offset, InstanceKlass* ik,
 
 int java_lang_String::value_offset  = 0;
 int java_lang_String::hash_offset   = 0;
+int java_lang_String::hashIsZero_offset = 0;
 int java_lang_String::coder_offset  = 0;
 
 bool java_lang_String::initialized  = false;
@@ -179,7 +180,8 @@ bool java_lang_String::is_instance(oop obj) {
 #define STRING_FIELDS_DO(macro) \
   macro(value_offset, k, vmSymbols::value_name(), byte_array_signature, false); \
   macro(hash_offset,  k, "hash",                  int_signature,        false); \
-  macro(coder_offset, k, "coder",                 byte_signature,       false)
+  macro(hashIsZero_offset, k, "hashIsZero",       bool_signature,       false); \
+  macro(coder_offset, k, "coder",                 byte_signature,       false);
 
 void java_lang_String::compute_offsets() {
   if (initialized) {
@@ -218,7 +220,7 @@ public:
 
 void java_lang_String::set_compact_strings(bool value) {
   CompactStringsFixup fix(value);
-  InstanceKlass::cast(SystemDictionary::String_klass())->do_local_static_fields(&fix);
+  SystemDictionary::String_klass()->do_local_static_fields(&fix);
 }
 
 Handle java_lang_String::basic_create(int length, bool is_latin1, TRAPS) {
@@ -507,18 +509,38 @@ jchar* java_lang_String::as_unicode_string(oop java_string, int& length, TRAPS) 
 }
 
 unsigned int java_lang_String::hash_code(oop java_string) {
-  typeArrayOop value  = java_lang_String::value(java_string);
-  int          length = java_lang_String::length(java_string, value);
-  // Zero length string will hash to zero with String.hashCode() function.
-  if (length == 0) return 0;
-
-  bool      is_latin1 = java_lang_String::is_latin1(java_string);
-
-  if (is_latin1) {
-    return java_lang_String::hash_code(value->byte_at_addr(0), length);
-  } else {
-    return java_lang_String::hash_code(value->char_at_addr(0), length);
+  // The hash and hashIsZero fields are subject to a benign data race,
+  // making it crucial to ensure that any observable result of the
+  // calculation in this method stays correct under any possible read of
+  // these fields. Necessary restrictions to allow this to be correct
+  // without explicit memory fences or similar concurrency primitives is
+  // that we can ever only write to one of these two fields for a given
+  // String instance, and that the computation is idempotent and derived
+  // from immutable state
+  assert(initialized && (hash_offset > 0) && (hashIsZero_offset > 0), "Must be initialized");
+  if (java_lang_String::hash_is_set(java_string)) {
+    return java_string->int_field(hash_offset);
   }
+
+  typeArrayOop value = java_lang_String::value(java_string);
+  int         length = java_lang_String::length(java_string, value);
+  bool     is_latin1 = java_lang_String::is_latin1(java_string);
+
+  unsigned int hash = 0;
+  if (length > 0) {
+    if (is_latin1) {
+      hash = java_lang_String::hash_code(value->byte_at_addr(0), length);
+    } else {
+      hash = java_lang_String::hash_code(value->char_at_addr(0), length);
+    }
+  }
+
+  if (hash != 0) {
+    java_string->int_field_put(hash_offset, hash);
+  } else {
+    java_string->bool_field_put(hashIsZero_offset, true);
+  }
+  return hash;
 }
 
 char* java_lang_String::as_quoted_ascii(oop java_string) {
@@ -4104,6 +4126,48 @@ void java_lang_System::serialize_offsets(SerializeClosure* f) {
 int java_lang_System::in_offset_in_bytes() { return static_in_offset; }
 int java_lang_System::out_offset_in_bytes() { return static_out_offset; }
 int java_lang_System::err_offset_in_bytes() { return static_err_offset; }
+
+// Support for jdk_internal_misc_UnsafeConstants
+//
+class UnsafeConstantsFixup : public FieldClosure {
+private:
+  int _address_size;
+  int _page_size;
+  bool _big_endian;
+  bool _use_unaligned_access;
+public:
+  UnsafeConstantsFixup() {
+    // round up values for all static final fields
+    _address_size = sizeof(void*);
+    _page_size = os::vm_page_size();
+    _big_endian = LITTLE_ENDIAN_ONLY(false) BIG_ENDIAN_ONLY(true);
+    _use_unaligned_access = UseUnalignedAccesses;
+  }
+
+  void do_field(fieldDescriptor* fd) {
+    oop mirror = fd->field_holder()->java_mirror();
+    assert(mirror != NULL, "UnsafeConstants must have mirror already");
+    assert(fd->field_holder() == SystemDictionary::UnsafeConstants_klass(), "Should be UnsafeConstants");
+    assert(fd->is_final(), "fields of UnsafeConstants must be final");
+    assert(fd->is_static(), "fields of UnsafeConstants must be static");
+    if (fd->name() == vmSymbols::address_size_name()) {
+      mirror->int_field_put(fd->offset(), _address_size);
+    } else if (fd->name() == vmSymbols::page_size_name()) {
+      mirror->int_field_put(fd->offset(), _page_size);
+    } else if (fd->name() == vmSymbols::big_endian_name()) {
+      mirror->bool_field_put(fd->offset(), _big_endian);
+    } else if (fd->name() == vmSymbols::use_unaligned_access_name()) {
+      mirror->bool_field_put(fd->offset(), _use_unaligned_access);
+    } else {
+      assert(false, "unexpected UnsafeConstants field");
+    }
+  }
+};
+
+void jdk_internal_misc_UnsafeConstants::set_unsafe_constants() {
+  UnsafeConstantsFixup fixup;
+  SystemDictionary::UnsafeConstants_klass()->do_local_static_fields(&fixup);
+}
 
 int java_lang_Class::_klass_offset;
 int java_lang_Class::_array_klass_offset;
