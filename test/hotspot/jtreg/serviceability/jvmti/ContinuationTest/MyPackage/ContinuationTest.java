@@ -46,49 +46,56 @@ public class ContinuationTest {
             log("java.library.path: " + System.getProperty("java.library.path"));
             throw ex;
         }
-        log("\n####### main: started ######\n");
+        log("\n######   main: started   #####\n");
         enableEvents(Thread.currentThread());
 
         ContinuationTest obj = new ContinuationTest();
         obj.runTest();
 
-        check();
-        log("\n###### main: finished ######\n");
+        if (!check()) {
+            throw new RuntimeException("ContinuationTest failed: expected no FramePop events!");
+        }
+        log("ContinuationTest passed\n");
+        log("\n#####   main: finished  #####\n");
     }
 
     public void runTest() {
+        log("\n####  runTest: started  ####\n");
         Continuation cont = new Continuation(FOO, ()-> { 
             double dval = 0;
+
+            log("\n##    cont: started     ##\n");
             for (int k = 1; k < 3; k++) {
                 int ival = 3;
                 String str = "abc";
+
+                log("\n cont: iteration #" + (k - 1));
 
                 log("\n<<<< runTest: before foo(): " + ival + ", " + str + ", " + dval + " <<<<"); 
                 dval += foo(k);
 	        log(  ">>>> runTest:  after foo(): " + ival + ", " + str + ", " + dval + " >>>>"); 
             }
+            log("\n##    cont: finished    ##\n");
         });
         int i = 0;
         while (!cont.isDone()) {
-            log("\n#### runTest: iteration #" + (i++));
+            log("\n##   runTest: iteration #" + (i++));
             cont.run();
-/*
-            StackTraceElement[] stes = Thread.currentThread().getStackTrace();
-            log("--- getStackTrace: after cont.run()");
-            log(java.util.Arrays.toString(stes));
-*/
             System.gc();
         }
+        log("\n####  runTest: finished ####\n");
     }
 
     static double foo(int iarg) {
         long lval = 8;
         String str1 = "yyy";
 
+        log("\n####   foo: started  ####\n");
         log("foo: before bar(): " + lval + ", " + str1 + ", " + iarg);
         String str2 = bar(iarg + 1);
 	log("foo:  after bar(): " + lval + ", " + str1 + ", " + str2); 
 
+        log("\n####   foo: finished ####\n");
         return Integer.parseInt(str2) + 1;
     }
 
@@ -96,17 +103,14 @@ public class ContinuationTest {
         double dval = 9.99;
         String str = "zzz";
 
+        log("\n####   bar: started  ####\n");
         log("bar: before yield(): " + dval + ", " + str + ", " + larg); 
-/*
-        StackTraceElement[] stes = Thread.currentThread().getStackTrace();
-        log("--- getStackTrace: before yield()");
-        log(java.util.Arrays.toString(stes));
-*/
         Continuation.yield(FOO);
 
         long lval = larg + 1;
         log("bar:  after yield(): " + dval + ", " + str + ", " + lval); 
 
+        log("\n####   bar: finished ####\n");
         return "" + lval;
     }
 }
