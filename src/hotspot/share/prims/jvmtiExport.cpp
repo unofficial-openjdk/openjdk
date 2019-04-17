@@ -1550,7 +1550,10 @@ void JvmtiExport::post_continuation_yield(JavaThread* thread, jint frames_count)
       if (!ets->has_frame_pops()) {
         continue;
       }
-      for (int frame_idx = 0; frame_idx < frames_count; frame_idx++) {
+      // The yield and yield0 frames are not counted in frames_count parameter.
+      // TMP workaround: frames_count => frames_count + 2.
+      // TBD: remove workaround after issue with miscounted yield and yield0 is fixed.
+      for (int frame_idx = 0; frame_idx < frames_count + 2; frame_idx++) {
         int frame_num = top_frame_num - frame_idx;
         if (ets->is_frame_pop(frame_num)) {
           // remove the frame's entry

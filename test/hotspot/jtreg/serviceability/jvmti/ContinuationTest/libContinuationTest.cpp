@@ -26,9 +26,13 @@
 
 extern "C" {
 
+#define MAX_FRAME_COUNT 20
+#define FRAMES_TO_POP 9 
+
 static jvmtiEnv *jvmti = NULL;
 static jthread exp_thread = NULL;
 static jrawMonitorID event_mon = NULL;
+static int method_entry_count = 0;
 static int frame_pop_count = 0;
 
 static void
@@ -49,7 +53,20 @@ check_jvmti_status(JNIEnv* jni, jvmtiError err, const char* msg) {
   }
 }
 
-#define MAX_FRAME_COUNT 20
+static char* get_method_class_name(jvmtiEnv *jvmti, JNIEnv* jni, jmethodID method) {
+  jvmtiError err;
+  jclass klass = NULL;
+  char*  cname = NULL;
+
+  err = jvmti->GetMethodDeclaringClass(method, &klass);
+  check_jvmti_status(jni, err, "get_method_class_name: error in JVMTI GetMethodDeclaringClass");
+
+  err = jvmti->GetClassSignature(klass, &cname, NULL);
+  check_jvmti_status(jni, err, "get_method_class_name: error in JVMTI GetClassSignature");
+
+  cname[strlen(cname) - 1] = '\0'; // get rid of trailing ';'
+  return cname + 1;                // get rid of leading 'L'
+}
 
 static void
 print_stack_trace(jvmtiEnv *jvmti, JNIEnv* jni) { 
@@ -62,18 +79,23 @@ print_stack_trace(jvmtiEnv *jvmti, JNIEnv* jni) {
 
   printf("JVMTI Stack Trace: frame count: %d\n", count);
   for (int depth = 0; depth < count; depth++) {
-    char *mname = NULL;
-    char *msign = NULL;
+    char*  cname = NULL;
+    char*  mname = NULL;
+    char*  msign = NULL;
+
+    cname = get_method_class_name(jvmti, jni, frames[depth].method);
 
     err = jvmti->GetMethodName(frames[depth].method, &mname, &msign, NULL);
     check_jvmti_status(jni, err, "print_stack_trace: error in JVMTI GetMethodName");
-    printf("depth #%d: %s%s\n", depth, mname, msign);
+
+    printf("%2d: %s: %s%s\n", depth, cname, mname, msign);
   }
   printf("\n");
 }
 
 static void
 print_frame_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jmethodID method, const char* event_name) {
+  char* cname = NULL;
   char* mname = NULL;
   char* msign = NULL;
   jvmtiThreadInfo thr_info;
@@ -81,13 +103,21 @@ print_frame_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jmethodID m
 
   memset(&thr_info, 0, sizeof(thr_info));
   err = jvmti->GetThreadInfo(thread, &thr_info);
-  check_jvmti_status(jni, err, "event handler failed during JVMTI GetThreadInfo call");
+  check_jvmti_status(jni, err, "event handler: error in JVMTI GetThreadInfo call");
   const char* thr_name = (thr_info.name == NULL) ? "<Unnamed thread>" : thr_info.name;
 
-  err = jvmti->GetMethodName(method, &mname, &msign, NULL);
-  check_jvmti_status(jni, err, "event handler failed during JVMTI GetThreadInfo call");
+  cname = get_method_class_name(jvmti, jni, method);
 
-  printf("%s event: thread: %s, method: %s%s\n", event_name, thr_name, mname, msign);
+  err = jvmti->GetMethodName(method, &mname, &msign, NULL);
+  check_jvmti_status(jni, err, "event handler: error in JVMTI GetMethodName call");
+
+  if (strcmp(event_name, "MethodEntry") == 0) {
+    printf("%s event #%d: thread: %s, method: %s: %s%s\n",
+           event_name, method_entry_count, thr_name, cname, mname, msign);
+  } else {
+    printf("%s event #%d: thread: %s, method: %s: %s%s\n",
+           event_name, frame_pop_count, thr_name, cname, mname, msign);
+  }
   fflush(0);
 }
 
@@ -105,6 +135,35 @@ print_cont_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_
 
   print_stack_trace(jvmti, jni);
   fflush(0);
+}
+
+static void JNICALL
+MethodEntry(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jmethodID method) {
+  jvmtiError err;
+  char* mname = NULL;
+
+  lock_events();
+
+  err = jvmti->GetMethodName(method, &mname, NULL, NULL);
+  check_jvmti_status(jni, err, "MethodEntry: error in JVMTI GetMethodName call");
+
+  if (strcmp(mname, "yield0") == 0) {
+    // Request FramePop notifications for all continuation frames.
+    // They all are expected to be cleared as a part of yield protocol.
+    for (jint depth = 0; depth < FRAMES_TO_POP; depth++) {
+      jvmtiError err = jvmti->NotifyFramePop(thread, depth);
+      check_jvmti_status(jni, err, "MethodEntry: error in JVMTI NotifyFramePop");
+    }
+    if (++method_entry_count > 1) {
+      // Disable YIELD events when the second MethodEntry event is posted.
+      // We want to make sure the FramePop requests are cleared in both cases:
+      // when YIELD events are enabled (1) and disabled (2).
+      err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_CONTINUATION_YIELD, thread);
+      check_jvmti_status(jni, err, "MethodEntry: error in JVMTI SetEventNotificationMode: disable CONTINUATION_YIELD");
+    }
+    print_frame_event_info(jvmti, jni, thread, method, "MethodEntry");
+  }
+  unlock_events();
 }
 
 static void JNICALL
@@ -127,13 +186,6 @@ static void JNICALL
 ContinuationYield(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_count) {
   lock_events();
   print_cont_event_info(jvmti, jni, thread, frames_count, "ContinuationYield");
-
-  // Request FramePop notifications for all continuation frames.
-  // They all are expected to be cleared as a part of yield protocol.
-  for (jint depth = 0; depth < frames_count; depth++) {
-    jvmtiError err = jvmti->NotifyFramePop(thread, depth);
-    check_jvmti_status(jni, err, "ContinuationYield: error in JVMTI NotifyFramePop");
-  }
   unlock_events();
 }
 
@@ -149,12 +201,13 @@ Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) {
   }
 
   memset(&callbacks, 0, sizeof(callbacks));
+  callbacks.MethodEntry       = &MethodEntry;
   callbacks.FramePop          = &FramePop;
   callbacks.ContinuationRun   = &ContinuationRun;
   callbacks.ContinuationYield = &ContinuationYield;
 
   memset(&caps, 0, sizeof(caps));
-  caps.can_generate_method_exit_events = 1;
+  caps.can_generate_method_entry_events = 1;
   caps.can_generate_frame_pop_events = 1;
   caps.can_support_continuations = 1;
 
@@ -186,6 +239,9 @@ Java_MyPackage_ContinuationTest_enableEvents(JNIEnv *jni, jclass cls, jthread th
   printf("enableEvents: started\n");
   exp_thread = (jthread)jni->NewGlobalRef(thread);
 
+  err = jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_METHOD_ENTRY, thread);
+  check_jvmti_status(jni, err, "enableEvents: error in JVMTI SetEventNotificationMode: enable METHOD_ENTRY");
+
   err = jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_FRAME_POP, thread);
   check_jvmti_status(jni, err, "enableEvents: error in JVMTI SetEventNotificationMode: enable FRAME_POP");
 
@@ -205,6 +261,9 @@ Java_MyPackage_ContinuationTest_check(JNIEnv *jni, jclass cls) {
 
   printf("\n");
   printf("check: started\n");
+
+  err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_METHOD_ENTRY, exp_thread);
+  check_jvmti_status(jni, err, "enableEvents: error in JVMTI SetEventNotificationMode: disable METHOD_ENTRY");
 
   err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_FRAME_POP, exp_thread);
   check_jvmti_status(jni, err, "error in JVMTI SetEventNotificationMode: disable FRAME_POP");
