@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@
 extern "C" {
 
 #define MAX_FRAME_COUNT 20
-#define FRAMES_TO_POP 9 
+#define FRAMES_TO_NOTIFY_POP 8 
 
 static jvmtiEnv *jvmti = NULL;
 static jthread exp_thread = NULL;
@@ -69,6 +69,21 @@ static char* get_method_class_name(jvmtiEnv *jvmti, JNIEnv* jni, jmethodID metho
 }
 
 static void
+print_method(jvmtiEnv *jvmti, JNIEnv* jni, jmethodID method, jint depth) {
+  char*  cname = NULL;
+  char*  mname = NULL;
+  char*  msign = NULL;
+  jvmtiError err;
+
+  cname = get_method_class_name(jvmti, jni, method);
+
+  err = jvmti->GetMethodName(method, &mname, &msign, NULL);
+  check_jvmti_status(jni, err, "print_method: error in JVMTI GetMethodName");
+
+  printf("%2d: %s: %s%s\n", depth, cname, mname, msign);
+}
+
+static void
 print_stack_trace(jvmtiEnv *jvmti, JNIEnv* jni) { 
   jvmtiFrameInfo frames[MAX_FRAME_COUNT];
   jint count = 0;
@@ -79,16 +94,7 @@ print_stack_trace(jvmtiEnv *jvmti, JNIEnv* jni) {
 
   printf("JVMTI Stack Trace: frame count: %d\n", count);
   for (int depth = 0; depth < count; depth++) {
-    char*  cname = NULL;
-    char*  mname = NULL;
-    char*  msign = NULL;
-
-    cname = get_method_class_name(jvmti, jni, frames[depth].method);
-
-    err = jvmti->GetMethodName(frames[depth].method, &mname, &msign, NULL);
-    check_jvmti_status(jni, err, "print_stack_trace: error in JVMTI GetMethodName");
-
-    printf("%2d: %s: %s%s\n", depth, cname, mname, msign);
+    print_method(jvmti, jni, frames[depth].method, depth);
   }
   printf("\n");
 }
@@ -139,8 +145,8 @@ print_cont_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_
 
 static void JNICALL
 MethodEntry(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jmethodID method) {
-  jvmtiError err;
   char* mname = NULL;
+  jvmtiError err;
 
   lock_events();
 
@@ -148,11 +154,24 @@ MethodEntry(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jmethodID method) {
   check_jvmti_status(jni, err, "MethodEntry: error in JVMTI GetMethodName call");
 
   if (strcmp(mname, "yield0") == 0) {
+    print_frame_event_info(jvmti, jni, thread, method, "MethodEntry");
+
+    printf("\nMethodEntry: Requesting FramePop notifications for %d frames:\n", FRAMES_TO_NOTIFY_POP);
+    fflush(0);
+
     // Request FramePop notifications for all continuation frames.
     // They all are expected to be cleared as a part of yield protocol.
-    for (jint depth = 0; depth < FRAMES_TO_POP; depth++) {
-      jvmtiError err = jvmti->NotifyFramePop(thread, depth);
+    for (jint depth = 0; depth < FRAMES_TO_NOTIFY_POP; depth++) {
+      jmethodID frame_method = NULL;
+      jlocation location = 0LL;
+
+      err = jvmti->NotifyFramePop(thread, depth);
       check_jvmti_status(jni, err, "MethodEntry: error in JVMTI NotifyFramePop");
+      
+      err = jvmti->GetFrameLocation(thread, depth, &frame_method, &location);
+      check_jvmti_status(jni, err, "MethodEntry: error in JVMTI GetFrameLocation");
+
+      print_method(jvmti, jni, frame_method, depth);
     }
     if (++method_entry_count > 1) {
       // Disable YIELD events when the second MethodEntry event is posted.
@@ -161,8 +180,8 @@ MethodEntry(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jmethodID method) {
       err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_CONTINUATION_YIELD, thread);
       check_jvmti_status(jni, err, "MethodEntry: error in JVMTI SetEventNotificationMode: disable CONTINUATION_YIELD");
     }
-    print_frame_event_info(jvmti, jni, thread, method, "MethodEntry");
   }
+  fflush(0);
   unlock_events();
 }
 
@@ -172,13 +191,6 @@ FramePop(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jmethodID method,
   lock_events();
   frame_pop_count++;
   print_frame_event_info(jvmti, jni, thread, method, "FramePop");
-  unlock_events();
-}
-
-static void JNICALL
-ContinuationRun(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_count) {
-  lock_events();
-  print_cont_event_info(jvmti, jni, thread, frames_count, "ContinuationRun");
   unlock_events();
 }
 
@@ -203,7 +215,6 @@ Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) {
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.MethodEntry       = &MethodEntry;
   callbacks.FramePop          = &FramePop;
-  callbacks.ContinuationRun   = &ContinuationRun;
   callbacks.ContinuationYield = &ContinuationYield;
 
   memset(&caps, 0, sizeof(caps));
@@ -245,9 +256,6 @@ Java_MyPackage_ContinuationTest_enableEvents(JNIEnv *jni, jclass cls, jthread th
   err = jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_FRAME_POP, thread);
   check_jvmti_status(jni, err, "enableEvents: error in JVMTI SetEventNotificationMode: enable FRAME_POP");
 
-  err = jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CONTINUATION_RUN, thread);
-  check_jvmti_status(jni, err, "enableEvents: error in JVMTI SetEventNotificationMode: enable CONTINUATION_RUN");
-
   err = jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CONTINUATION_YIELD, thread);
   check_jvmti_status(jni, err, "enableEvents: error in JVMTI SetEventNotificationMode: enable CONTINUATION_YIELD");
 
@@ -267,9 +275,6 @@ Java_MyPackage_ContinuationTest_check(JNIEnv *jni, jclass cls) {
 
   err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_FRAME_POP, exp_thread);
   check_jvmti_status(jni, err, "error in JVMTI SetEventNotificationMode: disable FRAME_POP");
-
-  err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_CONTINUATION_RUN, exp_thread);
-  check_jvmti_status(jni, err, "error in JVMTI SetEventNotificationMode: disable CONTINUATION_RUN");
 
   err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_CONTINUATION_YIELD, exp_thread);
   check_jvmti_status(jni, err, "error in JVMTI SetEventNotificationMode: disable CONTINUATION_YIELD");

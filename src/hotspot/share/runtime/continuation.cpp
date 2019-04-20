@@ -1595,7 +1595,7 @@ static int num_java_frames(ContMirror& cont) {
   int count = 0;
   for (hframe hf = cont.last_frame(); !hf.is_empty(); hf = hf.sender(cont))
     count += num_java_frames(hf);
-  return count + 2; // Account for enter and run frames that are not saved on h-stack
+  return count + 1; // Account for enter frame which is not saved on h-stack
 }
 
 // static int num_java_frames(const frame& f) {
