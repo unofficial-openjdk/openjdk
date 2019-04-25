@@ -53,8 +53,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import jdk.internal.misc.Strands;
 import sun.net.ResourceManager;
 import sun.net.ext.ExtendedSocketOptions;
 
@@ -89,7 +91,8 @@ class DatagramChannelImpl
 
     // Lock held by any thread that modifies the state fields declared below
     // DO NOT invoke a blocking I/O operation while holding this lock!
-    private final Object stateLock = new Object();
+    private final ReentrantLock stateLock = new ReentrantLock();
+    private final Condition stateCondition = stateLock.newCondition();
 
     // -- The following fields are protected by stateLock
 
@@ -121,19 +124,10 @@ class DatagramChannelImpl
     // set true/false when socket is already bound and SO_REUSEADDR is emulated
     private boolean isReuseAddress;
 
+    // lazily set to true when the socket is configured non-blocking
+    private volatile boolean nonBlocking;
+
     // -- End of fields protected by stateLock
-
-    private static FileDescriptor newSocket(ProtocolFamily family) throws IOException {
-        FileDescriptor fd = Net.socket(family, false);
-        try {
-            IOUtil.configureBlocking(fd, false);
-        } catch (IOException ioe) {
-            nd.close(fd);
-            throw ioe;
-        }
-        return fd;
-    }
-
 
     public DatagramChannelImpl(SelectorProvider sp)
         throws IOException
@@ -144,7 +138,7 @@ class DatagramChannelImpl
             this.family = Net.isIPv6Available()
                     ? StandardProtocolFamily.INET6
                     : StandardProtocolFamily.INET;
-            this.fd = newSocket(family);
+            this.fd = Net.socket(family, false);
             this.fdVal = IOUtil.fdVal(fd);
         } catch (IOException ioe) {
             ResourceManager.afterUdpClose();
@@ -170,7 +164,7 @@ class DatagramChannelImpl
         ResourceManager.beforeUdpCreate();
         try {
             this.family = family;
-            this.fd = newSocket(family);
+            this.fd = Net.socket(family, false);
             this.fdVal = IOUtil.fdVal(fd);
         } catch (IOException ioe) {
             ResourceManager.afterUdpClose();
@@ -182,7 +176,6 @@ class DatagramChannelImpl
         throws IOException
     {
         super(sp);
-        IOUtil.configureBlocking(fd, false);
 
         // increment UDP count to match decrement when closing
         ResourceManager.beforeUdpCreate();
@@ -192,8 +185,11 @@ class DatagramChannelImpl
                 : StandardProtocolFamily.INET;
         this.fd = fd;
         this.fdVal = IOUtil.fdVal(fd);
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             this.localAddress = Net.localAddress(fd);
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -205,27 +201,36 @@ class DatagramChannelImpl
 
     @Override
     public DatagramSocket socket() {
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             if (socket == null)
                 socket = DatagramSocketAdaptor.create(this);
             return socket;
+        } finally {
+            stateLock.unlock();
         }
     }
 
     @Override
     public SocketAddress getLocalAddress() throws IOException {
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             ensureOpen();
             // Perform security check before returning address
             return Net.getRevealedLocalAddress(localAddress);
+        } finally {
+            stateLock.unlock();
         }
     }
 
     @Override
     public SocketAddress getRemoteAddress() throws IOException {
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             ensureOpen();
             return remoteAddress;
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -237,7 +242,8 @@ class DatagramChannelImpl
         if (!supportedOptions().contains(name))
             throw new UnsupportedOperationException("'" + name + "' not supported");
 
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             ensureOpen();
 
             if (name == StandardSocketOptions.IP_TOS ||
@@ -277,6 +283,8 @@ class DatagramChannelImpl
             // remaining options don't need any special handling
             Net.setSocketOption(fd, Net.UNSPEC, name, value);
             return this;
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -289,7 +297,8 @@ class DatagramChannelImpl
         if (!supportedOptions().contains(name))
             throw new UnsupportedOperationException("'" + name + "' not supported");
 
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             ensureOpen();
 
             if (name == StandardSocketOptions.IP_TOS ||
@@ -328,6 +337,8 @@ class DatagramChannelImpl
 
             // no special handling
             return (T) Net.getSocketOption(fd, Net.UNSPEC, name);
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -375,7 +386,8 @@ class DatagramChannelImpl
             begin();
         }
         SocketAddress remote;
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             ensureOpen();
             remote = remoteAddress;
             if ((remote == null) && mustBeConnected)
@@ -384,6 +396,8 @@ class DatagramChannelImpl
                 bindInternal(null);
             if (blocking)
                 readerThread = NativeThread.current();
+        } finally {
+            stateLock.unlock();
         }
         return remote;
     }
@@ -397,12 +411,15 @@ class DatagramChannelImpl
         throws AsynchronousCloseException
     {
         if (blocking) {
-            synchronized (stateLock) {
+            stateLock.lock();
+            try {
                 readerThread = 0;
                 // notify any thread waiting in implCloseSelectableChannel
                 if (state == ST_CLOSING) {
-                    stateLock.notifyAll();
+                    stateCondition.signalAll();
                 }
+            } finally {
+                stateLock.unlock();
             }
             // remove hook for Thread.interrupt
             end(completed);
@@ -423,20 +440,19 @@ class DatagramChannelImpl
             ByteBuffer bb = null;
             try {
                 SocketAddress remote = beginRead(blocking, false);
+                lockedConfigureNonBlockingIfFiber();
                 boolean connected = (remote != null);
                 SecurityManager sm = System.getSecurityManager();
                 if (connected || (sm == null)) {
                     // connected or no security manager
                     n = receive(fd, dst, connected);
-                    if (n == IOStatus.UNAVAILABLE) {
-                        if (blocking) {
-                            do {
-                                park(Net.POLLIN);
-                                n = receive(fd, dst, connected);
-                            } while (n == IOStatus.UNAVAILABLE && isOpen());
-                        } else {
-                            return null;
+                    if (blocking) {
+                        while (IOStatus.okayToRetry(n) && isOpen()) {
+                            park(Net.POLLIN);
+                            n = receive(fd, dst, connected);
                         }
+                    } else if (n == IOStatus.UNAVAILABLE) {
+                        return null;
                     }
                 } else {
                     // Cannot receive into user's buffer when running with a
@@ -444,15 +460,13 @@ class DatagramChannelImpl
                     bb = Util.getTemporaryDirectBuffer(dst.remaining());
                     for (;;) {
                         n = receive(fd, bb, connected);
-                        if (n == IOStatus.UNAVAILABLE) {
-                            if (blocking) {
-                                do {
-                                    park(Net.POLLIN);
-                                    n = receive(fd, bb, connected);
-                                } while (n == IOStatus.UNAVAILABLE && isOpen());
-                            } else {
-                                return null;
+                        if (blocking) {
+                            while (IOStatus.okayToRetry(n) && isOpen()) {
+                                park(Net.POLLIN);
+                                n = receive(fd, bb, connected);
                             }
+                        } else if (n == IOStatus.UNAVAILABLE) {
+                            return null;
                         }
                         InetSocketAddress isa = (InetSocketAddress)sender;
                         try {
@@ -531,17 +545,18 @@ class DatagramChannelImpl
             int n = 0;
             try {
                 SocketAddress remote = beginWrite(blocking, false);
+                lockedConfigureNonBlockingIfFiber();
                 if (remote != null) {
                     // connected
                     if (!target.equals(remote)) {
                         throw new AlreadyConnectedException();
                     }
                     n = IOUtil.write(fd, src, -1, nd);
-                    if (n == IOStatus.UNAVAILABLE && blocking) {
-                        do {
+                    if (blocking) {
+                        while (IOStatus.okayToRetry(n) && isOpen()) {
                             park(Net.POLLOUT);
                             n = IOUtil.write(fd, src, -1, nd);
-                        } while (n == IOStatus.UNAVAILABLE && isOpen());
+                        }
                     }
                 } else {
                     // not connected
@@ -555,11 +570,11 @@ class DatagramChannelImpl
                         }
                     }
                     n = send(fd, src, isa);
-                    if (n == IOStatus.UNAVAILABLE && blocking) {
-                        do {
+                    if (blocking) {
+                        while (IOStatus.okayToRetry(n) && isOpen()) {
                             park(Net.POLLOUT);
                             n = send(fd, src, isa);
-                        } while (n == IOStatus.UNAVAILABLE && isOpen());
+                        }
                     }
                 }
             } finally {
@@ -636,12 +651,13 @@ class DatagramChannelImpl
             int n = 0;
             try {
                 beginRead(blocking, true);
+                lockedConfigureNonBlockingIfFiber();
                 n = IOUtil.read(fd, buf, -1, nd);
-                if (n == IOStatus.UNAVAILABLE && blocking) {
-                    do {
+                if (blocking) {
+                    while (IOStatus.okayToRetry(n) && isOpen()) {
                         park(Net.POLLIN);
                         n = IOUtil.read(fd, buf, -1, nd);
-                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                    }
                 }
             } finally {
                 endRead(blocking, n > 0);
@@ -665,12 +681,13 @@ class DatagramChannelImpl
             long n = 0;
             try {
                 beginRead(blocking, true);
+                lockedConfigureNonBlockingIfFiber();
                 n = IOUtil.read(fd, dsts, offset, length, nd);
-                if (n == IOStatus.UNAVAILABLE && blocking) {
-                    do {
+                if (blocking) {
+                    while (IOStatus.okayToRetry(n) && isOpen()) {
                         park(Net.POLLIN);
                         n = IOUtil.read(fd, dsts, offset, length, nd);
-                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                    }
                 }
             } finally {
                 endRead(blocking, n > 0);
@@ -699,7 +716,8 @@ class DatagramChannelImpl
             begin();
         }
         SocketAddress remote;
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             ensureOpen();
             remote = remoteAddress;
             if ((remote == null) && mustBeConnected)
@@ -708,6 +726,8 @@ class DatagramChannelImpl
                 bindInternal(null);
             if (blocking)
                 writerThread = NativeThread.current();
+        } finally {
+            stateLock.unlock();
         }
         return remote;
     }
@@ -721,12 +741,15 @@ class DatagramChannelImpl
         throws AsynchronousCloseException
     {
         if (blocking) {
-            synchronized (stateLock) {
+            stateLock.lock();
+            try {
                 writerThread = 0;
                 // notify any thread waiting in implCloseSelectableChannel
                 if (state == ST_CLOSING) {
-                    stateLock.notifyAll();
+                    stateCondition.signalAll();
                 }
+            } finally {
+                stateLock.unlock();
             }
             // remove hook for Thread.interrupt
             end(completed);
@@ -743,12 +766,13 @@ class DatagramChannelImpl
             int n = 0;
             try {
                 beginWrite(blocking, true);
+                lockedConfigureNonBlockingIfFiber();
                 n = IOUtil.write(fd, buf, -1, nd);
-                if (n == IOStatus.UNAVAILABLE && blocking) {
-                    do {
+                if (blocking) {
+                    while (IOStatus.okayToRetry(n) && isOpen()) {
                         park(Net.POLLOUT);
                         n = IOUtil.write(fd, buf, -1, nd);
-                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                    }
                 }
             } finally {
                 endWrite(blocking, n > 0);
@@ -772,12 +796,13 @@ class DatagramChannelImpl
             long n = 0;
             try {
                 beginWrite(blocking, true);
+                lockedConfigureNonBlockingIfFiber();
                 n = IOUtil.write(fd, srcs, offset, length, nd);
-                if (n == IOStatus.UNAVAILABLE && blocking) {
-                    do {
+                if (blocking) {
+                    while (IOStatus.okayToRetry(n) && isOpen()) {
                         park(Net.POLLOUT);
                         n = IOUtil.write(fd, srcs, offset, length, nd);
-                    } while (n == IOStatus.UNAVAILABLE && isOpen());
+                    }
                 }
             } finally {
                 endWrite(blocking, n > 0);
@@ -795,10 +820,7 @@ class DatagramChannelImpl
         try {
             writeLock.lock();
             try {
-                synchronized (stateLock) {
-                    ensureOpen();
-                    // nothing to do
-                }
+                lockedConfigureBlocking(block);
             } finally {
                 writeLock.unlock();
             }
@@ -807,15 +829,58 @@ class DatagramChannelImpl
         }
     }
 
+    /**
+     * Adjust the blocking mode while holding readLock or writeLock.
+     */
+    private void lockedConfigureBlocking(boolean block) throws IOException {
+        assert readLock.isHeldByCurrentThread() || writeLock.isHeldByCurrentThread();
+        stateLock.lock();
+        try {
+            ensureOpen();
+            // do nothing if fiber has forced the socket to be non-blocking
+            if (!nonBlocking) {
+                IOUtil.configureBlocking(fd, block);
+            }
+        } finally {
+            stateLock.unlock();
+        }
+    }
+
+    /**
+     * Ensures that the socket is configured non-blocking when the current
+     * strand is a fiber or a timeout is specified.
+     * @throws IOException if there is an I/O error changing the blocking mode
+     */
+    private void lockedConfigureNonBlockingIfFiber() throws IOException {
+        assert readLock.isHeldByCurrentThread() || writeLock.isHeldByCurrentThread();
+        if (!nonBlocking && (Strands.currentStrand() instanceof Fiber)) {
+            stateLock.lock();
+            try {
+                ensureOpen();
+                IOUtil.configureBlocking(fd, false);
+                nonBlocking = true;
+            } finally {
+                stateLock.unlock();
+            }
+        }
+    }
+
+
     InetSocketAddress localAddress() {
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             return localAddress;
+        } finally {
+            stateLock.unlock();
         }
     }
 
     InetSocketAddress remoteAddress() {
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             return remoteAddress;
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -825,11 +890,14 @@ class DatagramChannelImpl
         try {
             writeLock.lock();
             try {
-                synchronized (stateLock) {
+                stateLock.lock();
+                try {
                     ensureOpen();
                     if (localAddress != null)
                         throw new AlreadyBoundException();
                     bindInternal(local);
+                } finally {
+                    stateLock.unlock();
                 }
             } finally {
                 writeLock.unlock();
@@ -841,7 +909,7 @@ class DatagramChannelImpl
     }
 
     private void bindInternal(SocketAddress local) throws IOException {
-        assert Thread.holdsLock(stateLock) && (localAddress == null);
+        assert stateLock.isHeldByCurrentThread() && (localAddress == null);
 
         InetSocketAddress isa;
         if (local == null) {
@@ -864,8 +932,11 @@ class DatagramChannelImpl
 
     @Override
     public boolean isConnected() {
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             return (state == ST_CONNECTED);
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -887,7 +958,8 @@ class DatagramChannelImpl
         try {
             writeLock.lock();
             try {
-                synchronized (stateLock) {
+                stateLock.lock();
+                try {
                     ensureOpen();
                     if (state == ST_CONNECTED)
                         throw new AlreadyConnectedException();
@@ -907,10 +979,23 @@ class DatagramChannelImpl
                     localAddress = Net.localAddress(fd);
 
                     // flush any packets already received.
-                    ByteBuffer buf = ByteBuffer.allocate(100);
-                    do {
-                        n = receive(fd, buf, true);
-                    } while (n != IOStatus.UNAVAILABLE && isOpen());
+                    boolean blocking = isBlocking();
+                    if (blocking) {
+                        lockedConfigureBlocking(false);
+                    }
+                    try {
+                        ByteBuffer buf = ByteBuffer.allocate(100);
+                        while (receive(fd, buf, false) > 0) {
+                            buf.clear();
+                        }
+                    } finally {
+                        if (blocking) {
+                            lockedConfigureBlocking(true);
+                        }
+                    }
+
+                } finally {
+                    stateLock.unlock();
                 }
             } finally {
                 writeLock.unlock();
@@ -927,7 +1012,8 @@ class DatagramChannelImpl
         try {
             writeLock.lock();
             try {
-                synchronized (stateLock) {
+                stateLock.lock();
+                try {
                     if (!isOpen() || (state != ST_CONNECTED))
                         return this;
 
@@ -941,6 +1027,8 @@ class DatagramChannelImpl
 
                     // refresh local address
                     localAddress = Net.localAddress(fd);
+                } finally {
+                    stateLock.unlock();
                 }
             } finally {
                 writeLock.unlock();
@@ -988,7 +1076,8 @@ class DatagramChannelImpl
         if (sm != null)
             sm.checkMulticast(group);
 
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             ensureOpen();
 
             // check the registry to see if we are already a member of the group
@@ -1043,6 +1132,8 @@ class DatagramChannelImpl
 
             registry.add(key);
             return key;
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -1068,7 +1159,8 @@ class DatagramChannelImpl
     void drop(MembershipKeyImpl key) {
         assert key.channel() == this;
 
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             if (!key.isValid())
                 return;
 
@@ -1089,6 +1181,8 @@ class DatagramChannelImpl
 
             key.invalidate();
             registry.remove(key);
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -1102,7 +1196,8 @@ class DatagramChannelImpl
         assert key.channel() == this;
         assert key.sourceAddress() == null;
 
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             if (!key.isValid())
                 throw new IllegalStateException("key is no longer valid");
             if (source.isAnyLocalAddress())
@@ -1128,6 +1223,8 @@ class DatagramChannelImpl
                 // ancient kernel
                 throw new UnsupportedOperationException();
             }
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -1138,7 +1235,8 @@ class DatagramChannelImpl
         assert key.channel() == this;
         assert key.sourceAddress() == null;
 
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             if (!key.isValid())
                 throw new IllegalStateException("key is no longer valid");
 
@@ -1158,6 +1256,8 @@ class DatagramChannelImpl
                 // should not happen
                 throw new AssertionError(ioe);
             }
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -1182,7 +1282,8 @@ class DatagramChannelImpl
         boolean interrupted = false;
 
         // set state to ST_CLOSING and invalid membership keys
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             assert state < ST_CLOSING;
             blocking = isBlocking();
             state = ST_CLOSING;
@@ -1190,11 +1291,14 @@ class DatagramChannelImpl
             // if member of any multicast groups then invalidate the keys
             if (registry != null)
                 registry.invalidateAll();
+        } finally {
+            stateLock.unlock();
         }
 
         // wait for any outstanding I/O operations to complete
         if (blocking) {
-            synchronized (stateLock) {
+            stateLock.lock();
+            try {
                 assert state == ST_CLOSING;
 
                 // unpark and wait for fibers to complete I/O operations
@@ -1205,7 +1309,7 @@ class DatagramChannelImpl
                     while (NativeThread.isFiber(readerThread) ||
                             NativeThread.isFiber(writerThread)) {
                         try {
-                            stateLock.wait();
+                            stateCondition.await();
                         } catch (InterruptedException e) {
                             interrupted = true;
                         }
@@ -1228,12 +1332,14 @@ class DatagramChannelImpl
                     while (NativeThread.isKernelThread(readerThread) ||
                             NativeThread.isKernelThread(writerThread)) {
                         try {
-                            stateLock.wait();
+                            stateCondition.await();
                         } catch (InterruptedException e) {
                             interrupted = true;
                         }
                     }
                 }
+            } finally {
+                stateLock.unlock();
             }
         } else {
             // non-blocking mode: wait for read/write to complete
@@ -1247,9 +1353,12 @@ class DatagramChannelImpl
         }
 
         // set state to ST_KILLPENDING
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             assert state == ST_CLOSING;
             state = ST_KILLPENDING;
+        } finally {
+            stateLock.unlock();
         }
 
         // close socket if not registered with Selector
@@ -1263,7 +1372,8 @@ class DatagramChannelImpl
 
     @Override
     public void kill() throws IOException {
-        synchronized (stateLock) {
+        stateLock.lock();
+        try {
             if (state == ST_KILLPENDING) {
                 state = ST_KILLED;
                 try {
@@ -1273,6 +1383,8 @@ class DatagramChannelImpl
                     ResourceManager.afterUdpClose();
                 }
             }
+        } finally {
+            stateLock.unlock();
         }
     }
 
@@ -1328,7 +1440,7 @@ class DatagramChannelImpl
      * Poll this channel's socket for reading up to the given timeout.
      * @return {@code true} if the socket is polled
      */
-    boolean pollRead(long nanos) throws IOException {
+    boolean pollRead(long timeout) throws IOException {
         boolean blocking = isBlocking();
         assert Thread.holdsLock(blockingLock()) && blocking;
 
@@ -1337,11 +1449,7 @@ class DatagramChannelImpl
             boolean polled = false;
             try {
                 beginRead(blocking, false);
-                int events = Net.pollNow(fd, Net.POLLIN);
-                if (events == 0) {
-                    park(Net.POLLIN, nanos);
-                    events = Net.pollNow(fd, Net.POLLIN);
-                }
+                int events = Net.poll(fd, Net.POLLIN, timeout);
                 polled = (events != 0);
             } finally {
                 endRead(blocking, polled);

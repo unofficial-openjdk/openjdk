@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,15 +32,14 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.net.SocketOption;
 import java.net.StandardSocketOptions;
 import java.nio.channels.IllegalBlockingModeException;
-import java.nio.channels.NotYetBoundException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.Set;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 
 // Make a server-socket channel look like a server socket.
@@ -59,23 +58,21 @@ class ServerSocketAdaptor                        // package-private
     // Timeout "option" value for accepts
     private volatile int timeout;
 
-    public static ServerSocket create(ServerSocketChannelImpl ssc) {
-        try {
-            return new ServerSocketAdaptor(ssc);
-        } catch (IOException x) {
-            throw new Error(x);
-        }
+    static ServerSocket create(ServerSocketChannelImpl ssc) {
+        return new ServerSocketAdaptor(ssc);
     }
 
-    // ## super will create a useless impl
-    private ServerSocketAdaptor(ServerSocketChannelImpl ssc) throws IOException {
+    private ServerSocketAdaptor(ServerSocketChannelImpl ssc) {
+        super(DummySocketImpl.create());
         this.ssc = ssc;
     }
 
+    @Override
     public void bind(SocketAddress local) throws IOException {
         bind(local, 50);
     }
 
+    @Override
     public void bind(SocketAddress local, int backlog) throws IOException {
         if (local == null)
             local = new InetSocketAddress(0);
@@ -86,6 +83,7 @@ class ServerSocketAdaptor                        // package-private
         }
     }
 
+    @Override
     public InetAddress getInetAddress() {
         InetSocketAddress local = ssc.localAddress();
         if (local == null) {
@@ -95,6 +93,7 @@ class ServerSocketAdaptor                        // package-private
         }
     }
 
+    @Override
     public int getLocalPort() {
         InetSocketAddress local = ssc.localAddress();
         if (local == null) {
@@ -104,66 +103,65 @@ class ServerSocketAdaptor                        // package-private
         }
     }
 
+    @Override
     public Socket accept() throws IOException {
-        synchronized (ssc.blockingLock()) {
-            try {
-                if (!ssc.isBound())
-                    throw new NotYetBoundException();
-
-                long to = this.timeout;
-                if (to == 0) {
-                    // for compatibility reasons: accept connection if available
-                    // when configured non-blocking
-                    SocketChannel sc = ssc.accept();
-                    if (sc == null && !ssc.isBlocking())
-                        throw new IllegalBlockingModeException();
-                    return sc.socket();
-                }
-
-                if (!ssc.isBlocking())
+        SocketChannel sc = null;
+        try {
+            int timeout = this.timeout;
+            if (timeout > 0) {
+                long nanos = MILLISECONDS.toNanos(timeout);
+                sc = ssc.blockingAccept(nanos);
+            } else {
+                // accept connection if possible when non-blocking (to preserve
+                // long standing behavior)
+                sc = ssc.accept();
+                if (sc == null) {
                     throw new IllegalBlockingModeException();
-                long nanos = NANOSECONDS.convert(to, MILLISECONDS);
-                for (;;) {
-                    long startTime = System.nanoTime();
-                    if (ssc.pollAccept(nanos)) {
-                        return ssc.accept().socket();
-                    }
-                    nanos -= System.nanoTime() - startTime;
-                    if (nanos <= 0)
-                        throw new SocketTimeoutException();
                 }
-            } catch (Exception x) {
-                Net.translateException(x);
-                assert false;
-                return null;            // Never happens
             }
+        } catch (Exception e) {
+            Net.translateException(e);
         }
+        return sc.socket();
     }
 
+    @Override
     public void close() throws IOException {
         ssc.close();
     }
 
+    @Override
     public ServerSocketChannel getChannel() {
         return ssc;
     }
 
+    @Override
     public boolean isBound() {
         return ssc.isBound();
     }
 
+    @Override
     public boolean isClosed() {
         return !ssc.isOpen();
     }
 
+    @Override
     public void setSoTimeout(int timeout) throws SocketException {
+        if (!ssc.isOpen())
+            throw new SocketException("Socket is closed");
+        if (timeout < 0)
+            throw new IllegalArgumentException("timeout < 0");
         this.timeout = timeout;
     }
 
+    @Override
     public int getSoTimeout() throws SocketException {
+        if (!ssc.isOpen())
+            throw new SocketException("Socket is closed");
         return timeout;
     }
 
+    @Override
     public void setReuseAddress(boolean on) throws SocketException {
         try {
             ssc.setOption(StandardSocketOptions.SO_REUSEADDR, on);
@@ -172,6 +170,7 @@ class ServerSocketAdaptor                        // package-private
         }
     }
 
+    @Override
     public boolean getReuseAddress() throws SocketException {
         try {
             return ssc.getOption(StandardSocketOptions.SO_REUSEADDR).booleanValue();
@@ -181,6 +180,7 @@ class ServerSocketAdaptor                        // package-private
         }
     }
 
+    @Override
     public String toString() {
         if (!isBound())
             return "ServerSocket[unbound]";
@@ -188,6 +188,7 @@ class ServerSocketAdaptor                        // package-private
                ",localport=" + getLocalPort()  + "]";
     }
 
+    @Override
     public void setReceiveBufferSize(int size) throws SocketException {
         // size 0 valid for ServerSocketChannel, invalid for ServerSocket
         if (size <= 0)
@@ -199,6 +200,7 @@ class ServerSocketAdaptor                        // package-private
         }
     }
 
+    @Override
     public int getReceiveBufferSize() throws SocketException {
         try {
             return ssc.getOption(StandardSocketOptions.SO_RCVBUF).intValue();
@@ -206,5 +208,21 @@ class ServerSocketAdaptor                        // package-private
             Net.translateToSocketException(x);
             return -1;          // Never happens
         }
+    }
+
+    @Override
+    public <T> ServerSocket setOption(SocketOption<T> name, T value) throws IOException {
+        ssc.setOption(name, value);
+        return this;
+    }
+
+    @Override
+    public <T> T getOption(SocketOption<T> name) throws IOException {
+        return ssc.getOption(name);
+    }
+
+    @Override
+    public Set<SocketOption<?>> supportedOptions() {
+        return ssc.supportedOptions();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,13 +23,14 @@
  * questions.
  */
 
-/*
- */
-
 package java.nio.channels.spi;
 
 import java.io.IOException;
-import java.nio.channels.*;
+import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.Channel;
+import java.nio.channels.ClosedByInterruptException;
+import java.nio.channels.InterruptibleChannel;
+import java.util.concurrent.locks.ReentrantLock;
 
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.misc.Strands;
@@ -86,7 +87,7 @@ import sun.nio.ch.Interruptible;
 public abstract class AbstractInterruptibleChannel
     implements Channel, InterruptibleChannel
 {
-    private final Object closeLock = new Object();
+    private final ReentrantLock closeLock = new ReentrantLock();
     private volatile boolean closed;
 
     /**
@@ -106,11 +107,14 @@ public abstract class AbstractInterruptibleChannel
      *          If an I/O error occurs
      */
     public final void close() throws IOException {
-        synchronized (closeLock) {
+        closeLock.lock();
+        try {
             if (closed)
                 return;
             closed = true;
             implCloseChannel();
+        } finally {
+            closeLock.unlock();
         }
     }
 
@@ -162,7 +166,8 @@ public abstract class AbstractInterruptibleChannel
             if (interruptor == null) {
                 interruptor = new Interruptible() {
                     public void interrupt(Thread target) {
-                        synchronized (closeLock) {
+                        closeLock.lock();
+                        try {
                             if (closed)
                                 return;
                             closed = true;
@@ -170,6 +175,8 @@ public abstract class AbstractInterruptibleChannel
                             try {
                                 AbstractInterruptibleChannel.this.implCloseChannel();
                             } catch (IOException x) { }
+                        } finally {
+                            closeLock.unlock();
                         }
                     }};
             }
@@ -221,7 +228,7 @@ public abstract class AbstractInterruptibleChannel
     }
 
 
-    // -- jdk.internal.misc.SharedSecrets --
+    // -- jdk.internal.access.SharedSecrets --
     static void blockedOn(Interruptible intr) {         // package-private
         SharedSecrets.getJavaLangAccess().blockedOn(intr);
     }
