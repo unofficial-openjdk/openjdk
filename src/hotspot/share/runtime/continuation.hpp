@@ -65,7 +65,8 @@ public:
   static int freeze0(JavaThread* thread, FrameInfo* fi, bool safepoint_yield);
   static int freeze(JavaThread* thread, FrameInfo* fi);
   static int prepare_thaw(FrameInfo* fi, bool return_barrier);
-  static address thaw(FrameInfo* fi, bool return_barrier, bool exception);
+  static address thaw_leaf(FrameInfo* fi, bool return_barrier, bool exception);
+  static address thaw(JavaThread* thread, FrameInfo* fi, bool return_barrier, bool exception);
   static int try_force_yield(JavaThread* thread, oop cont);
 
   static oop  get_continutation_for_frame(JavaThread* thread, const frame& f);
