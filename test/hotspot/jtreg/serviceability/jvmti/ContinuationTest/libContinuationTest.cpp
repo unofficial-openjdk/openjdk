@@ -195,6 +195,13 @@ FramePop(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jmethodID method,
 }
 
 static void JNICALL
+ContinuationRun(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_count) {
+  lock_events();
+  print_cont_event_info(jvmti, jni, thread, frames_count, "ContinuationRun");
+  unlock_events();
+}
+
+static void JNICALL
 ContinuationYield(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_count) {
   lock_events();
   print_cont_event_info(jvmti, jni, thread, frames_count, "ContinuationYield");
@@ -215,6 +222,7 @@ Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) {
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.MethodEntry       = &MethodEntry;
   callbacks.FramePop          = &FramePop;
+  callbacks.ContinuationRun   = &ContinuationRun;
   callbacks.ContinuationYield = &ContinuationYield;
 
   memset(&caps, 0, sizeof(caps));
@@ -256,6 +264,9 @@ Java_MyPackage_ContinuationTest_enableEvents(JNIEnv *jni, jclass cls, jthread th
   err = jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_FRAME_POP, thread);
   check_jvmti_status(jni, err, "enableEvents: error in JVMTI SetEventNotificationMode: enable FRAME_POP");
 
+  err = jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CONTINUATION_RUN, thread);
+  check_jvmti_status(jni, err, "enableEvents: error in JVMTI SetEventNotificationMode: enable CONTINUATION_RUN");
+
   err = jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CONTINUATION_YIELD, thread);
   check_jvmti_status(jni, err, "enableEvents: error in JVMTI SetEventNotificationMode: enable CONTINUATION_YIELD");
 
@@ -275,6 +286,9 @@ Java_MyPackage_ContinuationTest_check(JNIEnv *jni, jclass cls) {
 
   err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_FRAME_POP, exp_thread);
   check_jvmti_status(jni, err, "error in JVMTI SetEventNotificationMode: disable FRAME_POP");
+
+  err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_CONTINUATION_RUN, exp_thread);
+  check_jvmti_status(jni, err, "error in JVMTI SetEventNotificationMode: disable CONTINUATION_RUN");
 
   err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_CONTINUATION_YIELD, exp_thread);
   check_jvmti_status(jni, err, "error in JVMTI SetEventNotificationMode: disable CONTINUATION_YIELD");

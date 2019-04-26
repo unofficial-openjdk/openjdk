@@ -90,6 +90,7 @@ class JvmtiExport : public AllStatic {
   JVMTI_SUPPORT_FLAG(can_post_frame_pop)
   JVMTI_SUPPORT_FLAG(can_pop_frame)
   JVMTI_SUPPORT_FLAG(can_force_early_return)
+  JVMTI_SUPPORT_FLAG(can_support_continuations)
 
   JVMTI_SUPPORT_FLAG(early_vmstart_recorded)
 

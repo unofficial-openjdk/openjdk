@@ -3502,7 +3502,23 @@ JRT_END
 //      fi->fp = the FP " ...
 //      fi->pc = the PC " ...
 // JRT_ENTRY(void, Continuation::thaw(JavaThread* thread, FrameInfo* fi, int num_frames))
-JRT_LEAF(address, Continuation::thaw(FrameInfo* fi, bool return_barrier, bool exception))
+JRT_LEAF(address, Continuation::thaw_leaf(FrameInfo* fi, bool return_barrier, bool exception))
+  //callgrind();
+  Continuation::PERFTEST_LEVEL = ContPerfTest;
+
+  thaw1(JavaThread::current(), fi, return_barrier);
+
+  if (exception) {
+    // TODO: handle deopt. see TemplateInterpreterGenerator::generate_throw_exception, OptoRuntime::handle_exception_C, OptoRuntime::handle_exception_helper
+    // assert (!top.is_deoptimized_frame(), ""); -- seems to be handled
+    address ret = fi->pc;
+    fi->pc = SharedRuntime::raw_exception_handler_for_return_address(JavaThread::current(), fi->pc);
+    return ret;
+  } else
+    return reinterpret_cast<address>(Interpreter::contains(fi->pc)); // really only necessary in the case of continuing from a forced yield
+JRT_END
+
+JRT_ENTRY(address, Continuation::thaw(JavaThread* thread, FrameInfo* fi, bool return_barrier, bool exception))
   //callgrind();
   Continuation::PERFTEST_LEVEL = ContPerfTest;
 
