@@ -224,9 +224,6 @@ VM_EnterInterpOnlyMode::VM_EnterInterpOnlyMode(JvmtiThreadState *state)
 
 
 void VM_EnterInterpOnlyMode::doit() {
-  // Set up the current stack depth for later tracking
-  _state->invalidate_cur_stack_depth();
-
   _state->enter_interp_only_mode();
 
   JavaThread *thread = _state->get_thread();

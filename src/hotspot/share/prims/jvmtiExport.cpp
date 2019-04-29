@@ -1627,6 +1627,7 @@ void JvmtiExport::post_continuation_run(JavaThread* thread, jint frames_count) {
   if (state == NULL) {
     return;
   }
+  state->invalidate_cur_stack_depth();
 
   if (state->is_enabled(JVMTI_EVENT_CONTINUATION_RUN)) {
     JvmtiEnvThreadStateIterator it(state);
@@ -1648,7 +1649,6 @@ void JvmtiExport::post_continuation_run(JavaThread* thread, jint frames_count) {
       }
     }
   }
-  state->invalidate_cur_stack_depth();
 }
 
 void JvmtiExport::post_continuation_yield(JavaThread* thread, jint frames_count) {
@@ -1662,6 +1662,7 @@ void JvmtiExport::post_continuation_yield(JavaThread* thread, jint frames_count)
   if (state == NULL) {
     return;
   }
+  state->invalidate_cur_stack_depth();
 
   if (state->is_enabled(JVMTI_EVENT_CONTINUATION_YIELD)) {
     JvmtiEnvThreadStateIterator it(state);
@@ -1683,7 +1684,6 @@ void JvmtiExport::post_continuation_yield(JavaThread* thread, jint frames_count)
       }
     }
   }
-  state->invalidate_cur_stack_depth();
 
   // Clear frame_pop requests in frames poped by yield
   if (can_post_frame_pop()) {
