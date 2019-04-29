@@ -203,6 +203,7 @@ void JvmtiThreadState::add_env(JvmtiEnvBase *env) {
 void JvmtiThreadState::enter_interp_only_mode() {
   assert(_thread->get_interp_only_mode() == 0, "entering interp only when mode not zero");
   _thread->increment_interp_only_mode();
+  invalidate_cur_stack_depth();
 }
 
 

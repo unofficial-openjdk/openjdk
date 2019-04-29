@@ -2574,13 +2574,13 @@ static res_freeze freeze_continuation(JavaThread* thread, oop oopCont, frame& f,
 
   cont.write();
 
+  if (JvmtiExport::should_post_continuation_yield() || JvmtiExport::can_post_frame_pop()) {
+    JvmtiExport::post_continuation_yield(JavaThread::current(), num_java_frames(cont));
+  }
+
   JvmtiThreadState *jvmti_state = thread->jvmti_thread_state();
   if (jvmti_state != NULL && jvmti_state->is_interp_only_mode()) {
     jvmti_state->invalidate_cur_stack_depth();
-  }
-
-  if (JvmtiExport::should_post_continuation_yield() || JvmtiExport::can_post_frame_pop()) {
-    JvmtiExport::post_continuation_yield(JavaThread::current(), num_java_frames(cont));
   }
 
   cont.post_jfr_event(&event);
@@ -3390,15 +3390,15 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
 
   DEBUG_ONLY(thread->_continuation = oopCont;)
 
-  JvmtiThreadState *jvmti_state = thread->jvmti_thread_state();
-  if (jvmti_state != NULL && jvmti_state->is_interp_only_mode()) {
-    jvmti_state->invalidate_cur_stack_depth();
-  }
-
   if (!return_barrier && JvmtiExport::should_post_continuation_run()) {
     set_anchor(thread, fi); // ensure thawed frames are visible
     JvmtiExport::post_continuation_run(JavaThread::current(), java_frame_count);
     clear_anchor(thread);
+  }
+
+  JvmtiThreadState *jvmti_state = thread->jvmti_thread_state();
+  if (jvmti_state != NULL && jvmti_state->is_interp_only_mode()) {
+    jvmti_state->invalidate_cur_stack_depth();
   }
 
   cont.post_jfr_event(&event);
