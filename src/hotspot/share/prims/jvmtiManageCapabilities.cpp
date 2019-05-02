@@ -374,6 +374,7 @@ void JvmtiManageCapabilities::update() {
   JvmtiExport::set_can_post_frame_pop(avail.can_generate_frame_pop_events);
   JvmtiExport::set_can_pop_frame(avail.can_pop_frame);
   JvmtiExport::set_can_force_early_return(avail.can_force_early_return);
+  JvmtiExport::set_can_support_fibers(avail.can_support_fibers);
   JvmtiExport::set_can_support_continuations(avail.can_support_continuations);
   JvmtiExport::set_should_clean_up_heap_objects(avail.can_generate_breakpoint_events);
 }

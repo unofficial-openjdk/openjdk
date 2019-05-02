@@ -1199,6 +1199,7 @@ bool              JvmtiExport::_can_post_method_exit                      = fals
 bool              JvmtiExport::_can_post_frame_pop                        = false;
 bool              JvmtiExport::_can_pop_frame                             = false;
 bool              JvmtiExport::_can_force_early_return                    = false;
+bool              JvmtiExport::_can_support_fibers                        = false;
 bool              JvmtiExport::_can_support_continuations                 = false;
 
 bool              JvmtiExport::_early_vmstart_recorded                    = false;

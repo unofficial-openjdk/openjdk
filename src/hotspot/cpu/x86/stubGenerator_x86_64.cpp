@@ -5845,7 +5845,7 @@ RuntimeStub* generate_cont_doYield() {
     push_FrameInfo(_masm, fi, fi, rbp, c_rarg3);
     __ movl(c_rarg1, return_barrier);
     __ movl(c_rarg2, exception);
-    if (!return_barrier && JvmtiExport::can_support_continuations()) {
+    if (!return_barrier && (JvmtiExport::can_support_continuations() || JvmtiExport::can_support_fibers())) {
       __ call_VM(noreg, CAST_FROM_FN_PTR(address, Continuation::thaw), fi, c_rarg1, c_rarg2);
     } else {
       __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::thaw_leaf), fi, c_rarg1, c_rarg2);
