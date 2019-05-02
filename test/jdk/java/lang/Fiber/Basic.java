@@ -1840,6 +1840,7 @@ public class Basic {
     }
 
     // fiber waits, notified by other fiber
+    @Test(enabled=false)
     public void testWaitNotify3() throws Exception {
         var lock = new Object();
         var fiber1 = Fiber.schedule(() -> {

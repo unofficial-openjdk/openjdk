@@ -362,8 +362,7 @@
   template(destroyed_name,                            "destroyed")                                \
   template(nthreads_name,                             "nthreads")                                 \
   template(ngroups_name,                              "ngroups")                                  \
-  template(shutdown_method_name,                      "shutdown")                                 \
-  template(bootstrapFinished_method_name,             "bootstrapFinished")                        \
+  template(shutdown_name,                             "shutdown")                                 \
   template(finalize_method_name,                      "finalize")                                 \
   template(reference_lock_name,                       "lock")                                     \
   template(reference_discovered_name,                 "discovered")                               \
@@ -1555,7 +1554,7 @@ class vmSymbols: AllStatic {
     FIRST_SID = NO_SID + 1
   };
   enum {
-    log2_SID_LIMIT = 10         // checked by an assert at start-up
+    log2_SID_LIMIT = 11         // checked by an assert at start-up
   };
 
  private:
