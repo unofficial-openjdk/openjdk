@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,43 +23,31 @@
  * questions.
  */
 
-/*
- * A class to manage AccessBridge debugging
- */
+package sun.awt;
 
-#ifndef __AccessBridgeDebug_H__
-#define __AccessBridgeDebug_H__
+import java.awt.GraphicsEnvironment;
 
-#include <crtdbg.h>
-#include <windows.h>
+public class PlatformGraphicsInfo {
 
-#ifdef DEBUG
-#define DEBUGGING_ON
-#define SEND_TO_OUTPUT_DEBUG_STRING
-//#define JAVA_DEBUGGING_ON
-#endif
+    public static GraphicsEnvironment createGE() {
+        return new Win32GraphicsEnvironment();
+    }
 
-#ifdef DEBUGGING_ON
-#define DEBUG_CODE(x) x
-#else
-#define DEBUG_CODE(x) /* */
-#endif
+    public static boolean getDefaultHeadlessProperty() {
+        // On Windows, we assume we can always create headful apps.
+        // Here is where we can add code that would actually check.
+        return false;
+    }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+    /*
+     * Called from java.awt.GraphicsEnvironment when
+     * getDefaultHeadlessProperty() has returned true, and
+     * the application has called an API that requires headful.
+     */
+    public static String getDefaultHeadlessMessage() {
+        return
+            "\nThe application does not have desktop access,\n" +
+            "but this program performed an operation which requires it.";
+    }
 
-    char *printError(char *msg);
-    void PrintDebugString(char *msg, ...);
-    void PrintJavaDebugString(char *msg, ...);
-    void wPrintJavaDebugString(wchar_t *msg, ...);
-    void wPrintDebugString(wchar_t *msg, ...);
-    void initializeFileLogger(char * fileName);
-    void finalizeFileLogger();
-
-#ifdef __cplusplus
 }
-#endif
-
-
-#endif

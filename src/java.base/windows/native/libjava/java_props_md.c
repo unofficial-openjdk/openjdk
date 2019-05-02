@@ -376,9 +376,6 @@ GetJavaProperties(JNIEnv* env)
         sprops.tmp_dir = _wcsdup(tmpdir);
     }
 
-    /* Java2D properties */
-    sprops.graphics_env = "sun.awt.Win32GraphicsEnvironment";
-
     /* OS properties */
     {
         char buf[100];
@@ -577,7 +574,6 @@ GetJavaProperties(JNIEnv* env)
 #else
         sprops.os_arch = "unknown";
 #endif
-        sprops.desktop = "windows";
     }
 
     /* Endianness of platform */
