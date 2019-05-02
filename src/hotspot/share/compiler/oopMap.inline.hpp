@@ -148,7 +148,7 @@ void OopMapDo<OopMapFnT, DerivedOopFnT, ValueFilterT>::walk_derived_pointers(con
       // Protect the operation on the derived pointers.  This
       // protects the addition of derived pointers to the shared
       // derived pointer table in DerivedPointerTable::add().
-      MutexLockerEx x(DerivedPointerTableGC_lock, Mutex::_no_safepoint_check_flag);
+      MutexLocker x(DerivedPointerTableGC_lock, Mutex::_no_safepoint_check_flag);
       walk_derived_pointers1<OopMapStreamT>(oms, fr, reg_map);
     } else {
       walk_derived_pointers1<OopMapStreamT>(oms, fr, reg_map);

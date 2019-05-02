@@ -34,7 +34,6 @@ import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
 import java.util.Set;
 import java.util.Collections;
-import java.util.concurrent.locks.ReentrantLock;
 
 import jdk.internal.access.JavaNetSocketAccess;
 import jdk.internal.access.SharedSecrets;
@@ -65,7 +64,7 @@ class ServerSocket implements java.io.Closeable {
     private boolean created = false;
     private boolean bound = false;
     private boolean closed = false;
-    private final ReentrantLock closeLock = new ReentrantLock();
+    private Object closeLock = new Object();
 
     /**
      * The implementation of this Socket.
@@ -687,19 +686,12 @@ class ServerSocket implements java.io.Closeable {
      * @spec JSR-51
      */
     public void close() throws IOException {
-        closeLock.lock();
-        try {
-            if (!closed) {
-                try {
-                    SocketImpl impl = this.impl;
-                    if (impl != null)
-                        impl.close();
-                } finally {
-                    closed = true;
-                }
-            }
-        } finally {
-            closeLock.unlock();
+        synchronized(closeLock) {
+            if (isClosed())
+                return;
+            if (created)
+                impl.close();
+            closed = true;
         }
     }
 
@@ -741,11 +733,8 @@ class ServerSocket implements java.io.Closeable {
      * @since 1.4
      */
     public boolean isClosed() {
-        closeLock.lock();
-        try {
+        synchronized(closeLock) {
             return closed;
-        } finally {
-            closeLock.unlock();
         }
     }
 

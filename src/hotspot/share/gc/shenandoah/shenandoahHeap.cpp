@@ -259,7 +259,7 @@ jint ShenandoahHeap::initialize() {
 
   _regions = NEW_C_HEAP_ARRAY(ShenandoahHeapRegion*, _num_regions, mtGC);
   _free_set = new ShenandoahFreeSet(this, _num_regions);
-  _collection_set = new ShenandoahCollectionSet(this, (HeapWord*)sh_rs.base());
+  _collection_set = new ShenandoahCollectionSet(this, sh_rs.base(), sh_rs.size());
 
   {
     ShenandoahHeapLocker locker(lock());
@@ -536,6 +536,15 @@ void ShenandoahHeap::print_on(outputStream* st) const {
   st->print_cr(" - [" PTR_FORMAT ", " PTR_FORMAT ") ",
                p2i(reserved_region().start()),
                p2i(reserved_region().end()));
+
+  ShenandoahCollectionSet* cset = collection_set();
+  st->print_cr("Collection set:");
+  if (cset != NULL) {
+    st->print_cr(" - map (vanilla): " PTR_FORMAT, p2i(cset->map_address()));
+    st->print_cr(" - map (biased):  " PTR_FORMAT, p2i(cset->biased_map_address()));
+  } else {
+    st->print_cr(" (NULL)");
+  }
 
   st->cr();
   MetaspaceUtils::print_on(st);
