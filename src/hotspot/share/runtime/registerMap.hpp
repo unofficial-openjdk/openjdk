@@ -117,24 +117,19 @@ class RegisterMap : public StackObj {
     }
   }
 
-  void update_location(VMReg reg, address loc) {
-    int index = reg->value() / location_valid_type_size;
-    assert(0 <= reg->value() && reg->value() < reg_count, "range check");
-    assert(0 <= index && index < location_valid_size, "range check");
-    assert(!_validate_oops || _update_map, "updating map that does not need updating");
-    _location[reg->value()] = (intptr_t*) loc;
-    check_location_valid();
-  }
-
+  template <bool set_location_valid>
   void set_location(VMReg reg, address loc) {
     int index = reg->value() / location_valid_type_size;
     assert(0 <= reg->value() && reg->value() < reg_count, "range check");
     assert(0 <= index && index < location_valid_size, "range check");
     assert(!_validate_oops || _update_map, "updating map that does not need updating");
     _location[reg->value()] = (intptr_t*) loc;
-    _location_valid[index] |= ((LocationValidType)1 << (reg->value() % location_valid_type_size));
+    if (set_location_valid)
+      _location_valid[index] |= ((LocationValidType)1 << (reg->value() % location_valid_type_size));
     check_location_valid();
   }
+
+  void set_location(VMReg reg, address loc) { set_location<true>(reg, loc); }
 
   // Called by an entry frame.
   void clear();

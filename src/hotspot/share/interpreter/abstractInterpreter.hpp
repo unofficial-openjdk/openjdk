@@ -162,18 +162,26 @@ class AbstractInterpreter: AllStatic {
   // the compiled version to the intrinsic version.
   static bool       can_be_compiled(const methodHandle& m) {
     switch (m->intrinsic_id()) {
-      case vmIntrinsics::_dsin  : // fall thru
-      case vmIntrinsics::_dcos  : // fall thru
-      case vmIntrinsics::_dtan  : // fall thru
-      case vmIntrinsics::_dabs  : // fall thru
-      case vmIntrinsics::_dsqrt : // fall thru
-      case vmIntrinsics::_dlog  : // fall thru
-      case vmIntrinsics::_dlog10: // fall thru
-      case vmIntrinsics::_dpow  : // fall thru
-      case vmIntrinsics::_dexp  : // fall thru
-      case vmIntrinsics::_fmaD  : // fall thru
-      case vmIntrinsics::_fmaF  : // fall thru
+      // math intrinsics
+      case vmIntrinsics::_dsin  :
+      case vmIntrinsics::_dcos  :
+      case vmIntrinsics::_dtan  :
+      case vmIntrinsics::_dabs  :
+      case vmIntrinsics::_dsqrt :
+      case vmIntrinsics::_dlog  :
+      case vmIntrinsics::_dlog10:
+      case vmIntrinsics::_dpow  :
+      case vmIntrinsics::_dexp  :
+      case vmIntrinsics::_fmaD  :
+      case vmIntrinsics::_fmaF  :
+
+      // continuation intrinsics
+      case vmIntrinsics::_Continuation_getSP      :
+      case vmIntrinsics::_Continuation_doYield    :
+      case vmIntrinsics::_Continuation_doContinue :
+
         return false;
+
       default:
         return true;
     }

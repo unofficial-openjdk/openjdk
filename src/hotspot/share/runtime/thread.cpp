@@ -3334,6 +3334,7 @@ void JavaThread::print_frame_layout(int depth, bool validate_only) {
     fst.current()->describe(values, ++frame_no, fst.register_map());
     if (depth == frame_no) break;
   }
+  Continuation::describe(values);
   if (validate_only) {
     values.validate();
   } else {

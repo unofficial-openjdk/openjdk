@@ -33,6 +33,23 @@
 
 // Inline functions for Intel frames:
 
+class ContinuationCodeBlobLookup {
+public:
+  enum { has_oopmap_lookup = true };
+
+  static CodeBlob* find_blob(address pc) {
+    CodeBlob* cb = CodeCache::find_blob_fast(pc);
+    /*Prefetch::read(cb, PrefetchScanIntervalInBytes);
+    Prefetch::read((void*)cb->is_compiled_addr(), PrefetchScanIntervalInBytes);
+    Prefetch::read((void*) ((CompiledMethod*) cb)->deopt_handler_begin_addr(), PrefetchScanIntervalInBytes);*/
+    return cb;
+  }
+
+  static CodeBlob* find_blob_and_oopmap(address pc, int& slot) {
+    return CodeCache::find_blob_and_oopmap(pc, slot);
+  }
+};
+
 // Constructors:
 
 inline frame::frame() {

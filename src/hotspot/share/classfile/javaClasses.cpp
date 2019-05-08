@@ -2361,6 +2361,8 @@ void java_lang_Throwable::java_printStackTrace(Handle throwable, TRAPS) {
                           THREAD);
 }
 
+extern "C" void pfl();
+
 void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope, const methodHandle& method, TRAPS) {
   if (!StackTraceInThrowable) return;
   ResourceMark rm(THREAD);
@@ -2429,6 +2431,12 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope
           assert (Continuation::is_scope_bottom(contScope(), fr, &map), "must be");
           is_last = true;
         } else {
+          // if (!Continuation::is_frame_in_continuation(fr, cont)) {
+          //   tty->print_cr(">>>>>");
+          //   fr.print_on(tty);
+          //   tty->print_cr("<<<<<");
+          //   pfl();
+          // }
           assert (Continuation::is_frame_in_continuation(fr, cont), "must be");
           cont = java_lang_Continuation::parent(cont);
         }

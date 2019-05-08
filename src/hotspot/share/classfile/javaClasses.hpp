@@ -1060,7 +1060,7 @@ class java_lang_Continuation: AllStatic {
   static inline int stack_size(oop ref);
   static inline void* stack_base(oop ref);
   static inline HeapWord* refStack_base(oop ref);
-  static inline jshort cs(oop ref);
+  static inline jshort critical_section(oop ref);
   static bool on_local_stack(oop ref, address adr);
   static bool is_reset(oop ref);
 };

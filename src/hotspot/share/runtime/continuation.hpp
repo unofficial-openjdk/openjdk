@@ -25,7 +25,10 @@
 #ifndef SHARE_VM_RUNTIME_CONTINUATION_HPP
 #define SHARE_VM_RUNTIME_CONTINUATION_HPP
 
+#include "oops/oopsHierarchy.hpp"
+#include "runtime/frame.hpp"
 #include "runtime/globals.hpp"
+#include "jni.h"
 
 #define CONT_FULL_STACK (!UseNewCode)
 
@@ -59,10 +62,10 @@ public:
 void continuations_init();
 
 class javaVFrame;
+class JavaThread;
 
 class Continuation : AllStatic {
 public:
-  static int freeze0(JavaThread* thread, FrameInfo* fi, bool safepoint_yield);
   static int freeze(JavaThread* thread, FrameInfo* fi);
   static int prepare_thaw(FrameInfo* fi, bool return_barrier);
   static address thaw_leaf(FrameInfo* fi, bool return_barrier, bool exception);
@@ -102,12 +105,14 @@ public:
   static oop continuation_scope(oop cont);
   static bool is_scope_bottom(oop cont_scope, const frame& fr, const RegisterMap* map);
 
-  static int PERFTEST_LEVEL;
+#ifndef PRODUCT
+  static void describe(FrameValues &values);
+#endif
+
 private:
   // declared here as it's used in friend declarations
   static address oop_address(objArrayOop ref_stack, int ref_sp, int index);
   static address oop_address(objArrayOop ref_stack, int ref_sp, address stack_address);
-  static FrameInfo* get_thread_cont_frame(JavaThread* thread);
 };
 
 void CONT_RegisterNativeMethods(JNIEnv *env, jclass cls);

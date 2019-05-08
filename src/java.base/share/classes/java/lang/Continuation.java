@@ -407,10 +407,8 @@ public class Continuation {
     public static boolean yield(ContinuationScope scope) {
         Continuation cont = currentCarrierThread().getContinuation();
         Continuation c;
-        int scopes = 0;
-        for (c = cont; c != null && c.scope != scope; c = c.parent) {
-            scopes++;
-        }
+        for (c = cont; c != null && c.scope != scope; c = c.parent)
+            ;
         if (c == null)
             throw new IllegalStateException("Not in scope " + scope);
 
@@ -423,41 +421,41 @@ public class Continuation {
             this.yieldInfo = scope;
         int res = doYield(0);
         unsafe.storeFence(); // needed to prevent certain transformations by the compiler
-        if (TRACE) System.out.println(this + " awake on scope " + scope + " child: " + child + " res: " + res);
+        
+        if (TRACE) System.out.println(this + " awake on scope " + scope + " child: " + child + " res: " + res + " yieldInfo: " + yieldInfo);
 
         try {
         assert scope != this.scope || yieldInfo == null : "scope: " + scope + " this.scope: " + this.scope + " yieldInfo: " + yieldInfo + " res: " + res;
         assert yieldInfo == null || scope == this.scope || yieldInfo instanceof Integer : "scope: " + scope + " this.scope: " + this.scope + " yieldInfo: " + yieldInfo + " res: " + res;
+
         if (child != null) { // TODO: ugly
-            if (TRACE) System.out.println(this + " child != null: " + child);
             if (res != 0) {
-                if (TRACE) System.out.println(this + " child.yieldInfo = " + res);
                 child.yieldInfo = res;
             } else if (yieldInfo != null) {
                 assert yieldInfo instanceof Integer;
                 child.yieldInfo = yieldInfo;
-                if (TRACE) System.out.println(this + " child.yieldInfo = " + yieldInfo);
             } else {
-                if (TRACE) System.out.println(this + " child.yieldInfo = " + res);
                 child.yieldInfo = res;
             }
             this.yieldInfo = null;
+
+            if (TRACE) System.out.println(this + " child.yieldInfo = " + child.yieldInfo);
         } else {
-            if (TRACE) System.out.println(this + " child == null");
             if (res == 0 && yieldInfo != null) {
-                if (TRACE) System.out.println(this + " res = yieldInfo: " + yieldInfo);
                 res = (Integer)yieldInfo;
             }
-            if (TRACE) System.out.println(this + " res: " + res);
             this.yieldInfo = null;
-            assert reset || !hasLeak() : "hasLeak2 " + "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
+
             if (res == 0)
                 onContinue();
             else
                 onPinned0(res);
+
+            if (TRACE) System.out.println(this + " res: " + res);
         }
         assert yieldInfo == null;
-        assert reset || !hasLeak() : "hasLeak3 " + "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
+        assert reset || !hasLeak() : "hasLeak2 " + "refSP: " + refSP + " refStack: " + Arrays.toString(refStack);
+
         return res == 0;
         } catch (Throwable t) {
             t.printStackTrace();
