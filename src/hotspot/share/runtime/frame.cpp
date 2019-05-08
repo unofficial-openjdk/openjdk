@@ -216,7 +216,11 @@ void frame::set_pc(address   newpc ) {
 
 }
 
-void frame::set_pc_preserve_deopt(address   newpc) {
+void frame::set_pc_preserve_deopt(address newpc) {
+  set_pc_preserve_deopt(newpc, CodeCache::find_blob_unsafe(newpc));
+}
+
+void frame::set_pc_preserve_deopt(address newpc, CodeBlob* cb) {
 #ifdef ASSERT
   if (_cb != NULL && _cb->is_nmethod()) {
     assert(!((nmethod*)_cb)->is_deopt_pc(_pc), "invariant violation");
@@ -224,7 +228,7 @@ void frame::set_pc_preserve_deopt(address   newpc) {
 #endif // ASSERT
 
   _pc = newpc;
-  _cb = CodeCache::find_blob_unsafe(_pc);
+  _cb = cb;
 }
 
 // type testers
@@ -1338,48 +1342,48 @@ void frame::describe(FrameValues& values, int frame_no, const RegisterMap* reg_m
                                        ((_deopt_state == unknown) ? " (state unknown)" : "")),
                     3);
 
-      { // mark arguments (see nmethod::print_nmethod_labels)
-        Method* m = cm->method();
+    { // mark arguments (see nmethod::print_nmethod_labels)
+      Method* m = cm->method();
 
-        int stack_slot_offset = cm->frame_size() * wordSize; // offset, in bytes, to caller sp
-        int sizeargs = m->size_of_parameters();
+      int stack_slot_offset = cm->frame_size() * wordSize; // offset, in bytes, to caller sp
+      int sizeargs = m->size_of_parameters();
 
-        BasicType* sig_bt = NEW_RESOURCE_ARRAY(BasicType, sizeargs);
-        VMRegPair* regs   = NEW_RESOURCE_ARRAY(VMRegPair, sizeargs);
-        {
-          int sig_index = 0;
-          if (!m->is_static()) sig_bt[sig_index++] = T_OBJECT; // 'this'
-          for (SignatureStream ss(m->signature()); !ss.at_return_type(); ss.next()) {
-            BasicType t = ss.type();
-            assert(type2size[t] == 1 || type2size[t] == 2, "size is 1 or 2");
-            sig_bt[sig_index++] = t;
-            if (type2size[t] == 2) sig_bt[sig_index++] = T_VOID;
-          }
-          assert(sig_index == sizeargs, "");
-        }
-        int out_preserve = SharedRuntime::java_calling_convention(sig_bt, regs, sizeargs, false);
-        assert (out_preserve ==  m->num_stack_arg_slots(), "");
+      BasicType* sig_bt = NEW_RESOURCE_ARRAY(BasicType, sizeargs);
+      VMRegPair* regs   = NEW_RESOURCE_ARRAY(VMRegPair, sizeargs);
+      {
         int sig_index = 0;
-        int arg_index = (m->is_static() ? 0 : -1);
-        for (SignatureStream ss(m->signature()); !ss.at_return_type(); ) {
-          bool at_this = (arg_index == -1);
-          bool at_old_sp = false;
-          BasicType t = (at_this ? T_OBJECT : ss.type());
-          assert(t == sig_bt[sig_index], "sigs in sync");
-          VMReg fst = regs[sig_index].first();
-          if (fst->is_stack()) {
-            int offset = fst->reg2stack() * VMRegImpl::stack_slot_size + stack_slot_offset;
-            intptr_t* stack_address = (intptr_t*)((address)sp() + offset);
-            if (at_this)
-              values.describe(frame_no, stack_address, err_msg("this for #%d", frame_no), 1);
-            else
-              values.describe(frame_no, stack_address, err_msg("param %d %s for #%d", arg_index, type2name(t), frame_no), 1);
-          }
-          sig_index += type2size[t];
-          arg_index += 1;
-          if (!at_this) ss.next();
+        if (!m->is_static()) sig_bt[sig_index++] = T_OBJECT; // 'this'
+        for (SignatureStream ss(m->signature()); !ss.at_return_type(); ss.next()) {
+          BasicType t = ss.type();
+          assert(type2size[t] == 1 || type2size[t] == 2, "size is 1 or 2");
+          sig_bt[sig_index++] = t;
+          if (type2size[t] == 2) sig_bt[sig_index++] = T_VOID;
         }
+        assert(sig_index == sizeargs, "");
       }
+      int out_preserve = SharedRuntime::java_calling_convention(sig_bt, regs, sizeargs, false);
+      assert (out_preserve ==  m->num_stack_arg_slots(), "");
+      int sig_index = 0;
+      int arg_index = (m->is_static() ? 0 : -1);
+      for (SignatureStream ss(m->signature()); !ss.at_return_type(); ) {
+        bool at_this = (arg_index == -1);
+        bool at_old_sp = false;
+        BasicType t = (at_this ? T_OBJECT : ss.type());
+        assert(t == sig_bt[sig_index], "sigs in sync");
+        VMReg fst = regs[sig_index].first();
+        if (fst->is_stack()) {
+          int offset = fst->reg2stack() * VMRegImpl::stack_slot_size + stack_slot_offset;
+          intptr_t* stack_address = (intptr_t*)((address)sp() + offset);
+          if (at_this)
+            values.describe(frame_no, stack_address, err_msg("this for #%d", frame_no), 1);
+          else
+            values.describe(frame_no, stack_address, err_msg("param %d %s for #%d", arg_index, type2name(t), frame_no), 1);
+        }
+        sig_index += type2size[t];
+        arg_index += 1;
+        if (!at_this) ss.next();
+      }
+    }
 
     if (reg_map != NULL) {
       int scope_no = 0;

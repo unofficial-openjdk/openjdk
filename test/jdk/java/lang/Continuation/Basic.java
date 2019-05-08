@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+* Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 *
 * This code is free software; you can redistribute it and/or modify it
@@ -21,21 +21,38 @@
 * questions.
 */
 
+
+
 /**
 * @test
 * @summary Basic tests for java.lang.Continuation
 *
 * @run testng/othervm -Xint Basic
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Basic
-* @run testng/othervm -XX:-TieredCompilation -Xcomp Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:+UseNewCode Basic
-* @run testng/othervm -XX:TieredStopAtLevel=3 -Xcomp Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode Basic
+* @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
+* @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=inline,java/lang/Continuation.run Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
+* @run testng/othervm -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
 */
 
-// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp Basic
-// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp -XX:+UseNewCode Basic
+// Anything excluded or not compileonly is not compiled; see CompilerOracle::should_exclude
 
+// * @library /test/lib /
+// *
+// * @build sun.hotspot.WhiteBox
+// * @run driver ClassFileInstaller sun.hotspot.WhiteBox sun.hotspot.WhiteBox$WhiteBoxPermission
+// *
+// -XX:+WhiteBoxAPI
+
+// @run driver jdk.test.lib.FileInstaller compilerDirectives.json compilerDirectives.json
+// -XX:CompilerDirectivesFile=compilerDirectives.json
+
+// import sun.hotspot.WhiteBox;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +69,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 @Test
 public class Basic {
+    // private static final WhiteBox WB = WhiteBox.getWhiteBox();
+
     static final ContinuationScope FOO = new ContinuationScope() {};
     
     public void test1() {
@@ -203,20 +222,11 @@ public class Basic {
         }
     }
 
-    public void testManyArgs() {
+    private void testManyArgs() {
         System.out.println("testManyArgs");
         final AtomicInteger res = new AtomicInteger(0);
         Continuation cont = new Continuation(FOO, ()-> {
-            double r = 0;
-            for (int k = 1; k < 20; k++) {
-                int x = 3;
-                String s = "abc";
-                r += fooMany(k,
-                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-                1.0, 2.0, 3.0, 4.0, 5.0, 6.0f, 7.0f, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0f, 15.0f, 16.0f, 17.0, 18.0, 19.0, 20.0,
-                1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020);
-            }
-            res.set((int)r);
+            res.set((int)manyArgsDriver());
         });
         
         int i = 0;
@@ -227,6 +237,21 @@ public class Basic {
         assertEquals(res.get(), 247);
     }
     
+    static double manyArgsDriver() {
+        double r = 0;
+        for (int k = 1; k < 20; k++) {
+            int x = 3;
+            String s = "abc"; 
+
+            // TODO: test when this method is interpreted but callee is compiled.
+            r += fooMany(k,
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+            1.0, 2.0, 3.0, 4.0, 5.0, 6.0f, 7.0f, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0f, 15.0f, 16.0f, 17.0, 18.0, 19.0, 20.0,
+            1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020);
+        }
+        return r;
+    }
+
     static double fooMany(int a,
     int x1, int x2, int x3, int x4, int x5, int x6, int x7, int x8, int x9, int x10, int x11, int x12,
     int x13, int x14, int x15, int x16, int x17, int x18, int x19, int x20,

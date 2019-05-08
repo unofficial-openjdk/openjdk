@@ -419,6 +419,7 @@ void frame::adjust_unextended_sp() {
 
 //------------------------------------------------------------------------------
 // frame::update_map_with_saved_link
+template <bool set_location_valid>
 void frame::update_map_with_saved_link(RegisterMap* map, intptr_t** link_addr) {
   // The interpreter and compiler(s) always save EBP/RBP in a known
   // location on entry. We must record where that location is
@@ -428,7 +429,7 @@ void frame::update_map_with_saved_link(RegisterMap* map, intptr_t** link_addr) {
   // Since the interpreter always saves EBP/RBP if we record where it is then
   // we don't have to always save EBP/RBP on entry and exit to c2 compiled
   // code, on entry will be enough.
-  map->set_location(rbp->as_VMReg(), (address) link_addr);
+  map->set_location<set_location_valid>(rbp->as_VMReg(), (address) link_addr);
 #ifdef AMD64
   // this is weird "H" ought to be at a higher address however the
   // oopMaps seems to have the "H" regs at the same address and the
@@ -439,6 +440,9 @@ void frame::update_map_with_saved_link(RegisterMap* map, intptr_t** link_addr) {
   }
 #endif // AMD64
 }
+
+template void frame::update_map_with_saved_link<true>(RegisterMap*, intptr_t**);
+template void frame::update_map_with_saved_link<false>(RegisterMap*, intptr_t**);
 
 intptr_t** frame::saved_link_address(const RegisterMap* map) {
   return (intptr_t**)map->location(rbp->as_VMReg());

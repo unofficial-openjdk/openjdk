@@ -28,10 +28,10 @@
  * 
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -Xint LiveFramesDriver
  * @run main/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode LiveFramesDriver
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp LiveFramesDriver
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:+UseNewCode LiveFramesDriver
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+TieredCompilation -XX:TieredStopAtLevel=3 -Xcomp LiveFramesDriver
- * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+TieredCompilation -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode LiveFramesDriver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,java/lang/LiveFrames LiveFramesDriver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,java/lang/LiveFrames -XX:+UseNewCode LiveFramesDriver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+TieredCompilation -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,java/lang/LiveFrames LiveFramesDriver
+ * @run main/othervm -XX:+UnlockDiagnosticVMOptions -XX:+TieredCompilation -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,java/lang/LiveFrames -XX:+UseNewCode LiveFramesDriver
  */
 
 

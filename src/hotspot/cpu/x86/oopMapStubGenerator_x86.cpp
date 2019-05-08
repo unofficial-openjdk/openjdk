@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1065,7 +1065,7 @@ public:
         }
 
         if (reg->is_reg()) {
-          assert(reg == rbp->as_VMReg(), "must");
+          assert(reg == rbp->as_VMReg(), "must"); // not true for safepoint stub, but we don't use oopmap stubs when preempting
           //load_link_offset();
           if (omv.type() == OopMapValue::oop_value) {
             _masm->movptr(Address(rdx, 0), rax);
@@ -1178,7 +1178,7 @@ public:
         VMReg reg = omv.reg();
 
         if (reg->is_reg()) {
-          assert(reg == rbp->as_VMReg(), "must");
+          assert(reg == rbp->as_VMReg(), "must"); // not true for safepoint stub, but we don't use oopmap stubs when preempting
           load_link_offset();
           if (omv.type() == OopMapValue::oop_value) {
             _masm->movptr(rax, Address(rdx, 0));

@@ -1329,6 +1329,13 @@ class JavaThread: public Thread {
   inline void set_polling_page(void* poll_value);
   inline volatile void* get_polling_page();
 
+  // Continuation support
+  bool cont_yield() { return _cont_yield; }
+  void set_cont_yield(bool x) { _cont_yield = x; }
+  bool cont_preempt() { return _cont_preempt; }
+  void set_cont_preempt(bool x) { _cont_preempt = x; }
+  FrameInfo* cont_frame() { return &_cont_frame; }
+
  private:
   // Support for thread handshake operations
   HandshakeState _handshake;
@@ -2073,8 +2080,6 @@ class JavaThread: public Thread {
   static inline void set_stack_size_at_create(size_t value) {
     _stack_size_at_create = value;
   }
-
-  FrameInfo* cont_frame() { return &_cont_frame; }
 
   // Machine dependent stuff
 #include OS_CPU_HEADER(thread)

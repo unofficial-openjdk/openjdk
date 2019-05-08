@@ -25,8 +25,8 @@
  * @test
  * @run testng/othervm -Xint Scoped
  * @run testng/othervm -Xint -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
- * @run testng/othervm -Xcomp Scoped
- * @run testng/othervm -Xcomp -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
+ * @run testng/othervm -Xcomp -XX:CompileOnly=java/lang/Continuation,Scoped Scoped
+ * @run testng/othervm -Xcomp -XX:CompileOnly=java/lang/Continuation,Scoped -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
  *  
  * @summary Nested continuations test
  */

@@ -27,14 +27,14 @@
 *
 * @run testng/othervm -Xint Preempt
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Preempt
-* @run testng/othervm -XX:-TieredCompilation -Xcomp Preempt
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:+UseNewCode Preempt
-* @run testng/othervm -XX:TieredStopAtLevel=3 -Xcomp Preempt
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:+UseNewCode Preempt
+* @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Preempt Preempt
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Preempt -XX:+UseNewCode Preempt
+* @run testng/othervm -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Preempt Preempt
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Preempt -XX:+UseNewCode Preempt
 */
 
-// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp Preempt
-// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp -XX:+UseNewCode Preempt
+// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp -XX:CompileOnly=java/lang/Continuation,Preempt Preempt
+// * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -XX:+UseJVMCICompiler -Xcomp -XX:CompileOnly=java/lang/Continuation,Preempt -XX:+UseNewCode Preempt
 
 // TODO:
 // - Add tests for failed preemptions

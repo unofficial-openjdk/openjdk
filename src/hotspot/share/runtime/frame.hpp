@@ -98,6 +98,7 @@ class frame {
 
   void set_pc( address   newpc );
   void set_pc_preserve_deopt( address   newpc );
+  void set_pc_preserve_deopt(address newpc, CodeBlob* cb);
 
   intptr_t* sp() const           { return _sp; }
   void set_sp( intptr_t* newsp ) { _sp = newsp; }
@@ -165,7 +166,7 @@ class frame {
   // returns the sending frame
   frame sender(RegisterMap* map) const;
 
-  template<typename LOOKUP>
+  template<typename LOOKUP> // LOOKUP is CodeCache or ContinuationCodeBlobLookup (requires: static CodeBlob* find_blob(address pc))
   frame frame_sender(RegisterMap* map) const;
 
   bool safe_for_sender(JavaThread *thread);
