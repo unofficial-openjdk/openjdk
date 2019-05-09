@@ -53,7 +53,6 @@ template<>
 void hframe::set_link_address<Interpreted>(const ContMirror& cont) {
   assert (_is_interpreted, "");
   assert (cont.valid_stack_index(_fp), "fp: %ld stack_length: %d", _fp, cont.stack_length());
-  // if (cont.valid_stack_index(_fp))
   _link_address = &cont.stack_address(_fp)[frame::link_offset];
 }
 
@@ -63,7 +62,6 @@ void hframe::set_link_address(const ContMirror& cont) {
   assert (FKind::interpreted == _is_interpreted, "");
 
   assert (cont.valid_stack_index(_sp), "sp: %d stack_length: %d", _sp, cont.stack_length());
-  // if (cont.valid_stack_index(_sp))
   _link_address = real_fp(cont) - frame::sender_sp_offset;
 }
 
@@ -460,7 +458,9 @@ inline void Freeze<ConfigT, mode>::patch_pd(frame& f, hframe& hf, const hframe& 
     }
   } else { // bottom
     assert (!_cont.is_empty() || (_cont.fp() == 0 && _cont.pc() == NULL), "");
-    if (Interpreter::contains(_cont.pc())) { // if empty, we'll take the second branch and patch to NULL; we want to avoid a test of is_empty, as we do it in patch, too
+    assert (_cont.is_flag(FLAG_LAST_FRAME_INTERPRETED) == Interpreter::contains(_cont.pc()), "");
+
+    if (_cont.is_flag(FLAG_LAST_FRAME_INTERPRETED)) { // if empty, we'll take the second branch and patch to 0; we want to avoid a test of is_empty, as we do it in patch, too
       hf.patch_link_relative(&_cont.stack_address(_cont.fp())[frame::link_offset]);
     } else {
       hf.patch_link(_cont.fp());
@@ -472,6 +472,34 @@ inline void Freeze<ConfigT, mode>::patch_pd(frame& f, hframe& hf, const hframe& 
         ? hf.patch_real_fp_offset(frame::interpreter_frame_sender_sp_offset, 0)
         : hf.patch_sender_sp_relative(_cont.stack_address(_cont.sp()));
     }
+  }
+}
+
+template <typename ConfigT, freeze_mode mode>
+template <typename FKind, bool top, bool bottom> 
+inline void Freeze<ConfigT, mode>::align(hframe& caller) {
+  if (mode != mode_fast && !FKind::interpreted && !bottom) { // we handle bottom in align_pd_bottom
+    if (caller.is_interpreted_frame())
+      _cont.add_size(sizeof(intptr_t));
+  }
+}
+
+template <typename ConfigT, freeze_mode mode>
+template <typename FKind> 
+inline void Freeze<ConfigT, mode>::align_bottom(address entry_pc) {
+  assert (mode != mode_fast || !Interpreter::contains(entry_pc), "");
+  if (mode != mode_fast && !FKind::interpreted) {
+    if (Interpreter::contains(entry_pc))
+      _cont.add_size(sizeof(intptr_t));
+  }
+}
+
+template <typename ConfigT, freeze_mode mode>
+template <typename FKind> 
+inline void Freeze<ConfigT, mode>::align_bottom_interpreted_sender() {
+  assert (mode != mode_fast, "");
+  if (!FKind::interpreted) {
+      _cont.add_size(sizeof(intptr_t));
   }
 }
 

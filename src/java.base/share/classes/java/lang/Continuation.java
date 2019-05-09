@@ -300,13 +300,9 @@ public class Continuation {
     /**
      * TBD
      */
-    // @DontInline
     public final void run() {
         while (true) {
-            if (TRACE) {
-                System.out.println();
-                System.out.println("++++++++++++++++++++++++++++++");
-            }
+            if (TRACE) System.out.println("\n++++++++++++++++++++++++++++++");
 
             mount();
 
@@ -320,8 +316,6 @@ public class Continuation {
             } else
                 this.parent = t.getContinuation();
             t.setContinuation(this);
-
-            // if (TRACE) walkFrames();
 
             int origRefSP = refSP;
 
@@ -371,8 +365,7 @@ public class Continuation {
         // A yield jumps to this method's caller as if returning from this method.
         try {
             if (!isStarted()) { // is this the first run? (at this point we know !done)
-                if (TRACE)
-                    System.out.println("ENTERING " + id());
+                if (TRACE) System.out.println("ENTERING " + id());
                 this.entrySP = getSP();
                 enter0(); // make this an invokevirtual rather than invokeinterface. Otherwise it freaks out the interpreter (currently solved by patching in native)
             } else
@@ -382,8 +375,7 @@ public class Continuation {
             assert reset || fence() && isStackEmpty() : "sp: " + sp + " stack.length: " + (stack != null ? stack.length : "null");
             // assert doneX;
             // System.out.println("-- done!  " + id());
-            if (TRACE)
-                System.out.println(">>>>>>>> DONE <<<<<<<<<<<<< " + id());
+            if (TRACE) System.out.println(">>>>>>>> DONE <<<<<<<<<<<<< " + id());
         }
     }
 
@@ -478,8 +470,6 @@ public class Continuation {
 
             maybeShrink();
         }
-
-        // if (TRACE) walkFrames();
     }
 
     private void onPinned0(int reason) {
@@ -635,10 +625,8 @@ public class Continuation {
             } else
                 return false;
         }
-        if (TRACE) {
-            // walkFrames();
-            System.out.println("--- end of getStack sp: " + sp);
-        }
+        if (TRACE) System.out.println("--- end of getStack sp: " + sp);
+
         return true;
     }
 
@@ -662,10 +650,8 @@ public class Continuation {
                 System.out.println("-- getRefStack: allocated: " + newLength + " old: " + oldLength + " refSP: " + refSP);
         } else
             return false;
-        if (TRACE) {
-            // walkFrames();
-            System.out.println("--- end of getRefStack: " + refStack.length + " refSP: " + refSP);
-        }
+        if (TRACE) System.out.println("--- end of getRefStack: " + refStack.length + " refSP: " + refSP);
+        
         return true;
     }
 
@@ -914,26 +900,6 @@ public class Continuation {
 
     private boolean isStackEmpty() {
         return (stack == null) || (sp < 0) || (sp >= stack.length);
-    }
-
-    private void walkFrames() {
-        System.out.println("--------------");
-        System.out.println("walkFrames:");
-        if (stack == null) {
-            System.out.println("Empty stack.");
-            return;
-        }
-        int sp = this.sp;
-        System.out.println("stack.length = " + stack.length + " sp: " + sp);
-        System.out.println("++++++++++++");
-        if (refStack != null) {
-            System.out.println("refStack.length : " + refStack.length);
-            for (int i = refStack.length - 1; i >= refSP; i--) {
-                Object obj = refStack[i];
-                System.out.println(i + ": " + (obj == this ? "this" : obj));
-            }
-        }
-        System.out.println("##############");
     }
 
     private void dump() {

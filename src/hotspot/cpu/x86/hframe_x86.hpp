@@ -73,12 +73,10 @@ public:
   template<typename FKind> void set_link_address(const ContMirror& cont);
   inline void set_link_address(const ContMirror& cont);
 
-  void patch_link(intptr_t value) { 
+  void patch_link(intptr_t value) {
     intptr_t* la = link_address();
     *la = value;
   }
-
-  void zero_link() { patch_link(0); }
 
   inline void patch_link_relative(intptr_t* fp);
 
