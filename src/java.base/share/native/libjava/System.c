@@ -161,8 +161,6 @@ Java_jdk_internal_util_SystemProps_00024Raw_platformProperties(JNIEnv *env, jcla
     PUTPROP(propArray, _sun_cpu_isalist_NDX, sprops->cpu_isalist);
 
 #ifdef MACOSX
-    PUTPROP(propArray, _java_awt_headless_NDX, sprops->awt_headless);
-
     /* Proxy setting properties */
     if (sprops->httpProxyEnabled) {
         PUTPROP(propArray, _http_proxyHost_NDX, sprops->httpHost);
@@ -205,26 +203,6 @@ Java_jdk_internal_util_SystemProps_00024Raw_platformProperties(JNIEnv *env, jcla
 
     /* patch level */
     PUTPROP(propArray, _sun_os_patch_level_NDX, sprops->patch_level);
-
-    PUTPROP(propArray, _awt_toolkit_NDX, sprops->awt_toolkit);
-
-    /* Java2D properties */
-    /* Note: java.awt.graphicsenv is an implementation private property which
-     * just happens to have a java.* name because it is referenced in
-     * a java.awt class. It is the mechanism by which the implementation
-     * finds the appropriate class in the JRE for the platform.
-     * It is explicitly not designed to be overridden by clients as
-     * a way of replacing the implementation class, and in any case
-     * the mechanism by which the class is loaded is constrained to only
-     * find and load classes that are part of the JRE.
-     * This property may be removed if that mechanism is redesigned
-     */
-    PUTPROP(propArray, _java_awt_graphicsenv_NDX, sprops->graphics_env);
-
-    /*
-     * The sun.desktop property is currently only set for Gnome and Windows desktops.
-     */
-    PUTPROP(propArray, _sun_desktop_NDX, sprops->desktop);
 
     PUTPROP_PlatformString(propArray, _java_io_tmpdir_NDX, sprops->tmp_dir);
 

@@ -645,7 +645,7 @@ public abstract class SunFontManager implements FontSupport, FontManagerForSGE {
 
         String fontName = f.fullName;
         String familyName = f.familyName;
-        if (fontName == null || "".equals(fontName)) {
+        if (fontName == null || fontName.isEmpty()) {
             return null;
         }
         if (compositeFonts.containsKey(fontName)) {
@@ -1979,6 +1979,9 @@ public abstract class SunFontManager implements FontSupport, FontManagerForSGE {
             font = family.getFontWithExactStyleMatch(style);
             if (font == null) {
                 font = findDeferredFont(name, style);
+            }
+            if (font == null) {
+                font = findFontFromPlatform(lowerCaseName, style);
             }
             if (font == null) {
                 font = family.getFont(style);

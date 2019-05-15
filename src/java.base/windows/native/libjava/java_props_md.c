@@ -365,9 +365,6 @@ GetJavaProperties(JNIEnv* env)
         return &sprops;
     }
 
-    /* AWT properties */
-    sprops.awt_toolkit = "sun.awt.windows.WToolkit";
-
     /* tmp dir */
     {
         WCHAR tmpdir[MAX_PATH + 1];
@@ -375,9 +372,6 @@ GetJavaProperties(JNIEnv* env)
         GetTempPathW(MAX_PATH + 1, tmpdir);
         sprops.tmp_dir = _wcsdup(tmpdir);
     }
-
-    /* Java2D properties */
-    sprops.graphics_env = "sun.awt.Win32GraphicsEnvironment";
 
     /* OS properties */
     {
@@ -577,7 +571,6 @@ GetJavaProperties(JNIEnv* env)
 #else
         sprops.os_arch = "unknown";
 #endif
-        sprops.desktop = "windows";
     }
 
     /* Endianness of platform */
