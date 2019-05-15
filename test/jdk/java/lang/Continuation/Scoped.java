@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,12 +23,12 @@
 
 /**
  * @test
+ * @summary Nested continuations test
+ * 
  * @run testng/othervm -Xint Scoped
  * @run testng/othervm -Xint -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
  * @run testng/othervm -Xcomp -XX:CompileOnly=java/lang/Continuation,Scoped Scoped
  * @run testng/othervm -Xcomp -XX:CompileOnly=java/lang/Continuation,Scoped -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
- *  
- * @summary Nested continuations test
  */
 
 import java.util.Arrays;
@@ -71,27 +71,27 @@ public class Scoped {
 
                         frames = cont.stackWalker().walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
                         // System.out.println("No scope: " + frames);
-                        assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "lambda$bar$14", "enter0", "enter", "run", "bar", "lambda$foo$8", "enter0", "enter", "run", "foo", "lambda$test1$0", "enter0", "enter"));
+                        assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "lambda$bar$14", "enter", "run", "bar", "lambda$foo$8", "enter", "run", "foo", "lambda$test1$0", "enter"));
 
                         frames = cont.stackWalker(EnumSet.noneOf(StackWalker.Option.class), A).walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
                         // System.out.println("A: " + frames);
-                        assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "lambda$bar$14", "enter0", "enter", "run", "bar", "lambda$foo$8", "enter0", "enter", "run", "foo", "lambda$test1$0", "enter0", "enter"));
+                        assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "lambda$bar$14", "enter", "run", "bar", "lambda$foo$8", "enter", "run", "foo", "lambda$test1$0", "enter"));
 
                         frames = cont.stackWalker(EnumSet.noneOf(StackWalker.Option.class), B).walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
                         // System.out.println("B: " + frames);
-                        assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "lambda$bar$14", "enter0", "enter", "run", "bar", "lambda$foo$8", "enter0", "enter"));
+                        assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "lambda$bar$14", "enter", "run", "bar", "lambda$foo$8", "enter"));
 
                         frames = cont.stackWalker(EnumSet.noneOf(StackWalker.Option.class), C).walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
                         // System.out.println("C: " + frames);
-                        assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "lambda$bar$14", "enter0", "enter"));
+                        assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "lambda$bar$14", "enter"));
 
                         frames = cont.stackWalker(EnumSet.noneOf(StackWalker.Option.class), K).walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
                         // System.out.println("K: " + frames);
-                        assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "lambda$bar$14", "enter0", "enter", "run", "bar", "lambda$foo$8", "enter0", "enter", "run", "foo", "lambda$test1$0", "enter0", "enter"));
+                        assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "lambda$bar$14", "enter", "run", "bar", "lambda$foo$8", "enter", "run", "foo", "lambda$test1$0", "enter"));
 
                         frames = cont.stackWalker(EnumSet.noneOf(StackWalker.Option.class), null).walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
                         // System.out.println("null: " + frames);
-                        assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "lambda$bar$14", "enter0", "enter", "run", "bar", "lambda$foo$8", "enter0", "enter", "run", "foo", "lambda$test1$0", "enter0", "enter"));
+                        assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "lambda$bar$14", "enter", "run", "bar", "lambda$foo$8", "enter", "run", "foo", "lambda$test1$0", "enter"));
                 }
                 assertEquals(res.get(), 2);
         }
@@ -116,23 +116,23 @@ public class Scoped {
 
                         List<String> frames = StackWalker.getInstance().walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
                 
-                        assertEquals(frames.subList(0, 15), Arrays.asList("lambda$bar$14", "enter0", "enter", "run", "bar", "lambda$foo$8", "enter0", "enter", "run", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
+                        assertEquals(frames.subList(0, 12), Arrays.asList("lambda$bar$14", "enter", "run", "bar", "lambda$foo$8", "enter", "run", "foo", "lambda$test1$0", "enter", "run", "test1"));
                 
                         frames = StackWalker.getInstance(C).walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
                 
-                        assertEquals(frames, Arrays.asList("lambda$bar$14", "enter0", "enter"));
+                        assertEquals(frames, Arrays.asList("lambda$bar$14", "enter"));
 
                         frames = StackWalker.getInstance(B).walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
                 
-                        assertEquals(frames, Arrays.asList("lambda$bar$14", "enter0", "enter", "run", "bar", "lambda$foo$8", "enter0", "enter"));
+                        assertEquals(frames, Arrays.asList("lambda$bar$14", "enter", "run", "bar", "lambda$foo$8", "enter"));
 
                         frames = StackWalker.getInstance(A).walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
                 
-                        assertEquals(frames, Arrays.asList("lambda$bar$14", "enter0", "enter", "run", "bar", "lambda$foo$8", "enter0", "enter", "run", "foo", "lambda$test1$0", "enter0", "enter"));
+                        assertEquals(frames, Arrays.asList("lambda$bar$14", "enter", "run", "bar", "lambda$foo$8", "enter", "run", "foo", "lambda$test1$0", "enter"));
 
                         frames = StackWalker.getInstance(K).walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
                 
-                        assertEquals(frames.subList(0, 15), Arrays.asList("lambda$bar$14", "enter0", "enter", "run", "bar", "lambda$foo$8", "enter0", "enter", "run", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
+                        assertEquals(frames.subList(0, 12), Arrays.asList("lambda$bar$14", "enter", "run", "bar", "lambda$foo$8", "enter", "run", "foo", "lambda$test1$0", "enter", "run", "test1"));
 
                         long r = b+1;
                 });

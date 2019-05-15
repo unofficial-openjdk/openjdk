@@ -1745,6 +1745,7 @@ oop java_lang_Thread::continuation(oop java_thread) {
 }
 
 void java_lang_Thread::set_continuation(oop java_thread, oop continuation) {
+  tty->print_cr(">>> java_lang_Thread::set_continuation %p", (oopDesc*)continuation);
   return java_thread->obj_field_put(_continuation_offset, continuation);
 }
 
@@ -2428,7 +2429,6 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope
       if (cont != NULL && Continuation::is_continuation_entry_frame(fr, &map)) {
         oop scope = java_lang_Continuation::scope(cont);
         if (contScope.not_null() && oopDesc::equals(scope, contScope())) {
-          assert (Continuation::is_scope_bottom(contScope(), fr, &map), "must be");
           is_last = true;
         } else {
           // if (!Continuation::is_frame_in_continuation(fr, cont)) {
@@ -2440,8 +2440,6 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, Handle contScope
           assert (Continuation::is_frame_in_continuation(fr, cont), "must be");
           cont = java_lang_Continuation::parent(cont);
         }
-      } else {
-        assert (!Continuation::is_scope_bottom(contScope(), fr, &map), "");
       }
 
       address pc = fr.pc();

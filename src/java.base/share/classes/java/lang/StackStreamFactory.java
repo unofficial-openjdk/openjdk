@@ -313,11 +313,7 @@ final class StackStreamFactory {
 
             this.anchor = anchor;  // set anchor for this bulk stack frame traversal
 
-            int numFrames = bufEndIndex - bufStartIndex;        
-            if (numFrames > 0 && numFrames < batchSize && continuation != null) {
-                makeContinuationEnterFrame(bufEndIndex);
-                bufEndIndex++;
-            }
+            int numFrames = bufEndIndex - bufStartIndex;
             frameBuffer.setBatch(depth, bufStartIndex, bufEndIndex);
 
             // traverse all frames and perform the action on the stack frames, if specified
@@ -430,22 +426,11 @@ final class StackStreamFactory {
 
             int numFrames = endIndex - startIndex;
 
-            if (numFrames < batchSize && continuation != null) {
-                makeContinuationEnterFrame(endIndex);
-                endIndex++;
-                numFrames++;
-            }
-
             if (numFrames > 0) {
                 frameBuffer.setBatch(depth, startIndex, endIndex);
             }
             return numFrames;
         }
-
-        /**
-         * Create a synthetic frame for {@code Continuation.enter}.
-         */
-        protected abstract void makeContinuationEnterFrame(int index);
 
         /**
          * Begins stack walking.  This method anchors this frame and invokes
@@ -550,23 +535,6 @@ final class StackStreamFactory {
             final Class<?> at(int index) {
                 return stackFrames[index].declaringClass();
             }
-        }
-
-        @Override
-        protected final void makeContinuationEnterFrame(int index) {
-            PrivilegedAction<Method> pa = () -> {
-                try {
-                    return Continuation.class.getDeclaredMethod("enter");
-                } catch(NoSuchMethodException | SecurityException e) {
-                    throw new AssertionError(e);
-                }
-            };
-            Method enter = AccessController.doPrivileged(pa);
-            StackFrameInfo sfi = frameBuffer.frames()[index];
-            sfi.clear();
-            sfi.setMemberName(enter);
-            sfi.setBCI((short)-1);
-            sfi.setContinuationScope(continuation.getScope());
         }
 
         final Function<? super Stream<StackFrame>, ? extends T> function;  // callback
@@ -774,11 +742,6 @@ final class StackStreamFactory {
         @Override
         protected int getNextBatchSize() {
             return MIN_BATCH_SIZE;
-        }
-
-        @Override
-        protected final void makeContinuationEnterFrame(int index) {
-            throw new InternalError("should not reach here");
         }
     }
 

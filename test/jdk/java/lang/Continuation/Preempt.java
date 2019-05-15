@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+* Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 *
 * This code is free software; you can redistribute it and/or modify it
@@ -94,7 +94,7 @@ public class Preempt {
         assertEquals(cont.isPreempted(), true);
 
         List<String> frames = cont.stackWalker().walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
-        assertEquals(frames, Arrays.asList("loop", "lambda$test1$0", "enter0", "enter"));
+        assertEquals(frames, Arrays.asList("loop", "lambda$test1$0", "enter"));
 
         cont.run();
         assertEquals(cont.isDone(), false);

@@ -322,7 +322,13 @@ public class Continuation {
             int origSP = sp, origMaxSize = maxSize; long origFP = fp, origPC = pc; // perftest only (used only if reset is true)
 
             try {
-                enter();
+                if (!isStarted()) { // is this the first run? (at this point we know !done)
+                    if (TRACE) System.out.println("ENTERING " + id());
+                    this.entrySP = getSP();
+                    enter(); // make this an invokevirtual rather than invokeinterface. Otherwise it freaks out the interpreter (currently solved by patching in native)
+                } else {
+                    doContinue(); // intrinsic. Jumps into yield, as a return from doYield    
+                }
             } finally {
                 try {
                 if (TRACE) System.out.println("run (after) sp: " + sp + " refSP: " + refSP + " maxSize: " + maxSize);
@@ -355,21 +361,13 @@ public class Continuation {
         }
     }
 
-    /**
-     * TBD
-     */
-    @HotSpotIntrinsicCandidate
     @DontInline
+    @HotSpotIntrinsicCandidate
     private void enter() {
         // This method runs in the "entry frame".
         // A yield jumps to this method's caller as if returning from this method.
         try {
-            if (!isStarted()) { // is this the first run? (at this point we know !done)
-                if (TRACE) System.out.println("ENTERING " + id());
-                this.entrySP = getSP();
-                enter0(); // make this an invokevirtual rather than invokeinterface. Otherwise it freaks out the interpreter (currently solved by patching in native)
-            } else
-                doContinue(); // intrinsic. Jumps into yield, as a return from doYield
+            target.run();
         } finally {
             done = true;
             assert reset || fence() && isStackEmpty() : "sp: " + sp + " stack.length: " + (stack != null ? stack.length : "null");
@@ -377,11 +375,6 @@ public class Continuation {
             // System.out.println("-- done!  " + id());
             if (TRACE) System.out.println(">>>>>>>> DONE <<<<<<<<<<<<< " + id());
         }
-    }
-
-    @DontInline
-    private void enter0() {
-        target.run();
     }
 
     private boolean isStarted() {
