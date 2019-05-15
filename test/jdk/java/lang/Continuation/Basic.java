@@ -27,20 +27,18 @@
 * @test
 * @summary Basic tests for java.lang.Continuation
 *
+* @run testng/othervm -Xint Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Basic
 * @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
+* @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=inline,java/lang/Continuation.run Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
+* @run testng/othervm -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic Basic
+* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
 */
-
-// * @run testng/othervm -Xint Basic
-// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Basic
-// * @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic Basic
-// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
-// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
-// * @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=inline,java/lang/Continuation.run Basic
-// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
-// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
-// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
-// * @run testng/othervm -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic Basic
-// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
 
 // Anything excluded or not compileonly is not compiled; see CompilerOracle::should_exclude
 
@@ -69,7 +67,7 @@ import static org.testng.Assert.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-// @Test
+@Test
 public class Basic {
     // private static final WhiteBox WB = WhiteBox.getWhiteBox();
 
