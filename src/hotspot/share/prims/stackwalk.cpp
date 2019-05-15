@@ -70,7 +70,7 @@ void BaseFrameStream::set_continuation(Handle cont) {
   // This actually also sets a copy of the handle in the RegisterMap,
   // but that's OK, because we want them to be the same, anyway.
   // (although we don't rely on this sharing, and set the other copy again)
-  // tty->print_cr("-- BaseFrameStream::set_continuation: %p", (oopDesc*)cont());
+  tty->print_cr("-- BaseFrameStream::set_continuation: %p", (oopDesc*)cont());
   *(_continuation.raw_value()) = cont();
 }
 
@@ -120,6 +120,7 @@ void LiveFrameStream::set_continuation(Handle cont) {
 
   _jvf = Continuation::last_java_vframe(continuation(), _map); // we must not use the handle argument (lifetime; see BaseFrameStream::set_continuation)
   _cont = continuation(); // *(_cont.raw_value()) = cont(); // preserve handle
+  tty->print_cr("-- LiveFrameStream::set_continuation: %p", (oopDesc*)_cont());
 }
 
 void JavaFrameStream::next() { 
@@ -135,7 +136,7 @@ void LiveFrameStream::next() {
     *(_cont.raw_value()) = java_lang_Continuation::parent(cont);
     
     if (_cont_scope.not_null() && oopDesc::equals(scope, _cont_scope())) {
-      assert (Continuation::is_frame_in_continuation(_jvf->fr(), cont), "must be"); // assert (Continuation::is_scope_bottom(_cont_scope(), _jvf->fr(), _jvf->register_map()), "must be");
+      assert (Continuation::is_frame_in_continuation(_jvf->fr(), cont), "must be");
       _jvf = NULL;
       return;
     }
@@ -244,7 +245,7 @@ int StackWalk::fill_in_frames(jlong mode, BaseFrameStream& stream,
 
     if (++frames_decoded >= max_nframes)  break;
   }
-  log_debug(stackwalk)("fill_in_frames done frames_decoded=%d", frames_decoded);
+  log_debug(stackwalk)("fill_in_frames done frames_decoded=%d at_end=%d", frames_decoded, stream.at_end());
 
   return frames_decoded;
 }
@@ -425,8 +426,15 @@ oop StackWalk::walk(Handle stackStream, jlong mode, int skip_frames, Handle cont
   HandleMark hm(THREAD); // needed to store a continuation in the RegisterMap
 
   JavaThread* jt = (JavaThread*)THREAD;
-  log_debug(stackwalk)("Start walking: mode " JLONG_FORMAT " skip %d frames batch size %d",
-                       mode, skip_frames, frame_count);
+  log_debug(stackwalk)("Start walking: mode " JLONG_FORMAT " skip %d frames batch size %d", mode, skip_frames, frame_count);
+  LogTarget(Debug, stackwalk) lt;
+  if (lt.is_enabled()) {
+    ResourceMark rm(THREAD);
+    LogStream ls(lt);
+    ls.print("cont_scope: ");
+    cont_scope()->print_on(&ls);
+    ls.cr();
+  }
 
   if (frames_array.is_null()) {
     THROW_MSG_(vmSymbols::java_lang_NullPointerException(), "frames_array is NULL", NULL);

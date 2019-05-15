@@ -27,18 +27,20 @@
 * @test
 * @summary Basic tests for java.lang.Continuation
 *
-* @run testng/othervm -Xint Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Basic
 * @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
-* @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=inline,java/lang/Continuation.run Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
-* @run testng/othervm -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
 */
+
+// * @run testng/othervm -Xint Basic
+// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Basic
+// * @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic Basic
+// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
+// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
+// * @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=inline,java/lang/Continuation.run Basic
+// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
+// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
+// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
+// * @run testng/othervm -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic Basic
+// * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
 
 // Anything excluded or not compileonly is not compiled; see CompilerOracle::should_exclude
 
@@ -67,12 +69,13 @@ import static org.testng.Assert.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-@Test
+// @Test
 public class Basic {
     // private static final WhiteBox WB = WhiteBox.getWhiteBox();
 
     static final ContinuationScope FOO = new ContinuationScope() {};
     
+    @Test
     public void test1() {
         System.out.println("test1");
         final AtomicInteger res = new AtomicInteger(0);
@@ -94,7 +97,7 @@ public class Basic {
             assertEquals(cont.isPreempted(), false);
 
             List<String> frames = cont.stackWalker().walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
-            assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "bar", "foo", "lambda$test1$0", "enter0", "enter"));
+            assertEquals(frames, cont.isDone() ? List.of() : Arrays.asList("yield0", "yield", "bar", "foo", "lambda$test1$0", "enter"));
         }
         assertEquals(res.get(), 247);
         assertEquals(cont.isPreempted(), false);
@@ -118,12 +121,12 @@ public class Basic {
         // StackWalker walker = StackWalker.getInstance();
         // List<String> frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
 
-        // assertEquals(frames.subList(0, 7), List.of("bar", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
+        // assertEquals(frames.subList(0, 7), List.of("bar", "foo", "lambda$test1$0", "enter", "run", "test1"));
 
         // walker = StackWalker.getInstance(FOO);
         // frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
 
-        // assertEquals(frames, List.of("bar", "foo", "lambda$test1$0", "enter0", "enter"));
+        // assertEquals(frames, List.of("bar", "foo", "lambda$test1$0", "enter"));
 
         deep(DEPTH);
 
@@ -146,24 +149,28 @@ public class Basic {
             return;
         }
 
-        // System.out.println("--------- DEEP ----------- ");
+        System.out.println("--------- DEEP ----------- ");
         StackWalker walker = StackWalker.getInstance();
         List<String> frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
 
+        System.out.println("--- DEEP 1111");
         List<String> expected0 = new ArrayList<>();
         IntStream.range(0, DEPTH).forEach(i -> { expected0.add("deep"); });
-        expected0.addAll(List.of("bar", "foo", "lambda$test1$0", "enter0", "enter", "run", "test1"));
+        expected0.addAll(List.of("bar", "foo", "lambda$test1$0", "enter", "run", "test1"));
 
-        assertEquals(frames.subList(0, DEPTH + 7), expected0);
+        assertEquals(frames.subList(0, DEPTH + 6), expected0);
 
+        System.out.println("--- DEEP 22222");
         walker = StackWalker.getInstance(FOO);
         frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
 
+        System.out.println("--- DEEP 33333");
+
         List<String> expected1 = new ArrayList<>();
         IntStream.range(0, DEPTH).forEach(i -> { expected1.add("deep"); });
-        expected1.addAll(List.of("bar", "foo", "lambda$test1$0", "enter0", "enter"));
+        expected1.addAll(List.of("bar", "foo", "lambda$test1$0", "enter"));
         assertEquals(frames, expected1);
-        // System.out.println("========== DEEP ============ ");
+        System.out.println("========== DEEP ============ ");
     }
 
     static class LoomException extends RuntimeException {
@@ -217,8 +224,10 @@ public class Basic {
             StackTraceElement[] stes = e.getStackTrace();
             // System.out.println(Arrays.toString(stes));
             assertEquals(stes[0].getMethodName(), "barThrow");
-            assertEquals(stes[stes.length - 1].getClassName(), "java.lang.Continuation");
-            assertEquals(stes[stes.length - 1].getMethodName(), "enter");
+            StackTraceElement last = stes[stes.length-1];
+            assertEquals(last.getClassName(), "java.lang.Continuation");
+            assertEquals(last.getMethodName(), "enter");
+            assertTrue(last.toString().endsWith(" " + FOO.toString()), last.toString());
         }
     }
 

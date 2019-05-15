@@ -235,6 +235,10 @@ hframe ContMirror::last_frame() {
   return is_empty() ? hframe() : hframe(_sp, _ref_sp, _fp, _pc, *this);
 }
 
+hframe ContMirror::from_frame(const frame& f) {
+  return hframe(f.cont_sp(), f.cont_ref_sp(), (intptr_t)f.fp(), f.pc(), f.cb(), f.is_interpreted_frame(), *this);
+}
+
 ///////
 
 inline intptr_t** Frame::saved_link_address(const RegisterMap* map) {
@@ -251,6 +255,7 @@ static inline intptr_t* real_fp(const frame& f) {
 
 template<typename FKind> // TODO: maybe do the same CRTP trick with Interpreted and Compiled as with hframe
 static inline intptr_t** link_address(const frame& f) {
+  assert (FKind::interpreted == f.is_interpreted_frame(), "");
   return FKind::interpreted
             ? (intptr_t**)(f.fp() + frame::link_offset)
             : (intptr_t**)(real_fp<FKind>(f) - frame::sender_sp_offset);
@@ -326,10 +331,11 @@ inline void ContinuationHelper::set_last_vstack_frame(RegisterMap* map, const fr
   map->set_last_vstack_fp(link_address(hf));
 }
 
-inline void ContinuationHelper::to_frame_info_pd(const frame& f, const frame& hf, FrameInfo* fi) {
+template<typename FKind> // the callee's type
+inline void ContinuationHelper::to_frame_info_pd(const frame& f, const frame& callee, FrameInfo* fi) {
   // we have an indirection for fp, because the link at the entry frame may hold a sender's oop, and it can be relocated
   // at a safpoint on the VM->Java transition, so we point at an address where the GC would find it
-  fi->fp = (intptr_t*)link_address(hf); // f.fp(); -- dynamic branch
+  fi->fp = (intptr_t*)link_address<FKind>(callee); // f.fp(); -- dynamic branch
 }
 
 inline frame ContinuationHelper::to_frame(FrameInfo* fi) {
@@ -337,6 +343,13 @@ inline frame ContinuationHelper::to_frame(FrameInfo* fi) {
   int slot;
   CodeBlob* cb = ContinuationCodeBlobLookup::find_blob_and_oopmap(pc, slot);
   return frame(fi->sp, fi->sp, fi->fp, pc, cb, slot == -1 ? NULL : cb->oop_map_for_slot(slot, pc));
+}
+
+inline frame ContinuationHelper::to_frame_indirect(FrameInfo* fi) {
+  address pc = fi->pc;
+  int slot;
+  CodeBlob* cb = ContinuationCodeBlobLookup::find_blob_and_oopmap(pc, slot);
+  return frame(fi->sp, fi->sp, (intptr_t*)*fi->fp, pc, cb, slot == -1 ? NULL : cb->oop_map_for_slot(slot, pc));
 }
 
 // creates the yield stub frame faster than JavaThread::last_frame
