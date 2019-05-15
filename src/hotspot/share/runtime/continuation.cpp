@@ -2535,12 +2535,6 @@ static frame thaw_frames(ContMirror& cont, hframe hf, int oop_index, int num_fra
       // we use thread->_cont_frame->sp rather than the continuations themselves (which allow nesting) b/c it's faser and simpler.
       // for that to work, we rely on the fact that parent continuation's have at lesat Continuation.run on the stack, which does not require stack arguments
       cont.thread()->cont_frame()->sp = NULL;
-    // TODO R: delete the following commented code once enter0-removal is done
-    //   if (sender.is_interpreted_frame()) { // unnecessary now, thanks to enter0
-    //     // We enter the continuation through an interface call (target.run()), but exit through a virtual call (doContinue())
-    //     // Alternatively, wrap the call to target.run() inside a private method.
-    //     patch_return_pc(f, Interpreter::return_entry(vtos, 0, Bytecodes::_invokevirtual), f.is_interpreted_frame());
-    //   }
     }
   }
 
@@ -2909,7 +2903,7 @@ bool Continuation::is_scope_bottom(oop cont_scope, const frame& f, const Registe
   return oopDesc::equals(sc, cont_scope);
 }
 
-// TODO R: delete? consider other is_scope_bottom or something
+// TODO: delete? consider other is_scope_bottom or something
 // bool Continuation::is_scope_bottom(oop cont_scope, const frame& f, const RegisterMap* map) {
 //   if (cont_scope == NULL || !map->in_cont())
 //     return false;
@@ -2923,11 +2917,6 @@ bool Continuation::is_scope_bottom(oop cont_scope, const frame& f, const Registe
 
 //   hframe hf = cont.from_frame(f);
 //   hframe sender = hf.sender(cont);
-
-//   // tty->print_cr(">>> is_scope_bottom");
-//   // hf.print_on(cont, tty);
-//   // tty->print_cr(">> sender");
-//   // sender.print_on(cont, tty);
 
 //   return sender.is_empty();
 // }
