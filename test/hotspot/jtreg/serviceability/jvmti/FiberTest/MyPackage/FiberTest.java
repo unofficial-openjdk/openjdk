@@ -27,7 +27,8 @@ package MyPackage;
  * @test
  * @summary Verifies JVMTI support for Fibers.
  * @compile FiberTest.java
- * @run main/othervm/native -agentlib:FiberTest MyPackage.FiberTest
+ * @run main/othervm/native -agentlib:FiberTest=EnableContinuationEvents MyPackage.FiberTest
+ * @run main/othervm/native -agentlib:FiberTest=DisableContinuationEvents MyPackage.FiberTest
  */
 
 import java.util.concurrent.*;

@@ -41,6 +41,7 @@ static const int MAX_EVENTS_TO_PROCESS = 20;
 static jvmtiEnv *jvmti = NULL;
 static jrawMonitorID events_monitor = NULL;
 static Tinfo tinfo[MAX_WORKER_THREADS];
+static jboolean continuation_events_enabled = JNI_FALSE;
 
 static void
 lock_events() {
@@ -100,7 +101,7 @@ print_fiber_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fib
         if (inf->was_yield) {
           (*jni)->FatalError(jni, "FiberMount: event with ContinuationYield before!");
         }
-        if (!inf->was_run) {
+        if (continuation_events_enabled && !inf->was_run) {
           (*jni)->FatalError(jni, "FiberMount: event without ContinuationRun before!");
         }
       }
@@ -112,7 +113,7 @@ print_fiber_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fib
       if (inf->was_run) {
         (*jni)->FatalError(jni, "FiberUnmount: event with ContinuationRun before!");
       }
-      if (!inf->was_yield) {
+      if (continuation_events_enabled && !inf->was_yield) {
         (*jni)->FatalError(jni, "FiberUnmount: event without ContinuationYield before!");
       }
     }
@@ -264,7 +265,7 @@ test_GetFiberThread(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber,
   if (fiber_thread == NULL) {
     (*jni)->FatalError(jni, "event handler: JVMTI GetFiberThread with good fiber failed to return non-NULL carrier thread");
   }
-  printf("%s event: JVMTI GetFiberThread with good fiber returned non-NULL career thread as expected\n", event_name);
+  printf("%s event: JVMTI GetFiberThread with good fiber returned non-NULL carrier thread as expected\n", event_name);
 }
 
 static void
@@ -368,6 +369,15 @@ extern JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options,
     return JNI_ERR;
   }
 
+  if (strcmp(options, "EnableContinuationEvents") == 0) {
+    continuation_events_enabled = JNI_TRUE;
+  } else if (strcmp(options, "DisableContinuationEvents") == 0) {
+    continuation_events_enabled = JNI_FALSE;
+  } else {
+    printf("bad option passed to Agent_OnLoad: \"%s\"\n", options);
+    return 2;
+  }
+
   memset(&callbacks, 0, sizeof(callbacks));
   callbacks.FiberScheduled  = &FiberScheduled;
   callbacks.FiberTerminated = &FiberTerminated;
@@ -378,7 +388,9 @@ extern JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options,
 
   memset(&caps, 0, sizeof(caps));
   caps.can_support_fibers = 1;
-  caps.can_support_continuations = 1;
+  if (continuation_events_enabled) {
+    caps.can_support_continuations = 1;
+  }
   err = (*jvmti)->AddCapabilities(jvmti, &caps);
   if (err != JVMTI_ERROR_NONE) {
     printf("error in JVMTI AddCapabilities: %d\n", err);
@@ -409,14 +421,16 @@ extern JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options,
     printf("error in JVMTI SetEventNotificationMode: %d\n", err);
   }
 
-  err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, JVMTI_EVENT_CONTINUATION_RUN, NULL);
-  if (err != JVMTI_ERROR_NONE) {
-    printf("error in JVMTI SetEventNotificationMode: %d\n", err);
-  }
+  if (continuation_events_enabled) {
+    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, JVMTI_EVENT_CONTINUATION_RUN, NULL);
+    if (err != JVMTI_ERROR_NONE) {
+      printf("error in JVMTI SetEventNotificationMode: %d\n", err);
+    }
 
-  err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, JVMTI_EVENT_CONTINUATION_YIELD, NULL);
-  if (err != JVMTI_ERROR_NONE) {
-    printf("error in JVMTI SetEventNotificationMode: %d\n", err);
+    err = (*jvmti)->SetEventNotificationMode(jvmti, JVMTI_ENABLE, JVMTI_EVENT_CONTINUATION_YIELD, NULL);
+    if (err != JVMTI_ERROR_NONE) {
+      printf("error in JVMTI SetEventNotificationMode: %d\n", err);
+    }
   }
 
   (*jvmti)->CreateRawMonitor(jvmti, "Events Monitor", &events_monitor);
