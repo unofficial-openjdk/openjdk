@@ -58,7 +58,7 @@ public class NativeThread {
     /**
      * Returns a token representing the current kernel thread
      */
-    public static long currentKernelThread() {
+    static long currentKernelThread() {
         return current0();
     }
 

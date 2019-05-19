@@ -39,16 +39,16 @@ class NativeThread {
         return 0;
     }
 
-    static boolean isLightweight(long tid) {
+    static void signal(long tid) {
+        throw new UnsupportedOperationException();
+    }
+
+    static boolean isFiber(long tid) {
         return false;
     }
 
     static boolean isKernelThread(long tid) {
         return false;
-    }
-
-    static void signal(long tid) {
-        throw new UnsupportedOperationException();
     }
 
 }

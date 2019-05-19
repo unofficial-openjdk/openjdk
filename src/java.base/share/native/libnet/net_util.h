@@ -131,8 +131,6 @@ JNIEXPORT jint JNICALL ipv6_available();
 
 JNIEXPORT jint JNICALL reuseport_available();
 
-JNIEXPORT int NET_SocketAvailable(int s, jint *pbytes);
-
 /**
  * This function will fill a SOCKETADDRESS structure from an InetAddress
  * object.
