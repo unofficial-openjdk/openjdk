@@ -84,7 +84,7 @@ print_method(jvmtiEnv *jvmti, JNIEnv* jni, jmethodID method, jint depth) {
 }
 
 static void
-print_stack_trace(jvmtiEnv *jvmti, JNIEnv* jni) { 
+print_stack_trace(jvmtiEnv *jvmti, JNIEnv* jni) {
   jvmtiFrameInfo frames[MAX_FRAME_COUNT];
   jint count = 0;
   jvmtiError err;
@@ -178,7 +178,7 @@ SingleStep(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread,
   check_jvmti_status(jni, err, "SingleStep: error in JVMTI GetMethodName call");
 
   if (strcmp(mname, "yield0") != 0) {
-    return; // ignore unrelated events 
+    return; // ignore unrelated events
   }
   print_frame_event_info(jvmti, jni, thread, method,
                          "SingleStep", ++single_step_count);
@@ -252,7 +252,7 @@ Java_MyPackage_ContYieldBreakPointTest_enableEvents(JNIEnv *jni, jclass klass, j
       printf("enableEvents: found method %s() to set a breakpoint\n", mname);
       fflush(0);
       method = meth;
-    } 
+    }
   }
   if (method == NULL) {
     jni->FatalError("Error in enableEvents: not found method fibTest()");
@@ -271,8 +271,6 @@ Java_MyPackage_ContYieldBreakPointTest_enableEvents(JNIEnv *jni, jclass klass, j
 
 JNIEXPORT jboolean JNICALL
 Java_MyPackage_ContYieldBreakPointTest_check(JNIEnv *jni, jclass cls) {
-  jvmtiError err;
-
   printf("\n");
   printf("check: started\n");
 
@@ -283,7 +281,7 @@ Java_MyPackage_ContYieldBreakPointTest_check(JNIEnv *jni, jclass cls) {
   printf("\n");
   fflush(0);
 
-  // Getting this far without a crash or assert means the test passed. 
+  // Getting this far without a crash or assert means the test passed.
   return JNI_TRUE;
 }
 } // extern "C"
