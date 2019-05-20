@@ -164,19 +164,31 @@ intptr_t* hframe::interpreter_frame_expression_stack_at(int offset) const {
 
 template<typename FKind>
 hframe hframe::sender(ContMirror& cont, int num_oops) const {
-  address sender_pc = return_pc<FKind>();
+  // tty->print_cr(">> sender of:");
+  // print_on(cont, tty);
+
   int sender_sp = frame_bottom_index<FKind>();
-  bool is_sender_interpreted = Interpreter::contains(sender_pc);
-  long sender_fp = link();
-  if (is_sender_interpreted) {
-    sender_fp += link_index(cont);
-    // log_develop_trace(jvmcont)("real_fp: %d sender_fp: %ld", link_index(cont), sender_fp);
-  }
   int sender_ref_sp = _ref_sp + num_oops;
   assert (sender_sp > _sp, "");
   if (sender_sp >= cont.stack_length())
     return hframe();
-  return hframe(sender_sp, sender_ref_sp, sender_fp, sender_pc, is_sender_interpreted, cont);
+  
+  address sender_pc = return_pc<FKind>();
+  bool is_sender_interpreted = Interpreter::contains(sender_pc);
+  CodeBlob* sender_cb;
+
+  long sender_fp = link();
+
+  if (is_sender_interpreted) {
+    sender_fp += link_index(cont);
+    sender_cb = NULL;
+    // log_develop_trace(jvmcont)("real_fp: %d sender_fp: %ld", link_index(cont), sender_fp);
+  } else {
+    sender_cb = ContinuationCodeBlobLookup::find_blob(sender_pc);
+    sender_pc = hframe::deopt_original_pc(cont, sender_pc, sender_cb, sender_sp); // TODO PERF: unnecessary in the long term solution of unrolling deopted frames on freeze
+    // a stub can only appear as the topmost frame; all senders must be compiled/interpreted Java frames so we can call deopt_original_pc, which assumes a compiled Java frame
+  }
+  return hframe(sender_sp, sender_ref_sp, sender_fp, sender_pc, sender_cb, is_sender_interpreted, cont);
 }
 
 inline frame hframe::to_frame(ContMirror& cont, address pc, bool deopt) const {
@@ -230,6 +242,10 @@ void hframe::print_on(ContMirror& cont, outputStream* st) const {
 }
 
 /////
+
+inline void ContMirror::set_last_frame_pd(hframe& f) {
+  set_fp(f.fp());
+}
 
 hframe ContMirror::last_frame() {
   return is_empty() ? hframe() : hframe(_sp, _ref_sp, _fp, _pc, *this);
@@ -326,6 +342,9 @@ inline intptr_t* Interpreted::frame_bottom(const frame& f) { // exclusive; this 
     return *(intptr_t**)f.addr_at(frame::interpreter_frame_locals_offset) + 1; // exclusive, so we add 1 word
 }
 
+inline frame ContinuationHelper::frame_with(frame& f, intptr_t* sp, address pc) {
+  return frame(sp, f.unextended_sp(), f.fp(), pc, CodeCache::find_blob(pc));
+}
 
 inline void ContinuationHelper::set_last_vstack_frame(RegisterMap* map, const frame& hf) {
   map->set_last_vstack_fp(link_address(hf));
@@ -374,9 +393,13 @@ static inline frame sender_for_compiled_frame(frame& f, intptr_t** link_addr) {
   int slot = 0;
   CodeBlob* sender_cb = ContinuationCodeBlobLookup::find_blob_and_oopmap(sender_pc, slot);
   assert (!fast || sender_cb != NULL, "");
-  return fast || sender_cb != NULL 
-    ? frame(sender_sp, sender_sp, *link_addr, sender_pc, sender_cb, slot == -1 ? NULL : sender_cb->oop_map_for_slot(slot, sender_pc))
-    : frame(sender_sp, sender_sp, *link_addr, sender_pc);
+  if (fast) {
+    return frame(sender_sp, sender_sp, *link_addr, sender_pc, sender_cb, slot == -1 ? NULL : sender_cb->oop_map_for_slot(slot, sender_pc), true);
+  } else {
+    return sender_cb != NULL
+      ? frame(sender_sp, sender_sp, *link_addr, sender_pc, sender_cb, slot == -1 ? NULL : sender_cb->oop_map_for_slot(slot, sender_pc))
+      : frame(sender_sp, sender_sp, *link_addr, sender_pc);
+  }
 }
 
 static inline frame sender_for_interpreted_frame(frame& f, intptr_t** link_addr) {
@@ -399,6 +422,17 @@ inline frame Freeze<ConfigT, mode>::sender(frame& f, intptr_t*** link_address_ou
   assert (FKind::interpreted == f.is_interpreted_frame(), "");
   intptr_t** link_addr = link_address<FKind>(f);
   *link_address_out = link_addr;
+  return FKind::interpreted 
+    ? sender_for_interpreted_frame(f, link_addr) 
+    : (mode == mode_fast ? sender_for_compiled_frame<true> (f, link_addr) 
+                         : sender_for_compiled_frame<false>(f, link_addr));
+}
+
+template <typename ConfigT, freeze_mode mode>
+template<typename FKind>
+inline frame Freeze<ConfigT, mode>::sender(frame& f) {
+  assert (FKind::interpreted == f.is_interpreted_frame(), "");
+  intptr_t** link_addr = link_address<FKind>(f);
   return FKind::interpreted 
     ? sender_for_interpreted_frame(f, link_addr) 
     : (mode == mode_fast ? sender_for_compiled_frame<true> (f, link_addr) 

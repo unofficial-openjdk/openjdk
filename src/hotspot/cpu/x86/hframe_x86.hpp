@@ -48,14 +48,11 @@ public:
 
   hframe(const hframe& hf) : HFrameBase(hf), _fp(hf._fp), _link_address(hf._link_address) {}
 
-  hframe(int sp, int ref_sp, intptr_t fp, address pc, ContMirror& cont)
+  hframe(int sp, int ref_sp, intptr_t fp, address pc, ContMirror& cont) // called by ContMirror::last_frame
     : HFrameBase(sp, ref_sp, pc, cont), _fp(fp) { set_link_address(cont); }
 
   hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted, ContMirror& cont)
     : HFrameBase(sp, ref_sp, pc, cb, is_interpreted, cont), _fp(fp) { set_link_address(cont); }
-
-  hframe(int sp, int ref_sp, intptr_t fp, address pc, bool is_interpreted, ContMirror& cont)
-    : HFrameBase(sp, ref_sp, pc, is_interpreted, cont), _fp(fp), _link_address(NULL) { set_link_address(cont); }
 
   hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted) // called by ContMirror::new_hframe
     : HFrameBase(sp, ref_sp, pc, cb, is_interpreted), _fp(fp), _link_address(NULL) {}

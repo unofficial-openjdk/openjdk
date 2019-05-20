@@ -108,6 +108,21 @@ inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address
   setup(pc);
 }
 
+inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc, CodeBlob* cb, const ImmutableOopMap* oop_map, bool dummy) {
+  _sp = sp;
+  _unextended_sp = unextended_sp;
+  _fp = fp;
+  _pc = pc;
+  assert(pc != NULL, "no pc?");
+  _cb = cb;
+  _oop_map = oop_map;
+  _deopt_state = not_deoptimized;
+#ifdef ASSERT
+  setup(pc);
+  assert(_pc == pc && _deopt_state == not_deoptimized, "");
+#endif
+}
+
 inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc) {
   _sp = sp;
   _unextended_sp = unextended_sp;
@@ -122,6 +137,10 @@ inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address
 inline void frame::setup(address pc) {
   adjust_unextended_sp();
 
+  if (_cb == NULL) {
+    tty->print_cr(">>>> ohoh");
+    print_on(tty);
+  }
   assert(_cb != NULL, "pc: " INTPTR_FORMAT, p2i(pc));
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
   if (original_pc != NULL) {
@@ -387,20 +406,12 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
 
   assert(sender_sp != sp(), "must have changed");
 
-  if (Continuation::is_return_barrier_entry(sender_pc)) {
-    if (map->walk_cont()) { // about to walk into an h-stack 
-      return Continuation::top_frame(*this, map);
-    } else {
-      Continuation::fix_continuation_bottom_sender(this, map, &sender_pc, &sender_sp);
-    }
-  }
-
   intptr_t* unextended_sp = sender_sp;
   CodeBlob* sender_cb = LOOKUP::find_blob(sender_pc);
   if (sender_cb != NULL) {
-    return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc, sender_cb);
+    return Continuation::fix_continuation_bottom_sender(*this, map, frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc, sender_cb));
   }
-  return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc);
+  return Continuation::fix_continuation_bottom_sender(*this, map, frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc));
 }
 
 inline const ImmutableOopMap* frame::get_oop_map() const {
