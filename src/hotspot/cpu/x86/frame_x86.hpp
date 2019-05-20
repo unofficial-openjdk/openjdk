@@ -141,6 +141,8 @@
 
   frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc, CodeBlob* cb, const ImmutableOopMap* oop_map);
 
+  frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address pc, CodeBlob* cb, const ImmutableOopMap* oop_map, bool dummy); // used for fast frame construction by continuations
+
   frame(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool deopt); // for continuation frames
 
   frame(intptr_t* sp, intptr_t* fp);

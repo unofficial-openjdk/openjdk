@@ -343,6 +343,9 @@ void frame::deoptimize(JavaThread* thread) {
   // Schedule deoptimization of an nmethod activation with this frame.
   assert(_cb != NULL && _cb->is_compiled(), "must be");
 
+  // tty->print_cr(">>>> frame::deoptimize:");
+  // print_on(tty);
+
   // If the call site is a MethodHandle call site use the MH deopt
   // handler.
   CompiledMethod* cm = (CompiledMethod*) _cb;

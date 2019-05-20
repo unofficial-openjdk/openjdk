@@ -469,14 +469,8 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
 #endif // COMPILER2_OR_JVMCI
 
   address sender_pc = this->sender_pc();
-  if (Continuation::is_return_barrier_entry(sender_pc)) {
-    if (map->walk_cont()) { // about to walk into an h-stack
-      return Continuation::top_frame(*this, map);
-    } else
-      Continuation::fix_continuation_bottom_sender(this, map, &sender_pc, NULL);
-  }
 
-  return frame(sender_sp, unextended_sp, link(), sender_pc);
+  return Continuation::fix_continuation_bottom_sender(*this, map, frame(sender_sp, unextended_sp, link(), sender_pc));
 }
 
 

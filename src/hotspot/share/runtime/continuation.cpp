@@ -108,7 +108,9 @@ static int PERFTEST_LEVEL = ContPerfTest;
 #define ENTER0_SIG "java.lang.Continuation.enter0()V"
 #define RUN_SIG    "java.lang.Continuation.run()V"
 
-// debugging funstions
+static bool is_stub(CodeBlob* cb);
+
+// debugging functions
 static void print_oop(void *p, oop obj, outputStream* st = tty);
 static void print_vframe(frame f, const RegisterMap* map = NULL, outputStream* st = tty);
 #ifdef ASSERT
@@ -239,16 +241,11 @@ protected:
     : _sp(sp), _ref_sp(ref_sp), _pc(pc), 
       _cb(cb), _oop_map(NULL), _is_interpreted(is_interpreted) {}
 
-  HFrameBase(int sp, int ref_sp, address pc, bool is_interpreted, ContMirror& cont)
-    : _sp(sp), _ref_sp(ref_sp), _pc(pc), 
-      _oop_map(NULL), _is_interpreted(is_interpreted) {
-      _cb = NULL;
-      set_codeblob(_pc); // TODO: lazify
-    }
-
   HFrameBase(int sp, int ref_sp, address pc, CodeBlob* cb, bool is_interpreted) // called by ContMirror::new_hframe
     : _sp(sp), _ref_sp(ref_sp), _pc(pc),
       _cb(cb), _oop_map(NULL), _is_interpreted(is_interpreted) {}
+
+  static address deopt_original_pc(ContMirror& cont, address pc, CodeBlob* cb, int sp);
 
 public:
   inline bool operator==(const HFrameBase& other);
@@ -259,6 +256,8 @@ public:
   inline address   pc()     const { return _pc; }
   inline int       ref_sp() const { return _ref_sp; }
   CodeBlob* cb() const { return _cb; }
+
+  inline void set_pc(address pc) { _pc = pc; }
 
   template<typename FKind> address return_pc() const { return *return_pc_address<FKind>(); }
 
@@ -434,6 +433,7 @@ public:
 
   hframe last_frame();
   inline void set_last_frame(hframe& f);
+  inline void set_last_frame_pd(hframe& f);
 
   hframe from_frame(const frame& f);
 
@@ -487,6 +487,24 @@ const ImmutableOopMap* HFrameBase<SelfPD>::get_oop_map() const {
 }
 
 template<typename SelfPD>
+address HFrameBase<SelfPD>::deopt_original_pc(ContMirror& cont, address pc, CodeBlob* cb, int sp) {
+  // TODO DEOPT: unnecessary in the long term solution of unroll on freeze
+
+  assert (cb != NULL && cb->is_compiled(), "");
+  CompiledMethod* cm = cb->as_compiled_method();
+  if (cm->is_deopt_pc(pc)) {
+    log_develop_trace(jvmcont)("hframe::deopt_original_pc deoptimized frame");
+    pc = *(address*)((address)cont.stack_address(sp) + cm->orig_pc_offset());
+    assert(pc != NULL, "");
+    assert(cm->insts_contains_inclusive(pc), "original PC must be in the main code section of the the compiled method (or must be immediately following it)");
+    assert(!cm->is_deopt_pc(pc), "");
+    // _deopt_state = is_deoptimized;
+  }
+
+  return pc;
+}
+
+template<typename SelfPD>
 template<typename FKind>
 inline void HFrameBase<SelfPD>::patch_return_pc(address value) {
   *(PD.template return_pc_address<FKind>()) = value;
@@ -529,7 +547,6 @@ template <typename FKind>
 int HFrameBase<SelfPD>::compiled_frame_size(int* argsize, int* num_oops) const {
   assert (!_is_interpreted, "");
   *argsize = compiled_frame_stack_argsize<FKind>();
-  // tty->print_cr(">> compiled_frame_size %d", cb()->as_compiled_method()->is_deopt_pc(pc()));
   *num_oops = oop_map()->num_oops();
   return cb()->frame_size() * wordSize;
 }
@@ -703,7 +720,10 @@ bool ContMirror::is_empty() {
 
 inline void ContMirror::set_last_frame(hframe& f) {
   // assert (f._length = _stack_length, "");
-  set_sp(f.sp()); set_fp(f.fp()); set_pc(f.pc());
+  set_sp(f.sp());
+  set_pc(f.pc()); // DEOPT?
+  set_last_frame_pd(f);
+
   // if (f.ref_sp() != -1) // frames' ref_sp is invalid during freeze
   //   set_refSP(f.ref_sp());
   if (is_empty()) {
@@ -846,6 +866,7 @@ template<typename Event> void ContMirror::post_jfr_event(Event* e) {
 class ContinuationHelper {
 public:
   template<typename FKind> static inline void update_register_map(RegisterMap* map, const frame& f);
+  static inline frame frame_with(frame& f, intptr_t* sp, address pc);
   static inline frame last_frame(JavaThread* thread);
   static inline void to_frame_info(const frame& f, const frame& callee, FrameInfo* fi);
   template<typename FKind> static inline void to_frame_info_pd(const frame& f, const frame& callee, FrameInfo* fi);
@@ -1033,10 +1054,12 @@ static void set_anchor(JavaThread* thread, FrameInfo* fi) {
   print_vframe(thread->last_frame());
 }
 
-// static void set_anchor(ContMirror& cont) {
-//   FrameInfo fi = { cont.entryPC(), cont.entryFP(), cont.entrySP() };
-//   set_anchor(cont.thread(), &fi);
-// }
+#ifdef ASSERT
+static void set_anchor(ContMirror& cont) {
+  FrameInfo fi = { cont.entryPC(), cont.entryFP(), cont.entrySP() };
+  set_anchor(cont.thread(), &fi);
+}
+#endif
 
 static oop get_continuation(JavaThread* thread) {
   assert (thread != NULL, "");
@@ -1263,6 +1286,7 @@ private:
   intptr_t* _safepoint_stub_hsp;
 #endif
 
+  template<typename FKind> static inline frame sender(frame& f);
   template<typename FKind> static inline frame sender(frame& f, hframe::callee_info* callee_info);
   static inline void update_register_map(RegisterMap* map, hframe::callee_info callee_info);
   template <typename FKind> static inline int compiled_frame_size(frame& f, int* argsize, int* num_oops);
@@ -1314,7 +1338,7 @@ public:
     frame f = ContinuationHelper::last_frame(_thread); // thread->last_frame();
     assert (StubRoutines::cont_doYield_stub()->contains(f.pc()), "must be");
     ContinuationHelper::update_register_map<StubF>(&_map, f);
-    f = f.frame_sender<ContinuationCodeBlobLookup>(&_map);  // this is the yield frame
+    f = sender<StubF>(f);  // this is the yield frame
 
     // The following doesn't work because fi->fp can contain an oop, that a GC doesn't know about when walking.
     // frame::update_map_with_saved_link(&map, (intptr_t **)&fi->fp);
@@ -1567,6 +1591,18 @@ public:
     assert (FKind::interpreted == f.is_interpreted_frame(), "");
 
     patch_pd<FKind, top, bottom>(f, hf, caller);
+
+#ifdef ASSERT
+    // TODO DEOPT: long term solution: unroll on freeze and patch pc
+    if (!FKind::interpreted && !FKind::stub) {
+      assert (hf.cb()->is_compiled(), "");
+      if (f.is_deoptimized_frame()) {
+        log_develop_trace(jvmcont)("Freezing deoptimized frame");
+        assert (f.cb()->as_compiled_method()->is_deopt_pc(f.raw_pc()), "");
+        assert (f.cb()->as_compiled_method()->is_deopt_pc(Frame::real_pc(f)), "");
+      }
+    }
+#endif
 
     // sanity check
     assert (bottom || !caller.is_empty(), "");
@@ -2325,10 +2361,11 @@ static frame thaw_frame(ContMirror& cont, hframe& hf, int oop_index, int fsize, 
     ret_pc = CHOOSE2(is_interpreted, hf.return_pc); // sender.pc();
   }
   assert (is_entry_frame(cont, sender) || ret_pc == CHOOSE2(is_interpreted, hf.return_pc) || is_deopt_return(CHOOSE2(is_interpreted, hf.return_pc), sender), "");
-  assert (ret_pc == sender.raw_pc(), "%d %d %d %d %d",
-    is_entry_frame(cont, sender),
-    is_deopt_return(ret_pc, sender), is_deopt_return(sender.raw_pc(), sender),
-    is_sender_deopt, sender.is_deoptimized_frame());
+  // TODO R: the following assertion has been commented out; note that ret_pc is never used!
+  // assert (ret_pc == sender.raw_pc(), "%d %d %d %d %d",
+  //   is_entry_frame(cont, sender),
+  //   is_deopt_return(ret_pc, sender), is_deopt_return(sender.raw_pc(), sender),
+  //   is_sender_deopt, sender.is_deoptimized_frame());
   deoptimized = false;
 
 #ifdef ASSERT
@@ -2455,7 +2492,7 @@ static frame thaw_frames(ContMirror& cont, hframe hf, int oop_index, int num_fra
     last_oop_index = oop_index;
     last_frame = hf;
 
-    // tty->print_cr(">>>>>>>>>");
+    // tty->print_cr(">>>>>>>>> thaw_frames entry");
     // hf.print_on(cont, tty);
 
     deoptimized = false;
@@ -2469,7 +2506,7 @@ static frame thaw_frames(ContMirror& cont, hframe hf, int oop_index, int num_fra
   int fsize, num_oops;
   frame f, sender;
 
-  // tty->print_cr(">>>>>>>>>");
+  // tty->print_cr(">>>>>>>>> thaw_frames");
   // hf.print_on(cont, tty);
 
   if (interpreted) {
@@ -2532,6 +2569,7 @@ static frame thaw_frames(ContMirror& cont, hframe hf, int oop_index, int num_fra
 
       CHOOSE1(f1.is_interpreted_frame(), patch_return_pc, f1, StubRoutines::cont_returnBarrier());
     } else {
+      // TODO R DEOPT
       // we use thread->_cont_frame->sp rather than the continuations themselves (which allow nesting) b/c it's faser and simpler.
       // for that to work, we rely on the fact that parent continuation's have at lesat Continuation.run on the stack, which does not require stack arguments
       cont.thread()->cont_frame()->sp = NULL;
@@ -2592,10 +2630,10 @@ static inline void thaw1(JavaThread* thread, FrameInfo* fi, const bool return_ba
     java_frame_count = num_java_frames(cont);
   }
 
-// #ifndef PRODUCT
-//   set_anchor(cont);
+#ifdef ASSERT
+  set_anchor(cont); // required for assert(thread->frame_anchor()->has_last_Java_frame()) in frame::deoptimize
 //   print_frames(thread);
-// #endif
+#endif
 
   // log_develop_trace(jvmcont)("thaw: TARGET: " INTPTR_FORMAT, p2i(target);
   // log_develop_trace(jvmcont)("QQQ CCCCC bottom: " INTPTR_FORMAT " top: " INTPTR_FORMAT " size: %ld", p2i(cont.entrySP()), p2i(target), (address)cont.entrySP() - target);
@@ -2864,12 +2902,12 @@ static address get_entry_pc_past_barrier(JavaThread* thread, const frame& f) {
   return pc;
 }
 
-void Continuation::fix_continuation_bottom_sender(const frame* callee, RegisterMap* map, address* sender_pc, intptr_t** sender_sp) {
-  if (map->thread() != NULL && is_return_barrier_entry(*sender_pc)) {
-    *sender_pc = get_entry_pc_past_barrier(map->thread(), *callee);
-    if (callee->is_compiled_frame()) {
+static void fix_continuation_bottom_sender(const frame& callee, const RegisterMap* map, address* sender_pc, intptr_t** sender_sp) {
+  if (map->thread() != NULL && Continuation::is_return_barrier_entry(*sender_pc)) {
+    *sender_pc = get_entry_pc_past_barrier(map->thread(), callee);
+    if (callee.is_compiled_frame()) {
       // The callee's stack arguments (part of the caller frame) are also thawed to the stack when using lazy-copy
-      int argsize = callee->cb()->as_compiled_method()->method()->num_stack_arg_slots() * VMRegImpl::stack_slot_size;
+      int argsize = callee.cb()->as_compiled_method()->method()->num_stack_arg_slots() * VMRegImpl::stack_slot_size;
       assert ((argsize & WordAlignmentMask) == 0, "must be");
       argsize >>= LogBytesPerWord;
       if (argsize % 2 != 0)
@@ -2880,12 +2918,25 @@ void Continuation::fix_continuation_bottom_sender(const frame* callee, RegisterM
   }
 }
 
-// frame Continuation::fix_continuation_bottom_sender(const frame& callee, frame f, RegisterMap* map) {
-//   if (map->thread() != NULL && is_cont_bottom_frame(callee)) {
-//     f.set_pc_preserve_deopt(get_entry_pc_past_barrier(map->thread(), f));
-//   }
-//   return f;
-// }
+frame Continuation::fix_continuation_bottom_sender(const frame& callee, RegisterMap* map, frame f) {
+  // we do this after the frame is constructed, because the sender_pc computed in frame::sender can be to a deopt blob; we want f.pc()
+  if (!is_return_barrier_entry(f.pc())) {
+    return f;
+  }
+
+  if (map->walk_cont()) {
+    return top_frame(callee, map);
+  }
+
+  if (map->thread() != NULL) {
+    address   sender_pc = f.pc();
+    intptr_t* sender_sp = f.sp();
+    ::fix_continuation_bottom_sender(callee, map, &sender_pc, &sender_sp);
+    return ContinuationHelper::frame_with(f, sender_sp, sender_pc);
+  }
+
+  return f;
+}
 
 bool Continuation::is_scope_bottom(oop cont_scope, const frame& f, const RegisterMap* map) {
   if (cont_scope == NULL || !is_continuation_entry_frame(f, map))

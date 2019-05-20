@@ -73,7 +73,6 @@ public class Basic {
 
     static final ContinuationScope FOO = new ContinuationScope() {};
     
-    @Test
     public void test1() {
         System.out.println("test1");
         final AtomicInteger res = new AtomicInteger(0);

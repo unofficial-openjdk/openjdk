@@ -78,7 +78,7 @@ public:
   static bool is_return_barrier_entry(const address pc);
   static bool is_frame_in_continuation(const frame& f, oop cont);
   static bool is_frame_in_continuation(JavaThread* thread, const frame& f);
-  static void fix_continuation_bottom_sender(const frame* callee, RegisterMap* map, address* sender_pc, intptr_t** sender_sp);
+  static frame fix_continuation_bottom_sender(const frame& callee, RegisterMap* map, frame f);
 
   static frame top_frame(const frame& callee, RegisterMap* map);
   static frame sender_for_interpreter_frame(const frame& callee, RegisterMap* map);
