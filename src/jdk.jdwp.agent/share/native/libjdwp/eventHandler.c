@@ -593,7 +593,7 @@ filterAndHandleEvent(JNIEnv *env, EventInfo *evinfo, EventIndex ei,
 /*
  * Called when we are not notifying the debugging of all fibers, and we are seeing an event
  * on a fiber that we have not notified the debugger about yet. If the event passes the event
- * filters, then we will notify the debugger with a THREAD_START and add it to our list of 
+ * filters, then we will notify the debugger with a THREAD_START and add it to our list of
  * fibers. Otherwise we ignore it.
  */
 static void
@@ -655,14 +655,14 @@ filterAndAddFiber(JNIEnv *env, EventInfo *evinfo, EventIndex ei, jbyte eventSess
          */
         EventInfo info;
         struct bag *eventBag = eventHelper_createEventBag();
-        
+
         JDI_ASSERT(evinfo->fiber != NULL);
         (void)memset(&info,0,sizeof(info));
         info.ei         = EI_FIBER_SCHEDULED;
         info.thread     = thread;
         info.fiber      = fiber;
         info.matchesFiber = JNI_TRUE;
-        
+
         /* Note: filterAndHandleEvent() expects EI_THREAD_START instead of EI_FIBER_SCHEDULED. */
         filterAndHandleEvent(env, &info, EI_THREAD_START, eventBag, eventSessionID);
         JDI_ASSERT(bagSize(eventBag) == 0);
@@ -741,7 +741,7 @@ event_callback_helper(JNIEnv *env, EventInfo *evinfo)
     if (thread != NULL) {
         if (gdata->fibersSupported) {
             /*
-             * Get the event fiber if one is running on this thread and has not already 
+             * Get the event fiber if one is running on this thread and has not already
              * been set, which is the case for fiber related JVMTI events.
              */
             if (evinfo->fiber == NULL) {
@@ -1447,10 +1447,10 @@ cbFiberScheduled(jvmtiEnv *jvmti_env, JNIEnv *env,
     /*tty_message("cbFiberScheduled: thread=%p", thread);*/
     JDI_ASSERT(gdata->fibersSupported);
 
-    /* 
+    /*
      * Now would be a good time to cache the ThreadGroup for fibers (carrier threads)
      * if we haven't already.
-     * 
+     *
      * fiber fixme: the is kind of a hack. What happens if custom
      * scheduler uses carrier threads in multple group? What if as a result of this a
      * Fiber can move between thread groups? We should have a dedicated
@@ -1463,7 +1463,7 @@ cbFiberScheduled(jvmtiEnv *jvmti_env, JNIEnv *env,
         (void)memset(&info, 0, sizeof(info));
         error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadInfo)
             (gdata->jvmti, thread, &info);
-      
+
         if (error != JVMTI_ERROR_NONE) {
             EXIT_ERROR(error, "could not get fiber ThreadGroup");
         } else {
@@ -1524,8 +1524,6 @@ static void JNICALL
 cbFiberMount(jvmtiEnv *jvmti_env, JNIEnv *env,
              jthread thread, jthread fiber)
 {
-    EventInfo info;
-
     LOG_CB(("cbFiberMount: thread=%p", thread));
     /*tty_message("cbFiberMount: thread=%p", thread);*/
     JDI_ASSERT(gdata->fibersSupported);
@@ -1545,8 +1543,6 @@ static void JNICALL
 cbFiberUnmount(jvmtiEnv *jvmti_env, JNIEnv *env,
                jthread thread, jthread fiber)
 {
-    EventInfo info;
-
     LOG_CB(("cbFiberUnmount: thread=%p", thread));
     /*tty_message("cbFiberUnmount: thread=%p", thread);*/
     JDI_ASSERT(gdata->fibersSupported);
