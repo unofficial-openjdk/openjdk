@@ -416,7 +416,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
 
   // If the caller is a continuation entry and the callee has a return barrier
   // then we cannot use the parameters in the caller.
-  bool caller_was_continuation_entry = Continuation::is_cont_bottom_frame(deopt_sender);
+  bool caller_was_continuation_entry = Continuation::is_cont_barrier_frame(deopt_sender);
 
   //
   // frame_sizes/frame_pcs[0] oldest frame (int or c2i)
@@ -491,8 +491,8 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   // since the frame will "magically" show the original pc before the deopt
   // and we'd undo the deopt.
 
-  frame_pcs[0] = Continuation::is_cont_bottom_frame(deoptee) ? StubRoutines::cont_returnBarrier() : deopt_sender.raw_pc();
-  // if (Continuation::is_cont_bottom_frame(deoptee)) tty->print_cr("WOWEE Continuation::is_cont_bottom_frame(deoptee)");
+  frame_pcs[0] = Continuation::is_cont_barrier_frame(deoptee) ? StubRoutines::cont_returnBarrier() : deopt_sender.raw_pc();
+  // if (Continuation::is_cont_barrier_frame(deoptee)) tty->print_cr("WOWEE Continuation::is_cont_barrier_frame(deoptee)");
 
   assert(CodeCache::find_blob_unsafe(frame_pcs[0]) != NULL, "bad pc");
 

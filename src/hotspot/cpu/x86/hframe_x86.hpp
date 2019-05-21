@@ -54,10 +54,13 @@ public:
   hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted, ContMirror& cont)
     : HFrameBase(sp, ref_sp, pc, cb, is_interpreted, cont), _fp(fp) { set_link_address(cont); }
 
-  hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted) // called by ContMirror::new_hframe
+  hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted) // called by new_callee_hframe
     : HFrameBase(sp, ref_sp, pc, cb, is_interpreted), _fp(fp), _link_address(NULL) {}
 
-  inline bool operator==(const hframe& other);
+  hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted, intptr_t* link_address) // called by new_bottom_hframe
+    : HFrameBase(sp, ref_sp, pc, cb, is_interpreted), _fp(fp), _link_address(link_address) {}
+
+  inline bool operator==(const hframe& other) const;
 
   inline intptr_t  fp()     const { return _fp; }
 

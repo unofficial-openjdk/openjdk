@@ -146,28 +146,23 @@ public class Basic {
             return;
         }
 
-        System.out.println("--------- DEEP ----------- ");
         StackWalker walker = StackWalker.getInstance();
         List<String> frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
 
-        System.out.println("--- DEEP 1111");
         List<String> expected0 = new ArrayList<>();
         IntStream.range(0, DEPTH).forEach(i -> { expected0.add("deep"); });
         expected0.addAll(List.of("bar", "foo", "lambda$test1$0", "enter", "run", "test1"));
 
         assertEquals(frames.subList(0, DEPTH + 6), expected0);
 
-        System.out.println("--- DEEP 22222");
         walker = StackWalker.getInstance(FOO);
         frames = walker.walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
 
-        System.out.println("--- DEEP 33333");
 
         List<String> expected1 = new ArrayList<>();
         IntStream.range(0, DEPTH).forEach(i -> { expected1.add("deep"); });
         expected1.addAll(List.of("bar", "foo", "lambda$test1$0", "enter"));
         assertEquals(frames, expected1);
-        System.out.println("========== DEEP ============ ");
     }
 
     static class LoomException extends RuntimeException {
