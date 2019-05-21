@@ -118,8 +118,10 @@ inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address
   _oop_map = oop_map;
   _deopt_state = not_deoptimized;
 #ifdef ASSERT
-  setup(pc);
-  assert(_pc == pc && _deopt_state == not_deoptimized, "");
+  if (cb != NULL) {
+    setup(pc);
+    assert(_pc == pc && _deopt_state == not_deoptimized, "");
+  }
 #endif
 }
 
@@ -138,7 +140,7 @@ inline void frame::setup(address pc) {
   adjust_unextended_sp();
 
   if (_cb == NULL) {
-    tty->print_cr(">>>> ohoh");
+    tty->print_cr(">>>> frame::setup _cb == NULL:");
     print_on(tty);
   }
   assert(_cb != NULL, "pc: " INTPTR_FORMAT, p2i(pc));

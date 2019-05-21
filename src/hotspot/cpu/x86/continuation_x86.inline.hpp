@@ -28,7 +28,9 @@
 #include "runtime/frame.hpp"
 #include "runtime/frame.inline.hpp"
 
-inline bool hframe::operator==(const hframe& other) { 
+const int LogIndexPerWord = 1;
+
+inline bool hframe::operator==(const hframe& other) const { 
     return  HFrameBase::operator==(other) && _fp == other._fp; 
 }
 
@@ -247,7 +249,7 @@ inline void ContMirror::set_last_frame_pd(hframe& f) {
   set_fp(f.fp());
 }
 
-hframe ContMirror::last_frame() {
+const hframe ContMirror::last_frame() {
   return is_empty() ? hframe() : hframe(_sp, _ref_sp, _fp, _pc, *this);
 }
 
@@ -445,24 +447,76 @@ inline void Freeze<ConfigT, mode>::update_register_map(RegisterMap* map, intptr_
 }
 
 template <typename ConfigT, freeze_mode mode>
-template<typename FKind> hframe Freeze<ConfigT, mode>::new_hframe(const frame& f, intptr_t* vsp, intptr_t* hsp, int ref_sp) {
+template<typename FKind> hframe Freeze<ConfigT, mode>::new_callee_hframe(const frame& f, intptr_t* vsp, hframe& caller, int fsize, int num_oops) {
   assert (FKind::interpreted == f.is_interpreted_frame(), "");
 
-  int sp = _cont.stack_index(hsp);
+  int sp = caller.sp() - ContMirror::to_index(fsize);
 
   intptr_t fp;
   CodeBlob* cb;
   if (FKind::interpreted) {
-    fp = _cont.stack_index(hsp + (long)(f.fp() - vsp));
+    fp = sp + ((f.fp() - vsp) << LogIndexPerWord);
     cb = NULL;
   } else {
     fp = (intptr_t)f.fp();
     cb = f.cb();
   }
 
-  hframe result = hframe(sp, ref_sp, fp, f.pc(), cb, FKind::interpreted);
+  hframe result = hframe(sp, caller.ref_sp() - num_oops, fp, f.pc(), cb, FKind::interpreted);
   result.set_link_address<FKind>(_cont);
   return result;
+}
+
+template <typename ConfigT, freeze_mode mode>
+template<bool cont_empty>
+hframe Freeze<ConfigT, mode>::new_bottom_hframe(int sp, int ref_sp, address pc, bool interpreted) {
+  intptr_t fp = _cont.fp();
+  assert (!cont_empty || fp == 0, "");
+  if (cont_empty || !interpreted) {
+    return hframe(sp, ref_sp, fp, pc, NULL, interpreted);
+  } else {
+    return hframe(sp, ref_sp, fp, pc, NULL, interpreted, &_cont.stack_address(fp)[frame::link_offset]);
+  }
+}
+
+template <typename ConfigT, freeze_mode mode>
+template <typename FKind, bool top, bool bottom>
+inline void Freeze<ConfigT, mode>::patch_pd(frame& f, hframe& hf, const hframe& caller) {
+  if (!FKind::interpreted) {
+    if (_fp_oop_info._has_fp_oop) {
+      hf.set_fp(_fp_oop_info._fp_index);
+    }
+  } else {
+    assert (!_fp_oop_info._has_fp_oop, "only compiled frames");
+  }
+
+  if (mode != mode_fast && caller.is_interpreted_frame()) {
+    hf.patch_link_relative(caller.link_address());
+  } else {
+    hf.patch_link(caller.fp()); // caller.fp() already contains _fp_oop_info._fp_index if appropriate, as it was patched when patch is called on the caller
+  }
+  if (FKind::interpreted) {
+    assert (mode != mode_fast, "");
+    if (bottom && _cont.is_empty()) { // dynamic test, but we don't care because we're interpreted
+      hf.patch_real_fp_offset(frame::interpreter_frame_sender_sp_offset, 0);
+    } else {
+      hf.patch_sender_sp_relative(_cont.stack_address(caller.sp()));
+    }
+  }
+}
+
+template <typename ConfigT, freeze_mode mode>
+template <typename FKind, bool top, bool bottom> 
+inline void Freeze<ConfigT, mode>::align(hframe& caller) {
+  if (mode != mode_fast && !FKind::interpreted) {
+    if (caller.is_interpreted_frame())
+      _cont.add_size(sizeof(intptr_t));
+  }
+}
+
+template<typename FKind>
+inline void Thaw::patch_thawed_frame_pd(frame& f, const frame& sender) {
+  patch_link<FKind>(f, sender.fp());
 }
 
 template <typename ConfigT, freeze_mode mode>
@@ -479,80 +533,6 @@ inline void Freeze<ConfigT, mode>::relativize_interpreted_frame_metadata(frame& 
   }
   ContMirror::relativize(vfp, hfp, frame::interpreter_frame_initial_sp_offset); // == block_top == block_bottom
   ContMirror::relativize(vfp, hfp, frame::interpreter_frame_locals_offset);
-}
-
-template <typename ConfigT, freeze_mode mode>
-template <typename FKind, bool top, bool bottom>
-inline void Freeze<ConfigT, mode>::patch_pd(frame& f, hframe& hf, const hframe& caller) {
-  if (!FKind::interpreted) {
-    if (_fp_oop_info._has_fp_oop) {
-      hf.set_fp(_fp_oop_info._fp_index);
-    }
-  } else {
-    assert (!_fp_oop_info._has_fp_oop, "only compiled frames");
-  }
-
-  assert (caller.is_empty() == bottom, "caller.is_empty(): %d bottom: %d", caller.is_empty(), bottom);
-  if (!bottom) {
-    if (mode != mode_fast && caller.is_interpreted_frame()) {
-      hf.patch_link_relative(caller.link_address());
-    } else {
-      hf.patch_link(caller.fp()); // caller.fp() already contains _fp_oop_info._fp_index if appropriate, as it was patched when patch is called on the caller
-    }
-    if (FKind::interpreted) {
-      assert (mode != mode_fast, "");
-      hf.patch_sender_sp_relative(_cont.stack_address(caller.sp()));
-    }
-  } else { // bottom
-    assert (!_cont.is_empty() || (_cont.fp() == 0 && _cont.pc() == NULL), "");
-    assert (_cont.is_flag(FLAG_LAST_FRAME_INTERPRETED) == Interpreter::contains(_cont.pc()), "");
-
-    if (_cont.is_flag(FLAG_LAST_FRAME_INTERPRETED)) { // if empty, we'll take the second branch and patch to 0; we want to avoid a test of is_empty, as we do it in patch, too
-      hf.patch_link_relative(&_cont.stack_address(_cont.fp())[frame::link_offset]);
-    } else {
-      hf.patch_link(_cont.fp());
-    }
-
-    if (FKind::interpreted) {
-      assert (mode != mode_fast, "");
-      _cont.is_empty() // dynamic test, but we don't care because we're interpreted
-        ? hf.patch_real_fp_offset(frame::interpreter_frame_sender_sp_offset, 0)
-        : hf.patch_sender_sp_relative(_cont.stack_address(_cont.sp()));
-    }
-  }
-}
-
-template <typename ConfigT, freeze_mode mode>
-template <typename FKind, bool top, bool bottom> 
-inline void Freeze<ConfigT, mode>::align(hframe& caller) {
-  if (mode != mode_fast && !FKind::interpreted && !bottom) { // we handle bottom in align_pd_bottom
-    if (caller.is_interpreted_frame())
-      _cont.add_size(sizeof(intptr_t));
-  }
-}
-
-template <typename ConfigT, freeze_mode mode>
-template <typename FKind> 
-inline void Freeze<ConfigT, mode>::align_bottom(address entry_pc) {
-  assert (mode != mode_fast || !Interpreter::contains(entry_pc), "");
-  if (mode != mode_fast && !FKind::interpreted) {
-    if (Interpreter::contains(entry_pc))
-      _cont.add_size(sizeof(intptr_t));
-  }
-}
-
-template <typename ConfigT, freeze_mode mode>
-template <typename FKind> 
-inline void Freeze<ConfigT, mode>::align_bottom_interpreted_sender() {
-  assert (mode != mode_fast, "");
-  if (!FKind::interpreted) {
-      _cont.add_size(sizeof(intptr_t));
-  }
-}
-
-template<typename FKind>
-static inline void patch_thawed_frame_pd(frame& f, const frame& sender) {
-  patch_link<FKind>(f, sender.fp());
 }
 
 /// DEBUGGING
