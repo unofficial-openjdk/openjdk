@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,16 @@
  */
 
 /*
+ * @test
  * @bug 4468997
+ * @library /test/lib
  * @summary SO_LINGER is ignored on Windows with Winsock 2
  * @run main RST
  * @run main/othervm -Djava.net.preferIPv4Stack=true RST
  */
 import java.net.*;
 import java.io.*;
+import jdk.test.lib.net.IPSupport;
 
 public class RST implements Runnable {
 
@@ -44,8 +47,10 @@ public class RST implements Runnable {
     }
 
     RST() throws Exception {
-        ServerSocket ss = new ServerSocket(0);
-        client = new Socket("localhost", ss.getLocalPort());
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        ServerSocket ss = new ServerSocket();
+        ss.bind(new InetSocketAddress(loopback, 0));
+        client = new Socket(loopback, ss.getLocalPort());
         Socket server = ss.accept();
 
         Thread thr = new Thread(this);
@@ -77,6 +82,8 @@ public class RST implements Runnable {
 
 
     public static void main(String args[]) throws Exception {
+        IPSupport.throwSkippedExceptionIfNonOperational();
+
         new RST();
     }
 }

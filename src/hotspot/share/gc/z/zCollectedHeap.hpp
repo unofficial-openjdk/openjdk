@@ -27,25 +27,25 @@
 #include "gc/shared/collectedHeap.hpp"
 #include "gc/shared/softRefPolicy.hpp"
 #include "gc/z/zBarrierSet.hpp"
-#include "gc/z/zCollectorPolicy.hpp"
 #include "gc/z/zDirector.hpp"
 #include "gc/z/zDriver.hpp"
-#include "gc/z/zInitialize.hpp"
 #include "gc/z/zHeap.hpp"
+#include "gc/z/zInitialize.hpp"
 #include "gc/z/zRuntimeWorkers.hpp"
 #include "gc/z/zStat.hpp"
+#include "gc/z/zUncommitter.hpp"
 
 class ZCollectedHeap : public CollectedHeap {
   friend class VMStructs;
 
 private:
-  ZCollectorPolicy* _collector_policy;
   SoftRefPolicy     _soft_ref_policy;
   ZBarrierSet       _barrier_set;
   ZInitialize       _initialize;
   ZHeap             _heap;
   ZDirector*        _director;
   ZDriver*          _driver;
+  ZUncommitter*     _uncommitter;
   ZStat*            _stat;
   ZRuntimeWorkers   _runtime_workers;
 
@@ -56,14 +56,13 @@ private:
 public:
   static ZCollectedHeap* heap();
 
-  ZCollectedHeap(ZCollectorPolicy* policy);
+  ZCollectedHeap();
   virtual Name kind() const;
   virtual const char* name() const;
   virtual jint initialize();
   virtual void initialize_serviceability();
   virtual void stop();
 
-  virtual CollectorPolicy* collector_policy() const;
   virtual SoftRefPolicy* soft_ref_policy();
 
   virtual size_t max_capacity() const;

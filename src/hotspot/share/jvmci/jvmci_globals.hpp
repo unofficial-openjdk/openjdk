@@ -25,7 +25,7 @@
 #ifndef SHARE_JVMCI_JVMCI_GLOBALS_HPP
 #define SHARE_JVMCI_JVMCI_GLOBALS_HPP
 
-#include "utilities/ostream.hpp"
+class fileStream;
 
 //
 // Defines all global flags used by the JVMCI compiler. Only flags that need
@@ -53,7 +53,10 @@
           "Prints properties used by the JVMCI compiler and exits")         \
                                                                             \
   experimental(bool, BootstrapJVMCI, false,                                 \
-          "Bootstrap JVMCI before running Java main method")                \
+          "Bootstrap JVMCI before running Java main method. This "          \
+          "initializes the compile queue with a small set of methods "      \
+          "and processes the queue until it is empty. Combining this with " \
+          "-XX:-TieredCompilation makes JVMCI compile more of itself.")     \
                                                                             \
   experimental(bool, EagerJVMCI, false,                                     \
           "Force eager JVMCI initialization")                               \
@@ -125,21 +128,6 @@
                                                                             \
   NOT_COMPILER2(diagnostic(bool, UseMontgomerySquareIntrinsic, false,       \
           "Enables intrinsification of BigInteger.montgomerySquare()"))
-
-
-// Read default values for JVMCI globals
-
-JVMCI_FLAGS(DECLARE_DEVELOPER_FLAG, \
-            DECLARE_PD_DEVELOPER_FLAG, \
-            DECLARE_PRODUCT_FLAG, \
-            DECLARE_PD_PRODUCT_FLAG, \
-            DECLARE_DIAGNOSTIC_FLAG, \
-            DECLARE_PD_DIAGNOSTIC_FLAG, \
-            DECLARE_EXPERIMENTAL_FLAG, \
-            DECLARE_NOTPRODUCT_FLAG, \
-            IGNORE_RANGE, \
-            IGNORE_CONSTRAINT, \
-            IGNORE_WRITEABLE)
 
 // The base name for the shared library containing the JVMCI based compiler
 #define JVMCI_SHARED_LIBRARY_NAME "jvmcicompiler"

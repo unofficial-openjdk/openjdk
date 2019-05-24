@@ -43,6 +43,7 @@ import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import jdk.internal.util.ArraysSupport;
 
 /**
  * A compiled representation of a regular expression.
@@ -1678,7 +1679,13 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
             return;
         int j = i;
         i += 2;
-        int[] newtemp = new int[j + 3*(pLen-i) + 2];
+        int newTempLen;
+        try {
+            newTempLen = Math.addExact(j + 2, Math.multiplyExact(3, pLen - i));
+        } catch (ArithmeticException ae) {
+            throw new OutOfMemoryError();
+        }
+        int[] newtemp = new int[newTempLen];
         System.arraycopy(temp, 0, newtemp, 0, j);
 
         boolean inQuote = true;
@@ -2309,13 +2316,15 @@ loop:   for(int x=0, offset=0; x<nCodePoints; x++, offset+=len) {
         }
     }
 
-    private void append(int ch, int len) {
-        if (len >= buffer.length) {
-            int[] tmp = new int[len+len];
-            System.arraycopy(buffer, 0, tmp, 0, len);
-            buffer = tmp;
+    private void append(int ch, int index) {
+        int len = buffer.length;
+        if (index - len >= 0) {
+            len = ArraysSupport.newLength(len,
+                    1 + index - len, /* minimum growth */
+                    len              /* preferred growth */);
+            buffer = Arrays.copyOf(buffer, len);
         }
-        buffer[len] = ch;
+        buffer[index] = ch;
     }
 
     /**

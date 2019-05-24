@@ -24,7 +24,6 @@
 #ifndef SHARE_GC_SHENANDOAH_C2_SHENANDOAHSUPPORT_HPP
 #define SHARE_GC_SHENANDOAH_C2_SHENANDOAHSUPPORT_HPP
 
-#include "gc/shenandoah/shenandoahBrooksPointer.hpp"
 #include "memory/allocation.hpp"
 #include "opto/addnode.hpp"
 #include "opto/graphKit.hpp"
@@ -44,7 +43,7 @@ private:
     ShenandoahStore,
     ShenandoahValue,
     ShenandoahOopStore,
-    ShenandoahNone,
+    ShenandoahNone
   };
 
   static bool verify_helper(Node* in, Node_Stack& phis, VectorSet& visited, verify_type t, bool trace, Unique_Node_List& barriers_used);

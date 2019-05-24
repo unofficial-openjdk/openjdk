@@ -29,10 +29,10 @@
 #include "code/codeCache.hpp"
 #include "code/icBuffer.hpp"
 #include "gc/g1/g1Allocator.inline.hpp"
+#include "gc/g1/g1Arguments.hpp"
 #include "gc/g1/g1BarrierSet.hpp"
 #include "gc/g1/g1CollectedHeap.inline.hpp"
 #include "gc/g1/g1CollectionSet.hpp"
-#include "gc/g1/g1CollectorPolicy.hpp"
 #include "gc/g1/g1CollectorState.hpp"
 #include "gc/g1/g1ConcurrentRefine.hpp"
 #include "gc/g1/g1ConcurrentRefineThread.hpp"
@@ -83,6 +83,7 @@
 #include "memory/allocation.hpp"
 #include "memory/iterator.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/compressedOops.inline.hpp"
 #include "oops/oop.inline.hpp"
@@ -1036,7 +1037,7 @@ void G1CollectedHeap::prepare_heap_for_full_collection() {
 
 void G1CollectedHeap::verify_before_full_collection(bool explicit_gc) {
   assert(!GCCause::is_user_requested_gc(gc_cause()) || explicit_gc, "invariant");
-  assert(used() == recalculate_used(), "Should be equal");
+  assert_used_and_recalculate_used_equal(this);
   _verifier->verify_region_sets_optional();
   _verifier->verify_before_gc(G1HeapVerifier::G1VerifyFull);
   _verifier->check_bitmaps("Full GC Start");
@@ -1092,7 +1093,7 @@ void G1CollectedHeap::verify_after_full_collection() {
   // the full GC has compacted objects and updated TAMS but not updated
   // the prev bitmap.
   if (G1VerifyBitmaps) {
-    GCTraceTime(Debug, gc)("Clear Prev Bitmap for Verification");
+    GCTraceTime(Debug, gc) tm("Clear Prev Bitmap for Verification");
     _cm->clear_prev_bitmap(workers());
   }
   // This call implicitly verifies that the next bitmap is clear after Full GC.
@@ -1177,9 +1178,6 @@ void G1CollectedHeap::resize_heap_if_necessary() {
   const double maximum_free_percentage = (double) MaxHeapFreeRatio / 100.0;
   const double minimum_used_percentage = 1.0 - maximum_free_percentage;
 
-  const size_t min_heap_size = collector_policy()->min_heap_byte_size();
-  const size_t max_heap_size = collector_policy()->max_heap_byte_size();
-
   // We have to be careful here as these two calculations can overflow
   // 32-bit size_t's.
   double used_after_gc_d = (double) used_after_gc;
@@ -1188,7 +1186,7 @@ void G1CollectedHeap::resize_heap_if_necessary() {
 
   // Let's make sure that they are both under the max heap size, which
   // by default will make them fit into a size_t.
-  double desired_capacity_upper_bound = (double) max_heap_size;
+  double desired_capacity_upper_bound = (double) MaxHeapSize;
   minimum_desired_capacity_d = MIN2(minimum_desired_capacity_d,
                                     desired_capacity_upper_bound);
   maximum_desired_capacity_d = MIN2(maximum_desired_capacity_d,
@@ -1208,11 +1206,11 @@ void G1CollectedHeap::resize_heap_if_necessary() {
   // Should not be greater than the heap max size. No need to adjust
   // it with respect to the heap min size as it's a lower bound (i.e.,
   // we'll try to make the capacity larger than it, not smaller).
-  minimum_desired_capacity = MIN2(minimum_desired_capacity, max_heap_size);
+  minimum_desired_capacity = MIN2(minimum_desired_capacity, MaxHeapSize);
   // Should not be less than the heap min size. No need to adjust it
   // with respect to the heap max size as it's an upper bound (i.e.,
   // we'll try to make the capacity smaller than it, not greater).
-  maximum_desired_capacity =  MAX2(maximum_desired_capacity, min_heap_size);
+  maximum_desired_capacity =  MAX2(maximum_desired_capacity, MinHeapSize);
 
   if (capacity_after_gc < minimum_desired_capacity) {
     // Don't expand unless it's significant
@@ -1484,11 +1482,10 @@ public:
   const char* get_description() { return "Humongous Regions"; }
 };
 
-G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* collector_policy) :
+G1CollectedHeap::G1CollectedHeap() :
   CollectedHeap(),
   _young_gen_sampling_thread(NULL),
   _workers(NULL),
-  _collector_policy(collector_policy),
   _card_table(NULL),
   _soft_ref_policy(),
   _old_set("Old Region Set", new OldRegionSetChecker()),
@@ -1515,7 +1512,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* collector_policy) :
   _survivor(),
   _gc_timer_stw(new (ResourceObj::C_HEAP, mtGC) STWGCTimer()),
   _gc_tracer_stw(new (ResourceObj::C_HEAP, mtGC) G1NewTracer()),
-  _policy(G1Policy::create_policy(collector_policy, _gc_timer_stw)),
+  _policy(G1Policy::create_policy(_gc_timer_stw)),
   _heap_sizing_policy(NULL),
   _collection_set(this, _policy),
   _hot_card_cache(NULL),
@@ -1539,7 +1536,7 @@ G1CollectedHeap::G1CollectedHeap(G1CollectorPolicy* collector_policy) :
   _ref_processor_cm(NULL),
   _is_alive_closure_cm(this),
   _is_subject_to_discovery_cm(this),
-  _in_cset_fast_test() {
+  _region_attr() {
 
   _verifier = new G1HeapVerifier(this);
 
@@ -1644,14 +1641,13 @@ jint G1CollectedHeap::initialize() {
   // HeapWordSize).
   guarantee(HeapWordSize == wordSize, "HeapWordSize must equal wordSize");
 
-  size_t init_byte_size = collector_policy()->initial_heap_byte_size();
-  size_t max_byte_size = _collector_policy->heap_reserved_size_bytes();
-  size_t heap_alignment = collector_policy()->heap_alignment();
+  size_t init_byte_size = InitialHeapSize;
+  size_t reserved_byte_size = G1Arguments::heap_reserved_size_bytes();
 
   // Ensure that the sizes are properly aligned.
   Universe::check_alignment(init_byte_size, HeapRegion::GrainBytes, "g1 heap");
-  Universe::check_alignment(max_byte_size, HeapRegion::GrainBytes, "g1 heap");
-  Universe::check_alignment(max_byte_size, heap_alignment, "g1 heap");
+  Universe::check_alignment(reserved_byte_size, HeapRegion::GrainBytes, "g1 heap");
+  Universe::check_alignment(reserved_byte_size, HeapAlignment, "g1 heap");
 
   // Reserve the maximum.
 
@@ -1666,8 +1662,8 @@ jint G1CollectedHeap::initialize() {
   // If this happens then we could end up using a non-optimal
   // compressed oops mode.
 
-  ReservedSpace heap_rs = Universe::reserve_heap(max_byte_size,
-                                                 heap_alignment);
+  ReservedSpace heap_rs = Universe::reserve_heap(reserved_byte_size,
+                                                 HeapAlignment);
 
   initialize_reserved_region((HeapWord*)heap_rs.base(), (HeapWord*)(heap_rs.base() + heap_rs.size()));
 
@@ -1699,7 +1695,7 @@ jint G1CollectedHeap::initialize() {
   _hot_card_cache = new G1HotCardCache(this);
 
   // Carve out the G1 part of the heap.
-  ReservedSpace g1_rs = heap_rs.first_part(max_byte_size);
+  ReservedSpace g1_rs = heap_rs.first_part(reserved_byte_size);
   size_t page_size = actual_reserved_page_size(heap_rs);
   G1RegionToSpaceMapper* heap_storage =
     G1RegionToSpaceMapper::create_heap_mapper(g1_rs,
@@ -1714,8 +1710,8 @@ jint G1CollectedHeap::initialize() {
   }
 
   os::trace_page_sizes("Heap",
-                       collector_policy()->min_heap_byte_size(),
-                       max_byte_size,
+                       MinHeapSize,
+                       reserved_byte_size,
                        page_size,
                        heap_rs.base(),
                        heap_rs.size());
@@ -1743,7 +1739,7 @@ jint G1CollectedHeap::initialize() {
   G1RegionToSpaceMapper* next_bitmap_storage =
     create_aux_memory_mapper("Next Bitmap", bitmap_size, G1CMBitMap::heap_map_factor());
 
-  _hrm = HeapRegionManager::create_manager(this, _collector_policy);
+  _hrm = HeapRegionManager::create_manager(this);
 
   _hrm->initialize(heap_storage, prev_bitmap_storage, next_bitmap_storage, bot_storage, cardtable_storage, card_counts_storage);
   _card_table->initialize(cardtable_storage);
@@ -1776,7 +1772,7 @@ jint G1CollectedHeap::initialize() {
     HeapWord* end = _hrm->reserved().end();
     size_t granularity = HeapRegion::GrainBytes;
 
-    _in_cset_fast_test.initialize(start, end, granularity);
+    _region_attr.initialize(start, end, granularity);
     _humongous_reclaim_candidates.initialize(start, end, granularity);
   }
 
@@ -1870,10 +1866,6 @@ void G1CollectedHeap::safepoint_synchronize_end() {
   SuspendibleThreadSet::desynchronize();
 }
 
-size_t G1CollectedHeap::conservative_max_heap_alignment() {
-  return HeapRegion::max_region_size();
-}
-
 void G1CollectedHeap::post_initialize() {
   CollectedHeap::post_initialize();
   ref_processing_init();
@@ -1938,10 +1930,6 @@ void G1CollectedHeap::ref_processing_init() {
                            true,                                 // Reference discovery is atomic
                            &_is_alive_closure_stw,               // is alive closure
                            true);                                // allow changes to number of processing threads
-}
-
-CollectorPolicy* G1CollectedHeap::collector_policy() const {
-  return _collector_policy;
 }
 
 SoftRefPolicy* G1CollectedHeap::soft_ref_policy() {
@@ -2333,7 +2321,7 @@ bool G1CollectedHeap::request_concurrent_phase(const char* phase) {
 }
 
 bool G1CollectedHeap::is_heterogeneous_heap() const {
-  return _collector_policy->is_heterogeneous_heap();
+  return G1Arguments::is_heterogeneous_heap();
 }
 
 class PrintRegionClosure: public HeapRegionClosure {
@@ -2638,7 +2626,7 @@ bool G1CollectedHeap::is_potential_eager_reclaim_candidate(HeapRegion* r) const 
          G1EagerReclaimHumongousObjects && rem_set->is_empty();
 }
 
-class RegisterHumongousWithInCSetFastTestClosure : public HeapRegionClosure {
+class RegisterRegionsWithRegionAttrTableClosure : public HeapRegionClosure {
  private:
   size_t _total_humongous;
   size_t _candidate_humongous;
@@ -2702,24 +2690,26 @@ class RegisterHumongousWithInCSetFastTestClosure : public HeapRegionClosure {
   }
 
  public:
-  RegisterHumongousWithInCSetFastTestClosure()
+  RegisterRegionsWithRegionAttrTableClosure()
   : _total_humongous(0),
     _candidate_humongous(0),
     _dcq(&G1BarrierSet::dirty_card_queue_set()) {
   }
 
   virtual bool do_heap_region(HeapRegion* r) {
+    G1CollectedHeap* g1h = G1CollectedHeap::heap();
+
     if (!r->is_starts_humongous()) {
+      g1h->register_region_with_region_attr(r);
       return false;
     }
-    G1CollectedHeap* g1h = G1CollectedHeap::heap();
 
     bool is_candidate = humongous_region_is_candidate(g1h, r);
     uint rindex = r->hrm_index();
     g1h->set_humongous_reclaim_candidate(rindex, is_candidate);
     if (is_candidate) {
       _candidate_humongous++;
-      g1h->register_humongous_region_with_cset(rindex);
+      g1h->register_humongous_region_with_region_attr(rindex);
       // Is_candidate already filters out humongous object with large remembered sets.
       // If we have a humongous object with a few remembered sets, we simply flush these
       // remembered set entries into the DCQS. That will result in automatic
@@ -2755,8 +2745,14 @@ class RegisterHumongousWithInCSetFastTestClosure : public HeapRegionClosure {
         // collecting remembered set entries for humongous regions that were not
         // reclaimed.
         r->rem_set()->set_state_complete();
+#ifdef ASSERT
+        G1HeapRegionAttr region_attr = g1h->region_attr(oop(r->bottom()));
+        assert(region_attr.needs_remset_update(), "must be");
+#endif
       }
       assert(r->rem_set()->is_empty(), "At this point any humongous candidate remembered set must be empty.");
+    } else {
+      g1h->register_region_with_region_attr(r);
     }
     _total_humongous++;
 
@@ -2769,21 +2765,15 @@ class RegisterHumongousWithInCSetFastTestClosure : public HeapRegionClosure {
   void flush_rem_set_entries() { _dcq.flush(); }
 };
 
-void G1CollectedHeap::register_humongous_regions_with_cset() {
-  if (!G1EagerReclaimHumongousObjects) {
-    phase_times()->record_fast_reclaim_humongous_stats(0.0, 0, 0);
-    return;
-  }
-  double time = os::elapsed_counter();
+void G1CollectedHeap::register_regions_with_region_attr() {
+  Ticks start = Ticks::now();
 
-  // Collect reclaim candidate information and register candidates with cset.
-  RegisterHumongousWithInCSetFastTestClosure cl;
+  RegisterRegionsWithRegionAttrTableClosure cl;
   heap_region_iterate(&cl);
 
-  time = ((double)(os::elapsed_counter() - time) / os::elapsed_frequency()) * 1000.0;
-  phase_times()->record_fast_reclaim_humongous_stats(time,
-                                                     cl.total_humongous(),
-                                                     cl.candidate_humongous());
+  phase_times()->record_register_regions((Ticks::now() - start).seconds() * 1000.0,
+                                         cl.total_humongous(),
+                                         cl.candidate_humongous());
   _has_humongous_reclaim_candidates = cl.candidate_humongous() > 0;
 
   // Finally flush all remembered set entries to re-check into the global DCQS.
@@ -2873,7 +2863,7 @@ void G1CollectedHeap::start_new_collection_set() {
 
   collection_set()->start_incremental_building();
 
-  clear_cset_fast_test();
+  clear_region_attr();
 
   guarantee(_eden.length() == 0, "eden should have been cleared");
   policy()->transfer_survivors_to_cset(survivor());
@@ -3314,17 +3304,17 @@ public:
     oop obj = *p;
     assert(obj != NULL, "the caller should have filtered out NULL values");
 
-    const InCSetState cset_state =_g1h->in_cset_state(obj);
-    if (!cset_state.is_in_cset_or_humongous()) {
+    const G1HeapRegionAttr region_attr =_g1h->region_attr(obj);
+    if (!region_attr.is_in_cset_or_humongous()) {
       return;
     }
-    if (cset_state.is_in_cset()) {
+    if (region_attr.is_in_cset()) {
       assert( obj->is_forwarded(), "invariant" );
       *p = obj->forwardee();
     } else {
       assert(!obj->is_forwarded(), "invariant" );
-      assert(cset_state.is_humongous(),
-             "Only allowed InCSet state is IsHumongous, but is %d", cset_state.value());
+      assert(region_attr.is_humongous(),
+             "Only allowed G1HeapRegionAttr state is IsHumongous, but is %d", region_attr.type());
      _g1h->set_humongous_is_live(obj);
     }
   }
@@ -3584,10 +3574,10 @@ void G1CollectedHeap::pre_evacuate_collection_set(G1EvacuationInfo& evacuation_i
   // Initialize the GC alloc regions.
   _allocator->init_gc_alloc_regions(evacuation_info);
 
-  register_humongous_regions_with_cset();
-  assert(_verifier->check_cset_fast_test(), "Inconsistency in the InCSetState table.");
+  register_regions_with_region_attr();
+  assert(_verifier->check_region_attr_table(), "Inconsistency in the region attributes table.");
 
-  rem_set()->prepare_for_oops_into_collection_set_do();
+  rem_set()->prepare_for_scan_rem_set();
   _preserved_marks_set.assert_empty();
 
 #if COMPILER2_OR_JVMCI
@@ -3800,7 +3790,7 @@ void G1CollectedHeap::evacuate_optional_collection_set(G1ParScanThreadStateSet* 
 void G1CollectedHeap::post_evacuate_collection_set(G1EvacuationInfo& evacuation_info, G1ParScanThreadStateSet* per_thread_states) {
   // Also cleans the card table from temporary duplicate detection information used
   // during UpdateRS/ScanRS.
-  rem_set()->cleanup_after_oops_into_collection_set_do();
+  rem_set()->cleanup_after_scan_rem_set();
 
   // Process any discovered reference objects - we have
   // to do this _before_ we retire the GC alloc regions
@@ -3982,7 +3972,7 @@ private:
       G1CollectedHeap* g1h = G1CollectedHeap::heap();
 
       assert(r->in_collection_set(), "Region %u should be in collection set.", r->hrm_index());
-      g1h->clear_in_cset(r);
+      g1h->clear_region_attr(r);
 
       if (r->is_young()) {
         assert(r->young_index_in_cset() != -1 && (uint)r->young_index_in_cset() < g1h->collection_set()->young_region_length(),
@@ -4043,7 +4033,7 @@ private:
       G1Policy* policy = g1h->policy();
       policy->add_bytes_allocated_in_old_since_last_gc(_bytes_allocated_in_old_since_last_gc);
 
-      g1h->alloc_buffer_stats(InCSetState::Old)->add_failure_used_and_waste(_failure_used_words, _failure_waste_words);
+      g1h->alloc_buffer_stats(G1HeapRegionAttr::Old)->add_failure_used_and_waste(_failure_used_words, _failure_waste_words);
     }
   };
 
@@ -4377,7 +4367,7 @@ class G1AbandonCollectionSetClosure : public HeapRegionClosure {
 public:
   virtual bool do_heap_region(HeapRegion* r) {
     assert(r->in_collection_set(), "Region %u must have been in collection set", r->hrm_index());
-    G1CollectedHeap::heap()->clear_in_cset(r);
+    G1CollectedHeap::heap()->clear_region_attr(r);
     r->set_young_index_in_cset(-1);
     return false;
   }
@@ -4552,9 +4542,7 @@ void G1CollectedHeap::rebuild_region_sets(bool free_list_only) {
       _archive_allocator->clear_used();
     }
   }
-  assert(used() == recalculate_used(),
-         "inconsistent used(), value: " SIZE_FORMAT " recalculated: " SIZE_FORMAT,
-         used(), recalculate_used());
+  assert_used_and_recalculate_used_equal(this);
 }
 
 // Methods for the mutator alloc region
@@ -4596,7 +4584,7 @@ void G1CollectedHeap::retire_mutator_alloc_region(HeapRegion* alloc_region,
 
 // Methods for the GC alloc regions
 
-bool G1CollectedHeap::has_more_regions(InCSetState dest) {
+bool G1CollectedHeap::has_more_regions(G1HeapRegionAttr dest) {
   if (dest.is_old()) {
     return true;
   } else {
@@ -4604,7 +4592,7 @@ bool G1CollectedHeap::has_more_regions(InCSetState dest) {
   }
 }
 
-HeapRegion* G1CollectedHeap::new_gc_alloc_region(size_t word_size, InCSetState dest) {
+HeapRegion* G1CollectedHeap::new_gc_alloc_region(size_t word_size, G1HeapRegionAttr dest) {
   assert(FreeList_lock->owned_by_self(), "pre-condition");
 
   if (!has_more_regions(dest)) {
@@ -4632,6 +4620,7 @@ HeapRegion* G1CollectedHeap::new_gc_alloc_region(size_t word_size, InCSetState d
       _verifier->check_bitmaps("Old Region Allocation", new_alloc_region);
     }
     _policy->remset_tracker()->update_at_allocate(new_alloc_region);
+    register_region_with_region_attr(new_alloc_region);
     _hr_printer.alloc(new_alloc_region);
     return new_alloc_region;
   }
@@ -4640,12 +4629,12 @@ HeapRegion* G1CollectedHeap::new_gc_alloc_region(size_t word_size, InCSetState d
 
 void G1CollectedHeap::retire_gc_alloc_region(HeapRegion* alloc_region,
                                              size_t allocated_bytes,
-                                             InCSetState dest) {
+                                             G1HeapRegionAttr dest) {
   policy()->record_bytes_copied_during_gc(allocated_bytes);
   if (dest.is_old()) {
     old_set_add(alloc_region);
   } else {
-    assert(dest.is_young(), "Retiring alloc region should be young(%d)", dest.value());
+    assert(dest.is_young(), "Retiring alloc region should be young (%d)", dest.type());
     _survivor.add_used_bytes(allocated_bytes);
   }
 

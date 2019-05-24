@@ -28,8 +28,8 @@
 #include "code/compressedStream.hpp"
 #include "code/vmreg.hpp"
 #include "memory/allocation.hpp"
+#include "memory/iterator.hpp"
 #include "oops/oopsHierarchy.hpp"
-#include "utilities/growableArray.hpp"
 
 // Interface for generating the frame map for compiled code.  A frame map
 // describes for a specific pc whether each register and frame stack slot is:
@@ -42,8 +42,8 @@
 
 class frame;
 class RegisterMap;
-class DerivedPointerEntry;
 class OopClosure;
+class CodeBlob;
 
 class OopMapValue {
   friend class VMStructs;
@@ -142,7 +142,7 @@ public:
   }
 
   void print_on(outputStream* st) const;
-  void print() const { print_on(tty); }
+  void print() const;
 };
 
 
@@ -211,7 +211,7 @@ class OopMap: public ResourceObj {
 
   // Printing
   void print_on(outputStream* st) const;
-  void print() const { print_on(tty); }
+  void print() const;
   bool equals(const OopMap* other) const;
 };
 
@@ -255,7 +255,7 @@ class OopMapSet : public ResourceObj {
   int heap_size() const;
 
   // Methods oops_do() and all_do() filter out NULL oops and
-  // oop == Universe::narrow_oop_base() before passing oops
+  // oop == CompressedOops::base() before passing oops
   // to closures.
 
   static const ImmutableOopMap* find_map(const CodeBlob* cb, address pc);
@@ -280,7 +280,7 @@ class OopMapSet : public ResourceObj {
 
   // Printing
   void print_on(outputStream* st) const;
-  void print() const { print_on(tty); }
+  void print() const;
 };
 
 class ImmutableOopMapBuilder;
@@ -350,7 +350,7 @@ public:
 
   // Printing
   void print_on(outputStream* st) const;
-  void print() const { print_on(tty); }
+  void print() const;
 
   void generate_stub() const;
   address freeze_stub() const { return _freeze_stub; }
@@ -407,7 +407,7 @@ public:
   int nr_of_bytes() const { return _size; }
 
   void print_on(outputStream* st) const;
-  void print() const { print_on(tty); }
+  void print() const;
 };
 
 class OopMapStream : public StackObj {
@@ -513,12 +513,6 @@ private:
   void fill(ImmutableOopMapSet* set, int size);
 };
 
-class AddDerivedOop : public DerivedOopClosure {
-public:
-  enum { SkipNull = true, NeedsLock = true };
-  virtual void do_derived_oop(oop* base, oop* derived);
-};
-
 class SkipNullValue {
 public:
   static inline bool should_skip(oop val);
@@ -534,9 +528,8 @@ class OopMapDo {
 private:
   OopFnT* _oop_fn;
   DerivedOopFnT* _derived_oop_fn;
-  bool _lock_derived_table;
 public:
-  OopMapDo(OopFnT* oop_fn, DerivedOopFnT* derived_oop_fn, bool lock_derived_table = true) : _oop_fn(oop_fn), _derived_oop_fn(derived_oop_fn), _lock_derived_table(lock_derived_table) {}
+  OopMapDo(OopFnT* oop_fn, DerivedOopFnT* derived_oop_fn) : _oop_fn(oop_fn), _derived_oop_fn(derived_oop_fn) {}
   void oops_do(const frame* fr, const RegisterMap* reg_map, const ImmutableOopMap* oopmap);
 private:
   template <typename OopMapStreamT>
@@ -556,13 +549,14 @@ private:
 class DerivedPointerTable : public AllStatic {
   friend class VMStructs;
  private:
-   static GrowableArray<DerivedPointerEntry*>* _list;
-   static bool _active;                      // do not record pointers for verify pass etc.
+  class Entry;
+  static bool _active;                      // do not record pointers for verify pass etc.
+
  public:
   static void clear();                       // Called before scavenge/GC
   static void add(oop *derived, oop *base);  // Called during scavenge/GC
   static void update_pointers();             // Called after  scavenge/GC
-  static bool is_empty()                     { return _list == NULL || _list->is_empty(); }
+  static bool is_empty();
   static bool is_active()                    { return _active; }
   static void set_active(bool value)         { _active = value; }
 };

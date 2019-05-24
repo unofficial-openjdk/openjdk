@@ -35,6 +35,7 @@
 #include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/objArrayKlass.hpp"
 #include "oops/objArrayOop.hpp"
 #include "oops/oop.inline.hpp"
@@ -382,7 +383,10 @@ JvmtiExport::get_jvmti_interface(JavaVM *jvm, void **penv, jint version) {
       }
       break;
     default:
-      return JNI_EVERSION;  // unsupported major version number
+      // Starting from 13 we do not care about minor version anymore
+      if (major < 13 || major > Abstract_VM_Version::vm_major_version()) {
+        return JNI_EVERSION;  // unsupported major version number
+      }
   }
 
   if (JvmtiEnv::get_phase() == JVMTI_PHASE_LIVE) {

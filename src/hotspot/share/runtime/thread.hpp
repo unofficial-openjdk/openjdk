@@ -733,7 +733,7 @@ protected:
   // Printing
   void print_on(outputStream* st, bool print_extended_info) const;
   virtual void print_on(outputStream* st) const { print_on(st, false); }
-  void print() const { print_on(tty); }
+  void print() const;
   virtual void print_on_error(outputStream* st, char* buf, int buflen) const;
   void print_value_on(outputStream* st) const;
 
@@ -985,7 +985,6 @@ class JavaThread: public Thread {
   friend class WhiteBox;
   friend class Continuation;
  private:
-  JavaThread*    _next;                          // The next thread in the Threads list
   bool           _on_thread_list;                // Is set when this JavaThread is added to the Threads list
   oop            _threadObj;                     // The Java level thread object
 
@@ -1156,7 +1155,7 @@ class JavaThread: public Thread {
 
  public:
   static jlong* _jvmci_old_thread_counters;
-  static void collect_counters(JVMCIEnv* JVMCIENV, JVMCIPrimitiveArray array);
+  static void collect_counters(jlong* array, int length);
  private:
 #endif // INCLUDE_JVMCI
 
@@ -1254,10 +1253,6 @@ class JavaThread: public Thread {
   // Testers
   virtual bool is_Java_thread() const            { return true;  }
   virtual bool can_call_java() const             { return true; }
-
-  // Thread chain operations
-  JavaThread* next() const                       { return _next; }
-  void set_next(JavaThread* p)                   { _next = p; }
 
   // Thread oop. threadObj() can be NULL for initial JavaThread
   // (or for threads attached via JNI)
@@ -1894,6 +1889,7 @@ class JavaThread: public Thread {
   char* name() const { return (char*)get_thread_name(); }
   void print_on(outputStream* st, bool print_extended_info) const;
   void print_on(outputStream* st) const { print_on(st, false); }
+  void print() const;
   void print_value();
   void print_thread_state_on(outputStream*) const      PRODUCT_RETURN;
   void print_thread_state() const                      PRODUCT_RETURN;
@@ -2235,7 +2231,6 @@ inline CompilerThread* CompilerThread::current() {
 class Threads: AllStatic {
   friend class VMStructs;
  private:
-  static JavaThread* _thread_list;
   static int         _number_of_threads;
   static int         _number_of_non_daemon_threads;
   static int         _return_code;

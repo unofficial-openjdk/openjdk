@@ -65,7 +65,6 @@ G1GCPhaseTimes::G1GCPhaseTimes(STWGCTimer* gc_timer, uint max_gc_threads) :
   _gc_par_phases[CMRefRoots] = new WorkerDataArray<double>(max_gc_threads, "CM RefProcessor Roots (ms):");
   _gc_par_phases[WaitForStrongCLD] = new WorkerDataArray<double>(max_gc_threads, "Wait For Strong CLD (ms):");
   _gc_par_phases[WeakCLDRoots] = new WorkerDataArray<double>(max_gc_threads, "Weak CLD Roots (ms):");
-  _gc_par_phases[SATBFiltering] = new WorkerDataArray<double>(max_gc_threads, "SATB Filtering (ms):");
 
   _gc_par_phases[UpdateRS] = new WorkerDataArray<double>(max_gc_threads, "Update RS (ms):");
   if (G1HotCardCache::default_use_cache()) {
@@ -171,7 +170,7 @@ void G1GCPhaseTimes::reset() {
   _recorded_total_free_cset_time_ms = 0.0;
   _recorded_serial_free_cset_time_ms = 0.0;
   _cur_fast_reclaim_humongous_time_ms = 0.0;
-  _cur_fast_reclaim_humongous_register_time_ms = 0.0;
+  _cur_region_register_time = 0.0;
   _cur_fast_reclaim_humongous_total = 0;
   _cur_fast_reclaim_humongous_candidates = 0;
   _cur_fast_reclaim_humongous_reclaimed = 0;
@@ -365,7 +364,7 @@ double G1GCPhaseTimes::print_pre_evacuate_collection_set() const {
   const double sum_ms = _root_region_scan_wait_time_ms +
                         _recorded_young_cset_choice_time_ms +
                         _recorded_non_young_cset_choice_time_ms +
-                        _cur_fast_reclaim_humongous_register_time_ms +
+                        _cur_region_register_time +
                         _recorded_clear_claimed_marks_time_ms;
 
   info_time("Pre Evacuate Collection Set", sum_ms);
@@ -375,8 +374,8 @@ double G1GCPhaseTimes::print_pre_evacuate_collection_set() const {
   }
   debug_time("Prepare TLABs", _cur_prepare_tlab_time_ms);
   debug_time("Choose Collection Set", (_recorded_young_cset_choice_time_ms + _recorded_non_young_cset_choice_time_ms));
+  debug_time("Region Register", _cur_region_register_time);
   if (G1EagerReclaimHumongousObjects) {
-    debug_time("Humongous Register", _cur_fast_reclaim_humongous_register_time_ms);
     trace_count("Humongous Total", _cur_fast_reclaim_humongous_total);
     trace_count("Humongous Candidate", _cur_fast_reclaim_humongous_candidates);
   }
@@ -406,7 +405,7 @@ double G1GCPhaseTimes::print_evacuate_collection_set() const {
 
   trace_phase(_gc_par_phases[GCWorkerStart], false);
   debug_phase(_gc_par_phases[ExtRootScan]);
-  for (int i = ExtRootScanSubPhasesStart; i <= ExtRootScanSubPhasesEnd; i++) {
+  for (int i = ExtRootScanSubPhasesFirst; i <= ExtRootScanSubPhasesLast; i++) {
     trace_phase(_gc_par_phases[i]);
   }
   if (G1HotCardCache::default_use_cache()) {
@@ -531,7 +530,6 @@ const char* G1GCPhaseTimes::phase_name(GCParPhases phase) {
       "CMRefRoots",
       "WaitForStrongCLD",
       "WeakCLDRoots",
-      "SATBFiltering",
       "UpdateRS",
       "ScanHCC",
       "ScanRS",

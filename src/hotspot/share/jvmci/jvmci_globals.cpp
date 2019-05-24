@@ -32,18 +32,6 @@
 
 fileStream* JVMCIGlobals::_jni_config_file = NULL;
 
-JVMCI_FLAGS(MATERIALIZE_DEVELOPER_FLAG, \
-            MATERIALIZE_PD_DEVELOPER_FLAG, \
-            MATERIALIZE_PRODUCT_FLAG, \
-            MATERIALIZE_PD_PRODUCT_FLAG, \
-            MATERIALIZE_DIAGNOSTIC_FLAG, \
-            MATERIALIZE_PD_DIAGNOSTIC_FLAG, \
-            MATERIALIZE_EXPERIMENTAL_FLAG, \
-            MATERIALIZE_NOTPRODUCT_FLAG,
-            IGNORE_RANGE, \
-            IGNORE_CONSTRAINT, \
-            IGNORE_WRITEABLE)
-
 // Return true if jvmci flags are consistent.
 bool JVMCIGlobals::check_jvmci_flags_are_consistent() {
 
@@ -83,7 +71,7 @@ bool JVMCIGlobals::check_jvmci_flags_are_consistent() {
     }
     FLAG_SET_DEFAULT(EnableJVMCI, true);
     if (BootstrapJVMCI && UseJVMCINativeLibrary) {
-      jio_fprintf(defaultStream::error_stream(), "-XX:+BootstrapJVMCI is not compatible with -XX:+UseJVMCINativeLibrary");
+      jio_fprintf(defaultStream::error_stream(), "-XX:+BootstrapJVMCI is not compatible with -XX:+UseJVMCINativeLibrary\n");
       return false;
     }
   }

@@ -40,6 +40,7 @@
 #include "classfile/protectionDomainCache.hpp"
 #include "classfile/resolutionErrors.hpp"
 #include "classfile/stringTable.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/codeCache.hpp"
@@ -56,6 +57,7 @@
 #include "memory/metaspaceClosure.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/instanceKlass.hpp"
 #include "oops/instanceRefKlass.hpp"
@@ -262,7 +264,7 @@ InstanceKlass* SystemDictionary::resolve_instance_class_or_null_helper(Symbol* c
     ResourceMark rm(THREAD);
     // Ignore wrapping L and ;.
     TempNewSymbol name = SymbolTable::new_symbol(class_name->as_C_string() + 1,
-                                   class_name->utf8_length() - 2, CHECK_NULL);
+                                                 class_name->utf8_length() - 2);
     return resolve_instance_class_or_null(name, class_loader, protection_domain, THREAD);
   } else {
     return resolve_instance_class_or_null(class_name, class_loader, protection_domain, THREAD);
@@ -2355,7 +2357,7 @@ Symbol* SystemDictionary::check_signature_loaders(Symbol* signature,
   SignatureStream sig_strm(signature, is_method);
   while (!sig_strm.is_done()) {
     if (sig_strm.is_object()) {
-      Symbol* sig = sig_strm.as_symbol(CHECK_NULL);
+      Symbol* sig = sig_strm.as_symbol();
       if (!add_loader_constraint(sig, loader1, loader2, THREAD)) {
         return sig;
       }
@@ -2625,7 +2627,7 @@ Handle SystemDictionary::find_method_handle_type(Symbol* signature,
       mirror = ss.as_java_mirror(class_loader, protection_domain,
                                  SignatureStream::NCDFError, CHECK_(empty));
     }
-    assert(mirror != NULL, "%s", ss.as_symbol(THREAD)->as_C_string());
+    assert(mirror != NULL, "%s", ss.as_symbol()->as_C_string());
     if (ss.at_return_type())
       rt = Handle(THREAD, mirror);
     else
@@ -2824,6 +2826,8 @@ void SystemDictionary::print_on(outputStream *st) {
   st->cr();
 }
 
+void SystemDictionary::print() { print_on(tty); }
+
 void SystemDictionary::verify() {
   guarantee(constraints() != NULL,
             "Verify of loader constraints failed");
@@ -2850,11 +2854,23 @@ void SystemDictionary::dump(outputStream *st, bool verbose) {
     print_on(st);
   } else {
     CDS_ONLY(SystemDictionaryShared::print_table_statistics(st));
-    ClassLoaderDataGraph::print_dictionary_statistics(st);
+    ClassLoaderDataGraph::print_table_statistics(st);
     placeholders()->print_table_statistics(st, "Placeholder Table");
     constraints()->print_table_statistics(st, "LoaderConstraints Table");
-    _pd_cache_table->print_table_statistics(st, "ProtectionDomainCache Table");
+    pd_cache_table()->print_table_statistics(st, "ProtectionDomainCache Table");
   }
+}
+
+TableStatistics SystemDictionary::placeholders_statistics() {
+  return placeholders()->statistics_calculate();
+}
+
+TableStatistics SystemDictionary::loader_constraints_statistics() {
+  return constraints()->statistics_calculate();
+}
+
+TableStatistics SystemDictionary::protection_domain_cache_statistics() {
+  return pd_cache_table()->statistics_calculate();
 }
 
 // Utility for dumping dictionaries.

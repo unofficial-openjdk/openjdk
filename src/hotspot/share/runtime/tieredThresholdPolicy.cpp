@@ -238,7 +238,7 @@ void TieredThresholdPolicy::initialize() {
       // Lower the compiler count such that all buffers fit into the code cache
       count = MAX2(max_count, c1_only ? 1 : 2);
     }
-    FLAG_SET_ERGO(intx, CICompilerCount, count);
+    FLAG_SET_ERGO(CICompilerCount, count);
   }
 #else
   // On 32-bit systems, the number of compiler threads is limited to 3.
@@ -250,7 +250,7 @@ void TieredThresholdPolicy::initialize() {
   /// available to the VM and thus cause the VM to crash.
   if (FLAG_IS_DEFAULT(CICompilerCount)) {
     count = 3;
-    FLAG_SET_ERGO(intx, CICompilerCount, count);
+    FLAG_SET_ERGO(CICompilerCount, count);
   }
 #endif
 
@@ -353,6 +353,16 @@ CompileTask* TieredThresholdPolicy::select_task(CompileQueue* compile_queue) {
       TieredStopAtLevel > CompLevel_full_profile &&
       max_method != NULL && is_method_profiled(max_method)) {
     max_task->set_comp_level(CompLevel_limited_profile);
+
+    if (CompileBroker::compilation_is_complete(max_method, max_task->osr_bci(), CompLevel_limited_profile)) {
+      if (PrintTieredEvents) {
+        print_event(REMOVE_FROM_QUEUE, max_method, max_method, max_task->osr_bci(), (CompLevel)max_task->comp_level());
+      }
+      compile_queue->remove_and_mark_stale(max_task);
+      max_method->clear_queued_for_compilation();
+      return NULL;
+    }
+
     if (PrintTieredEvents) {
       print_event(UPDATE_IN_QUEUE, max_method, max_method, max_task->osr_bci(), (CompLevel)max_task->comp_level());
     }

@@ -23,13 +23,14 @@
 
 #include "precompiled.hpp"
 #include "memory/allocation.hpp"
-#include "gc/shenandoah/shenandoahBrooksPointer.hpp"
+#include "gc/shenandoah/shenandoahForwarding.hpp"
 #include "gc/shenandoah/shenandoahHeapRegionSet.inline.hpp"
 #include "gc/shenandoah/shenandoahHeap.inline.hpp"
 #include "gc/shenandoah/shenandoahHeapRegion.hpp"
 #include "gc/shenandoah/shenandoahMarkingContext.inline.hpp"
 #include "gc/shenandoah/shenandoahTraversalGC.hpp"
 #include "gc/shared/space.inline.hpp"
+#include "jfr/jfrEvents.hpp"
 #include "memory/iterator.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
@@ -93,7 +94,7 @@ void ShenandoahHeapRegion::make_regular_allocation() {
     case _empty_uncommitted:
       do_commit();
     case _empty_committed:
-      _state = _regular;
+      set_state(_regular);
     case _regular:
     case _pinned:
       return;
@@ -114,10 +115,10 @@ void ShenandoahHeapRegion::make_regular_bypass() {
     case _cset:
     case _humongous_start:
     case _humongous_cont:
-      _state = _regular;
+      set_state(_regular);
       return;
     case _pinned_cset:
-      _state = _pinned;
+      set_state(_pinned);
       return;
     case _regular:
     case _pinned:
@@ -133,7 +134,7 @@ void ShenandoahHeapRegion::make_humongous_start() {
     case _empty_uncommitted:
       do_commit();
     case _empty_committed:
-      _state = _humongous_start;
+      set_state(_humongous_start);
       return;
     default:
       report_illegal_transition("humongous start allocation");
@@ -149,7 +150,7 @@ void ShenandoahHeapRegion::make_humongous_start_bypass() {
     case _regular:
     case _humongous_start:
     case _humongous_cont:
-      _state = _humongous_start;
+      set_state(_humongous_start);
       return;
     default:
       report_illegal_transition("humongous start bypass");
@@ -162,7 +163,7 @@ void ShenandoahHeapRegion::make_humongous_cont() {
     case _empty_uncommitted:
       do_commit();
     case _empty_committed:
-      _state = _humongous_cont;
+     set_state(_humongous_cont);
       return;
     default:
       report_illegal_transition("humongous continuation allocation");
@@ -178,7 +179,7 @@ void ShenandoahHeapRegion::make_humongous_cont_bypass() {
     case _regular:
     case _humongous_start:
     case _humongous_cont:
-      _state = _humongous_cont;
+      set_state(_humongous_cont);
       return;
     default:
       report_illegal_transition("humongous continuation bypass");
@@ -190,14 +191,14 @@ void ShenandoahHeapRegion::make_pinned() {
   switch (_state) {
     case _regular:
       assert (_critical_pins == 0, "sanity");
-      _state = _pinned;
+      set_state(_pinned);
     case _pinned_cset:
     case _pinned:
       _critical_pins++;
       return;
     case _humongous_start:
       assert (_critical_pins == 0, "sanity");
-      _state = _pinned_humongous_start;
+      set_state(_pinned_humongous_start);
     case _pinned_humongous_start:
       _critical_pins++;
       return;
@@ -219,7 +220,7 @@ void ShenandoahHeapRegion::make_unpinned() {
       assert (_critical_pins > 0, "sanity");
       _critical_pins--;
       if (_critical_pins == 0) {
-        _state = _regular;
+        set_state(_regular);
       }
       return;
     case _regular:
@@ -231,14 +232,14 @@ void ShenandoahHeapRegion::make_unpinned() {
       assert (_critical_pins > 0, "sanity");
       _critical_pins--;
       if (_critical_pins == 0) {
-        _state = _cset;
+        set_state(_cset);
       }
       return;
     case _pinned_humongous_start:
       assert (_critical_pins > 0, "sanity");
       _critical_pins--;
       if (_critical_pins == 0) {
-        _state = _humongous_start;
+        set_state(_humongous_start);
       }
       return;
     default:
@@ -250,7 +251,7 @@ void ShenandoahHeapRegion::make_cset() {
   _heap->assert_heaplock_owned_by_current_thread();
   switch (_state) {
     case _regular:
-      _state = _cset;
+      set_state(_cset);
     case _cset:
       return;
     default:
@@ -268,7 +269,7 @@ void ShenandoahHeapRegion::make_trash() {
       // Reclaiming humongous regions
     case _regular:
       // Immediate region reclaim
-      _state = _trash;
+      set_state(_trash);
       return;
     default:
       report_illegal_transition("trashing");
@@ -287,7 +288,7 @@ void ShenandoahHeapRegion::make_empty() {
   _heap->assert_heaplock_owned_by_current_thread();
   switch (_state) {
     case _trash:
-      _state = _empty_committed;
+      set_state(_empty_committed);
       _empty_time = os::elapsedTime();
       return;
     default:
@@ -300,7 +301,7 @@ void ShenandoahHeapRegion::make_uncommitted() {
   switch (_state) {
     case _empty_committed:
       do_uncommit();
-      _state = _empty_uncommitted;
+      set_state(_empty_uncommitted);
       return;
     default:
       report_illegal_transition("uncommiting");
@@ -314,7 +315,7 @@ void ShenandoahHeapRegion::make_committed_bypass() {
   switch (_state) {
     case _empty_uncommitted:
       do_commit();
-      _state = _empty_committed;
+      set_state(_empty_committed);
       return;
     default:
       report_illegal_transition("commit bypass");
@@ -452,12 +453,12 @@ void ShenandoahHeapRegion::oop_iterate(OopIterateClosure* blk) {
 
 void ShenandoahHeapRegion::oop_iterate_objects(OopIterateClosure* blk) {
   assert(! is_humongous(), "no humongous region here");
-  HeapWord* obj_addr = bottom() + ShenandoahBrooksPointer::word_size();
+  HeapWord* obj_addr = bottom() + ShenandoahForwarding::word_size();
   HeapWord* t = top();
   // Could call objects iterate, but this is easier.
   while (obj_addr < t) {
     oop obj = oop(obj_addr);
-    obj_addr += obj->oop_iterate_size(blk) + ShenandoahBrooksPointer::word_size();
+    obj_addr += obj->oop_iterate_size(blk) + ShenandoahForwarding::word_size();
   }
 }
 
@@ -466,7 +467,7 @@ void ShenandoahHeapRegion::oop_iterate_humongous(OopIterateClosure* blk) {
   // Find head.
   ShenandoahHeapRegion* r = humongous_start_region();
   assert(r->is_humongous_start(), "need humongous head here");
-  oop obj = oop(r->bottom() + ShenandoahBrooksPointer::word_size());
+  oop obj = oop(r->bottom() + ShenandoahForwarding::word_size());
   obj->oop_iterate(blk, MemRegion(bottom(), top()));
 }
 
@@ -505,18 +506,18 @@ HeapWord* ShenandoahHeapRegion::block_start_const(const void* p) const {
   if (p >= top()) {
     return top();
   } else {
-    HeapWord* last = bottom() + ShenandoahBrooksPointer::word_size();
+    HeapWord* last = bottom() + ShenandoahForwarding::word_size();
     HeapWord* cur = last;
     while (cur <= p) {
       last = cur;
-      cur += oop(cur)->size() + ShenandoahBrooksPointer::word_size();
+      cur += oop(cur)->size() + ShenandoahForwarding::word_size();
     }
     shenandoah_assert_correct(NULL, oop(last));
     return last;
   }
 }
 
-void ShenandoahHeapRegion::setup_sizes(size_t initial_heap_size, size_t max_heap_size) {
+void ShenandoahHeapRegion::setup_sizes(size_t max_heap_size) {
   // Absolute minimums we should not ever break.
   static const size_t MIN_REGION_SIZE = 256*K;
 
@@ -526,10 +527,10 @@ void ShenandoahHeapRegion::setup_sizes(size_t initial_heap_size, size_t max_heap
 
   size_t region_size;
   if (FLAG_IS_DEFAULT(ShenandoahHeapRegionSize)) {
-    if (ShenandoahMinRegionSize > initial_heap_size / MIN_NUM_REGIONS) {
-      err_msg message("Initial heap size (" SIZE_FORMAT "K) is too low to afford the minimum number "
+    if (ShenandoahMinRegionSize > max_heap_size / MIN_NUM_REGIONS) {
+      err_msg message("Max heap size (" SIZE_FORMAT "K) is too low to afford the minimum number "
                       "of regions (" SIZE_FORMAT ") of minimum region size (" SIZE_FORMAT "K).",
-                      initial_heap_size/K, MIN_NUM_REGIONS, ShenandoahMinRegionSize/K);
+                      max_heap_size/K, MIN_NUM_REGIONS, ShenandoahMinRegionSize/K);
       vm_exit_during_initialization("Invalid -XX:ShenandoahMinRegionSize option", message);
     }
     if (ShenandoahMinRegionSize < MIN_REGION_SIZE) {
@@ -562,10 +563,10 @@ void ShenandoahHeapRegion::setup_sizes(size_t initial_heap_size, size_t max_heap
     region_size = MIN2(ShenandoahMaxRegionSize, region_size);
 
   } else {
-    if (ShenandoahHeapRegionSize > initial_heap_size / MIN_NUM_REGIONS) {
-      err_msg message("Initial heap size (" SIZE_FORMAT "K) is too low to afford the minimum number "
+    if (ShenandoahHeapRegionSize > max_heap_size / MIN_NUM_REGIONS) {
+      err_msg message("Max heap size (" SIZE_FORMAT "K) is too low to afford the minimum number "
                               "of regions (" SIZE_FORMAT ") of requested size (" SIZE_FORMAT "K).",
-                      initial_heap_size/K, MIN_NUM_REGIONS, ShenandoahHeapRegionSize/K);
+                      max_heap_size/K, MIN_NUM_REGIONS, ShenandoahHeapRegionSize/K);
       vm_exit_during_initialization("Invalid -XX:ShenandoahHeapRegionSize option", message);
     }
     if (ShenandoahHeapRegionSize < ShenandoahMinRegionSize) {
@@ -619,6 +620,7 @@ void ShenandoahHeapRegion::setup_sizes(size_t initial_heap_size, size_t max_heap
 
   guarantee(HumongousThresholdWords == 0, "we should only set it once");
   HumongousThresholdWords = RegionSizeWords * ShenandoahHumongousThreshold / 100;
+  HumongousThresholdWords = align_down(HumongousThresholdWords, MinObjAlignment);
   assert (HumongousThresholdWords <= RegionSizeWords, "sanity");
 
   guarantee(HumongousThresholdBytes == 0, "we should only set it once");
@@ -643,12 +645,13 @@ void ShenandoahHeapRegion::setup_sizes(size_t initial_heap_size, size_t max_heap
   //
   // The whole thing is mitigated if Elastic TLABs are enabled.
   //
-  guarantee(MaxTLABSizeBytes == 0, "we should only set it once");
-  MaxTLABSizeBytes = MIN2(ShenandoahElasticTLAB ? RegionSizeBytes : (RegionSizeBytes / 8), HumongousThresholdBytes);
-  assert (MaxTLABSizeBytes > MinTLABSize, "should be larger");
-
   guarantee(MaxTLABSizeWords == 0, "we should only set it once");
-  MaxTLABSizeWords = MaxTLABSizeBytes / HeapWordSize;
+  MaxTLABSizeWords = MIN2(ShenandoahElasticTLAB ? RegionSizeWords : (RegionSizeWords / 8), HumongousThresholdWords);
+  MaxTLABSizeWords = align_down(MaxTLABSizeWords, MinObjAlignment);
+
+  guarantee(MaxTLABSizeBytes == 0, "we should only set it once");
+  MaxTLABSizeBytes = MaxTLABSizeWords * HeapWordSize;
+  assert (MaxTLABSizeBytes > MinTLABSize, "should be larger");
 
   log_info(gc, init)("Regions: " SIZE_FORMAT " x " SIZE_FORMAT "%s",
                      RegionCount, byte_size_in_proper_unit(RegionSizeBytes), proper_unit_for_byte_size(RegionSizeBytes));
@@ -676,4 +679,17 @@ void ShenandoahHeapRegion::do_uncommit() {
     report_java_out_of_memory("Unable to uncommit bitmaps for region");
   }
   _heap->decrease_committed(ShenandoahHeapRegion::region_size_bytes());
+}
+
+void ShenandoahHeapRegion::set_state(RegionState to) {
+  EventShenandoahHeapRegionStateChange evt;
+  if (evt.should_commit()){
+    evt.set_index((unsigned)region_number());
+    evt.set_start((uintptr_t)bottom());
+    evt.set_used(used());
+    evt.set_from(_state);
+    evt.set_to(to);
+    evt.commit();
+  }
+  _state = to;
 }

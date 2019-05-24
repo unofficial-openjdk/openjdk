@@ -34,6 +34,7 @@
 #include "interpreter/interpreterRuntime.hpp"
 #include "logging/log.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/constantPool.inline.hpp"
 #include "oops/cpCache.inline.hpp"
 #include "oops/method.inline.hpp"
@@ -2870,7 +2871,7 @@ run:
                      METHOD->print_value_string(),
                      (int)(istate->bcp() - METHOD->code_base()),
                      (int)continuation_bci, p2i(THREAD));
-        Exceptions::log_exception(except_oop, tempst);
+        Exceptions::log_exception(except_oop, tempst.as_string());
       }
       // for AbortVMOnException flag
       Exceptions::debug_check_abort(except_oop);
@@ -2887,7 +2888,7 @@ run:
              METHOD->print_value_string(),
              (int)(istate->bcp() - METHOD->code_base()),
              p2i(THREAD));
-      Exceptions::log_exception(except_oop, tempst);
+      Exceptions::log_exception(except_oop, tempst.as_string());
     }
     // for AbortVMOnException flag
     Exceptions::debug_check_abort(except_oop);

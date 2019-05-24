@@ -2914,7 +2914,7 @@ public class Attr extends JCTree.Visitor {
                 public void visitLambda(JCLambda that) {
                     // or lambda expressions!
                 }
-            }.scan(tree);
+            }.scan(tree.body);
         }
 
         Types.MapVisitor<DiagnosticPosition> targetChecker = new Types.MapVisitor<DiagnosticPosition>() {
@@ -4222,7 +4222,7 @@ public class Attr extends JCTree.Visitor {
          * @param tree    The tree making up the variable reference.
          * @param env     The current environment.
          * @param v       The variable's symbol.
-         * @jls  section 8.9 Enums
+         * @jls 8.9 Enum Types
          */
         private void checkEnumInitializer(JCTree tree, Env<AttrContext> env, VarSymbol v) {
             // JLS:

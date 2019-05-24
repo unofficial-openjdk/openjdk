@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@
 #include "memory/metadataFactory.hpp"
 #include "memory/metaspaceClosure.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/compressedOops.inline.hpp"
 #include "oops/fieldStreams.hpp"
 #include "oops/oop.inline.hpp"
@@ -417,8 +418,7 @@ void HeapShared::write_subgraph_info_table() {
 
   _run_time_subgraph_info_table.reset();
 
-  int num_buckets = CompactHashtableWriter::default_num_buckets(d_table->_count);
-  CompactHashtableWriter writer(num_buckets, &stats);
+  CompactHashtableWriter writer(d_table->_count, &stats);
   CopyKlassSubGraphInfoToArchive copy(&writer);
   d_table->iterate(&copy);
 
@@ -883,8 +883,8 @@ void HeapShared::init_subgraph_entry_fields(ArchivableStaticFieldInfo fields[],
                                             int num, Thread* THREAD) {
   for (int i = 0; i < num; i++) {
     ArchivableStaticFieldInfo* info = &fields[i];
-    TempNewSymbol klass_name =  SymbolTable::new_symbol(info->klass_name, THREAD);
-    TempNewSymbol field_name =  SymbolTable::new_symbol(info->field_name, THREAD);
+    TempNewSymbol klass_name =  SymbolTable::new_symbol(info->klass_name);
+    TempNewSymbol field_name =  SymbolTable::new_symbol(info->field_name);
 
     Klass* k = SystemDictionary::resolve_or_null(klass_name, THREAD);
     assert(k != NULL && !HAS_PENDING_EXCEPTION, "class must exist");

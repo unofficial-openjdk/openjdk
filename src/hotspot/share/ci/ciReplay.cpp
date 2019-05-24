@@ -29,6 +29,7 @@
 #include "ci/ciSymbol.hpp"
 #include "ci/ciKlass.hpp"
 #include "ci/ciUtilities.inline.hpp"
+#include "classfile/symbolTable.hpp"
 #include "compiler/compileBroker.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/oopFactory.hpp"
@@ -335,7 +336,7 @@ class CompileReplay : public StackObj {
   Symbol* parse_symbol(TRAPS) {
     const char* str = parse_escaped_string();
     if (str != NULL) {
-      Symbol* sym = SymbolTable::lookup(str, (int)strlen(str), CHECK_NULL);
+      Symbol* sym = SymbolTable::new_symbol(str);
       return sym;
     }
     return NULL;
@@ -344,7 +345,7 @@ class CompileReplay : public StackObj {
   // Parse a valid klass name and look it up
   Klass* parse_klass(TRAPS) {
     const char* str = parse_escaped_string();
-    Symbol* klass_name = SymbolTable::lookup(str, (int)strlen(str), CHECK_NULL);
+    Symbol* klass_name = SymbolTable::new_symbol(str);
     if (klass_name != NULL) {
       Klass* k = NULL;
       if (_iklass != NULL) {
@@ -370,7 +371,7 @@ class CompileReplay : public StackObj {
 
   // Lookup a klass
   Klass* resolve_klass(const char* klass, TRAPS) {
-    Symbol* klass_name = SymbolTable::lookup(klass, (int)strlen(klass), CHECK_NULL);
+    Symbol* klass_name = SymbolTable::new_symbol(klass);
     return SystemDictionary::resolve_or_fail(klass_name, _loader, _protection_domain, true, THREAD);
   }
 
@@ -799,8 +800,8 @@ class CompileReplay : public StackObj {
     const char* field_name = parse_escaped_string();
     const char* field_signature = parse_string();
     fieldDescriptor fd;
-    Symbol* name = SymbolTable::lookup(field_name, (int)strlen(field_name), CHECK);
-    Symbol* sig = SymbolTable::lookup(field_signature, (int)strlen(field_signature), CHECK);
+    Symbol* name = SymbolTable::new_symbol(field_name);
+    Symbol* sig = SymbolTable::new_symbol(field_signature);
     if (!k->find_local_field(name, sig, &fd) ||
         !fd.is_static() ||
         fd.has_initial_value()) {

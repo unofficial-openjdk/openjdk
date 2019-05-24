@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
@@ -81,7 +82,7 @@ BasicType FieldType::get_array_info(Symbol* signature, FieldArrayInfo& fd, TRAPS
     int len = (int)strlen(element);
     assert(element[len-1] == ';', "last char should be a semicolon");
     element[len-1] = '\0';        // chop off semicolon
-    fd._object_key = SymbolTable::new_symbol(element + 1, CHECK_(T_BYTE));
+    fd._object_key = SymbolTable::new_symbol(element + 1);
   }
   // Pass dimension back to caller
   fd._dimension = dim;

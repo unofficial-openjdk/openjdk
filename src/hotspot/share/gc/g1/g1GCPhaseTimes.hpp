@@ -60,7 +60,6 @@ class G1GCPhaseTimes : public CHeapObj<mtGC> {
     CMRefRoots,
     WaitForStrongCLD,
     WeakCLDRoots,
-    SATBFiltering,
     UpdateRS,
     ScanHCC,
     ScanRS,
@@ -82,8 +81,8 @@ class G1GCPhaseTimes : public CHeapObj<mtGC> {
     GCParPhasesSentinel
   };
 
-  static const GCParPhases ExtRootScanSubPhasesStart = ThreadRoots;
-  static const GCParPhases ExtRootScanSubPhasesEnd = SATBFiltering;
+  static const GCParPhases ExtRootScanSubPhasesFirst = ThreadRoots;
+  static const GCParPhases ExtRootScanSubPhasesLast = WeakCLDRoots;
 
   enum GCScanRSWorkItems {
     ScanRSScannedCards,
@@ -177,8 +176,9 @@ class G1GCPhaseTimes : public CHeapObj<mtGC> {
 
   double _recorded_serial_free_cset_time_ms;
 
+  double _cur_region_register_time;
+
   double _cur_fast_reclaim_humongous_time_ms;
-  double _cur_fast_reclaim_humongous_register_time_ms;
   size_t _cur_fast_reclaim_humongous_total;
   size_t _cur_fast_reclaim_humongous_candidates;
   size_t _cur_fast_reclaim_humongous_reclaimed;
@@ -306,8 +306,8 @@ class G1GCPhaseTimes : public CHeapObj<mtGC> {
     _recorded_serial_free_cset_time_ms = time_ms;
   }
 
-  void record_fast_reclaim_humongous_stats(double time_ms, size_t total, size_t candidates) {
-    _cur_fast_reclaim_humongous_register_time_ms = time_ms;
+  void record_register_regions(double time_ms, size_t total, size_t candidates) {
+    _cur_region_register_time = time_ms;
     _cur_fast_reclaim_humongous_total = total;
     _cur_fast_reclaim_humongous_candidates = candidates;
   }

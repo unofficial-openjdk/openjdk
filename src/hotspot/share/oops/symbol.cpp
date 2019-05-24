@@ -31,6 +31,7 @@
 #include "logging/logStream.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/symbol.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/os.hpp"
@@ -56,13 +57,13 @@ Symbol::Symbol(const u1* name, int length, int refcount) {
   }
 }
 
-void* Symbol::operator new(size_t sz, int len, TRAPS) throw() {
+void* Symbol::operator new(size_t sz, int len) throw() {
   int alloc_size = size(len)*wordSize;
   address res = (address) AllocateHeap(alloc_size, mtSymbol);
   return res;
 }
 
-void* Symbol::operator new(size_t sz, int len, Arena* arena, TRAPS) throw() {
+void* Symbol::operator new(size_t sz, int len, Arena* arena) throw() {
   int alloc_size = size(len)*wordSize;
   address res = (address)arena->Amalloc_4(alloc_size);
   return res;
@@ -72,6 +73,13 @@ void Symbol::operator delete(void *p) {
   assert(((Symbol*)p)->refcount() == 0, "should not call this");
   FreeHeap(p);
 }
+
+void Symbol::set_permanent() {
+  // This is called at a safepoint during dumping of a dynamic CDS archive.
+  assert(SafepointSynchronize::is_at_safepoint(), "must be at a safepoint");
+  _length_and_refcount =  pack_length_and_refcount(length(), PERM_REFCOUNT);
+}
+
 
 // ------------------------------------------------------------------
 // Symbol::starts_with
@@ -365,6 +373,8 @@ void Symbol::print_on(outputStream* st) const {
   st->print(" count %d", refcount());
 }
 
+void Symbol::print() const { print_on(tty); }
+
 // The print_value functions are present in all builds, to support the
 // disassembler and error reporting.
 void Symbol::print_value_on(outputStream* st) const {
@@ -374,6 +384,8 @@ void Symbol::print_value_on(outputStream* st) const {
   }
   st->print("'");
 }
+
+void Symbol::print_value() const { print_value_on(tty); }
 
 bool Symbol::is_valid(Symbol* s) {
   if (!is_aligned(s, sizeof(MetaWord))) return false;

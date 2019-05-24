@@ -330,6 +330,7 @@ public class WhiteBox {
     return enqueueInitializerForCompilation0(aClass, compLevel);
   }
   private native void    clearMethodState0(Executable method);
+  public  native void    markMethodProfiled(Executable method);
   public         void    clearMethodState(Executable method) {
     Objects.requireNonNull(method);
     clearMethodState0(method);
@@ -513,6 +514,7 @@ public class WhiteBox {
 
   // Sharing & archiving
   public native String  getDefaultArchivePath();
+  public native boolean cdsMemoryMappingFailed();
   public native boolean isSharingEnabled();
   public native boolean isShared(Object o);
   public native boolean isSharedClass(Class<?> c);
@@ -521,6 +523,7 @@ public class WhiteBox {
   public native boolean isJFRIncludedInVmBuild();
   public native boolean isJavaHeapArchiveSupported();
   public native Object  getResolvedReferences(Class<?> c);
+  public native void    linkClass(Class<?> c);
   public native boolean areOpenArchiveHeapObjectsMapped();
 
   // Compiler Directive
