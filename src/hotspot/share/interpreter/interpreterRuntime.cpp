@@ -24,6 +24,7 @@
 
 #include "precompiled.hpp"
 #include "classfile/javaClasses.inline.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/codeCache.hpp"
@@ -416,7 +417,7 @@ JRT_END
 
 JRT_ENTRY(void, InterpreterRuntime::create_exception(JavaThread* thread, char* name, char* message))
   // lookup exception klass
-  TempNewSymbol s = SymbolTable::new_symbol(name, CHECK);
+  TempNewSymbol s = SymbolTable::new_symbol(name);
   if (ProfileTraps) {
     if (s == vmSymbols::java_lang_ArithmeticException()) {
       note_trap(thread, Deoptimization::Reason_div0_check, CHECK);
@@ -435,7 +436,7 @@ JRT_ENTRY(void, InterpreterRuntime::create_klass_exception(JavaThread* thread, c
   ResourceMark rm(thread);
   const char* klass_name = obj->klass()->external_name();
   // lookup exception klass
-  TempNewSymbol s = SymbolTable::new_symbol(name, CHECK);
+  TempNewSymbol s = SymbolTable::new_symbol(name);
   if (ProfileTraps) {
     note_trap(thread, Deoptimization::Reason_class_check, CHECK);
   }
@@ -542,7 +543,7 @@ JRT_ENTRY(address, InterpreterRuntime::exception_handler_for_exception(JavaThrea
       tempst.print("interpreter method <%s>\n"
                    " at bci %d for thread " INTPTR_FORMAT " (%s)",
                    h_method->print_value_string(), current_bci, p2i(thread), thread->name());
-      Exceptions::log_exception(h_exception, tempst);
+      Exceptions::log_exception(h_exception, tempst.as_string());
     }
 // Don't go paging in something which won't be used.
 //     else if (extable->length() == 0) {
@@ -920,23 +921,19 @@ void InterpreterRuntime::resolve_invoke(JavaThread* thread, Bytecodes::Code byte
            info.call_kind() == CallInfo::vtable_call, "");
   }
 #endif
+  // Get sender or sender's unsafe_anonymous_host, and only set cpCache entry to resolved if
+  // it is not an interface.  The receiver for invokespecial calls within interface
+  // methods must be checked for every call.
+  InstanceKlass* sender = pool->pool_holder();
+  sender = sender->is_unsafe_anonymous() ? sender->unsafe_anonymous_host() : sender;
 
   switch (info.call_kind()) {
-  case CallInfo::direct_call: {
-    // Get sender or sender's unsafe_anonymous_host, and only set cpCache entry to resolved if
-    // it is not an interface.  The receiver for invokespecial calls within interface
-    // methods must be checked for every call.
-    InstanceKlass* pool_holder = pool->pool_holder();
-    InstanceKlass* sender = pool_holder->is_unsafe_anonymous() ?
-                              pool_holder->unsafe_anonymous_host() : pool_holder;
-
+  case CallInfo::direct_call:
     cp_cache_entry->set_direct_call(
       bytecode,
       info.resolved_method(),
-      sender->is_interface(),
-      pool_holder);
+      sender->is_interface());
     break;
-  }
   case CallInfo::vtable_call:
     cp_cache_entry->set_vtable_call(
       bytecode,

@@ -34,7 +34,9 @@
 #include "classfile/modules.hpp"
 #include "classfile/packageEntry.hpp"
 #include "classfile/klassFactory.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
+#include "classfile/systemDictionaryShared.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "compiler/compileBroker.hpp"
 #include "interpreter/bytecodeStream.hpp"
@@ -243,7 +245,7 @@ PackageEntry* ClassLoader::get_package_entry(const char* class_name, ClassLoader
     return NULL;
   }
   PackageEntryTable* pkgEntryTable = loader_data->packages();
-  TempNewSymbol pkg_symbol = SymbolTable::new_symbol(pkg_name, CHECK_NULL);
+  TempNewSymbol pkg_symbol = SymbolTable::new_symbol(pkg_name);
   return pkgEntryTable->lookup_only(pkg_symbol);
 }
 
@@ -467,7 +469,7 @@ bool ClassPathImageEntry::is_modules_image() const {
 
 #if INCLUDE_CDS
 void ClassLoader::exit_with_path_failure(const char* error, const char* message) {
-  assert(DumpSharedSpaces, "only called at dump time");
+  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "only called at dump time");
   tty->print_cr("Hint: enable -Xlog:class+path=info to diagnose the failure");
   vm_exit_during_initialization(error, message);
 }
@@ -533,7 +535,7 @@ void ClassLoader::setup_bootstrap_search_path() {
     trace_class_path("bootstrap loader class path=", sys_class_path);
   }
 #if INCLUDE_CDS
-  if (DumpSharedSpaces) {
+  if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
     _shared_paths_misc_info->add_boot_classpath(sys_class_path);
   }
 #endif
@@ -549,16 +551,16 @@ void* ClassLoader::get_shared_paths_misc_info() {
   return _shared_paths_misc_info->buffer();
 }
 
-bool ClassLoader::check_shared_paths_misc_info(void *buf, int size) {
+bool ClassLoader::check_shared_paths_misc_info(void *buf, int size, bool is_static) {
   SharedPathsMiscInfo* checker = new SharedPathsMiscInfo((char*)buf, size);
-  bool result = checker->check();
+  bool result = checker->check(is_static);
   delete checker;
   return result;
 }
 
 void ClassLoader::setup_app_search_path(const char *class_path) {
 
-  assert(DumpSharedSpaces, "Sanity");
+  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "Sanity");
 
   Thread* THREAD = Thread::current();
   int len = (int)strlen(class_path);
@@ -586,7 +588,7 @@ void ClassLoader::setup_app_search_path(const char *class_path) {
 void ClassLoader::add_to_module_path_entries(const char* path,
                                              ClassPathEntry* entry) {
   assert(entry != NULL, "ClassPathEntry should not be NULL");
-  assert(DumpSharedSpaces, "dump time only");
+  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "dump time only");
 
   // The entry does not exist, add to the list
   if (_module_path_entries == NULL) {
@@ -600,7 +602,7 @@ void ClassLoader::add_to_module_path_entries(const char* path,
 
 // Add a module path to the _module_path_entries list.
 void ClassLoader::update_module_path_entry_list(const char *path, TRAPS) {
-  assert(DumpSharedSpaces, "dump time only");
+  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "dump time only");
   struct stat st;
   if (os::stat(path, &st) != 0) {
     tty->print_cr("os::stat error %d (%s). CDS dump aborted (path was \"%s\").",
@@ -645,7 +647,7 @@ void ClassLoader::setup_patch_mod_entries() {
 
   for (int i = 0; i < num_of_entries; i++) {
     const char* module_name = (patch_mod_args->at(i))->module_name();
-    Symbol* const module_sym = SymbolTable::lookup(module_name, (int)strlen(module_name), CHECK);
+    Symbol* const module_sym = SymbolTable::new_symbol(module_name);
     assert(module_sym != NULL, "Failed to obtain Symbol for module name");
     ModuleClassPathList* module_cpl = new ModuleClassPathList(module_sym);
 
@@ -708,7 +710,7 @@ void ClassLoader::setup_boot_search_path(const char *class_path) {
   bool set_base_piece = true;
 
 #if INCLUDE_CDS
-  if (DumpSharedSpaces) {
+  if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
     if (!Arguments::has_jimage()) {
       vm_exit_during_initialization("CDS is not supported in exploded JDK build", NULL);
     }
@@ -975,7 +977,7 @@ bool ClassLoader::update_class_path_entry_list(const char *path,
     return true;
   } else {
 #if INCLUDE_CDS
-    if (DumpSharedSpaces) {
+    if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
       _shared_paths_misc_info->add_nonexist_path(path);
     }
 #endif
@@ -1125,7 +1127,7 @@ bool ClassLoader::add_package(const char *fullq_class_name, s2 classpath_index, 
   const char *cp = package_from_name(fullq_class_name);
   if (cp != NULL) {
     PackageEntryTable* pkg_entry_tbl = ClassLoaderData::the_null_class_loader_data()->packages();
-    TempNewSymbol pkg_symbol = SymbolTable::new_symbol(cp, CHECK_false);
+    TempNewSymbol pkg_symbol = SymbolTable::new_symbol(cp);
     PackageEntry* pkg_entry = pkg_entry_tbl->lookup_only(pkg_symbol);
     if (pkg_entry != NULL) {
       assert(classpath_index != -1, "Unexpected classpath_index");
@@ -1140,7 +1142,7 @@ bool ClassLoader::add_package(const char *fullq_class_name, s2 classpath_index, 
 oop ClassLoader::get_system_package(const char* name, TRAPS) {
   // Look up the name in the boot loader's package entry table.
   if (name != NULL) {
-    TempNewSymbol package_sym = SymbolTable::new_symbol(name, (int)strlen(name), CHECK_NULL);
+    TempNewSymbol package_sym = SymbolTable::new_symbol(name);
     // Look for the package entry in the boot loader's package entry table.
     PackageEntry* package =
       ClassLoaderData::the_null_class_loader_data()->packages()->lookup_only(package_sym);
@@ -1333,6 +1335,10 @@ InstanceKlass* ClassLoader::load_class(Symbol* name, bool search_append_only, TR
     // appear in the _patch_mod_entries. The runtime shared class visibility
     // check will determine if a shared class is visible based on the runtime
     // environemnt, including the runtime --patch-module setting.
+    //
+    // DynamicDumpSharedSpaces requires UseSharedSpaces to be enabled. Since --patch-module
+    // is not supported with UseSharedSpaces, it is not supported with DynamicDumpSharedSpaces.
+    assert(!DynamicDumpSharedSpaces, "sanity");
     if (!DumpSharedSpaces) {
       stream = search_module_entries(_patch_mod_entries, class_name, file_name, CHECK_NULL);
     }
@@ -1422,7 +1428,7 @@ char* ClassLoader::skip_uri_protocol(char* source) {
 // Record the shared classpath index and loader type for classes loaded
 // by the builtin loaders at dump time.
 void ClassLoader::record_result(InstanceKlass* ik, const ClassFileStream* stream, TRAPS) {
-  assert(DumpSharedSpaces, "sanity");
+  assert(DumpSharedSpaces || DynamicDumpSharedSpaces, "sanity");
   assert(stream != NULL, "sanity");
 
   if (ik->is_unsafe_anonymous()) {
@@ -1512,6 +1518,8 @@ void ClassLoader::record_result(InstanceKlass* ik, const ClassFileStream* stream
     // user defined classloader.
     if (classpath_index < 0) {
       assert(ik->shared_classpath_index() < 0, "Sanity");
+      ik->set_shared_classpath_index(UNREGISTERED_INDEX);
+      SystemDictionaryShared::set_shared_class_misc_info(ik, (ClassFileStream*)stream);
       return;
     }
   } else {
@@ -1594,7 +1602,7 @@ void ClassLoader::initialize() {
   load_jimage_library();
 #if INCLUDE_CDS
   // initialize search path
-  if (DumpSharedSpaces) {
+  if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
     _shared_paths_misc_info = new SharedPathsMiscInfo();
   }
 #endif
@@ -1603,14 +1611,14 @@ void ClassLoader::initialize() {
 
 #if INCLUDE_CDS
 void ClassLoader::initialize_shared_path() {
-  if (DumpSharedSpaces) {
+  if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
     ClassLoaderExt::setup_search_paths();
     _shared_paths_misc_info->write_jint(0); // see comments in SharedPathsMiscInfo::check()
   }
 }
 
 void ClassLoader::initialize_module_path(TRAPS) {
-  if (DumpSharedSpaces) {
+  if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
     ClassLoaderExt::setup_module_paths(THREAD);
     FileMapInfo::allocate_shared_path_table();
   }
@@ -1676,6 +1684,7 @@ void ClassLoader::classLoader_init2(TRAPS) {
   // entries will be added to the exploded build array.
   if (!has_jrt_entry()) {
     assert(!DumpSharedSpaces, "DumpSharedSpaces not supported with exploded module builds");
+    assert(!DynamicDumpSharedSpaces, "DynamicDumpSharedSpaces not supported with exploded module builds");
     assert(!UseSharedSpaces, "UsedSharedSpaces not supported with exploded module builds");
     // Set up the boot loader's _exploded_entries list.  Note that this gets
     // done before loading any classes, by the same thread that will

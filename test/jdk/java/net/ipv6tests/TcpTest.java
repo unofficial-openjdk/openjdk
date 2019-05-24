@@ -25,7 +25,9 @@
  * @test
  * @bug 4868820
  * @key intermittent
- * @summary IPv6 support for Windows XP and 2003 server
+ * @summary IPv6 support for Windows XP and 2003 server. This test requires
+ *          binding to the wildcard address, and as such is susceptible
+ *          of intermittent failures caused by port reuse policy.
  * @library /test/lib
  * @build jdk.test.lib.NetworkConfiguration
  *        jdk.test.lib.Platform
@@ -58,6 +60,10 @@ public class TcpTest extends Tests {
 
     public static void main (String[] args) throws Exception {
         checkDebug(args);
+        if (ia4addr == null) {
+            System.out.println ("No IPV4 addresses: exiting test");
+            return;
+        }
         if (ia6addr == null) {
             System.out.println ("No IPV6 addresses: exiting test");
             return;
@@ -216,4 +222,3 @@ public class TcpTest extends Tests {
         System.out.println ("Test4: OK");
     }
 }
-

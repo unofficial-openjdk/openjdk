@@ -26,6 +26,8 @@
 #define SHARE_VM_COMPILER_OOPMAP_INLINE_HPP
 
 #include "gc/shared/collectedHeap.hpp"
+#include "memory/universe.hpp"
+#include "oops/compressedOops.hpp"
 
 inline const ImmutableOopMap* ImmutableOopMapSet::find_map_at_slot(int slot, int pc_offset) const {
   assert(slot >= 0 && slot < _count, "bounds");
@@ -40,7 +42,7 @@ inline const ImmutableOopMap* ImmutableOopMapPair::get_from(const ImmutableOopMa
 }
 
 inline bool SkipNullValue::should_skip(oop val) {
-  return val == (oop)NULL || Universe::is_narrow_oop_base(val);
+  return val == (oop)NULL || CompressedOops::is_base(val);
 }
 
 template <typename OopFnT, typename DerivedOopFnT, typename ValueFilterT>
@@ -78,7 +80,7 @@ void OopMapDo<OopFnT, DerivedOopFnT, ValueFilterT>::iterate_oops_do(const frame 
         oop val = *loc;
         if (ValueFilterT::should_skip(val)) { // TODO: UGLY (basically used to decide if we're freezing/thawing continuation)
           // Ignore NULL oops and decoded NULL narrow oops which
-          // equal to Universe::narrow_oop_base when a narrow oop
+          // equal to CompressedOops::base() when a narrow oop
           // implicit null check is used in compiled code.
           // The narrow_oop_base could be NULL or be the address
           // of the page below heap depending on compressed oops mode.
@@ -143,16 +145,7 @@ void OopMapDo<OopMapFnT, DerivedOopFnT, ValueFilterT>::walk_derived_pointers(con
 #endif
 #endif // !TIERED
 
-    if (_lock_derived_table) {
-      assert (reg_map->validate_oops(), "");
-      // Protect the operation on the derived pointers.  This
-      // protects the addition of derived pointers to the shared
-      // derived pointer table in DerivedPointerTable::add().
-      MutexLocker x(DerivedPointerTableGC_lock, Mutex::_no_safepoint_check_flag);
-      walk_derived_pointers1<OopMapStreamT>(oms, fr, reg_map);
-    } else {
-      walk_derived_pointers1<OopMapStreamT>(oms, fr, reg_map);
-    }
+    walk_derived_pointers1<OopMapStreamT>(oms, fr, reg_map);
   }
 }
 
@@ -171,11 +164,11 @@ void OopMapDo<OopMapFnT, DerivedOopFnT, ValueFilterT>::walk_derived_pointers1(Oo
     oop *derived_loc = loc;
     oop *base_loc    = fr->oopmapreg_to_location(omv.content_reg(), reg_map);
     // Ignore NULL oops and decoded NULL narrow oops which
-    // equal to Universe::narrow_oop_base when a narrow oop
+    // equal to CompressedOops::base() when a narrow oop
     // implicit null check is used in compiled code.
     // The narrow_oop_base could be NULL or be the address
     // of the page below heap depending on compressed oops mode.
-    if (base_loc != NULL && *base_loc != (oop)NULL && !Universe::is_narrow_oop_base(*base_loc)) {
+    if (base_loc != NULL && *base_loc != (oop)NULL && !CompressedOops::is_base(*base_loc)) {
       _derived_oop_fn->do_derived_oop(base_loc, derived_loc);
     }
     oms.next();

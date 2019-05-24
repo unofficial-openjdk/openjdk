@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2002, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,6 +42,7 @@ import java.io.*;
 import java.time.Duration;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class MultiThreadTest extends Thread {
 
@@ -60,13 +61,11 @@ public class MultiThreadTest extends Thread {
             System.out.println(msg);
     }
 
-    static int reqnum = 0;
+    static final AtomicInteger reqnum = new AtomicInteger();
 
     void doRequest(String uri) throws Exception {
-        URL url = new URL(uri + "?foo="+reqnum);
-        reqnum ++;
+        URL url = new URL(uri + "?foo="+reqnum.getAndIncrement());
         HttpURLConnection http = (HttpURLConnection)url.openConnection();
-
         InputStream in = http.getInputStream();
         byte b[] = new byte[100];
         int total = 0;
@@ -84,8 +83,8 @@ public class MultiThreadTest extends Thread {
     byte[] b;
     int requests;
 
-    MultiThreadTest(int port, int requests) throws Exception {
-        uri = "http://localhost:" + port + "/foo.html";
+    MultiThreadTest(String authority, int requests) throws Exception {
+        uri = "http://" + authority + "/foo.html";
 
         b = new byte [256];
         this.requests = requests;
@@ -134,14 +133,16 @@ public class MultiThreadTest extends Thread {
         }
 
         /* start the server */
-        ServerSocket ss = new ServerSocket(0);
+        InetAddress loopback = InetAddress.getLoopbackAddress();
+        ServerSocket ss = new ServerSocket();
+        ss.bind(new InetSocketAddress(loopback, 0));
         Server svr = new Server(ss);
         svr.start();
 
         Object lock = MultiThreadTest.getLock();
         synchronized (lock) {
             for (int i=0; i<threads; i++) {
-                MultiThreadTest t = new MultiThreadTest(ss.getLocalPort(), requests);
+                MultiThreadTest t = new MultiThreadTest(svr.getAuthority(), requests);
                 t.start ();
             }
             try {
@@ -157,12 +158,37 @@ public class MultiThreadTest extends Thread {
         int reqs = Worker.getRequests ();
         MultiThreadTest.debug("Requests = " + reqs);
         System.out.println ("Connection count = " + cnt + " Request count = " + reqs);
-        if (cnt > threads) { // could be less
-            throw new RuntimeException ("Expected "+threads + " connections: used " +cnt);
+
+        // We may have received traffic from something else than
+        // our client. We should only count those workers for which
+        // the expected header has been found.
+        int validConnections = 0;
+        for (Worker w : svr.workers()) {
+            if (w.headerFound) validConnections++;
         }
-        if  (reqs != threads*requests) {
+
+        if (validConnections > threads + 1 || validConnections == 0) { // could be less
+            throw new RuntimeException ("Expected " + threads + " connections: used " + validConnections);
+        }
+
+        // Sometimes the client drops a connection after a while and
+        // spawns a new one. Why this is happening is not clear,
+        // and JDK-8223783 is logged to follow up on this. For the sake
+        // of test stabilization we don't fail on `threads + 1` connections
+        // but log a warning instead.
+        if (validConnections == threads + 1) {
+            debug("WARNING: " + validConnections
+                + " have been used, where only " + threads
+                + " were expected!");
+        }
+
+        if (validConnections != cnt) {
+            debug("WARNING: got " + (cnt - validConnections) + " unexpected connections!");
+        }
+        if  (validConnections == cnt && reqs != threads*requests) {
             throw new RuntimeException ("Expected "+ threads*requests+ " requests: got " +reqs);
         }
+
         for (Thread worker : svr.workers()) {
             worker.join(60_000);
         }
@@ -179,10 +205,20 @@ public class MultiThreadTest extends Thread {
         ServerSocket ss;
         int connectionCount;
         boolean shutdown = false;
-        private Queue<Worker> workers = new ConcurrentLinkedQueue<>();
+        private final Queue<Worker> workers = new ConcurrentLinkedQueue<>();
 
         Server(ServerSocket ss) {
             this.ss = ss;
+        }
+
+        public String getAuthority() {
+            InetAddress address = ss.getInetAddress();
+            String hostaddr = address.isAnyLocalAddress()
+                ? "localhost" : address.getHostAddress();
+            if (hostaddr.indexOf(':') > -1) {
+                hostaddr = "[" + hostaddr + "]";
+            }
+            return hostaddr + ":" + ss.getLocalPort();
         }
 
         public Queue<Worker> workers() {
@@ -246,8 +282,10 @@ public class MultiThreadTest extends Thread {
     class Worker extends Thread {
         Socket s;
         int id;
+        volatile boolean headerFound;
 
         Worker(Socket s, int id) {
+            super("Worker-" + id);
             this.s = s;
             this.id = id;
         }
@@ -260,18 +298,20 @@ public class MultiThreadTest extends Thread {
                 return requests;
             }
         }
+
         public static void incRequests () {
             synchronized (rlock) {
                 requests++;
             }
         }
 
-        int readUntil(InputStream in, char[] seq) throws IOException {
+        int readUntil(InputStream in, StringBuilder headers, char[] seq) throws IOException {
             int i=0, count=0;
             while (true) {
                 int c = in.read();
                 if (c == -1)
                     return -1;
+                headers.append((char)c);
                 count++;
                 if (c == seq[i]) {
                     i++;
@@ -300,13 +340,17 @@ public class MultiThreadTest extends Thread {
 
                     // read entire request from client
                     int n=0;
-
-                    n = readUntil(in, new char[] {'\r','\n', '\r','\n'});
-
+                    StringBuilder headers = new StringBuilder();
+                    n = readUntil(in, headers, new char[] {'\r','\n', '\r','\n'});
                     if (n <= 0) {
                         MultiThreadTest.debug("worker: " + id + ": Shutdown");
                         s.close();
                         return;
+                    }
+                    if (headers.toString().contains("/foo.html?foo=")) {
+                        headerFound = true;
+                    } else {
+                        MultiThreadTest.debug("worker: " + id + ": Unexpected request received: " + headers);
                     }
 
                     MultiThreadTest.debug("worker " + id +

@@ -68,9 +68,6 @@ typedef struct {
     char *sun_stdout_encoding;
     char *sun_stderr_encoding;
 
-    char *graphics_env;
-    char *awt_toolkit;
-
     char *unicode_encoding;     /* The default endianness of unicode
                                     i.e. UnicodeBig or UnicodeLittle   */
 
@@ -81,8 +78,6 @@ typedef struct {
     char *data_model;           /* 32 or 64 bit data model */
 
     char *patch_level;          /* patches/service packs installed */
-
-    char *desktop;              /* Desktop name. */
 
 #ifdef MACOSX
     // These are for proxy-related information.
@@ -105,8 +100,6 @@ typedef struct {
     char *socksPort;
 
     char *exceptionList;
-
-    char *awt_headless;  /* java.awt.headless setting, if NULL (default) will not be set */
 #endif
 
 } java_props_t;

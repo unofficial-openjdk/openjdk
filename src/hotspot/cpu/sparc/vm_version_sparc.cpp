@@ -28,6 +28,7 @@
 #include "logging/log.hpp"
 #include "logging/logStream.hpp"
 #include "memory/resourceArea.hpp"
+#include "oops/compressedOops.hpp"
 #include "runtime/java.hpp"
 #include "runtime/os.hpp"
 #include "runtime/stubCodeGenerator.hpp"
@@ -84,8 +85,8 @@ void VM_Version::initialize() {
 
   // 32-bit oops don't make sense for the 64-bit VM on SPARC since the 32-bit
   // VM has the same registers and smaller objects.
-  Universe::set_narrow_oop_shift(LogMinObjAlignmentInBytes);
-  Universe::set_narrow_klass_shift(LogKlassAlignmentInBytes);
+  CompressedOops::set_shift(LogMinObjAlignmentInBytes);
+  CompressedKlassPointers::set_shift(LogKlassAlignmentInBytes);
 
 #ifdef COMPILER2
   if (has_fast_ind_br() && FLAG_IS_DEFAULT(UseJumpTables)) {
@@ -138,12 +139,12 @@ void VM_Version::initialize() {
     if (FLAG_IS_DEFAULT(AllocatePrefetchLines)) {
       const int ap_lns = AllocatePrefetchLines;
       const int ap_inc = cache_line_size < 64 ? ap_lns : (ap_lns + 1) / 2;
-      FLAG_SET_ERGO(intx, AllocatePrefetchLines, ap_lns + ap_inc);
+      FLAG_SET_ERGO(AllocatePrefetchLines, ap_lns + ap_inc);
     }
     if (FLAG_IS_DEFAULT(AllocateInstancePrefetchLines)) {
       const int ip_lns = AllocateInstancePrefetchLines;
       const int ip_inc = cache_line_size < 64 ? ip_lns : (ip_lns + 1) / 2;
-      FLAG_SET_ERGO(intx, AllocateInstancePrefetchLines, ip_lns + ip_inc);
+      FLAG_SET_ERGO(AllocateInstancePrefetchLines, ip_lns + ip_inc);
     }
   }
 #endif /* COMPILER2 */

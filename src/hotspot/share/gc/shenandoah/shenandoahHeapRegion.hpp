@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2013, 2019, Red Hat, Inc. All rights reserved.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -29,13 +29,14 @@
 #include "gc/shenandoah/shenandoahAsserts.hpp"
 #include "gc/shenandoah/shenandoahHeap.hpp"
 #include "gc/shenandoah/shenandoahPacer.hpp"
-#include "memory/universe.hpp"
 #include "utilities/sizes.hpp"
 
 class VMStructs;
+class ShenandoahHeapRegionStateConstant;
 
 class ShenandoahHeapRegion : public ContiguousSpace {
   friend class VMStructs;
+  friend class ShenandoahHeapRegionStateConstant;
 private:
   /*
     Region state is described by a state machine. Transitions are guarded by
@@ -116,9 +117,10 @@ private:
     _pinned,                  // region is pinned
     _pinned_cset,             // region is pinned and in cset (evac failure path)
     _trash,                   // region contains only trash
+    _REGION_STATES_NUM        // last
   };
 
-  const char* region_state_to_string(RegionState s) const {
+  static const char* region_state_to_string(RegionState s) {
     switch (s) {
       case _empty_uncommitted:       return "Empty Uncommitted";
       case _empty_committed:         return "Empty Committed";
@@ -158,6 +160,10 @@ private:
   void report_illegal_transition(const char* method);
 
 public:
+  static const int region_states_num() {
+    return _REGION_STATES_NUM;
+  }
+
   // Allowed transitions from the outside code:
   void make_regular_allocation();
   void make_regular_bypass();
@@ -258,7 +264,7 @@ public:
 
   static const size_t MIN_NUM_REGIONS = 10;
 
-  static void setup_sizes(size_t initial_heap_size, size_t max_heap_size);
+  static void setup_sizes(size_t max_heap_size);
 
   double empty_time() {
     return _empty_time;
@@ -425,6 +431,8 @@ private:
   void oop_iterate_humongous(OopIterateClosure* cl);
 
   inline void internal_increase_live_data(size_t s);
+
+  void set_state(RegionState to);
 };
 
 #endif // SHARE_GC_SHENANDOAH_SHENANDOAHHEAPREGION_HPP

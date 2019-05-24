@@ -282,9 +282,9 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   JNIMethodBlock* jmethod_ids() const              { return _jmethod_ids; }
   void set_jmethod_ids(JNIMethodBlock* new_block)  { _jmethod_ids = new_block; }
 
-  void print()                                     { print_on(tty); }
+  void print() const;
   void print_on(outputStream* out) const PRODUCT_RETURN;
-  void print_value()                               { print_value_on(tty); }
+  void print_value() const;
   void print_value_on(outputStream* out) const;
   void verify();
 
@@ -299,6 +299,10 @@ class ClassLoaderData : public CHeapObj<mtClass> {
   ModuleEntry* unnamed_module() { return _unnamed_module; }
   ModuleEntryTable* modules();
   bool modules_defined() { return (_modules != NULL); }
+
+  // Offsets
+  static ByteSize holder_offset()     { return in_ByteSize(offset_of(ClassLoaderData, _holder)); }
+  static ByteSize keep_alive_offset() { return in_ByteSize(offset_of(ClassLoaderData, _keep_alive)); }
 
   // Loaded class dictionary
   Dictionary* dictionary() const { return _dictionary; }

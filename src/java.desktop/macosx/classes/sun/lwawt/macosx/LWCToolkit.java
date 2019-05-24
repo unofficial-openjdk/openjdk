@@ -105,6 +105,7 @@ import sun.awt.AppContext;
 import sun.awt.CGraphicsConfig;
 import sun.awt.CGraphicsDevice;
 import sun.awt.LightweightFrame;
+import sun.awt.PlatformGraphicsInfo;
 import sun.awt.SunToolkit;
 import sun.awt.datatransfer.DataTransferer;
 import sun.awt.util.ThreadGroupUtils;
@@ -163,7 +164,9 @@ public final class LWCToolkit extends LWToolkit {
             }
         });
 
-        if (!GraphicsEnvironment.isHeadless() && !isInAquaSession()) {
+        if (!GraphicsEnvironment.isHeadless() &&
+            !PlatformGraphicsInfo.isInAquaSession())
+        {
             throw new AWTError("WindowServer is not available");
         }
 
@@ -187,10 +190,16 @@ public final class LWCToolkit extends LWToolkit {
     private static final boolean inAWT;
 
     public LWCToolkit() {
-        areExtraMouseButtonsEnabled = Boolean.parseBoolean(System.getProperty("sun.awt.enableExtraMouseButtons", "true"));
-        //set system property if not yet assigned
-        System.setProperty("sun.awt.enableExtraMouseButtons", ""+areExtraMouseButtonsEnabled);
-        initAppkit(ThreadGroupUtils.getRootThreadGroup(), GraphicsEnvironment.isHeadless());
+        final String extraButtons = "sun.awt.enableExtraMouseButtons";
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            areExtraMouseButtonsEnabled =
+                 Boolean.parseBoolean(System.getProperty(extraButtons, "true"));
+            //set system property if not yet assigned
+            System.setProperty(extraButtons, ""+areExtraMouseButtonsEnabled);
+            initAppkit(ThreadGroupUtils.getRootThreadGroup(),
+                       GraphicsEnvironment.isHeadless());
+            return null;
+        });
     }
 
     /*
@@ -863,13 +872,6 @@ public final class LWCToolkit extends LWToolkit {
      * @return true if AWT toolkit is embedded, false otherwise
      */
     public static native boolean isEmbedded();
-
-    /**
-     * Returns true if the WindowServer is available, false otherwise.
-     *
-     * @return true if the WindowServer is available, false otherwise
-     */
-    private static native boolean isInAquaSession();
 
     /*
      * Activates application ignoring other apps.

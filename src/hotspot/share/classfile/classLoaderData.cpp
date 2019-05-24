@@ -108,8 +108,7 @@ void ClassLoaderData::initialize_name(Handle class_loader) {
     const char* cl_instance_name = java_lang_String::as_utf8_string(cl_name);
 
     if (cl_instance_name != NULL && cl_instance_name[0] != '\0') {
-      // Can't throw InternalError and SymbolTable doesn't throw OOM anymore.
-      _name = SymbolTable::new_symbol(cl_instance_name, CATCH);
+      _name = SymbolTable::new_symbol(cl_instance_name);
     }
   }
 
@@ -125,8 +124,7 @@ void ClassLoaderData::initialize_name(Handle class_loader) {
                   (cl_name_and_id == NULL) ? _class_loader_klass->external_name() :
                                              java_lang_String::as_utf8_string(cl_name_and_id);
   assert(cl_instance_name_and_id != NULL && cl_instance_name_and_id[0] != '\0', "class loader has no name and id");
-  // Can't throw InternalError and SymbolTable doesn't throw OOM anymore.
-  _name_and_id = SymbolTable::new_symbol(cl_instance_name_and_id, CATCH);
+  _name_and_id = SymbolTable::new_symbol(cl_instance_name_and_id);
 }
 
 ClassLoaderData::ClassLoaderData(Handle h_class_loader, bool is_unsafe_anonymous) :
@@ -915,6 +913,8 @@ void ClassLoaderData::print_value_on(outputStream* out) const {
   }
 }
 
+void ClassLoaderData::print_value() const { print_value_on(tty); }
+
 #ifndef PRODUCT
 void ClassLoaderData::print_on(outputStream* out) const {
   out->print("ClassLoaderData CLD: " PTR_FORMAT ", loader: " PTR_FORMAT ", loader_klass: %s {",
@@ -932,6 +932,8 @@ void ClassLoaderData::print_on(outputStream* out) const {
   out->print_cr("}");
 }
 #endif // PRODUCT
+
+void ClassLoaderData::print() const { print_on(tty); }
 
 void ClassLoaderData::verify() {
   assert_locked_or_safepoint(_metaspace_lock);

@@ -1709,10 +1709,10 @@ public:
 
       FreezeOopFn oopFn(&_cont, &_fp_oop_info, &f, vsp, hsp, &_map, starting_index, stub_vsp, stub_hsp);
 
-      OopMapDo<FreezeOopFn, FreezeOopFn, IncludeAllValues> visitor(&oopFn, &oopFn, false /* no derived table lock */);
+      OopMapDo<FreezeOopFn, FreezeOopFn, IncludeAllValues> visitor(&oopFn, &oopFn);
       visitor.oops_do(&f, &_map, oopmap);
       assert (!_map.include_argument_oops(), "");
-      
+
       return oopFn.count();
     }
   }
@@ -2616,7 +2616,7 @@ public:
       // ResourceMark rm(cont.thread()); // apparently, oop-mapping may require resource allocation
       ThawOopFn oopFn(&_cont, &f, oop_index, num_oops, target, &map);
       if (oop_map) {
-        OopMapDo<ThawOopFn, ThawOopFn, IncludeAllValues> visitor(&oopFn, &oopFn, false /* no derived table lock */);
+        OopMapDo<ThawOopFn, ThawOopFn, IncludeAllValues> visitor(&oopFn, &oopFn);
         visitor.oops_do(&f, &map, oop_map);
       } else {
         f.oops_do(&oopFn, NULL, &oopFn, &map);

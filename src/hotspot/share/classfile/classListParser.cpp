@@ -295,13 +295,13 @@ InstanceKlass* ClassListParser::load_class_from_source(Symbol* class_name, TRAPS
   if (!is_id_specified()) {
     error("If source location is specified, id must be also specified");
   }
-  InstanceKlass* k = ClassLoaderExt::load_class(class_name, _source, CHECK_NULL);
-
   if (strncmp(_class_name, "java/", 5) == 0) {
     log_info(cds)("Prohibited package for non-bootstrap classes: %s.class from %s",
           _class_name, _source);
     return NULL;
   }
+
+  InstanceKlass* k = ClassLoaderExt::load_class(class_name, _source, CHECK_NULL);
 
   if (k != NULL) {
     if (k->local_interfaces()->length() != _interfaces->length()) {
@@ -326,8 +326,7 @@ InstanceKlass* ClassListParser::load_class_from_source(Symbol* class_name, TRAPS
 }
 
 Klass* ClassListParser::load_current_class(TRAPS) {
-  TempNewSymbol class_name_symbol = SymbolTable::new_symbol(_class_name, THREAD);
-  guarantee(!HAS_PENDING_EXCEPTION, "Exception creating a symbol.");
+  TempNewSymbol class_name_symbol = SymbolTable::new_symbol(_class_name);
 
   Klass *klass = NULL;
   if (!is_loading_from_source()) {
@@ -462,4 +461,3 @@ InstanceKlass* ClassListParser::lookup_interface_for_current_class(Symbol* inter
   ShouldNotReachHere();
   return NULL;
 }
-

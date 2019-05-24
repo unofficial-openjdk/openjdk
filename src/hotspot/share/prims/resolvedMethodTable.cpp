@@ -28,6 +28,7 @@
 #include "logging/log.hpp"
 #include "memory/allocation.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/oop.inline.hpp"
 #include "oops/method.hpp"
@@ -55,12 +56,15 @@ unsigned int method_hash(const Method* method) {
   return name_hash ^ signature_hash;
 }
 
+typedef ConcurrentHashTable<WeakHandle<vm_resolved_method_table_data>,
+                            ResolvedMethodTableConfig,
+                            mtClass> ResolvedMethodTableHash;
+
 class ResolvedMethodTableConfig : public ResolvedMethodTableHash::BaseConfig {
  private:
  public:
   static uintx get_hash(WeakHandle<vm_resolved_method_table_data> const& value,
                         bool* is_dead) {
-    EXCEPTION_MARK;
     oop val_oop = value.peek();
     if (val_oop == NULL) {
       *is_dead = true;
@@ -83,14 +87,14 @@ class ResolvedMethodTableConfig : public ResolvedMethodTableHash::BaseConfig {
   }
 };
 
-ResolvedMethodTableHash* ResolvedMethodTable::_local_table           = NULL;
-size_t                   ResolvedMethodTable::_current_size          = (size_t)1 << ResolvedMethodTableSizeLog;
+static ResolvedMethodTableHash* _local_table           = NULL;
+static size_t                   _current_size          = (size_t)1 << ResolvedMethodTableSizeLog;
 
 OopStorage*              ResolvedMethodTable::_weak_handles          = NULL;
-
 volatile bool            ResolvedMethodTable::_has_work              = false;
-volatile size_t          ResolvedMethodTable::_items_count           = 0;
-volatile size_t          ResolvedMethodTable::_uncleaned_items_count = 0;
+
+volatile size_t          _items_count           = 0;
+volatile size_t          _uncleaned_items_count = 0;
 
 void ResolvedMethodTable::create_table() {
   _local_table  = new ResolvedMethodTableHash(ResolvedMethodTableSizeLog, END_SIZE, GROW_HINT);
@@ -176,8 +180,8 @@ static void log_insert(const Method* method) {
   LogTarget(Debug, membername, table) log;
   if (log.is_enabled()) {
     ResourceMark rm;
-    log_debug(membername, table) ("ResolvedMethod entry added for %s",
-                                  method->name_and_sig_as_C_string());
+    log.print("ResolvedMethod entry added for %s",
+              method->name_and_sig_as_C_string());
   }
 }
 
@@ -198,8 +202,6 @@ oop ResolvedMethodTable::add_method(const Method* method, Handle rmethod_name) {
       return wh.resolve();
     }
   }
-
-  return rmethod_name();
 }
 
 void ResolvedMethodTable::item_added() {
@@ -209,14 +211,6 @@ void ResolvedMethodTable::item_added() {
 void ResolvedMethodTable::item_removed() {
   Atomic::dec(&_items_count);
   log_trace(membername, table) ("ResolvedMethod entry removed");
-}
-
-bool ResolvedMethodTable::has_work() {
-  return _has_work;
-}
-
-OopStorage* ResolvedMethodTable::weak_storage() {
-  return _weak_handles;
 }
 
 double ResolvedMethodTable::get_load_factor() {

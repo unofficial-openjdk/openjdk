@@ -35,6 +35,7 @@
 #include "gc/shared/genOopClosures.inline.hpp"
 #include "gc/shared/strongRootsScope.hpp"
 #include "gc/shared/workgroup.hpp"
+#include "memory/universe.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/vmThread.hpp"
 #include "services/memoryManager.hpp"
@@ -65,9 +66,8 @@ public:
   }
 };
 
-CMSHeap::CMSHeap(GenCollectorPolicy *policy) :
-    GenCollectedHeap(policy,
-                     Generation::ParNew,
+CMSHeap::CMSHeap() :
+    GenCollectedHeap(Generation::ParNew,
                      Generation::ConcurrentMarkSweep,
                      "ParNew:CMS"),
     _workers(NULL),
@@ -162,9 +162,7 @@ bool CMSHeap::create_cms_collector() {
   assert(old_gen()->kind() == Generation::ConcurrentMarkSweep,
          "Unexpected generation kinds");
   CMSCollector* collector =
-    new CMSCollector((ConcurrentMarkSweepGeneration*) old_gen(),
-                     rem_set(),
-                     (ConcurrentMarkSweepPolicy*) gen_policy());
+    new CMSCollector((ConcurrentMarkSweepGeneration*) old_gen(), rem_set());
 
   if (collector == NULL || !collector->completed_initialization()) {
     if (collector) {

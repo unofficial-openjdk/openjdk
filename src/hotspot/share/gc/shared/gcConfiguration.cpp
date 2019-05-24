@@ -24,8 +24,10 @@
 #include "precompiled.hpp"
 
 #include "gc/shared/collectedHeap.hpp"
+#include "gc/shared/gcArguments.hpp"
 #include "gc/shared/gcConfiguration.hpp"
 #include "memory/universe.hpp"
+#include "oops/compressedOops.hpp"
 #include "runtime/arguments.hpp"
 #include "runtime/globals.hpp"
 #include "utilities/debug.hpp"
@@ -131,7 +133,7 @@ size_t GCHeapConfiguration::max_size() const {
 }
 
 size_t GCHeapConfiguration::min_size() const {
-  return Arguments::min_heap_size();
+  return MinHeapSize;
 }
 
 size_t GCHeapConfiguration::initial_size() const {
@@ -142,8 +144,8 @@ bool GCHeapConfiguration::uses_compressed_oops() const {
   return UseCompressedOops;
 }
 
-Universe::NARROW_OOP_MODE GCHeapConfiguration::narrow_oop_mode() const {
-  return Universe::narrow_oop_mode();
+CompressedOops::Mode GCHeapConfiguration::narrow_oop_mode() const {
+  return CompressedOops::mode();
 }
 
 uint GCHeapConfiguration::object_alignment_in_bytes() const {

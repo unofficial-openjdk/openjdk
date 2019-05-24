@@ -54,19 +54,20 @@ private:
   template<typename Filter>
   inline void apply_filter(Filter filter_out);
 
+protected:
+  virtual void handle_completed_buffer();
+
 public:
   SATBMarkQueue(SATBMarkQueueSet* qset);
 
   // Process queue entries and free resources.
   void flush();
 
+  inline SATBMarkQueueSet* satb_qset() const;
+
   // Apply cl to the active part of the buffer.
   // Prerequisite: Must be at a safepoint.
   void apply_closure_and_empty(SATBBufferClosure* cl);
-
-  // Overrides PtrQueue::should_enqueue_buffer(). See the method's
-  // definition for more information.
-  virtual bool should_enqueue_buffer();
 
 #ifndef PRODUCT
   // Helpful for debugging
@@ -125,9 +126,6 @@ public:
   size_t buffer_enqueue_threshold() const { return _buffer_enqueue_threshold; }
   virtual void filter(SATBMarkQueue* queue) = 0;
 
-  // Filter all the currently-active SATB buffers.
-  void filter_thread_buffers();
-
   // If there exists some completed buffer, pop and process it, and
   // return true.  Otherwise return false.  Processing a buffer
   // consists of applying the closure to the active range of the
@@ -143,8 +141,12 @@ public:
   void abandon_partial_marking();
 };
 
+inline SATBMarkQueueSet* SATBMarkQueue::satb_qset() const {
+  return static_cast<SATBMarkQueueSet*>(qset());
+}
+
 inline void SATBMarkQueue::filter() {
-  static_cast<SATBMarkQueueSet*>(qset())->filter(this);
+  satb_qset()->filter(this);
 }
 
 // Removes entries from the buffer that are no longer needed, as

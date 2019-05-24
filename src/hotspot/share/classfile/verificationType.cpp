@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -94,12 +94,14 @@ bool VerificationType::is_reference_assignable_from(
       return true;
     }
 
-    if (DumpSharedSpaces && SystemDictionaryShared::add_verification_constraint(klass,
+    if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
+      if (SystemDictionaryShared::add_verification_constraint(klass,
               name(), from.name(), from_field_is_protected, from.is_array(),
               from.is_object())) {
-      // If add_verification_constraint() returns true, the resolution/check should be
-      // delayed until runtime.
-      return true;
+        // If add_verification_constraint() returns true, the resolution/check should be
+        // delayed until runtime.
+        return true;
+      }
     }
 
     return resolve_and_check_assignability(klass, name(), from.name(),
@@ -129,13 +131,11 @@ VerificationType VerificationType::get_component(ClassVerifier *context, TRAPS) 
     case 'D': return VerificationType(Double);
     case '[':
       component = context->create_temporary_symbol(
-        name(), 1, name()->utf8_length(),
-        CHECK_(VerificationType::bogus_type()));
+        name(), 1, name()->utf8_length());
       return VerificationType::reference_type(component);
     case 'L':
       component = context->create_temporary_symbol(
-        name(), 2, name()->utf8_length() - 1,
-        CHECK_(VerificationType::bogus_type()));
+        name(), 2, name()->utf8_length() - 1);
       return VerificationType::reference_type(component);
     default:
       // Met an invalid type signature, e.g. [X

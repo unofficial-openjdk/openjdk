@@ -56,12 +56,6 @@ public abstract class SocketImpl implements SocketOptions {
     }
 
     /**
-     * The actual Socket object.
-     */
-    Socket socket = null;
-    ServerSocket serverSocket = null;
-
-    /**
      * The file descriptor object for this socket.
      */
     protected FileDescriptor fd;
@@ -80,6 +74,23 @@ public abstract class SocketImpl implements SocketOptions {
      * The local port number to which this socket is connected.
      */
     protected int localport;
+
+    /**
+     * Whether this is a server or not.
+     */
+    final boolean isServer;
+
+
+    SocketImpl(boolean isServer) {
+        this.isServer = isServer;
+    }
+
+    /**
+     * Initialize a new instance of this class
+     */
+    public SocketImpl() {
+        this.isServer = false;
+    }
 
     /**
      * Creates either a stream or a datagram socket.
@@ -301,22 +312,6 @@ public abstract class SocketImpl implements SocketOptions {
         return localport;
     }
 
-    void setSocket(Socket soc) {
-        this.socket = soc;
-    }
-
-    Socket getSocket() {
-        return socket;
-    }
-
-    void setServerSocket(ServerSocket soc) {
-        this.serverSocket = soc;
-    }
-
-    ServerSocket getServerSocket() {
-        return serverSocket;
-    }
-
     /**
      * Returns the address and port of this socket as a {@code String}.
      *
@@ -396,11 +391,9 @@ public abstract class SocketImpl implements SocketOptions {
      * @since 9
      */
     protected <T> void setOption(SocketOption<T> name, T value) throws IOException {
-        if (name == StandardSocketOptions.SO_KEEPALIVE &&
-                (getSocket() != null)) {
+        if (name == StandardSocketOptions.SO_KEEPALIVE && !isServer) {
             setOption(SocketOptions.SO_KEEPALIVE, value);
-        } else if (name == StandardSocketOptions.SO_SNDBUF &&
-                (getSocket() != null)) {
+        } else if (name == StandardSocketOptions.SO_SNDBUF && !isServer) {
             setOption(SocketOptions.SO_SNDBUF, value);
         } else if (name == StandardSocketOptions.SO_RCVBUF) {
             setOption(SocketOptions.SO_RCVBUF, value);
@@ -409,13 +402,11 @@ public abstract class SocketImpl implements SocketOptions {
         } else if (name == StandardSocketOptions.SO_REUSEPORT &&
             supportedOptions().contains(name)) {
             setOption(SocketOptions.SO_REUSEPORT, value);
-        } else if (name == StandardSocketOptions.SO_LINGER &&
-                (getSocket() != null)) {
+        } else if (name == StandardSocketOptions.SO_LINGER && !isServer) {
             setOption(SocketOptions.SO_LINGER, value);
         } else if (name == StandardSocketOptions.IP_TOS) {
             setOption(SocketOptions.IP_TOS, value);
-        } else if (name == StandardSocketOptions.TCP_NODELAY &&
-                (getSocket() != null)) {
+        } else if (name == StandardSocketOptions.TCP_NODELAY && !isServer) {
             setOption(SocketOptions.TCP_NODELAY, value);
         } else {
             throw new UnsupportedOperationException("unsupported option");
@@ -439,11 +430,9 @@ public abstract class SocketImpl implements SocketOptions {
      */
     @SuppressWarnings("unchecked")
     protected <T> T getOption(SocketOption<T> name) throws IOException {
-        if (name == StandardSocketOptions.SO_KEEPALIVE &&
-                (getSocket() != null)) {
+        if (name == StandardSocketOptions.SO_KEEPALIVE && !isServer) {
             return (T)getOption(SocketOptions.SO_KEEPALIVE);
-        } else if (name == StandardSocketOptions.SO_SNDBUF &&
-                (getSocket() != null)) {
+        } else if (name == StandardSocketOptions.SO_SNDBUF && !isServer) {
             return (T)getOption(SocketOptions.SO_SNDBUF);
         } else if (name == StandardSocketOptions.SO_RCVBUF) {
             return (T)getOption(SocketOptions.SO_RCVBUF);
@@ -452,13 +441,11 @@ public abstract class SocketImpl implements SocketOptions {
         } else if (name == StandardSocketOptions.SO_REUSEPORT &&
             supportedOptions().contains(name)) {
             return (T)getOption(SocketOptions.SO_REUSEPORT);
-        } else if (name == StandardSocketOptions.SO_LINGER &&
-                (getSocket() != null)) {
+        } else if (name == StandardSocketOptions.SO_LINGER && !isServer) {
             return (T)getOption(SocketOptions.SO_LINGER);
         } else if (name == StandardSocketOptions.IP_TOS) {
             return (T)getOption(SocketOptions.IP_TOS);
-        } else if (name == StandardSocketOptions.TCP_NODELAY &&
-                (getSocket() != null)) {
+        } else if (name == StandardSocketOptions.TCP_NODELAY && !isServer) {
             return (T)getOption(SocketOptions.TCP_NODELAY);
         } else {
             throw new UnsupportedOperationException("unsupported option");
@@ -505,7 +492,7 @@ public abstract class SocketImpl implements SocketOptions {
      * @since 9
      */
     protected Set<SocketOption<?>> supportedOptions() {
-        if (getSocket() != null) {
+        if (!isServer) {
             return socketOptions;
         } else {
             return serverSocketOptions;

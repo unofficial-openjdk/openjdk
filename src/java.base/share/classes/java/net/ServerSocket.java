@@ -32,6 +32,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.channels.ServerSocketChannel;
 import java.security.AccessController;
 import java.security.PrivilegedExceptionAction;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Collections;
 
@@ -72,11 +73,6 @@ class ServerSocket implements java.io.Closeable {
     private SocketImpl impl;
 
     /**
-     * Are we using an older SocketImpl?
-     */
-    private boolean oldImpl = false;
-
-    /**
      * Creates a server socket with a user-specified {@code SocketImpl}.
      *
      * @param      impl an instance of a SocketImpl to use on the ServerSocket.
@@ -86,8 +82,8 @@ class ServerSocket implements java.io.Closeable {
      * @since 12
      */
     protected ServerSocket(SocketImpl impl) {
+        Objects.requireNonNull(impl);
         this.impl = impl;
-        impl.setServerSocket(this);
     }
 
     /**
@@ -270,36 +266,13 @@ class ServerSocket implements java.io.Closeable {
         return impl;
     }
 
-    private void checkOldImpl() {
-        if (impl == null)
-            return;
-        // SocketImpl.connect() is a protected method, therefore we need to use
-        // getDeclaredMethod, therefore we need permission to access the member
-        try {
-            AccessController.doPrivileged(
-                new PrivilegedExceptionAction<Void>() {
-                    public Void run() throws NoSuchMethodException {
-                        impl.getClass().getDeclaredMethod("connect",
-                                                          SocketAddress.class,
-                                                          int.class);
-                        return null;
-                    }
-                });
-        } catch (java.security.PrivilegedActionException e) {
-            oldImpl = true;
-        }
-    }
-
     private void setImpl() {
         SocketImplFactory factory = ServerSocket.factory;
         if (factory != null) {
             impl = factory.createSocketImpl();
-            checkOldImpl();
         } else {
             impl = SocketImpl.createPlatformSocketImpl(true);
         }
-        if (impl != null)
-            impl.setServerSocket(this);
     }
 
     /**
@@ -368,7 +341,7 @@ class ServerSocket implements java.io.Closeable {
     public void bind(SocketAddress endpoint, int backlog) throws IOException {
         if (isClosed())
             throw new SocketException("Socket is closed");
-        if (!oldImpl && isBound())
+        if (isBound())
             throw new SocketException("Already bound");
         if (endpoint == null)
             endpoint = new InetSocketAddress(0);
@@ -722,8 +695,7 @@ class ServerSocket implements java.io.Closeable {
      * @since 1.4
      */
     public boolean isBound() {
-        // Before 1.3 ServerSockets were always bound during creation
-        return bound || oldImpl;
+        return bound;
     }
 
     /**
@@ -864,14 +836,6 @@ class ServerSocket implements java.io.Closeable {
             in = impl.getInetAddress();
         return "ServerSocket[addr=" + in +
                 ",localport=" + impl.getLocalPort()  + "]";
-    }
-
-    void setBound() {
-        bound = true;
-    }
-
-    void setCreated() {
-        created = true;
     }
 
     /**

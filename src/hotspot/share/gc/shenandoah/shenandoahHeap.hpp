@@ -40,6 +40,7 @@ class ShenandoahAllocTracker;
 class ShenandoahCollectorPolicy;
 class ShenandoahControlThread;
 class ShenandoahGCSession;
+class ShenandoahGCStateResetter;
 class ShenandoahHeuristics;
 class ShenandoahMarkingContext;
 class ShenandoahPhaseTimings;
@@ -111,6 +112,7 @@ class ShenandoahHeap : public CollectedHeap {
   friend class ShenandoahAsserts;
   friend class VMStructs;
   friend class ShenandoahGCSession;
+  friend class ShenandoahGCStateResetter;
 
 // ---------- Locks that guard important data structures in Heap
 //
@@ -244,7 +246,7 @@ public:
     UPDATEREFS_BITPOS = 3,
 
     // Heap is under traversal collection
-    TRAVERSAL_BITPOS  = 4,
+    TRAVERSAL_BITPOS  = 4
   };
 
   enum GCState {
@@ -253,7 +255,7 @@ public:
     MARKING       = 1 << MARKING_BITPOS,
     EVACUATION    = 1 << EVACUATION_BITPOS,
     UPDATEREFS    = 1 << UPDATEREFS_BITPOS,
-    TRAVERSAL     = 1 << TRAVERSAL_BITPOS,
+    TRAVERSAL     = 1 << TRAVERSAL_BITPOS
   };
 
 private:
@@ -303,7 +305,7 @@ public:
     _degenerated_mark,
     _degenerated_evac,
     _degenerated_updaterefs,
-    _DEGENERATED_LIMIT,
+    _DEGENERATED_LIMIT
   };
 
   static const char* degen_point_to_string(ShenandoahDegenPoint point) {
@@ -479,7 +481,6 @@ public:
   MemoryUsage memory_usage();
   GCTracer* tracer();
   GCTimer* gc_timer() const;
-  CollectorPolicy* collector_policy() const;
 
 // ---------- Reference processing
 //

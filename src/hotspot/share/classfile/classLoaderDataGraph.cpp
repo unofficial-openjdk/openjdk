@@ -48,6 +48,7 @@ volatile size_t ClassLoaderDataGraph::_num_array_classes = 0;
 volatile size_t ClassLoaderDataGraph::_num_instance_classes = 0;
 
 void ClassLoaderDataGraph::clear_claimed_marks() {
+  assert_locked_or_safepoint_weak(ClassLoaderDataGraph_lock);
   for (ClassLoaderData* cld = _head; cld != NULL; cld = cld->next()) {
     cld->clear_claim();
   }
@@ -442,7 +443,7 @@ void ClassLoaderDataGraph::print_dictionary(outputStream* st) {
   }
 }
 
-void ClassLoaderDataGraph::print_dictionary_statistics(outputStream* st) {
+void ClassLoaderDataGraph::print_table_statistics(outputStream* st) {
   FOR_ALL_DICTIONARY(cld) {
     ResourceMark rm;
     stringStream tempst;
@@ -595,14 +596,13 @@ void ClassLoaderDataGraph::purge() {
   DependencyContext::purge_dependency_contexts();
 }
 
-int ClassLoaderDataGraph::resize_if_needed() {
+int ClassLoaderDataGraph::resize_dictionaries() {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at safepoint!");
   int resized = 0;
-  if (Dictionary::does_any_dictionary_needs_resizing()) {
-    FOR_ALL_DICTIONARY(cld) {
-      if (cld->dictionary()->resize_if_needed()) {
-        resized++;
-      }
+  assert (Dictionary::does_any_dictionary_needs_resizing(), "some dictionary should need resizing");
+  FOR_ALL_DICTIONARY(cld) {
+    if (cld->dictionary()->resize_if_needed()) {
+      resized++;
     }
   }
   return resized;
@@ -706,3 +706,5 @@ void ClassLoaderDataGraph::print_on(outputStream * const out) {
   }
 }
 #endif // PRODUCT
+
+void ClassLoaderDataGraph::print() { print_on(tty); }

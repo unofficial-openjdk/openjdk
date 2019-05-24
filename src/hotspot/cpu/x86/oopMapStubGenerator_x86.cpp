@@ -574,7 +574,7 @@ public:
       _masm->movptr(rax, Address(rdi, derived_sp_offset_in_bytes)); // offset -> rax
     }
 
-    address narrow_oop_base = Universe::narrow_oop_base();
+    address narrow_oop_base = CompressedOops::base();
     assert(narrow_oop_base == (address) NULL, "");
     // maybe we need to test for is_narrow_oop_base too...
 
@@ -606,7 +606,7 @@ public:
   }
 
   bool need_heapbase() {
-    return (UseCompressedOops && Universe::narrow_oop_base() != NULL) || CheckCompressedOops;
+    return (UseCompressedOops && CompressedOops::base() != NULL) || CheckCompressedOops;
   }
 
   void generate_thaw(const ImmutableOopMap& map) {
@@ -774,7 +774,7 @@ public:
     }
 
     // read the base value into rax
-    address narrow_oop_base = Universe::narrow_oop_base();
+    address narrow_oop_base = CompressedOops::base();
     assert(narrow_oop_base == (address) NULL, "");
     // maybe we need to test for is_narrow_oop_base too...
 
@@ -1131,7 +1131,7 @@ public:
           _masm->movptr(rcx, Address(rdi, sp_offset_in_bytes)); // base -> rdx
         }
 
-        address narrow_oop_base = Universe::narrow_oop_base();
+        address narrow_oop_base = CompressedOops::base();
         assert(narrow_oop_base == (address) NULL, "");
         // maybe we need to test for is_narrow_oop_base too...
         Label L_next;
@@ -1268,7 +1268,7 @@ public:
           _masm->movptr(rax, Address(rdi, sp_offset_in_bytes));
         }
 
-        address narrow_oop_base = Universe::narrow_oop_base();
+        address narrow_oop_base = CompressedOops::base();
         assert(narrow_oop_base == (address) NULL, "");
         // maybe we need to test for is_narrow_oop_base too...
         Label L_next;

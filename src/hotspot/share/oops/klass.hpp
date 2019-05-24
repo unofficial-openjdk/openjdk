@@ -333,6 +333,7 @@ protected:
   static ByteSize secondary_super_cache_offset() { return in_ByteSize(offset_of(Klass, _secondary_super_cache)); }
   static ByteSize secondary_supers_offset()      { return in_ByteSize(offset_of(Klass, _secondary_supers)); }
   static ByteSize java_mirror_offset()           { return in_ByteSize(offset_of(Klass, _java_mirror)); }
+  static ByteSize class_loader_data_offset()     { return in_ByteSize(offset_of(Klass, _class_loader_data)); }
   static ByteSize modifier_flags_offset()        { return in_ByteSize(offset_of(Klass, _modifier_flags)); }
   static ByteSize layout_helper_offset()         { return in_ByteSize(offset_of(Klass, _layout_helper)); }
   static ByteSize access_flags_offset()          { return in_ByteSize(offset_of(Klass, _access_flags)); }
@@ -692,18 +693,7 @@ protected:
   virtual void oop_verify_on(oop obj, outputStream* st);
 
   // for error reporting
-  static Klass* decode_klass_raw(narrowKlass narrow_klass);
   static bool is_valid(Klass* k);
-
-  static bool is_null(narrowKlass obj);
-  static bool is_null(Klass* obj);
-
-  // klass encoding for klass pointer in objects.
-  static narrowKlass encode_klass_not_null(Klass* v);
-  static narrowKlass encode_klass(Klass* v);
-
-  static Klass* decode_klass_not_null(narrowKlass v);
-  static Klass* decode_klass(narrowKlass v);
 };
 
 #endif // SHARE_OOPS_KLASS_HPP

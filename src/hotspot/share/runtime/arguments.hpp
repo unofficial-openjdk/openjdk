@@ -333,8 +333,6 @@ class Arguments : AllStatic {
   // Value of the conservative maximum heap alignment needed
   static size_t  _conservative_max_heap_alignment;
 
-  static size_t  _min_heap_size;
-
   // -Xrun arguments
   static AgentLibraryList _libraryList;
   static void add_init_library(const char* name, char* options);
@@ -486,6 +484,11 @@ class Arguments : AllStatic {
   static AliasedLoggingFlag catch_logging_aliases(const char* name, bool on);
 
   static char*  SharedArchivePath;
+  static char*  SharedDynamicArchivePath;
+  static int num_archives(const char* archive_path) NOT_CDS_RETURN_(0);
+  static void extract_shared_archive_paths(const char* archive_path,
+                                         char** base_archive_path,
+                                         char** top_archive_path) NOT_CDS_RETURN;
 
  public:
   // Parses the arguments, first phase
@@ -548,10 +551,6 @@ class Arguments : AllStatic {
   // -Dsun.java.launcher.pid
   static int sun_java_launcher_pid()        { return _sun_java_launcher_pid; }
 
-  // -Xms
-  static size_t min_heap_size()             { return _min_heap_size; }
-  static void  set_min_heap_size(size_t v)  { _min_heap_size = v;  }
-
   // -Xrun
   static AgentLibrary* libraries()          { return _libraryList.first(); }
   static bool init_libraries_at_startup()   { return !_libraryList.is_empty(); }
@@ -569,6 +568,7 @@ class Arguments : AllStatic {
   static vfprintf_hook_t vfprintf_hook()    { return _vfprintf_hook; }
 
   static const char* GetSharedArchivePath() { return SharedArchivePath; }
+  static const char* GetSharedDynamicArchivePath() { return SharedDynamicArchivePath; }
 
   // Java launcher properties
   static void process_sun_java_launcher_properties(JavaVMInitArgs* args);
@@ -631,7 +631,8 @@ class Arguments : AllStatic {
   static char* get_appclasspath() { return _java_class_path->value(); }
   static void  fix_appclasspath();
 
-  static char* get_default_shared_archive_path();
+  static char* get_default_shared_archive_path() NOT_CDS_RETURN_(NULL);
+  static bool  init_shared_archive_paths() NOT_CDS_RETURN_(false);
 
   // Operation modi
   static Mode mode()                        { return _mode; }

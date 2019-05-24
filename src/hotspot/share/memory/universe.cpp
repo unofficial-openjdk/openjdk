@@ -28,6 +28,7 @@
 #include "classfile/classLoaderDataGraph.hpp"
 #include "classfile/javaClasses.hpp"
 #include "classfile/stringTable.hpp"
+#include "classfile/symbolTable.hpp"
 #include "classfile/systemDictionary.hpp"
 #include "classfile/vmSymbols.hpp"
 #include "code/codeBehaviours.hpp"
@@ -49,7 +50,7 @@
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
 #include "memory/universe.hpp"
-#include "memory/universe.hpp"
+#include "oops/compressedOops.hpp"
 #include "oops/constantPool.hpp"
 #include "oops/instanceClassLoaderKlass.hpp"
 #include "oops/instanceKlass.hpp"
@@ -153,11 +154,6 @@ size_t          Universe::_heap_capacity_at_last_gc;
 size_t          Universe::_heap_used_at_last_gc = 0;
 
 CollectedHeap*  Universe::_collectedHeap = NULL;
-
-NarrowPtrStruct Universe::_narrow_oop = { NULL, 0, true };
-NarrowPtrStruct Universe::_narrow_klass = { NULL, 0, true };
-address Universe::_narrow_ptrs_base;
-uint64_t Universe::_narrow_klass_range = (uint64_t(max_juint)+1);
 
 void Universe::basic_type_classes_do(void f(Klass*)) {
   for (int i = T_BOOLEAN; i < T_LONG+1; i++) {
@@ -663,10 +659,16 @@ jint universe_init() {
 
   initialize_global_behaviours();
 
+  GCConfig::arguments()->initialize_heap_sizes();
+
   jint status = Universe::initialize_heap();
   if (status != JNI_OK) {
     return status;
   }
+
+  CompressedOops::initialize();
+
+  Universe::initialize_tlab();
 
   SystemDictionary::initialize_oop_storage();
 
@@ -709,13 +711,14 @@ jint universe_init() {
   {
     SymbolTable::create_table();
     StringTable::create_table();
+  }
 
 #if INCLUDE_CDS
-    if (DumpSharedSpaces) {
-      MetaspaceShared::prepare_for_dumping();
-    }
-#endif
+  if (DumpSharedSpaces || DynamicDumpSharedSpaces) {
+    MetaspaceShared::prepare_for_dumping();
   }
+#endif
+
   if (strlen(VerifySubSet) > 0) {
     Universe::initialize_verify_flags();
   }
@@ -725,98 +728,25 @@ jint universe_init() {
   return JNI_OK;
 }
 
-CollectedHeap* Universe::create_heap() {
+jint Universe::initialize_heap() {
   assert(_collectedHeap == NULL, "Heap already created");
-  return GCConfig::arguments()->create_heap();
+  _collectedHeap = GCConfig::arguments()->create_heap();
+  jint status = _collectedHeap->initialize();
+
+  if (status == JNI_OK) {
+    log_info(gc)("Using %s", _collectedHeap->name());
+  }
+
+  return status;
 }
 
-// Choose the heap base address and oop encoding mode
-// when compressed oops are used:
-// Unscaled  - Use 32-bits oops without encoding when
-//     NarrowOopHeapBaseMin + heap_size < 4Gb
-// ZeroBased - Use zero based compressed oops with encoding when
-//     NarrowOopHeapBaseMin + heap_size < 32Gb
-// HeapBased - Use compressed oops with heap base + encoding.
-
-jint Universe::initialize_heap() {
-  _collectedHeap = create_heap();
-  jint status = _collectedHeap->initialize();
-  if (status != JNI_OK) {
-    return status;
-  }
-  log_info(gc)("Using %s", _collectedHeap->name());
-
+void Universe::initialize_tlab() {
   ThreadLocalAllocBuffer::set_max_size(Universe::heap()->max_tlab_size());
-
-#ifdef _LP64
-  if (UseCompressedOops) {
-    // Subtract a page because something can get allocated at heap base.
-    // This also makes implicit null checking work, because the
-    // memory+1 page below heap_base needs to cause a signal.
-    // See needs_explicit_null_check.
-    // Only set the heap base for compressed oops because it indicates
-    // compressed oops for pstack code.
-    if ((uint64_t)Universe::heap()->reserved_region().end() > UnscaledOopHeapMax) {
-      // Didn't reserve heap below 4Gb.  Must shift.
-      Universe::set_narrow_oop_shift(LogMinObjAlignmentInBytes);
-    }
-    if ((uint64_t)Universe::heap()->reserved_region().end() <= OopEncodingHeapMax) {
-      // Did reserve heap below 32Gb. Can use base == 0;
-      Universe::set_narrow_oop_base(0);
-    }
-    AOTLoader::set_narrow_oop_shift();
-
-    Universe::set_narrow_ptrs_base(Universe::narrow_oop_base());
-
-    LogTarget(Info, gc, heap, coops) lt;
-    if (lt.is_enabled()) {
-      ResourceMark rm;
-      LogStream ls(lt);
-      Universe::print_compressed_oops_mode(&ls);
-    }
-
-    // Tell tests in which mode we run.
-    Arguments::PropertyList_add(new SystemProperty("java.vm.compressedOopsMode",
-                                                   narrow_oop_mode_to_string(narrow_oop_mode()),
-                                                   false));
-  }
-  // Universe::narrow_oop_base() is one page below the heap.
-  assert((intptr_t)Universe::narrow_oop_base() <= (intptr_t)(Universe::heap()->base() -
-         os::vm_page_size()) ||
-         Universe::narrow_oop_base() == NULL, "invalid value");
-  assert(Universe::narrow_oop_shift() == LogMinObjAlignmentInBytes ||
-         Universe::narrow_oop_shift() == 0, "invalid value");
-#endif
-
-  // We will never reach the CATCH below since Exceptions::_throw will cause
-  // the VM to exit if an exception is thrown during initialization
-
   if (UseTLAB) {
     assert(Universe::heap()->supports_tlab_allocation(),
            "Should support thread-local allocation buffers");
     ThreadLocalAllocBuffer::startup_initialization();
   }
-  return JNI_OK;
-}
-
-void Universe::print_compressed_oops_mode(outputStream* st) {
-  st->print("Heap address: " PTR_FORMAT ", size: " SIZE_FORMAT " MB",
-            p2i(Universe::heap()->base()), Universe::heap()->reserved_region().byte_size()/M);
-
-  st->print(", Compressed Oops mode: %s", narrow_oop_mode_to_string(narrow_oop_mode()));
-
-  if (Universe::narrow_oop_base() != 0) {
-    st->print(": " PTR_FORMAT, p2i(Universe::narrow_oop_base()));
-  }
-
-  if (Universe::narrow_oop_shift() != 0) {
-    st->print(", Oop shift amount: %d", Universe::narrow_oop_shift());
-  }
-
-  if (!Universe::narrow_oop_use_implicit_null_checks()) {
-    st->print(", no protected page in front of the heap");
-  }
-  st->cr();
 }
 
 ReservedSpace Universe::reserve_heap(size_t heap_size, size_t alignment) {
@@ -846,7 +776,7 @@ ReservedSpace Universe::reserve_heap(size_t heap_size, size_t alignment) {
       // Universe::initialize_heap() will reset this to NULL if unscaled
       // or zero-based narrow oops are actually used.
       // Else heap start and base MUST differ, so that NULL can be encoded nonambigous.
-      Universe::set_narrow_oop_base((address)total_rs.compressed_oop_base());
+      CompressedOops::set_base((address)total_rs.compressed_oop_base());
     }
 
     if (AllocateHeapAt != NULL) {
@@ -872,47 +802,13 @@ void Universe::update_heap_info_at_gc() {
   _heap_used_at_last_gc     = heap()->used();
 }
 
-
-const char* Universe::narrow_oop_mode_to_string(Universe::NARROW_OOP_MODE mode) {
-  switch (mode) {
-    case UnscaledNarrowOop:
-      return "32-bit";
-    case ZeroBasedNarrowOop:
-      return "Zero based";
-    case DisjointBaseNarrowOop:
-      return "Non-zero disjoint base";
-    case HeapBasedNarrowOop:
-      return "Non-zero based";
-    default:
-      ShouldNotReachHere();
-      return "";
-  }
-}
-
-
-Universe::NARROW_OOP_MODE Universe::narrow_oop_mode() {
-  if (narrow_oop_base_disjoint()) {
-    return DisjointBaseNarrowOop;
-  }
-
-  if (narrow_oop_base() != 0) {
-    return HeapBasedNarrowOop;
-  }
-
-  if (narrow_oop_shift() != 0) {
-    return ZeroBasedNarrowOop;
-  }
-
-  return UnscaledNarrowOop;
-}
-
 void initialize_known_method(LatestMethodCache* method_cache,
                              InstanceKlass* ik,
                              const char* method,
                              Symbol* signature,
                              bool is_static, TRAPS)
 {
-  TempNewSymbol name = SymbolTable::new_symbol(method, CHECK);
+  TempNewSymbol name = SymbolTable::new_symbol(method);
   Method* m = NULL;
   // The klass must be linked before looking up the method.
   if (!ik->link_class_or_fail(THREAD) ||

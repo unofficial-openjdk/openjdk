@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,11 +36,13 @@
 #include "memory/allocation.inline.hpp"
 #include "memory/iterator.hpp"
 #include "memory/resourceArea.hpp"
+#include "oops/compressedOops.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/signature.hpp"
 #include "utilities/align.hpp"
+#include "utilities/lockFreeStack.hpp"
 #ifdef COMPILER1
 #include "c1/c1_Defs.hpp"
 #endif
@@ -419,6 +421,7 @@ OopMap* OopMapSet::singular_oop_map() {
   return at(0);
 }
 
+
 OopMap* OopMapSet::find_map_at_offset(int pc_offset) const {
   int i, len = om_count();
   assert( len > 0, "must have pointer maps" );
@@ -437,16 +440,18 @@ OopMap* OopMapSet::find_map_at_offset(int pc_offset) const {
   return m;
 }
 
-void AddDerivedOop::do_derived_oop(oop* base, oop* derived) {
+class AddDerivedOop : public DerivedOopClosure {
+public:
+  enum { SkipNull = true, NeedsLock = true };
+  virtual void do_derived_oop(oop* base, oop* derived) {
 #if !defined(TIERED) && !INCLUDE_JVMCI
-  COMPILER1_PRESENT(ShouldNotReachHere();)
+    COMPILER1_PRESENT(ShouldNotReachHere();)
 #endif // !defined(TIERED) && !INCLUDE_JVMCI
 #if COMPILER2_OR_JVMCI
-  DerivedPointerTable::add(derived, base);
+      DerivedPointerTable::add(derived, base);
 #endif // COMPILER2_OR_JVMCI
-}
-
-
+  }
+};
 
 void OopMapSet::oops_do(const frame *fr, const RegisterMap* reg_map, OopClosure* f, DerivedOopClosure* df) {
   // add_derived_oop: add derived oops to a table
@@ -716,9 +721,11 @@ void OopMapValue::print_on(outputStream* st) const {
   st->print(" ");
 }
 
+void OopMapValue::print() const { print_on(tty); }
+
 void ImmutableOopMap::print_on(outputStream* st) const {
   OopMapValue omv;
-  st->print("ImmutableOopMap{");
+  st->print("ImmutableOopMap {");
   for(OopMapStream oms(this); !oms.is_done(); oms.next()) {
     omv = oms.current();
     omv.print_on(st);
@@ -726,43 +733,58 @@ void ImmutableOopMap::print_on(outputStream* st) const {
   st->print("}");
 }
 
+void ImmutableOopMap::print() const { print_on(tty); }
+
 void OopMap::print_on(outputStream* st) const {
   OopMapValue omv;
-  st->print("OopMap{");
+  st->print("OopMap {");
   for(OopMapStream oms((OopMap*)this); !oms.is_done(); oms.next()) {
     omv = oms.current();
     omv.print_on(st);
   }
-  st->print("off=%d}", (int) offset());
+  // Print hex offset in addition.
+  st->print("off=%d/0x%x}", (int) offset(), (int) offset());
 }
+
+void OopMap::print() const { print_on(tty); }
 
 void ImmutableOopMapSet::print_on(outputStream* st) const {
   const ImmutableOopMap* last = NULL;
-  for (int i = 0; i < _count; ++i) {
+  const int len = count();
+
+  st->print_cr("ImmutableOopMapSet contains %d OopMaps", len);
+
+  for (int i = 0; i < len; i++) {
     const ImmutableOopMapPair* pair = pair_at(i);
     const ImmutableOopMap* map = pair->get_from(this);
     if (map != last) {
       st->cr();
       map->print_on(st);
-      st->print("pc offsets: ");
+      st->print(" pc offsets: ");
     }
     last = map;
     st->print("%d ", pair->pc_offset());
   }
+  st->cr();
 }
 
+void ImmutableOopMapSet::print() const { print_on(tty); }
+
 void OopMapSet::print_on(outputStream* st) const {
-  int i, len = om_count();
+  const int len = om_count();
 
-  st->print_cr("OopMapSet contains %d OopMaps\n",len);
+  st->print_cr("OopMapSet contains %d OopMaps", len);
 
-  for( i = 0; i < len; i++) {
+  for( int i = 0; i < len; i++) {
     OopMap* m = at(i);
     st->print_cr("#%d ",i);
     m->print_on(st);
     st->cr();
   }
+  st->cr();
 }
+
+void OopMapSet::print() const { print_on(tty); }
 
 bool OopMap::equals(const OopMap* other) const {
   if (other->_omv_count != _omv_count) {
@@ -793,15 +815,17 @@ int ImmutableOopMapSet::find_slot_for_offset(int pc_offset) const {
 
 const ImmutableOopMap* ImmutableOopMapSet::find_map_at_offset(int pc_offset) const {
   ImmutableOopMapPair* pairs = get_pairs();
+  ImmutableOopMapPair* last  = NULL;
 
-  int i;
-  for (i = 0; i < _count; ++i) {
+  for (int i = 0; i < _count; ++i) {
     if (pairs[i].pc_offset() >= pc_offset) {
+      last = &pairs[i];
       break;
     }
   }
-  ImmutableOopMapPair* last = &pairs[i];
 
+  // Heal Coverity issue: potential index out of bounds access.
+  guarantee(last != NULL, "last may not be null");
   assert(last->pc_offset() == pc_offset, "oopmap not found");
   return last->get_from(this);
 }
@@ -824,8 +848,7 @@ int ImmutableOopMap::nr_of_bytes() const {
 }
 #endif
 
-ImmutableOopMapBuilder::ImmutableOopMapBuilder(const OopMapSet* set)
-  : _set(set), _empty(NULL), _last(NULL), _empty_offset(-1), _last_offset(-1), _offset(0), _required(-1), _new_set(NULL) {
+ImmutableOopMapBuilder::ImmutableOopMapBuilder(const OopMapSet* set) : _set(set), _empty(NULL), _last(NULL), _empty_offset(-1), _last_offset(-1), _offset(0), _required(-1), _new_set(NULL) {
   _mapping = NEW_RESOURCE_ARRAY(Mapping, _set->size());
 }
 
@@ -954,44 +977,56 @@ ImmutableOopMapSet* ImmutableOopMapSet::build_from(const OopMapSet* oopmap_set) 
 
 #if COMPILER2_OR_JVMCI
 
-class DerivedPointerEntry : public CHeapObj<mtCompiler> {
- private:
-  oop*     _location; // Location of derived pointer (also pointing to the base)
-  intptr_t _offset;   // Offset from base pointer
- public:
-  DerivedPointerEntry(oop* location, intptr_t offset) { _location = location; _offset = offset; }
-  oop* location()    { return _location; }
-  intptr_t  offset() { return _offset; }
+class DerivedPointerTable::Entry : public CHeapObj<mtCompiler> {
+  oop* _location;   // Location of derived pointer, also pointing to base
+  intptr_t _offset; // Offset from base pointer
+  Entry* volatile _next;
+
+  static Entry* volatile* next_ptr(Entry& entry) { return &entry._next; }
+
+public:
+  Entry(oop* location, intptr_t offset) :
+    _location(location), _offset(offset), _next(NULL) {}
+
+  oop* location() const { return _location; }
+  intptr_t offset() const { return _offset; }
+  Entry* next() const { return _next; }
+
+  typedef LockFreeStack<Entry, &next_ptr> List;
+  static List* _list;
 };
 
-
-GrowableArray<DerivedPointerEntry*>* DerivedPointerTable::_list = NULL;
+DerivedPointerTable::Entry::List* DerivedPointerTable::Entry::_list = NULL;
 bool DerivedPointerTable::_active = false;
 
+bool DerivedPointerTable::is_empty() {
+  return Entry::_list == NULL || Entry::_list->empty();
+}
 
 void DerivedPointerTable::clear() {
   // The first time, we create the list.  Otherwise it should be
   // empty.  If not, then we have probably forgotton to call
   // update_pointers after last GC/Scavenge.
   assert (!_active, "should not be active");
-  assert(_list == NULL || _list->length() == 0, "table not empty");
-  if (_list == NULL) {
-    _list = new (ResourceObj::C_HEAP, mtCompiler) GrowableArray<DerivedPointerEntry*>(10, true); // Allocated on C heap
+  assert(is_empty(), "table not empty");
+  if (Entry::_list == NULL) {
+    void* mem = NEW_C_HEAP_OBJ(Entry::List, mtCompiler);
+    Entry::_list = ::new (mem) Entry::List();
   }
   _active = true;
 }
 
-
 // Returns value of location as an int
-intptr_t value_of_loc(oop *pointer) { return cast_from_oop<intptr_t>((*pointer)); }
-
+inline intptr_t value_of_loc(oop *pointer) {
+  return cast_from_oop<intptr_t>((*pointer));
+}
 
 void DerivedPointerTable::add(oop *derived_loc, oop *base_loc) {
   assert(Universe::heap()->is_in_or_null(*base_loc), "not an oop");
   assert(derived_loc != base_loc, "Base and derived in same location");
   if (_active) {
     assert(*derived_loc != (oop)base_loc, "location already added");
-    assert(_list != NULL, "list must exist");
+    assert(Entry::_list != NULL, "list must exist");
     intptr_t offset = value_of_loc(derived_loc) - value_of_loc(base_loc);
     // This assert is invalid because derived pointers can be
     // arbitrarily far away from their base.
@@ -1007,21 +1042,21 @@ void DerivedPointerTable::add(oop *derived_loc, oop *base_loc) {
     }
     // Set derived oop location to point to base.
     *derived_loc = (oop)base_loc;
-    assert_lock_strong(DerivedPointerTableGC_lock);
-    DerivedPointerEntry *entry = new DerivedPointerEntry(derived_loc, offset);
-    _list->append(entry);
+    Entry* entry = new Entry(derived_loc, offset);
+    Entry::_list->push(*entry);
   }
 }
 
-
 void DerivedPointerTable::update_pointers() {
-  assert(_list != NULL, "list must exist");
-  for(int i = 0; i < _list->length(); i++) {
-    DerivedPointerEntry* entry = _list->at(i);
+  assert(Entry::_list != NULL, "list must exist");
+  Entry* entries = Entry::_list->pop_all();
+  while (entries != NULL) {
+    Entry* entry = entries;
+    entries = entry->next();
     oop* derived_loc = entry->location();
     intptr_t offset  = entry->offset();
     // The derived oop was setup to point to location of base
-    oop  base        = **(oop**)derived_loc;
+    oop base = **(oop**)derived_loc;
     assert(Universe::heap()->is_in_or_null(base), "must be an oop");
 
     *derived_loc = (oop)(((address)base) + offset);
@@ -1035,13 +1070,8 @@ void DerivedPointerTable::update_pointers() {
 
     // Delete entry
     delete entry;
-    _list->at_put(i, NULL);
   }
-  // Clear list, so it is ready for next traversal (this is an invariant)
-  if (TraceDerivedPointers && !_list->is_empty()) {
-    tty->print_cr("--------------------------");
-  }
-  _list->clear();
+  assert(Entry::_list->empty(), "invariant");
   _active = false;
 }
 

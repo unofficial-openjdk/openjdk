@@ -40,6 +40,7 @@
 #include "memory/allocation.inline.hpp"
 #include "memory/iterator.hpp"
 #include "memory/resourceArea.hpp"
+#include "memory/universe.hpp"
 #include "oops/method.inline.hpp"
 #include "oops/objArrayOop.hpp"
 #include "oops/oop.inline.hpp"
@@ -282,9 +283,9 @@ void CodeCache::initialize_heaps() {
 
   // Verify sizes and update flag values
   assert(non_profiled_size + profiled_size + non_nmethod_size == cache_size, "Invalid code heap sizes");
-  FLAG_SET_ERGO(uintx, NonNMethodCodeHeapSize, non_nmethod_size);
-  FLAG_SET_ERGO(uintx, ProfiledCodeHeapSize, profiled_size);
-  FLAG_SET_ERGO(uintx, NonProfiledCodeHeapSize, non_profiled_size);
+  FLAG_SET_ERGO(NonNMethodCodeHeapSize, non_nmethod_size);
+  FLAG_SET_ERGO(ProfiledCodeHeapSize, profiled_size);
+  FLAG_SET_ERGO(NonProfiledCodeHeapSize, non_profiled_size);
 
   // If large page support is enabled, align code heaps according to large
   // page size to make sure that code cache is covered by large pages.
@@ -957,9 +958,9 @@ void CodeCache::initialize() {
     initialize_heaps();
   } else {
     // Use a single code heap
-    FLAG_SET_ERGO(uintx, NonNMethodCodeHeapSize, 0);
-    FLAG_SET_ERGO(uintx, ProfiledCodeHeapSize, 0);
-    FLAG_SET_ERGO(uintx, NonProfiledCodeHeapSize, 0);
+    FLAG_SET_ERGO(NonNMethodCodeHeapSize, 0);
+    FLAG_SET_ERGO(ProfiledCodeHeapSize, 0);
+    FLAG_SET_ERGO(NonProfiledCodeHeapSize, 0);
     ReservedCodeSpace rs = reserve_heap_memory(ReservedCodeCacheSize);
     add_heap(rs, "CodeCache", CodeBlobType::All);
   }
@@ -1071,7 +1072,7 @@ static void reset_old_method_table() {
 
 // Remove this method when zombied or unloaded.
 void CodeCache::unregister_old_nmethod(CompiledMethod* c) {
-  assert_locked_or_safepoint(CodeCache_lock);
+  assert_lock_strong(CodeCache_lock);
   if (old_compiled_method_table != NULL) {
     int index = old_compiled_method_table->find(c);
     if (index != -1) {
@@ -1086,7 +1087,11 @@ void CodeCache::old_nmethods_do(MetadataClosure* f) {
   if (old_compiled_method_table != NULL) {
     length = old_compiled_method_table->length();
     for (int i = 0; i < length; i++) {
-      old_compiled_method_table->at(i)->metadata_do(f);
+      CompiledMethod* cm = old_compiled_method_table->at(i);
+      // Only walk alive nmethods, the dead ones will get removed by the sweeper.
+      if (cm->is_alive()) {
+        old_compiled_method_table->at(i)->metadata_do(f);
+      }
     }
   }
   log_debug(redefine, class, nmethod)("Walked %d nmethods for mark_on_stack", length);
