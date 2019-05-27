@@ -802,15 +802,16 @@ bool OopMap::equals(const OopMap* other) const {
 int ImmutableOopMapSet::find_slot_for_offset(int pc_offset) const {
   ImmutableOopMapPair* pairs = get_pairs();
 
-  int i;
-  for (i = 0; i < _count; ++i) {
+  for (int i = 0; i < _count; ++i) {
     if (pairs[i].pc_offset() >= pc_offset) {
-      break;
+      ImmutableOopMapPair* last = &pairs[i];
+      assert(last->pc_offset() == pc_offset, "oopmap not found");
+      return i;
     }
   }
-  ImmutableOopMapPair* last = &pairs[i];
-  assert(last->pc_offset() == pc_offset, "oopmap not found");
-  return i;
+
+  guarantee(false, "failed to find oopmap for pc");
+  return -1;
 }
 
 const ImmutableOopMap* ImmutableOopMapSet::find_map_at_offset(int pc_offset) const {
