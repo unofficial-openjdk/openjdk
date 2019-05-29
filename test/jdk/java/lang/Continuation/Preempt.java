@@ -25,7 +25,7 @@
 * @test
 * @summary Tests for java.lang.Continuation preemption
 *
-* @run testng/othervm -Xint Preempt
+* @run testng/othervm/timeout=60 -Xint Preempt
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseNewCode Preempt
 * @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Preempt Preempt
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Preempt -XX:+UseNewCode Preempt

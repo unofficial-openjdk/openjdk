@@ -385,9 +385,11 @@ class frame {
   // Oops-do's
   void oops_compiled_arguments_do(Symbol* signature, bool has_receiver, bool has_appendix, const RegisterMap* reg_map, OopClosure* f);
   void oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool query_oop_map_cache = true);
+  void oops_interpreted_do(OopClosure* f, const RegisterMap* map, const InterpreterOopMap& mask);
 
  private:
   void oops_interpreted_arguments_do(Symbol* signature, bool has_receiver, OopClosure* f);
+  void oops_interpreted_do0(OopClosure* f, const RegisterMap* map, methodHandle m, jint bci, const InterpreterOopMap& mask);
 
   // Iteration of oops
   void oops_do_internal(OopClosure* f, CodeBlobClosure* cf, DerivedOopClosure* df, const RegisterMap* map, bool use_interpreter_oop_map_cache);

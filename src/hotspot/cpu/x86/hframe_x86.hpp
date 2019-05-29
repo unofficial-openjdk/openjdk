@@ -38,7 +38,6 @@ private:
   inline int link_index(const ContMirror& cont) const;
   inline intptr_t* interpreter_frame_metadata_at(int offset) const;
 
-
 public:
 
   typedef intptr_t** callee_info;
@@ -48,17 +47,23 @@ public:
 
   hframe(const hframe& hf) : HFrameBase(hf), _fp(hf._fp), _link_address(hf._link_address) {}
 
-  hframe(int sp, int ref_sp, intptr_t fp, address pc, ContMirror& cont) // called by ContMirror::last_frame
+  hframe(int sp, int ref_sp, intptr_t fp, address pc, const ContMirror& cont) // called by ContMirror::last_frame
     : HFrameBase(sp, ref_sp, pc, cont), _fp(fp) { set_link_address(cont); }
-
-  hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted, ContMirror& cont)
-    : HFrameBase(sp, ref_sp, pc, cb, is_interpreted, cont), _fp(fp) { set_link_address(cont); }
+  
+  hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted, const ContMirror& cont)
+    : HFrameBase(sp, ref_sp, pc, cb, is_interpreted), _fp(fp) { set_link_address(cont); }
 
   hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted) // called by new_callee_hframe
     : HFrameBase(sp, ref_sp, pc, cb, is_interpreted), _fp(fp), _link_address(NULL) {}
 
   hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted, intptr_t* link_address) // called by new_bottom_hframe
     : HFrameBase(sp, ref_sp, pc, cb, is_interpreted), _fp(fp), _link_address(link_address) {}
+
+  template <typename FKind> static hframe new_hframe(int sp, int ref_sp, intptr_t fp, address pc, const ContMirror& cont) {
+    assert (FKind::interpreted == Interpreter::contains(pc), "");
+    CodeBlob* cb = FKind::interpreted ? NULL : ContinuationCodeBlobLookup::find_blob(pc);
+    return hframe(sp, ref_sp, fp, pc, cb, FKind::interpreted, link_address<FKind>(sp, fp, cb, cont));
+  }
 
   inline bool operator==(const hframe& other) const;
 
@@ -70,7 +75,8 @@ public:
   intptr_t* link_address() const { return _link_address; }
   intptr_t link() const          { return *link_address(); }
 
-  template<typename FKind> void set_link_address(const ContMirror& cont);
+  template<typename FKind> static inline intptr_t* link_address(int sp, intptr_t fp, const CodeBlob* cb, const ContMirror& cont);
+  template<typename FKind> inline void set_link_address(const ContMirror& cont);
   inline void set_link_address(const ContMirror& cont);
 
   void patch_link(intptr_t value) {
@@ -90,7 +96,7 @@ public:
   template<typename FKind> int frame_bottom_index() const;
 
   using HFrameBase<hframe>::sender; // unhide overloaded
-  template<typename FKind> hframe sender(ContMirror& cont, int num_oops) const;
+  template<typename FKind, op_mode mode> hframe sender(const ContMirror& cont, int num_oops) const;
 
   DEBUG_ONLY(int interpreted_frame_top_index() const;)
   int interpreted_frame_num_monitors() const;
