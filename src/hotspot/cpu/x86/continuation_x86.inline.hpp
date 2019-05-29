@@ -51,29 +51,31 @@ inline void hframe::patch_real_fp_offset(int offset, intptr_t value) {
   *(link_address() + offset) = value; 
 }
 
-template<>
-void hframe::set_link_address<Interpreted>(const ContMirror& cont) {
-  assert (_is_interpreted, "");
-  assert (cont.valid_stack_index(_fp), "fp: %ld stack_length: %d", _fp, cont.stack_length());
-  _link_address = &cont.stack_address(_fp)[frame::link_offset];
+template<> 
+inline intptr_t* hframe::link_address<Interpreted>(int sp, intptr_t fp, const CodeBlob* cb, const ContMirror& cont) {
+  return &cont.stack_address(fp)[frame::link_offset];
+}
+
+template<typename FKind> 
+inline intptr_t* hframe::link_address(int sp, intptr_t fp, const CodeBlob* cb, const ContMirror& cont) {
+  assert (cont.valid_stack_index(sp), "sp: %d stack_length: %d", sp, cont.stack_length());
+  assert (cb != NULL, "must be");
+  return (cont.stack_address(sp) + cb->frame_size()) - frame::sender_sp_offset;
 }
 
 template<typename FKind>
-void hframe::set_link_address(const ContMirror& cont) {
-  assert (!FKind::interpreted, "");
-  assert (FKind::interpreted == _is_interpreted, "");
-
-  assert (cont.valid_stack_index(_sp), "sp: %d stack_length: %d", _sp, cont.stack_length());
-  _link_address = real_fp(cont) - frame::sender_sp_offset;
+inline void hframe::set_link_address(const ContMirror& cont) {
+  assert (FKind::is_instance(*this), "");
+  _link_address = link_address<FKind>(_sp, _fp, _cb, cont); 
 }
 
 inline void hframe::set_link_address(const ContMirror& cont) { 
-  _is_interpreted ? set_link_address<Interpreted>(cont) : set_link_address<Compiled>(cont); 
+  _is_interpreted ? set_link_address<Interpreted>(cont) : set_link_address<NonInterpretedUnknown>(cont); 
 }
 
 template<typename FKind>
 inline address* hframe::return_pc_address() const {
-  assert (FKind::interpreted == _is_interpreted, "");
+  assert (FKind::is_instance(*this), "");
   // for compiled frames, link_address = real_fp - frame::sender_sp_offset
   return (address*)&link_address()[frame::return_addr_offset];
 }
@@ -121,7 +123,7 @@ int hframe::interpreted_frame_num_monitors() const {
 
 template<typename FKind>
 int hframe::frame_bottom_index() const {
-  assert (FKind::interpreted == _is_interpreted, "");
+  assert (FKind::is_instance(*this), "");
   if (FKind::interpreted) {
     int bottom_offset = *(int*)interpreter_frame_metadata_at(frame::interpreter_frame_locals_offset) + (1*ELEMS_PER_WORD); // exclusive, so we add 1 word
     // assert (bottom_offset == *(int*)interpreter_frame_metadata_at(frame::interpreter_frame_sender_sp_offset), 
@@ -164,8 +166,8 @@ intptr_t* hframe::interpreter_frame_expression_stack_at(int offset) const {
   return &(expression_stack[n]);
 }
 
-template<typename FKind>
-hframe hframe::sender(ContMirror& cont, int num_oops) const {
+template<typename FKind, op_mode mode>
+hframe hframe::sender(const ContMirror& cont, int num_oops) const {
   // tty->print_cr(">> sender of:");
   // print_on(cont, tty);
 
@@ -176,12 +178,12 @@ hframe hframe::sender(ContMirror& cont, int num_oops) const {
     return hframe();
   
   address sender_pc = return_pc<FKind>();
-  bool is_sender_interpreted = Interpreter::contains(sender_pc);
+  bool is_sender_interpreted = mode == mode_fast ? false : Interpreter::contains(sender_pc);
   CodeBlob* sender_cb;
 
   long sender_fp = link();
 
-  if (is_sender_interpreted) {
+  if (mode != mode_fast && is_sender_interpreted) {
     sender_fp += link_index(cont);
     sender_cb = NULL;
     // log_develop_trace(jvmcont)("real_fp: %d sender_fp: %ld", link_index(cont), sender_fp);
@@ -190,7 +192,8 @@ hframe hframe::sender(ContMirror& cont, int num_oops) const {
     sender_pc = hframe::deopt_original_pc(cont, sender_pc, sender_cb, sender_sp); // TODO PERF: unnecessary in the long term solution of unrolling deopted frames on freeze
     // a stub can only appear as the topmost frame; all senders must be compiled/interpreted Java frames so we can call deopt_original_pc, which assumes a compiled Java frame
   }
-  return hframe(sender_sp, sender_ref_sp, sender_fp, sender_pc, sender_cb, is_sender_interpreted, cont);
+  return mode == mode_fast ? hframe::new_hframe<Compiled>(sender_sp, sender_ref_sp, sender_fp, sender_pc, cont)
+                           : hframe(sender_sp, sender_ref_sp, sender_fp, sender_pc, sender_cb, is_sender_interpreted, cont);
 }
 
 inline frame hframe::to_frame(ContMirror& cont, address pc, bool deopt) const {
@@ -245,12 +248,15 @@ void hframe::print_on(ContMirror& cont, outputStream* st) const {
 
 /////
 
-inline void ContMirror::set_last_frame_pd(hframe& f) {
+inline void ContMirror::set_last_frame_pd(const hframe& f) {
   set_fp(f.fp());
 }
 
+template<op_mode mode /* = mode_slow*/> // TODO: add default when switching to C++11+
 const hframe ContMirror::last_frame() {
-  return is_empty() ? hframe() : hframe(_sp, _ref_sp, _fp, _pc, *this);
+  if (is_empty()) return hframe();
+  return mode == mode_fast ? hframe::new_hframe<Compiled>(_sp, _ref_sp, _fp, _pc, *this)
+                           : hframe(_sp, _ref_sp, _fp, _pc, *this);
 }
 
 hframe ContMirror::from_frame(const frame& f) {
@@ -265,7 +271,7 @@ inline intptr_t** Frame::saved_link_address(const RegisterMap* map) {
 
 template<typename FKind>
 static inline intptr_t* real_fp(const frame& f) {
-  assert (FKind::interpreted == f.is_interpreted_frame(), "");
+  assert (FKind::is_instance(f), "");
   assert (FKind::interpreted || f.cb() != NULL, "");
 
   return FKind::interpreted ? f.fp() : f.unextended_sp() + f.cb()->frame_size();
@@ -273,7 +279,7 @@ static inline intptr_t* real_fp(const frame& f) {
 
 template<typename FKind> // TODO: maybe do the same CRTP trick with Interpreted and Compiled as with hframe
 static inline intptr_t** link_address(const frame& f) {
-  assert (FKind::interpreted == f.is_interpreted_frame(), "");
+  assert (FKind::is_instance(f), "");
   return FKind::interpreted
             ? (intptr_t**)(f.fp() + frame::link_offset)
             : (intptr_t**)(real_fp<FKind>(f) - frame::sender_sp_offset);
@@ -305,7 +311,8 @@ inline address* Interpreted::return_pc_address(const frame& f) {
   return (address*)(f.fp() + frame::return_addr_offset);
 }
 
-inline address* Compiled::return_pc_address(const frame& f) {
+template<typename Self>
+inline address* NonInterpreted<Self>::return_pc_address(const frame& f) {
   return (address*)(f.real_fp() - 1);
 }
 
@@ -344,6 +351,15 @@ inline intptr_t* Interpreted::frame_bottom(const frame& f) { // exclusive; this 
     return *(intptr_t**)f.addr_at(frame::interpreter_frame_locals_offset) + 1; // exclusive, so we add 1 word
 }
 
+template<typename FKind>
+inline void ContinuationHelper::update_register_map(RegisterMap* map, const frame& f) {
+  frame::update_map_with_saved_link(map, link_address<FKind>(f));
+}
+
+inline void ContinuationHelper::update_register_map(RegisterMap* map, intptr_t** link_address) {
+  frame::update_map_with_saved_link(map, link_address);
+}
+
 inline frame ContinuationHelper::frame_with(frame& f, intptr_t* sp, address pc) {
   return frame(sp, f.unextended_sp(), f.fp(), pc, CodeCache::find_blob(pc));
 }
@@ -356,7 +372,11 @@ template<typename FKind> // the callee's type
 inline void ContinuationHelper::to_frame_info_pd(const frame& f, const frame& callee, FrameInfo* fi) {
   // we have an indirection for fp, because the link at the entry frame may hold a sender's oop, and it can be relocated
   // at a safpoint on the VM->Java transition, so we point at an address where the GC would find it
-  fi->fp = (intptr_t*)link_address<FKind>(callee); // f.fp(); -- dynamic branch
+  fi->fp = (intptr_t*)link_address<FKind>(callee); // f.fp();
+}
+
+inline void ContinuationHelper::to_frame_info_pd(const frame& f, FrameInfo* fi) {
+  fi->fp = f.fp();
 }
 
 inline frame ContinuationHelper::to_frame(FrameInfo* fi) {
@@ -396,7 +416,7 @@ static inline frame sender_for_compiled_frame(frame& f, intptr_t** link_addr) {
   CodeBlob* sender_cb = ContinuationCodeBlobLookup::find_blob_and_oopmap(sender_pc, slot);
   assert (!fast || sender_cb != NULL, "");
   if (fast) {
-    return frame(sender_sp, sender_sp, *link_addr, sender_pc, sender_cb, slot == -1 ? NULL : sender_cb->oop_map_for_slot(slot, sender_pc), true);
+    return frame(sender_sp, sender_sp, *link_addr, sender_pc, sender_cb, slot == -1 ? NULL : sender_cb->oop_map_for_slot(slot, sender_pc), true); // no deopt check; TODO: not sure about this
   } else {
     return sender_cb != NULL
       ? frame(sender_sp, sender_sp, *link_addr, sender_pc, sender_cb, slot == -1 ? NULL : sender_cb->oop_map_for_slot(slot, sender_pc))
@@ -409,19 +429,14 @@ static inline frame sender_for_interpreted_frame(frame& f, intptr_t** link_addr)
   return frame(f.sender_sp(), f.interpreter_frame_sender_sp(), f.link(), f.sender_pc());
 }
 
-template<typename FKind>
-inline void ContinuationHelper::update_register_map(RegisterMap* map, const frame& f) {
-  frame::update_map_with_saved_link(map, link_address<FKind>(f));
-}
-
 // inline void Freeze<ConfigT, mode>::update_register_map_stub(RegisterMap* map, const frame& f) {
 //   update_register_map(map, link_address_stub(f));
 // }
 
-template <typename ConfigT, freeze_mode mode>
+template <typename ConfigT, op_mode mode>
 template<typename FKind>
 inline frame Freeze<ConfigT, mode>::sender(frame& f, intptr_t*** link_address_out) {
-  assert (FKind::interpreted == f.is_interpreted_frame(), "");
+  assert (FKind::is_instance(f), "");
   intptr_t** link_addr = link_address<FKind>(f);
   *link_address_out = link_addr;
   return FKind::interpreted 
@@ -430,10 +445,10 @@ inline frame Freeze<ConfigT, mode>::sender(frame& f, intptr_t*** link_address_ou
                          : sender_for_compiled_frame<false>(f, link_addr));
 }
 
-template <typename ConfigT, freeze_mode mode>
+template <typename ConfigT, op_mode mode>
 template<typename FKind>
 inline frame Freeze<ConfigT, mode>::sender(frame& f) {
-  assert (FKind::interpreted == f.is_interpreted_frame(), "");
+  assert (FKind::is_instance(f), "");
   intptr_t** link_addr = link_address<FKind>(f);
   return FKind::interpreted 
     ? sender_for_interpreted_frame(f, link_addr) 
@@ -441,14 +456,21 @@ inline frame Freeze<ConfigT, mode>::sender(frame& f) {
                          : sender_for_compiled_frame<false>(f, link_addr));
 }
 
-template <typename ConfigT, freeze_mode mode>
-inline void Freeze<ConfigT, mode>::update_register_map(RegisterMap* map, intptr_t** link_address) {
-  frame::update_map_with_saved_link(map, link_address);
+template <typename ConfigT, op_mode mode>
+template<bool cont_empty>
+hframe Freeze<ConfigT, mode>::new_bottom_hframe(int sp, int ref_sp, address pc, bool interpreted) {
+  intptr_t fp = _cont.fp();
+  assert (!cont_empty || fp == 0, "");
+  if (cont_empty || !interpreted) {
+    return hframe(sp, ref_sp, fp, pc, NULL, interpreted);
+  } else {
+    return hframe(sp, ref_sp, fp, pc, NULL, interpreted, hframe::link_address<Interpreted>(sp, fp, NULL, _cont));
+  }
 }
 
-template <typename ConfigT, freeze_mode mode>
+template <typename ConfigT, op_mode mode>
 template<typename FKind> hframe Freeze<ConfigT, mode>::new_callee_hframe(const frame& f, intptr_t* vsp, hframe& caller, int fsize, int num_oops) {
-  assert (FKind::interpreted == f.is_interpreted_frame(), "");
+  assert (FKind::is_instance(f), "");
 
   int sp = caller.sp() - ContMirror::to_index(fsize);
 
@@ -467,19 +489,7 @@ template<typename FKind> hframe Freeze<ConfigT, mode>::new_callee_hframe(const f
   return result;
 }
 
-template <typename ConfigT, freeze_mode mode>
-template<bool cont_empty>
-hframe Freeze<ConfigT, mode>::new_bottom_hframe(int sp, int ref_sp, address pc, bool interpreted) {
-  intptr_t fp = _cont.fp();
-  assert (!cont_empty || fp == 0, "");
-  if (cont_empty || !interpreted) {
-    return hframe(sp, ref_sp, fp, pc, NULL, interpreted);
-  } else {
-    return hframe(sp, ref_sp, fp, pc, NULL, interpreted, &_cont.stack_address(fp)[frame::link_offset]);
-  }
-}
-
-template <typename ConfigT, freeze_mode mode>
+template <typename ConfigT, op_mode mode>
 template <typename FKind, bool top, bool bottom>
 inline void Freeze<ConfigT, mode>::patch_pd(frame& f, hframe& hf, const hframe& caller) {
   if (!FKind::interpreted) {
@@ -505,7 +515,7 @@ inline void Freeze<ConfigT, mode>::patch_pd(frame& f, hframe& hf, const hframe& 
   }
 }
 
-template <typename ConfigT, freeze_mode mode>
+template <typename ConfigT, op_mode mode>
 template <typename FKind, bool top, bool bottom> 
 inline void Freeze<ConfigT, mode>::align(hframe& caller) {
   if (mode != mode_fast && !FKind::interpreted) {
@@ -514,15 +524,11 @@ inline void Freeze<ConfigT, mode>::align(hframe& caller) {
   }
 }
 
-template<typename FKind>
-inline void Thaw::patch_thawed_frame_pd(frame& f, const frame& sender) {
-  patch_link<FKind>(f, sender.fp());
-}
-
-template <typename ConfigT, freeze_mode mode>
-inline void Freeze<ConfigT, mode>::relativize_interpreted_frame_metadata(frame& f, intptr_t* vsp, intptr_t* hsp) {
+template <typename ConfigT, op_mode mode>
+inline void Freeze<ConfigT, mode>::relativize_interpreted_frame_metadata(frame& f, intptr_t* vsp, hframe& hf) {
   intptr_t* vfp = f.fp();
-  intptr_t* hfp = hsp + (vfp - vsp);
+  intptr_t* hfp = _cont.stack_address(hf.fp());
+  assert (hfp == _cont.stack_address(hf.sp()) + (vfp - vsp), "");
 
   assert ((*(vfp + frame::interpreter_frame_last_sp_offset) != 0) || (f.unextended_sp() == f.sp()), "");
 
@@ -533,6 +539,75 @@ inline void Freeze<ConfigT, mode>::relativize_interpreted_frame_metadata(frame& 
   }
   ContMirror::relativize(vfp, hfp, frame::interpreter_frame_initial_sp_offset); // == block_top == block_bottom
   ContMirror::relativize(vfp, hfp, frame::interpreter_frame_locals_offset);
+}
+
+template <typename ConfigT, op_mode mode>
+inline frame Thaw<ConfigT, mode>::new_entry_frame() {
+  return frame(_cont.entrySP(), _cont.entryFP(), _cont.entryPC());
+}
+
+template <typename ConfigT, op_mode mode>
+template<typename FKind> frame Thaw<ConfigT, mode>::new_frame(const hframe& hf, intptr_t* vsp, int callee_argsize_words) {
+  assert (FKind::is_instance(hf), "");
+
+  intptr_t* fp;
+  if (FKind::interpreted) {
+    int hsp = hf.sp() + (callee_argsize_words << LogIndexPerWord);
+    fp = vsp + ((hf.fp() - hsp) >> LogIndexPerWord);
+    return frame(vsp, vsp, fp, hf.pc());
+  } else {
+    fp = (intptr_t*)hf.fp();
+    assert (hf.oop_map() != NULL, "");
+    return frame(vsp, vsp, fp, hf.pc(), hf.cb(), hf.oop_map()); // TODO PERF : this computes deopt state; is it necessary?
+  }
+}
+
+template<typename ConfigT, op_mode mode>
+inline intptr_t** Thaw<ConfigT, mode>::frame_callee_info_address(frame& f) {
+  return f.fp_addr(); // we write into the frame object, not the frame on the stack
+}
+
+template<typename ConfigT, op_mode mode>
+template<typename FKind, bool top, bool bottom>
+inline intptr_t* Thaw<ConfigT, mode>::align(const hframe& hf, intptr_t* vsp, const frame& caller) {
+  assert (FKind::is_instance(hf), "");
+
+  if (!FKind::interpreted && !FKind::stub) {
+  #ifdef _LP64
+    if ((long)vsp % 16 != 0) {
+      log_develop_trace(jvmcont)("Aligning compiled frame: " INTPTR_FORMAT " -> " INTPTR_FORMAT, p2i(vsp), p2i(vsp - 1));
+      assert(caller.is_interpreted_frame() 
+        || (bottom && !FKind::stub && hf.compiled_frame_stack_argsize<Compiled>() % 16 != 0), "");
+      vsp--;
+    }
+    assert((long)vsp % 16 == 0, "");
+  #endif
+  
+    if (Interpreter::contains(hf.return_pc<Compiled>())) { // false if bottom-most frame, as the return address would be patched to NULL if interpreted
+      _cont.sub_size(sizeof(intptr_t)); // we do this whether or not we've aligned because we add it in freeze_interpreted_frame
+    }
+  }
+  return vsp;
+}
+
+template<typename ConfigT, op_mode mode>
+template<typename FKind>
+inline void Thaw<ConfigT, mode>::patch_pd(frame& f, const frame& sender) {
+  patch_link<FKind>(f, sender.fp());
+}
+
+template <typename ConfigT, op_mode mode>
+inline void Thaw<ConfigT, mode>::derelativize_interpreted_frame_metadata(const hframe& hf, const frame& f) {
+  intptr_t* hfp = _cont.stack_address(hf.fp());
+  intptr_t* vfp = f.fp();
+
+  if (*(hfp + frame::interpreter_frame_last_sp_offset) == 0) {
+      *(vfp + frame::interpreter_frame_last_sp_offset) = 0;
+  } else {
+    ContMirror::derelativize(vfp, frame::interpreter_frame_last_sp_offset);
+  }
+  ContMirror::derelativize(vfp, frame::interpreter_frame_initial_sp_offset); // == block_top == block_bottom
+  ContMirror::derelativize(vfp, frame::interpreter_frame_locals_offset);
 }
 
 /// DEBUGGING

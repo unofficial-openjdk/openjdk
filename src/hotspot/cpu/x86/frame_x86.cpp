@@ -154,6 +154,9 @@ bool frame::safe_for_sender(JavaThread *thread) {
       saved_fp = (intptr_t*) *(sender_sp - frame::sender_sp_offset);
     }
 
+    if (Continuation::is_return_barrier_entry(sender_pc)) {	
+      Continuation::fix_continuation_bottom_sender(thread, *this, &sender_pc, &sender_sp);	
+    }
 
     // If the potential sender is the interpreter then we can do some more checking
     if (Interpreter::contains(sender_pc)) {
@@ -471,7 +474,13 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
 
   address sender_pc = this->sender_pc();
 
-  return Continuation::fix_continuation_bottom_sender(*this, map, frame(sender_sp, unextended_sp, link(), sender_pc));
+  if (Continuation::is_return_barrier_entry(sender_pc)) {	
+    if (map->walk_cont()) { // about to walk into an h-stack	
+      return Continuation::top_frame(*this, map);	
+    } else	
+      Continuation::fix_continuation_bottom_sender(map->thread(), *this, &sender_pc, NULL);	
+  }
+  return frame(sender_sp, unextended_sp, link(), sender_pc); // Continuation::fix_continuation_bottom_sender(*this, map, frame(sender_sp, unextended_sp, link(), sender_pc));
 }
 
 

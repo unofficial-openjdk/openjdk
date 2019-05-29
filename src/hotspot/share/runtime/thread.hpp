@@ -1472,7 +1472,7 @@ class JavaThread: public Thread {
     return x;
   }
 
-  bool is_cont_force_yield() { return _cont_preempt; }
+  bool is_cont_force_yield() { return cont_preempt(); }
   // Are any async conditions present?
   bool has_async_condition() { return (_special_runtime_exit_condition != _no_async_condition); }
 

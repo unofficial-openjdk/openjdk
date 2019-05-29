@@ -895,13 +895,31 @@ oop* frame::interpreter_callee_receiver_addr(Symbol* signature) {
   return (oop *)interpreter_frame_tos_at(size);
 }
 
-
 void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool query_oop_map_cache) {
-  assert(is_interpreted_frame(), "Not an interpreted frame");
-  assert(map != NULL, "map must be set");
   Thread *thread = Thread::current();
   methodHandle m (thread, interpreter_frame_method());
-  jint      bci = interpreter_frame_bci();
+  jint bci = interpreter_frame_bci();
+
+  InterpreterOopMap mask;
+  if (query_oop_map_cache) {
+    m->mask_for(bci, &mask);
+  } else {
+    OopMapCache::compute_one_oop_map(m, bci, &mask);
+  }
+  
+  oops_interpreted_do0(f, map, m, bci, mask);
+}
+
+void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, const InterpreterOopMap& mask) {
+  Thread *thread = Thread::current();
+  methodHandle m (thread, interpreter_frame_method());
+  jint bci = interpreter_frame_bci();
+  oops_interpreted_do0(f, map, m, bci, mask);
+}
+
+void frame::oops_interpreted_do0(OopClosure* f, const RegisterMap* map, methodHandle m, jint bci, const InterpreterOopMap& mask) {
+  assert(is_interpreted_frame(), "Not an interpreted frame");
+  assert(map != NULL, "map must be set");
 
   assert(!Universe::heap()->is_in(m()),
           "must be valid oop");
@@ -967,12 +985,6 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
   InterpreterFrameClosure blk(this, max_locals, m->max_stack(), f);
 
   // process locals & expression stack
-  InterpreterOopMap mask;
-  if (query_oop_map_cache) {
-    m->mask_for(bci, &mask);
-  } else {
-    OopMapCache::compute_one_oop_map(m, bci, &mask);
-  }
   // mask.print();
   mask.iterate_oop(&blk);
 }
