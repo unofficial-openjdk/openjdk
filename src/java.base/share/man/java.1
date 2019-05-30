@@ -1,5 +1,5 @@
 '\" t
-.\" Copyright (c) 1994, 2018, Oracle and/or its affiliates. All rights reserved.
+.\" Copyright (c) 1994, 2019, Oracle and/or its affiliates. All rights reserved.
 .\" DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 .\"
 .\" This code is free software; you can redistribute it and/or modify it
@@ -716,6 +716,8 @@ Shows additional diagnostic messages\&.
 \-Xfuture
 .RS 4
 Enables strict class\-file format checks that enforce close conformance to the class\-file format specification\&. Developers are encouraged to use this flag when developing new code because the stricter checks will become the default in future releases\&.
+.sp
+This option is deprecated and may be removed in a future release.
 .RE
 .PP
 \-Xint
@@ -1160,6 +1162,8 @@ arguments for this option include the following:
 none
 .RS 4
 Do not verify the bytecode\&. This reduces startup time and also reduces the protection provided by Java\&.
+.sp
+This option is deprecated and may be removed in a future release.
 .RE
 .PP
 remote

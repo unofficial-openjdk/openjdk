@@ -29,6 +29,7 @@ import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.net.InetAddress;
@@ -107,7 +108,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
     private boolean stream;
     private FileDescriptorCloser closer;
 
-    // lazily set to true when the socket is configured non-blocking
+    // set to true when the socket is in non-blocking mode
     private volatile boolean nonBlocking;
 
     // used by connect/read/write/accept, protected by stateLock
@@ -252,7 +253,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
             readerThread = 0;
             int state = this.state;
             if (state == ST_CLOSING)
-                tryClose();
+                tryFinishClose();
             if (!completed && state >= ST_CLOSING)
                 throw new SocketException("Socket closed");
         }
@@ -272,7 +273,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
                 dst.get(b, off, n);
             }
             return n;
-        } finally{
+        } finally {
             Util.offerFirstTemporaryDirectBuffer(dst);
         }
     }
@@ -387,7 +388,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
             writerThread = 0;
             int state = this.state;
             if (state == ST_CLOSING)
-                tryClose();
+                tryFinishClose();
             if (!completed && state >= ST_CLOSING)
                 throw new SocketException("Socket closed");
         }
@@ -413,7 +414,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
     /**
      * Writes a sequence of bytes to the socket from the given byte array.
      * @return the number of bytes written
-     * @throws SocketException if the socket is closed or an socket I/O error occurs
+     * @throws SocketException if the socket is closed or a socket I/O error occurs
      */
     private int implWrite(byte[] b, int off, int len) throws IOException {
         int n = 0;
@@ -435,7 +436,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
 
     /**
      * Writes a sequence of bytes to the socket from the given byte array.
-     * @throws SocketException if the socket is closed or an socket I/O error occurs
+     * @throws SocketException if the socket is closed or a socket I/O error occurs
      */
     private void write(byte[] b, int off, int len) throws IOException {
         Objects.checkFromIndexSize(off, len, b.length);
@@ -532,7 +533,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
             readerThread = 0;
             int state = this.state;
             if (state == ST_CLOSING)
-                tryClose();
+                tryFinishClose();
             if (completed && state == ST_CONNECTING) {
                 this.state = ST_CONNECTED;
                 localport = Net.localAddress(fd).getPort();
@@ -682,7 +683,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
             int state = this.state;
             readerThread = 0;
             if (state == ST_CLOSING)
-                tryClose();
+                tryFinishClose();
             if (!completed && state >= ST_CLOSING)
                 throw new SocketException("Socket closed");
         }
@@ -842,14 +843,15 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
     }
 
     /**
-     * Closes the socket, and returns true, if there are no I/O operations in
-     * progress.
+     * Closes the socket if there are no I/O operations in progress.
      */
-    private boolean tryClose() {
+    private boolean tryClose() throws IOException {
         assert Thread.holdsLock(stateLock) && state == ST_CLOSING;
         if (readerThread == 0 && writerThread == 0) {
             try {
                 closer.run();
+            } catch (UncheckedIOException ioe) {
+                throw ioe.getCause();
             } finally {
                 state = ST_CLOSED;
             }
@@ -857,6 +859,17 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
         } else {
             return false;
         }
+    }
+
+    /**
+     * Invokes tryClose to attempt to close the socket.
+     *
+     * This method is used for deferred closing by I/O operations.
+     */
+    private void tryFinishClose() {
+        try {
+            tryClose();
+        } catch (IOException ignore) { }
     }
 
     /**
@@ -941,6 +954,8 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
     protected <T> void setOption(SocketOption<T> opt, T value) throws IOException {
         if (!supportedOptions().contains(opt))
             throw new UnsupportedOperationException("'" + opt + "' not supported");
+        if (!opt.type().isInstance(value))
+            throw new IllegalArgumentException("Invalid value '" + value + "'");
         synchronized (stateLock) {
             ensureOpen();
             if (opt == StandardSocketOptions.IP_TOS) {
@@ -1225,7 +1240,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
                 try {
                     nd.close(fd);
                 } catch (IOException ioe) {
-                    throw new RuntimeException(ioe);
+                    throw new UncheckedIOException(ioe);
                 } finally {
                     if (!stream) {
                         // decrement
