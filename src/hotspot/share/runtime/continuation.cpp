@@ -54,6 +54,7 @@
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/vframe_hp.hpp"
 #include "utilities/copy.hpp"
+#include "utilities/debug.hpp"
 #include "utilities/exceptions.hpp"
 #include "utilities/macros.hpp"
 
@@ -115,7 +116,7 @@ static void print_oop(void *p, oop obj, outputStream* st = tty);
 static void print_vframe(frame f, const RegisterMap* map = NULL, outputStream* st = tty);
 #ifdef ASSERT
 static void print_frames(JavaThread* thread, outputStream* st = tty);
-static long java_tid(JavaThread* thread);
+static jlong java_tid(JavaThread* thread);
 static VMReg find_register_spilled_here(void* p, RegisterMap* map);
 // void static stop();
 // void static stop(const frame& f);
@@ -125,8 +126,16 @@ static VMReg find_register_spilled_here(void* p, RegisterMap* map);
 
 #define HOB (1ULL << 63)
 
-#define ELEM_SIZE sizeof(jint) // stack is int[]
 #define ELEMS_PER_WORD (wordSize/sizeof(jint))
+// Primitive hstack is int[]
+typedef jint ElemType;
+const BasicType basicElementType   = T_INT;
+const int       elementSizeInBytes = T_INT_aelem_bytes;
+const int       LogBytesPerElement = LogBytesPerInt;
+const int       elemsPerWord       = wordSize/elementSizeInBytes;
+
+STATIC_ASSERT(sizeof(ElemType) == elementSizeInBytes);
+STATIC_ASSERT(sizeof(ElemType) == (1 << LogBytesPerElement));
 
 // #define CHOOSE1(interp, f, ...) ((interp) ? Interpreted::f(__VA_ARGS__) : Compiled::f(__VA_ARGS__))
 #define CHOOSE2(interp, f, ...) ((interp) ? f<Interpreted>(__VA_ARGS__) : f<Compiled>(__VA_ARGS__))
@@ -348,8 +357,6 @@ template<typename Self> bool FrameCommon<Self>::is_instance(const hframe& f) { r
 bool NonInterpretedUnknown::is_instance(const frame& f)  { return (interpreted == f.is_interpreted_frame()); }
 bool NonInterpretedUnknown::is_instance(const hframe& f) { return (interpreted == f.is_interpreted_frame()); }
 
-const int LogBytesPerIndex = 2;
-
 // Mirrors the Java continuation objects.
 // This object is created when we begin a freeze/thaw operation for a continuation, and is destroyed when the operation completes.
 // Contents are read from the Java object at the entry points of this module, and written at exists or intermediate calls into Java
@@ -367,7 +374,7 @@ private:
 
   typeArrayOop _stack;
   int _stack_length;
-  int* _hstack;
+  ElemType* _hstack;
 
   size_t _max_size;
 
@@ -386,7 +393,7 @@ private:
   short _e_size;
 
 private:
-  int* stack() const { return _hstack; }
+  ElemType* stack() const { return _hstack; }
 
   inline void post_safepoint(Handle conth);
   oop raw_allocate(Klass* klass, size_t words, size_t elements, bool zero);
@@ -395,15 +402,17 @@ private:
   bool allocate_stack(int size);
   bool allocate_ref_stack(int nr_oops);
   bool allocate_stacks_in_native(int size, int oops, bool needs_stack, bool needs_refstack);
+  static void copy_primitive_arrays(typeArrayOop old_array, int old_start, typeArrayOop new_array, int new_start, int count);
+  static void copy_ref_arrays(objArrayOop old_array, int old_start, objArrayOop new_array, int new_start, int count, int new_length, int min_length);
   void allocate_stacks_in_java(int size, int oops, int frames);
   bool grow_stack(int new_size);
   bool grow_ref_stack(int nr_oops);
-  int fix_decreasing_index(int index, int old_length, int new_length) const;
+  static int fix_decreasing_index(int index, int old_length, int new_length);
   int ensure_capacity(int old, int min);
 
 public:
-  static inline int to_index(size_t x) { return x >> LogBytesPerIndex; } // stack is int[]
-  static inline int to_bytes(int x)    { return x << LogBytesPerIndex; } // stack is int[]
+  static inline int to_index(size_t x) { return x >> LogBytesPerElement; }
+  static inline int to_bytes(int x)    { return x << LogBytesPerElement; }
   static inline int to_index(void* base, void* ptr) { return to_index((char*)ptr - (char*)base); }
 
 private:
@@ -558,7 +567,7 @@ template<typename SelfPD>
 template<typename FKind>
 bool HFrameBase<SelfPD>::is_bottom(const ContMirror& cont) const {
   return frame_bottom_index<FKind>() 
-    + ((FKind::interpreted || FKind::stub) ? 0 : cb()->as_compiled_method()->method()->num_stack_arg_slots() * VMRegImpl::stack_slot_size / (int)ELEM_SIZE)
+    + ((FKind::interpreted || FKind::stub) ? 0 : cb()->as_compiled_method()->method()->num_stack_arg_slots() * VMRegImpl::stack_slot_size / elementSizeInBytes)
     >= cont.stack_length();
 }
 
@@ -576,7 +585,7 @@ int HFrameBase<SelfPD>::interpreted_frame_size(const InterpreterOopMap& mask, in
   assert (_is_interpreted, "");
   // we calculate on relativized metadata; all monitors must be NULL on hstack, but as f.oops_do walks them, we count them
   *num_oops = interpreted_frame_num_oops(mask);
-  int size = (frame_bottom_index<Interpreted>() - frame_top_index<Interpreted>()) * ELEM_SIZE;
+  int size = (frame_bottom_index<Interpreted>() - frame_top_index<Interpreted>()) * elementSizeInBytes;
   return size;
 }
 
@@ -687,7 +696,7 @@ void ContMirror::read() {
   _stack = java_lang_Continuation::stack(_cont);
   if (_stack != NULL) {
     _stack_length = _stack->length();
-    _hstack = (int*)_stack->base(T_INT);
+    _hstack = (ElemType*)_stack->base(basicElementType);
   } else {
     _stack_length = 0;
     _hstack = NULL;
@@ -822,7 +831,7 @@ inline void ContMirror::relativize(intptr_t* const fp, intptr_t* const hfp, int 
 }
 
 inline void ContMirror::derelativize(intptr_t* const fp, int offset) {
-  *(fp + offset) = (intptr_t)((address)fp + to_bytes(*(long*)(fp + offset)));
+  *(fp + offset) = (intptr_t)((address)fp + to_bytes(*(intptr_t*)(fp + offset)));
 }
 
 void ContMirror::copy_to_stack(void* from, void* to, int size) {
@@ -1099,6 +1108,7 @@ static void set_anchor(JavaThread* thread, FrameInfo* fi) {
   anchor->set_last_Java_sp((intptr_t*)fi->sp);
   anchor->set_last_Java_fp((intptr_t*)fi->fp);
   anchor->set_last_Java_pc(fi->pc);
+  assert (thread->has_last_Java_frame(), "");
 
   assert(thread->last_frame().cb() != NULL, "");
 
@@ -2194,7 +2204,7 @@ private:
 
   inline frame new_entry_frame();
   template<typename FKind> frame new_frame(const hframe& hf, intptr_t* vsp, int callee_argsize_words);
-  template<typename FKind> static inline void patch_pd(frame& f, const frame& sender);
+  template<typename FKind, bool top, bool bottom> inline void patch_pd(frame& f, const frame& sender);
   void derelativize_interpreted_frame_metadata(const hframe& hf, const frame& f);
   inline hframe::callee_info frame_callee_info_address(frame& f);
   template<typename FKind, bool top, bool bottom> inline intptr_t* align(const hframe& hf, intptr_t* vsp, const frame& caller);
@@ -2341,8 +2351,6 @@ public:
 
     assert (FKind::is_instance(hf), "");
     assert (bottom == is_entry_frame(_cont, caller), "");
-    assert (!bottom || caller.sp() == _cont.entrySP(), "caller.sp: " INTPTR_FORMAT " entrySP: " INTPTR_FORMAT, p2i(caller.sp()), p2i(_cont.entrySP()));
-    assert (!bottom || caller.fp() == _cont.entryFP(), "caller.fp: " INTPTR_FORMAT " entryFP: " INTPTR_FORMAT, p2i(caller.fp()), p2i(_cont.entryFP())); // TODO PD
 
     if (log_develop_is_enabled(Trace, jvmcont)) hf.print(_cont);
 
@@ -2381,10 +2389,12 @@ public:
     log_develop_trace(jvmcont)("Done walking oops");
   }
 
-  template<typename FKind>
-  static inline void patch(frame& f, const frame& caller) {
+  template<typename FKind, bool top, bool bottom>
+  inline void patch(frame& f, const frame& caller) {
+    assert (!bottom || caller.sp() == _cont.entrySP(), "caller.sp: " INTPTR_FORMAT " entrySP: " INTPTR_FORMAT, p2i(caller.sp()), p2i(_cont.entrySP()));
+
     FKind::patch_return_pc(f, caller.raw_pc()); // this patches the return address to the deopt handler if necessary
-    patch_pd<FKind>(f, caller);
+    patch_pd<FKind, top, bottom>(f, caller);
 
     if (FKind::interpreted) {
       Interpreted::patch_sender_sp(f, caller.unextended_sp()); // ContMirror::derelativize(vfp, frame::interpreter_frame_sender_sp_offset);
@@ -2407,7 +2417,7 @@ public:
 
     thaw_oops<Interpreted>(f, f.sp(), hf.ref_sp(), num_oops, mask);
 
-    patch<Interpreted>(f, caller);
+    patch<Interpreted, top, bottom>(f, caller);
 
     assert(f.is_interpreted_frame_valid(_cont.thread()), "invalid thawed frame");
     assert (Interpreted::frame_bottom(f) <= Frame::frame_top(caller), "");
@@ -2483,7 +2493,7 @@ public:
       thaw_oops<FKind>(f, f.sp(), hf.ref_sp(), num_oops, (void*)t_fn);
     }
 
-    patch<FKind>(f, caller);
+    patch<FKind, top, bottom>(f, caller);
 
     _cont.dec_num_frames();
 
@@ -2742,15 +2752,19 @@ JRT_LEAF(address, Continuation::thaw_leaf(FrameInfo* fi, bool return_barrier, bo
     address ret = fi->pc;
     fi->pc = SharedRuntime::raw_exception_handler_for_return_address(JavaThread::current(), fi->pc);
     return ret;
-  } else
+  } else {
     return reinterpret_cast<address>(Interpreter::contains(fi->pc)); // really only necessary in the case of continuing from a forced yield
+  }
 JRT_END
 
 JRT_ENTRY(address, Continuation::thaw(JavaThread* thread, FrameInfo* fi, bool return_barrier, bool exception))
   //callgrind();
   PERFTEST_LEVEL = ContPerfTest;
 
-  thaw0(JavaThread::current(), fi, return_barrier);
+  assert(thread == JavaThread::current(), "");
+
+  thaw0(thread, fi, return_barrier);
+  set_anchor(thread, fi); // we're in a full transition that expects last java frame
 
   if (exception) {
     // TODO: handle deopt. see TemplateInterpreterGenerator::generate_throw_exception, OptoRuntime::handle_exception_C, OptoRuntime::handle_exception_helper
@@ -2758,8 +2772,9 @@ JRT_ENTRY(address, Continuation::thaw(JavaThread* thread, FrameInfo* fi, bool re
     address ret = fi->pc;
     fi->pc = SharedRuntime::raw_exception_handler_for_return_address(JavaThread::current(), fi->pc);
     return ret;
-  } else
+  } else {
     return reinterpret_cast<address>(Interpreter::contains(fi->pc)); // really only necessary in the case of continuing from a forced yield
+  }
 JRT_END
 
 bool Continuation::is_continuation_entry_frame(const frame& f, const RegisterMap* map) {
@@ -2827,9 +2842,10 @@ void Continuation::fix_continuation_bottom_sender(JavaThread* thread, const fram
       int argsize = callee.cb()->as_compiled_method()->method()->num_stack_arg_slots() * VMRegImpl::stack_slot_size;
       assert ((argsize & WordAlignmentMask) == 0, "must be");
       argsize >>= LogBytesPerWord;
+    #ifdef _LP64
       if (argsize % 2 != 0)
         argsize++; // 16-byte alignment for compiled frame sp
-
+    #endif
       *sender_sp += argsize;
     }
     // tty->print_cr(">>> fix_continuation_bottom_sender 2: %p", *sender_pc);
@@ -3240,73 +3256,42 @@ oop Continuation::continuation_scope(oop cont) {
 
 ///// Allocation
 
-inline void ContMirror::post_safepoint(Handle conth) {
-  _cont = conth();  // reload oop
-  _ref_stack = java_lang_Continuation::refStack(_cont);
-  _stack = java_lang_Continuation::stack(_cont);
-  _hstack = (int*)_stack->base(T_INT);
-}
+void ContMirror::allocate_stacks(int size, int oops, int frames) {
+  bool needs_stack_allocation    = (_stack == NULL || to_index(size) > (_sp >= 0 ? _sp : _stack_length));
+  bool needs_refStack_allocation = (_ref_stack == NULL || oops > _ref_sp);
 
-/* try to allocate an array from the tlab, if it doesn't work allocate one using the allocate
- * method. In the later case we might have done a safepoint and need to reload our oops */
-oop ContMirror::raw_allocate(Klass* klass, size_t size_in_words, size_t elements, bool zero) {
-  ThreadLocalAllocBuffer& tlab = _thread->tlab();
-  HeapWord* start = tlab.allocate(size_in_words);
+  log_develop_trace(jvmcont)("stack size: %d (int): %d sp: %d stack_length: %d needs alloc: %d", size, to_index(size), _sp, _stack_length, needs_stack_allocation);
+  log_develop_trace(jvmcont)("num_oops: %d ref_sp: %d needs alloc: %d", oops, _ref_sp, needs_stack_allocation);
 
-  ObjArrayAllocator allocator(klass, size_in_words, elements, /* do_zero */ zero);
-  if (start == NULL) {
-    HandleMark hm(_thread);
-    Handle conth(_thread, _cont);
-    oop result = allocator.allocate(/* use_tlab */ false);
-    post_safepoint(conth);
-    return result;
+  assert(_sp == java_lang_Continuation::sp(_cont), "");
+  assert(_fp == java_lang_Continuation::fp(_cont), "");
+  assert(_pc == java_lang_Continuation::pc(_cont), "");
+
+  if (!(needs_stack_allocation | needs_refStack_allocation))
+    return;
+
+  if (PERFTEST_LEVEL < 100) {
+    tty->print_cr("stack size: %d (int): %d sp: %d stack_length: %d needs alloc: %d", size, to_index(size), _sp, _stack_length, needs_stack_allocation);
+    tty->print_cr("num_oops: %d ref_sp: %d needs alloc: %d", oops, _ref_sp, needs_stack_allocation);
+  }
+  guarantee(PERFTEST_LEVEL >= 100, "");
+
+  if (!allocate_stacks_in_native(size, oops, needs_stack_allocation, needs_refStack_allocation)) {
+    allocate_stacks_in_java(size, oops, frames);
+    if (!thread()->has_pending_exception()) return;
   }
 
-  return allocator.initialize(start);
-}
+  // These assertions aren't important, as we'll overwrite the Java-computed ones, but they're just to test that the Java computation is OK.
+  assert(_pc == java_lang_Continuation::pc(_cont), "_pc: " INTPTR_FORMAT "  this.pc: " INTPTR_FORMAT "",  p2i(_pc), p2i(java_lang_Continuation::pc(_cont)));
+  assert(_sp == java_lang_Continuation::sp(_cont), "_sp: %d  this.sp: %d",  _sp, java_lang_Continuation::sp(_cont));
+  assert(_fp == java_lang_Continuation::fp(_cont), "_fp: %lu this.fp: " JLONG_FORMAT " %d %d", _fp, java_lang_Continuation::fp(_cont), Interpreter::contains(_pc), is_flag(FLAG_LAST_FRAME_INTERPRETED));
+  
+  assert (oopDesc::equals(_stack, java_lang_Continuation::stack(_cont)), "");
+  assert (_stack->base(basicElementType) == _hstack, "");
 
-typeArrayOop ContMirror::allocate_stack_array(size_t elements) {
-  assert(elements > 0, "");
-
-  log_develop_trace(jvmcont)("allocate_stack_array elements: %lu", elements);
-  TypeArrayKlass* klass = TypeArrayKlass::cast(Universe::intArrayKlassObj());
-  size_t size_in_words = typeArrayOopDesc::object_size(klass, elements);
-  return typeArrayOop(raw_allocate(klass, size_in_words, elements, false));
-}
-
-objArrayOop ContMirror::allocate_refstack_array(size_t nr_oops) {
-  assert(nr_oops > 0, "");
-
-  log_develop_trace(jvmcont)("allocate_refstack_array nr_oops: %lu", nr_oops);
-  ArrayKlass* klass = ArrayKlass::cast(Universe::objectArrayKlassObj());
-  size_t size_in_words = objArrayOopDesc::object_size(nr_oops);
-  return objArrayOop(raw_allocate(klass, size_in_words, nr_oops, true)); // TODO PERF: consider no zero.
-}
-
-bool ContMirror::allocate_stack(int size) {
-  int elements = size >> 2;
-  oop result = allocate_stack_array(elements);
-  if (result == NULL) {
-    return false;
-  }
-
-  _stack = typeArrayOop(result);
-  _sp = elements;
-  _stack_length = elements;
-  _hstack = (int*)_stack->base(T_INT);
-
-  return true;
-}
-
-bool ContMirror::allocate_ref_stack(int nr_oops) {
-  oop result = allocate_refstack_array(nr_oops);
-  if (result == NULL) {
-    return false;
-  }
-  _ref_stack = objArrayOop(result);
-  _ref_sp = nr_oops;
-
-  return true;
+  assert (to_bytes(_stack_length) >= size, "sanity check: stack_size: %d size: %d", to_bytes(_stack_length), size);
+  assert (to_bytes(_sp) >= size, "sanity check");
+  assert (to_bytes(_ref_sp) >= oops, "oops: %d ref_sp: %d refStack length: %d", oops, _ref_sp, _ref_stack->length());
 }
 
 bool ContMirror::allocate_stacks_in_native(int size, int oops, bool needs_stack, bool needs_refstack) {
@@ -3347,69 +3332,23 @@ bool ContMirror::allocate_stacks_in_native(int size, int oops, bool needs_stack,
   return true;
 }
 
-void ContMirror::allocate_stacks(int size, int oops, int frames) {
-  bool needs_stack_allocation    = (_stack == NULL || to_index(size) > (_sp >= 0 ? _sp : _stack_length));
-  bool needs_refStack_allocation = (_ref_stack == NULL || oops > _ref_sp);
-
-  log_develop_trace(jvmcont)("stack size: %d (int): %d sp: %d stack_length: %d needs alloc: %d", size, to_index(size), _sp, _stack_length, needs_stack_allocation);
-  log_develop_trace(jvmcont)("num_oops: %d ref_sp: %d needs alloc: %d", oops, _ref_sp, needs_stack_allocation);
-
-  assert(_sp == java_lang_Continuation::sp(_cont), "");
-  assert(_fp == java_lang_Continuation::fp(_cont), "");
-  assert(_pc == java_lang_Continuation::pc(_cont), "");
-
-  if (!(needs_stack_allocation | needs_refStack_allocation))
-    return;
-
-  if (PERFTEST_LEVEL < 100) {
-    tty->print_cr("stack size: %d (int): %d sp: %d stack_length: %d needs alloc: %d", size, to_index(size), _sp, _stack_length, needs_stack_allocation);
-    tty->print_cr("num_oops: %d ref_sp: %d needs alloc: %d", oops, _ref_sp, needs_stack_allocation);
-  }
-  guarantee(PERFTEST_LEVEL >= 100, "");
-
-  if (!allocate_stacks_in_native(size, oops, needs_stack_allocation, needs_refStack_allocation)) {
-    allocate_stacks_in_java(size, oops, frames);
-    if (!thread()->has_pending_exception()) return;
+bool ContMirror::allocate_stack(int size) {
+  int elements = size >> LogBytesPerElement;
+  oop result = allocate_stack_array(elements);
+  if (result == NULL) {
+    return false;
   }
 
-  // These assertions aren't important, as we'll overwrite the Java-computed ones, but they're just to test that the Java computation is OK.
-  assert(_pc == java_lang_Continuation::pc(_cont), "_pc: " INTPTR_FORMAT "  this.pc: " INTPTR_FORMAT "",  p2i(_pc), p2i(java_lang_Continuation::pc(_cont)));
-  assert(_sp == java_lang_Continuation::sp(_cont), "_sp: %d  this.sp: %d",  _sp, java_lang_Continuation::sp(_cont));
-  assert(_fp == java_lang_Continuation::fp(_cont), "_fp: %lu this.fp: " JLONG_FORMAT " %d %d", _fp, java_lang_Continuation::fp(_cont), Interpreter::contains(_pc), is_flag(FLAG_LAST_FRAME_INTERPRETED));
-  
-  assert (oopDesc::equals(_stack, java_lang_Continuation::stack(_cont)), "");
-  assert (_stack->base(T_INT) == _hstack, "");
+  _stack = typeArrayOop(result);
+  _sp = elements;
+  _stack_length = elements;
+  _hstack = (ElemType*)_stack->base(basicElementType);
 
-  assert (to_bytes(_stack_length) >= size, "sanity check: stack_size: %d size: %d", to_bytes(_stack_length), size);
-  assert (to_bytes(_sp) >= size, "sanity check");
-  assert (to_bytes(_ref_sp) >= oops, "oops: %d ref_sp: %d refStack length: %d", oops, _ref_sp, _ref_stack->length());
-}
-
-void ContMirror::allocate_stacks_in_java(int size, int oops, int frames) {
-  guarantee (false, "unreachable");
-  int old_stack_length = _stack_length;
-
-  HandleMark hm(_thread);
-  Handle conth(_thread, _cont);
-  JavaCallArguments args;
-  args.push_oop(conth);
-  args.push_int(size);
-  args.push_int(oops);
-  args.push_int(frames);
-  JavaValue result(T_VOID);
-  JavaCalls::call_virtual(&result, SystemDictionary::Continuation_klass(), vmSymbols::getStacks_name(), vmSymbols::continuationGetStacks_signature(), &args, _thread); 
-  post_safepoint(conth); // reload oop after java call
-
-  _sp    = java_lang_Continuation::sp(_cont);
-  _fp    = java_lang_Continuation::fp(_cont);
-  _ref_sp    = java_lang_Continuation::refSP(_cont);
-
-  _stack_length = _stack->length();
-  /* We probably should handle OOM? */
+  return true;
 }
 
 bool ContMirror::grow_stack(int new_size) {
-  new_size = new_size >> 2; // convert to number of elements 
+  new_size = new_size >> LogBytesPerElement;
 
   int old_length = _stack_length;
   int offset = _sp > 0 ? _sp : old_length;
@@ -3430,16 +3369,11 @@ bool ContMirror::grow_stack(int new_size) {
   }
 
   log_develop_trace(jvmcont)("grow_stack old_length: %d new_length: %d", old_length, new_length);
-  int* new_hstack = (int*)new_stack->base(T_INT);
+  ElemType* new_hstack = (ElemType*)new_stack->base(basicElementType);
   int n = old_length - offset;
   assert(new_length > n, "");
   if (n > 0) {
-    int* from = _hstack + offset;
-    void* to = new_hstack + (new_length - n);
-    size_t size = to_bytes(n);
-    memcpy(to, from, size);
-    //Copy::conjoint_memory_atomic(from, to, size); // Copy::disjoint_words((HeapWord*)from, (HeapWord*)to, size/wordSize); // 
-    // ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(_stack, offset * 4, new_stack, (new_length - n) * 4, n);
+    copy_primitive_arrays(_stack, offset, new_stack, new_length - n, n);
   }
   _stack = new_stack;
   _stack_length = new_length;
@@ -3455,10 +3389,23 @@ bool ContMirror::grow_stack(int new_size) {
   return true;
 }
 
+bool ContMirror::allocate_ref_stack(int nr_oops) {
+  // we don't zero the array because we allocate an array that exactly holds all the oops we'll fill in as we freeze
+  oop result = allocate_refstack_array(nr_oops);
+  if (result == NULL) {
+    return false;
+  }
+  _ref_stack = objArrayOop(result);
+  _ref_sp = nr_oops;
+
+  return true;
+}
+
 bool ContMirror::grow_ref_stack(int nr_oops) {
   int old_length = _ref_stack->length();
   int offset = _ref_sp > 0 ? _ref_sp : old_length;
-  int min_length = (old_length - offset) + nr_oops;
+  int old_oops = old_length - offset;
+  int min_length = old_oops + nr_oops;
 
   int new_length = ensure_capacity(old_length, min_length);
   if (new_length == -1) {
@@ -3473,12 +3420,9 @@ bool ContMirror::grow_ref_stack(int nr_oops) {
   log_develop_trace(jvmcont)("grow_ref_stack old_length: %d new_length: %d", old_length, new_length);
 
   int n = old_length - offset;
-  if (n > 0) { // TODO PERF R: fix below and zero here instead of on init
+  if (old_oops > 0) {
     assert(UseNewCode, "");
-    for (int i=0, old_i = offset, new_i = fix_decreasing_index(offset, old_length, new_length); i<n; i++, old_i++, new_i++) 
-      new_ref_stack->obj_at_put(new_i, _ref_stack->obj_at(old_i));
-    // The following fails on Skynet with UseCompressedOops + tiered compilation + UseNewCode (it succeeds with any one of these options being turned off)
-    // ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(_ref_stack, _ref_sp * heapOopSize, new_ref_stack, (new_length - n) * heapOopSize, n * heapOopSize);
+    copy_ref_arrays(_ref_stack, offset, new_ref_stack, fix_decreasing_index(offset, old_length, new_length), old_oops, new_length, min_length);
   }
 
   _ref_stack = new_ref_stack;
@@ -3487,10 +3431,6 @@ bool ContMirror::grow_ref_stack(int nr_oops) {
   _ref_sp = fix_decreasing_index(_ref_sp, old_length, new_length);
   log_develop_trace(jvmcont)("grow_ref_stack new ref_sp: %d", _ref_sp);
   return true;
-}
-
-int ContMirror::fix_decreasing_index(int index, int old_length, int new_length) const {
-  return new_length - (old_length - index);
 }
 
 int ContMirror::ensure_capacity(int old, int min) {
@@ -3504,193 +3444,120 @@ int ContMirror::ensure_capacity(int old, int min) {
   return newsize;
 }
 
-///// DEBUGGING
-
-#ifndef PRODUCT
-void Continuation::describe(FrameValues &values) {
-  JavaThread* thread = JavaThread::current();
-  if (thread != NULL) {
-    for (oop cont = thread->last_continuation(); cont != (oop)NULL; cont = java_lang_Continuation::parent(cont)) {
-      intptr_t* bottom = java_lang_Continuation::entrySP(cont);
-      if (bottom != NULL)
-        values.describe(-1, bottom, "continuation entry");
-    }
-  }
+int ContMirror::fix_decreasing_index(int index, int old_length, int new_length) {
+  return new_length - (old_length - index);
 }
-#endif
 
-static void print_oop(void *p, oop obj, outputStream* st) {
-  if (!log_develop_is_enabled(Trace, jvmcont) && st != NULL) return;
+inline void ContMirror::post_safepoint(Handle conth) {
+  _cont = conth(); // reload oop
+  _ref_stack = java_lang_Continuation::refStack(_cont);
+  _stack = java_lang_Continuation::stack(_cont);
+  _hstack = (ElemType*)_stack->base(basicElementType);
+}
 
-  if (st == NULL) st = tty;
+typeArrayOop ContMirror::allocate_stack_array(size_t elements) {
+  assert(elements > 0, "");
+  log_develop_trace(jvmcont)("allocate_stack_array elements: %lu", elements);
 
-  st->print_cr(INTPTR_FORMAT ": ", p2i(p));
-  if (obj == NULL) {
-    st->print_cr("*NULL*");
+  TypeArrayKlass* klass = TypeArrayKlass::cast(Universe::intArrayKlassObj());
+  size_t size_in_words = typeArrayOopDesc::object_size(klass, elements);
+  return typeArrayOop(raw_allocate(klass, size_in_words, elements, false));
+}
+
+objArrayOop ContMirror::allocate_refstack_array(size_t nr_oops) {
+  assert(nr_oops > 0, "");
+  bool zero = !BarrierSet::barrier_set()->is_a(BarrierSet::ModRef);
+  log_develop_trace(jvmcont)("allocate_refstack_array nr_oops: %lu zero: %d", nr_oops, zero);
+
+  ArrayKlass* klass = ArrayKlass::cast(Universe::objectArrayKlassObj());
+  size_t size_in_words = objArrayOopDesc::object_size(nr_oops);
+  return objArrayOop(raw_allocate(klass, size_in_words, nr_oops, zero));
+}
+
+/* try to allocate an array from the tlab, if it doesn't work allocate one using the allocate
+ * method. In the later case we might have done a safepoint and need to reload our oops */
+oop ContMirror::raw_allocate(Klass* klass, size_t size_in_words, size_t elements, bool zero) {
+  ObjArrayAllocator allocator(klass, size_in_words, elements, zero, _thread);
+  HeapWord* start = _thread->tlab().allocate(size_in_words);
+  if (start != NULL) {
+    return allocator.initialize(start);
   } else {
-    if (oopDesc::is_oop_or_null(obj)) {
-      if (obj->is_objArray()) {
-        st->print_cr("valid objArray: " INTPTR_FORMAT, p2i(obj));
-      } else {
-        obj->print_value_on(st);
-        // obj->print();
-      }
+    HandleMark hm(_thread);
+    Handle conth(_thread, _cont);
+    oop result = allocator.allocate(/* use_tlab */ false);
+    post_safepoint(conth);
+    return result;
+  }
+}
+
+void ContMirror::copy_primitive_arrays(typeArrayOop old_array, int old_start, typeArrayOop new_array, int new_start, int count) {
+    ElemType* from = (ElemType*)old_array->base(basicElementType) + old_start;
+    ElemType* to   = (ElemType*)new_array->base(basicElementType) + new_start;
+    size_t size = to_bytes(count);
+
+    memcpy(to, from, size);
+    //Copy::conjoint_memory_atomic(from, to, size); // Copy::disjoint_words((HeapWord*)from, (HeapWord*)to, size/wordSize); // 
+    // ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(_stack, offset * elementSizeInBytes, new_stack, (new_length - n) * elementSizeInBytes, n);
+}
+
+void ContMirror::copy_ref_arrays(objArrayOop old_array, int old_start, objArrayOop new_array, int new_start, int count, int new_length, int min_length) {
+  assert (new_length == new_array->length(), "");
+  assert (new_start + count == new_array->length(), "");
+
+  HeapWord* new_base = new_array->base();
+  if (BarrierSet::barrier_set()->is_a(BarrierSet::ModRef)) {
+    // zero the bottom part of the array that won't be filled in the freeze
+    int extra_oops = new_length - min_length;
+    const uint OopsPerHeapWord = HeapWordSize/heapOopSize;
+    assert(OopsPerHeapWord >= 1 && (HeapWordSize % heapOopSize == 0), "");
+    uint word_size = ((uint)extra_oops + OopsPerHeapWord - 1)/OopsPerHeapWord;
+    Copy::fill_to_aligned_words(new_base, word_size, 0); // fill_to_words
+  }
+
+  // Copy from old array
+
+  // Requires the array is zeroed i.e. !BarrierSet::barrier_set()->is_a(BarrierSet::ModRef):
+  // for (int i=0, old_i = old_start, new_i = new_start; i < count; i++, old_i++, new_i++) 
+  //   new_array->obj_at_put(new_i, old_array->obj_at(old_i));
+
+  if (count > 0) {
+    size_t src_offset, dst_offset;
+    // HeapWord* dst_start;
+    if (UseCompressedOops) {
+      src_offset = (size_t) objArrayOopDesc::obj_at_offset<narrowOop>(old_start);
+      dst_offset = (size_t) objArrayOopDesc::obj_at_offset<narrowOop>(new_start);
+      // dst_start  = (HeapWord*)((char*)new_base + sizeof(narrowOop)*new_start);
     } else {
-      st->print_cr("invalid oop: " INTPTR_FORMAT, p2i(obj));
+      src_offset = (size_t) objArrayOopDesc::obj_at_offset<oop>(old_start);
+      dst_offset = (size_t) objArrayOopDesc::obj_at_offset<oop>(new_start);
+      // dst_start  = (HeapWord*)((char*)new_base + sizeof(oop)*new_start);
     }
-    st->cr();
+    ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(old_array, src_offset, new_array, dst_offset, count);
+    // barrier_set_cast<ModRefBarrierSet>(BarrierSet::barrier_set())->write_ref_array(dst_start, count); // TODO is this necessary?
   }
 }
 
-void ContMirror::print_hframes(outputStream* st) {
-  if (st != NULL && !log_develop_is_enabled(Trace, jvmcont)) return;
-  if (st == NULL) st = tty;
+void ContMirror::allocate_stacks_in_java(int size, int oops, int frames) {
+  guarantee (false, "unreachable");
+  int old_stack_length = _stack_length;
 
-  st->print_cr("------- hframes ---------");
-  st->print_cr("sp: %d length: %d", _sp, _stack_length);
-  int i = 0;
-  for (hframe f = last_frame<mode_slow>(); !f.is_empty(); f = f.sender<mode_slow>(*this)) {
-    st->print_cr("frame: %d", i);
-    f.print_on(*this, st);
-    i++;
-  }
-  st->print_cr("======= end hframes =========");
-}
+  HandleMark hm(_thread);
+  Handle conth(_thread, _cont);
+  JavaCallArguments args;
+  args.push_oop(conth);
+  args.push_int(size);
+  args.push_int(oops);
+  args.push_int(frames);
+  JavaValue result(T_VOID);
+  JavaCalls::call_virtual(&result, SystemDictionary::Continuation_klass(), vmSymbols::getStacks_name(), vmSymbols::continuationGetStacks_signature(), &args, _thread); 
+  post_safepoint(conth); // reload oop after java call
 
-#ifdef ASSERT
+  _sp     = java_lang_Continuation::sp(_cont);
+  _fp     = java_lang_Continuation::fp(_cont);
+  _ref_sp = java_lang_Continuation::refSP(_cont);
 
-static long java_tid(JavaThread* thread) {
-  return java_lang_Thread::thread_id(thread->threadObj());
-}
-
-static void print_frames(JavaThread* thread, outputStream* st) {
-  if (st != NULL && !log_develop_is_enabled(Trace, jvmcont)) return;
-  if (st == NULL) st = tty;
-
-  st->print_cr("------- frames ---------");
-  RegisterMap map(thread, true, false);
-#ifndef PRODUCT
-  map.set_skip_missing(true);
-  ResetNoHandleMark rnhm;
-  ResourceMark rm(thread);
-  HandleMark hm(thread);
-  FrameValues values;
-#endif
-
-  int i = 0;
-  for (frame f = thread->last_frame(); !f.is_entry_frame(); f = f.sender(&map)) {
-#ifndef PRODUCT
-    // print_vframe(f, &map, st);
-    f.describe(values, i, &map);
-#else
-    print_vframe(f, &map, st);
-#endif
-    i++;
-  }
-#ifndef PRODUCT
-  values.print(thread);
-#endif
-  st->print_cr("======= end frames =========");
-}
-
-// static inline bool is_not_entrant(const frame& f) {
-//   return  f.is_compiled_frame() ? f.cb()->as_nmethod()->is_not_entrant() : false;
-// }
-
-static char* method_name(Method* m) {
-  return m != NULL ? m->name_and_sig_as_C_string() : NULL;
-}
-
-static inline Method* top_java_frame_method(const frame& f) {
-  Method* m = NULL;
-  if (f.is_interpreted_frame()) {
-    m = f.interpreter_frame_method();
-  } else if (f.is_compiled_frame()) {
-    CompiledMethod* cm = f.cb()->as_compiled_method();
-    ScopeDesc* scope = cm->scope_desc_at(f.pc());
-    m = scope->method();
-  }
-  // m = ((CompiledMethod*)f.cb())->method();
-  return m;
-}
-
-static inline Method* bottom_java_frame_method(const frame& f) {
-  return Frame::frame_method(f);
-}
-
-static char* top_java_frame_name(const frame& f) {
-  return method_name(top_java_frame_method(f));
-}
-
-static char* bottom_java_frame_name(const frame& f) {
-  return method_name(bottom_java_frame_method(f));
-}
-
-static bool assert_top_java_frame_name(const frame& f, const char* name) {
-  ResourceMark rm;
-  bool res = (strcmp(top_java_frame_name(f), name) == 0);
-  assert (res, "name: %s", top_java_frame_name(f));
-  return res;
-}
-
-static bool assert_bottom_java_frame_name(const frame& f, const char* name) {
-  ResourceMark rm;
-  bool res = (strcmp(bottom_java_frame_name(f), name) == 0);
-  assert (res, "name: %s", bottom_java_frame_name(f));
-  return res;
-}
-
-static inline bool is_deopt_return(address pc, const frame& sender) {
-  if (sender.is_interpreted_frame()) return false;
-
-  CompiledMethod* cm = sender.cb()->as_compiled_method();
-  return cm->is_deopt_pc(pc);
-}
-
-// Does a reverse lookup of a RegisterMap. Returns the register, if any, spilled at the given address.
-static VMReg find_register_spilled_here(void* p, RegisterMap* map) {
-  for(int i = 0; i < RegisterMap::reg_count; i++) {
-    VMReg r = VMRegImpl::as_VMReg(i);
-    if (p == map->location(r)) return r;
-  }
-  return NULL;
-}
-
-// void static stop() {
-//     print_frames(JavaThread::current(), NULL);
-//     assert (false, "");
-// }
-
-// void static stop(const frame& f) {
-//     f.print_on(tty);
-//     stop();
-// }
-#endif
-
-volatile long Continuations::_exploded_miss = 0;
-volatile long Continuations::_exploded_hit = 0;
-volatile long Continuations::_nmethod_miss = 0;
-volatile long Continuations::_nmethod_hit = 0;
-
-void Continuations::exploded_miss() {
-  //Atomic::inc(&_exploded_miss);
-}
-
-void Continuations::exploded_hit() {
-  //Atomic::inc(&_exploded_hit);
-}
-
-void Continuations::nmethod_miss() {
-  //Atomic::inc(&_nmethod_miss);
-}
-
-void Continuations::nmethod_hit() {
-  //Atomic::inc(&_nmethod_hit);
-}
-
-void Continuations::print_statistics() {
-  //tty->print_cr("Continuations hit/miss %ld / %ld", _exploded_hit, _exploded_miss);
-  //tty->print_cr("Continuations nmethod hit/miss %ld / %ld", _nmethod_hit, _nmethod_miss);
+  _stack_length = _stack->length();
+  /* We probably should handle OOM? */
 }
 
 JVM_ENTRY(void, CONT_Clean(JNIEnv* env, jobject jcont)) {
@@ -3834,6 +3701,195 @@ public:
 void Continuations::init() {
   ConfigResolve::resolve();
 }
+
+volatile long Continuations::_exploded_miss = 0;
+volatile long Continuations::_exploded_hit = 0;
+volatile long Continuations::_nmethod_miss = 0;
+volatile long Continuations::_nmethod_hit = 0;
+
+void Continuations::exploded_miss() {
+  //Atomic::inc(&_exploded_miss);
+}
+
+void Continuations::exploded_hit() {
+  //Atomic::inc(&_exploded_hit);
+}
+
+void Continuations::nmethod_miss() {
+  //Atomic::inc(&_nmethod_miss);
+}
+
+void Continuations::nmethod_hit() {
+  //Atomic::inc(&_nmethod_hit);
+}
+
+void Continuations::print_statistics() {
+  //tty->print_cr("Continuations hit/miss %ld / %ld", _exploded_hit, _exploded_miss);
+  //tty->print_cr("Continuations nmethod hit/miss %ld / %ld", _nmethod_hit, _nmethod_miss);
+}
+
+///// DEBUGGING
+
+#ifndef PRODUCT
+void Continuation::describe(FrameValues &values) {
+  JavaThread* thread = JavaThread::current();
+  if (thread != NULL) {
+    for (oop cont = thread->last_continuation(); cont != (oop)NULL; cont = java_lang_Continuation::parent(cont)) {
+      intptr_t* bottom = java_lang_Continuation::entrySP(cont);
+      if (bottom != NULL)
+        values.describe(-1, bottom, "continuation entry");
+    }
+  }
+}
+#endif
+
+static void print_oop(void *p, oop obj, outputStream* st) {
+  if (!log_develop_is_enabled(Trace, jvmcont) && st != NULL) return;
+
+  if (st == NULL) st = tty;
+
+  st->print_cr(INTPTR_FORMAT ": ", p2i(p));
+  if (obj == NULL) {
+    st->print_cr("*NULL*");
+  } else {
+    if (oopDesc::is_oop_or_null(obj)) {
+      if (obj->is_objArray()) {
+        st->print_cr("valid objArray: " INTPTR_FORMAT, p2i(obj));
+      } else {
+        obj->print_value_on(st);
+        // obj->print();
+      }
+    } else {
+      st->print_cr("invalid oop: " INTPTR_FORMAT, p2i(obj));
+    }
+    st->cr();
+  }
+}
+
+void ContMirror::print_hframes(outputStream* st) {
+  if (st != NULL && !log_develop_is_enabled(Trace, jvmcont)) return;
+  if (st == NULL) st = tty;
+
+  st->print_cr("------- hframes ---------");
+  st->print_cr("sp: %d length: %d", _sp, _stack_length);
+  int i = 0;
+  for (hframe f = last_frame<mode_slow>(); !f.is_empty(); f = f.sender<mode_slow>(*this)) {
+    st->print_cr("frame: %d", i);
+    f.print_on(*this, st);
+    i++;
+  }
+  st->print_cr("======= end hframes =========");
+}
+
+#ifdef ASSERT
+
+static jlong java_tid(JavaThread* thread) {
+  return java_lang_Thread::thread_id(thread->threadObj());
+}
+
+static void print_frames(JavaThread* thread, outputStream* st) {
+  if (st != NULL && !log_develop_is_enabled(Trace, jvmcont)) return;
+  if (st == NULL) st = tty;
+
+  st->print_cr("------- frames ---------");
+  RegisterMap map(thread, true, false);
+#ifndef PRODUCT
+  map.set_skip_missing(true);
+  ResetNoHandleMark rnhm;
+  ResourceMark rm(thread);
+  HandleMark hm(thread);
+  FrameValues values;
+#endif
+
+  int i = 0;
+  for (frame f = thread->last_frame(); !f.is_entry_frame(); f = f.sender(&map)) {
+#ifndef PRODUCT
+    // print_vframe(f, &map, st);
+    f.describe(values, i, &map);
+#else
+    print_vframe(f, &map, st);
+#endif
+    i++;
+  }
+#ifndef PRODUCT
+  values.print(thread);
+#endif
+  st->print_cr("======= end frames =========");
+}
+
+// static inline bool is_not_entrant(const frame& f) {
+//   return  f.is_compiled_frame() ? f.cb()->as_nmethod()->is_not_entrant() : false;
+// }
+
+static char* method_name(Method* m) {
+  return m != NULL ? m->name_and_sig_as_C_string() : NULL;
+}
+
+static inline Method* top_java_frame_method(const frame& f) {
+  Method* m = NULL;
+  if (f.is_interpreted_frame()) {
+    m = f.interpreter_frame_method();
+  } else if (f.is_compiled_frame()) {
+    CompiledMethod* cm = f.cb()->as_compiled_method();
+    ScopeDesc* scope = cm->scope_desc_at(f.pc());
+    m = scope->method();
+  }
+  // m = ((CompiledMethod*)f.cb())->method();
+  return m;
+}
+
+static inline Method* bottom_java_frame_method(const frame& f) {
+  return Frame::frame_method(f);
+}
+
+static char* top_java_frame_name(const frame& f) {
+  return method_name(top_java_frame_method(f));
+}
+
+static char* bottom_java_frame_name(const frame& f) {
+  return method_name(bottom_java_frame_method(f));
+}
+
+static bool assert_top_java_frame_name(const frame& f, const char* name) {
+  ResourceMark rm;
+  bool res = (strcmp(top_java_frame_name(f), name) == 0);
+  assert (res, "name: %s", top_java_frame_name(f));
+  return res;
+}
+
+static bool assert_bottom_java_frame_name(const frame& f, const char* name) {
+  ResourceMark rm;
+  bool res = (strcmp(bottom_java_frame_name(f), name) == 0);
+  assert (res, "name: %s", bottom_java_frame_name(f));
+  return res;
+}
+
+static inline bool is_deopt_return(address pc, const frame& sender) {
+  if (sender.is_interpreted_frame()) return false;
+
+  CompiledMethod* cm = sender.cb()->as_compiled_method();
+  return cm->is_deopt_pc(pc);
+}
+
+// Does a reverse lookup of a RegisterMap. Returns the register, if any, spilled at the given address.
+static VMReg find_register_spilled_here(void* p, RegisterMap* map) {
+  for(int i = 0; i < RegisterMap::reg_count; i++) {
+    VMReg r = VMRegImpl::as_VMReg(i);
+    if (p == map->location(r)) return r;
+  }
+  return NULL;
+}
+
+// void static stop() {
+//     print_frames(JavaThread::current(), NULL);
+//     assert (false, "");
+// }
+
+// void static stop(const frame& f) {
+//     f.print_on(tty);
+//     stop();
+// }
+#endif
 
 // #ifdef ASSERT
 // #define JAVA_THREAD_OFFSET(field) tty->print_cr("JavaThread." #field " 0x%x", in_bytes(JavaThread:: cat2(field,_offset()) ))

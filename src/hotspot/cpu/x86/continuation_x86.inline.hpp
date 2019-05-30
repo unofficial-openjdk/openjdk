@@ -47,7 +47,7 @@ inline int hframe::real_fp_index(const ContMirror& cont) const {
 }
 
 inline void hframe::patch_real_fp_offset(int offset, intptr_t value) { 
-  long* addr = (link_address() + offset);
+  intptr_t* addr = (link_address() + offset);
   *(link_address() + offset) = value; 
 }
 
@@ -94,7 +94,7 @@ inline void hframe::patch_link_relative(intptr_t* fp) {
 inline void hframe::patch_sender_sp_relative(intptr_t* value) {
   assert (_is_interpreted, "");
   intptr_t* fp_address = link_address();
-  long* la = (long*)(&fp_address[frame::interpreter_frame_sender_sp_offset]);
+  intptr_t* la = &fp_address[frame::interpreter_frame_sender_sp_offset];
   *la = ContMirror::to_index((address)value - (address)fp_address); // all relative indices are relative to fp
 }
 
@@ -107,7 +107,7 @@ void hframe::interpreted_frame_oop_map(InterpreterOopMap* mask) const {
 
 int hframe::interpreted_frame_num_monitors() const {
   assert (_is_interpreted, "");
-  return (frame::interpreter_frame_monitor_block_bottom_offset - *(int*)interpreter_frame_metadata_at(frame::interpreter_frame_monitor_block_top_offset)/ELEMS_PER_WORD)/BasicObjectLock::size();
+  return (frame::interpreter_frame_monitor_block_bottom_offset - *(int*)interpreter_frame_metadata_at(frame::interpreter_frame_monitor_block_top_offset)/elemsPerWord)/BasicObjectLock::size();
 }
 
 #ifdef ASSERT
@@ -116,7 +116,7 @@ int hframe::interpreted_frame_num_monitors() const {
     interpreted_frame_oop_map(&mask);
     int top_offset = *(int*)interpreter_frame_metadata_at(frame::interpreter_frame_initial_sp_offset);
     int expression_stack_size = mask.expression_stack_size();
-    int index = _fp + top_offset - (expression_stack_size*ELEMS_PER_WORD);
+    int index = _fp + top_offset - (expression_stack_size*elemsPerWord);
     return index;
   }
 #endif
@@ -125,13 +125,13 @@ template<typename FKind>
 int hframe::frame_bottom_index() const {
   assert (FKind::is_instance(*this), "");
   if (FKind::interpreted) {
-    int bottom_offset = *(int*)interpreter_frame_metadata_at(frame::interpreter_frame_locals_offset) + (1*ELEMS_PER_WORD); // exclusive, so we add 1 word
+    int bottom_offset = *(int*)interpreter_frame_metadata_at(frame::interpreter_frame_locals_offset) + (1*elemsPerWord); // exclusive, so we add 1 word
     // assert (bottom_offset == *(int*)interpreter_frame_metadata_at(frame::interpreter_frame_sender_sp_offset), 
     //   "bottom_offset: %d interpreter_frame_sender_sp: %d (%d)", 
     //   bottom_offset, *(int*)interpreter_frame_metadata_at(frame::interpreter_frame_sender_sp_offset), *(int*)interpreter_frame_metadata_at(cont, frame::interpreter_frame_locals_offset));
     return _fp + bottom_offset;
   } else {
-    return _sp + cb()->frame_size()*ELEMS_PER_WORD;
+    return _sp + cb()->frame_size()*elemsPerWord;
   }
 }
 
@@ -149,7 +149,7 @@ address hframe::interpreter_frame_bcp() const {
 intptr_t* hframe::interpreter_frame_local_at(int index) const {
   intptr_t* fp = link_address();
   const int n = Interpreter::local_offset_in_bytes(index)/wordSize;
-  intptr_t* locals = (intptr_t*)((address)fp + ContMirror::to_bytes(*(long*)(fp + frame::interpreter_frame_locals_offset)));
+  intptr_t* locals = (intptr_t*)((address)fp + ContMirror::to_bytes(*(intptr_t*)(fp + frame::interpreter_frame_locals_offset)));
   intptr_t* loc = &(locals[n]); // derelativize
 
   // tty->print_cr("interpreter_frame_local_at: %d (%p, %ld, %ld) fp: %ld sp: %d, n: %d fp: %p", index, loc, loc - cont.stack_address(_sp), loc - fp, _fp, _sp, n, fp);  
@@ -158,7 +158,7 @@ intptr_t* hframe::interpreter_frame_local_at(int index) const {
 
 intptr_t* hframe::interpreter_frame_expression_stack_at(int offset) const {
   intptr_t* fp = link_address();
-  intptr_t* monitor_end = (intptr_t*)((address)fp + ContMirror::to_bytes(*(long*)(fp + frame::interpreter_frame_monitor_block_top_offset))); // derelativize
+  intptr_t* monitor_end = (intptr_t*)((address)fp + ContMirror::to_bytes(*(intptr_t*)(fp + frame::interpreter_frame_monitor_block_top_offset))); // derelativize
   intptr_t* expression_stack = monitor_end-1;
 
   const int i = offset * frame::interpreter_frame_expression_stack_direction();
@@ -181,7 +181,7 @@ hframe hframe::sender(const ContMirror& cont, int num_oops) const {
   bool is_sender_interpreted = mode == mode_fast ? false : Interpreter::contains(sender_pc);
   CodeBlob* sender_cb;
 
-  long sender_fp = link();
+  intptr_t sender_fp = link();
 
   if (mode != mode_fast && is_sender_interpreted) {
     sender_fp += link_index(cont);
@@ -224,12 +224,12 @@ void hframe::print_on(ContMirror& cont, outputStream* st) const {
     st->print_cr("\tmethod: " INTPTR_FORMAT " (at " INTPTR_FORMAT ")", p2i(method), p2i(method_addr));
     st->print("\tmethod: "); method->print_short_name(st); st->cr();
 
-    st->print_cr("\tissp: %ld",             *(long*) (fp + frame::interpreter_frame_sender_sp_offset));
-    st->print_cr("\tlast_sp: %ld",          *(long*) (fp + frame::interpreter_frame_last_sp_offset));
-    st->print_cr("\tinitial_sp: %ld",       *(long*) (fp + frame::interpreter_frame_initial_sp_offset));
-    // st->print_cr("\tmon_block_top: %ld",    *(long*) (fp + frame::interpreter_frame_monitor_block_top_offset));
-    // st->print_cr("\tmon_block_bottom: %ld", *(long*) (fp + frame::interpreter_frame_monitor_block_bottom_offset));
-    st->print_cr("\tlocals: %ld",           *(long*) (fp + frame::interpreter_frame_locals_offset));
+    st->print_cr("\tissp: %ld",             *(intptr_t*) (fp + frame::interpreter_frame_sender_sp_offset));
+    st->print_cr("\tlast_sp: %ld",          *(intptr_t*) (fp + frame::interpreter_frame_last_sp_offset));
+    st->print_cr("\tinitial_sp: %ld",       *(intptr_t*) (fp + frame::interpreter_frame_initial_sp_offset));
+    // st->print_cr("\tmon_block_top: %ld",    *(intptr_t*) (fp + frame::interpreter_frame_monitor_block_top_offset));
+    // st->print_cr("\tmon_block_bottom: %ld", *(intptr_t*) (fp + frame::interpreter_frame_monitor_block_bottom_offset));
+    st->print_cr("\tlocals: %ld",           *(intptr_t*) (fp + frame::interpreter_frame_locals_offset));
     st->print_cr("\tcache: " INTPTR_FORMAT, p2i(*(void**)(fp + frame::interpreter_frame_cache_offset)));
     st->print_cr("\tbcp: " INTPTR_FORMAT,   p2i(*(void**)(fp + frame::interpreter_frame_bcp_offset)));
     st->print_cr("\tbci: %d",               method->bci_from(*(address*)(fp + frame::interpreter_frame_bcp_offset)));
@@ -574,13 +574,13 @@ inline intptr_t* Thaw<ConfigT, mode>::align(const hframe& hf, intptr_t* vsp, con
 
   if (!FKind::interpreted && !FKind::stub) {
   #ifdef _LP64
-    if ((long)vsp % 16 != 0) {
+    if ((intptr_t)vsp % 16 != 0) {
       log_develop_trace(jvmcont)("Aligning compiled frame: " INTPTR_FORMAT " -> " INTPTR_FORMAT, p2i(vsp), p2i(vsp - 1));
       assert(caller.is_interpreted_frame() 
         || (bottom && !FKind::stub && hf.compiled_frame_stack_argsize<Compiled>() % 16 != 0), "");
       vsp--;
     }
-    assert((long)vsp % 16 == 0, "");
+    assert((intptr_t)vsp % 16 == 0, "");
   #endif
   
     if (Interpreter::contains(hf.return_pc<Compiled>())) { // false if bottom-most frame, as the return address would be patched to NULL if interpreted
@@ -591,9 +591,11 @@ inline intptr_t* Thaw<ConfigT, mode>::align(const hframe& hf, intptr_t* vsp, con
 }
 
 template<typename ConfigT, op_mode mode>
-template<typename FKind>
-inline void Thaw<ConfigT, mode>::patch_pd(frame& f, const frame& sender) {
-  patch_link<FKind>(f, sender.fp());
+template<typename FKind, bool top, bool bottom>
+inline void Thaw<ConfigT, mode>::patch_pd(frame& f, const frame& caller) {
+  assert (!bottom || caller.fp() == _cont.entryFP(), "caller.fp: " INTPTR_FORMAT " entryFP: " INTPTR_FORMAT, p2i(caller.fp()), p2i(_cont.entryFP()));
+
+  patch_link<FKind>(f, caller.fp());
 }
 
 template <typename ConfigT, op_mode mode>
