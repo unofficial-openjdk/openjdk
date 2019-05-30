@@ -395,21 +395,21 @@ private:
 private:
   ElemType* stack() const { return _hstack; }
 
-  inline void post_safepoint(Handle conth);
-  oop raw_allocate(Klass* klass, size_t words, size_t elements, bool zero);
-  typeArrayOop allocate_stack_array(size_t elements);
-  objArrayOop  allocate_refstack_array(size_t nr_oops);
-  bool allocate_stack(int size);
-  bool allocate_ref_stack(int nr_oops);
-  bool allocate_stacks_in_native(int size, int oops, bool needs_stack, bool needs_refstack);
-  static void copy_primitive_arrays(typeArrayOop old_array, int old_start, typeArrayOop new_array, int new_start, int count);
-  static void copy_ref_arrays(objArrayOop old_array, int old_start, objArrayOop new_array, int new_start, int count, int new_length, int min_length);
+  template <typename ConfigT> bool allocate_stacks_in_native(int size, int oops, bool needs_stack, bool needs_refstack);
   void allocate_stacks_in_java(int size, int oops, int frames);
-  bool grow_stack(int new_size);
-  bool grow_ref_stack(int nr_oops);
   static int fix_decreasing_index(int index, int old_length, int new_length);
+  inline void post_safepoint(Handle conth);
   int ensure_capacity(int old, int min);
-
+  bool allocate_stack(int size);
+  typeArrayOop allocate_stack_array(size_t elements);
+  bool grow_stack(int new_size);
+  static void copy_primitive_array(typeArrayOop old_array, int old_start, typeArrayOop new_array, int new_start, int count);
+  template <typename ConfigT> bool allocate_ref_stack(int nr_oops);
+  template <typename ConfigT> objArrayOop  allocate_refstack_array(size_t nr_oops);
+  template <typename ConfigT> bool grow_ref_stack(int nr_oops);
+  template <typename ConfigT> static void copy_ref_array(objArrayOop old_array, int old_start, objArrayOop new_array, int new_start, int count, int new_length, int min_length);
+  oop raw_allocate(Klass* klass, size_t words, size_t elements, bool zero);
+  
 public:
   static inline int to_index(size_t x) { return x >> LogBytesPerElement; }
   static inline int to_bytes(int x)    { return x << LogBytesPerElement; }
@@ -459,7 +459,7 @@ public:
 
   JavaThread* thread() const { return _thread; }
 
-  inline void allocate_stacks(int size, int oops, int frames);
+  template <typename ConfigT> inline void allocate_stacks(int size, int oops, int frames);
   inline bool in_hstack(void *p) { return (_hstack != NULL && p >= _hstack && p < (_hstack + _stack_length)); }
 
   bool valid_stack_index(int idx) const { return idx >= 0 && idx < _stack_length; }
@@ -1459,7 +1459,7 @@ public:
 
     setup_jump<FKind>(f, callee);
 
-    _cont.allocate_stacks(_size, _oops, _frames);
+    _cont.allocate_stacks<ConfigT>(_size, _oops, _frames);
     if (_thread->has_pending_exception()) 
       return freeze_exception;
 
@@ -3256,6 +3256,7 @@ oop Continuation::continuation_scope(oop cont) {
 
 ///// Allocation
 
+template <typename ConfigT>
 void ContMirror::allocate_stacks(int size, int oops, int frames) {
   bool needs_stack_allocation    = (_stack == NULL || to_index(size) > (_sp >= 0 ? _sp : _stack_length));
   bool needs_refStack_allocation = (_ref_stack == NULL || oops > _ref_sp);
@@ -3276,7 +3277,7 @@ void ContMirror::allocate_stacks(int size, int oops, int frames) {
   }
   guarantee(PERFTEST_LEVEL >= 100, "");
 
-  if (!allocate_stacks_in_native(size, oops, needs_stack_allocation, needs_refStack_allocation)) {
+  if (!allocate_stacks_in_native<ConfigT>(size, oops, needs_stack_allocation, needs_refStack_allocation)) {
     allocate_stacks_in_java(size, oops, frames);
     if (!thread()->has_pending_exception()) return;
   }
@@ -3294,6 +3295,7 @@ void ContMirror::allocate_stacks(int size, int oops, int frames) {
   assert (to_bytes(_ref_sp) >= oops, "oops: %d ref_sp: %d refStack length: %d", oops, _ref_sp, _ref_stack->length());
 }
 
+template <typename ConfigT>
 bool ContMirror::allocate_stacks_in_native(int size, int oops, bool needs_stack, bool needs_refstack) {
   if (needs_stack) {
     if (_stack == NULL) {
@@ -3315,11 +3317,11 @@ bool ContMirror::allocate_stacks_in_native(int size, int oops, bool needs_stack,
 
   if (needs_refstack) {
     if (_ref_stack == NULL) {
-      if (!allocate_ref_stack(oops)) {
+      if (!allocate_ref_stack<ConfigT>(oops)) {
         return false;
       }
     } else {
-      if (!grow_ref_stack(oops)) {
+      if (!grow_ref_stack<ConfigT>(oops)) {
         return false;
       }
     }
@@ -3373,7 +3375,7 @@ bool ContMirror::grow_stack(int new_size) {
   int n = old_length - offset;
   assert(new_length > n, "");
   if (n > 0) {
-    copy_primitive_arrays(_stack, offset, new_stack, new_length - n, n);
+    copy_primitive_array(_stack, offset, new_stack, new_length - n, n);
   }
   _stack = new_stack;
   _stack_length = new_length;
@@ -3389,9 +3391,10 @@ bool ContMirror::grow_stack(int new_size) {
   return true;
 }
 
+template <typename ConfigT>
 bool ContMirror::allocate_ref_stack(int nr_oops) {
   // we don't zero the array because we allocate an array that exactly holds all the oops we'll fill in as we freeze
-  oop result = allocate_refstack_array(nr_oops);
+  oop result = allocate_refstack_array<ConfigT>(nr_oops);
   if (result == NULL) {
     return false;
   }
@@ -3401,6 +3404,7 @@ bool ContMirror::allocate_ref_stack(int nr_oops) {
   return true;
 }
 
+template <typename ConfigT>
 bool ContMirror::grow_ref_stack(int nr_oops) {
   int old_length = _ref_stack->length();
   int offset = _ref_sp > 0 ? _ref_sp : old_length;
@@ -3411,7 +3415,7 @@ bool ContMirror::grow_ref_stack(int nr_oops) {
   if (new_length == -1) {
     return false;
   }
-  objArrayOop new_ref_stack = allocate_refstack_array(new_length);
+  objArrayOop new_ref_stack = allocate_refstack_array<ConfigT>(new_length);
 
   if (new_ref_stack == NULL) {
     return false;
@@ -3422,7 +3426,7 @@ bool ContMirror::grow_ref_stack(int nr_oops) {
   int n = old_length - offset;
   if (old_oops > 0) {
     assert(UseNewCode, "");
-    copy_ref_arrays(_ref_stack, offset, new_ref_stack, fix_decreasing_index(offset, old_length, new_length), old_oops, new_length, min_length);
+    copy_ref_array<ConfigT>(_ref_stack, offset, new_ref_stack, fix_decreasing_index(offset, old_length, new_length), old_oops, new_length, min_length);
   }
 
   _ref_stack = new_ref_stack;
@@ -3464,33 +3468,7 @@ typeArrayOop ContMirror::allocate_stack_array(size_t elements) {
   return typeArrayOop(raw_allocate(klass, size_in_words, elements, false));
 }
 
-objArrayOop ContMirror::allocate_refstack_array(size_t nr_oops) {
-  assert(nr_oops > 0, "");
-  bool zero = !BarrierSet::barrier_set()->is_a(BarrierSet::ModRef);
-  log_develop_trace(jvmcont)("allocate_refstack_array nr_oops: %lu zero: %d", nr_oops, zero);
-
-  ArrayKlass* klass = ArrayKlass::cast(Universe::objectArrayKlassObj());
-  size_t size_in_words = objArrayOopDesc::object_size(nr_oops);
-  return objArrayOop(raw_allocate(klass, size_in_words, nr_oops, zero));
-}
-
-/* try to allocate an array from the tlab, if it doesn't work allocate one using the allocate
- * method. In the later case we might have done a safepoint and need to reload our oops */
-oop ContMirror::raw_allocate(Klass* klass, size_t size_in_words, size_t elements, bool zero) {
-  ObjArrayAllocator allocator(klass, size_in_words, elements, zero, _thread);
-  HeapWord* start = _thread->tlab().allocate(size_in_words);
-  if (start != NULL) {
-    return allocator.initialize(start);
-  } else {
-    HandleMark hm(_thread);
-    Handle conth(_thread, _cont);
-    oop result = allocator.allocate(/* use_tlab */ false);
-    post_safepoint(conth);
-    return result;
-  }
-}
-
-void ContMirror::copy_primitive_arrays(typeArrayOop old_array, int old_start, typeArrayOop new_array, int new_start, int count) {
+void ContMirror::copy_primitive_array(typeArrayOop old_array, int old_start, typeArrayOop new_array, int new_start, int count) {
     ElemType* from = (ElemType*)old_array->base(basicElementType) + old_start;
     ElemType* to   = (ElemType*)new_array->base(basicElementType) + new_start;
     size_t size = to_bytes(count);
@@ -3500,12 +3478,24 @@ void ContMirror::copy_primitive_arrays(typeArrayOop old_array, int old_start, ty
     // ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(_stack, offset * elementSizeInBytes, new_stack, (new_length - n) * elementSizeInBytes, n);
 }
 
-void ContMirror::copy_ref_arrays(objArrayOop old_array, int old_start, objArrayOop new_array, int new_start, int count, int new_length, int min_length) {
+template <typename ConfigT>
+objArrayOop ContMirror::allocate_refstack_array(size_t nr_oops) {
+  assert(nr_oops > 0, "");
+  bool zero = !ConfigT::_post_barrier; // !BarrierSet::barrier_set()->is_a(BarrierSet::ModRef);
+  log_develop_trace(jvmcont)("allocate_refstack_array nr_oops: %lu zero: %d", nr_oops, zero);
+
+  ArrayKlass* klass = ArrayKlass::cast(Universe::objectArrayKlassObj());
+  size_t size_in_words = objArrayOopDesc::object_size(nr_oops);
+  return objArrayOop(raw_allocate(klass, size_in_words, nr_oops, zero));
+}
+
+template <typename ConfigT>
+void ContMirror::copy_ref_array(objArrayOop old_array, int old_start, objArrayOop new_array, int new_start, int count, int new_length, int min_length) {
   assert (new_length == new_array->length(), "");
   assert (new_start + count == new_array->length(), "");
 
   HeapWord* new_base = new_array->base();
-  if (BarrierSet::barrier_set()->is_a(BarrierSet::ModRef)) {
+  if (ConfigT::_post_barrier) { // BarrierSet::barrier_set()->is_a(BarrierSet::ModRef)
     // zero the bottom part of the array that won't be filled in the freeze
     int extra_oops = new_length - min_length;
     const uint OopsPerHeapWord = HeapWordSize/heapOopSize;
@@ -3523,17 +3513,28 @@ void ContMirror::copy_ref_arrays(objArrayOop old_array, int old_start, objArrayO
   if (count > 0) {
     size_t src_offset, dst_offset;
     // HeapWord* dst_start;
-    if (UseCompressedOops) {
-      src_offset = (size_t) objArrayOopDesc::obj_at_offset<narrowOop>(old_start);
-      dst_offset = (size_t) objArrayOopDesc::obj_at_offset<narrowOop>(new_start);
-      // dst_start  = (HeapWord*)((char*)new_base + sizeof(narrowOop)*new_start);
-    } else {
-      src_offset = (size_t) objArrayOopDesc::obj_at_offset<oop>(old_start);
-      dst_offset = (size_t) objArrayOopDesc::obj_at_offset<oop>(new_start);
-      // dst_start  = (HeapWord*)((char*)new_base + sizeof(oop)*new_start);
-    }
+    src_offset = (size_t) objArrayOopDesc::obj_at_offset<typename ConfigT::OopT>(old_start);
+    dst_offset = (size_t) objArrayOopDesc::obj_at_offset<typename ConfigT::OopT>(new_start);
+    // dst_start  = (HeapWord*)((char*)new_base + sizeof(typename ConfigT::OopT)*new_start);
+
     ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(old_array, src_offset, new_array, dst_offset, count);
     // barrier_set_cast<ModRefBarrierSet>(BarrierSet::barrier_set())->write_ref_array(dst_start, count); // TODO is this necessary?
+  }
+}
+
+/* try to allocate an array from the tlab, if it doesn't work allocate one using the allocate
+ * method. In the later case we might have done a safepoint and need to reload our oops */
+oop ContMirror::raw_allocate(Klass* klass, size_t size_in_words, size_t elements, bool zero) {
+  ObjArrayAllocator allocator(klass, size_in_words, elements, zero, _thread);
+  HeapWord* start = _thread->tlab().allocate(size_in_words);
+  if (start != NULL) {
+    return allocator.initialize(start);
+  } else {
+    HandleMark hm(_thread);
+    Handle conth(_thread, _cont);
+    oop result = allocator.allocate(/* use_tlab */ false);
+    post_safepoint(conth);
+    return result;
   }
 }
 
@@ -3651,6 +3652,7 @@ public:
   typedef typename Conditional<post_barrier, RawOopWriter<SelfT>, NormalOopWriter<SelfT> >::type OopWriterT;
 
   static const bool _compressed_oops = compressed_oops;
+  static const bool _post_barrier = post_barrier;
   static const bool allow_stubs = gen_stubs && compressed_oops && post_barrier;
 
   template<op_mode mode>
