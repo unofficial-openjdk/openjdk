@@ -209,7 +209,7 @@ public class AMD64Call {
         int after = masm.position();
         crb.recordDirectCall(before, after, callTarget, info);
         crb.recordExceptionHandlers(after, info);
-        masm.ensureUniquePC();
+        masm.nop(8);
         return callPCOffset;
     }
 
@@ -260,7 +260,7 @@ public class AMD64Call {
         int after = masm.position();
         crb.recordIndirectCall(before, after, callTarget, info);
         crb.recordExceptionHandlers(after, info);
-        masm.ensureUniquePC();
+        masm.nop(8);
         return before;
     }
 }

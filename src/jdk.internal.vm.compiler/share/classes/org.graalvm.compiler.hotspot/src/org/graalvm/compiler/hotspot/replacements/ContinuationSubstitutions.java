@@ -47,6 +47,6 @@ public class ContinuationSubstitutions {
         return 3;
     }
 
-    public static final ForeignCallDescriptor CONTINUATION_DO_CONTINUE = new ForeignCallDescriptor("contomiaton_do_continue", int.class, Continuation.class);
-    public static final ForeignCallDescriptor CONTINUATION_YIELD = new ForeignCallDescriptor("continuation_do_flibble", int.class, int.class);
+    public static final ForeignCallDescriptor CONTINUATION_DO_CONTINUE = new ForeignCallDescriptor("contomiaton_do_continue", void.class, Continuation.class);
+    public static final ForeignCallDescriptor CONTINUATION_YIELD = new ForeignCallDescriptor("continuation_do_yield", int.class, int.class);
 }
