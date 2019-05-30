@@ -29,6 +29,7 @@ import org.graalvm.compiler.core.common.spi.ForeignCallsProvider;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.extended.ForeignCallNode;
 
+import jdk.vm.ci.meta.JavaKind;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 
 /**
@@ -47,7 +48,11 @@ public final class ForeignCallPlugin implements InvocationPlugin {
     public boolean execute(GraphBuilderContext b, ResolvedJavaMethod targetMethod, InvocationPlugin.Receiver receiver, ValueNode[] args) {
         ForeignCallNode foreignCall = new ForeignCallNode(foreignCalls, descriptor, args);
         foreignCall.setBci(b.bci());
-        b.addPush(targetMethod.getSignature().getReturnKind(), foreignCall);
+        if (targetMethod.getSignature().getReturnKind() == JavaKind.Void) {
+            b.add(foreignCall);
+        } else {
+            b.addPush(targetMethod.getSignature().getReturnKind(), foreignCall);
+        }
         return true;
     }
 }

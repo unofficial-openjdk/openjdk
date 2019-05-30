@@ -60,7 +60,7 @@ public final class AMD64CCall extends AMD64LIRInstruction {
     private void directCall(AMD64MacroAssembler masm) {
         Register reg = ValueUtil.asRegister(functionPtr);
         masm.call(reg);
-        masm.ensureUniquePC();
+        masm.nop(8);
     }
 
     @Override

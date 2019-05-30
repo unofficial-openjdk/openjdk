@@ -1515,6 +1515,7 @@ JVMCI::CodeInstallResult JVMCIRuntime::register_method(JVMCIEnv* JVMCIENV,
       } else {
         nm->set_has_unsafe_access(has_unsafe_access);
         nm->set_has_wide_vectors(has_wide_vector);
+        nm->set_has_monitors(has_monitors);
 
         // Record successful registration.
         // (Put nm into the task handle *before* publishing to the Java heap.)
