@@ -40,6 +40,20 @@
 * @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
 */
 
+/*
+Graal tests currently disabled until we can find the problem with monitor pinned tests.
+
+* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic Basic
+* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
+* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
+* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=inline,java/lang/Continuation.run Basic
+* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
+* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
+* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
+* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic Basic
+* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseNewCode Basic
+*/
+
 // Anything excluded or not compileonly is not compiled; see CompilerOracle::should_exclude
 
 // * @library /test/lib /
