@@ -244,9 +244,6 @@ enum op_mode {
 
 // Represents a stack frame on the horizontal stack, analogous to the frame class, for vertical-stack frames.
 
-#define PD static_cast<SelfPD&>(*this)
-#define CONST_PD static_cast<const SelfPD&>(*this)
-
 template<typename SelfPD>
 class HFrameBase {
 protected:
@@ -261,7 +258,11 @@ protected:
   friend class ContMirror;
 private:
   const ImmutableOopMap* get_oop_map() const;
-  template<typename FKind> address* return_pc_address() const { return CONST_PD.template return_pc_address<FKind>(); }
+
+  const SelfPD& self() const { return static_cast<const SelfPD&>(*this); }
+  SelfPD& self() { return static_cast<SelfPD&>(*this); }
+
+  template<typename FKind> address* return_pc_address() const { return self().template return_pc_address<FKind>(); }
 
   void set_codeblob(address pc) {
     if (_cb == NULL && !_is_interpreted) {// compute lazily
@@ -273,11 +274,11 @@ private:
 protected:
   HFrameBase() : _sp(-1), _ref_sp(-1), _pc(NULL), _cb(NULL), _oop_map(NULL), _is_interpreted(true) {}
 
-  HFrameBase(const HFrameBase& hf) : _sp(hf._sp), _ref_sp(hf._ref_sp), _pc(hf._pc), 
+  HFrameBase(const HFrameBase& hf) : _sp(hf._sp), _ref_sp(hf._ref_sp), _pc(hf._pc),
                                      _cb(hf._cb), _oop_map(hf._oop_map), _is_interpreted(hf._is_interpreted) {}
 
   HFrameBase(int sp, int ref_sp, address pc, const ContMirror& cont)
-    : _sp(sp), _ref_sp(ref_sp), _pc(pc), 
+    : _sp(sp), _ref_sp(ref_sp), _pc(pc),
       _oop_map(NULL), _is_interpreted(Interpreter::contains(pc)) {
       _cb = NULL;
       set_codeblob(_pc);
@@ -312,38 +313,38 @@ public:
   }
 
   template<typename FKind> int frame_top_index() const;
-  template<typename FKind> int frame_bottom_index() const { return CONST_PD.template frame_bottom_index<FKind>(); };
+  template<typename FKind> int frame_bottom_index() const { return self().template frame_bottom_index<FKind>(); };
 
   template<typename FKind> inline void patch_return_pc(address value);
 
   template <typename FKind> int compiled_frame_size(int* argsize, int* num_oops) const;
   template <typename FKind> int compiled_frame_stack_argsize() const;
 
-  DEBUG_ONLY(int interpreted_frame_top_index() const { return CONST_PD.interpreted_frame_top_index(); } )
-  int interpreted_frame_num_monitors() const         { return CONST_PD.interpreted_frame_num_monitors(); }
+  DEBUG_ONLY(int interpreted_frame_top_index() const { return self().interpreted_frame_top_index(); } )
+  int interpreted_frame_num_monitors() const         { return self().interpreted_frame_num_monitors(); }
   int interpreted_frame_num_oops(const InterpreterOopMap& mask) const;
   int interpreted_frame_size(const InterpreterOopMap& mask, int* num_oops) const;
-  void interpreted_frame_oop_map(InterpreterOopMap* mask) const { CONST_PD.interpreted_frame_oop_map(mask); }
+  void interpreted_frame_oop_map(InterpreterOopMap* mask) const { self().interpreted_frame_oop_map(mask); }
 
   template<typename FKind, op_mode mode> SelfPD sender(const ContMirror& cont, int num_oops) const {
     assert (mode != mode_fast || !FKind::interpreted, "");
-    return CONST_PD.template sender<FKind, mode>(cont, num_oops); 
+    return self().template sender<FKind, mode>(cont, num_oops);
   }
   template<typename FKind, op_mode mode> SelfPD sender(const ContMirror& cont, InterpreterOopMap* mask) const;
   template<op_mode mode /* = mode_slow*/> SelfPD sender(const ContMirror& cont) const;
 
   template<typename FKind> bool is_bottom(const ContMirror& cont) const;
 
-  address interpreter_frame_bcp() const                             { return CONST_PD.interpreter_frame_bcp(); }
-  intptr_t* interpreter_frame_local_at(int index) const             { return CONST_PD.interpreter_frame_local_at(index); }
-  intptr_t* interpreter_frame_expression_stack_at(int offset) const { return CONST_PD.interpreter_frame_expression_stack_at(offset); }
+  address interpreter_frame_bcp() const                             { return self().interpreter_frame_bcp(); }
+  intptr_t* interpreter_frame_local_at(int index) const             { return self().interpreter_frame_local_at(index); }
+  intptr_t* interpreter_frame_expression_stack_at(int offset) const { return self().interpreter_frame_expression_stack_at(offset); }
 
   template<typename FKind> Method* method() const;
 
   inline frame to_frame(ContMirror& cont) const;
 
-  void print_on(ContMirror& cont, outputStream* st) const { CONST_PD.print_on(cont, st); }
-  void print_on(outputStream* st) const { CONST_PD.print_on(st); };
+  void print_on(ContMirror& cont, outputStream* st) const { self().print_on(cont, st); }
+  void print_on(outputStream* st) const { self().print_on(st); };
   void print(ContMirror& cont) const { print_on(cont, tty); }
   void print() const { print_on(tty); }
 };
@@ -409,7 +410,7 @@ private:
   template <typename ConfigT> bool grow_ref_stack(int nr_oops);
   template <typename ConfigT> static void copy_ref_array(objArrayOop old_array, int old_start, objArrayOop new_array, int new_start, int count, int new_length, int min_length);
   oop raw_allocate(Klass* klass, size_t words, size_t elements, bool zero);
-  
+
 public:
   static inline int to_index(size_t x) { return x >> LogBytesPerElement; }
   static inline int to_bytes(int x)    { return x << LogBytesPerElement; }
@@ -560,13 +561,13 @@ address HFrameBase<SelfPD>::deopt_original_pc(const ContMirror& cont, address pc
 template<typename SelfPD>
 template<typename FKind>
 inline void HFrameBase<SelfPD>::patch_return_pc(address value) {
-  *(PD.template return_pc_address<FKind>()) = value;
+  *(self().template return_pc_address<FKind>()) = value;
 }
 
 template<typename SelfPD>
 template<typename FKind>
 bool HFrameBase<SelfPD>::is_bottom(const ContMirror& cont) const {
-  return frame_bottom_index<FKind>() 
+  return frame_bottom_index<FKind>()
     + ((FKind::interpreted || FKind::stub) ? 0 : cb()->as_compiled_method()->method()->num_stack_arg_slots() * VMRegImpl::stack_slot_size / elementSizeInBytes)
     >= cont.stack_length();
 }
@@ -577,11 +578,11 @@ int HFrameBase<SelfPD>::interpreted_frame_num_oops(const InterpreterOopMap& mask
   // we calculate on relativized metadata; all monitors must be NULL on hstack, but as f.oops_do walks them, we count them
   return mask.num_oops()
      + 1 // for the mirror
-     + interpreted_frame_num_monitors();  
+     + interpreted_frame_num_monitors();
 }
 
 template<typename SelfPD>
-int HFrameBase<SelfPD>::interpreted_frame_size(const InterpreterOopMap& mask, int* num_oops) const { 
+int HFrameBase<SelfPD>::interpreted_frame_size(const InterpreterOopMap& mask, int* num_oops) const {
   assert (_is_interpreted, "");
   // we calculate on relativized metadata; all monitors must be NULL on hstack, but as f.oops_do walks them, we count them
   *num_oops = interpreted_frame_num_oops(mask);
@@ -624,7 +625,7 @@ SelfPD HFrameBase<SelfPD>::sender(const ContMirror& cont, InterpreterOopMap* mas
 
 template<typename SelfPD>
 template<op_mode mode>
-SelfPD HFrameBase<SelfPD>::sender(const ContMirror& cont) const { 
+SelfPD HFrameBase<SelfPD>::sender(const ContMirror& cont) const {
   if (_is_interpreted) {
     InterpreterOopMap mask;
     interpreted_frame_oop_map(&mask);
@@ -665,7 +666,7 @@ inline frame HFrameBase<SelfPD>::to_frame(ContMirror& cont) const {
 
   // tty->print_cr("-- to_frame:");
   // print_on(cont, tty);
-  return CONST_PD.to_frame(cont, pc, deopt);
+  return self().to_frame(cont, pc, deopt);
 }
 
 ContMirror::ContMirror(JavaThread* thread, oop cont)
@@ -745,7 +746,7 @@ void ContMirror::write() {
   java_lang_Continuation::set_entryFP(_cont, _entryFP);
   java_lang_Continuation::set_entryPC(_cont, _entryPC);
 
-  java_lang_Continuation::set_maxSize(_cont, (jint)_max_size); 
+  java_lang_Continuation::set_maxSize(_cont, (jint)_max_size);
   java_lang_Continuation::set_flags(_cont, _flags);
 
   java_lang_Continuation::set_numFrames(_cont, _num_frames);
@@ -762,7 +763,7 @@ void ContMirror::cleanup() {
 
 void ContMirror::null_ref_stack(int start, int num) {
   if (java_lang_Continuation::is_reset(_cont)) return;
-  
+
   for (int i = 0; i < num; i++)
     _ref_stack->obj_at_put(start + i, NULL);
 }
@@ -844,7 +845,7 @@ void ContMirror::copy_to_stack(void* from, void* to, int size) {
 
   if (PERFTEST_LEVEL >= 25) {
     memcpy(to, from, size);
-    //Copy::conjoint_memory_atomic(from, to, size); // Copy::disjoint_words((HeapWord*)from, (HeapWord*)to, size/wordSize); // 
+    //Copy::conjoint_memory_atomic(from, to, size); // Copy::disjoint_words((HeapWord*)from, (HeapWord*)to, size/wordSize); //
   }
 
   _e_size += size;
@@ -877,9 +878,9 @@ inline int ContMirror::add_oop(oop obj, int index) {
 
 inline oop ContMirror::obj_at(int i) {
   assert (_ref_stack != NULL, "");
-  assert (0 <= i && i < _ref_stack->length(), "i: %d length: %d", i, _ref_stack->length()); 
+  assert (0 <= i && i < _ref_stack->length(), "i: %d length: %d", i, _ref_stack->length());
   // assert (_ref_sp <= i, "i: %d _ref_sp: %d length: %d", i, _ref_sp, _ref_stack->length()); -- in Thaw, we set_last_frame before reading the objects during the recursion return trip
-  
+
   return _ref_stack->obj_at(i);
 }
 
@@ -1053,8 +1054,8 @@ void ContinuationHelper::to_frame_info(const frame& f, const frame& callee, Fram
 }
 
 void clear_frame_info(FrameInfo* fi) {
-  fi->fp = NULL; 
-  fi->sp = NULL; 
+  fi->fp = NULL;
+  fi->sp = NULL;
   fi->pc = NULL;
 }
 
@@ -1253,12 +1254,12 @@ private:
 
 public:
 
-  Freeze(JavaThread* thread, ContMirror& mirror) : 
-    _thread(thread), _cont(mirror), _bottom_address(mirror.entrySP()), 
+  Freeze(JavaThread* thread, ContMirror& mirror) :
+    _thread(thread), _cont(mirror), _bottom_address(mirror.entrySP()),
     _map(thread, false, false, false),
     _oops(0), _size(0), _frames(0),
     _fp_oop_info(), _safepoint_stub_caller(false) {
-    
+
     _map.set_include_argument_oops(false);
   }
 
@@ -1279,7 +1280,7 @@ public:
   frame freeze_start_frame() {
     if (mode == mode_preempt) // TODO: we should really do partial specialization, but then we'll need to define this out-of-line
       return freeze_start_frame_safepoint_stub();
-    
+
     assert (mode != mode_preempt, "");
 
     log_develop_trace(jvmcont)("%s nop at freeze yield", nativePostCallNop_at(_fi->pc) != NULL ? "has" : "no");
@@ -1375,7 +1376,7 @@ public:
       freeze_result result = finalize<FKind>(senderf, f, caller); // recursion end
       if (result != freeze_ok)
         return result;
-      
+
       ContinuationHelper::update_register_map(&_map, callee_info); // restore saved link
       freeze_java_frame<FKind, top, true>(f, caller, fsize, argsize, oops, callee_argsize, extra);
 
@@ -1410,7 +1411,7 @@ public:
   void prepare_freeze_frame(frame& f, int* fsize, int* argsize, int* oops, int callee_argsize, InterpreterOopMap* mask) {
     int oops0 = 0;
     int argsize0 = 0;
-    const int fsize0 = FKind::interpreted ? interpreted_frame_size(f, &oops0, mask) 
+    const int fsize0 = FKind::interpreted ? interpreted_frame_size(f, &oops0, mask)
                                           : compiled_frame_size<FKind>(f, &argsize0, &oops0);
     assert (fsize0 > 0, "");
 
@@ -1460,7 +1461,7 @@ public:
     setup_jump<FKind>(f, callee);
 
     _cont.allocate_stacks<ConfigT>(_size, _oops, _frames);
-    if (_thread->has_pending_exception()) 
+    if (_thread->has_pending_exception())
       return freeze_exception;
 
     if (_cont.is_empty()) {
@@ -1493,7 +1494,7 @@ public:
     assert_top_java_frame_name(f1, RUN_SIG);
   #endif
   }
-  
+
   template<typename FKind, bool top, bool bottom>
   void freeze_java_frame(frame& f, hframe& caller, int fsize, int argsize, int oops, int callee_argsize, void* extra) {
     if (PERFTEST_LEVEL <= 15) return;
@@ -1502,7 +1503,7 @@ public:
     log_develop_trace(jvmcont)("fsize: %d argsize: %d oops: %d callee_argsize: %d", fsize, argsize, oops, callee_argsize);
     if (log_develop_is_enabled(Trace, jvmcont)) f.print_on(tty);
 
-    caller = FKind::interpreted 
+    caller = FKind::interpreted
       ? freeze_interpreted_frame       <top, bottom>(f, caller, fsize,          oops, callee_argsize, (InterpreterOopMap*)extra)
       : freeze_compiled_frame<Compiled, top, bottom>(f, caller, fsize, argsize, oops, callee_argsize, (FreezeFnT)extra);
   }
@@ -1584,7 +1585,7 @@ public:
     relativize_interpreted_frame_metadata(f, vsp, hf);
 
     freeze_oops<Interpreted>(f, vsp, hsp, hf.ref_sp(), oops, mask);
-    
+
     patch<Interpreted, top, bottom>(f, hf, caller);
 
     _cont.add_size(fsize + callee_argsize);
@@ -1600,7 +1601,7 @@ public:
     f.oops_interpreted_do(&oopFn, &_map, mask);
     return oopFn.count();
   }
-  
+
   template <typename FKind>
   inline int compiled_frame_size(frame& f, int* argsize, int* num_oops) {
     assert (f.oop_map() != NULL, "");
@@ -1610,7 +1611,7 @@ public:
   }
 
   template <typename FKind, bool top, bool bottom>
-  hframe freeze_compiled_frame(frame& f, hframe& caller, int fsize, int argsize, int oops, int callee_argsize, FreezeFnT f_fn) {    
+  hframe freeze_compiled_frame(frame& f, hframe& caller, int fsize, int argsize, int oops, int callee_argsize, FreezeFnT f_fn) {
     assert ((callee_argsize & WordAlignmentMask) == 0, "must be");
     int callee_argsize_words = callee_argsize >> LogBytesPerWord;
 
@@ -1637,7 +1638,7 @@ public:
       if (mode == mode_preempt && _safepoint_stub_caller) {
         _safepoint_stub_h = freeze_safepoint_stub(hf);
       }
-      
+
       freeze_oops<Compiled>(f, vsp, extended_hsp, hf.ref_sp(), oops, (void*)f_fn);
 
       if (mode == mode_preempt && _safepoint_stub_caller) {
@@ -1717,7 +1718,7 @@ public:
       _cont.last_frame<mode_slow>().print_on(_cont, tty);
     }
 
-    assert (_cont.is_flag(FLAG_LAST_FRAME_INTERPRETED) == _cont.last_frame<mode_slow>().is_interpreted_frame(), 
+    assert (_cont.is_flag(FLAG_LAST_FRAME_INTERPRETED) == _cont.last_frame<mode_slow>().is_interpreted_frame(),
       "flag: %d is_interpreted: %d", _cont.is_flag(FLAG_LAST_FRAME_INTERPRETED), _cont.last_frame<mode_slow>().is_interpreted_frame());
   }
 
@@ -1837,12 +1838,12 @@ public:
     : ContOopBase(cont, fr, map, vsp), _fp_info(fp_info), _hsp(hsp), _starting_index(starting_index),
       _stub_vsp((address)stub_vsp)
   #ifndef PRODUCT
-      , _stub_hsp((address)stub_hsp) 
+      , _stub_hsp((address)stub_hsp)
   #endif
-    { 
+    {
       assert (cont->in_hstack(hsp), "");
     }
-    
+
     void do_oop(oop* p)       { do_oop_work(p); }
     void do_oop(narrowOop* p) { do_oop_work(p); }
 
@@ -1902,8 +1903,8 @@ public:
   }
 
   static void finish(ContMirror& mirror, int count, int low_array_index) {
-    BarrierSet* bs = BarrierSet::barrier_set();
     if (count > 0) {
+      BarrierSet* bs = BarrierSet::barrier_set();
       ModRefBarrierSet* mbs = barrier_set_cast<ModRefBarrierSet>(bs);
       HeapWord* start = (HeapWord*) mirror.refStack()->obj_at_addr<OopT>(low_array_index);
       mbs->write_ref_array(start, count);
@@ -1985,7 +1986,7 @@ int freeze0(JavaThread* thread, FrameInfo* fi) {
 
   post_JVMTI_yield(thread, cont);
   cont.post_jfr_event(&event);
-  
+
   // set_anchor(thread, fi);
   thread->set_cont_yield(false);
 
@@ -2001,11 +2002,15 @@ JRT_END
 
 static freeze_result is_pinned(const frame& f, const RegisterMap* map) {
   if (f.is_interpreted_frame()) {
-    if (Interpreted::is_owning_locks(f)) 
+    if (Interpreted::is_owning_locks(f)) {
       return freeze_pinned_monitor;
+    }
+
   } else if (f.is_compiled_frame()) {
-    if (Compiled::is_owning_locks(map->thread(), map, f)) 
+    if (Compiled::is_owning_locks(map->thread(), map, f)) {
       return freeze_pinned_monitor;
+    }
+
   } else {
     return freeze_pinned_native;
   }
@@ -2014,7 +2019,7 @@ static freeze_result is_pinned(const frame& f, const RegisterMap* map) {
 
 static freeze_result is_pinned0(JavaThread* thread, oop cont_scope, bool safepoint) {
   oop cont = get_continuation(thread);
-  if (cont == (oop)NULL) {
+  if (cont == (oop) NULL) {
     return freeze_ok;
   }
   if (java_lang_Continuation::critical_section(cont) > 0)
@@ -2039,14 +2044,14 @@ static freeze_result is_pinned0(JavaThread* thread, oop cont_scope, bool safepoi
     freeze_result res = is_pinned(f, &map);
     if (res != freeze_ok)
       return res;
-    
+
     f = f.frame_sender<ContinuationCodeBlobLookup>(&map);
     if (!Continuation::is_frame_in_continuation(f, cont)) {
       oop scope = java_lang_Continuation::scope(cont);
       if (oopDesc::equals(scope, cont_scope))
         break;
       cont = java_lang_Continuation::parent(cont);
-      if (cont == (oop)NULL)
+      if (cont == (oop) NULL)
         break;
       if (java_lang_Continuation::critical_section(cont) > 0)
         return freeze_pinned_cs;
@@ -2155,7 +2160,7 @@ static bool stack_overflow_check(JavaThread* thread, int size, address sp) {
 //                  fi->pc - overflow? throw StackOverflowError : cont's entry PC
 JRT_LEAF(int, Continuation::prepare_thaw(FrameInfo* fi, bool return_barrier))
   PERFTEST_LEVEL = ContPerfTest;
-  
+
   if (PERFTEST_LEVEL <= 110) return 0;
 
   int num_frames = thaw_num_frames(return_barrier);
@@ -2211,13 +2216,13 @@ private:
 
   typedef int (*ThawFnT)(address /* dst */, address /* objArray */, address /* map */);
 
-public: 
+public:
 
   Thaw(JavaThread* thread, ContMirror& mirror) :
-    _thread(thread), _cont(mirror), 
+    _thread(thread), _cont(mirror),
     _map(thread, false, false, false),
     _safepoint_stub(NULL), _safepoint_stub_caller(false) {
-    
+
     _map.set_include_argument_oops(false);
   }
 
@@ -2420,7 +2425,7 @@ public:
     patch<Interpreted, top, bottom>(f, caller);
 
     assert(f.is_interpreted_frame_valid(_cont.thread()), "invalid thawed frame");
-    assert (Interpreted::frame_bottom(f) <= Frame::frame_top(caller), "");
+    assert(Interpreted::frame_bottom(f) <= Frame::frame_top(caller), "");
 
     _cont.sub_size(fsize + callee_argsize);
     _cont.dec_num_frames();
@@ -2442,7 +2447,7 @@ public:
     assert ((callee_argsize & WordAlignmentMask) == 0, "must be");
     int callee_argsize_words = callee_argsize >> LogBytesPerWord;
 
-    assert (FKind::stub == is_stub(hf.cb()), "");
+    assert(FKind::stub == is_stub(hf.cb()), "");
 
     intptr_t* vsp = (intptr_t*)((address)caller.sp() - fsize);
 
@@ -2796,8 +2801,8 @@ bool Continuation::is_cont_barrier_frame(const frame& f) {
   // return is_return_barrier_entry(CHOOSE1(f.is_interpreted_frame(), return_pc, f));
 }
 
-bool Continuation::is_return_barrier_entry(const address pc) { 
-  return pc == StubRoutines::cont_returnBarrier(); 
+bool Continuation::is_return_barrier_entry(const address pc) {
+  return pc == StubRoutines::cont_returnBarrier();
 }
 
 static inline bool is_sp_in_continuation(intptr_t* const sp, oop cont) {
@@ -2913,7 +2918,7 @@ static frame continuation_top_frame(oop contOop, RegisterMap* map) {
 
   // tty->print_cr(">>>> continuation_top_frame");
   // hf.print_on(cont, tty);
-  
+
   // if (!oopDesc::equals(map->cont(), contOop))
   map->set_cont(contOop);
   map->set_in_cont(true);
@@ -2935,14 +2940,14 @@ static frame continuation_parent_frame(ContMirror& cont, RegisterMap* map) {
   //     return continuation_top_frame(parentOop, map);
   //   }
   // }
-  
+
   oop parent = java_lang_Continuation::parent(cont.mirror());
   map->set_cont(parent);
   map->set_in_cont(false); // TODO parent != (oop)NULL; consider getting rid of set_in_cont altogether
 
   if (!cont.is_mounted()) { // When we're walking an unmounted continuation and reached the end
     // tty->print_cr("continuation_parent_frame: no more");
-    return frame(); 
+    return frame();
   }
 
   frame sender(cont.entrySP(), cont.entryFP(), cont.entryPC());
@@ -3102,7 +3107,7 @@ address Continuation::oop_address(objArrayOop ref_stack, int ref_sp, int index) 
   log_develop_trace(jvmcont)("oop_address: index: %d", index);
   // print_oop(p, obj);
   assert (oopDesc::is_oop_or_null(obj), "invalid oop");
-  return p;  
+  return p;
 }
 
 bool Continuation::is_in_usable_stack(address addr, const RegisterMap* map) {
@@ -3139,7 +3144,7 @@ int Continuation::usp_offset_to_index(const frame& fr, const RegisterMap* map, c
   intptr_t* hsp;
   if (usp_offset_in_bytes >= 0) {
      hsp = cont.stack_address(hf.sp());
-  } else {    
+  } else {
     hframe stub = cont.last_frame<mode_slow>();
 
     assert (cont.is_flag(FLAG_SAFEPOINT_YIELD), "must be");
@@ -3216,9 +3221,9 @@ address Continuation::interpreter_frame_expression_stack_at(const frame& fr, con
   int index1 = max_locals + index; // see stack_expressions in vframe.cpp
   log_develop_trace(jvmcont)("interpreter_frame_expression_stack_at oop_address: stack index: %d, length: %d exp: %d index1: %d", cont.stack_index(loc), cont.stack_length(), index, index1);
 
-  address res = oop_mask.is_oop(index1) 
+  address res = oop_mask.is_oop(index1)
     ? oop_address(cont.refStack(), cont.refSP(), hf.ref_sp() + find_oop_in_interpreted_frame(hf, index1, oop_mask))
-    : loc; 
+    : loc;
   return res;
 }
 
@@ -3230,7 +3235,7 @@ address Continuation::interpreter_frame_local_at(const frame& fr, const Register
   address loc = (address)hf.interpreter_frame_local_at(index);
 
   log_develop_trace(jvmcont)("interpreter_frame_local_at oop_address: stack index: %d length: %d local: %d", cont.stack_index(loc), cont.stack_length(), index);
-  address res = oop_mask.is_oop(index) 
+  address res = oop_mask.is_oop(index)
     ? oop_address(cont.refStack(), cont.refSP(), hf.ref_sp() + find_oop_in_interpreted_frame(hf, index, oop_mask))
     : loc;
   return res;
@@ -3250,8 +3255,8 @@ address Continuation::interpreter_frame_bcp(const frame& fr, const RegisterMap* 
   return hf.interpreter_frame_bcp();
 }
 
-oop Continuation::continuation_scope(oop cont) { 
-  return cont != NULL ? java_lang_Continuation::scope(cont) : (oop)NULL; 
+oop Continuation::continuation_scope(oop cont) {
+  return cont != NULL ? java_lang_Continuation::scope(cont) : (oop)NULL;
 }
 
 ///// Allocation
@@ -3286,7 +3291,7 @@ void ContMirror::allocate_stacks(int size, int oops, int frames) {
   assert(_pc == java_lang_Continuation::pc(_cont), "_pc: " INTPTR_FORMAT "  this.pc: " INTPTR_FORMAT "",  p2i(_pc), p2i(java_lang_Continuation::pc(_cont)));
   assert(_sp == java_lang_Continuation::sp(_cont), "_sp: %d  this.sp: %d",  _sp, java_lang_Continuation::sp(_cont));
   assert(_fp == java_lang_Continuation::fp(_cont), "_fp: %lu this.fp: " JLONG_FORMAT " %d %d", _fp, java_lang_Continuation::fp(_cont), Interpreter::contains(_pc), is_flag(FLAG_LAST_FRAME_INTERPRETED));
-  
+
   assert (oopDesc::equals(_stack, java_lang_Continuation::stack(_cont)), "");
   assert (_stack->base(basicElementType) == _hstack, "");
 
@@ -3301,7 +3306,7 @@ bool ContMirror::allocate_stacks_in_native(int size, int oops, bool needs_stack,
     if (_stack == NULL) {
       if (!allocate_stack(size)) {
         return false;
-      } 
+      }
     } else {
       if (!grow_stack(size)) {
         return false;
@@ -3469,13 +3474,13 @@ typeArrayOop ContMirror::allocate_stack_array(size_t elements) {
 }
 
 void ContMirror::copy_primitive_array(typeArrayOop old_array, int old_start, typeArrayOop new_array, int new_start, int count) {
-    ElemType* from = (ElemType*)old_array->base(basicElementType) + old_start;
-    ElemType* to   = (ElemType*)new_array->base(basicElementType) + new_start;
-    size_t size = to_bytes(count);
+  ElemType* from = (ElemType*)old_array->base(basicElementType) + old_start;
+  ElemType* to   = (ElemType*)new_array->base(basicElementType) + new_start;
+  size_t size = to_bytes(count);
 
-    memcpy(to, from, size);
-    //Copy::conjoint_memory_atomic(from, to, size); // Copy::disjoint_words((HeapWord*)from, (HeapWord*)to, size/wordSize); // 
-    // ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(_stack, offset * elementSizeInBytes, new_stack, (new_length - n) * elementSizeInBytes, n);
+  memcpy(to, from, size);
+  //Copy::conjoint_memory_atomic(from, to, size); // Copy::disjoint_words((HeapWord*)from, (HeapWord*)to, size/wordSize); //
+  // ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(_stack, offset * elementSizeInBytes, new_stack, (new_length - n) * elementSizeInBytes, n);
 }
 
 template <typename ConfigT>
@@ -3507,7 +3512,7 @@ void ContMirror::copy_ref_array(objArrayOop old_array, int old_start, objArrayOo
   // Copy from old array
 
   // Requires the array is zeroed i.e. !BarrierSet::barrier_set()->is_a(BarrierSet::ModRef):
-  // for (int i=0, old_i = old_start, new_i = new_start; i < count; i++, old_i++, new_i++) 
+  // for (int i=0, old_i = old_start, new_i = new_start; i < count; i++, old_i++, new_i++)
   //   new_array->obj_at_put(new_i, old_array->obj_at(old_i));
 
   if (count > 0) {
@@ -3550,7 +3555,7 @@ void ContMirror::allocate_stacks_in_java(int size, int oops, int frames) {
   args.push_int(oops);
   args.push_int(frames);
   JavaValue result(T_VOID);
-  JavaCalls::call_virtual(&result, SystemDictionary::Continuation_klass(), vmSymbols::getStacks_name(), vmSymbols::continuationGetStacks_signature(), &args, _thread); 
+  JavaCalls::call_virtual(&result, SystemDictionary::Continuation_klass(), vmSymbols::getStacks_name(), vmSymbols::continuationGetStacks_signature(), &args, _thread);
   post_safepoint(conth); // reload oop after java call
 
   _sp     = java_lang_Continuation::sp(_cont);
@@ -3597,7 +3602,7 @@ JVM_ENTRY(jint, CONT_TryForceYield0(JNIEnv* env, jobject jcont, jobject jthread)
       //   tty->print_cr(">>> current thread");
       //   Thread::current()->print_on(tty);
       // }
-      
+
       oop oopCont = JNIHandles::resolve_non_null(_jcont);
       _result = Continuation::try_force_yield(thread, oopCont);
     }
@@ -3671,7 +3676,7 @@ public:
   static void resolve() { resolve_compressed(); }
 
   static void resolve_compressed() {
-    UseCompressedOops ? resolve_modref<true>() 
+    UseCompressedOops ? resolve_modref<true>()
                       : resolve_modref<false>();
   }
 
@@ -3684,7 +3689,7 @@ public:
 
   template <bool use_compressed, bool is_modref>
   static void resolve_gencode() {
-    LoomGenCode ? resolve<use_compressed, is_modref, true>() 
+    LoomGenCode ? resolve<use_compressed, is_modref, true>()
                 : resolve<use_compressed, is_modref, false>();
   }
 
