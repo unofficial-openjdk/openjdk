@@ -1301,6 +1301,11 @@ public:
 };
 
 bool OopMapStubGenerator::generate() {
+#ifndef _WINDOWS
+  // Windows have a different calling convention than macOs and Linux, the current stub is generated
+  // for Linux and macOs right now.
+  return false;
+#else
   ResourceMark rm;
 
   int size = 64 + (_oopmap.count() * 6 * 15) + (CheckCompressedOops ? 2048 : 0); // worst case, 6 instructions per oop, 15 bytes per instruction;
@@ -1320,6 +1325,7 @@ bool OopMapStubGenerator::generate() {
   _thaw_stub = cgen.thaw_stub();
 
   return true;
+#endif
 }
 
 void OopMapStubGenerator::free() {
