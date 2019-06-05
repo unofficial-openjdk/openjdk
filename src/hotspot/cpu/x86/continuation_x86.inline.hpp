@@ -28,8 +28,6 @@
 #include "runtime/frame.hpp"
 #include "runtime/frame.inline.hpp"
 
-const int LogIndexPerWord = 1;
-
 inline bool hframe::operator==(const hframe& other) const { 
     return  HFrameBase::operator==(other) && _fp == other._fp; 
 }
@@ -126,9 +124,6 @@ int hframe::frame_bottom_index() const {
   assert (FKind::is_instance(*this), "");
   if (FKind::interpreted) {
     int bottom_offset = *(int*)interpreter_frame_metadata_at(frame::interpreter_frame_locals_offset) + (1*elemsPerWord); // exclusive, so we add 1 word
-    // assert (bottom_offset == *(int*)interpreter_frame_metadata_at(frame::interpreter_frame_sender_sp_offset), 
-    //   "bottom_offset: %d interpreter_frame_sender_sp: %d (%d)", 
-    //   bottom_offset, *(int*)interpreter_frame_metadata_at(frame::interpreter_frame_sender_sp_offset), *(int*)interpreter_frame_metadata_at(cont, frame::interpreter_frame_locals_offset));
     return _fp + bottom_offset;
   } else {
     return _sp + cb()->frame_size()*elemsPerWord;
@@ -186,6 +181,7 @@ hframe hframe::sender(const ContMirror& cont, int num_oops) const {
   if (mode != mode_fast && is_sender_interpreted) {
     sender_fp += link_index(cont);
     sender_cb = NULL;
+    sender_sp += FKind::interpreted ? 0 : compiled_frame_stack_argsize() >> LogBytesPerElement;
     // log_develop_trace(jvmcont)("real_fp: %d sender_fp: %ld", link_index(cont), sender_fp);
   } else {
     sender_cb = ContinuationCodeBlobLookup::find_blob(sender_pc);
@@ -242,8 +238,12 @@ void hframe::print_on(ContMirror& cont, outputStream* st) const {
       st->print_cr("\tcb.frame_size: %d", _cb->frame_size());
     }
   }
-  st->print_cr("\tlink: 0x%lx %ld (at: " INTPTR_FORMAT ")", link(), link(), p2i(link_address()));
-  st->print_cr("\treturn_pc: " INTPTR_FORMAT " (at " INTPTR_FORMAT ")", p2i(CHOOSE2(_is_interpreted, return_pc)), p2i(CHOOSE2(_is_interpreted, return_pc_address)));
+  if (link_address() != NULL) {
+    st->print_cr("\tlink: 0x%lx %ld (at: " INTPTR_FORMAT ")", link(), link(), p2i(link_address()));
+    st->print_cr("\treturn_pc: " INTPTR_FORMAT " (at " INTPTR_FORMAT ")", p2i(CHOOSE2(_is_interpreted, return_pc)), p2i(CHOOSE2(_is_interpreted, return_pc_address)));
+  } else {
+    st->print_cr("\tlink address: NULL");
+  }
 }
 
 /////
@@ -335,19 +335,6 @@ inline intptr_t* Interpreted::frame_top(const frame& f, InterpreterOopMap* mask)
 }
 
 inline intptr_t* Interpreted::frame_bottom(const frame& f) { // exclusive; this will not be copied with the frame
-#ifdef ASSERT
-    if (Thread::current()->is_Java_thread()) { // may not be if we're freezing in a handshake
-      RegisterMap map(JavaThread::current(), false); // if thread is NULL we don't get a fix for the return barrier -> entry frame
-      frame sender = f.sender(&map);
-      intptr_t* locals_plus_one = *(intptr_t**)f.addr_at(frame::interpreter_frame_locals_offset) + 1;
-      if (!sender.is_entry_frame() && Frame::frame_top(sender) != locals_plus_one) {
-        log_trace(jvmcont)("f: "); print_vframe(f);
-        log_trace(jvmcont)("sender: "); print_vframe(sender);
-        log_trace(jvmcont)("sender top: " INTPTR_FORMAT " locals+1: " INTPTR_FORMAT, p2i(Frame::frame_top(sender)), p2i(locals_plus_one));
-      }
-      assert (Frame::frame_top(sender) >= locals_plus_one || sender.is_entry_frame(), "sender top: " INTPTR_FORMAT " locals+1: " INTPTR_FORMAT, p2i(Frame::frame_top(sender)), p2i(locals_plus_one));
-    }
-#endif
     return *(intptr_t**)f.addr_at(frame::interpreter_frame_locals_offset) + 1; // exclusive, so we add 1 word
 }
 
@@ -407,7 +394,7 @@ inline frame ContinuationHelper::last_frame(JavaThread* thread) {
 }
 
 template<bool fast>
-static inline frame sender_for_compiled_frame(frame& f, intptr_t** link_addr) {
+static inline frame sender_for_compiled_frame(const frame& f, intptr_t** link_addr) {
   intptr_t* sender_sp = (intptr_t*)(link_addr + frame::sender_sp_offset); //  f.unextended_sp() + (fsize/wordSize); // 
   address sender_pc = (address) *(sender_sp-1);
   assert(sender_sp != f.sp(), "must have changed");
@@ -424,7 +411,7 @@ static inline frame sender_for_compiled_frame(frame& f, intptr_t** link_addr) {
   }
 }
 
-static inline frame sender_for_interpreted_frame(frame& f, intptr_t** link_addr) {
+static inline frame sender_for_interpreted_frame(const frame& f, intptr_t** link_addr) {
   assert (*link_addr == f.link(), "");
   return frame(f.sender_sp(), f.interpreter_frame_sender_sp(), f.link(), f.sender_pc());
 }
@@ -435,7 +422,7 @@ static inline frame sender_for_interpreted_frame(frame& f, intptr_t** link_addr)
 
 template <typename ConfigT, op_mode mode>
 template<typename FKind>
-inline frame Freeze<ConfigT, mode>::sender(frame& f, intptr_t*** link_address_out) {
+inline frame Freeze<ConfigT, mode>::sender(const frame& f, intptr_t*** link_address_out) {
   assert (FKind::is_instance(f), "");
   intptr_t** link_addr = link_address<FKind>(f);
   *link_address_out = link_addr;
@@ -447,7 +434,7 @@ inline frame Freeze<ConfigT, mode>::sender(frame& f, intptr_t*** link_address_ou
 
 template <typename ConfigT, op_mode mode>
 template<typename FKind>
-inline frame Freeze<ConfigT, mode>::sender(frame& f) {
+inline frame Freeze<ConfigT, mode>::sender(const frame& f) {
   assert (FKind::is_instance(f), "");
   intptr_t** link_addr = link_address<FKind>(f);
   return FKind::interpreted 
@@ -469,7 +456,7 @@ hframe Freeze<ConfigT, mode>::new_bottom_hframe(int sp, int ref_sp, address pc, 
 }
 
 template <typename ConfigT, op_mode mode>
-template<typename FKind> hframe Freeze<ConfigT, mode>::new_callee_hframe(const frame& f, intptr_t* vsp, hframe& caller, int fsize, int num_oops) {
+template<typename FKind> hframe Freeze<ConfigT, mode>::new_callee_hframe(const frame& f, intptr_t* vsp, const hframe& caller, int fsize, int num_oops) {
   assert (FKind::is_instance(f), "");
 
   int sp = caller.sp() - ContMirror::to_index(fsize);
@@ -477,7 +464,7 @@ template<typename FKind> hframe Freeze<ConfigT, mode>::new_callee_hframe(const f
   intptr_t fp;
   CodeBlob* cb;
   if (FKind::interpreted) {
-    fp = sp + ((f.fp() - vsp) << LogIndexPerWord);
+    fp = sp + ((f.fp() - vsp) << LogElemsPerWord);
     cb = NULL;
   } else {
     fp = (intptr_t)f.fp();
@@ -491,7 +478,7 @@ template<typename FKind> hframe Freeze<ConfigT, mode>::new_callee_hframe(const f
 
 template <typename ConfigT, op_mode mode>
 template <typename FKind, bool top, bool bottom>
-inline void Freeze<ConfigT, mode>::patch_pd(frame& f, hframe& hf, const hframe& caller) {
+inline void Freeze<ConfigT, mode>::patch_pd(const frame& f, hframe& hf, const hframe& caller) {
   if (!FKind::interpreted) {
     if (_fp_oop_info._has_fp_oop) {
       hf.set_fp(_fp_oop_info._fp_index);
@@ -516,16 +503,16 @@ inline void Freeze<ConfigT, mode>::patch_pd(frame& f, hframe& hf, const hframe& 
 }
 
 template <typename ConfigT, op_mode mode>
-template <typename FKind, bool top, bool bottom> 
-inline void Freeze<ConfigT, mode>::align(hframe& caller) {
-  if (mode != mode_fast && !FKind::interpreted) {
-    if (caller.is_interpreted_frame())
-      _cont.add_size(sizeof(intptr_t));
+template <bool bottom> 
+inline void Freeze<ConfigT, mode>::align(const hframe& caller) {
+  // assert (caller.is_interpreted_frame(), "");
+  if (mode != mode_fast && caller.is_interpreted_frame()) {
+    _cont.add_size(sizeof(intptr_t));
   }
 }
 
 template <typename ConfigT, op_mode mode>
-inline void Freeze<ConfigT, mode>::relativize_interpreted_frame_metadata(frame& f, intptr_t* vsp, hframe& hf) {
+inline void Freeze<ConfigT, mode>::relativize_interpreted_frame_metadata(const frame& f, intptr_t* vsp, const hframe& hf) {
   intptr_t* vfp = f.fp();
   intptr_t* hfp = _cont.stack_address(hf.fp());
   assert (hfp == _cont.stack_address(hf.sp()) + (vfp - vsp), "");
@@ -547,13 +534,13 @@ inline frame Thaw<ConfigT, mode>::new_entry_frame() {
 }
 
 template <typename ConfigT, op_mode mode>
-template<typename FKind> frame Thaw<ConfigT, mode>::new_frame(const hframe& hf, intptr_t* vsp, int callee_argsize_words) {
+template<typename FKind> frame Thaw<ConfigT, mode>::new_frame(const hframe& hf, intptr_t* vsp) {
   assert (FKind::is_instance(hf), "");
 
   intptr_t* fp;
   if (FKind::interpreted) {
-    int hsp = hf.sp() + (callee_argsize_words << LogIndexPerWord);
-    fp = vsp + ((hf.fp() - hsp) >> LogIndexPerWord);
+    int hsp = hf.sp();
+    fp = vsp + ((hf.fp() - hsp) >> LogElemsPerWord);
     return frame(vsp, vsp, fp, hf.pc());
   } else {
     fp = (intptr_t*)hf.fp();
@@ -577,13 +564,13 @@ inline intptr_t* Thaw<ConfigT, mode>::align(const hframe& hf, intptr_t* vsp, con
     if ((intptr_t)vsp % 16 != 0) {
       log_develop_trace(jvmcont)("Aligning compiled frame: " INTPTR_FORMAT " -> " INTPTR_FORMAT, p2i(vsp), p2i(vsp - 1));
       assert(caller.is_interpreted_frame() 
-        || (bottom && !FKind::stub && hf.compiled_frame_stack_argsize<Compiled>() % 16 != 0), "");
+        || (bottom && !FKind::stub && hf.compiled_frame_stack_argsize() % 16 != 0), "");
       vsp--;
     }
     assert((intptr_t)vsp % 16 == 0, "");
   #endif
   
-    if (Interpreter::contains(hf.return_pc<Compiled>())) { // false if bottom-most frame, as the return address would be patched to NULL if interpreted
+    if (Interpreter::contains(hf.return_pc<FKind>())) { // false if bottom-most frame, as the return address would be patched to NULL if interpreted
       _cont.sub_size(sizeof(intptr_t)); // we do this whether or not we've aligned because we add it in freeze_interpreted_frame
     }
   }
