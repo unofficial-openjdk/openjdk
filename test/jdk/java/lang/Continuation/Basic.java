@@ -237,7 +237,7 @@ public class Basic {
         }
     }
 
-    private void testManyArgs() {
+    public void testManyArgs() {
         System.out.println("testManyArgs");
         final AtomicInteger res = new AtomicInteger(0);
         Continuation cont = new Continuation(FOO, ()-> {
