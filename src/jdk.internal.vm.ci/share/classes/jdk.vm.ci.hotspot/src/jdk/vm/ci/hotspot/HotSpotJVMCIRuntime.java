@@ -187,6 +187,9 @@ public final class HotSpotJVMCIRuntime implements JVMCIRuntime {
                     // initialized.
                     JVMCI.getRuntime();
                 }
+                // Make sure all the primitive box caches are populated (required to properly materialize boxed primitives
+                // during deoptimization).
+                Object[] boxCaches = { Boolean.valueOf(false), Byte.valueOf((byte)0), Short.valueOf((short) 0), Character.valueOf((char) 0), Integer.valueOf(0), Long.valueOf(0) };
             }
         }
         return result;
@@ -794,6 +797,26 @@ assert factories != null : "sanity";
      */
     public long[] collectCounters() {
         return compilerToVm.collectCounters();
+    }
+
+    /**
+     * @return the current number of per thread counters. May be set through
+     *         {@code -XX:JVMCICompilerSize=} command line option or the
+     *         {@link #setCountersSize(int)} call.
+     */
+    public int getCountersSize() {
+        return compilerToVm.getCountersSize();
+    }
+
+    /**
+     * Attempt to enlarge the number of per thread counters available. Requires a safepoint so
+     * resizing should be rare to avoid performance effects.
+     *
+     * @param newSize
+     * @return false if the resizing failed
+     */
+    public boolean setCountersSize(int newSize) {
+        return compilerToVm.setCountersSize(newSize);
     }
 
     /**

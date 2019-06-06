@@ -288,6 +288,27 @@ ALL_TARGETS += $(COMPILE_COMMANDS_TARGETS_HOTSPOT) $(COMPILE_COMMANDS_TARGETS_JD
 ALL_TARGETS += compile-commands compile-commands-hotspot
 
 ################################################################################
+# VS Code projects
+vscode-project:
+	+($(CD) $(TOPDIR)/make/vscode && $(MAKE) $(MAKE_ARGS) -f CreateVSCodeProject.gmk \
+      VSCODE_INDEXER=cpptools)
+
+vscode-project-clangd:
+	+($(CD) $(TOPDIR)/make/vscode && $(MAKE) $(MAKE_ARGS) -f CreateVSCodeProject.gmk \
+      VSCODE_INDEXER=clangd)
+
+vscode-project-rtags:
+	+($(CD) $(TOPDIR)/make/vscode && $(MAKE) $(MAKE_ARGS) -f CreateVSCodeProject.gmk \
+      VSCODE_INDEXER=rtags)
+
+vscode-project-ccls:
+	+($(CD) $(TOPDIR)/make/vscode && $(MAKE) $(MAKE_ARGS) -f CreateVSCodeProject.gmk \
+      VSCODE_INDEXER=ccls)
+
+ALL_TARGETS += vscode-project vscode-project-clangd vscode-project-rtags \
+  vscode-project-ccls
+
+################################################################################
 # Build demos targets
 
 demos-jdk:
@@ -774,6 +795,11 @@ else
   compile-commands-hotspot: $(COMPILE_COMMANDS_TARGETS_HOTSPOT)
   compile-commands: $(COMPILE_COMMANDS_TARGETS_HOTSPOT) $(COMPILE_COMMANDS_TARGETS_JDK)
 
+  vscode-project: compile-commands
+  vscode-project-clangd: compile-commands
+  vscode-project-rtags: compile-commands
+  vscode-project-ccls: compile-commands
+
   # Jmods cannot be created until we have the jmod tool ready to run. During
   # a normal build we run it from the exploded image, but when cross compiling
   # it's run from the buildjdk, which is either created at build time or user
@@ -869,7 +895,7 @@ else
   JVM_DOCS_TARGETS ?= hotspot-$(JVM_VARIANT_MAIN)-gensrc
 
   # The gensrc steps for hotspot and jdk.jdi create html spec files.
-  docs-jdk-specs: $(JVM_DOCS_TARGETS) jdk.jdi-gensrc \
+  docs-jdk-specs: buildtools-jdk $(JVM_DOCS_TARGETS) jdk.jdi-gensrc \
       docs-jdk-index
 
   docs-zip: docs-jdk

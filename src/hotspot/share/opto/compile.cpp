@@ -654,6 +654,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                   _trace_opto_output(directive->TraceOptoOutputOption),
 #endif
                   _has_method_handle_invokes(false),
+                  _clinit_barrier_on_entry(false),
                   _comp_arena(mtCompiler),
                   _barrier_set_state(BarrierSet::barrier_set()->barrier_set_c2()->create_barrier_state(comp_arena())),
                   _env(ci_env),
@@ -989,6 +990,7 @@ Compile::Compile( ciEnv* ci_env,
     _trace_opto_output(directive->TraceOptoOutputOption),
 #endif
     _has_method_handle_invokes(false),
+    _clinit_barrier_on_entry(false),
     _comp_arena(mtCompiler),
     _env(ci_env),
     _directive(directive),
@@ -1172,6 +1174,9 @@ void Compile::Init(int aliaslevel) {
     }
   }
 #endif
+  if (VM_Version::supports_fast_class_init_checks() && has_method() && !is_osr_compilation() && method()->needs_clinit_barrier()) {
+    set_clinit_barrier_on_entry(true);
+  }
   if (debug_info()->recording_non_safepoints()) {
     set_node_note_array(new(comp_arena()) GrowableArray<Node_Notes*>
                         (comp_arena(), 8, 0, NULL));
@@ -3843,9 +3848,42 @@ void Compile::set_allowed_deopt_reasons() {
   }
 }
 
-bool Compile::is_compiling_clinit_for(ciKlass* k) {
-  ciMethod* root = method(); // the root method of compilation
-  return root->is_static_initializer() && root->holder() == k; // access in the context of clinit
+bool Compile::needs_clinit_barrier(ciMethod* method, ciMethod* accessing_method) {
+  return method->is_static() && needs_clinit_barrier(method->holder(), accessing_method);
+}
+
+bool Compile::needs_clinit_barrier(ciField* field, ciMethod* accessing_method) {
+  return field->is_static() && needs_clinit_barrier(field->holder(), accessing_method);
+}
+
+bool Compile::needs_clinit_barrier(ciInstanceKlass* holder, ciMethod* accessing_method) {
+  if (holder->is_initialized()) {
+    return false;
+  }
+  if (holder->is_being_initialized()) {
+    if (accessing_method->holder() == holder) {
+      // Access inside a class. The barrier can be elided when access happens in <clinit>,
+      // <init>, or a static method. In all those cases, there was an initialization
+      // barrier on the holder klass passed.
+      if (accessing_method->is_static_initializer() ||
+          accessing_method->is_object_initializer() ||
+          accessing_method->is_static()) {
+        return false;
+      }
+    } else if (accessing_method->holder()->is_subclass_of(holder)) {
+      // Access from a subclass. The barrier can be elided only when access happens in <clinit>.
+      // In case of <init> or a static method, the barrier is on the subclass is not enough:
+      // child class can become fully initialized while its parent class is still being initialized.
+      if (accessing_method->is_static_initializer()) {
+        return false;
+      }
+    }
+    ciMethod* root = method(); // the root method of compilation
+    if (root != accessing_method) {
+      return needs_clinit_barrier(holder, root); // check access in the context of compilation root
+    }
+  }
+  return true;
 }
 
 #ifndef PRODUCT
