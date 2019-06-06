@@ -933,6 +933,13 @@ bool ciMethod::is_ignored_by_security_stack_walk() const {
   return get_Method()->is_ignored_by_security_stack_walk();
 }
 
+// ------------------------------------------------------------------
+// ciMethod::needs_clinit_barrier
+//
+bool ciMethod::needs_clinit_barrier() const {
+  check_is_loaded();
+  return is_static() && !holder()->is_initialized();
+}
 
 // ------------------------------------------------------------------
 // invokedynamic support
@@ -1104,7 +1111,7 @@ void ciMethod::set_not_compilable(const char* reason) {
   } else {
     _is_c2_compilable = false;
   }
-  get_Method()->set_not_compilable(env->comp_level(), true, reason);
+  get_Method()->set_not_compilable(reason, env->comp_level());
 }
 
 // ------------------------------------------------------------------

@@ -33,6 +33,7 @@ class vframeArray;
 class MonitorInfo;
 class MonitorValue;
 class ObjectValue;
+class AutoBoxObjectValue;
 class ScopeValue;
 class compiledVFrame;
 
@@ -72,6 +73,7 @@ class Deoptimization : AllStatic {
     // recorded per method
     Reason_unloaded,              // unloaded class or constant pool entry
     Reason_uninitialized,         // bad class state (uninitialized)
+    Reason_initialized,           // class has been fully initialized
     Reason_unreached,             // code is not reached, compiler
     Reason_unhandled,             // arbitrary compiler limitation
     Reason_constraint,            // arbitrary runtime constraint violated
@@ -152,6 +154,7 @@ class Deoptimization : AllStatic {
 
 #if INCLUDE_JVMCI
   static address deoptimize_for_missing_exception_handler(CompiledMethod* cm);
+  static oop get_cached_box(AutoBoxObjectValue* bv, frame* fr, RegisterMap* reg_map, TRAPS);
 #endif
 
   private:
@@ -168,7 +171,7 @@ class Deoptimization : AllStatic {
 JVMCI_ONLY(public:)
 
   // Support for restoring non-escaping objects
-  static bool realloc_objects(JavaThread* thread, frame* fr, GrowableArray<ScopeValue*>* objects, TRAPS);
+  static bool realloc_objects(JavaThread* thread, frame* fr, RegisterMap* reg_map, GrowableArray<ScopeValue*>* objects, TRAPS);
   static void reassign_type_array_elements(frame* fr, RegisterMap* reg_map, ObjectValue* sv, typeArrayOop obj, BasicType type);
   static void reassign_object_array_elements(frame* fr, RegisterMap* reg_map, ObjectValue* sv, objArrayOop obj);
   static void reassign_fields(frame* fr, RegisterMap* reg_map, GrowableArray<ScopeValue*>* objects, bool realloc_failures, bool skip_internal);
