@@ -291,7 +291,7 @@ static inline intptr_t** link_address(const frame& f) {
 // }
 
 static inline intptr_t** link_address(const frame& f) {
-  return f.is_interpreted_frame() ? link_address<Interpreted>(f) : link_address<Compiled>(f);
+  return f.is_interpreted_frame() ? link_address<Interpreted>(f) : link_address<NonInterpretedUnknown>(f);
 }
 
 template<typename FKind>
@@ -330,8 +330,8 @@ inline intptr_t* Interpreted::frame_top(const frame& f, InterpreterOopMap* mask)
   intptr_t* res = *(intptr_t**)f.addr_at(frame::interpreter_frame_initial_sp_offset) - expression_stack_size(f, mask);
   assert (res == (intptr_t*)f.interpreter_frame_monitor_end() - expression_stack_size(f, mask), "");
   return res;
-  // return *(intptr_t**)f.addr_at(frame::interpreter_frame_monitor_block_top_offset) - interpreter_frame_expression_stack_size(f);
-  // return (intptr_t*)f.interpreter_frame_monitor_end() - interpreter_frame_expression_stack_size(f);
+  // Not true, but using unextended_sp might work
+  // assert (res == f.unextended_sp() + 1, "res: " INTPTR_FORMAT " unextended_sp: " INTPTR_FORMAT, p2i(res), p2i(f.unextended_sp() + 1));
 }
 
 inline intptr_t* Interpreted::frame_bottom(const frame& f) { // exclusive; this will not be copied with the frame
@@ -352,7 +352,13 @@ inline frame ContinuationHelper::frame_with(frame& f, intptr_t* sp, address pc) 
 }
 
 inline void ContinuationHelper::set_last_vstack_frame(RegisterMap* map, const frame& hf) {
+  log_develop_trace(jvmcont)("setting map->last_vstack_fp: " INTPTR_FORMAT, p2i(hf.real_fp()));
   map->set_last_vstack_fp(link_address(hf));
+}
+
+inline void ContinuationHelper::clear_last_vstack_frame(RegisterMap* map) {
+  log_develop_trace(jvmcont)("clearing map->last_vstack_fp");
+  map->set_last_vstack_fp(NULL);
 }
 
 template<typename FKind> // the callee's type

@@ -1049,6 +1049,7 @@ class java_lang_Continuation: AllStatic {
   static inline void set_entryFP(oop ref, intptr_t* fp);
   static inline address entryPC(oop ref);
   static inline void set_entryPC(oop ref, address pc);
+  static inline address* entryPC_addr(oop ref);
   static inline jint maxSize(oop ref);
   static inline void set_maxSize(oop ref, jint i);
   static inline jshort numFrames(oop ref);

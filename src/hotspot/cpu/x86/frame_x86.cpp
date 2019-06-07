@@ -275,33 +275,26 @@ bool frame::safe_for_sender(JavaThread *thread) {
 
 void frame::patch_pc(Thread* thread, address pc) {
   address* pc_addr = &(((address*) sp())[-1]);
+  pc_addr = Continuation::get_continuation_entry_pc_for_sender(thread, *this, pc_addr);
+
   if (TracePcPatching) {
     tty->print_cr("patch_pc at address " INTPTR_FORMAT " [" INTPTR_FORMAT " -> " INTPTR_FORMAT "]",
                   p2i(pc_addr), p2i(*pc_addr), p2i(pc));
   }
   // Either the return address is the original one or we are going to
   // patch in the same address that's already there.
+
   assert(!Continuation::is_return_barrier_entry(*pc_addr), "return barrier");
-// #ifdef ASSERT
-//   bool good = (_pc == *pc_addr || pc == *pc_addr);
-//   if (!good) {
-//     tty->print_cr("pc: " INTPTR_FORMAT, p2i(pc)); os::print_location(tty, *(intptr_t*)&pc);
-//     tty->print_cr("_pc: " INTPTR_FORMAT, p2i(_pc)); os::print_location(tty, *(intptr_t*)&_pc);
-//     tty->print_cr("*pc_addr: " INTPTR_FORMAT, p2i(*pc_addr)); os::print_location(tty, *(intptr_t*)pc_addr);
-//   }
-// #endif
-  // *pc_addr = 0 in thaw_compiled frame, to disable this assertion, because the callee is not yet on the stack.
-  assert(_pc == *pc_addr || pc == *pc_addr || *pc_addr == 0, "must be (pc: " INTPTR_FORMAT " _pc: " INTPTR_FORMAT " *pc_addr: " INTPTR_FORMAT ")", p2i(pc), p2i(_pc), p2i(*pc_addr));
+  // *pc_addr = 0 in thaw_compiled_frame, to disable this assertion, because the callee is not yet on the stack.
+  // if (!(_pc == *pc_addr || pc == *pc_addr || *pc_addr == 0)) {
+  //   tty->print_cr(">>> frame::patch_pc");
+  //   print_on(tty);
+  //   tty->print_cr("_pc"); os::print_location(tty, (intptr_t)_pc); tty->print_cr("pc"); os::print_location(tty, (intptr_t)pc); tty->print_cr("*pc_addr"); os::print_location(tty, (intptr_t)*pc_addr);
+  // }
+  assert(_pc == *pc_addr || pc == *pc_addr || *pc_addr == 0, "must be (pc: " INTPTR_FORMAT " _pc: " INTPTR_FORMAT " pc_addr: " INTPTR_FORMAT " *pc_addr: " INTPTR_FORMAT ")", p2i(pc), p2i(_pc), p2i(pc_addr), p2i(*pc_addr));
   *pc_addr = pc;
   _cb = CodeCache::find_blob(pc);
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
-// #ifdef ASSERT
-//   if (!good) {
-//     tty->print_cr("_pc: " INTPTR_FORMAT " original_pc: " INTPTR_FORMAT, p2i(_pc), p2i(original_pc));
-//     CompiledMethod* cm = _cb->as_compiled_method_or_null();
-//     tty->print_cr("_pc: " INTPTR_FORMAT " is_deopt _pc: %d is_deopt pc: %d", p2i(_pc), cm->is_deopt_pc(_pc), cm->is_deopt_pc(pc));
-//   }
-// #endif
   if (original_pc != NULL) {
     assert(original_pc == _pc, "expected original PC to be stored before patching");
     _deopt_state = is_deoptimized;
@@ -477,8 +470,9 @@ frame frame::sender_for_interpreter_frame(RegisterMap* map) const {
   if (Continuation::is_return_barrier_entry(sender_pc)) {	
     if (map->walk_cont()) { // about to walk into an h-stack	
       return Continuation::top_frame(*this, map);	
-    } else	
-      Continuation::fix_continuation_bottom_sender(map->thread(), *this, &sender_pc, NULL);	
+    } else {
+      Continuation::fix_continuation_bottom_sender(map, *this, &sender_pc, NULL);
+    }
   }
   return frame(sender_sp, unextended_sp, link(), sender_pc); // Continuation::fix_continuation_bottom_sender(*this, map, frame(sender_sp, unextended_sp, link(), sender_pc));
 }
