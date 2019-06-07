@@ -1447,7 +1447,7 @@ static void get_monitors_from_stack(GrowableArray<Handle>* objects_to_revoke, Ja
 }
 
 void Deoptimization::revoke_using_safepoint(JavaThread* thread, frame fr, RegisterMap* map) {
-  if (!UseBiasedLocking) {
+  if (!UseBiasedLocking || Continuation::is_frame_in_continuation(thread, fr)) {
     return;
   }
   GrowableArray<Handle>* objects_to_revoke = new GrowableArray<Handle>();
