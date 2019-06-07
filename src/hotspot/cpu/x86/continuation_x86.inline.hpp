@@ -347,6 +347,19 @@ inline void ContinuationHelper::update_register_map(RegisterMap* map, intptr_t**
   frame::update_map_with_saved_link(map, link_address);
 }
 
+void ContinuationHelper::update_register_map(RegisterMap* map, const hframe& hf, const ContMirror& cont) {
+  int link_index = cont.stack_index(hf.link_address());
+  log_develop_trace(jvmcont)("ContinuationHelper::update_register_map: frame::update_map_with_saved_link: %d", link_index);
+  frame::update_map_with_saved_link(map, reinterpret_cast<intptr_t**>(link_index));
+}
+
+void ContinuationHelper::update_register_map_from_last_vstack_frame(RegisterMap* map) {
+  // we need to return the link address for the entry frame; it is saved in the bottom-most thawed frame
+  intptr_t** fp = (intptr_t**)(map->last_vstack_fp()); // TODO R PD
+  log_develop_trace(jvmcont)("ContinuationHelper::update_register_map_from_last_vstack_frame: frame::update_map_with_saved_link: " INTPTR_FORMAT, p2i(fp));
+  frame::update_map_with_saved_link(map, fp);
+}
+
 inline frame ContinuationHelper::frame_with(frame& f, intptr_t* sp, address pc) {
   return frame(sp, f.unextended_sp(), f.fp(), pc, CodeCache::find_blob(pc));
 }

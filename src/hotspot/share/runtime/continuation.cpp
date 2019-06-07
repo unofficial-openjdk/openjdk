@@ -255,7 +255,7 @@ enum op_mode {
 template<typename SelfPD>
 class HFrameBase {
 protected:
-  int _sp;
+  int _sp; // corresponds to unextended sp in frame
   int _ref_sp;
   address _pc;
   mutable CodeBlob* _cb;
@@ -620,8 +620,6 @@ int HFrameBase<SelfPD>::compiled_frame_size() const {
 template<typename SelfPD>
 template <typename FKind>
 int HFrameBase<SelfPD>::frame_top_index() const {
-  // _sp may be less than the above calculation when thawing an interpreted frame with lazy copy when the compiled callee has stack arguments
-  // because we go through the return barrier, there callee_argsize would be zero, but the callee did not remove the arguments from the hstack.
   assert (!FKind::interpreted || interpreted_frame_top_index() >= _sp, "");
   assert (FKind::is_instance(*(hframe*)this), "");
 
@@ -922,6 +920,8 @@ class ContinuationHelper {
 public:
   template<typename FKind> static inline void update_register_map(RegisterMap* map, const frame& f);
   static inline void update_register_map(RegisterMap* map, hframe::callee_info callee_info);
+  static void update_register_map(RegisterMap* map, const hframe& h, const ContMirror& cont);
+  static void update_register_map_from_last_vstack_frame(RegisterMap* map);
   static inline frame frame_with(frame& f, intptr_t* sp, address pc);
   static inline frame last_frame(JavaThread* thread);
   static inline void to_frame_info(const frame& f, const frame& callee, FrameInfo* fi);
@@ -2401,7 +2401,7 @@ public:
       log_develop_trace(jvmcont)("Setting return address to return barrier: " INTPTR_FORMAT, p2i(StubRoutines::cont_returnBarrier()));
       FKind::patch_return_pc(f, StubRoutines::cont_returnBarrier());
     } else {
-      FKind::patch_return_pc(f, caller.raw_pc()); // this patches the return address to the deopt handler if necessary TODO R TODOT DEOPT
+      FKind::patch_return_pc(f, caller.raw_pc()); // this patches the return address to the deopt handler if necessary TODO DEOPT -- if we do this only on bottom, everything works; what happens if we miss a deopt?
     }
     patch_pd<FKind, top, bottom>(f, caller);
 
@@ -2428,8 +2428,8 @@ public:
   frame thaw_interpreted_frame(const hframe& hf, const frame& caller, InterpreterOopMap* mask) {
     int fsize = hf.interpreted_frame_size();
     log_develop_trace(jvmcont)("fsize: %d", fsize);
-    intptr_t* vsp = (intptr_t*)((address)caller.sp() - fsize); // TODO R sp()->unextended_sp()
-    intptr_t* hsp = _cont.stack_address(hf.sp()); //  + callee_argsize_words;
+    intptr_t* vsp = (intptr_t*)((address)caller.unextended_sp() - fsize);
+    intptr_t* hsp = _cont.stack_address(hf.sp());
 
     frame f = new_frame<Interpreted>(hf, vsp);
 
@@ -3046,17 +3046,12 @@ static frame sender_for_frame(const frame& f, RegisterMap* map) {
 
   if (map->update_map()) {
     if (sender.is_empty()) {
-      // we need to return the link address for the entry frame; it is saved in the bottom-most thawed frame
-      intptr_t** fp = (intptr_t**)(map->last_vstack_fp()); // TODO R P
-      log_develop_trace(jvmcont)("sender_for_frame: frame::update_map_with_saved_link: " INTPTR_FORMAT, p2i(fp));
-      frame::update_map_with_saved_link(map, fp);
+      ContinuationHelper::update_register_map_from_last_vstack_frame(map);
     } else { // if (!sender.is_interpreted_frame())
       if (is_stub(f.cb())) {
         f.oop_map()->update_register_map(&f, map); // we have callee-save registers in this case
       }
-      int link_index = cont.stack_index(hf.link_address());
-      log_develop_trace(jvmcont)("sender_for_frame: frame::update_map_with_saved_link: %d", link_index);
-      frame::update_map_with_saved_link(map, reinterpret_cast<intptr_t**>(link_index));
+      ContinuationHelper::update_register_map(map, hf, cont);
     }
   }
 
