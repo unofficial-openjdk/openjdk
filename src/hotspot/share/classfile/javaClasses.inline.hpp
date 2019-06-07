@@ -239,6 +239,9 @@ inline address java_lang_Continuation::entryPC(oop ref) {
 inline void java_lang_Continuation::set_entryPC(oop ref, address pc) {
   ref->long_field_put(_entryPC_offset, (long)pc);
 }
+inline address* java_lang_Continuation::entryPC_addr(oop ref) {
+  return (address*)ref->field_addr(_entryPC_offset); // 
+}
 inline jint java_lang_Continuation::maxSize(oop ref) {
   return ref->int_field(_maxSize_offset);
 }

@@ -340,6 +340,7 @@ public class Continuation {
                 if (reset) { maxSize = origMaxSize; sp = origSP; fp = origFP; pc = origPC; refSP = origRefSP; } // perftest only
                 postYieldCleanup(origRefSP);
 
+                if (TRACE) System.out.println("clearing entryPC");
                 this.entryPC = 0; // cannot be done in native code, as a safpoint on the transition back to Java may want to walk the stack (with the still-mounted continuation)
 
                 unmount();

@@ -118,6 +118,7 @@ static void print_vframe(frame f, const RegisterMap* map = NULL, outputStream* s
 static void print_frames(JavaThread* thread, outputStream* st = tty);
 static jlong java_tid(JavaThread* thread);
 static VMReg find_register_spilled_here(void* p, RegisterMap* map);
+static void print_blob(outputStream* st, address addr);
 // void static stop();
 // void static stop(const frame& f);
 // static void print_JavaThread_offsets();
@@ -929,6 +930,7 @@ public:
   static inline frame to_frame(FrameInfo* fi);
   static inline frame to_frame_indirect(FrameInfo* fi);
   static inline void set_last_vstack_frame(RegisterMap* map, const frame& callee);
+  static inline void clear_last_vstack_frame(RegisterMap* map);
 };
 
 #ifdef ASSERT
@@ -961,8 +963,8 @@ template<typename Self>
 void FrameCommon<Self>::patch_return_pc(frame& f, address pc) {
   *Self::return_pc_address(f) = pc;
   log_develop_trace(jvmcont)("patched return_pc at " INTPTR_FORMAT ": " INTPTR_FORMAT, p2i(Self::return_pc_address(f)), p2i(pc));
+  // os::print_location(tty, (intptr_t)pc);
 }
-
 
 // static void patch_interpreted_bci(frame& f, int bci) {
 //   f.interpreter_frame_set_bcp(f.interpreter_frame_method()->bcp_from(bci));
@@ -1501,7 +1503,7 @@ public:
   template<typename FKind> // the callee's type
   void setup_jump(const frame& f, const frame& callee) {
     // upon end of freeze, f points at the entry frame. we need to point it one more frame, to Continuation.run
-    // TODO performance: we don't need all frame fields, e.g. we get CodeBlocb in sender, but don't use it
+    // TODO performance: we don't need all frame fields, e.g. we get CodeBlob in sender, but don't use it
     // ::fix_continuation_bottom_sender(_cont, f); // need this so frame_sender could work  // check if :: is necessary
     // frame f = f0.frame_sender<ContinuationCodeBlobLookup>(&dmap);
 
@@ -1940,9 +1942,10 @@ int early_return(int res, JavaThread* thread, FrameInfo* fi) {
 }
 
 static void invlidate_JVMTI_stack(JavaThread* thread) {
-  JvmtiThreadState *jvmti_state = thread->jvmti_thread_state();
-  if (jvmti_state != NULL && jvmti_state->is_interp_only_mode()) {
-    jvmti_state->invalidate_cur_stack_depth();
+  if (thread->is_interp_only_mode()) {
+    JvmtiThreadState *jvmti_state = thread->jvmti_thread_state();
+    if (jvmti_state != NULL)
+      jvmti_state->invalidate_cur_stack_depth();
   }
 }
 
@@ -2329,6 +2332,7 @@ public:
       // we use thread->_cont_frame->sp rather than the continuations themselves (which allow nesting) b/c it's faser and simpler.
       // for that to work, we rely on the fact that parent continuation's have at lesat Continuation.run on the stack, which does not require stack arguments
       _cont.thread()->cont_frame()->sp = NULL;
+      _cont.set_entryPC(NULL);
     } else {
       _cont.set_last_frame(hf); // _last_frame = hf;
       if (!FKind::interpreted && !hf.is_interpreted_frame()) {
@@ -2397,7 +2401,7 @@ public:
       log_develop_trace(jvmcont)("Setting return address to return barrier: " INTPTR_FORMAT, p2i(StubRoutines::cont_returnBarrier()));
       FKind::patch_return_pc(f, StubRoutines::cont_returnBarrier());
     } else {
-      FKind::patch_return_pc(f, caller.raw_pc()); // this patches the return address to the deopt handler if necessary
+      FKind::patch_return_pc(f, caller.raw_pc()); // this patches the return address to the deopt handler if necessary TODO R TODOT DEOPT
     }
     patch_pd<FKind, top, bottom>(f, caller);
 
@@ -2424,10 +2428,12 @@ public:
   frame thaw_interpreted_frame(const hframe& hf, const frame& caller, InterpreterOopMap* mask) {
     int fsize = hf.interpreted_frame_size();
     log_develop_trace(jvmcont)("fsize: %d", fsize);
-    intptr_t* vsp = (intptr_t*)((address)caller.sp() - fsize);
+    intptr_t* vsp = (intptr_t*)((address)caller.sp() - fsize); // TODO R sp()->unextended_sp()
     intptr_t* hsp = _cont.stack_address(hf.sp()); //  + callee_argsize_words;
 
     frame f = new_frame<Interpreted>(hf, vsp);
+
+    // if the caller is compiled we should really extend its sp to be our fp + 2 (1 for the return address, plus 1), but we don't bother as we don't use it
 
     thaw_raw_frame(hsp, vsp, fsize);
 
@@ -2490,22 +2496,17 @@ public:
 
     thaw_raw_frame(hsp, vsp, fsize);
 
-    if (!FKind::stub)
+    if (!FKind::stub) {
       hf.cb()->as_compiled_method()->dec_on_continuation_stack();
 
-      // TODO get nmethod. Call popNmethod if necessary
-      // when copying nmethod frames, we need to check for them being made non-reentrant, in which case we need to deopt them
-      // and turn them into interpreter frames.
+      if (!f.is_deoptimized_frame()
+          && (hf.cb()->as_compiled_method()->is_marked_for_deoptimization() 
+            || (mode != mode_fast && _thread->is_interp_only_mode()))) {
+        log_develop_trace(jvmcont)("Deoptimizing thawed frame");         // tty->print_cr("DDDDDDDDDDDDD");
+        DEBUG_ONLY(Frame::patch_pc(f, NULL));
+        Deoptimization::deoptimize(_cont.thread(), f, &_map);
+      }
 
-    if (f.should_be_deoptimized() && !f.is_deoptimized_frame()) {
-      log_develop_trace(jvmcont)("Deoptimizing thawed frame");
-      // tty->print_cr("DDDDDDDDDDDDD");
-
-      DEBUG_ONLY(Frame::patch_pc(f, NULL));
-      Deoptimization::deoptimize(_cont.thread(), f, &_map);
-    }
-
-    if (!FKind::stub) {
       if (_safepoint_stub_caller) {
         _safepoint_stub_f = thaw_safepoint_stub(f);
       }
@@ -2720,7 +2721,7 @@ static inline void thaw0(JavaThread* thread, FrameInfo* fi, const bool return_ba
 
   if (cont.is_flag(FLAG_SAFEPOINT_YIELD)) {
     cont_thaw<mode_preempt>(thread, cont, fi, num_frames);
-  } else if (cont.num_interpreted_frames() == 0) {
+  } else if (cont.num_interpreted_frames() == 0 && !thread->is_interp_only_mode()) {
     cont_thaw<mode_fast>(thread, cont, fi, num_frames);
   } else {
     cont_thaw<mode_slow>(thread, cont, fi, num_frames);
@@ -2731,7 +2732,7 @@ static inline void thaw0(JavaThread* thread, FrameInfo* fi, const bool return_ba
   log_develop_trace(jvmcont)("fi->sp: " INTPTR_FORMAT " fi->fp: " INTPTR_FORMAT " fi->pc: " INTPTR_FORMAT, p2i(fi->sp), p2i(fi->fp), p2i(fi->pc));
 
 #ifndef PRODUCT
-  // set_anchor(thread, fi);
+  set_anchor(thread, fi);
   print_frames(thread, tty); // must be done after write(), as frame walking reads fields off the Java objects.
   clear_anchor(thread);
 #endif
@@ -2823,10 +2824,10 @@ static inline bool is_sp_in_continuation(intptr_t* const sp, oop cont) {
 }
 
 bool Continuation::is_frame_in_continuation(const frame& f, oop cont) {
-  return is_sp_in_continuation(f.sp(), cont);
+  return is_sp_in_continuation(f.unextended_sp(), cont);
 }
 
-static oop find_continuation_for_frame(JavaThread* thread, intptr_t* const sp) {
+static oop get_continuation_for_frame(JavaThread* thread, intptr_t* const sp) {
   oop cont = get_continuation(thread);
   while (cont != NULL && !is_sp_in_continuation(sp, cont))
     cont = java_lang_Continuation::parent(cont);
@@ -2834,15 +2835,41 @@ static oop find_continuation_for_frame(JavaThread* thread, intptr_t* const sp) {
 }
 
 oop Continuation::get_continutation_for_frame(JavaThread* thread, const frame& f) {
-  return find_continuation_for_frame(thread, f.sp());
+  return get_continuation_for_frame(thread, f.unextended_sp());
 }
 
 bool Continuation::is_frame_in_continuation(JavaThread* thread, const frame& f) {
-  return find_continuation_for_frame(thread, f.sp()) != NULL;
+  return get_continuation_for_frame(thread, f.unextended_sp()) != NULL;
+}
+
+address* Continuation::get_continuation_entry_pc_for_sender(Thread* thread, const frame& f, address* pc_addr0) {
+  log_develop_trace(jvmcont)("get_continuation_entry_pc_for_sender unextended_sp: " INTPTR_FORMAT, p2i(f.unextended_sp()));
+  if (!thread->is_Java_thread()) 
+    return pc_addr0;
+  oop cont = get_continuation_for_frame((JavaThread*)thread, f.unextended_sp() - 1);
+  if (cont == NULL)
+    return pc_addr0;
+  if (is_sp_in_continuation(f.unextended_sp(), cont))
+    return pc_addr0; // not the run frame
+
+  // If our callee is the entry frame, we can continue as usual becuse we use the ordinary return address; see Freeze::setup_jump
+  // If the entry frame is the callee, we set entryPC_addr to NULL in Thaw::finalize
+
+  address *pc_addr = java_lang_Continuation::entryPC_addr(cont);
+  if (*pc_addr == NULL) {
+    assert (!is_return_barrier_entry(*pc_addr0), "");
+    return pc_addr0;
+  }
+ 
+  log_develop_trace(jvmcont)("get_continuation_entry_pc_for_sender pc_addr: " INTPTR_FORMAT " *pc_addr: " INTPTR_FORMAT, p2i(pc_addr), p2i(*pc_addr));
+  DEBUG_ONLY(if (log_develop_is_enabled(Trace, jvmcont)) { print_blob(tty, *pc_addr); print_blob(tty, *(address*)(f.sp()-1)); })
+  // if (log_develop_is_enabled(Trace, jvmcont)) { os::print_location(tty, (intptr_t)pc_addr); os::print_location(tty, (intptr_t)*pc_addr); }
+
+  return pc_addr;
 }
 
 static address get_entry_pc_past_barrier(JavaThread* thread, const frame& f) {
-  oop cont = find_continuation_for_frame(thread, f.sp());
+  oop cont = get_continuation_for_frame(thread, f.unextended_sp());
   assert (cont != NULL, "");
   address pc = java_lang_Continuation::entryPC(cont);
   // log_develop_trace(jvmcont)("YEYEYEYEYEYEYEEYEY: " INTPTR_FORMAT, p2i(pc));
@@ -2850,7 +2877,17 @@ static address get_entry_pc_past_barrier(JavaThread* thread, const frame& f) {
   return pc;
 }
 
-void Continuation::fix_continuation_bottom_sender(JavaThread* thread, const frame& callee, address* sender_pc, intptr_t** sender_sp) {
+bool Continuation::fix_continuation_bottom_sender(RegisterMap* map, const frame& callee, address* sender_pc, intptr_t** sender_sp) {
+  bool res = fix_continuation_bottom_sender(map->thread(), callee, sender_pc, sender_sp);
+  if (res && !callee.is_interpreted_frame()) {
+    ContinuationHelper::set_last_vstack_frame(map, callee);
+  } else {
+    ContinuationHelper::clear_last_vstack_frame(map);
+  }
+  return res;
+}
+
+bool Continuation::fix_continuation_bottom_sender(JavaThread* thread, const frame& callee, address* sender_pc, intptr_t** sender_sp) {
   // tty->print_cr(">>> fix_continuation_bottom_sender: %p", *sender_pc);
   if (thread != NULL && is_return_barrier_entry(*sender_pc)) {
     *sender_pc = get_entry_pc_past_barrier(thread, callee);
@@ -2863,10 +2900,13 @@ void Continuation::fix_continuation_bottom_sender(JavaThread* thread, const fram
       if (argsize % 2 != 0)
         argsize++; // 16-byte alignment for compiled frame sp
     #endif
+      // tty->print_cr(">>> fix_continuation_bottom_sender sp0: %p sp1: %p", *sender_sp, *sender_sp + argsize);
       *sender_sp += argsize;
     }
     // tty->print_cr(">>> fix_continuation_bottom_sender 2: %p", *sender_pc);
+    return true;
   }
+  return false;
 }
 
 frame Continuation::fix_continuation_bottom_sender(const frame& callee, RegisterMap* map, frame f) {
@@ -2881,7 +2921,7 @@ frame Continuation::fix_continuation_bottom_sender(const frame& callee, Register
   if (map->thread() != NULL) {
     address   sender_pc = f.pc();
     intptr_t* sender_sp = f.sp();
-    fix_continuation_bottom_sender(map->thread(), callee, &sender_pc, &sender_sp);
+    fix_continuation_bottom_sender(map, callee, &sender_pc, &sender_sp);
     return ContinuationHelper::frame_with(f, sender_sp, sender_pc);
   }
 
@@ -2895,7 +2935,7 @@ bool Continuation::is_scope_bottom(oop cont_scope, const frame& f, const Registe
   assert (!map->in_cont(), "");
   // if (map->in_cont()) return false;
 
-  oop cont = find_continuation_for_frame(map->thread(), f.sp());
+  oop cont = get_continuation_for_frame(map->thread(), f.sp());
   if (cont == NULL)
     return false;
 
@@ -2990,8 +3030,7 @@ javaVFrame* Continuation::last_java_vframe(Handle continuation, RegisterMap *map
 }
 
 frame Continuation::top_frame(const frame& callee, RegisterMap* map) {
-  oop cont = find_continuation_for_frame(map->thread(), callee.sp());
-  log_develop_trace(jvmcont)("Continuation::top_frame: setting map->last_vstack_fp: " INTPTR_FORMAT, p2i(callee.real_fp()));
+  oop cont = get_continuation_for_frame(map->thread(), callee.sp());
 
   ContinuationHelper::set_last_vstack_frame(map, callee);
   return continuation_top_frame(cont, map);
@@ -3008,7 +3047,7 @@ static frame sender_for_frame(const frame& f, RegisterMap* map) {
   if (map->update_map()) {
     if (sender.is_empty()) {
       // we need to return the link address for the entry frame; it is saved in the bottom-most thawed frame
-      intptr_t** fp = (intptr_t**)(map->last_vstack_fp());
+      intptr_t** fp = (intptr_t**)(map->last_vstack_fp()); // TODO R P
       log_develop_trace(jvmcont)("sender_for_frame: frame::update_map_with_saved_link: " INTPTR_FORMAT, p2i(fp));
       frame::update_map_with_saved_link(map, fp);
     } else { // if (!sender.is_interpreted_frame())
@@ -3892,6 +3931,16 @@ static VMReg find_register_spilled_here(void* p, RegisterMap* map) {
     if (p == map->location(r)) return r;
   }
   return NULL;
+}
+
+static void print_blob(outputStream* st, address addr) {
+  CodeBlob* b = CodeCache::find_blob_unsafe(addr);
+  st->print("address: " INTPTR_FORMAT " blob: ", p2i(addr));
+  if (b != NULL) {
+    b->dump_for_addr(addr, st, false);
+  } else {
+    st->print_cr("NULL");
+  }
 }
 
 // void static stop() {

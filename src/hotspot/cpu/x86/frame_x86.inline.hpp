@@ -408,8 +408,8 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
     if (map->walk_cont()) { // about to walk into an h-stack 	
       return Continuation::top_frame(*this, map);	
     } else {
-      Continuation::fix_continuation_bottom_sender(map->thread(), *this, &sender_pc, &sender_sp);	
-    }	
+      Continuation::fix_continuation_bottom_sender(map, *this, &sender_pc, &sender_sp);	
+    }
   }
 
   intptr_t* unextended_sp = sender_sp;
