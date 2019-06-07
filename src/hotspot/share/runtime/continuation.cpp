@@ -2504,7 +2504,7 @@ public:
             || (mode != mode_fast && _thread->is_interp_only_mode()))) {
         log_develop_trace(jvmcont)("Deoptimizing thawed frame");         // tty->print_cr("DDDDDDDDDDDDD");
         DEBUG_ONLY(Frame::patch_pc(f, NULL));
-        Deoptimization::deoptimize(_cont.thread(), f, &_map);
+        Deoptimization::deoptimize(_cont.thread(), f, &_map); // assumes no monitors in continuation; see Deoptimization::revoke_using_safepoint
       }
 
       if (_safepoint_stub_caller) {
