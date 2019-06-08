@@ -81,7 +81,6 @@ import static org.testng.Assert.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-@Test
 public class Basic {
     // private static final WhiteBox WB = WhiteBox.getWhiteBox();
 

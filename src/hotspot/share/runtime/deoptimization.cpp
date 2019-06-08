@@ -1427,9 +1427,8 @@ static void get_monitors_from_stack(GrowableArray<Handle>* objects_to_revoke, Ja
   if (map == NULL || !map->update_map()) {
     StackFrameStream sfs(thread, true);
     bool found = false;
-    while (!found && !sfs.is_done()) {
+    for (; !found && !sfs.is_done(); sfs.next()) {
       frame* cur = sfs.current();
-      sfs.next();
       found = cur->id() == fr.id();
     }
     assert(found, "frame to be deoptimized not found on target thread's stack");
@@ -1447,7 +1446,7 @@ static void get_monitors_from_stack(GrowableArray<Handle>* objects_to_revoke, Ja
 }
 
 void Deoptimization::revoke_using_safepoint(JavaThread* thread, frame fr, RegisterMap* map) {
-  if (!UseBiasedLocking || Continuation::is_frame_in_continuation(thread, fr)) {
+  if (!UseBiasedLocking) {
     return;
   }
   GrowableArray<Handle>* objects_to_revoke = new GrowableArray<Handle>();

@@ -28,6 +28,30 @@
 #include "runtime/frame.hpp"
 #include "runtime/frame.inline.hpp"
 
+static void set_anchor(JavaThread* thread, const FrameInfo* fi) {
+  JavaFrameAnchor* anchor = thread->frame_anchor();
+  anchor->set_last_Java_sp((intptr_t*)fi->sp);
+  anchor->set_last_Java_fp((intptr_t*)fi->fp);
+  anchor->set_last_Java_pc(fi->pc);
+
+  assert (thread->has_last_Java_frame(), "");
+  assert(thread->last_frame().cb() != NULL, "");
+  log_develop_trace(jvmcont)("set_anchor:");
+  print_vframe(thread->last_frame());
+}
+
+static void set_anchor(JavaThread* thread, const frame& f) {
+  JavaFrameAnchor* anchor = thread->frame_anchor();
+  anchor->set_last_Java_sp(f.unextended_sp());
+  anchor->set_last_Java_fp(f.fp());
+  anchor->set_last_Java_pc(f.pc());
+
+  assert (thread->has_last_Java_frame(), "");
+  assert(thread->last_frame().cb() != NULL, "");
+  log_develop_trace(jvmcont)("set_anchor:");
+  print_vframe(thread->last_frame());
+}
+
 inline bool hframe::operator==(const hframe& other) const { 
     return  HFrameBase::operator==(other) && _fp == other._fp; 
 }
