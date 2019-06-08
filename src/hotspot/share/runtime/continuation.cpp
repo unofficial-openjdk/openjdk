@@ -110,20 +110,25 @@ static int PERFTEST_LEVEL = ContPerfTest;
 #define RUN_SIG    "java.lang.Continuation.run()V"
 
 static bool is_stub(CodeBlob* cb);
+static void set_anchor(JavaThread* thread, const FrameInfo* fi);
+static void set_anchor(JavaThread* thread, const frame& f);
 
 // debugging functions
 static void print_oop(void *p, oop obj, outputStream* st = tty);
 static void print_vframe(frame f, const RegisterMap* map = NULL, outputStream* st = tty);
+
 #ifdef ASSERT
-static void print_frames(JavaThread* thread, outputStream* st = tty);
-static jlong java_tid(JavaThread* thread);
-static VMReg find_register_spilled_here(void* p, RegisterMap* map);
-static void print_blob(outputStream* st, address addr);
-// void static stop();
-// void static stop(const frame& f);
-// static void print_JavaThread_offsets();
+  static void print_frames(JavaThread* thread, outputStream* st = tty);
+  static jlong java_tid(JavaThread* thread);
+  static VMReg find_register_spilled_here(void* p, RegisterMap* map);
+  static void print_blob(outputStream* st, address addr);
+  // void static stop();
+  // void static stop(const frame& f);
+  // static void print_JavaThread_offsets();
+  // static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map);
+
+  static RegisterMap dmap(NULL, false); // global dummy RegisterMap
 #endif
-// NOT_PRODUCT(static void trace_codeblob_maps(const frame *fr, const RegisterMap *reg_map);)
 
 #define ELEMS_PER_WORD (wordSize/sizeof(jint))
 // Primitive hstack is int[]
@@ -1057,7 +1062,7 @@ bool NonInterpreted<Self>::is_owning_locks(JavaThread* thread, const RegisterMap
   assert (!f.is_interpreted_frame() && Self::is_instance(f), "");
 
   CompiledMethod* cm = f.cb()->as_compiled_method();
-  assert (!cm->is_compiled() || !cm->as_compiled_method()->is_native_method(), ""); // ??? See compiledVFrame::compiledVFrame(...) in vframe_hp.cpp
+  assert (!cm->is_compiled() || !cm->as_compiled_method()->is_native_method(), ""); // See compiledVFrame::compiledVFrame(...) in vframe_hp.cpp
 
   if (!cm->has_monitors()) {
     return false;
@@ -1085,8 +1090,6 @@ bool NonInterpreted<Self>::is_owning_locks(JavaThread* thread, const RegisterMap
 }
 
 ////////////////////////////////////
-
-static RegisterMap dmap(NULL, false); // global dummy RegisterMap
 
 void ContinuationHelper::to_frame_info(const frame& f, const frame& callee, FrameInfo* fi) {
   fi->sp = f.unextended_sp(); // java_lang_Continuation::entrySP(cont);
@@ -1145,19 +1148,6 @@ static int num_java_frames(ContMirror& cont) {
 
 static inline void clear_anchor(JavaThread* thread) {
   thread->frame_anchor()->clear();
-}
-
-static void set_anchor(JavaThread* thread, FrameInfo* fi) {
-  JavaFrameAnchor* anchor = thread->frame_anchor();
-  anchor->set_last_Java_sp((intptr_t*)fi->sp);
-  anchor->set_last_Java_fp((intptr_t*)fi->fp);
-  anchor->set_last_Java_pc(fi->pc);
-  assert (thread->has_last_Java_frame(), "");
-
-  assert(thread->last_frame().cb() != NULL, "");
-
-  log_develop_trace(jvmcont)("set_anchor:");
-  print_vframe(thread->last_frame());
 }
 
 #ifdef ASSERT
@@ -2411,6 +2401,10 @@ public:
 
     assert (!bottom || !_cont.is_empty() || assert_bottom_java_frame_name(f, ENTER_SIG), "");
     assert (!bottom || (_cont.is_empty() != Continuation::is_cont_barrier_frame(f)), "cont.is_empty(): %d is_cont_barrier_frame(f): %d ", _cont.is_empty(), Continuation::is_cont_barrier_frame(f));
+
+    // if (!FKind::stub && (top || (mode == mode_preempt && _safepoint_stub_caller))) {
+    //   set_anchor(_thread, f); // deoptimization may need this
+    // }
   }
 
   template<bool top>
@@ -2499,15 +2493,7 @@ public:
     if (!FKind::stub) {
       hf.cb()->as_compiled_method()->dec_on_continuation_stack();
 
-      if (!f.is_deoptimized_frame()
-          && (hf.cb()->as_compiled_method()->is_marked_for_deoptimization() 
-            || (mode != mode_fast && _thread->is_interp_only_mode()))) {
-        log_develop_trace(jvmcont)("Deoptimizing thawed frame");         // tty->print_cr("DDDDDDDDDDDDD");
-        DEBUG_ONLY(Frame::patch_pc(f, NULL));
-        Deoptimization::deoptimize(_cont.thread(), f, &_map); // assumes no monitors in continuation; see Deoptimization::revoke_using_safepoint
-      }
-
-      if (_safepoint_stub_caller) {
+      if (mode == mode_preempt && _safepoint_stub_caller) {
         _safepoint_stub_f = thaw_safepoint_stub(f);
       }
 
@@ -2517,6 +2503,19 @@ public:
     patch<FKind, top, bottom>(f, caller);
 
     _cont.dec_num_frames();
+
+    if (!FKind::stub) {
+      if (!f.is_deoptimized_frame()
+          && (hf.cb()->as_compiled_method()->is_marked_for_deoptimization() 
+            || (mode != mode_fast && _thread->is_interp_only_mode()))) {
+        log_develop_trace(jvmcont)("Deoptimizing thawed frame");         // tty->print_cr("DDDDDDDDDDDDD");
+        DEBUG_ONLY(Frame::patch_pc(f, NULL));
+
+        set_anchor(_thread, f); // deoptimization may need this
+        Deoptimization::deoptimize(_thread, f, &_map); // assumes no monitors in continuation; see Deoptimization::revoke_using_safepoint
+        clear_anchor(_thread);
+      }
+    }
 
     return f;
   }
@@ -2763,6 +2762,7 @@ JRT_LEAF(address, Continuation::thaw_leaf(FrameInfo* fi, bool return_barrier, bo
   PERFTEST_LEVEL = ContPerfTest;
 
   thaw0(JavaThread::current(), fi, return_barrier);
+  // clear_anchor(JavaThread::current());
 
   if (exception) {
     // TODO: handle deopt. see TemplateInterpreterGenerator::generate_throw_exception, OptoRuntime::handle_exception_C, OptoRuntime::handle_exception_helper
@@ -2843,7 +2843,6 @@ bool Continuation::is_frame_in_continuation(JavaThread* thread, const frame& f) 
 }
 
 address* Continuation::get_continuation_entry_pc_for_sender(Thread* thread, const frame& f, address* pc_addr0) {
-  log_develop_trace(jvmcont)("get_continuation_entry_pc_for_sender unextended_sp: " INTPTR_FORMAT, p2i(f.unextended_sp()));
   if (!thread->is_Java_thread()) 
     return pc_addr0;
   oop cont = get_continuation_for_frame((JavaThread*)thread, f.unextended_sp() - 1);
@@ -3546,7 +3545,7 @@ void ContMirror::zero_ref_array(objArrayOop new_array, int new_length, int min_l
     const uint OopsPerHeapWord = HeapWordSize/heapOopSize;
     assert(OopsPerHeapWord >= 1 && (HeapWordSize % heapOopSize == 0), "");
     uint word_size = ((uint)extra_oops + OopsPerHeapWord - 1)/OopsPerHeapWord;
-    Copy::fill_to_aligned_words(new_base, word_size, 0); // fill_to_words
+    Copy::fill_to_aligned_words(new_base, word_size, 0); // fill_to_words (we could be filling more than the elements if narrow, but we do this before copying)
 
     DEBUG_ONLY(for (int i=0; i<extra_oops; i++) assert(new_array->obj_at(i) == (oop)NULL, "");)
   }
@@ -3555,18 +3554,20 @@ void ContMirror::zero_ref_array(objArrayOop new_array, int new_length, int min_l
 template <typename ConfigT>
 void ContMirror::copy_ref_array(objArrayOop old_array, int old_start, objArrayOop new_array, int new_start, int count) {
   assert (new_start + count == new_array->length(), "");
-  // Requires the array is zeroed i.e. !BarrierSet::barrier_set()->is_a(BarrierSet::ModRef):
-  // for (int i=0, old_i = old_start, new_i = new_start; i < count; i++, old_i++, new_i++) new_array->obj_at_put(new_i, old_array->obj_at(old_i));
 
-  // HeapWord* new_base = new_array->base();
-  size_t src_offset, dst_offset;
-  // HeapWord* dst_start;
-  src_offset = (size_t) objArrayOopDesc::obj_at_offset<typename ConfigT::OopT>(old_start);
-  dst_offset = (size_t) objArrayOopDesc::obj_at_offset<typename ConfigT::OopT>(new_start);
-  // dst_start  = (HeapWord*)((char*)new_base + sizeof(typename ConfigT::OopT)*new_start);
-
-  ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(old_array, src_offset, new_array, dst_offset, count);
-  // barrier_set_cast<ModRefBarrierSet>(BarrierSet::barrier_set())->write_ref_array(dst_start, count); // TODO is this necessary?
+  typedef typename ConfigT::OopT OopT;
+  if (ConfigT::_post_barrier) {
+    OopT* from = (OopT*)old_array->base() + old_start;
+    OopT* to   = (OopT*)new_array->base() + new_start;
+    memcpy(to, from, count * sizeof(OopT));
+    barrier_set_cast<ModRefBarrierSet>(BarrierSet::barrier_set())->write_ref_array((HeapWord*)to, count);
+  } else {
+    // Requires the array is zeroed (see G1BarrierSet::write_ref_array_pre_work)
+    size_t src_offset = (size_t) objArrayOopDesc::obj_at_offset<OopT>(old_start);
+    size_t dst_offset = (size_t) objArrayOopDesc::obj_at_offset<OopT>(new_start);
+    ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(old_array, src_offset, new_array, dst_offset, count);
+    // for (int i=0, old_i = old_start, new_i = new_start; i < count; i++, old_i++, new_i++) new_array->obj_at_put(new_i, old_array->obj_at(old_i));
+  }
 }
 
 /* try to allocate an array from the tlab, if it doesn't work allocate one using the allocate
