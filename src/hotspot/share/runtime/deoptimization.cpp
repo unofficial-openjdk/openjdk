@@ -1430,6 +1430,7 @@ static void get_monitors_from_stack(GrowableArray<Handle>* objects_to_revoke, Ja
     for (; !found && !sfs.is_done(); sfs.next()) {
       frame* cur = sfs.current();
       found = cur->id() == fr.id();
+      if (found) break; // we must not call sfs.next
     }
     assert(found, "frame to be deoptimized not found on target thread's stack");
     map = sfs.register_map();

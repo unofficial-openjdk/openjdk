@@ -30,7 +30,7 @@
 #include "runtime/globals.hpp"
 #include "jni.h"
 
-#define CONT_FULL_STACK (!UseNewCode)
+#define CONT_FULL_STACK (!UseContinuationLazyCopy)
 
 // The order of this struct matters as it's directly manipulated by assembly code (push/pop)
 struct FrameInfo {

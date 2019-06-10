@@ -5736,17 +5736,18 @@ RuntimeStub* generate_cont_doYield() {
 
     __ post_call_nop(); // this must be exactly after the pc value that is pushed into the frame info, we use this nop for fast CodeBlob lookup
 
-    if (ContPerfTest > 5) {
-      __ set_last_Java_frame(rsp, rbp, the_pc);
-      __ movptr(c_rarg0, r15_thread);
-      __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::freeze), 2);
-      __ reset_last_Java_frame(false);
+    if (ContPerfTest > 5) {   
     // if (from_java) {
-    //__ set_last_Java_frame(rsp, rbp, the_pc); // may be unnecessary. also, consider MacroAssembler::call_VM_leaf_base
-    //__ call_VM(noreg, CAST_FROM_FN_PTR(address, Continuation::freeze), fi, false); // do NOT check exceptions; they'll get forwarded to the caller
+      __ set_last_Java_frame(rsp, rbp, the_pc); // may be unnecessary. also, consider MacroAssembler::call_VM_leaf_base
+      __ call_VM(noreg, CAST_FROM_FN_PTR(address, Continuation::freeze), fi, false); // do NOT check exceptions; they'll get forwarded to the caller
     // } else {
     //   __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::freeze_C), fi);
     // }
+    // ------------
+    // __ set_last_Java_frame(rsp, rbp, the_pc);
+    // __ movptr(c_rarg0, r15_thread);
+    // __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::freeze), 2);
+    // __ reset_last_Java_frame(false);
     }
 
     Label pinned;
@@ -5879,6 +5880,7 @@ RuntimeStub* generate_cont_doYield() {
     }
 
     __ subq(rsp, rax);             // make room for the thawed frames
+    __ subptr(rsp, wordSize);      // make room for return address
     if (return_barrier) {
       __ push(rdx); __ push_d(xmm0); // save original return value -- again
     }
