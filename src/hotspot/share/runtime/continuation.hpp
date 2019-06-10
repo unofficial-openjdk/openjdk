@@ -41,10 +41,10 @@ struct FrameInfo {
 
 class Continuations : public AllStatic {
 private:
-  static volatile long _exploded_miss;
-  static volatile long _exploded_hit;
-  static volatile long _nmethod_hit;
-  static volatile long _nmethod_miss;
+  static volatile intptr_t _exploded_miss;
+  static volatile intptr_t _exploded_hit;
+  static volatile intptr_t _nmethod_hit;
+  static volatile intptr_t _nmethod_miss;
 
   static int _flags;
 public:

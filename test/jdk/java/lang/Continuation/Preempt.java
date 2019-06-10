@@ -53,30 +53,29 @@ import static org.testng.Assert.*;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CountDownLatch;
 
 @Test
 public class Preempt {
     static final ContinuationScope FOO = new ContinuationScope() {};
+    final Continuation cont = new Continuation(FOO, ()-> { this.loop(); });
+    CountDownLatch startLatch = new CountDownLatch(1);
+    CountDownLatch preemptLatch = new CountDownLatch(1);
     volatile boolean run;
-	volatile int x;
-    
+    volatile int x;
+
     public void test1() throws Exception {
         System.out.println("test1");
 
-		final Continuation cont = new Continuation(FOO, ()-> { 
-				loop();
-            });
-        
         final Thread t0 = Thread.currentThread();
         Thread t = new Thread(() -> {
             try {
-                Thread.sleep(1000);
+                startLatch.await();
                 {
                     var res = cont.tryPreempt(t0);
                     assertEquals(res, Continuation.PreemptStatus.SUCCESS);
                 }
-    
-                Thread.sleep(1000);
+                preemptLatch.await();
                 {
                     var res = cont.tryPreempt(t0);
                     assertEquals(res, Continuation.PreemptStatus.SUCCESS);
@@ -94,7 +93,7 @@ public class Preempt {
         assertEquals(cont.isPreempted(), true);
 
         List<String> frames = cont.stackWalker().walk(fs -> fs.map(StackWalker.StackFrame::getMethodName).collect(Collectors.toList()));
-        assertEquals(frames, Arrays.asList("loop", "lambda$test1$0", "enter"));
+        assertEquals(frames.containsAll(Arrays.asList("loop", "lambda$new$0", "enter")), true);
 
         cont.run();
         assertEquals(cont.isDone(), false);
@@ -104,7 +103,14 @@ public class Preempt {
     }
 
     private void loop() {
-		while (run)
-		   x++;
+        while (run) {
+            x++;
+            if (startLatch.getCount() > 0) {
+                startLatch.countDown();
+            }
+            if (cont.isPreempted() && preemptLatch.getCount() > 0) {
+                preemptLatch.countDown();
+            }
+        }
     }
 }

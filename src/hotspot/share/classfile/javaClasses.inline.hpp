@@ -213,7 +213,7 @@ inline void* java_lang_Continuation::pc(oop ref) {
   return (void*)ref->long_field(_pc_offset);
 }
 inline void java_lang_Continuation::set_pc(oop ref, const void* pc) {
-  ref->long_field_put(_pc_offset, (long)pc);
+  ref->long_field_put(_pc_offset, (jlong)pc);
 }
 inline jint java_lang_Continuation::refSP(oop ref) {
   return ref->int_field(_refSP_offset);
@@ -225,22 +225,22 @@ inline intptr_t* java_lang_Continuation::entrySP(oop ref) {
   return (intptr_t*)ref->long_field(_entrySP_offset);
 }
 inline void java_lang_Continuation::set_entrySP(oop ref, intptr_t* sp) {
-  ref->long_field_put(_entrySP_offset, (long)sp);
+  ref->long_field_put(_entrySP_offset, (jlong)sp);
 }
 inline intptr_t* java_lang_Continuation::entryFP(oop ref) {
   return (intptr_t*)ref->long_field(_entryFP_offset);
 }
 inline void java_lang_Continuation::set_entryFP(oop ref, intptr_t* fp) {
-  ref->long_field_put(_entryFP_offset, (long)fp);
+  ref->long_field_put(_entryFP_offset, (jlong)fp);
 }
 inline address java_lang_Continuation::entryPC(oop ref) {
   return (address)ref->long_field(_entryPC_offset);
 }
 inline void java_lang_Continuation::set_entryPC(oop ref, address pc) {
-  ref->long_field_put(_entryPC_offset, (long)pc);
+  ref->long_field_put(_entryPC_offset, (jlong)pc);
 }
 inline address* java_lang_Continuation::entryPC_addr(oop ref) {
-  return (address*)ref->field_addr(_entryPC_offset); // 
+  return (address*)ref->field_addr(_entryPC_offset);
 }
 inline jint java_lang_Continuation::maxSize(oop ref) {
   return ref->int_field(_maxSize_offset);

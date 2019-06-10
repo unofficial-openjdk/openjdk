@@ -24,6 +24,7 @@
 package java.lang;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CountDownLatch;
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -38,14 +39,15 @@ public class PreemptLiveFrames {
     }
 
     static final ContinuationScope FOO = new ContinuationScope() {};
+    CountDownLatch startLatch = new CountDownLatch(1);
     volatile boolean run;
-	volatile int x;
-    
+    volatile int x;
+
     public void test1() throws Exception {
         System.out.println("test1");
 
         final AtomicInteger result = new AtomicInteger(0);
-		final Continuation cont = new Continuation(FOO, ()-> { 
+        final Continuation cont = new Continuation(FOO, ()-> {
                 double r = 0;
                 int k = 1;
                 int x = 3;
@@ -53,12 +55,11 @@ public class PreemptLiveFrames {
                 r += foo(k);
                 result.set((int)r);
             });
-        
+
         final Thread t0 = Thread.currentThread();
         Thread t = new Thread(() -> {
             try {
-                Thread.sleep(1000);
-
+                startLatch.await();
                 var res = cont.tryPreempt(t0);
                 assertEquals(res, Continuation.PreemptStatus.SUCCESS);
             } catch (InterruptedException e) {
@@ -77,25 +78,25 @@ public class PreemptLiveFrames {
 
         t.join();
     }
-    
+
     double foo(int a) {
         long x = 8;
         String s = "yyy";
         String r = bar(a + 1);
         return Integer.parseInt(r)+1;
     }
-    
+
     String bar(long b) {
         double x = 9.99;
         String s = "zzz";
         String r = baz(b + 1);
         return "" + r;
     }
-    
+
     String baz(long b) {
         double x = 9.99;
         String s = "zzz";
-        
+
         loop();
 
         long r = b+1;
@@ -103,8 +104,12 @@ public class PreemptLiveFrames {
     }
 
     void loop() {
-		while (run)
-		   x++;
+        while (run) {
+            x++;
+            if (startLatch.getCount() > 0) {
+                startLatch.countDown();
+            }
+        }
     }
 
     static void testStackWalk(StackWalker walker) {
@@ -124,7 +129,6 @@ public class PreemptLiveFrames {
         });
         System.out.println("^&^ end");
     }
-    
 
     static void assertEquals(Object actual, Object expected) {
         if (!Objects.equals(actual, expected)) {
