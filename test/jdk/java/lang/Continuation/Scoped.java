@@ -25,10 +25,10 @@
  * @test
  * @summary Nested continuations test
  * 
- * @run testng/othervm -Xint Scoped
- * @run testng/othervm -Xint -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
- * @run testng/othervm -Xcomp -XX:CompileOnly=java/lang/Continuation,Scoped Scoped
- * @run testng/othervm -Xcomp -XX:CompileOnly=java/lang/Continuation,Scoped -XX:+UnlockDiagnosticVMOptions -XX:+UseNewCode Scoped
+ * @run testng/othervm -Xint -XX:-UseContinuationLazyCopy Scoped
+ * @run testng/othervm -Xint -XX:+UnlockDiagnosticVMOptions -XX:+UseContinuationLazyCopy Scoped
+ * @run testng/othervm -Xcomp -XX:CompileOnly=java/lang/Continuation,Scoped -XX:-UseContinuationLazyCopy Scoped
+ * @run testng/othervm -Xcomp -XX:CompileOnly=java/lang/Continuation,Scoped -XX:+UnlockDiagnosticVMOptions -XX:+UseContinuationLazyCopy Scoped
  */
 
 import java.util.Arrays;

@@ -1495,10 +1495,7 @@ public:
 
   template<typename FKind> // the callee's type
   void setup_jump(const frame& f, const frame& callee) {
-    // upon end of freeze, f points at the entry frame. we need to point it one more frame, to Continuation.run
-    // TODO performance: we don't need all frame fields, e.g. we get CodeBlob in sender, but don't use it
-    // ::fix_continuation_bottom_sender(_cont, f); // need this so frame_sender could work  // check if :: is necessary
-    // frame f = f0.frame_sender<ContinuationCodeBlobLookup>(&dmap);
+    // set_anchor(_thread, f); // so that safepoints in JVMTI before returning to Java won't bother us about frozen frames
 
     ContinuationHelper::to_frame_info_pd<FKind>(f, callee, _fi);
     _fi->sp = f.unextended_sp(); // java_lang_Continuation::entrySP(cont);
@@ -1673,6 +1670,9 @@ public:
     }
 
     patch<FKind, top, bottom>(f, hf, caller);
+    
+    log_develop_trace(jvmcont)(">>>> freeze_compiled_frame real_pc: %p address: %p sp: %p", Frame::real_pc(f), &(((address*) f.sp())[-1]), f.sp());
+
     assert(bottom || Interpreter::contains(hf.return_pc<FKind>()) == caller.is_interpreted_frame(), "");
 
     return hf;
@@ -2000,8 +2000,8 @@ int freeze0(JavaThread* thread, FrameInfo* fi) {
 
   cont.write(); // commit the freeze
 
-  post_JVMTI_yield(thread, cont);
   cont.post_jfr_event(&event);
+  post_JVMTI_yield(thread, cont); // can safepoint
 
   // set_anchor(thread, fi);
   thread->set_cont_yield(false);
@@ -2302,7 +2302,7 @@ public:
     }
 
     if (top) {
-      finish(caller);
+      finish(caller); // caller is now the current frame
     }
 
     DEBUG_ONLY(_frames++;)
@@ -2562,13 +2562,16 @@ public:
     if (log_develop_is_enabled(Trace, jvmcont)) _cont.last_frame<mode_slow>().print_on(_cont, tty);
   }
 
-  void setup_jump(const frame& f) {
+  void setup_jump(frame& f) {
     assert (!f.is_compiled_frame() || f.is_deoptimized_frame() == f.cb()->as_compiled_method()->is_deopt_pc(f.raw_pc()), "");
     assert (!f.is_compiled_frame() || f.is_deoptimized_frame() == (f.pc() != f.raw_pc()), "");
 
     _fi->sp = f.sp();
-    _fi->pc = f.raw_pc(); // we'll jump to the current continuation pc // Interpreter::return_entry(vtos, 0, Bytecodes::_invokestatic, true); //
+    address pc = f.raw_pc();
+    _fi->pc = pc;
     ContinuationHelper::to_frame_info_pd(f, _fi);
+
+    Frame::patch_pc(f, pc); // in case we want to deopt the frame in a full transition, this is checked.
 
     assert (mode == mode_preempt || !CONT_FULL_STACK || assert_top_java_frame_name(f, YIELD0_SIG), "");
   }
@@ -2749,10 +2752,10 @@ static inline void thaw0(JavaThread* thread, FrameInfo* fi, const bool return_ba
 
   DEBUG_ONLY(thread->_continuation = oopCont;)
 
+  cont.post_jfr_event(&event);
   if (!return_barrier) {
     post_JVMTI_continue(thread, fi, java_frame_count);
   }
-  cont.post_jfr_event(&event);
 
   log_develop_debug(jvmcont)("=== End of thaw #" INTPTR_FORMAT, cont.hash());
 }
@@ -3475,7 +3478,7 @@ bool ContMirror::grow_ref_stack(int nr_oops) {
 
   zero_ref_array<ConfigT>(new_ref_stack, new_length, min_length);
   if (old_oops > 0) {
-    assert(UseNewCode, "");
+    assert(!CONT_FULL_STACK, "");
     copy_ref_array<ConfigT>(_ref_stack, offset, new_ref_stack, fix_decreasing_index(offset, old_length, new_length), old_oops);
   }
 
@@ -3522,8 +3525,8 @@ void ContMirror::copy_primitive_array(typeArrayOop old_array, int old_start, typ
   ElemType* from = (ElemType*)old_array->base(basicElementType) + old_start;
   ElemType* to   = (ElemType*)new_array->base(basicElementType) + new_start;
   size_t size = to_bytes(count);
-
   memcpy(to, from, size);
+
   //Copy::conjoint_memory_atomic(from, to, size); // Copy::disjoint_words((HeapWord*)from, (HeapWord*)to, size/wordSize); //
   // ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(_stack, offset * elementSizeInBytes, new_stack, (new_length - n) * elementSizeInBytes, n);
 }
@@ -3542,18 +3545,18 @@ objArrayOop ContMirror::allocate_refstack_array(size_t nr_oops) {
 template <typename ConfigT>
 void ContMirror::zero_ref_array(objArrayOop new_array, int new_length, int min_length) {
   assert (new_length == new_array->length(), "");
+  int extra_oops = new_length - min_length;
 
-  if (ConfigT::_post_barrier) { // BarrierSet::barrier_set()->is_a(BarrierSet::ModRef)
-    HeapWord* new_base = new_array->base();
+  if (ConfigT::_post_barrier) {
     // zero the bottom part of the array that won't be filled in the freeze
-    int extra_oops = new_length - min_length;
+    HeapWord* new_base = new_array->base();
     const uint OopsPerHeapWord = HeapWordSize/heapOopSize;
     assert(OopsPerHeapWord >= 1 && (HeapWordSize % heapOopSize == 0), "");
     uint word_size = ((uint)extra_oops + OopsPerHeapWord - 1)/OopsPerHeapWord;
     Copy::fill_to_aligned_words(new_base, word_size, 0); // fill_to_words (we could be filling more than the elements if narrow, but we do this before copying)
-
-    DEBUG_ONLY(for (int i=0; i<extra_oops; i++) assert(new_array->obj_at(i) == (oop)NULL, "");)
   }
+
+  DEBUG_ONLY(for (int i=0; i<extra_oops; i++) assert(new_array->obj_at(i) == (oop)NULL, "");)
 }
 
 template <typename ConfigT>
@@ -3568,6 +3571,7 @@ void ContMirror::copy_ref_array(objArrayOop old_array, int old_start, objArrayOo
     barrier_set_cast<ModRefBarrierSet>(BarrierSet::barrier_set())->write_ref_array((HeapWord*)to, count);
   } else {
     // Requires the array is zeroed (see G1BarrierSet::write_ref_array_pre_work)
+    DEBUG_ONLY(for (int i=0; i<count; i++) assert(new_array->obj_at(new_start + i) == (oop)NULL, "");)
     size_t src_offset = (size_t) objArrayOopDesc::obj_at_offset<OopT>(old_start);
     size_t dst_offset = (size_t) objArrayOopDesc::obj_at_offset<OopT>(new_start);
     ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(old_array, src_offset, new_array, dst_offset, count);
