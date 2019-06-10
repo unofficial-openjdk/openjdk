@@ -24,6 +24,7 @@
 /**
  * @test
  * @run testng NioChannels
+ * @requires (os.family != "windows")
  * @summary Basic tests for Fibers doing blocking I/O with NIO channels
  */
 

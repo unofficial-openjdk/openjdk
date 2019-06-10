@@ -24,6 +24,7 @@
 /**
  * @test
  * @run testng NetSockets
+ * @requires (os.family != "windows")
  * @summary Basic tests for Fibers using java.net.Socket
  */
 
