@@ -175,7 +175,7 @@ static void
 setupBreakpoint(JNIEnv *jni, jclass contKlass, const char *methodName)
 {
   jlocation location = (jlocation)0L;
-  jmethodID method;
+  jmethodID method = NULL;
   jvmtiError err;
   jint method_count = java_lang_Continuation_method_count;
 
