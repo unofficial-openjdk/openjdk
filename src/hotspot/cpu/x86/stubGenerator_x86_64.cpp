@@ -5831,7 +5831,7 @@ RuntimeStub* generate_cont_doYield() {
 
     // TODO: Handle Valhalla return types. May require generating different return barriers.
 
-    Register fi = c_rarg0;
+    Register fi = r11;
 
     if (!return_barrier) {
       __ pop(c_rarg3); // pop return address. if we don't do this, we get a drift, where the bottom-most frozen frame continuously grows
