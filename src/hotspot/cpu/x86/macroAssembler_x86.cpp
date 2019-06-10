@@ -2788,10 +2788,10 @@ void MacroAssembler::enter() {
 }
 
 void MacroAssembler::post_call_nop() {
-  emit_int8(0x0f);
-  emit_int8(0x1f);
-  emit_int8(0x84);
-  emit_int8(0x00);
+  emit_int8((int8_t)0x0f);
+  emit_int8((int8_t)0x1f);
+  emit_int8((int8_t)0x84);
+  emit_int8((int8_t)0x00);
   emit_int32(0x00);
 }
 
@@ -2800,11 +2800,11 @@ void MacroAssembler::fat_nop() {
   if (UseAddressNop) {
     addr_nop_5();
   } else {
-    emit_int8(0x26); // es:
-    emit_int8(0x2e); // cs:
-    emit_int8(0x64); // fs:
-    emit_int8(0x65); // gs:
-    emit_int8((unsigned char)0x90);
+    emit_int8((int8_t)0x26); // es:
+    emit_int8((int8_t)0x2e); // cs:
+    emit_int8((int8_t)0x64); // fs:
+    emit_int8((int8_t)0x65); // gs:
+    emit_int8((int8_t)0x90);
   }
 }
 

@@ -5690,7 +5690,7 @@ RuntimeStub* generate_cont_doYield() {
     const char *name = "cont_doYield";
 
     enum layout {
-      frameinfo_11  = frame::arg_reg_save_area_bytes/BytesPerInt,
+      frameinfo_11,
       frameinfo_12,
       frameinfo_21,
       frameinfo_22,
@@ -5713,9 +5713,10 @@ RuntimeStub* generate_cont_doYield() {
     // MacroAssembler* masm = _masm;
     // StubCodeMark mark(this, "StubRoutines", name);
 
-    address start = __ pc();
-
+    // second argument is the FrameInfo
     Register fi = c_rarg1;
+
+    address start = __ pc();
 
     // __ movq(c_rarg2, c_rarg1);          // scopes argument
     __ movptr(rax, Address(rsp, 0));    // use return address as the frame pc // __ lea(rax, InternalAddress(pcxxxx));
@@ -5736,25 +5737,29 @@ RuntimeStub* generate_cont_doYield() {
     __ post_call_nop(); // this must be exactly after the pc value that is pushed into the frame info, we use this nop for fast CodeBlob lookup
 
     if (ContPerfTest > 5) {
+      __ set_last_Java_frame(rsp, rbp, the_pc);
+      __ movptr(c_rarg0, r15_thread);
+      __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::freeze), 2);
+      __ reset_last_Java_frame(false);
     // if (from_java) {
-      __ set_last_Java_frame(rsp, rbp, the_pc); // may be unnecessary. also, consider MacroAssembler::call_VM_leaf_base
-      __ call_VM(noreg, CAST_FROM_FN_PTR(address, Continuation::freeze), fi, false); // do NOT check exceptions; they'll get forwarded to the caller
+    //__ set_last_Java_frame(rsp, rbp, the_pc); // may be unnecessary. also, consider MacroAssembler::call_VM_leaf_base
+    //__ call_VM(noreg, CAST_FROM_FN_PTR(address, Continuation::freeze), fi, false); // do NOT check exceptions; they'll get forwarded to the caller
     // } else {
     //   __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::freeze_C), fi);
     // }
     }
 
     Label pinned;
-    __ pop(rdx); // read the pc from the FrameInfo
-    if (ContPerfTest <= 5) { __ xorq(rdx, rdx); __ xorq(rax, rax); }
-    __ testq(rdx, rdx);
+    __ pop(c_rarg0); // read the pc from the FrameInfo
+    if (ContPerfTest <= 5) { __ xorq(c_rarg0, c_rarg0); __ xorq(rax, rax); }
+    __ testq(c_rarg0, c_rarg0);
     __ jcc(Assembler::zero, pinned);
 
     __ pop(rbp); // not pinned -- jump to Continuation.run (the entry frame)
     __ movptr(rbp, Address(rbp, 0)); // frame_info->fp has an indirection here. See Continuation::freeze for an explanation.
     __ pop(fi);
     __ movptr(rsp, fi);
-    __ jmp(rdx);
+    __ jmp(c_rarg0);
 
     __ bind(pinned); // pinned -- return to caller
     __ lea(rsp, Address(rsp, wordSize*2)); // "pop" the rest of the FrameInfo struct
@@ -5826,7 +5831,7 @@ RuntimeStub* generate_cont_doYield() {
 
     // TODO: Handle Valhalla return types. May require generating different return barriers.
 
-    Register fi = r11;
+    Register fi = c_rarg0;
 
     if (!return_barrier) {
       __ pop(c_rarg3); // pop return address. if we don't do this, we get a drift, where the bottom-most frozen frame continuously grows
@@ -5838,7 +5843,7 @@ RuntimeStub* generate_cont_doYield() {
       Label no_saved_sp;
       __ lea(fi, Address(r15_thread, JavaThread::cont_frame_offset()));
       __ movptr(fi, Address(fi, wordSize*2)); // sp
-      __ testq(fi, fi); 
+      __ testq(fi, fi);
       __ jcc(Assembler::zero, no_saved_sp);
       __ movptr(rsp, fi);
       __ bind(no_saved_sp);
@@ -5862,7 +5867,7 @@ RuntimeStub* generate_cont_doYield() {
     pop_FrameInfo(_masm, fi, rbp, rbx);
     if (return_barrier) {
       __ pop_d(xmm0); __ pop(rax); // restore return value (no safepoint in the call to thaw, so even an oop return value should be OK)
-    } 
+    }
     __ movptr(rsp, fi); // we're now on the yield frame (which is in an address above us b/c rsp has been pushed down)
     __ jmp(rbx); // a jump to StubRoutines::throw_StackOverflowError_entry
 

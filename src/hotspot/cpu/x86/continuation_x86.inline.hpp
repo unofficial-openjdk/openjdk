@@ -52,8 +52,8 @@ static void set_anchor(JavaThread* thread, const frame& f) {
   print_vframe(thread->last_frame());
 }
 
-inline bool hframe::operator==(const hframe& other) const { 
-    return  HFrameBase::operator==(other) && _fp == other._fp; 
+inline bool hframe::operator==(const hframe& other) const {
+    return  HFrameBase::operator==(other) && _fp == other._fp;
 }
 
 inline intptr_t* hframe::real_fp(const ContMirror& cont) const {
@@ -68,9 +68,9 @@ inline int hframe::real_fp_index(const ContMirror& cont) const {
   return _sp + ContMirror::to_index(cb()->frame_size() * sizeof(intptr_t));
 }
 
-inline void hframe::patch_real_fp_offset(int offset, intptr_t value) { 
+inline void hframe::patch_real_fp_offset(int offset, intptr_t value) {
   intptr_t* addr = (link_address() + offset);
-  *(link_address() + offset) = value; 
+  *(link_address() + offset) = value;
 }
 
 template<> 
@@ -88,11 +88,11 @@ inline intptr_t* hframe::link_address(int sp, intptr_t fp, const CodeBlob* cb, c
 template<typename FKind>
 inline void hframe::set_link_address(const ContMirror& cont) {
   assert (FKind::is_instance(*this), "");
-  _link_address = link_address<FKind>(_sp, _fp, _cb, cont); 
+  _link_address = link_address<FKind>(_sp, _fp, _cb, cont);
 }
 
-inline void hframe::set_link_address(const ContMirror& cont) { 
-  _is_interpreted ? set_link_address<Interpreted>(cont) : set_link_address<NonInterpretedUnknown>(cont); 
+inline void hframe::set_link_address(const ContMirror& cont) {
+  _is_interpreted ? set_link_address<Interpreted>(cont) : set_link_address<NonInterpretedUnknown>(cont);
 }
 
 template<typename FKind>
@@ -195,7 +195,7 @@ hframe hframe::sender(const ContMirror& cont, int num_oops) const {
   assert (sender_sp > _sp, "");
   if (sender_sp >= cont.stack_length())
     return hframe();
-  
+
   address sender_pc = return_pc<FKind>();
   bool is_sender_interpreted = mode == mode_fast ? false : Interpreter::contains(sender_pc);
   CodeBlob* sender_cb;
@@ -217,7 +217,7 @@ hframe hframe::sender(const ContMirror& cont, int num_oops) const {
 }
 
 inline frame hframe::to_frame(ContMirror& cont, address pc, bool deopt) const {
-  return frame(_sp, _ref_sp, reinterpret_cast<intptr_t>(_fp), pc, 
+  return frame(_sp, _ref_sp, _fp, pc,
               _cb != NULL ? _cb : (_cb = CodeCache::find_blob(_pc)),
               deopt);
 }
@@ -372,8 +372,8 @@ inline void ContinuationHelper::update_register_map(RegisterMap* map, intptr_t**
 }
 
 void ContinuationHelper::update_register_map(RegisterMap* map, const hframe& hf, const ContMirror& cont) {
-  int link_index = cont.stack_index(hf.link_address());
-  log_develop_trace(jvmcont)("ContinuationHelper::update_register_map: frame::update_map_with_saved_link: %d", link_index);
+  intptr_t link_index = cont.stack_index(hf.link_address());
+  log_develop_trace(jvmcont)("ContinuationHelper::update_register_map: frame::update_map_with_saved_link: " INTPTR_FORMAT, link_index);
   frame::update_map_with_saved_link(map, reinterpret_cast<intptr_t**>(link_index));
 }
 

@@ -1729,7 +1729,7 @@ void JavaThread::initialize() {
 
   _cont_yield = false;
   _cont_preempt = false;
-  _cont_frame = (FrameInfo){0, 0, 0};
+  memset(&_cont_frame, 0, sizeof(FrameInfo));
 
 #ifndef PRODUCT
   _jmp_ring_index = 0;
@@ -2370,7 +2370,7 @@ void JavaThread::handle_special_runtime_exit_condition(bool check_asyncs) {
 
   if (is_cont_force_yield()) {
     log_develop_trace(jvmcont)("handle_special_runtime_exit_condition is_cont_force_yield: %d check_asyncs: %d", is_cont_force_yield(), check_asyncs);
-    if (check_asyncs) { // TODO: we should probably be even more selective than that 
+    if (check_asyncs) { // TODO: we should probably be even more selective than that
       // we need this only for interpreted frames -- for compiled frames we install a return barrier on the safepoint stub in Continuation::try_force_yield
       StubRoutines::cont_jump_from_sp_C()();
     }

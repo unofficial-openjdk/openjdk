@@ -427,9 +427,9 @@ private:
   oop raw_allocate(Klass* klass, size_t words, size_t elements, bool zero);
 
 public:
-  static inline int to_index(size_t x) { return x >> LogBytesPerElement; }
+  static inline int to_index(int x) { return x >> LogBytesPerElement; }
   static inline int to_bytes(int x)    { return x << LogBytesPerElement; }
-  static inline int to_index(void* base, void* ptr) { return to_index((char*)ptr - (char*)base); }
+  static inline int to_index(const void* base, const void* ptr) { return to_index((const char*)ptr - (const char*)base); }
 
 private:
   ContMirror(const ContMirror& cont); // no copy constructor
@@ -598,7 +598,7 @@ int HFrameBase<SelfPD>::interpreted_frame_num_oops(const InterpreterOopMap& mask
 }
 
 template<typename SelfPD>
-int HFrameBase<SelfPD>::interpreted_frame_size() const { 
+int HFrameBase<SelfPD>::interpreted_frame_size() const {
   assert (_is_interpreted, "");
   return (frame_bottom_index<Interpreted>() - frame_top_index<Interpreted>()) * elementSizeInBytes;
 }
@@ -1068,7 +1068,7 @@ bool NonInterpreted<Self>::is_owning_locks(JavaThread* thread, const RegisterMap
     return false;
   }
 
-  ResourceMark rm(thread);
+  ResourceMark rm;
   for (ScopeDesc* scope = cm->scope_desc_at(f.pc()); scope != NULL; scope = scope->sender()) {
     GrowableArray<MonitorValue*>* mons = scope->monitors();
     if (mons == NULL || mons->is_empty())
@@ -1231,7 +1231,10 @@ static freeze_result cont_freeze(JavaThread* thread, ContMirror& cont, FrameInfo
   switch (mode) {
     case mode_fast:    return cont_freeze_fast   (thread, cont, fi);
     case mode_slow:    return cont_freeze_slow   (thread, cont, fi);
-    case mode_preempt: return cont_freeze_preempt(thread, cont, fi);
+    default: {
+      assert(mode == mode_preempt, "invariant");
+      return cont_freeze_preempt(thread, cont, fi);
+    }
   }
 }
 
@@ -1482,7 +1485,7 @@ public:
     }
 
     DEBUG_ONLY(log_develop_trace(jvmcont)("finalize bottom frame:"); if (log_develop_is_enabled(Trace, jvmcont)) caller.print_on(_cont, tty);)
-    
+
     _cont.add_num_frames(_frames);
     _cont.add_size(_size);
     _cont.e_add_refs(_oops);
@@ -2689,7 +2692,9 @@ static inline void thaw0(JavaThread* thread, FrameInfo* fi, const bool return_ba
   // NoSafepointVerifier nsv;
   EventContinuationThaw event;
 
-  if (return_barrier) log_develop_trace(jvmcont)("== RETURN BARRIER");
+  if (return_barrier) {
+    log_develop_trace(jvmcont)("== RETURN BARRIER");
+  }
   const int num_frames = thaw_num_frames(return_barrier);
 
   log_develop_trace(jvmcont)("~~~~~~~~~ thaw num_frames: %d", num_frames);
@@ -3509,7 +3514,7 @@ typeArrayOop ContMirror::allocate_stack_array(size_t elements) {
   log_develop_trace(jvmcont)("allocate_stack_array elements: %lu", elements);
 
   TypeArrayKlass* klass = TypeArrayKlass::cast(Universe::intArrayKlassObj());
-  size_t size_in_words = typeArrayOopDesc::object_size(klass, elements);
+  size_t size_in_words = typeArrayOopDesc::object_size(klass, (int)elements);
   return typeArrayOop(raw_allocate(klass, size_in_words, elements, false));
 }
 
@@ -3530,7 +3535,7 @@ objArrayOop ContMirror::allocate_refstack_array(size_t nr_oops) {
   log_develop_trace(jvmcont)("allocate_refstack_array nr_oops: %lu zero: %d", nr_oops, zero);
 
   ArrayKlass* klass = ArrayKlass::cast(Universe::objectArrayKlassObj());
-  size_t size_in_words = objArrayOopDesc::object_size(nr_oops);
+  size_t size_in_words = objArrayOopDesc::object_size((int)nr_oops);
   return objArrayOop(raw_allocate(klass, size_in_words, nr_oops, zero));
 }
 
@@ -3573,7 +3578,7 @@ void ContMirror::copy_ref_array(objArrayOop old_array, int old_start, objArrayOo
 /* try to allocate an array from the tlab, if it doesn't work allocate one using the allocate
  * method. In the later case we might have done a safepoint and need to reload our oops */
 oop ContMirror::raw_allocate(Klass* klass, size_t size_in_words, size_t elements, bool zero) {
-  ObjArrayAllocator allocator(klass, size_in_words, elements, zero, _thread);
+  ObjArrayAllocator allocator(klass, size_in_words, (int)elements, zero, _thread);
   HeapWord* start = _thread->tlab().allocate(size_in_words);
   if (start != NULL) {
     return allocator.initialize(start);
@@ -3751,10 +3756,10 @@ void Continuations::init() {
   ConfigResolve::resolve();
 }
 
-volatile long Continuations::_exploded_miss = 0;
-volatile long Continuations::_exploded_hit = 0;
-volatile long Continuations::_nmethod_miss = 0;
-volatile long Continuations::_nmethod_hit = 0;
+volatile intptr_t Continuations::_exploded_miss = 0;
+volatile intptr_t Continuations::_exploded_hit = 0;
+volatile intptr_t Continuations::_nmethod_miss = 0;
+volatile intptr_t Continuations::_nmethod_hit = 0;
 
 void Continuations::exploded_miss() {
   //Atomic::inc(&_exploded_miss);
@@ -3845,8 +3850,8 @@ static void print_frames(JavaThread* thread, outputStream* st) {
 #ifndef PRODUCT
   map.set_skip_missing(true);
   ResetNoHandleMark rnhm;
-  ResourceMark rm(thread);
-  HandleMark hm(thread);
+  ResourceMark rm;
+  HandleMark hm;
   FrameValues values;
 #endif
 
