@@ -3567,7 +3567,7 @@ void ContMirror::copy_ref_array(objArrayOop old_array, int old_start, objArrayOo
   if (ConfigT::_post_barrier) {
     OopT* from = (OopT*)old_array->base() + old_start;
     OopT* to   = (OopT*)new_array->base() + new_start;
-    memcpy(to, from, count * sizeof(OopT));
+    memcpy((void*)to, (void*)from, count * sizeof(OopT));
     barrier_set_cast<ModRefBarrierSet>(BarrierSet::barrier_set())->write_ref_array((HeapWord*)to, count);
   } else {
     // Requires the array is zeroed (see G1BarrierSet::write_ref_array_pre_work)
