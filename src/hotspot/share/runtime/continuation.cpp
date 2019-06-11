@@ -440,7 +440,7 @@ public:
   ContMirror(JavaThread* thread, oop cont);
   ContMirror(const RegisterMap* map);
 
-  DEBUG_ONLY(intptr_t hash() { return _cont->identity_hash(); })
+  DEBUG_ONLY(intptr_t hash() { return Thread::current()->is_Java_thread() ? _cont->identity_hash() : -1; })
   void write();
 
   oop mirror() { return _cont; }
@@ -1495,8 +1495,6 @@ public:
 
   template<typename FKind> // the callee's type
   void setup_jump(const frame& f, const frame& callee) {
-    // set_anchor(_thread, f); // so that safepoints in JVMTI before returning to Java won't bother us about frozen frames
-
     ContinuationHelper::to_frame_info_pd<FKind>(f, callee, _fi);
     _fi->sp = f.unextended_sp(); // java_lang_Continuation::entrySP(cont);
     _fi->pc = Continuation::is_return_barrier_entry(f.pc()) ? _cont.entryPC()
@@ -1671,7 +1669,7 @@ public:
 
     patch<FKind, top, bottom>(f, hf, caller);
     
-    log_develop_trace(jvmcont)(">>>> freeze_compiled_frame real_pc: %p address: %p sp: %p", Frame::real_pc(f), &(((address*) f.sp())[-1]), f.sp());
+    log_develop_trace(jvmcont)("freeze_compiled_frame real_pc: %p address: %p sp: %p", Frame::real_pc(f), &(((address*) f.sp())[-1]), f.sp());
 
     assert(bottom || Interpreter::contains(hf.return_pc<FKind>()) == caller.is_interpreted_frame(), "");
 
@@ -2232,6 +2230,8 @@ private:
 
   typedef int (*ThawFnT)(address /* dst */, address /* objArray */, address /* map */);
 
+  bool should_deoptimize() { return true; /* mode != mode_fast && _thread->is_interp_only_mode(); */ } // TODO PERF
+
 public:
 
   Thaw(JavaThread* thread, ContMirror& mirror) :
@@ -2393,8 +2393,8 @@ public:
     if (bottom && !_cont.is_empty()) {
       log_develop_trace(jvmcont)("Setting return address to return barrier: " INTPTR_FORMAT, p2i(StubRoutines::cont_returnBarrier()));
       FKind::patch_return_pc(f, StubRoutines::cont_returnBarrier());
-    } else {
-      FKind::patch_return_pc(f, caller.raw_pc()); // this patches the return address to the deopt handler if necessary TODO DEOPT -- if we do this only on bottom, everything works; what happens if we miss a deopt?
+    } else if (bottom || should_deoptimize()) {
+      FKind::patch_return_pc(f, caller.raw_pc()); // this patches the return address to the deopt handler if necessary
     }
     patch_pd<FKind, top, bottom>(f, caller);
 
@@ -2508,15 +2508,19 @@ public:
     _cont.dec_num_frames();
 
     if (!FKind::stub) {
-      if (!f.is_deoptimized_frame()
-          && (hf.cb()->as_compiled_method()->is_marked_for_deoptimization() 
-            || (mode != mode_fast && _thread->is_interp_only_mode()))) {
-        log_develop_trace(jvmcont)("Deoptimizing thawed frame");         // tty->print_cr("DDDDDDDDDDDDD");
+      if (should_deoptimize() && !f.is_deoptimized_frame()
+          && (hf.cb()->as_compiled_method()->is_marked_for_deoptimization() || (mode != mode_fast && _thread->is_interp_only_mode()))) {
+        log_develop_trace(jvmcont)("Deoptimizing thawed frame");
         DEBUG_ONLY(Frame::patch_pc(f, NULL));
 
-        set_anchor(_thread, f); // deoptimization may need this
-        Deoptimization::deoptimize(_thread, f, &_map); // assumes no monitors in continuation; see Deoptimization::revoke_using_safepoint
-        clear_anchor(_thread);
+        f.deoptimize(_thread); // we're assuming there are no monitors; this doesn't revoke biased locks
+        // set_anchor(_thread, f); // deoptimization may need this
+        // Deoptimization::deoptimize(_thread, f, &_map); // gets passed frame by value 
+        // clear_anchor(_thread);
+
+        assert (f.is_deoptimized_frame() && is_deopt_return(f.raw_pc(), f), 
+          "f.is_deoptimized_frame(): %d is_deopt_return(f.raw_pc()): %d is_deopt_return(f.pc()): %d", 
+          f.is_deoptimized_frame(), is_deopt_return(f.raw_pc(), f), is_deopt_return(f.pc(), f));
       }
     }
 
@@ -2779,7 +2783,7 @@ JRT_LEAF(address, Continuation::thaw_leaf(FrameInfo* fi, bool return_barrier, bo
     fi->pc = SharedRuntime::raw_exception_handler_for_return_address(JavaThread::current(), fi->pc);
     return ret;
   } else {
-    return reinterpret_cast<address>(Interpreter::contains(fi->pc)); // really only necessary in the case of continuing from a forced yield
+    return reinterpret_cast<address>(Interpreter::contains(fi->pc)); // TODO PERF: really only necessary in the case of continuing from a forced yield
   }
 JRT_END
 
@@ -2799,7 +2803,7 @@ JRT_ENTRY(address, Continuation::thaw(JavaThread* thread, FrameInfo* fi, bool re
     fi->pc = SharedRuntime::raw_exception_handler_for_return_address(JavaThread::current(), fi->pc);
     return ret;
   } else {
-    return reinterpret_cast<address>(Interpreter::contains(fi->pc)); // really only necessary in the case of continuing from a forced yield
+    return reinterpret_cast<address>(Interpreter::contains(fi->pc)); // TODO PERF: really only necessary in the case of continuing from a forced yield
   }
 JRT_END
 

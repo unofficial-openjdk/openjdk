@@ -70,13 +70,8 @@ RegisterMap::RegisterMap(JavaThread *thread, bool update_map, bool walk_cont, bo
   _last_vstack_fp = NULL;
   if (walk_cont) {
     // we allocate the handle now (rather than in set_cont) because sometimes (StackWalker) the handle must live across HandleMarks
-    JavaThread* currentThread = JavaThread::current();
-    if (thread == NULL) {
-      thread = currentThread;
-    }
-    assert (thread != NULL, "");
-    if (thread->last_continuation() != NULL) {
-      _cont = Handle(currentThread, thread->last_continuation());
+    if (thread != NULL && thread->last_continuation() != NULL) {
+      _cont = Handle(Thread::current(), thread->last_continuation());
       *(_cont.raw_value()) = NULL; // TODO UGLY : we just need to allocate a NULL handle
     } else {
       _cont = Handle();
@@ -354,9 +349,9 @@ void frame::deoptimize(JavaThread* thread) {
                         cm->deopt_handler_begin();
 
   // Save the original pc before we patch in the new one
-  // address xpc = pc();
   cm->set_original_pc(this, pc());
   patch_pc(thread, deopt);
+  assert(is_deoptimized_frame(), "must be");
 
 #ifdef ASSERT
   {
@@ -366,20 +361,6 @@ void frame::deoptimize(JavaThread* thread) {
       while (id() != check.id()) {
         check = check.sender(&map);
       }
-      // if (!check.is_deoptimized_frame()) {
-      //   tty->print_cr("Deopt failure:");
-      //   tty->print_cr("deopt: " INTPTR_FORMAT " pc: " INTPTR_FORMAT, p2i(deopt), p2i(xpc));
-      //   tty->print_cr("me:");
-      //   print_on(tty);
-      //   tty->print_cr("---- %d", is_younger(check.id()));
-      //   check = thread->last_frame();
-      //   check.print_on(tty);
-      //   while (id() != check.id()) {
-      //     check = check.sender(&map);
-      //     tty->print_cr("---- %d", is_younger(check.id()));
-      //     check.print_on(tty);
-      //   }
-      // }
       assert(check.is_deoptimized_frame(), "missed deopt");
     }
   }

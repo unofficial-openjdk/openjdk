@@ -285,24 +285,31 @@ void frame::patch_pc(Thread* thread, address pc) {
   // patch in the same address that's already there.
 
   assert(!Continuation::is_return_barrier_entry(*pc_addr), "return barrier");
-  // *pc_addr = 0 in thaw_compiled_frame, to disable this assertion, because the callee is not yet on the stack.
-  // if (!(_pc == *pc_addr || pc == *pc_addr || *pc_addr == 0)) {
-  //   tty->print_cr(">>> frame::patch_pc");
-  //   print_on(tty);
-  //   tty->print_cr("_pc"); os::print_location(tty, (intptr_t)_pc); tty->print_cr("pc"); os::print_location(tty, (intptr_t)pc); tty->print_cr("*pc_addr"); os::print_location(tty, (intptr_t)*pc_addr);
-  // }
+
   assert(_pc == *pc_addr || pc == *pc_addr || *pc_addr == 0, "must be (pc: " INTPTR_FORMAT " _pc: " INTPTR_FORMAT " pc_addr: " INTPTR_FORMAT " *pc_addr: " INTPTR_FORMAT ")", p2i(pc), p2i(_pc), p2i(pc_addr), p2i(*pc_addr));
+  DEBUG_ONLY(address old_pc = _pc;)
   *pc_addr = pc;
   _cb = CodeCache::find_blob(pc);
+  _pc = pc; // must be set before call to get_deopt_original_pc
   address original_pc = CompiledMethod::get_deopt_original_pc(this);
   if (original_pc != NULL) {
-    assert(original_pc == _pc, "expected original PC to be stored before patching");
+    assert(original_pc == old_pc, "expected original PC to be stored before patching");
     _deopt_state = is_deoptimized;
-    // leave _pc as is
+    _pc = original_pc;
   } else {
     _deopt_state = not_deoptimized;
-    _pc = pc;
   }
+  assert (!is_compiled_frame() || !_cb->as_compiled_method()->is_deopt_entry(_pc), "must be");
+
+#ifdef ASSERT
+  {
+    frame f = frame(this->sp(), this->unextended_sp(), this->fp(), pc);
+    assert(f.is_deoptimized_frame() == this->is_deoptimized_frame() && f.pc() == this->pc() && f.raw_pc() == this->raw_pc(), 
+      "must be (f.is_deoptimized_frame(): %d this->is_deoptimized_frame(): %d "
+      "f.pc(): " INTPTR_FORMAT " this->pc(): " INTPTR_FORMAT " f.raw_pc(): " INTPTR_FORMAT " this->raw_pc(): " INTPTR_FORMAT ")", 
+      f.is_deoptimized_frame(), this->is_deoptimized_frame(), p2i(f.pc()), p2i(this->pc()), p2i(f.raw_pc()), p2i(this->raw_pc()));
+  }
+#endif
 }
 
 int frame::frame_size(RegisterMap* map) const {
