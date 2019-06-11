@@ -5916,6 +5916,7 @@ RuntimeStub* generate_cont_doYield() {
       // see InterpreterMacroAssembler::restore_bcp/restore_locals
       __ movptr(_bcp_register,    Address(rbp, frame::interpreter_frame_bcp_offset    * wordSize));
       __ movptr(_locals_register, Address(rbp, frame::interpreter_frame_locals_offset * wordSize));
+      // __ reinit_heapbase();
 
       __ bind(not_interpreter);
 
