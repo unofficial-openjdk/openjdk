@@ -111,7 +111,7 @@ static int PERFTEST_LEVEL = ContPerfTest;
 
 static bool is_stub(CodeBlob* cb);
 static void set_anchor(JavaThread* thread, const FrameInfo* fi);
-static void set_anchor(JavaThread* thread, const frame& f);
+// static void set_anchor(JavaThread* thread, const frame& f); -- unused
 
 // debugging functions
 static void print_oop(void *p, oop obj, outputStream* st = tty);
@@ -2404,10 +2404,6 @@ public:
 
     assert (!bottom || !_cont.is_empty() || assert_bottom_java_frame_name(f, ENTER_SIG), "");
     assert (!bottom || (_cont.is_empty() != Continuation::is_cont_barrier_frame(f)), "cont.is_empty(): %d is_cont_barrier_frame(f): %d ", _cont.is_empty(), Continuation::is_cont_barrier_frame(f));
-
-    // if (!FKind::stub && (top || (mode == mode_preempt && _safepoint_stub_caller))) {
-    //   set_anchor(_thread, f); // deoptimization may need this
-    // }
   }
 
   template<bool top>

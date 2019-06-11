@@ -40,17 +40,18 @@ static void set_anchor(JavaThread* thread, const FrameInfo* fi) {
   print_vframe(thread->last_frame());
 }
 
-static void set_anchor(JavaThread* thread, const frame& f) {
-  JavaFrameAnchor* anchor = thread->frame_anchor();
-  anchor->set_last_Java_sp(f.unextended_sp());
-  anchor->set_last_Java_fp(f.fp());
-  anchor->set_last_Java_pc(f.pc());
+// unused
+// static void set_anchor(JavaThread* thread, const frame& f) {
+//   JavaFrameAnchor* anchor = thread->frame_anchor();
+//   anchor->set_last_Java_sp(f.unextended_sp());
+//   anchor->set_last_Java_fp(f.fp());
+//   anchor->set_last_Java_pc(f.pc());
 
-  assert (thread->has_last_Java_frame(), "");
-  assert(thread->last_frame().cb() != NULL, "");
-  log_develop_trace(jvmcont)("set_anchor:");
-  print_vframe(thread->last_frame());
-}
+//   assert (thread->has_last_Java_frame(), "");
+//   assert(thread->last_frame().cb() != NULL, "");
+//   log_develop_trace(jvmcont)("set_anchor:");
+//   print_vframe(thread->last_frame());
+// }
 
 inline bool hframe::operator==(const hframe& other) const {
     return  HFrameBase::operator==(other) && _fp == other._fp;
