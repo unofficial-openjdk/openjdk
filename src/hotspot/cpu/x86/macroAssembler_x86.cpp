@@ -767,16 +767,17 @@ void MacroAssembler::pushptr(AddressLiteral src) {
 }
 
 void MacroAssembler::reset_last_Java_frame(bool clear_fp) {
+  mov64(rscratch1, NULL_WORD);
   // we must set sp to zero to clear frame
-  movptr(Address(r15_thread, JavaThread::last_Java_sp_offset()), NULL_WORD);
+  movptr(Address(r15_thread, JavaThread::last_Java_sp_offset()), rscratch1);
   // must clear fp, so that compiled frames are not confused; it is
   // possible that we need it only for debugging
   if (clear_fp) {
-    movptr(Address(r15_thread, JavaThread::last_Java_fp_offset()), NULL_WORD);
+    movptr(Address(r15_thread, JavaThread::last_Java_fp_offset()), rscratch1);
   }
 
   // Always clear the pc because it could have been set by make_walkable()
-  movptr(Address(r15_thread, JavaThread::last_Java_pc_offset()), NULL_WORD);
+  movptr(Address(r15_thread, JavaThread::last_Java_pc_offset()), rscratch1);
   vzeroupper();
 }
 

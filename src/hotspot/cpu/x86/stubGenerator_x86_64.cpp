@@ -5685,6 +5685,27 @@ void pop_FrameInfo(MacroAssembler* _masm, Register sp, Register fp, Register pc)
   if (!sp->is_valid()) __ lea(rsp, Address(rsp, wordSize)); else __ pop(sp);
 }
 
+static Register get_thread() {
+#ifdef _LP64
+  return r15_thread;
+#else
+  get_thread(rdi);
+  return rdi;
+#endif // LP64
+}
+
+static void setup_freeze_invocation(MacroAssembler* _masm, address pc) {
+  Register thread = get_thread();
+  NOT_LP64(__ push(thread));
+  LP64_ONLY(__ movptr(c_rarg0, thread));
+  __ set_last_Java_frame(rsp, rbp, pc);
+}
+
+static void teardown_freeze_invocation(MacroAssembler* _masm) {
+  __ reset_last_Java_frame(true);
+  NOT_LP64(__ pop(rdi));
+}
+
   // c_rarg1 ContinuationScope
 RuntimeStub* generate_cont_doYield() {
     const char *name = "cont_doYield";
@@ -5736,31 +5757,30 @@ RuntimeStub* generate_cont_doYield() {
 
     __ post_call_nop(); // this must be exactly after the pc value that is pushed into the frame info, we use this nop for fast CodeBlob lookup
 
-    if (ContPerfTest > 5) {   
-    // if (from_java) {
-      __ set_last_Java_frame(rsp, rbp, the_pc); // may be unnecessary. also, consider MacroAssembler::call_VM_leaf_base
-      __ call_VM(noreg, CAST_FROM_FN_PTR(address, Continuation::freeze), fi, false); // do NOT check exceptions; they'll get forwarded to the caller
-    // } else {
-    //   __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::freeze_C), fi);
-    // }
-    // ------------
-    // __ set_last_Java_frame(rsp, rbp, the_pc);
-    // __ movptr(c_rarg0, r15_thread);
-    // __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::freeze), 2);
-    // __ reset_last_Java_frame(false);
+    if (ContPerfTest > 5) {
+      setup_freeze_invocation(_masm, the_pc);
+      __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::freeze), 2);
+      teardown_freeze_invocation(_masm);
+
+      // if (from_java) {
+      //__ set_last_Java_frame(rsp, rbp, the_pc); // may be unnecessary. also, consider MacroAssembler::call_VM_leaf_base
+      //__ call_VM(noreg, CAST_FROM_FN_PTR(address, Continuation::freeze), fi, false); // do NOT check exceptions; they'll get forwarded to the caller
+      // } else {
+      //   __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::freeze_C), fi);
+      // }
     }
 
     Label pinned;
-    __ pop(c_rarg0); // read the pc from the FrameInfo
-    if (ContPerfTest <= 5) { __ xorq(c_rarg0, c_rarg0); __ xorq(rax, rax); }
-    __ testq(c_rarg0, c_rarg0);
+    __ pop(c_rarg2); // read the pc from the FrameInfo
+    if (ContPerfTest <= 5) { __ xorq(c_rarg2, c_rarg2); __ xorq(rax, rax); }
+    __ testq(c_rarg2, c_rarg2);
     __ jcc(Assembler::zero, pinned);
 
     __ pop(rbp); // not pinned -- jump to Continuation.run (the entry frame)
     __ movptr(rbp, Address(rbp, 0)); // frame_info->fp has an indirection here. See Continuation::freeze for an explanation.
     __ pop(fi);
     __ movptr(rsp, fi);
-    __ jmp(c_rarg0);
+    __ jmp(c_rarg2);
 
     __ bind(pinned); // pinned -- return to caller
     __ lea(rsp, Address(rsp, wordSize*2)); // "pop" the rest of the FrameInfo struct
@@ -5898,7 +5918,7 @@ RuntimeStub* generate_cont_doYield() {
     pop_FrameInfo(_masm, fi, rbp, rbx);
     if (return_barrier) {
       __ pop_d(xmm0); __ pop(rax); // restore return value (no safepoint in the call to thaw, so even an oop return value should be OK)
-    } 
+    }
 
     __ movptr(rsp, fi); // we're now on the yield frame (which is in an address above us b/c rsp has been pushed down)
 
