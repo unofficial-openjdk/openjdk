@@ -81,12 +81,17 @@ static int PERFTEST_LEVEL = ContPerfTest;
 // 20 - all work, but no copying
 // 25 - copy to stack
 // 30 - freeze oops
+// <100 - don't allocate
 // 100 - everything
 //
 // Thaw:
 // 105 - no call into C (prepare_thaw)
 // 110 - immediate return from C (prepare_thaw)
-//
+// 112 - no call to thaw0
+// 115 - return after traversing frames
+// 120
+// 125 - copy from stack
+// 130 - thaw oops
 
 
 // TODO
@@ -874,8 +879,10 @@ void ContMirror::copy_from_stack(void* from, void* to, int size) {
   assert (stack_index(from) >= 0, "");
   assert (to_index(stack(), (address)from + size) <= stack_length(), "index: %d length: %d", to_index(stack(), (address)from + size), stack_length());
 
-  memcpy(to, from, size);
-  //Copy::conjoint_memory_atomic(from, to, size);
+  if (PERFTEST_LEVEL >= 125) {
+    memcpy(to, from, size);
+    //Copy::conjoint_memory_atomic(from, to, size);
+  }
 
   _e_size += size;
 }
@@ -1442,7 +1449,6 @@ public:
     //   CALLGRIND_START_INSTRUMENTATION;
     // }
   #endif
-    if (PERFTEST_LEVEL <= 15) return freeze_ok;
 
     // f is the entry frame
 
@@ -1463,6 +1469,8 @@ public:
   #endif
 
     setup_jump<FKind>(f, callee);
+
+    if (PERFTEST_LEVEL <= 15) return freeze_ok;
 
     _cont.allocate_stacks<ConfigT>(_size, _oops, _frames);
     if (_thread->has_pending_exception())
@@ -1535,6 +1543,7 @@ public:
     int frozen;
     if (!FKind::interpreted && extra != NULL) { // dynamic branch
       FreezeFnT f_fn = (FreezeFnT)extra;
+      // tty->print_cr(">>>>0000<<<<<");
       frozen = freeze_compiled_oops_stub(f_fn, vsp, hsp, &_map, index);
     } else {
       if (num_oops == 0)
@@ -1683,16 +1692,19 @@ public:
     //   return 0;
     // }
 
-    address stub = oopmap->freeze_stub();
-    if (mode != mode_preempt && ConfigT::allow_stubs && stub == NULL) {
+    if (mode != mode_preempt && ConfigT::allow_stubs && oopmap->freeze_stub() == NULL) {
       oopmap->generate_stub();
-      stub = oopmap->freeze_stub();
+      log_develop_trace(jvmcont)("freeze_compiled_oops generating oopmap stub; success: %d", get_oopmap_stub(f) != NULL);
+      // tty->print_cr(">>>> generating oopmap stub; success: %d <<<<<", get_oopmap_stub(f) != NULL);
+      // f.print_on(tty);
     }
+    FreezeFnT stub = get_oopmap_stub(f);
 
-    if (mode != mode_preempt && ConfigT::allow_stubs && stub != NULL && stub != (address) oopmap) { // need CompressedOops for now
+    if (mode != mode_preempt && ConfigT::allow_stubs && stub != NULL) {
       assert (_safepoint_stub.is_empty(), "");
-      return freeze_compiled_oops_stub((FreezeFnT) stub, vsp, hsp, &_map, starting_index);
+      return freeze_compiled_oops_stub(stub, vsp, hsp, &_map, starting_index);
     } else {
+      // tty->print_cr(">>>>33333<<<<<");
       intptr_t *stub_vsp = NULL;
       intptr_t *stub_hsp = NULL;
       if (mode == mode_preempt && _safepoint_stub_caller) {
@@ -1715,6 +1727,7 @@ public:
   }
 
   int freeze_compiled_oops_stub(FreezeFnT f_fn, intptr_t* vsp, intptr_t* hsp, RegisterMap* map, int starting_index) {
+    // tty->print_cr(">>>>2222<<<<<");
     typename ConfigT::OopT* addr = _cont.refStack()->template obj_at_address<typename ConfigT::OopT>(starting_index);
     int cnt = f_fn( (address) vsp,  (address) addr, (address) map, (address) hsp, _cont.refStack()->length() - starting_index, &_fp_oop_info);
     return cnt;
@@ -1963,6 +1976,7 @@ int freeze0(JavaThread* thread, FrameInfo* fi) {
   PERFTEST_LEVEL = ContPerfTest;
 
   if (PERFTEST_LEVEL <= 10) return early_return(freeze_ok, thread, fi);
+  if (PERFTEST_LEVEL < 1000) thread->set_cont_yield(false);
 
 #ifdef ASSERT
   log_develop_trace(jvmcont)("~~~~~~~~~ freeze fi->sp: " INTPTR_FORMAT " fi->fp: " INTPTR_FORMAT " fi->pc: " INTPTR_FORMAT, p2i(fi->sp), p2i(fi->fp), p2i(fi->pc));
@@ -2310,6 +2324,8 @@ public:
 
   template<typename FKind>
   void finalize(const hframe& hf, const hframe& callee, bool is_empty, frame& entry) {
+    if (PERFTEST_LEVEL <= 115) return;
+
     entry = new_entry_frame();
 
   #ifdef ASSERT
@@ -2341,6 +2357,8 @@ public:
 
   template<typename FKind, bool top, bool bottom>
   void thaw_java_frame(const hframe& hf, frame& caller, void* extra) {
+    if (PERFTEST_LEVEL <= 115) return;
+
     log_develop_trace(jvmcont)("============================= THAWING FRAME:");
 
     assert (FKind::is_instance(hf), "");
@@ -2358,6 +2376,8 @@ public:
 
   template <typename FKind>
   void thaw_oops(frame& f, intptr_t* vsp, int oop_index, void* extra) {
+    if (PERFTEST_LEVEL < 130) return;
+
     log_develop_trace(jvmcont)("Walking oops (thaw)");
 
     assert (!_map.include_argument_oops(), "");
@@ -2546,6 +2566,8 @@ public:
   }
 
   void finish(frame& f) {
+    if (PERFTEST_LEVEL <= 115) return;
+
     setup_jump(f);
 
     // _cont.set_last_frame(_last_frame);
@@ -3575,6 +3597,7 @@ void ContMirror::copy_ref_array(objArrayOop old_array, int old_start, objArrayOo
     size_t src_offset = (size_t) objArrayOopDesc::obj_at_offset<OopT>(old_start);
     size_t dst_offset = (size_t) objArrayOopDesc::obj_at_offset<OopT>(new_start);
     ArrayAccess<ARRAYCOPY_DISJOINT>::oop_arraycopy(old_array, src_offset, new_array, dst_offset, count);
+
     // for (int i=0, old_i = old_start, new_i = new_start; i < count; i++, old_i++, new_i++) new_array->obj_at_put(new_i, old_array->obj_at(old_i));
   }
 }
@@ -3709,7 +3732,7 @@ public:
 
   static const bool _compressed_oops = compressed_oops;
   static const bool _post_barrier = post_barrier;
-  static const bool allow_stubs = gen_stubs && compressed_oops && post_barrier;
+  static const bool allow_stubs = gen_stubs && post_barrier && compressed_oops;
 
   template<op_mode mode>
   static freeze_result freeze(JavaThread* thread, ContMirror& cont, FrameInfo* fi) {

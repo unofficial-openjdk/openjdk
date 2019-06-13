@@ -373,9 +373,11 @@ inline void ContinuationHelper::update_register_map(RegisterMap* map, intptr_t**
 }
 
 void ContinuationHelper::update_register_map(RegisterMap* map, const hframe& hf, const ContMirror& cont) {
-  intptr_t link_index = cont.stack_index(hf.link_address());
-  log_develop_trace(jvmcont)("ContinuationHelper::update_register_map: frame::update_map_with_saved_link: " INTPTR_FORMAT, link_index);
-  frame::update_map_with_saved_link(map, reinterpret_cast<intptr_t**>(link_index));
+  // we save the link _index_ in the oop map; it is read and converted back in Continuation::reg_to_location
+  int link_index = cont.stack_index(hf.link_address());
+  log_develop_trace(jvmcont)("ContinuationHelper::update_register_map: frame::update_map_with_saved_link: %d", link_index);
+  intptr_t link_index0 = link_index;
+  frame::update_map_with_saved_link(map, reinterpret_cast<intptr_t**>(link_index0));
 }
 
 void ContinuationHelper::update_register_map_from_last_vstack_frame(RegisterMap* map) {
