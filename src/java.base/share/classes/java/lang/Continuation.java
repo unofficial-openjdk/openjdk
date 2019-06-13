@@ -746,6 +746,8 @@ public class Continuation {
         this.sizeCounter = 0;
         this.stackWatermark = 0;
         this.refStackWatermark = 0;
+
+        setMounted(false);
     }
 
     /**

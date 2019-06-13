@@ -303,7 +303,7 @@ void frame::patch_pc(Thread* thread, address pc) {
 
 #ifdef ASSERT
   {
-    frame f = frame(this->sp(), this->unextended_sp(), this->fp(), pc);
+    frame f(this->sp(), this->unextended_sp(), this->fp(), pc);
     assert(f.is_deoptimized_frame() == this->is_deoptimized_frame() && f.pc() == this->pc() && f.raw_pc() == this->raw_pc(), 
       "must be (f.is_deoptimized_frame(): %d this->is_deoptimized_frame(): %d "
       "f.pc(): " INTPTR_FORMAT " this->pc(): " INTPTR_FORMAT " f.raw_pc(): " INTPTR_FORMAT " this->raw_pc(): " INTPTR_FORMAT ")", 

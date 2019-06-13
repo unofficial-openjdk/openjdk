@@ -1158,6 +1158,11 @@ public:
     _masm->ret(0);
 
     _thaw_len = (intptr_t) _masm->pc() - (intptr_t) _thaw;
+
+  // #ifdef ASSERT
+  //   tty->print_cr(">>> thaw stub:");
+  //   _masm->code()->decode(_thaw, _masm->pc());
+  // #endif
   }
 
   void generate_freeze(const ImmutableOopMap& map) {
@@ -1297,11 +1302,16 @@ public:
     _masm->movl(rax, map.num_oops());
     _masm->ret(0);
     _freeze_len = (intptr_t) _masm->pc() - (intptr_t) _freeze;
+
+  // #ifdef ASSERT
+  //   tty->print_cr(">>> freeze stub:");
+  //   _masm->code()->decode(_freeze, _masm->pc());
+  // #endif
   }
 };
 
 bool OopMapStubGenerator::generate() {
-#ifndef _WINDOWS
+#ifdef _WINDOWS
   // Windows have a different calling convention than macOs and Linux, the current stub is generated
   // for Linux and macOs right now.
   return false;

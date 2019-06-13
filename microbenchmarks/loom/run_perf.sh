@@ -38,4 +38,4 @@ run_benchmark() {
 }
 
 run_benchmark justYield    5 10 15 20 25 30
-run_benchmark justContinue 105 110 120 130
+run_benchmark justContinue 105 110 112 115 120 125 130
