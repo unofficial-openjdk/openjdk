@@ -560,7 +560,7 @@ JvmtiEnvBase::vframeFor(JavaThread* java_thread, jint depth) {
   if (!java_thread->has_last_Java_frame()) {
     return NULL;
   }
-  RegisterMap reg_map(java_thread);
+  RegisterMap reg_map(java_thread, true, true);
   vframe *vf = java_thread->last_java_vframe(&reg_map);
   int d = 0;
   while ((vf != NULL) && (d < depth)) {
@@ -623,7 +623,7 @@ JvmtiEnvBase::count_locked_objects(JavaThread *java_thread, Handle hobj) {
 
   ResourceMark rm;
   HandleMark   hm;
-  RegisterMap  reg_map(java_thread);
+  RegisterMap  reg_map(java_thread, true, true);
 
   for(javaVFrame *jvf=java_thread->last_java_vframe(&reg_map); jvf != NULL;
                                                  jvf = jvf->java_sender()) {
@@ -696,7 +696,7 @@ JvmtiEnvBase::get_owned_monitors(JavaThread *calling_thread, JavaThread* java_th
   if (java_thread->has_last_Java_frame()) {
     ResourceMark rm;
     HandleMark   hm;
-    RegisterMap  reg_map(java_thread);
+    RegisterMap  reg_map(java_thread, true, true);
 
     int depth = 0;
     for (javaVFrame *jvf = java_thread->last_java_vframe(&reg_map); jvf != NULL;
@@ -816,7 +816,7 @@ JvmtiEnvBase::get_stack_trace(JavaThread *java_thread,
          "at safepoint or target thread is suspended");
   int count = 0;
   if (java_thread->has_last_Java_frame()) {
-    RegisterMap reg_map(java_thread);
+    RegisterMap reg_map(java_thread, true, true);
     Thread* current_thread = Thread::current();
     ResourceMark rm(current_thread);
     javaVFrame *jvf = java_thread->last_java_vframe(&reg_map);

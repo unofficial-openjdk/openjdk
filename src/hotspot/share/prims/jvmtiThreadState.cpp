@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -222,7 +222,7 @@ int JvmtiThreadState::count_frames() {
   if (!get_thread()->has_last_Java_frame()) return 0;  // no Java frames
 
   ResourceMark rm;
-  RegisterMap reg_map(get_thread());
+  RegisterMap reg_map(get_thread(), true, true);
   javaVFrame *jvf = get_thread()->last_java_vframe(&reg_map);
   int n = 0;
   while (jvf != NULL) {
