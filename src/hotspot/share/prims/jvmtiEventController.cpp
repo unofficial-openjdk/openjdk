@@ -237,7 +237,7 @@ void VM_EnterInterpOnlyMode::doit() {
     // thread (nothing to do if no Java frames yet).
     int num_marked = 0;
     ResourceMark resMark;
-    RegisterMap rm(thread, false);
+    RegisterMap rm(thread, false, true);
     for (vframe* vf = thread->last_java_vframe(&rm); vf; vf = vf->sender()) {
       if (can_be_deoptimized(vf)) {
         ((compiledVFrame*) vf)->code()->mark_for_deoptimization();
