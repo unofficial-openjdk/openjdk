@@ -23,9 +23,12 @@
 
 /**
  * @test
- * @summary Verifies a that single stepping into Continuation.doContinue() properly complets in yield0().
+ * @summary Verifies that single stepping into Continuation.doContinue() properly completes in yield0().
  * @compile DoContinueSingleStepTest.java
- * @run main/othervm/native -agentlib:DoContinueSingleStepTest -Djdk.defaultScheduler.parallelism=1 DoContinueSingleStepTest
+ * @run main/othervm/native -XX:+UseContinuationLazyCopy -agentlib:DoContinueSingleStepTest -Djdk.defaultScheduler.parallelism=1 DoContinueSingleStepTest 150
+ * @run main/othervm/native -XX:+UseContinuationLazyCopy -agentlib:DoContinueSingleStepTest -Djdk.defaultScheduler.parallelism=1 DoContinueSingleStepTest 500
+ * @run main/othervm/native -XX:+UseContinuationLazyCopy -agentlib:DoContinueSingleStepTest DoContinueSingleStepTest 150
+ * @run main/othervm/native -XX:+UseContinuationLazyCopy -agentlib:DoContinueSingleStepTest DoContinueSingleStepTest 500
  */
 
 import java.util.concurrent.*;
@@ -36,7 +39,7 @@ public class DoContinueSingleStepTest {
     static native void enableEvents(Thread thread, Class contClass);
     static native boolean check();
 
-    static final int MSG_COUNT = 500;
+    static int MSG_COUNT; // Passed as an argument
     static final SynchronousQueue<String> QUEUE = new SynchronousQueue<>();
 
     static final Runnable PRODUCER = () -> {
@@ -75,6 +78,12 @@ public class DoContinueSingleStepTest {
     }
 
     public static void main(String[] args) throws Exception {
+        if (args.length != 1) {
+            throw new RuntimeException("Invalid # of arguments.");
+        } else {
+            MSG_COUNT = Integer.valueOf(args[0]);
+        }
+
         try {
             System.out.println("loading " + agentLib + " lib");
             System.loadLibrary(agentLib);
