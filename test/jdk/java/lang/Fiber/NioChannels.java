@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@
 /**
  * @test
  * @run testng NioChannels
- * @requires (os.family != "windows")
  * @summary Basic tests for Fibers doing blocking I/O with NIO channels
  */
 
@@ -61,7 +60,7 @@ public class NioChannels {
     }
 
     /**
-     * SocketChannel read/write, no blocking
+     * SocketChannel read/write, no blocking.
      */
     public void testSocketChannelReadWrite1() {
         test(() -> {
@@ -84,7 +83,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber blocks in SocketChannel.read
+     * Fiber blocks in SocketChannel read.
      */
     public void testSocketChannelReadWrite2() {
         test(() -> {
@@ -106,7 +105,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber blocks in SocketChannel.write
+     * Fiber blocks in SocketChannel write.
      */
     public void testSocketChannelReadWrite3() {
         test(() -> {
@@ -129,7 +128,7 @@ public class NioChannels {
     }
 
     /**
-     * SocketChannel close while Fiber blocked in read
+     * SocketChannel close while Fiber blocked in read.
      */
     public void testSocketChannelReadAsyncClose() {
         test(() -> {
@@ -145,7 +144,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber interrupted while blocked in SocketChannel.read
+     * Fiber interrupted while blocked in SocketChannel read.
      */
     public void testSocketChannelReadInterrupt() {
         test(() -> {
@@ -161,7 +160,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber cancelled while blocked in SocketChannel.read
+     * Fiber cancelled while blocked in SocketChannel read.
      */
     public void testSocketChannelReadCancel() {
         test(() -> {
@@ -178,7 +177,7 @@ public class NioChannels {
     }
 
     /**
-     * SocketChannel close while Fiber blocked in write
+     * SocketChannel close while Fiber blocked in write.
      */
     public void testSocketChannelWriteAsyncClose() {
         test(() -> {
@@ -198,7 +197,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber interrupted while blocked in SocketChannel.write
+     * Fiber interrupted while blocked in SocketChannel write.
      */
     public void testSocketChannelWriteInterrupt() {
         test(() -> {
@@ -218,7 +217,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber cancelled while blocked in SocketChannel.write
+     * Fiber cancelled while blocked in SocketChannel write.
      */
     public void testSocketChannelWritCeancel() {
         test(() -> {
@@ -239,7 +238,7 @@ public class NioChannels {
     }
 
     /**
-     * ServerSocketChannel accept, no blocking
+     * ServerSocketChannel accept, no blocking.
      */
     public void testServerSocketChannelAccept1() {
         test(() -> {
@@ -255,7 +254,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber blocks in ServerSocketChannel.accept
+     * Fiber blocks in ServerSocketChannel accept.
      */
     public void testServerSocketChannelAccept2() {
         test(() -> {
@@ -272,7 +271,7 @@ public class NioChannels {
     }
 
     /**
-     * SeverSocketChannel close while Fiber blocked in accept
+     * SeverSocketChannel close while Fiber blocked in accept.
      */
     public void testServerSocketChannelAcceptAsyncClose() {
         test(() -> {
@@ -290,7 +289,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber interrupted while blocked in ServerSocketChannel.accept
+     * Fiber interrupted while blocked in ServerSocketChannel accept.
      */
     public void testServerSocketChannelAcceptInterrupt() {
         test(() -> {
@@ -308,7 +307,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber cancelled while blocked in ServerSocketChannel.accept
+     * Fiber cancelled while blocked in ServerSocketChannel accept.
      */
     public void testServerSocketChannelAcceptCancel() {
         test(() -> {
@@ -327,7 +326,7 @@ public class NioChannels {
     }
 
     /**
-     * DatagramChannel receive/send, no blocking
+     * DatagramChannel receive/send, no blocking.
      */
     public void testDatagramhannelSendReceive1() {
         test(() -> {
@@ -351,7 +350,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber blocks in DatagramChannel.receive
+     * Fiber blocks in DatagramChannel receive.
      */
     public void testDatagramhannelSendReceive2() {
         test(() -> {
@@ -374,7 +373,7 @@ public class NioChannels {
     }
 
     /**
-     * DatagramChannel close while Fiber blocked in receive
+     * DatagramChannel close while Fiber blocked in receive.
      */
     public void testDatagramhannelReceiveAsyncClose() {
         test(() -> {
@@ -391,7 +390,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber interrupted while blocked in DatagramChannel.receive
+     * Fiber interrupted while blocked in DatagramChannel receive.
      */
     public void testDatagramhannelReceiveInterrupt() {
         test(() -> {
@@ -408,7 +407,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber cancelled while blocked in DatagramChannel.receive
+     * Fiber cancelled while blocked in DatagramChannel receive.
      */
     public void testDatagramhannelReceiveCancel() {
         test(() -> {
@@ -426,7 +425,7 @@ public class NioChannels {
     }
 
     /**
-     * Pipe read/write, no blocking
+     * Pipe read/write, no blocking.
      */
     public void testPipeReadWrite1() {
         test(() -> {
@@ -449,7 +448,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber blocks in Pipe.SourceChannel.read
+     * Fiber blocks in Pipe.SourceChannel read.
      */
     public void testPipeReadWrite2() {
         test(() -> {
@@ -471,7 +470,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber blocks in Pipe.SinkChannel write
+     * Fiber blocks in Pipe.SinkChannel write.
      */
     public void testPipeReadWrite3() {
         test(() -> {
@@ -494,7 +493,7 @@ public class NioChannels {
     }
 
     /**
-     * Pipe.SourceChannel close while Fiber blocked in read
+     * Pipe.SourceChannel close while Fiber blocked in read.
      */
     public void testPipeReadAsyncClose() {
         test(() -> {
@@ -510,7 +509,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber interrupted while blocked in Pipe.SourceChannel read
+     * Fiber interrupted while blocked in Pipe.SourceChannel read.
      */
     public void testPipeReadInterrupt() {
         test(() -> {
@@ -526,7 +525,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber cancelled while blocked in Pipe.SourceChannel read
+     * Fiber cancelled while blocked in Pipe.SourceChannel read.
      */
     public void testPipeReadCancel() {
         test(() -> {
@@ -543,7 +542,7 @@ public class NioChannels {
     }
 
     /**
-     * Pipe.SinkChannel close while Fiber blocked in write
+     * Pipe.SinkChannel close while Fiber blocked in write.
      */
     public void testPipeWriteAsyncClose() {
         test(() -> {
@@ -563,7 +562,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber interrupted while blocked in Pipe.SinkChannel write
+     * Fiber interrupted while blocked in Pipe.SinkChannel write.
      */
     public void testPipeWriteInterrupt() {
         test(() -> {
@@ -583,7 +582,7 @@ public class NioChannels {
     }
 
     /**
-     * Fiber cancelled while blocked in Pipe.SinkChannel write
+     * Fiber cancelled while blocked in Pipe.SinkChannel write.
      */
     public void testPipeWriteCancel() {
         test(() -> {

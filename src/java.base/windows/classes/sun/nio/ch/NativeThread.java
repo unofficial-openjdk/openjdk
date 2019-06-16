@@ -28,11 +28,18 @@ package sun.nio.ch;
 
 // Signalling operations on native threads
 
+import jdk.internal.misc.Strands;
 
 class NativeThread {
+    private static final long FIBER_ID = -1L;
 
     static long current() {
-        return 0;
+        Object s = Strands.currentStrand();
+        if (s instanceof Fiber) {
+            return FIBER_ID;
+        } else {
+            return 0;
+        }
     }
 
     static long currentKernelThread() {
@@ -44,7 +51,7 @@ class NativeThread {
     }
 
     static boolean isFiber(long tid) {
-        return false;
+        return (tid == FIBER_ID);
     }
 
     static boolean isKernelThread(long tid) {

@@ -22,22 +22,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package sun.nio.ch;
+#include <winsock2.h>
 
-import java.io.IOException;
+#include "jni.h"
+#include "jni_util.h"
+#include "jlong.h"
+#include "nio.h"
+#include "sun_nio_ch_PollPoller.h"
 
-class PollerProvider {
-    private PollerProvider() { }
-
-    static boolean available() {
-        return true;
+JNIEXPORT jint JNICALL
+Java_sun_nio_ch_PollPoller_poll(JNIEnv *env, jclass clazz,
+                                jlong address, jint numfds, jint timeout)
+{
+    LPWSAPOLLFD a = (LPWSAPOLLFD) jlong_to_ptr(address);
+    int res = WSAPoll(a, numfds, timeout);
+    if (res == SOCKET_ERROR) {
+        JNU_ThrowIOExceptionWithLastError(env, "WSAPoll failed");
+        return IOS_THROWN;
     }
-
-    static Poller readPoller() throws IOException {
-        return new PollPoller(true);
-    }
-
-    static Poller writePoller() throws IOException {
-        return new PollPoller(false);
-    }
+    return (jint) res;
 }
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,7 @@
 /**
  * @test
  * @run testng NetSockets
- * @requires (os.family != "windows")
- * @summary Basic tests for Fibers using java.net.Socket
+ * @summary Basic tests for Fibers using java.net.Socket/ServerSocket
  */
 
 import java.io.*;
@@ -49,9 +48,9 @@ public class NetSockets {
     }
 
     /**
-     * Cancel a fiber in connect
+     * Cancel a fiber in connect.
      */
-    public void testSocketConnectCancel1() {
+    public void testSocketConnectCancel() {
         test(() -> {
             try (var listener = new ServerSocket()) {
                 listener.bind(new InetSocketAddress( InetAddress.getLocalHost(), 0));
@@ -69,7 +68,7 @@ public class NetSockets {
     }
 
     /**
-     * Socket read/write, no blocking
+     * Socket read/write, no blocking.
      */
     public void testSocketReadWrite1() {
         test(() -> {
@@ -91,7 +90,7 @@ public class NetSockets {
     }
 
     /**
-     * Fiber blocks in Socket read
+     * Fiber blocks in read.
      */
     public void testSocketReadWrite2() {
         test(() -> {
@@ -113,7 +112,7 @@ public class NetSockets {
     }
 
     /**
-     * Fiber blocks in Socket write
+     * Fiber blocks in write.
      */
     public void testSocketReadWrite3() {
         test(() -> {
@@ -135,7 +134,46 @@ public class NetSockets {
     }
 
     /**
-     * Socket close while Fiber blocked in read
+     * Fibers blocks in read, peer closes connection.
+     */
+    public void testSocketReadPeerClose1() {
+        test(() -> {
+            try (var connection = new Connection()) {
+                Socket s1 = connection.socket1();
+                Socket s2 = connection.socket2();
+
+                ScheduledCloser.schedule(s2, DELAY);
+
+                int n = s1.getInputStream().read();
+                assertTrue(n == -1);
+            }
+        });
+    }
+
+    /**
+     * Fibers blocks in read, peer closes connection abruptly.
+     */
+    public void testSocketReadPeerClose2() {
+        test(() -> {
+            try (var connection = new Connection()) {
+                Socket s1 = connection.socket1();
+                Socket s2 = connection.socket2();
+
+                s2.setSoLinger(true, 0);
+                ScheduledCloser.schedule(s2, DELAY);
+
+                try {
+                    s1.getInputStream().read();
+                    assertTrue(false);
+                } catch (IOException ioe) {
+                    // expected
+                }
+            }
+        });
+    }
+
+    /**
+     * Socket close while Fiber blocked in read.
      */
     public void testSocketReadAsyncClose() {
         test(() -> {
@@ -151,7 +189,7 @@ public class NetSockets {
     }
 
     /**
-     * Socket close while Fiber blocked in write
+     * Socket close while Fiber blocked in write.
      */
     public void testSocketWriteAsyncClose() {
         test(() -> {
@@ -170,7 +208,7 @@ public class NetSockets {
     }
 
     /**
-     * Cancel a fiber blocked in read
+     * Cancel a fiber blocked in read.
      */
     public void testSocketReadCancel() {
         test(() -> {
@@ -187,7 +225,7 @@ public class NetSockets {
     }
 
     /**
-     * Cancel a fiber blocked in write
+     * Cancel a fiber blocked in write.
      */
     public void testSocketWriteCancel() {
         test(() -> {
@@ -207,9 +245,9 @@ public class NetSockets {
     }
 
     /**
-     * ServerSocket accept, no blocking
+     * ServerSocket accept, no blocking.
      */
-    public void testServerSocketCAccept1() {
+    public void testServerSocketAccept1() {
         test(() -> {
             try (var listener = new ServerSocket(0)) {
                 var socket1 = new Socket(listener.getInetAddress(), listener.getLocalPort());
@@ -222,7 +260,7 @@ public class NetSockets {
     }
 
     /**
-     * Fiber blocks in ServerSocket.accept
+     * Fiber blocks in accept.
      */
     public void testServerSocketAccept2() {
         test(() -> {
@@ -238,7 +276,7 @@ public class NetSockets {
     }
 
     /**
-     * ServerSocket close while Fiber blocked in accept
+     * ServerSocket close while Fiber blocked in accept.
      */
     public void testServerSocketAcceptAsyncClose() {
         test(() -> {
@@ -253,7 +291,7 @@ public class NetSockets {
     }
 
     /**
-     * Fiber cancelled while blocked in ServerSocket.accept
+     * Fiber cancelled while blocked in accept.
      */
     public void testServerSocketAcceptCancel() {
         test(() -> {
