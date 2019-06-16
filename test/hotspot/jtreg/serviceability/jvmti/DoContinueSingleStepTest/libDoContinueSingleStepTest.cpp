@@ -172,7 +172,7 @@ print_cont_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_
 }
 
 static void
-setupBreakpoint(JNIEnv *jni, jclass contKlass, const char *methodName)
+setOrClearBreakpoint(JNIEnv *jni, const char *methodName, jboolean set)
 {
   jlocation location = (jlocation)0L;
   jmethodID method = NULL;
@@ -185,7 +185,7 @@ setupBreakpoint(JNIEnv *jni, jclass contKlass, const char *methodName)
     char* mname = NULL;
 
     err = jvmti->GetMethodName(meth, &mname, NULL, NULL);
-    check_jvmti_status(jni, err, "enableEvents: error in JVMTI GetMethodName call");
+    check_jvmti_status(jni, err, "setupBreakpoint: error in JVMTI GetMethodName call");
 
     if (strcmp(mname, methodName) == 0) {
       printf("setupBreakpoint: found method %s() to set a breakpoint\n", mname);
@@ -198,9 +198,28 @@ setupBreakpoint(JNIEnv *jni, jclass contKlass, const char *methodName)
       jni->FatalError("Error in setupBreakpoint: not found method");
   }
 
-  err = jvmti->SetBreakpoint(method, location);
-  check_jvmti_status(jni, err, "enableEvents: error in JVMTI SetBreakpoint");
+  if (set) {
+      err = jvmti->SetBreakpoint(method, location);
+  } else {
+      err = jvmti->ClearBreakpoint(method, location);
+  }
+  check_jvmti_status(jni, err, "breakP: error in JVMTI SetBreakpoint");
 }
+
+static void
+setBreakpoint(JNIEnv *jni, const char *methodName)
+{
+    setOrClearBreakpoint(jni, methodName, JNI_TRUE);
+}
+
+static void
+clearBreakpoint(JNIEnv *jni, const char *methodName)
+{
+    setOrClearBreakpoint(jni, methodName, JNI_FALSE);
+}
+
+static jboolean runBreakpointHit = JNI_FALSE;
+static jboolean isStartedBreakpointHit = JNI_FALSE;
 
 static void JNICALL
 Breakpoint(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread,
@@ -215,16 +234,28 @@ Breakpoint(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread,
 
   if (strcmp(mname, "run") == 0) {
       // We hit our Continuation.run() breakpoint. Now setup the Continuation.isStarted() breakpoint.
+      if (runBreakpointHit) {
+          unlock_events();
+          return; // ignore if we've already seen one
+      }
       print_frame_event_info(jvmti, jni, thread, method,
                              "Breakpoint", ++breakpoint_count);
-      setupBreakpoint(jni, java_lang_Continuation_class, "isStarted");
+      runBreakpointHit = JNI_TRUE;
+      clearBreakpoint(jni, "run");
+      setBreakpoint(jni, "isStarted");
       err = jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_METHOD_EXIT, thread);
       check_jvmti_status(jni, err, "Breakpoint: error in JVMTI SetEventNotificationMode: enable METHOD_EXIT");
   } else if (strcmp(mname, "isStarted") == 0) {
       // We hit our Continuation.isStarted() breakpoint. Now setup single stepping so we can
       // step into Continuation.doContinue().
+      if (isStartedBreakpointHit) {
+          unlock_events();
+          return; // ignore if we've already seen one
+      }
       print_frame_event_info(jvmti, jni, thread, method,
                              "Breakpoint", ++breakpoint_count);
+      isStartedBreakpointHit = JNI_TRUE;
+      clearBreakpoint(jni, "isStarted");
       err = jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_SINGLE_STEP, thread);
       check_jvmti_status(jni, err, "Breakpoint: error in JVMTI SetEventNotificationMode: enable SINGLE_STEP");
       err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_BREAKPOINT, NULL);
@@ -254,15 +285,16 @@ SingleStep(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread,
   if (strcmp(mname, "yield0") == 0) {
       // We single stepped into yield0 within 50 steps. Turn off single stepping and let the test complete.
       printf("SingleStep: entered yield0()\n");
+      print_frame_event_info(jvmti, jni, thread, method,
+                             "SingleStep Passed", single_step_count);
       err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_SINGLE_STEP, thread);
       check_jvmti_status(jni, err, "SingleStep: error in JVMTI SetEventNotificationMode: enable SINGLE_STEP");
       passed = JNI_TRUE;
-  } 
-  if (single_step_count > 50) {
+  } else if (single_step_count >= 50) {
       // We didn't enter Continuation.yield0() within 50 single steps. The test has failed.
       printf("FAILED: SingleStep: never entered method yield0()\n");
       print_frame_event_info(jvmti, jni, thread, method,
-                         "SingleStep 50", single_step_count);
+                             "SingleStep 50", single_step_count);
       err = jvmti->SetEventNotificationMode(JVMTI_DISABLE, JVMTI_EVENT_SINGLE_STEP, thread);
       check_jvmti_status(jni, err, "SingleStep: error in JVMTI SetEventNotificationMode: enable SINGLE_STEP");
   }
@@ -431,7 +463,7 @@ Java_DoContinueSingleStepTest_enableEvents(JNIEnv *jni, jclass klass, jthread th
   err = jvmti->GetClassMethods(contKlass, &java_lang_Continuation_method_count, &java_lang_Continuation_methods);
   check_jvmti_status(jni, err, "enableEvents: error in JVMTI GetClassMethods");
 
-  setupBreakpoint(jni, contKlass, "run");
+  setBreakpoint(jni, "run");
 
   // Enable Breakpoint events globally
   err = jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_BREAKPOINT, NULL);
