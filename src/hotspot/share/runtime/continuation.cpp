@@ -362,9 +362,9 @@ public:
 
   inline frame to_frame(ContMirror& cont) const;
 
-  void print_on(ContMirror& cont, outputStream* st) const { self().print_on(cont, st); }
+  void print_on(const ContMirror& cont, outputStream* st) const { self().print_on(cont, st); }
   void print_on(outputStream* st) const { self().print_on(st); };
-  void print(ContMirror& cont) const { print_on(cont, tty); }
+  void print(const ContMirror& cont) const { print_on(cont, tty); }
   void print() const { print_on(tty); }
 };
 
@@ -1238,10 +1238,10 @@ static freeze_result cont_freeze(JavaThread* thread, ContMirror& cont, FrameInfo
   switch (mode) {
     case mode_fast:    return cont_freeze_fast   (thread, cont, fi);
     case mode_slow:    return cont_freeze_slow   (thread, cont, fi);
-    default: {
-      assert(mode == mode_preempt, "invariant");
-      return cont_freeze_preempt(thread, cont, fi);
-    }
+    case mode_preempt: return cont_freeze_preempt(thread, cont, fi);
+    default:
+      guarantee(false, "unreachable");
+      return freeze_exception;
   }
 }
 
@@ -1375,6 +1375,8 @@ public:
   freeze_result freeze(const frame& f, hframe& caller, intptr_t** callee_link_address, int callee_argsize) {
     assert (f.unextended_sp() < _bottom_address - SP_WIGGLE, ""); // see recurse_java_frame
     assert (f.is_interpreted_frame() || ((top && mode == mode_preempt) == is_stub(f.cb())), "");
+    assert (mode != mode_fast || (f.is_compiled_frame() && f.oop_map() != NULL), "");
+    assert (mode != mode_fast || !f.is_deoptimized_frame(), "");
 
     // Dynamically branch on frame type
     if (mode == mode_fast || f.is_compiled_frame()) {
@@ -1650,7 +1652,14 @@ public:
     }
 
     intptr_t* vsp = FKind::frame_top(f);
-    if (bottom || caller.is_interpreted_frame()) { // we must test for interpreted caller even in fast mode b/c caller can be the top frozen frame
+
+    // The following assertion appears also in patch_pd and align. 
+    // Even in fast mode, we allow the caller of the bottom frame (i.e. last frame still on the hstack) to be interpreted.
+    // We can have a different tradeoff, and only set mode_fast if this is not the case by uncommenting _fastpath = false in Thaw::finalize where we're setting the last frame
+    // Doing so can save us the test for caller.is_interpreted_frame() when we're in mode_fast and bottom, but at the cost of not switching to fast mode even if only a frozen frame is interpreted.
+    assert (mode != mode_fast || bottom || !caller.is_interpreted_frame(), "");
+
+    if (bottom || (mode != mode_fast && caller.is_interpreted_frame())) { // we must test for interpreted caller even in fast mode b/c caller can be the top frozen frame
       log_develop_trace(jvmcont)("freeze_compiled_frame add argsize: fsize: %d argsize: %d fsize: %d", fsize, argsize, fsize + argsize);
       fsize += argsize;
       align<bottom>(caller);
@@ -1979,9 +1988,10 @@ int freeze0(JavaThread* thread, FrameInfo* fi) {
   if (PERFTEST_LEVEL < 1000) thread->set_cont_yield(false);
 
 #ifdef ASSERT
-  log_develop_trace(jvmcont)("~~~~~~~~~ freeze fi->sp: " INTPTR_FORMAT " fi->fp: " INTPTR_FORMAT " fi->pc: " INTPTR_FORMAT, p2i(fi->sp), p2i(fi->fp), p2i(fi->pc));
+  log_develop_trace(jvmcont)("~~~~~~~~~ freeze mode: %d fi->sp: " INTPTR_FORMAT " fi->fp: " INTPTR_FORMAT " fi->pc: " INTPTR_FORMAT, mode, p2i(fi->sp), p2i(fi->fp), p2i(fi->pc));
   /* set_anchor(thread, fi); */ print_frames(thread);
 #endif
+  // if (mode != mode_fast) tty->print_cr(">>> freeze0 mode: %d", mode);
 
   assert (thread->thread_state() == _thread_in_vm || thread->thread_state() == _thread_blocked, "thread->thread_state(): %d", thread->thread_state());
   assert (!thread->cont_yield(), "");
@@ -2024,8 +2034,14 @@ int freeze0(JavaThread* thread, FrameInfo* fi) {
   return 0;
 }
 
-JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi))
-  return freeze0<mode_slow>(thread, fi);
+JRT_ENTRY(int, Continuation::freeze(JavaThread* thread, FrameInfo* fi, bool from_interpreter))
+  // There are no interpreted frames if we're not called from the interpreter and we haven't ancountered an i2c adapter or called Deoptimization::unpack_frames
+  // Calls from native frames also go through the interpreter (see JavaCalls::call_helper)
+  // We also clear thread->cont_fastpath in Deoptimize::deoptimize_single_frame and when we thaw interpreted frames
+  bool fast = UseContinuationFastPath && thread->cont_fastpath() && !from_interpreter;
+  // tty->print_cr(">>> freeze fast: %d thread->cont_fastpath(): %d from_interpreter: %d", fast, thread->cont_fastpath(), from_interpreter);
+  return fast ? freeze0<mode_fast>(thread, fi)
+              : freeze0<mode_slow>(thread, fi);
 JRT_END
 
 static freeze_result is_pinned(const frame& f, const RegisterMap* map) {
@@ -2148,18 +2164,21 @@ int Continuation::try_force_yield(JavaThread* thread, const oop cont) {
 }
 /////////////// THAW ////
 
-typedef void (*ThawContFnT)(JavaThread*, ContMirror&, FrameInfo*, int);
+typedef bool (*ThawContFnT)(JavaThread*, ContMirror&, FrameInfo*, int);
 
 static ThawContFnT cont_thaw_fast = NULL;
 static ThawContFnT cont_thaw_slow = NULL;
 static ThawContFnT cont_thaw_preempt = NULL;
 
 template<op_mode mode>
-static void cont_thaw(JavaThread* thread, ContMirror& cont, FrameInfo* fi, int num_frames) {
+static bool cont_thaw(JavaThread* thread, ContMirror& cont, FrameInfo* fi, int num_frames) {
   switch (mode) {
     case mode_fast:    return cont_thaw_fast   (thread, cont, fi, num_frames);
     case mode_slow:    return cont_thaw_slow   (thread, cont, fi, num_frames);
     case mode_preempt: return cont_thaw_preempt(thread, cont, fi, num_frames);
+    default:
+      guarantee(false, "unreachable");
+      return false;
   }
 }
 
@@ -2229,6 +2248,8 @@ private:
 
   RegisterMap _map; // map is only passed to thaw_compiled_frame for use in deoptimize, which uses it only for biased locks; we may not need deoptimize there at all -- investigate
 
+  bool _fastpath; // if true, a subsequent freeze can be in mode_fast
+
   const hframe* _safepoint_stub;
   bool _safepoint_stub_caller;
   frame _safepoint_stub_f;
@@ -2251,12 +2272,13 @@ public:
   Thaw(JavaThread* thread, ContMirror& mirror) :
     _thread(thread), _cont(mirror),
     _map(thread, false, false, false),
+    _fastpath(true),
     _safepoint_stub(NULL), _safepoint_stub_caller(false) {
 
     _map.set_include_argument_oops(false);
   }
 
-  void thaw(FrameInfo* fi, int num_frames) {
+  bool thaw(FrameInfo* fi, int num_frames) {
     _fi = fi;
 
     assert (!_map.include_argument_oops(), "should be");
@@ -2272,6 +2294,8 @@ public:
     thaw<true>(hf, caller, num_frames);
 
     assert (_cont.num_frames() == orig_num_frames - _frames, "cont.is_empty: %d num_frames: %d orig_num_frames: %d frame_count: %d", _cont.is_empty(), _cont.num_frames(), orig_num_frames, _frames);
+    assert (mode != mode_fast || _fastpath, "");
+    return mode == mode_fast ? true : _fastpath;
   }
 
   template<bool top>
@@ -2327,6 +2351,7 @@ public:
     if (PERFTEST_LEVEL <= 115) return;
 
     entry = new_entry_frame();
+    // if (entry.is_interpreted_frame()) _fastpath = false; // set _fastpath if entry is interpreted ? 
 
   #ifdef ASSERT
     log_develop_trace(jvmcont)("Found entry:");
@@ -2347,6 +2372,8 @@ public:
       if (!FKind::interpreted && !hf.is_interpreted_frame()) {
         // we'll be subtracting the argsize in thaw_compiled_frame, but if the caller is compiled, we shouldn't
         _cont.add_size(callee.compiled_frame_stack_argsize());
+      } else {
+        // _fastpath = false;
       }
     }
 
@@ -2462,6 +2489,8 @@ public:
     _cont.sub_size(fsize);
     _cont.dec_num_frames();
     _cont.dec_num_interpreted_frames();
+
+    _fastpath = false;
 
     return f;
   }
@@ -2748,15 +2777,18 @@ static inline void thaw0(JavaThread* thread, FrameInfo* fi, const bool return_ba
     java_frame_count = num_java_frames(cont);
   }
 
+  bool res; // whether only compiled frames are thawed
   if (cont.is_flag(FLAG_SAFEPOINT_YIELD)) {
-    cont_thaw<mode_preempt>(thread, cont, fi, num_frames);
+    res = cont_thaw<mode_preempt>(thread, cont, fi, num_frames);
   } else if (cont.num_interpreted_frames() == 0 && !thread->is_interp_only_mode()) {
-    cont_thaw<mode_fast>(thread, cont, fi, num_frames);
+    res = cont_thaw<mode_fast>(thread, cont, fi, num_frames);
   } else {
-    cont_thaw<mode_slow>(thread, cont, fi, num_frames);
+    res = cont_thaw<mode_slow>(thread, cont, fi, num_frames);
   }
 
   cont.write();
+
+  thread->set_cont_fastpath(res);
 
   log_develop_trace(jvmcont)("fi->sp: " INTPTR_FORMAT " fi->fp: " INTPTR_FORMAT " fi->pc: " INTPTR_FORMAT, p2i(fi->sp), p2i(fi->fp), p2i(fi->pc));
 
@@ -3740,8 +3772,8 @@ public:
   }
 
   template<op_mode mode>
-  static void thaw(JavaThread* thread, ContMirror& cont, FrameInfo* fi, int num_frames) {
-    Thaw<SelfT, mode>(thread, cont).thaw(fi, num_frames);
+  static bool thaw(JavaThread* thread, ContMirror& cont, FrameInfo* fi, int num_frames) {
+    return Thaw<SelfT, mode>(thread, cont).thaw(fi, num_frames);
   }
 };
 

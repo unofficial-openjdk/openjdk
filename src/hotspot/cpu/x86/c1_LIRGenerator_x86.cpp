@@ -345,6 +345,8 @@ void LIRGenerator::do_continuation_getFP(Intrinsic* x) {
 }
 
 void LIRGenerator::do_continuation_getSP(Intrinsic* x) {
+  LIR_Address* cont_fastpath_addr = new LIR_Address(getThreadPointer(), in_bytes(JavaThread::cont_fastpath_offset()), T_INT);
+  __ move(LIR_OprFact::intConst(1), cont_fastpath_addr);
   LIR_Opr result_reg = rlock_result(x);
   __ getsp(result_reg);
 }
@@ -376,9 +378,10 @@ void LIRGenerator::do_continuation_doYield(Intrinsic* x) {
   signature.append(T_INT);
   CallingConvention* cc = frame_map()->java_calling_convention(&signature, true);
 
-  LIRItem value(x->argument_at(0), this);
-  value.load_item();
-  __ move(value.result(), cc->at(0));
+  // LIRItem value(x->argument_at(0), this);
+  // value.load_item();
+  // __ move(value.result(), cc->at(0)); // scopes
+  __ move(LIR_OprFact::intConst(0), cc->at(0)); // from interpreter
 
   const LIR_Opr result_reg = result_register_for(x->type());
   address entry = StubRoutines::cont_doYield();

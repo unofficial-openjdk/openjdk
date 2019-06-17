@@ -2450,6 +2450,9 @@ const size_t minimumSymbolTableSize = 1024;
   product(bool, UseContinuationLazyCopy, true,                              \
       "Use lazy-copy in continuations")                                     \
                                                                             \
+  product(bool, UseContinuationFastPath, true,                              \
+      "Use fast-path frame walking in continuations")                       \
+                                                                            \
   experimental(ccstr, AllocateOldGenAt, NULL,                               \
           "Path to the directoy where a temporary file will be "            \
           "created to use as the backing store for old generation."         \

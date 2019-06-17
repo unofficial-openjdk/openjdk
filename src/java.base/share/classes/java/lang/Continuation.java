@@ -324,7 +324,7 @@ public class Continuation {
             try {
                 if (!isStarted()) { // is this the first run? (at this point we know !done)
                     if (TRACE) System.out.println("ENTERING " + id());
-                    this.entrySP = getSP();
+                    this.entrySP = getSP(); // now getSP also resets fastpath; this is also done in thaw for the doContinue branch
                     enter(); // make this an invokevirtual rather than invokeinterface. Otherwise it freaks out the interpreter (currently solved by patching in native)
                 } else {
                     doContinue(); // intrinsic. Jumps into yield, as a return from doYield    

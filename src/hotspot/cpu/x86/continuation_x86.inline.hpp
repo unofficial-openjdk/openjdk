@@ -76,6 +76,7 @@ inline void hframe::patch_real_fp_offset(int offset, intptr_t value) {
 
 template<> 
 inline intptr_t* hframe::link_address<Interpreted>(int sp, intptr_t fp, const CodeBlob* cb, const ContMirror& cont) {
+  assert (cont.valid_stack_index(fp), "fp: %ld stack_length: %d", fp, cont.stack_length());
   return &cont.stack_address(fp)[frame::link_offset];
 }
 
@@ -198,7 +199,8 @@ hframe hframe::sender(const ContMirror& cont, int num_oops) const {
     return hframe();
 
   address sender_pc = return_pc<FKind>();
-  bool is_sender_interpreted = mode == mode_fast ? false : Interpreter::contains(sender_pc);
+  assert (mode != mode_fast || !Interpreter::contains(sender_pc), "");
+  bool is_sender_interpreted = mode == mode_fast ? false : Interpreter::contains(sender_pc); 
   CodeBlob* sender_cb;
 
   intptr_t sender_fp = link();
@@ -233,7 +235,7 @@ void hframe::print_on(outputStream* st) const {
   }
 }
 
-void hframe::print_on(ContMirror& cont, outputStream* st) const {
+void hframe::print_on(const ContMirror& cont, outputStream* st) const {
   print_on(st);
   if (is_empty())
     return;
@@ -280,6 +282,7 @@ inline void ContMirror::set_last_frame_pd(const hframe& f) {
 template<op_mode mode /* = mode_slow*/> // TODO: add default when switching to C++11+
 const hframe ContMirror::last_frame() {
   if (is_empty()) return hframe();
+  assert (mode != mode_fast || !Interpreter::contains(_pc), "");
   return mode == mode_fast ? hframe::new_hframe<Compiled>(_sp, _ref_sp, _fp, _pc, *this)
                            : hframe(_sp, _ref_sp, _fp, _pc, *this);
 }
@@ -382,7 +385,7 @@ void ContinuationHelper::update_register_map(RegisterMap* map, const hframe& hf,
 
 void ContinuationHelper::update_register_map_from_last_vstack_frame(RegisterMap* map) {
   // we need to return the link address for the entry frame; it is saved in the bottom-most thawed frame
-  intptr_t** fp = (intptr_t**)(map->last_vstack_fp()); // TODO R PD
+  intptr_t** fp = (intptr_t**)(map->last_vstack_fp());
   log_develop_trace(jvmcont)("ContinuationHelper::update_register_map_from_last_vstack_frame: frame::update_map_with_saved_link: " INTPTR_FORMAT, p2i(fp));
   frame::update_map_with_saved_link(map, fp);
 }
@@ -447,8 +450,9 @@ static inline frame sender_for_compiled_frame(const frame& f, intptr_t** link_ad
 
   int slot = 0;
   CodeBlob* sender_cb = ContinuationCodeBlobLookup::find_blob_and_oopmap(sender_pc, slot);
-  assert (!fast || sender_cb != NULL, "");
   if (fast) {
+    assert (!Interpreter::contains(sender_pc), "");
+    assert (sender_cb != NULL, "");
     return frame(sender_sp, sender_sp, *link_addr, sender_pc, sender_cb, slot == -1 ? NULL : sender_cb->oop_map_for_slot(slot, sender_pc), true); // no deopt check; TODO: not sure about this
   } else {
     return sender_cb != NULL
@@ -533,9 +537,11 @@ inline void Freeze<ConfigT, mode>::patch_pd(const frame& f, hframe& hf, const hf
     assert (!_fp_oop_info._has_fp_oop, "only compiled frames");
   }
 
-  if (mode != mode_fast && caller.is_interpreted_frame()) {
+  assert (mode != mode_fast || bottom || !caller.is_interpreted_frame(), "");
+  if ((mode != mode_fast || bottom) && caller.is_interpreted_frame()) {
     hf.patch_link_relative(caller.link_address());
   } else {
+    assert (!caller.is_interpreted_frame(), "");
     hf.patch_link(caller.fp()); // caller.fp() already contains _fp_oop_info._fp_index if appropriate, as it was patched when patch is called on the caller
   }
   if (FKind::interpreted) {
@@ -551,8 +557,8 @@ inline void Freeze<ConfigT, mode>::patch_pd(const frame& f, hframe& hf, const hf
 template <typename ConfigT, op_mode mode>
 template <bool bottom> 
 inline void Freeze<ConfigT, mode>::align(const hframe& caller) {
-  // assert (caller.is_interpreted_frame(), "");
-  if (mode != mode_fast && caller.is_interpreted_frame()) {
+  assert (mode != mode_fast || bottom || !caller.is_interpreted_frame(), "");
+  if ((mode != mode_fast || bottom) && caller.is_interpreted_frame()) {
     _cont.add_size(sizeof(intptr_t));
   }
 }

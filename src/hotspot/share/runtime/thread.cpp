@@ -1729,6 +1729,7 @@ void JavaThread::initialize() {
 
   _cont_yield = false;
   _cont_preempt = false;
+  _cont_fastpath = 0;
   memset(&_cont_frame, 0, sizeof(FrameInfo));
 
 #ifndef PRODUCT

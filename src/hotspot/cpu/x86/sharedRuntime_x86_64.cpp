@@ -825,6 +825,8 @@ void SharedRuntime::gen_i2c_adapter(MacroAssembler *masm,
   }
 #endif // INCLUDE_JVMCI
 
+  __ set_cont_fastpath(r15_thread, 0);
+
   // Now generate the shuffle code.  Pick up all register args and move the
   // rest through the floating point stack top.
   for (int i = 0; i < total_args_passed; i++) {

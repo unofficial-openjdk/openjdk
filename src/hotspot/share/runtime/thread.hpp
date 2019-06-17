@@ -1202,6 +1202,7 @@ class JavaThread: public Thread {
   bool _cont_yield; // a continuation yield is in progress
   bool _cont_preempt;
   FrameInfo _cont_frame;
+  int _cont_fastpath;
 
 #ifndef PRODUCT
   int _jmp_ring_index;
@@ -1332,6 +1333,8 @@ class JavaThread: public Thread {
   // Continuation support
   bool cont_yield() { return _cont_yield; }
   void set_cont_yield(bool x) { _cont_yield = x; }
+  bool cont_fastpath() { return _cont_fastpath != 0; }
+  void set_cont_fastpath(bool x) { _cont_fastpath = (int)x; }
   bool cont_preempt() { return _cont_preempt; }
   void set_cont_preempt(bool x) { _cont_preempt = x; }
   FrameInfo* cont_frame() { return &_cont_frame; }
@@ -1789,7 +1792,6 @@ class JavaThread: public Thread {
   static ByteSize thread_state_offset()          { return byte_offset_of(JavaThread, _thread_state); }
   static ByteSize saved_exception_pc_offset()    { return byte_offset_of(JavaThread, _saved_exception_pc); }
   static ByteSize osthread_offset()              { return byte_offset_of(JavaThread, _osthread); }
-  DEBUG_ONLY(static ByteSize continuation_offset() { return byte_offset_of(JavaThread, _continuation); })
 #if INCLUDE_JVMCI
   static ByteSize pending_deoptimization_offset() { return byte_offset_of(JavaThread, _pending_deoptimization); }
   static ByteSize pending_monitorenter_offset()  { return byte_offset_of(JavaThread, _pending_monitorenter); }
@@ -1812,6 +1814,8 @@ class JavaThread: public Thread {
     return byte_offset_of(JavaThread, _should_post_on_exceptions_flag);
   }
 
+  DEBUG_ONLY(static ByteSize continuation_offset() { return byte_offset_of(JavaThread, _continuation); })
+  static ByteSize cont_fastpath_offset()      { return byte_offset_of(JavaThread, _cont_fastpath); }
   static ByteSize cont_frame_offset()         { return byte_offset_of(JavaThread, _cont_frame); }
   static ByteSize cont_preempt_offset()       { return byte_offset_of(JavaThread, _cont_preempt); }
 
