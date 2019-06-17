@@ -37,6 +37,19 @@
 #include "opto/optoreg.hpp"
 #endif
 
+static Register vsp = c_rarg0;
+static Register ref_stack = c_rarg1;
+static Register frame_ptr = c_rarg2;
+static Register frame_info = c_rarg2;
+static Register hsp = c_rarg3;
+
+#ifdef _WINDOWS
+static Register initial_index = rdi;
+static Register fp_oop_info = rsi;
+#else
+static Register initial_index = c_rarg4;
+static Register fp_oop_info = c_rarg5;
+#endif
 
 class OptOopMapStubGenerator : public StubCodeGenerator {
   // pmovzx to zero extend from compressed to uncompressed
@@ -155,7 +168,7 @@ class OptOopMapStubGenerator : public StubCodeGenerator {
       add_read(offset, 8); // find the right constants
     }
 
-    int offset() const { 
+    int offset() const {
       return _offset;
     }
 
@@ -483,14 +496,14 @@ public:
   void load_link_offset() {
     if (!_link_offset_loaded) {
       _link_offset_loaded = true;
-      _masm->movptr(rdx, Address(rdx, RegisterMap::link_offset()));
+      _masm->movptr(frame_ptr, Address(frame_ptr, RegisterMap::link_offset()));
     }
   }
 
   void store_rbp_oop(Register idx) {
     assert(_written_rbp_index == false, "");
-    _masm->movl(Address(r9, 0), 1); // offset to bool has_fp_index
-    _masm->movl(Address(r9, 4), idx); // offset to int fp_index
+    _masm->movl(Address(fp_oop_info, 0), 1); // offset to bool has_fp_index
+    _masm->movl(Address(fp_oop_info, 4), idx); // offset to int fp_index
     _written_rbp_index = true;
   }
 
@@ -501,21 +514,21 @@ public:
     // read value from array
     if (UseCompressedOops) {
 
-      _masm->movl(rax, Address(rsi, pos));
+      _masm->movl(rax, Address(ref_stack, pos));
       if (omv.type() == OopMapValue::oop_value) {
         _masm->decode_heap_oop(rax);
         if (has_derived) {
-          _masm->movptr(rcx, rax);
+          _masm->movptr(c_rarg3, rax);
         }
       } else if (omv.type() == OopMapValue::narrowoop_value && has_derived) {
-        _masm->movptr(rcx, rax);
-        _masm->decode_heap_oop(rcx);
+        _masm->movptr(c_rarg3, rax);
+        _masm->decode_heap_oop(c_rarg3);
       }
 
     } else {
-      _masm->movptr(rax, Address(rsi, pos));
+      _masm->movptr(rax, Address(ref_stack, pos));
       if (has_derived) {
-        _masm->movptr(rcx, rax);
+        _masm->movptr(c_rarg3, rax);
       }
     }
 
@@ -524,11 +537,11 @@ public:
       assert(reg == rbp->as_VMReg(), "must");
       //load_link_offset();
       if (omv.type() == OopMapValue::oop_value) {
-        _masm->movptr(Address(rdx, 0), rax);
+        _masm->movptr(Address(frame_info, 0), rax);
       } else {
         assert(UseCompressedOops, "");
         // narrow oop
-        _masm->movl(Address(rdx, 0), rax);
+        _masm->movl(Address(frame_info, 0), rax);
       }
 
       /* test
@@ -540,11 +553,11 @@ public:
       int sp_offset_in_bytes = reg->reg2stack() * VMRegImpl::stack_slot_size;
 
       if (omv.type() == OopMapValue::oop_value) {
-        _masm->movptr(Address(rdi, sp_offset_in_bytes), rax);
+        _masm->movptr(Address(vsp, sp_offset_in_bytes), rax);
       } else {
         // narrow oop
         assert(UseCompressedOops, "");
-        _masm->movl(Address(rdi, sp_offset_in_bytes), rax);
+        _masm->movl(Address(vsp, sp_offset_in_bytes), rax);
       }
 
       // index is refStack_length - index
@@ -567,11 +580,11 @@ public:
     // read the derived value into rax
     int derived_sp_offset_in_bytes = -1;
     if (reg->is_reg()) {
-      _masm->movptr(rax, Address(rdx, 0)); // offset -> rax
+      _masm->movptr(rax, Address(frame_info, 0)); // offset -> rax
       derived_is_reg = true;
     } else {
       derived_sp_offset_in_bytes = reg->reg2stack() * VMRegImpl::stack_slot_size;
-      _masm->movptr(rax, Address(rdi, derived_sp_offset_in_bytes)); // offset -> rax
+      _masm->movptr(rax, Address(vsp, derived_sp_offset_in_bytes)); // offset -> rax
     }
 
     address narrow_oop_base = CompressedOops::base();
@@ -581,9 +594,9 @@ public:
     _masm->addptr(rax, base); // offset in (base + offset)
 
     if (reg->is_reg()) {
-      _masm->movptr(Address(rdx, 0), rax);
+      _masm->movptr(Address(frame_info, 0), rax);
     } else {
-      _masm->movptr(Address(rdi, derived_sp_offset_in_bytes), rax);
+      _masm->movptr(Address(vsp, derived_sp_offset_in_bytes), rax);
     }
   }
 
@@ -591,7 +604,7 @@ public:
     OMV* d = o->derived();
     if (d != NULL) {
       Label L_next;
-      Register base = rcx;
+      Register base = c_rarg3;
 
       _masm->testptr(base, base);
       _masm->jcc(Assembler::zero, L_next);
@@ -889,11 +902,11 @@ public:
 
     void finish() {
       if (is_xmm()) {
-        _masm->movdqu(Address(rsi, _pos), xmm0);
+        _masm->movdqu(Address(ref_stack, _pos), xmm0);
       } else if (is_quad()) {
-        _masm->movptr(Address(rsi, _pos), rax);
+        _masm->movptr(Address(ref_stack, _pos), rax);
       } else if (is_word()) {
-        _masm->movl(Address(rsi, _pos), rax);
+        _masm->movl(Address(ref_stack, _pos), rax);
       }
       _pos += _size;
       _slot = 0;
@@ -937,11 +950,11 @@ public:
   public:
     SingleWriter(MacroAssembler* masm) : _masm(masm), _pos(0) {}
     virtual void write_narrow(Register reg) {
-      _masm->movl(Address(rsi, _pos), reg);
+      _masm->movl(Address(ref_stack, _pos), reg);
       _pos += 4;
     }
     virtual void write(Register reg) {
-      _masm->movptr(Address(rsi, _pos), reg);
+      _masm->movptr(Address(ref_stack, _pos), reg);
       _pos += 8;
     }
   };
@@ -1023,14 +1036,14 @@ public:
   void load_link_offset() {
     if (!_link_offset_loaded) {
       _link_offset_loaded = true;
-      _masm->movptr(rdx, Address(rdx, RegisterMap::link_offset()));
+      _masm->movptr(c_rarg2, Address(frame_info, RegisterMap::link_offset()));
     }
   }
 
   void store_rbp_oop(Register idx) {
     assert(_written_rbp_index == false, "");
-    _masm->movl(Address(r9, 0), 1); // offset to bool has_fp_index
-    _masm->movl(Address(r9, 4), idx); // offset to int fp_index
+    _masm->movl(Address(fp_oop_info, 0), 1); // offset to bool has_fp_index
+    _masm->movl(Address(fp_oop_info, 4), idx); // offset to int fp_index
     _written_rbp_index = true;
   }
 
@@ -1055,24 +1068,24 @@ public:
 
         // read value from array
         if (UseCompressedOops) {
-          _masm->movl(rax, Address(rsi, pos));
+          _masm->movl(rax, Address(ref_stack, pos));
 
           if (omv.type() == OopMapValue::oop_value) {
             _masm->decode_heap_oop(rax);
           }
         } else {
-          _masm->movptr(rax, Address(rsi, pos));
+          _masm->movptr(rax, Address(ref_stack, pos));
         }
 
         if (reg->is_reg()) {
           assert(reg == rbp->as_VMReg(), "must"); // not true for safepoint stub, but we don't use oopmap stubs when preempting
           //load_link_offset();
           if (omv.type() == OopMapValue::oop_value) {
-            _masm->movptr(Address(rdx, 0), rax);
+            _masm->movptr(Address(frame_info, 0), rax);
           } else {
             assert(UseCompressedOops, "");
             // narrow oop
-            _masm->movl(Address(rdx, 0), rax);
+            _masm->movl(Address(frame_info, 0), rax);
           }
 
           /* test
@@ -1084,11 +1097,11 @@ public:
           int sp_offset_in_bytes = reg->reg2stack() * VMRegImpl::stack_slot_size;
 
           if (omv.type() == OopMapValue::oop_value) {
-            _masm->movptr(Address(rdi, sp_offset_in_bytes), rax);
+            _masm->movptr(Address(vsp, sp_offset_in_bytes), rax);
           } else {
             // narrow oop
             assert(UseCompressedOops, "");
-            _masm->movl(Address(rdi, sp_offset_in_bytes), rax);
+            _masm->movl(Address(vsp, sp_offset_in_bytes), rax);
           }
 
           // index is refStack_length - index
@@ -1113,11 +1126,11 @@ public:
         // read the derived value into rax
         int derived_sp_offset_in_bytes = -1;
         if (reg->is_reg()) {
-          _masm->movptr(rax, Address(rdx, 0)); // offset -> rax
+          _masm->movptr(rax, Address(frame_info, 0)); // offset -> rax
           derived_is_reg = true;
         } else {
           derived_sp_offset_in_bytes = reg->reg2stack() * VMRegImpl::stack_slot_size;
-          _masm->movptr(rax, Address(rdi, derived_sp_offset_in_bytes)); // offset -> rax
+          _masm->movptr(rax, Address(vsp, derived_sp_offset_in_bytes)); // offset -> rax
         }
 
         // read the base value into rcx
@@ -1125,10 +1138,10 @@ public:
         if (content_reg->is_reg()) {
           guarantee(content_reg == rbp->as_VMReg(), "must");
           guarantee(derived_is_reg == false, "must");
-          _masm->movptr(rcx, Address(rdx, 0)); // base -> rcx
+          _masm->movptr(c_rarg3, Address(frame_info, 0)); // base -> rcx
         } else {
           int sp_offset_in_bytes = content_reg->reg2stack() * VMRegImpl::stack_slot_size;
-          _masm->movptr(rcx, Address(rdi, sp_offset_in_bytes)); // base -> rdx
+          _masm->movptr(c_rarg3, Address(vsp, sp_offset_in_bytes)); // base -> rdx
         }
 
         address narrow_oop_base = CompressedOops::base();
@@ -1136,15 +1149,15 @@ public:
         // maybe we need to test for is_narrow_oop_base too...
         Label L_next;
 
-        _masm->testptr(rcx, rcx);
+        _masm->testptr(c_rarg3, c_rarg3);
         _masm->jcc(Assembler::zero, L_next);
 
-        _masm->addptr(rcx, rax); // offset in (base + offset)
+        _masm->addptr(c_rarg3, rax); // offset in (base + offset)
 
         if (reg->is_reg()) {
-          _masm->movptr(Address(rdx, 0), rcx);
+          _masm->movptr(Address(frame_info, 0), c_rarg3);
         } else {
-          _masm->movptr(Address(rdi, derived_sp_offset_in_bytes), rcx);
+          _masm->movptr(Address(vsp, derived_sp_offset_in_bytes), c_rarg3);
         }
 
         _masm->bind(L_next);
@@ -1165,9 +1178,28 @@ public:
   // #endif
   }
 
+  static void freeze_prologue(MacroAssembler* _masm) {
+  #ifdef _WINDOWS
+    // Callee save
+    _masm->movptr(Address(rsp, wordSize * 3), initial_index);
+    _masm->movptr(Address(rsp, wordSize * 4), fp_oop_info);
+    _masm->load_sized_value(initial_index, Address(rsp, wordSize * 5), sizeof(int), true);
+    _masm->movptr(fp_oop_info, Address(rsp, wordSize * 6));
+  #endif
+  }
+
+  static void freeze_epilogue(MacroAssembler* _masm) {
+  #ifdef _WINDOWS
+    _masm->movptr(initial_index, Address(rsp, wordSize * 3));
+    _masm->movptr(fp_oop_info, Address(rsp, wordSize * 4));
+  #endif
+  }
+
   void generate_freeze(const ImmutableOopMap& map) {
     _masm->align(8);
     _freeze = _masm->pc();
+
+    freeze_prologue(_masm);
 
     /* rdi is source (rsp), rsi is destination (first address), rdx (rbp address), rcx (hstack), r8 (initial index (refStack_length - index) ), r9 (fp_oop_info) */
     if (UseCompressedOops) {
@@ -1186,19 +1218,19 @@ public:
           assert(reg == rbp->as_VMReg(), "must"); // not true for safepoint stub, but we don't use oopmap stubs when preempting
           load_link_offset();
           if (omv.type() == OopMapValue::oop_value) {
-            _masm->movptr(rax, Address(rdx, 0));
+            _masm->movptr(rax, Address(frame_ptr, 0));
             if (UseCompressedOops) {
               // compress
               _masm->encode_heap_oop(rax);
-              _masm->movl(Address(rsi, pos), rax);
+              _masm->movl(Address(ref_stack, pos), rax);
             } else {
-              _masm->movptr(Address(rsi, pos), rax);
+              _masm->movptr(Address(ref_stack, pos), rax);
             }
           } else {
             assert(UseCompressedOops, "");
             // narrow oop
-            _masm->movl(rax, Address(rdx, 0));
-            _masm->movl(Address(rsi, pos), rax);
+            _masm->movl(rax, Address(frame_ptr, 0));
+            _masm->movl(Address(ref_stack, pos), rax);
           }
 
           /* test
@@ -1210,19 +1242,19 @@ public:
           int sp_offset_in_bytes = reg->reg2stack() * VMRegImpl::stack_slot_size;
 
           if (omv.type() == OopMapValue::oop_value) {
-            _masm->movptr(rax, Address(rdi, sp_offset_in_bytes));
+            _masm->movptr(rax, Address(vsp, sp_offset_in_bytes));
             if (UseCompressedOops) {
               // compress
               _masm->encode_heap_oop(rax);
-              _masm->movl(Address(rsi, pos), rax);
+              _masm->movl(Address(ref_stack, pos), rax);
             } else {
-              _masm->movptr(Address(rsi, pos), rax);
+              _masm->movptr(Address(ref_stack, pos), rax);
             }
           } else {
             // narrow oop
             assert(UseCompressedOops, "");
-            _masm->movl(rax, Address(rdi, sp_offset_in_bytes));
-            _masm->movl(Address(rsi, pos), rax);
+            _masm->movl(rax, Address(vsp, sp_offset_in_bytes));
+            _masm->movl(Address(ref_stack, pos), rax);
           }
 
           // index is refStack_length - index
@@ -1254,11 +1286,11 @@ public:
         int derived_sp_offset_in_bytes = -1;
         if (reg->is_reg()) {
           load_link_offset();
-          _masm->movptr(r11, Address(rdx, 0));
+          _masm->movptr(r11, Address(frame_ptr, 0));
           derived_is_reg = true;
         } else {
           derived_sp_offset_in_bytes = reg->reg2stack() * VMRegImpl::stack_slot_size;
-          _masm->movptr(r11, Address(rdi, derived_sp_offset_in_bytes));
+          _masm->movptr(r11, Address(vsp, derived_sp_offset_in_bytes));
         }
 
         // read the base value into rax
@@ -1267,10 +1299,10 @@ public:
           load_link_offset();
           guarantee(content_reg == rbp->as_VMReg(), "must");
           guarantee(derived_is_reg == false, "must");
-          _masm->movptr(rax, Address(rdx, 0));
+          _masm->movptr(rax, Address(frame_ptr, 0));
         } else {
           int sp_offset_in_bytes = content_reg->reg2stack() * VMRegImpl::stack_slot_size;
-          _masm->movptr(rax, Address(rdi, sp_offset_in_bytes));
+          _masm->movptr(rax, Address(vsp, sp_offset_in_bytes));
         }
 
         address narrow_oop_base = CompressedOops::base();
@@ -1286,7 +1318,7 @@ public:
         if (reg->is_reg()) {
           store_rbp_oop(r11);
         } else {
-          _masm->movptr(Address(rcx, derived_sp_offset_in_bytes), r11);
+          _masm->movptr(Address(hsp, derived_sp_offset_in_bytes), r11);
         }
 
         _masm->bind(L_next);
@@ -1300,6 +1332,9 @@ public:
       _masm->pop(r12);
     }
     _masm->movl(rax, map.num_oops());
+
+    freeze_epilogue(_masm);
+
     _masm->ret(0);
     _freeze_len = (intptr_t) _masm->pc() - (intptr_t) _freeze;
 
@@ -1311,11 +1346,6 @@ public:
 };
 
 bool OopMapStubGenerator::generate() {
-#ifdef _WINDOWS
-  // Windows have a different calling convention than macOs and Linux, the current stub is generated
-  // for Linux and macOs right now.
-  return false;
-#else
   ResourceMark rm;
 
   int size = 64 + (_oopmap.count() * 6 * 15) + (CheckCompressedOops ? 2048 : 0); // worst case, 6 instructions per oop, 15 bytes per instruction;
@@ -1335,7 +1365,6 @@ bool OopMapStubGenerator::generate() {
   _thaw_stub = cgen.thaw_stub();
 
   return true;
-#endif
 }
 
 void OopMapStubGenerator::free() {
