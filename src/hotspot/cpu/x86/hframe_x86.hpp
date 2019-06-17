@@ -111,7 +111,7 @@ public:
   using HFrameBase<hframe>::to_frame; // unhide overloaded
   inline frame to_frame(ContMirror& cont, address pd, bool deopt) const;
 
-  void print_on(ContMirror& cont, outputStream* st) const;
+  void print_on(const ContMirror& cont, outputStream* st) const;
   void print_on(outputStream* st) const ;
 };
 

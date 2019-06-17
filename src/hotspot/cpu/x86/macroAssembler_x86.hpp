@@ -511,6 +511,8 @@ class MacroAssembler: public Assembler {
   void push_CPU_state();
   void pop_CPU_state();
 
+  void get_cont_fastpath(Register java_thread, Register dst);
+  void set_cont_fastpath(Register java_thread, int32_t imm);
   DEBUG_ONLY(void stop_if_in_cont(Register cont_reg, const char* name);)
 
   // Round up to a power of two

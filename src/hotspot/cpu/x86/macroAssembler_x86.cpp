@@ -3491,6 +3491,14 @@ void MacroAssembler::pop_FPU_state() {
   addptr(rsp, FPUStateSizeInWords * wordSize);
 }
 
+void MacroAssembler::get_cont_fastpath(Register java_thread, Register dst) {
+  movl(dst, Address(java_thread, JavaThread::cont_fastpath_offset()));
+}
+
+void MacroAssembler::set_cont_fastpath(Register java_thread, int32_t imm) {
+  movl(Address(java_thread, JavaThread::cont_fastpath_offset()), imm);
+}
+
 #ifdef ASSERT
 void MacroAssembler::stop_if_in_cont(Register cont, const char* name) {
 #ifdef _LP64

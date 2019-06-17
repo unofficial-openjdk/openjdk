@@ -730,6 +730,9 @@ address TemplateInterpreterGenerator::generate_Continuation_getSP_entry(void) {
 #ifdef _LP64
   address entry = __ pc();
 
+  const Register thread1 = NOT_LP64(rdi) LP64_ONLY(r15_thread);
+  NOT_LP64(__ get_thread(thread1));
+  __ set_cont_fastpath(thread1, 1);
   __ lea(rax, Address(rsp, wordSize)); // skip return address
   __ ret(0);
 
@@ -775,7 +778,8 @@ address TemplateInterpreterGenerator::generate_Continuation_doYield_entry(void) 
   address entry = __ pc();
   assert(StubRoutines::cont_doYield() != NULL, "stub not yet generated");
 
-  __ movl(c_rarg1, Address(rsp, wordSize)); // scopes
+  // __ movl(c_rarg1, Address(rsp, wordSize)); // scopes
+  __ movl(c_rarg1, 1); // from interpreter
   __ jump(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::cont_doYield())));
   // return value is in rax
 

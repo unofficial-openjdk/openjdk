@@ -5706,7 +5706,7 @@ static void teardown_freeze_invocation(MacroAssembler* _masm) {
   NOT_LP64(__ pop(rdi));
 }
 
-  // c_rarg1 ContinuationScope
+// c_rarg1 is from interpreter
 RuntimeStub* generate_cont_doYield() {
     const char *name = "cont_doYield";
 
@@ -5739,7 +5739,7 @@ RuntimeStub* generate_cont_doYield() {
 
     address start = __ pc();
 
-    // __ movq(c_rarg2, c_rarg1);          // scopes argument
+    __ movl(c_rarg2, c_rarg1);          // save from interpreter
     __ movptr(rax, Address(rsp, 0));    // use return address as the frame pc // __ lea(rax, InternalAddress(pcxxxx));
     __ lea(fi, Address(rsp, wordSize)); // skip return address
     __ movptr(c_rarg3, rbp);
@@ -5759,7 +5759,7 @@ RuntimeStub* generate_cont_doYield() {
 
     if (ContPerfTest > 5) {
       setup_freeze_invocation(_masm, the_pc);
-      __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::freeze), 2);
+      __ call_VM_leaf(CAST_FROM_FN_PTR(address, Continuation::freeze), 3);
       teardown_freeze_invocation(_masm);
 
       // if (from_java) {
@@ -5992,10 +5992,11 @@ RuntimeStub* generate_cont_doYield() {
     return start;
   }
 
-  address generate_cont_getSP() {
+  address generate_cont_getSP() { // used by C2
     StubCodeMark mark(this, "StubRoutines", "getSP");
     address start = __ pc();
 
+    __ set_cont_fastpath(get_thread(), 1);
     __ lea(rax, Address(rsp, wordSize));
     __ ret(0);
 

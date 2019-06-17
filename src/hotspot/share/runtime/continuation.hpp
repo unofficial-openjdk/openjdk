@@ -66,7 +66,7 @@ class JavaThread;
 
 class Continuation : AllStatic {
 public:
-  static int freeze(JavaThread* thread, FrameInfo* fi);
+  static int freeze(JavaThread* thread, FrameInfo* fi, bool from_interpreter);
   static int prepare_thaw(FrameInfo* fi, bool return_barrier);
   static address thaw_leaf(FrameInfo* fi, bool return_barrier, bool exception);
   static address thaw(JavaThread* thread, FrameInfo* fi, bool return_barrier, bool exception);
