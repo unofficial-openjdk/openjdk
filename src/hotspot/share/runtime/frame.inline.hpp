@@ -68,14 +68,15 @@ inline bool frame::is_compiled_frame() const {
   return false;
 }
 
-inline oop* frame::oopmapreg_to_location(VMReg reg, const RegisterMap* reg_map) const {
+template <typename RegisterMapT>
+inline oop* frame::oopmapreg_to_location(VMReg reg, const RegisterMapT* reg_map) const {
   if (reg->is_reg()) {
     // If it is passed in a register, it got spilled in the stub frame.
     return (oop *)reg_map->location(reg);
   } else {
     int sp_offset_in_bytes = reg->reg2stack() * VMRegImpl::stack_slot_size;
     if (reg_map->in_cont()) {
-      return reinterpret_cast<oop*>((uintptr_t)Continuation::usp_offset_to_index(*this, reg_map, sp_offset_in_bytes));
+      return reinterpret_cast<oop*>((uintptr_t)Continuation::usp_offset_to_index(*this, reg_map->as_RegisterMap(), sp_offset_in_bytes));
     }
     address usp = (address)unextended_sp();
     assert(reg_map->thread()->is_in_usable_stack(usp), INTPTR_FORMAT, p2i(usp)); 

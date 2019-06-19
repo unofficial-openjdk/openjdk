@@ -46,9 +46,9 @@ inline bool SkipNullValue::should_skip(oop val) {
 }
 
 template <typename OopFnT, typename DerivedOopFnT, typename ValueFilterT>
-template <typename OopMapStreamT>
-void OopMapDo<OopFnT, DerivedOopFnT, ValueFilterT>::iterate_oops_do(const frame *fr, const RegisterMap *reg_map, const ImmutableOopMap* oopmap) {
-  NOT_PRODUCT(if (TraceCodeBlobStacks) OopMapSet::trace_codeblob_maps(fr, reg_map);)
+template <typename OopMapStreamT, typename RegisterMapT>
+void OopMapDo<OopFnT, DerivedOopFnT, ValueFilterT>::iterate_oops_do(const frame *fr, const RegisterMapT *reg_map, const ImmutableOopMap* oopmap) {
+  NOT_PRODUCT(if (TraceCodeBlobStacks) OopMapSet::trace_codeblob_maps(fr, reg_map->as_RegisterMap());)
 
   // handle derived pointers first (otherwise base pointer may be
   // changed before derived pointer offset has been collected)
@@ -95,7 +95,7 @@ void OopMapDo<OopFnT, DerivedOopFnT, ValueFilterT>::iterate_oops_do(const frame 
              !Universe::heap()->is_in_or_null(*loc))) {
           tty->print_cr("# Found non oop pointer.  Dumping state at failure");
           // try to dump out some helpful debugging information
-          OopMapSet::trace_codeblob_maps(fr, reg_map);
+          OopMapSet::trace_codeblob_maps(fr, reg_map->as_RegisterMap());
           omv.print();
           tty->print_cr("register r");
           omv.reg()->print();
@@ -132,8 +132,8 @@ void OopMapDo<OopFnT, DerivedOopFnT, ValueFilterT>::iterate_oops_do(const frame 
 }
 
 template <typename OopMapFnT, typename DerivedOopFnT, typename ValueFilterT>
-template <typename OopMapStreamT>
-void OopMapDo<OopMapFnT, DerivedOopFnT, ValueFilterT>::walk_derived_pointers(const frame *fr, const ImmutableOopMap* map, const RegisterMap *reg_map) {
+template <typename OopMapStreamT, typename RegisterMapT>
+void OopMapDo<OopMapFnT, DerivedOopFnT, ValueFilterT>::walk_derived_pointers(const frame *fr, const ImmutableOopMap* map, const RegisterMapT *reg_map) {
   OopMapStreamT oms(map,OopMapValue::derived_oop_value);
   if (!oms.is_done()) {
 #ifndef TIERED
@@ -150,8 +150,8 @@ void OopMapDo<OopMapFnT, DerivedOopFnT, ValueFilterT>::walk_derived_pointers(con
 }
 
 template <typename OopMapFnT, typename DerivedOopFnT, typename ValueFilterT>
-template <typename OopMapStreamT>
-void OopMapDo<OopMapFnT, DerivedOopFnT, ValueFilterT>::walk_derived_pointers1(OopMapStreamT& oms, const frame *fr, const RegisterMap *reg_map) {
+template <typename OopMapStreamT, typename RegisterMapT>
+void OopMapDo<OopMapFnT, DerivedOopFnT, ValueFilterT>::walk_derived_pointers1(OopMapStreamT& oms, const frame *fr, const RegisterMapT *reg_map) {
   assert (fr != NULL, "");
   assert (_derived_oop_fn != NULL, "");
   OopMapValue omv;
@@ -177,7 +177,8 @@ void OopMapDo<OopMapFnT, DerivedOopFnT, ValueFilterT>::walk_derived_pointers1(Oo
 
 
 template <typename OopFnT, typename DerivedOopFnT, typename ValueFilterT>
-void OopMapDo<OopFnT, DerivedOopFnT, ValueFilterT>::oops_do(const frame *fr, const RegisterMap *reg_map, const ImmutableOopMap* oopmap) {
+template <typename RegisterMapT>
+void OopMapDo<OopFnT, DerivedOopFnT, ValueFilterT>::oops_do(const frame *fr, const RegisterMapT *reg_map, const ImmutableOopMap* oopmap) {
   if (oopmap->_exploded != NULL) {
     iterate_oops_do<ExplodedOopMapStream>(fr, reg_map, oopmap);
   } else {

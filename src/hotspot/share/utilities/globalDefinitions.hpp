@@ -1112,5 +1112,13 @@ template<typename K> bool primitive_equals(const K& k0, const K& k1) {
   return k0 == k1;
 }
 
+#if (defined(__GNUC__) || defined(__clang__))
+#define LIKELY(condition)   __builtin_expect(static_cast<bool>(condition), 1)
+#define UNLIKELY(condition) __builtin_expect(static_cast<bool>(condition), 0)
+#else
+#define LIKELY(condition)   (expr)
+#define UNLIKELY(condition) (expr)
+#endif
+
 
 #endif // SHARE_UTILITIES_GLOBALDEFINITIONS_HPP

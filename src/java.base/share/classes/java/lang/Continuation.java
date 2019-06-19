@@ -733,6 +733,7 @@ public class Continuation {
         this.sp = stack.length;
         this.refSP = refStack.length;
         this.done = false;
+        this.flags = 0;
 
         this.fp = 0;
         this.pc = 0;

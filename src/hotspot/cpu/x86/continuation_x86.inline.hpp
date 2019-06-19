@@ -293,8 +293,9 @@ hframe ContMirror::from_frame(const frame& f) {
 
 ///////
 
-inline intptr_t** Frame::saved_link_address(const RegisterMap* map) {
-  return frame::saved_link_address(map);
+template <typename RegisterMapT>
+inline intptr_t** Frame::map_link_address(const RegisterMapT* map) {
+  return (intptr_t**)map->location(rbp->as_VMReg());
 }
 
 template<typename FKind>
@@ -366,12 +367,17 @@ inline intptr_t* Interpreted::frame_bottom(const frame& f) { // exclusive; this 
     return *(intptr_t**)f.addr_at(frame::interpreter_frame_locals_offset) + 1; // exclusive, so we add 1 word
 }
 
-template<typename FKind>
-inline void ContinuationHelper::update_register_map(RegisterMap* map, const frame& f) {
+
+/////////
+
+
+template<typename FKind, typename RegisterMapT>
+inline void ContinuationHelper::update_register_map(RegisterMapT* map, const frame& f) {
   frame::update_map_with_saved_link(map, link_address<FKind>(f));
 }
 
-inline void ContinuationHelper::update_register_map(RegisterMap* map, intptr_t** link_address) {
+template<typename RegisterMapT>
+inline void ContinuationHelper::update_register_map(RegisterMapT* map, intptr_t** link_address) {
   frame::update_map_with_saved_link(map, link_address);
 }
 
@@ -518,7 +524,7 @@ template<typename FKind> hframe Freeze<ConfigT, mode>::new_callee_hframe(const f
     cb = NULL;
   } else {
     fp = (intptr_t)f.fp();
-    cb = f.cb();
+    cb = f.cb(); // TODO R : why are we even bothering with the cb?
   }
 
   hframe result = hframe(sp, caller.ref_sp() - num_oops, fp, f.pc(), cb, FKind::interpreted);
@@ -601,12 +607,12 @@ template<typename FKind> frame Thaw<ConfigT, mode>::new_frame(const hframe& hf, 
   }
 }
 
-template<typename ConfigT, op_mode mode>
+template <typename ConfigT, op_mode mode>
 inline intptr_t** Thaw<ConfigT, mode>::frame_callee_info_address(frame& f) {
   return f.fp_addr(); // we write into the frame object, not the frame on the stack
 }
 
-template<typename ConfigT, op_mode mode>
+template <typename ConfigT, op_mode mode>
 template<typename FKind, bool top, bool bottom>
 inline intptr_t* Thaw<ConfigT, mode>::align(const hframe& hf, intptr_t* vsp, const frame& caller) {
   assert (FKind::is_instance(hf), "");
@@ -629,7 +635,7 @@ inline intptr_t* Thaw<ConfigT, mode>::align(const hframe& hf, intptr_t* vsp, con
   return vsp;
 }
 
-template<typename ConfigT, op_mode mode>
+template <typename ConfigT, op_mode mode>
 template<typename FKind, bool top, bool bottom>
 inline void Thaw<ConfigT, mode>::patch_pd(frame& f, const frame& caller) {
   assert (!bottom || caller.fp() == _cont.entryFP(), "caller.fp: " INTPTR_FORMAT " entryFP: " INTPTR_FORMAT, p2i(caller.fp()), p2i(_cont.entryFP()));
@@ -650,6 +656,94 @@ inline void Thaw<ConfigT, mode>::derelativize_interpreted_frame_metadata(const h
   ContMirror::derelativize(vfp, frame::interpreter_frame_initial_sp_offset); // == block_top == block_bottom
   ContMirror::derelativize(vfp, frame::interpreter_frame_locals_offset);
 }
+
+////////
+
+// Java frames don't have callee saved registers (except for rbp), so we can use a smaller RegisterMap
+class SmallRegisterMap {
+  static const VMReg my_reg; // = rbp->as_VMReg();
+
+public:
+  // as_RegisterMap is used when we didn't want to templatize and abstract over RegisterMap type to support SmallRegisterMap
+  // Consider enhancing SmallRegisterMap to support those cases
+  const RegisterMap* as_RegisterMap() const { return NULL; }
+  RegisterMap* as_RegisterMap() { return NULL; }
+  
+private:
+  intptr_t*   _rbp;
+
+  JavaThread* _thread;
+  bool        _update_map;              // Tells if the register map need to be updated when traversing the stack
+  bool        _validate_oops;           // whether to perform valid oop checks in asserts -- used only in the map use for continuation freeze/thaw
+  // bool     _walk_cont;               // whether to walk frames on a continuation stack
+public:
+  SmallRegisterMap(JavaThread *thread, bool update_map = true, bool walk_cont = false, bool validate_oops = true) 
+   : _thread(thread), _update_map(update_map), _validate_oops(validate_oops) {
+     _rbp = NULL;
+  }
+  SmallRegisterMap(const SmallRegisterMap* map) 
+    : _thread(map->thread()), _update_map(map->update_map()), _validate_oops(map->validate_oops()) {
+    _rbp = map->_rbp;
+  }
+  SmallRegisterMap(const RegisterMap* map) 
+    : _thread(map->thread()), _update_map(map->update_map()), _validate_oops(map->validate_oops()) {
+    _rbp = (intptr_t*)map->location(my_reg);
+  }
+
+  address location(VMReg reg) const {
+    assert(!_validate_oops || _update_map, "updating map that does not need updating");
+    assert (reg == my_reg || reg == my_reg->next(), "Reg: %s", reg->name());
+    return (address)_rbp;
+  }
+
+  void set_location(VMReg reg, address loc) {
+    assert (reg == my_reg || reg == my_reg->next(), "Reg: %s", reg->name());
+    // tty->print_cr(">>> set location %s(%ld) loc: %p", reg->name(), reg->value(), loc);
+    _rbp = (intptr_t*)loc;
+  }
+
+  JavaThread* thread() const { return _thread; }
+  bool update_map()    const { return _update_map; }
+  bool validate_oops() const { return _validate_oops; }
+  bool walk_cont()     const { return false; }  
+  bool include_argument_oops() const { return false; }
+  void set_include_argument_oops(bool f)  {}
+
+  bool in_cont()      const { return false; }
+
+#ifdef ASSERT
+  // void set_skip_missing(bool value) { _skip_missing = value; }
+  bool should_skip_missing() const  { return false; }
+
+  VMReg find_register_spilled_here(void* p) {
+    return _rbp == (intptr_t*)p ? my_reg : NULL;
+  }
+#endif
+
+#ifndef PRODUCT
+  void print() const { print_on(tty); }
+  
+  void print_on(outputStream* st) const {
+    st->print_cr("Register map");
+
+    VMReg r = my_reg;
+
+    intptr_t* src = (intptr_t*) location(r);
+    if (src != NULL) {
+      r->print_on(st);
+      st->print(" [" INTPTR_FORMAT "] = ", p2i(src));
+      if (((uintptr_t)src & (sizeof(*src)-1)) != 0) {
+        st->print_cr("<misaligned>");
+      } else {
+        st->print_cr(INTPTR_FORMAT, *src);
+      }
+    }
+  }
+
+#endif
+};
+
+const VMReg SmallRegisterMap::my_reg = rbp->as_VMReg();
 
 /// DEBUGGING
 

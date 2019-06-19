@@ -117,19 +117,15 @@ class RegisterMap : public StackObj {
     }
   }
 
-  template <bool set_location_valid>
   void set_location(VMReg reg, address loc) {
     int index = reg->value() / location_valid_type_size;
     assert(0 <= reg->value() && reg->value() < reg_count, "range check");
     assert(0 <= index && index < location_valid_size, "range check");
     assert(!_validate_oops || _update_map, "updating map that does not need updating");
     _location[reg->value()] = (intptr_t*) loc;
-    if (set_location_valid)
-      _location_valid[index] |= ((LocationValidType)1 << (reg->value() % location_valid_type_size));
+    _location_valid[index] |= ((LocationValidType)1 << (reg->value() % location_valid_type_size));
     check_location_valid();
   }
-
-  void set_location(VMReg reg, address loc) { set_location<true>(reg, loc); }
 
   // Called by an entry frame.
   void clear();
@@ -150,12 +146,17 @@ class RegisterMap : public StackObj {
   intptr_t** last_vstack_fp()            { return _last_vstack_fp; }
   void set_last_vstack_fp(intptr_t** fp) { _last_vstack_fp = fp; }
 
+  const RegisterMap* as_RegisterMap() const { return this; }
+  RegisterMap* as_RegisterMap() { return this; }
+
   void print_on(outputStream* st) const;
   void print() const;
 
 #ifdef ASSERT
   void set_skip_missing(bool value) { _skip_missing = value; }
   bool should_skip_missing() const  { return _skip_missing; }
+
+  VMReg find_register_spilled_here(void* p);
 #endif
 
   // the following contains the definition of pd_xxx methods

@@ -2444,7 +2444,7 @@ const size_t minimumSymbolTableSize = 1024;
           "Path to the directoy where a temporary file will be created "    \
           "to use as the backing store for Java Heap.")                     \
                                                                             \
-  product(bool, LoomGenCode, false,                                         \
+  product(bool, LoomGenCode, true,                                          \
       "Generate oopmap code")                                               \
                                                                             \
   product(bool, UseContinuationLazyCopy, true,                              \

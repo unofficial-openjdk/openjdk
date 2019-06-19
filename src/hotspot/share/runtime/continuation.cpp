@@ -58,13 +58,34 @@
 #include "utilities/exceptions.hpp"
 #include "utilities/macros.hpp"
 
+// #define PERFTEST 1
+
+#ifdef PERFTEST
+#define PERFTEST_ONLY(code) code
+#else 
+#define PERFTEST_ONLY(code)
+#endif // ASSERT
+
 #ifdef __has_include
-#  if __has_include(<callgrind.h>)
-#    include <callgrind.h>
+#  if __has_include(<valgrind/callgrind.h>)
+#    include <valgrind/callgrind.h>
 #  endif
 #endif
+
 #ifdef CALLGRIND_START_INSTRUMENTATION
   static int callgrind_counter = 1;
+  // static void callgrind() {
+  //   if (callgrind_counter != 0) {
+  //     if (callgrind_counter > 20000) {
+  //       tty->print_cr("Starting callgrind instrumentation");
+  //       CALLGRIND_START_INSTRUMENTATION;
+  //       callgrind_counter = 0;
+  //     } else
+  //       callgrind_counter++;
+  //   }	
+  // }	
+#else	
+  // static void callgrind() {}
 #endif
 
 // #undef ASSERT
@@ -73,7 +94,7 @@
 
 int Continuations::_flags = 0;
 
-static int PERFTEST_LEVEL = ContPerfTest;
+PERFTEST_ONLY(static int PERFTEST_LEVEL = ContPerfTest;)
 // Freeze:
 // 5 - no call into C
 // 10 - immediate return from C
@@ -125,7 +146,6 @@ static void print_vframe(frame f, const RegisterMap* map = NULL, outputStream* s
 #ifdef ASSERT
   static void print_frames(JavaThread* thread, outputStream* st = tty);
   static jlong java_tid(JavaThread* thread);
-  static VMReg find_register_spilled_here(void* p, RegisterMap* map);
   static void print_blob(outputStream* st, address addr);
   // void static stop();
   // void static stop(const frame& f);
@@ -160,12 +180,13 @@ void continuations_init() {
   Continuations::init();
 }
 
+class SmallRegisterMap;
 class ContMirror;
 class hframe;
 
 class Frame {
 public:
-  static inline intptr_t** saved_link_address(const RegisterMap* map);
+  template<typename RegisterMapT> static inline intptr_t** map_link_address(const RegisterMapT* map);
   static inline Method* frame_method(const frame& f);
   static inline address real_pc(const frame& f);
   static inline void patch_pc(frame& f, address pc);
@@ -218,7 +239,8 @@ public:
   static inline int stack_argsize(const frame& f);
 
   static inline address* return_pc_address(const frame& f);
-  static bool is_owning_locks(JavaThread* thread, const RegisterMap* map, const frame& f);
+  template <typename RegisterMapT>
+  static bool is_owning_locks(JavaThread* thread, const RegisterMapT* map, const frame& f);
 };
 
 class NonInterpretedUnknown : public NonInterpreted<NonInterpretedUnknown>  {
@@ -460,10 +482,7 @@ public:
 
   void set_entrySP(intptr_t* sp) { _entrySP = sp; }
   void set_entryFP(intptr_t* fp) { _entryFP = fp; }
-  void set_entryPC(address pc)   {
-    log_develop_trace(jvmcont)("set_entryPC " INTPTR_FORMAT, p2i(pc));
-    _entryPC = pc;
-  }
+  void set_entryPC(address pc)   { _entryPC = pc; log_develop_trace(jvmcont)("set_entryPC " INTPTR_FORMAT, p2i(pc)); }
 
   int sp() const           { return _sp; }
   intptr_t fp() const      { return _fp; }
@@ -471,7 +490,9 @@ public:
 
   void set_sp(int sp)      { _sp = sp; }
   void set_fp(intptr_t fp) { _fp = fp; }
-  void set_pc(address pc)  { _pc = pc; set_flag(FLAG_LAST_FRAME_INTERPRETED, Interpreter::contains(pc));  }
+  void clear_pc()  { _pc = NULL; set_flag(FLAG_LAST_FRAME_INTERPRETED, false); }
+  void set_pc(address pc, bool interpreted)  { _pc = pc; set_flag(FLAG_LAST_FRAME_INTERPRETED, interpreted); 
+                                               assert (interpreted == Interpreter::contains(pc), ""); }
 
   bool is_flag(unsigned char flag) { return (_flags & flag) != 0; }
   void set_flag(unsigned char flag, bool v) { _flags = (v ? _flags |= flag : _flags &= ~flag); }
@@ -507,7 +528,7 @@ public:
   bool is_empty();
 
   template<op_mode mode> const hframe last_frame();
-  inline void set_last_frame(const hframe& f);
+  template<op_mode mode> void set_last_frame(const hframe& f);
   inline void set_last_frame_pd(const hframe& f);
   inline void set_empty();
 
@@ -794,10 +815,11 @@ bool ContMirror::is_empty() {
   return empty;
 }
 
+template<op_mode mode>
 inline void ContMirror::set_last_frame(const hframe& f) {
   // assert (f._length = _stack_length, "");
   set_sp(f.sp());
-  set_pc(f.pc()); // DEOPT?
+  set_pc(f.pc(), mode == mode_fast ? false : f.is_interpreted_frame());
   set_last_frame_pd(f);
   set_refSP(f.ref_sp());
 
@@ -815,7 +837,7 @@ inline void ContMirror::set_empty() {
     set_refSP(_ref_stack->length());
   }
   set_fp(0);
-  set_pc(NULL);
+  clear_pc();
 }
 
 bool ContMirror::is_in_stack(void* p) const {
@@ -863,10 +885,8 @@ void ContMirror::copy_to_stack(void* from, void* to, int size) {
   assert (stack_index(to) >= 0, "");
   assert (to_index(_hstack, (address)to + size) <= _sp, "");
 
-  if (PERFTEST_LEVEL >= 25) {
-    memcpy(to, from, size);
-    //Copy::conjoint_memory_atomic(from, to, size); // Copy::disjoint_words((HeapWord*)from, (HeapWord*)to, size/wordSize); //
-  }
+  PERFTEST_ONLY(if (PERFTEST_LEVEL >= 25))
+    memcpy(to, from, size); //Copy::conjoint_memory_atomic(from, to, size); // Copy::disjoint_words((HeapWord*)from, (HeapWord*)to, size/wordSize); //
 
   _e_size += size;
 }
@@ -879,10 +899,8 @@ void ContMirror::copy_from_stack(void* from, void* to, int size) {
   assert (stack_index(from) >= 0, "");
   assert (to_index(stack(), (address)from + size) <= stack_length(), "index: %d length: %d", to_index(stack(), (address)from + size), stack_length());
 
-  if (PERFTEST_LEVEL >= 125) {
-    memcpy(to, from, size);
-    //Copy::conjoint_memory_atomic(from, to, size);
-  }
+  PERFTEST_ONLY(if (PERFTEST_LEVEL >= 125))
+    memcpy(to, from, size); //Copy::conjoint_memory_atomic(from, to, size);
 
   _e_size += size;
 }
@@ -930,8 +948,8 @@ template<typename Event> void ContMirror::post_jfr_event(Event* e) {
 
 class ContinuationHelper {
 public:
-  template<typename FKind> static inline void update_register_map(RegisterMap* map, const frame& f);
-  static inline void update_register_map(RegisterMap* map, hframe::callee_info callee_info);
+  template<typename FKind, typename RegisterMapT> static inline void update_register_map(RegisterMapT* map, const frame& f);
+  template<typename RegisterMapT> static inline void update_register_map(RegisterMapT* map, hframe::callee_info callee_info);
   static void update_register_map(RegisterMap* map, const hframe& h, const ContMirror& cont);
   static void update_register_map_from_last_vstack_frame(RegisterMap* map);
   static inline frame frame_with(frame& f, intptr_t* sp, address pc);
@@ -1064,8 +1082,9 @@ inline int NonInterpreted<Self>::stack_argsize(const frame&f) {
 }
 
 template<typename Self>
-bool NonInterpreted<Self>::is_owning_locks(JavaThread* thread, const RegisterMap* map, const frame& f) {
-  if (!DetectLocksInCompiledFrames) return false;
+template<typename RegisterMapT>
+bool NonInterpreted<Self>::is_owning_locks(JavaThread* thread, const RegisterMapT* map, const frame& f) {
+  // if (!DetectLocksInCompiledFrames) return false;
   assert (!f.is_interpreted_frame() && Self::is_instance(f), "");
 
   CompiledMethod* cm = f.cb()->as_compiled_method();
@@ -1173,6 +1192,7 @@ static oop get_continuation(JavaThread* thread) {
 //   java_lang_Thread::set_continuation(thread->threadObj(), cont);
 // }
 
+template<typename RegisterMapT>
 class ContOopBase : public OopClosure, public DerivedOopClosure {
 protected:
   ContMirror* const _cont;
@@ -1180,14 +1200,14 @@ protected:
   void* const _vsp;
   int _count;
 #ifdef ASSERT
-  RegisterMap* _map;
+  RegisterMapT* _map;
 #endif
 
 public:
   int count() { return _count; }
 
 protected:
-  ContOopBase(ContMirror* cont, const frame* fr, RegisterMap* map, void* vsp)
+  ContOopBase(ContMirror* cont, const frame* fr, RegisterMapT* map, void* vsp)
    : _cont(cont), _fr(fr), _vsp(vsp) {
      _count = 0;
   #ifdef ASSERT
@@ -1201,11 +1221,11 @@ protected:
 #ifdef ASSERT // this section adds substantial overhead
     VMReg reg;
     // The following is not true for the sender of the safepoint stub
-    // assert(offset >= 0 || p == saved_link_address(_map),
-    //   "offset: %d reg: %s", offset, (reg = find_register_spilled_here(p, _map), reg != NULL ? reg->name() : "NONE")); // calle-saved register can only be rbp
-    reg = find_register_spilled_here(p, _map); // expensive operation
+    // assert(offset >= 0 || p == Frame::map_link_address(_map),
+    //   "offset: %d reg: %s", offset, (reg = _map->find_register_spilled_here(p), reg != NULL ? reg->name() : "NONE")); // calle-saved register can only be rbp
+    reg = _map->find_register_spilled_here(p); // expensive operation
     if (reg != NULL) log_develop_trace(jvmcont)("reg: %s", reg->name());
-    log_develop_trace(jvmcont)("p: " INTPTR_FORMAT " offset: %d %s", p2i(p), offset, p == Frame::saved_link_address(_map) ? "(link)" : "");
+    log_develop_trace(jvmcont)("p: " INTPTR_FORMAT " offset: %d %s", p2i(p), offset, p == Frame::map_link_address(_map) ? "(link)" : "");
 #endif
 
     return offset;
@@ -1263,20 +1283,22 @@ struct FpOopInfo {
 
 template <typename ConfigT, op_mode mode>
 class Freeze {
+  typedef typename Conditional<mode == mode_preempt, RegisterMap, SmallRegisterMap>::type RegisterMapT;
 
 private:
   JavaThread* _thread;
   ContMirror& _cont;
   intptr_t *_bottom_address;
 
-  RegisterMap _map;
-
   int _oops;
   int _size; // total size of all frames plus metadata. keeps track of offset where a frame should be written and how many bytes we need to allocate.
   int _frames;
+  int _cgrind_interpreted_frames;
 
   FpOopInfo _fp_oop_info;
   FrameInfo* _fi;
+
+  RegisterMapT _map;
 
   frame _safepoint_stub;
   hframe _safepoint_stub_h;
@@ -1299,9 +1321,9 @@ public:
 
   Freeze(JavaThread* thread, ContMirror& mirror) :
     _thread(thread), _cont(mirror), _bottom_address(mirror.entrySP()),
-    _map(thread, false, false, false),
-    _oops(0), _size(0), _frames(0),
-    _fp_oop_info(), _safepoint_stub_caller(false) {
+    _oops(0), _size(0), _frames(0), _cgrind_interpreted_frames(0),
+    _fp_oop_info(), _map(thread, false, false, false),
+    _safepoint_stub_caller(false) {
 
     _map.set_include_argument_oops(false);
   }
@@ -1315,14 +1337,14 @@ public:
 
     // assert (map.update_map(), "RegisterMap not set to update");
     assert (!_map.include_argument_oops(), "should be");
-    frame f = freeze_start_frame();
+    frame f = freeze_start_frame(_map);
     hframe caller;
-    return freeze<true>(f, caller, Frame::saved_link_address(&_map), 0);
+    return freeze<true>(f, caller, Frame::map_link_address(&_map), 0);
   }
 
-  frame freeze_start_frame() {
-    if (mode == mode_preempt) // TODO: we should really do partial specialization, but then we'll need to define this out-of-line
-      return freeze_start_frame_safepoint_stub();
+  frame freeze_start_frame(SmallRegisterMap& ignored) {
+    // if (mode == mode_preempt) // TODO: we should really do partial specialization, but then we'll need to define this out-of-line
+    //   return freeze_start_frame_safepoint_stub();
 
     assert (mode != mode_preempt, "");
 
@@ -1346,7 +1368,9 @@ public:
     return f;
   }
 
-  frame freeze_start_frame_safepoint_stub() {
+  frame freeze_start_frame(RegisterMap& ignored) {
+    assert (mode == mode_preempt, "");
+
     // safepoint yield
     frame f = _thread->last_frame();
     f.set_fp(f.real_fp()); // Instead of this, maybe in ContMirror::set_last_frame always use the real_fp? // TODO PD
@@ -1372,7 +1396,7 @@ public:
   }
 
   template<bool top>
-  freeze_result freeze(const frame& f, hframe& caller, intptr_t** callee_link_address, int callee_argsize) {
+  NOINLINE freeze_result freeze(const frame& f, hframe& caller, intptr_t** callee_link_address, int callee_argsize) {
     assert (f.unextended_sp() < _bottom_address - SP_WIGGLE, ""); // see recurse_java_frame
     assert (f.is_interpreted_frame() || ((top && mode == mode_preempt) == is_stub(f.cb())), "");
     assert (mode != mode_fast || (f.is_compiled_frame() && f.oop_map() != NULL), "");
@@ -1445,11 +1469,11 @@ public:
   template<typename FKind> // the callee's type
   NOINLINE freeze_result finalize(const frame& f, const frame& callee, int argsize, hframe& caller) {
   #ifdef CALLGRIND_START_INSTRUMENTATION
-    // if (_frames == _compiled && callgrind_counter == 1) {
-    //   callgrind_counter = 2;
-    //   tty->print_cr("Starting callgrind instrumentation");
-    //   CALLGRIND_START_INSTRUMENTATION;
-    // }
+    if (_frames > 0 && _cgrind_interpreted_frames == 0 && callgrind_counter == 1) {
+      callgrind_counter = 2;
+      tty->print_cr("Starting callgrind instrumentation");
+      CALLGRIND_START_INSTRUMENTATION;
+    }
   #endif
 
     // f is the entry frame
@@ -1472,7 +1496,7 @@ public:
 
     setup_jump<FKind>(f, callee);
 
-    if (PERFTEST_LEVEL <= 15) return freeze_ok;
+    PERFTEST_ONLY(if (PERFTEST_LEVEL <= 15) return freeze_ok;)
 
     _cont.allocate_stacks<ConfigT>(_size, _oops, _frames);
     if (_thread->has_pending_exception())
@@ -1521,7 +1545,7 @@ public:
 
   template<typename FKind, bool top, bool bottom>
   void freeze_java_frame(const frame& f, hframe& caller, int fsize, int argsize, int oops, void* extra) {
-    if (PERFTEST_LEVEL <= 15) return;
+    PERFTEST_ONLY(if (PERFTEST_LEVEL <= 15) return;)
 
     log_develop_trace(jvmcont)("============================= FREEZING FRAME interpreted: %d top: %d bottom: %d", FKind::interpreted, top, bottom);
     log_develop_trace(jvmcont)("fsize: %d argsize: %d oops: %d", fsize, argsize, oops);
@@ -1534,7 +1558,7 @@ public:
 
   template <typename FKind>
   void freeze_oops(const frame& f, intptr_t* vsp, intptr_t *hsp, int index, int num_oops, void* extra) {
-    if (PERFTEST_LEVEL < 30) return;
+    PERFTEST_ONLY(if (PERFTEST_LEVEL < 30) return;)
 
     log_develop_trace(jvmcont)("Walking oops (freeze)");
 
@@ -1543,7 +1567,7 @@ public:
     _fp_oop_info._has_fp_oop = false;
 
     int frozen;
-    if (!FKind::interpreted && extra != NULL) { // dynamic branch
+    if (LIKELY(!FKind::interpreted && extra != NULL)) { // dynamic branch
       FreezeFnT f_fn = (FreezeFnT)extra;
       // tty->print_cr(">>>>0000<<<<<");
       frozen = freeze_compiled_oops_stub(f_fn, vsp, hsp, &_map, index);
@@ -1598,6 +1622,7 @@ public:
     _size += fsize + callee_argsize;
     _oops += oops;
     _frames++;
+    _cgrind_interpreted_frames++;
 
     return recurse_java_frame<Interpreted, top>(f, caller, callee_info, fsize, 0, oops, (void*)&mask);
   }
@@ -1625,12 +1650,12 @@ public:
 
   int freeze_intepreted_oops(const frame& f, intptr_t* vsp, intptr_t* hsp, int starting_index, const InterpreterOopMap& mask) {
     FreezeOopFn oopFn(&_cont, &_fp_oop_info, &f, vsp, hsp, &_map, starting_index);
-    const_cast<frame&>(f).oops_interpreted_do(&oopFn, &_map, mask);
+    const_cast<frame&>(f).oops_interpreted_do(&oopFn, NULL, mask);
     return oopFn.count();
   }
 
   template<bool top>
-  freeze_result recurse_compiled_frame(const frame& f, hframe& caller, hframe::callee_info callee_info) {
+  inline freeze_result recurse_compiled_frame(const frame& f, hframe& caller, hframe::callee_info callee_info) {
     int fsize = Compiled::size(f);
     int oops  = Compiled::num_oops(f);
     int argsize = Compiled::stack_argsize(f);
@@ -1662,7 +1687,7 @@ public:
     if (bottom || (mode != mode_fast && caller.is_interpreted_frame())) { // we must test for interpreted caller even in fast mode b/c caller can be the top frozen frame
       log_develop_trace(jvmcont)("freeze_compiled_frame add argsize: fsize: %d argsize: %d fsize: %d", fsize, argsize, fsize + argsize);
       fsize += argsize;
-      align<bottom>(caller);
+      align<bottom>(caller); // TODO PERF
     }
 
     hframe hf = new_callee_hframe<FKind>(f, vsp, caller, fsize, oops);
@@ -1735,21 +1760,21 @@ public:
     }
   }
 
-  int freeze_compiled_oops_stub(FreezeFnT f_fn, intptr_t* vsp, intptr_t* hsp, RegisterMap* map, int starting_index) {
+  int freeze_compiled_oops_stub(FreezeFnT f_fn, intptr_t* vsp, intptr_t* hsp, RegisterMapT* map, int starting_index) {
     // tty->print_cr(">>>>2222<<<<<");
     typename ConfigT::OopT* addr = _cont.refStack()->template obj_at_address<typename ConfigT::OopT>(starting_index);
-    int cnt = f_fn( (address) vsp,  (address) addr, (address) map, (address) hsp, _cont.refStack()->length() - starting_index, &_fp_oop_info);
+    int cnt = f_fn( (address) vsp,  (address) addr, (address) Frame::map_link_address(map), (address) hsp, _cont.refStack()->length() - starting_index, &_fp_oop_info);
     return cnt;
   }
 
   NOINLINE void finish(const frame& f, const hframe& top) {
-    if (PERFTEST_LEVEL <= 15) return;
+    PERFTEST_ONLY(if (PERFTEST_LEVEL <= 15) return;)
 
     ConfigT::OopWriterT::finish(_cont, nr_oops(), top.ref_sp());
 
     assert (top.sp() <= _cont.sp(), "top.sp(): %d sp: %d", top.sp(), _cont.sp());
 
-    _cont.set_last_frame(top);
+    _cont.set_last_frame<mode>(top);
 
     if (log_develop_is_enabled(Trace, jvmcont)) {
       log_develop_trace(jvmcont)("top_hframe after (freeze):");
@@ -1820,7 +1845,7 @@ public:
     _cont.copy_to_stack(vsp, hsp, fsize);
   }
 
-  class FreezeOopFn: public ContOopBase {
+  class FreezeOopFn : public ContOopBase<RegisterMapT> {
   private:
     FpOopInfo* _fp_info;
     void* const _hsp;
@@ -1832,14 +1857,14 @@ public:
   #endif
 
     int add_oop(oop obj, int index) {
-      return _cont->add_oop<ConfigT>(obj, index);
+      return this->_cont->template add_oop<ConfigT>(obj, index);
     }
 
   protected:
     template <class T> inline void do_oop_work(T* p) {
-      process(p);
+      this->process(p);
       oop obj = RawAccess<>::oop_load(p); // we are reading off our own stack, Raw should be fine
-      int index = add_oop(obj, _starting_index + _count - 1);
+      int index = add_oop(obj, _starting_index + this->_count - 1);
 
   #ifdef ASSERT
       // oop obj = NativeAccess<>::oop_load(p);
@@ -1847,14 +1872,14 @@ public:
       assert (oopDesc::is_oop_or_null(obj), "invalid oop");
       log_develop_trace(jvmcont)("narrow: %d", sizeof(T) < wordSize);
 
-      int offset = verify(p);
+      int offset = this->verify(p);
       assert(offset < 32768, "");
       if (_stub_vsp == NULL && offset < 0) { // rbp could be stored in the callee frame.
-        assert (p == (T*)Frame::saved_link_address(_map), "");
+        assert (p == (T*)Frame::map_link_address(this->_map), "");
         _fp_info->set_oop_fp_index(0xbaba); // assumed to be unnecessary at this time; used only in ASSERT for now
       } else {
         address hloc = (address)_hsp + offset; // address of oop in the (raw) h-stack
-        assert (_cont->in_hstack(hloc), "");
+        assert (this->_cont->in_hstack(hloc), "");
         assert (*(T*)hloc == *p, "*hloc: " INTPTR_FORMAT " *p: " INTPTR_FORMAT, *(intptr_t*)hloc, *(intptr_t*)p);
 
         log_develop_trace(jvmcont)("Marking oop at " INTPTR_FORMAT " (offset: %d)", p2i(hloc), offset);
@@ -1869,8 +1894,8 @@ public:
     }
 
   public:
-    FreezeOopFn(ContMirror* cont, FpOopInfo* fp_info, const frame* fr, void* vsp, void* hsp, RegisterMap* map, int starting_index, intptr_t* stub_vsp = NULL, intptr_t* stub_hsp = NULL)
-    : ContOopBase(cont, fr, map, vsp), _fp_info(fp_info), _hsp(hsp), _starting_index(starting_index),
+    FreezeOopFn(ContMirror* cont, FpOopInfo* fp_info, const frame* fr, void* vsp, void* hsp, RegisterMapT* map, int starting_index, intptr_t* stub_vsp = NULL, intptr_t* stub_hsp = NULL)
+    : ContOopBase<RegisterMapT>(cont, fr, map, vsp), _fp_info(fp_info), _hsp(hsp), _starting_index(starting_index),
       _stub_vsp((address)stub_vsp)
   #ifndef PRODUCT
       , _stub_hsp((address)stub_hsp)
@@ -1885,8 +1910,8 @@ public:
     void do_derived_oop(oop *base_loc, oop *derived_loc) {
       assert(Universe::heap()->is_in_or_null(*base_loc), "not an oop");
       assert(derived_loc != base_loc, "Base and derived in same location");
-      DEBUG_ONLY(verify(base_loc);)
-      DEBUG_ONLY(verify(derived_loc);)
+      DEBUG_ONLY(this->verify(base_loc);)
+      DEBUG_ONLY(this->verify(derived_loc);)
 
       intptr_t offset = cast_from_oop<intptr_t>(*derived_loc) - cast_from_oop<intptr_t>(*base_loc);
 
@@ -1894,9 +1919,9 @@ public:
         "Continuation freeze derived pointer@" INTPTR_FORMAT " - Derived: " INTPTR_FORMAT " Base: " INTPTR_FORMAT " (@" INTPTR_FORMAT ") (Offset: " INTX_FORMAT ")",
         p2i(derived_loc), p2i((address)*derived_loc), p2i((address)*base_loc), p2i(base_loc), offset);
 
-      int hloc_offset = (address)derived_loc - (address)_vsp;
+      int hloc_offset = (address)derived_loc - (address)this->_vsp;
       if (hloc_offset < 0 && _stub_vsp == NULL) {
-        assert ((intptr_t**)derived_loc == Frame::saved_link_address(_map), "");
+        assert ((intptr_t**)derived_loc == Frame::map_link_address(this->_map), "");
         _fp_info->set_oop_fp_index(offset);
 
         log_develop_trace(jvmcont)("Writing derived pointer offset in fp (offset: %ld, 0x%lx)", offset, offset);
@@ -1982,10 +2007,10 @@ static void post_JVMTI_yield(JavaThread* thread, ContMirror& cont) {
 template<op_mode mode>
 int freeze0(JavaThread* thread, FrameInfo* fi) {
   //callgrind();
-  PERFTEST_LEVEL = ContPerfTest;
+  PERFTEST_ONLY(PERFTEST_LEVEL = ContPerfTest;)
 
-  if (PERFTEST_LEVEL <= 10) return early_return(freeze_ok, thread, fi);
-  if (PERFTEST_LEVEL < 1000) thread->set_cont_yield(false);
+  PERFTEST_ONLY(if (PERFTEST_LEVEL <= 10) return early_return(freeze_ok, thread, fi);)
+  PERFTEST_ONLY(if (PERFTEST_LEVEL < 1000) thread->set_cont_yield(false);)
 
 #ifdef ASSERT
   log_develop_trace(jvmcont)("~~~~~~~~~ freeze mode: %d fi->sp: " INTPTR_FORMAT " fi->fp: " INTPTR_FORMAT " fi->pc: " INTPTR_FORMAT, mode, p2i(fi->sp), p2i(fi->fp), p2i(fi->pc));
@@ -2016,7 +2041,7 @@ int freeze0(JavaThread* thread, FrameInfo* fi) {
   if (res != freeze_ok)
     return early_return(res, thread, fi);
 
-  if (PERFTEST_LEVEL <= 15) return freeze_ok;
+  PERFTEST_ONLY(if (PERFTEST_LEVEL <= 15) return freeze_ok;)
 
   cont.set_flag(FLAG_SAFEPOINT_YIELD, mode == mode_preempt);
 
@@ -2206,9 +2231,9 @@ static bool stack_overflow_check(JavaThread* thread, int size, address sp) {
 //                  fi->fp - cont's entry FP
 //                  fi->pc - overflow? throw StackOverflowError : cont's entry PC
 JRT_LEAF(int, Continuation::prepare_thaw(FrameInfo* fi, bool return_barrier))
-  PERFTEST_LEVEL = ContPerfTest;
+  PERFTEST_ONLY(PERFTEST_LEVEL = ContPerfTest;)
 
-  if (PERFTEST_LEVEL <= 110) return 0;
+  PERFTEST_ONLY(if (PERFTEST_LEVEL <= 110) return 0;)
 
   int num_frames = thaw_num_frames(return_barrier);
 
@@ -2234,21 +2259,23 @@ JRT_LEAF(int, Continuation::prepare_thaw(FrameInfo* fi, bool return_barrier))
 
   log_develop_trace(jvmcont)("prepare_thaw bottom: " INTPTR_FORMAT " top: " INTPTR_FORMAT " size: %d", p2i(bottom), p2i(bottom - size), size);
 
-  if (PERFTEST_LEVEL <= 120) return 0;
+  PERFTEST_ONLY(if (PERFTEST_LEVEL <= 120) return 0;)
 
   return size;
 JRT_END
 
 template <typename ConfigT, op_mode mode>
 class Thaw {
+  typedef typename Conditional<mode == mode_preempt, RegisterMap, SmallRegisterMap>::type RegisterMapT;
+
 private:
   JavaThread* _thread;
   ContMirror& _cont;
   FrameInfo* _fi;
 
-  RegisterMap _map; // map is only passed to thaw_compiled_frame for use in deoptimize, which uses it only for biased locks; we may not need deoptimize there at all -- investigate
-
   bool _fastpath; // if true, a subsequent freeze can be in mode_fast
+
+  RegisterMapT _map; // map is only passed to thaw_compiled_frame for use in deoptimize, which uses it only for biased locks; we may not need deoptimize there at all -- investigate
 
   const hframe* _safepoint_stub;
   bool _safepoint_stub_caller;
@@ -2271,8 +2298,8 @@ public:
 
   Thaw(JavaThread* thread, ContMirror& mirror) :
     _thread(thread), _cont(mirror),
-    _map(thread, false, false, false),
     _fastpath(true),
+    _map(thread, false, false, false),
     _safepoint_stub(NULL), _safepoint_stub_caller(false) {
 
     _map.set_include_argument_oops(false);
@@ -2348,7 +2375,7 @@ public:
 
   template<typename FKind>
   void finalize(const hframe& hf, const hframe& callee, bool is_empty, frame& entry) {
-    if (PERFTEST_LEVEL <= 115) return;
+    PERFTEST_ONLY(if (PERFTEST_LEVEL <= 115) return;)
 
     entry = new_entry_frame();
     // if (entry.is_interpreted_frame()) _fastpath = false; // set _fastpath if entry is interpreted ? 
@@ -2368,13 +2395,14 @@ public:
       _cont.thread()->cont_frame()->sp = NULL;
       _cont.set_entryPC(NULL);
     } else {
-      _cont.set_last_frame(hf); // _last_frame = hf;
+      _cont.set_last_frame<mode>(hf); // _last_frame = hf;
       if (!FKind::interpreted && !hf.is_interpreted_frame()) {
         // we'll be subtracting the argsize in thaw_compiled_frame, but if the caller is compiled, we shouldn't
         _cont.add_size(callee.compiled_frame_stack_argsize());
-      } else {
-        // _fastpath = false;
-      }
+      } 
+      // else {
+      //   _fastpath = false; // see discussion in Freeze::freeze_compiled_frame
+      // }
     }
 
     assert (is_entry_frame(_cont, entry), "");
@@ -2384,7 +2412,7 @@ public:
 
   template<typename FKind, bool top, bool bottom>
   void thaw_java_frame(const hframe& hf, frame& caller, void* extra) {
-    if (PERFTEST_LEVEL <= 115) return;
+    PERFTEST_ONLY(if (PERFTEST_LEVEL <= 115) return;)
 
     log_develop_trace(jvmcont)("============================= THAWING FRAME:");
 
@@ -2403,7 +2431,7 @@ public:
 
   template <typename FKind>
   void thaw_oops(frame& f, intptr_t* vsp, int oop_index, void* extra) {
-    if (PERFTEST_LEVEL < 130) return;
+    PERFTEST_ONLY(if (PERFTEST_LEVEL < 130) return;)
 
     log_develop_trace(jvmcont)("Walking oops (thaw)");
 
@@ -2499,7 +2527,7 @@ public:
     assert (mask != NULL, "");
 
     ThawOopFn oopFn(&_cont, &f, starting_index, vsp, &_map);
-    f.oops_interpreted_do(&oopFn, &_map, mask); // f.oops_do(&oopFn, NULL, &oopFn, &_map);
+    f.oops_interpreted_do(&oopFn, NULL, mask); // f.oops_do(&oopFn, NULL, &oopFn, &_map);
     return oopFn.count();
   }
 
@@ -2542,7 +2570,7 @@ public:
       hf.cb()->as_compiled_method()->dec_on_continuation_stack();
 
       if (mode == mode_preempt && _safepoint_stub_caller) {
-        _safepoint_stub_f = thaw_safepoint_stub(f);
+        _safepoint_stub_f = thaw_safepoint_stub(f, _map);
       }
 
       thaw_oops<FKind>(f, f.sp(), hf.ref_sp(), (void*)t_fn);
@@ -2595,7 +2623,7 @@ public:
   }
 
   void finish(frame& f) {
-    if (PERFTEST_LEVEL <= 115) return;
+    PERFTEST_ONLY(if (PERFTEST_LEVEL <= 115) return;)
 
     setup_jump(f);
 
@@ -2651,7 +2679,7 @@ public:
     DEBUG_ONLY(_frames++;)
   }
 
-  NOINLINE frame thaw_safepoint_stub(frame& caller) {
+  NOINLINE frame thaw_safepoint_stub(frame& caller, RegisterMap& ignored) {
     // A safepoint stub is the only case we encounter callee-saved registers (aside from rbp). We therefore thaw that frame
     // before thawing the oops in its sender, as the oops will need to be written to that stub frame.
     log_develop_trace(jvmcont)("THAWING SAFEPOINT STUB");
@@ -2670,6 +2698,11 @@ public:
     return f;
   }
 
+  frame thaw_safepoint_stub(frame& caller, SmallRegisterMap& ignored) {
+    assert(false, "unreachable");
+    return frame();
+  }
+
   inline ThawFnT get_oopmap_stub(const hframe& f) {
     if (!ConfigT::allow_stubs)
       return NULL;
@@ -2686,14 +2719,14 @@ public:
     _cont.copy_from_stack(hsp, vsp, fsize);
   }
 
-  class ThawOopFn: public ContOopBase {
+  class ThawOopFn : public ContOopBase<RegisterMapT> {
   private:
     int _i;
 
   protected:
     template <class T> inline void do_oop_work(T* p) {
-      process(p);
-      oop obj = _cont->obj_at(_i); // does a HeapAccess<IN_HEAP_ARRAY> load barrier
+      this->process(p);
+      oop obj = this->_cont->obj_at(_i); // does a HeapAccess<IN_HEAP_ARRAY> load barrier
 
       assert (oopDesc::is_oop_or_null(obj), "invalid oop");
       log_develop_trace(jvmcont)("i: %d", _i); print_oop(p, obj);
@@ -2702,16 +2735,16 @@ public:
       _i++;
     }
   public:
-    ThawOopFn(ContMirror* cont, frame* fr, int index, void* vsp, RegisterMap* map)
-      : ContOopBase(cont, fr, map, vsp) { _i = index; }
+    ThawOopFn(ContMirror* cont, frame* fr, int index, void* vsp, RegisterMapT* map)
+      : ContOopBase<RegisterMapT>(cont, fr, map, vsp) { _i = index; }
     void do_oop(oop* p)       { do_oop_work(p); }
     void do_oop(narrowOop* p) { do_oop_work(p); }
 
     void do_derived_oop(oop *base_loc, oop *derived_loc) {
       assert(Universe::heap()->is_in_or_null(*base_loc), "not an oop: " INTPTR_FORMAT " (at " INTPTR_FORMAT ")", p2i((oopDesc*)*base_loc), p2i(base_loc));
       assert(derived_loc != base_loc, "Base and derived in same location");
-      DEBUG_ONLY(verify(base_loc);)
-      DEBUG_ONLY(verify(derived_loc);)
+      DEBUG_ONLY(this->verify(base_loc);)
+      DEBUG_ONLY(this->verify(derived_loc);)
       assert (oopDesc::is_oop_or_null(*base_loc), "invalid oop");
 
       intptr_t offset = *(intptr_t*)derived_loc;
@@ -2821,7 +2854,7 @@ static inline void thaw0(JavaThread* thread, FrameInfo* fi, const bool return_ba
 // JRT_ENTRY(void, Continuation::thaw(JavaThread* thread, FrameInfo* fi, int num_frames))
 JRT_LEAF(address, Continuation::thaw_leaf(FrameInfo* fi, bool return_barrier, bool exception))
   //callgrind();
-  PERFTEST_LEVEL = ContPerfTest;
+  PERFTEST_ONLY(PERFTEST_LEVEL = ContPerfTest;)
 
   thaw0(JavaThread::current(), fi, return_barrier);
   // clear_anchor(JavaThread::current());
@@ -2839,7 +2872,7 @@ JRT_END
 
 JRT_ENTRY(address, Continuation::thaw(JavaThread* thread, FrameInfo* fi, bool return_barrier, bool exception))
   //callgrind();
-  PERFTEST_LEVEL = ContPerfTest;
+  PERFTEST_ONLY(PERFTEST_LEVEL = ContPerfTest;)
 
   assert(thread == JavaThread::current(), "");
 
@@ -3272,6 +3305,7 @@ address Continuation::reg_to_location(const frame& fr, const RegisterMap* map, V
 }
 
 address Continuation::reg_to_location(const frame& fr, const RegisterMap* map, VMReg reg, bool is_oop) {
+  assert (map != NULL, "");
   oop cont;
   if (map->in_cont()) {
     cont = map->cont();
@@ -3282,6 +3316,7 @@ address Continuation::reg_to_location(const frame& fr, const RegisterMap* map, V
 }
 
 address Continuation::reg_to_location(oop contOop, const frame& fr, const RegisterMap* map, VMReg reg, bool is_oop) {
+  assert (map != NULL, "");
   assert (fr.is_compiled_frame(), "");
 
   // assert (!is_continuation_entry_frame(fr, map), "");
@@ -3302,7 +3337,7 @@ address Continuation::reg_to_location(oop contOop, const frame& fr, const Regist
   if (oop_index >= 0) {
     res = oop_address(cont.refStack(), cont.refSP(), hf.ref_sp() + find_oop_in_compiled_frame(fr, map, reg));
   } else {
-  // assert ((void*)saved_link_address(map) == (void*)map->location(reg), "must be the link register (rbp): %s", reg->name());
+  // assert ((void*)Frame::map_link_address(map) == (void*)map->location(reg), "must be the link register (rbp): %s", reg->name());
     int index = (int)reinterpret_cast<uintptr_t>(map->location(reg)); // the RegisterMap should contain the link index. See sender_for_frame
     assert (index >= 0, "non-oop in fp of the topmost frame is not supported");
     if (index >= 0) { // see frame::update_map_with_saved_link in continuation_top_frame
@@ -3369,7 +3404,7 @@ oop Continuation::continuation_scope(oop cont) {
 ///// Allocation
 
 template <typename ConfigT>
-void ContMirror::allocate_stacks(int size, int oops, int frames) {
+inline void ContMirror::allocate_stacks(int size, int oops, int frames) {
   bool needs_stack_allocation    = (_stack == NULL || to_index(size) > (_sp >= 0 ? _sp : _stack_length));
   bool needs_refStack_allocation = (_ref_stack == NULL || oops > _ref_sp);
 
@@ -3381,11 +3416,13 @@ void ContMirror::allocate_stacks(int size, int oops, int frames) {
   if (!(needs_stack_allocation | needs_refStack_allocation))
     return;
 
+#ifdef PERFTEST
   if (PERFTEST_LEVEL < 100) {
     tty->print_cr("stack size: %d (int): %d sp: %d stack_length: %d needs alloc: %d", size, to_index(size), _sp, _stack_length, needs_stack_allocation);
     tty->print_cr("num_oops: %d ref_sp: %d needs alloc: %d", oops, _ref_sp, needs_stack_allocation);
   }
   guarantee(PERFTEST_LEVEL >= 100, "");
+#endif
 
   if (!allocate_stacks_in_native<ConfigT>(size, oops, needs_stack_allocation, needs_refStack_allocation)) {
     allocate_stacks_in_java(size, oops, frames);
@@ -3401,7 +3438,7 @@ void ContMirror::allocate_stacks(int size, int oops, int frames) {
 }
 
 template <typename ConfigT>
-bool ContMirror::allocate_stacks_in_native(int size, int oops, bool needs_stack, bool needs_refstack) {
+NOINLINE bool ContMirror::allocate_stacks_in_native(int size, int oops, bool needs_stack, bool needs_refstack) {
   if (needs_stack) {
     if (_stack == NULL) {
       if (!allocate_stack(size)) {
@@ -3650,7 +3687,7 @@ oop ContMirror::raw_allocate(Klass* klass, size_t size_in_words, size_t elements
   }
 }
 
-void ContMirror::allocate_stacks_in_java(int size, int oops, int frames) {
+NOINLINE void ContMirror::allocate_stacks_in_java(int size, int oops, int frames) {
   guarantee (false, "unreachable");
   int old_stack_length = _stack_length;
 
@@ -3982,15 +4019,6 @@ static inline bool is_deopt_return(address pc, const frame& sender) {
 
   CompiledMethod* cm = sender.cb()->as_compiled_method();
   return cm->is_deopt_pc(pc);
-}
-
-// Does a reverse lookup of a RegisterMap. Returns the register, if any, spilled at the given address.
-static VMReg find_register_spilled_here(void* p, RegisterMap* map) {
-  for(int i = 0; i < RegisterMap::reg_count; i++) {
-    VMReg r = VMRegImpl::as_VMReg(i);
-    if (p == map->location(r)) return r;
-  }
-  return NULL;
 }
 
 static void print_blob(outputStream* st, address addr) {

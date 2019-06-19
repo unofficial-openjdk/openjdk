@@ -237,6 +237,34 @@ inline intptr_t* frame::real_fp() const {
   return fp();
 }
 
+// helper to update a map with callee-saved RBP
+
+template <typename RegisterMapT>
+void frame::update_map_with_saved_link(RegisterMapT* map, intptr_t** link_addr) {
+  // The interpreter and compiler(s) always save EBP/RBP in a known
+  // location on entry. We must record where that location is
+  // so this if EBP/RBP was live on callout from c2 we can find
+  // the saved copy no matter what it called.
+
+  // Since the interpreter always saves EBP/RBP if we record where it is then
+  // we don't have to always save EBP/RBP on entry and exit to c2 compiled
+  // code, on entry will be enough.
+  map->set_location(rbp->as_VMReg(), (address) link_addr);
+#ifdef AMD64
+  // this is weird "H" ought to be at a higher address however the
+  // oopMaps seems to have the "H" regs at the same address and the
+  // vanilla register.
+  // XXXX make this go away
+  if (true) {
+    map->set_location(rbp->as_VMReg()->next(), (address) link_addr);
+  }
+#endif // AMD64
+}
+
+template <typename RegisterMapT>
+intptr_t** frame::saved_link_address(const RegisterMapT* map) {
+  return (intptr_t**)map->location(rbp->as_VMReg());
+}
 
 // Return address:
 

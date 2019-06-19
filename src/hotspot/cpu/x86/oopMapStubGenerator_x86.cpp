@@ -496,7 +496,7 @@ public:
   void load_link_offset() {
     if (!_link_offset_loaded) {
       _link_offset_loaded = true;
-      _masm->movptr(frame_ptr, Address(frame_ptr, RegisterMap::link_offset()));
+      // _masm->movptr(frame_ptr, Address(frame_ptr, RegisterMap::link_offset()));
     }
   }
 
@@ -1036,7 +1036,7 @@ public:
   void load_link_offset() {
     if (!_link_offset_loaded) {
       _link_offset_loaded = true;
-      _masm->movptr(c_rarg2, Address(frame_info, RegisterMap::link_offset()));
+      // _masm->movptr(c_rarg2, Address(frame_info, RegisterMap::link_offset()));
     }
   }
 
