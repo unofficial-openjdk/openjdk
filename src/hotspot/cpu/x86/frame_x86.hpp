@@ -162,10 +162,10 @@
   intptr_t* interpreter_frame_last_sp() const;
 
   // helper to update a map with callee-saved RBP
-  template <bool set_location_valid>
-  static void update_map_with_saved_link(RegisterMap* map, intptr_t** link_addr);
-  static void update_map_with_saved_link(RegisterMap* map, intptr_t** link_addr) { update_map_with_saved_link<true>(map, link_addr); }
-  static intptr_t** saved_link_address(const RegisterMap* map);
+  template <typename RegisterMapT>
+  static void update_map_with_saved_link(RegisterMapT* map, intptr_t** link_addr);
+  template <typename RegisterMapT>
+  static intptr_t** saved_link_address(const RegisterMapT* map);
 
   // deoptimization support
   void interpreter_frame_set_last_sp(intptr_t* sp);

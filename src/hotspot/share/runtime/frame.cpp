@@ -49,6 +49,7 @@
 #include "runtime/os.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "runtime/signature.hpp"
+#include "runtime/stackValue.hpp"
 #include "runtime/stubCodeGenerator.hpp"
 #include "runtime/stubRoutines.hpp"
 #include "runtime/thread.inline.hpp"
@@ -152,6 +153,14 @@ void RegisterMap::clear() {
 }
 
 #ifndef PRODUCT
+
+VMReg RegisterMap::find_register_spilled_here(void* p) {
+  for(int i = 0; i < RegisterMap::reg_count; i++) {
+    VMReg r = VMRegImpl::as_VMReg(i);
+    if (p == location(r)) return r;
+  }
+  return NULL;
+}
 
 void RegisterMap::print_on(outputStream* st) const {
   st->print_cr("Register map");
@@ -900,7 +909,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, const Int
 
 void frame::oops_interpreted_do0(OopClosure* f, const RegisterMap* map, methodHandle m, jint bci, const InterpreterOopMap& mask) {
   assert(is_interpreted_frame(), "Not an interpreted frame");
-  assert(map != NULL, "map must be set");
+  // assert(map != NULL, "map must be set");
 
   assert(!Universe::heap()->is_in(m()),
           "must be valid oop");
@@ -945,7 +954,7 @@ void frame::oops_interpreted_do0(OopClosure* f, const RegisterMap* map, methodHa
     if (call.is_valid()) {
       signature = call.signature();
       has_receiver = call.has_receiver();
-      if (map->include_argument_oops() &&
+      if (map != NULL && map->include_argument_oops() &&
           interpreter_frame_expression_stack_size() > 0) {
         // ResourceMark rm(thread);  // is this right ???
         // we are at a call site & the expression stack is not empty

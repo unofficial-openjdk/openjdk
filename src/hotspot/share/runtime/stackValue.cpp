@@ -36,20 +36,7 @@
 #include "gc/shenandoah/shenandoahBarrierSet.hpp"
 #endif
 
-address StackValue::stack_value_address(const frame* fr, const RegisterMap* reg_map, ScopeValue* sv) {
-  if (!sv->is_location() || reg_map->in_cont())
-    return NULL;
-  Location loc = ((LocationValue *)sv)->location();
-  if (loc.type() == Location::invalid)
-    return NULL;
-  address value_addr = loc.is_register()     // see create_stack_value
-      ? reg_map->location(VMRegImpl::as_VMReg(loc.register_number()))
-      : ((address)fr->unextended_sp()) + loc.stack_offset();
-  assert(value_addr == NULL || reg_map->thread()->is_in_usable_stack(value_addr), INTPTR_FORMAT, p2i(value_addr)); 
-  return value_addr;
-}
-
-StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* reg_map, ScopeValue* sv) {
+StackValue* StackValue::create_stack_value(ScopeValue* sv, address value_addr, bool in_cont) {
   if (sv->is_location()) {
     // Stack or register value
     Location loc = ((LocationValue *)sv)->location();
@@ -59,31 +46,6 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
     // handle the case of a 2 floats in a single double register.
     assert( !(loc.is_register() && loc.type() == Location::float_in_dbl), "Sparc does not handle callee-save floats yet" );
 #endif // SPARC
-
-    // First find address of value
-
-    address value_addr;
-    if (!reg_map->in_cont()) {
-      value_addr = loc.is_register()
-      // Value was in a callee-save register
-        ? reg_map->location(VMRegImpl::as_VMReg(loc.register_number()))
-      // Else value was directly saved on the stack. The frame's original stack pointer,
-      // before any extension by its callee (due to Compiler1 linkage on SPARC), must be used.
-        : ((address)fr->unextended_sp()) + loc.stack_offset();
-
-      assert(reg_map->thread()->is_in_usable_stack(value_addr), INTPTR_FORMAT, p2i(value_addr));
-    } else {
-      if (loc.type() == Location::invalid)
-        return new StackValue();
-      value_addr = loc.is_register()
-      // Value was in a callee-save register
-        ? Continuation::reg_to_location(*fr, reg_map, VMRegImpl::as_VMReg(loc.register_number()), loc.type() == Location::oop || loc.type() == Location::narrowoop)
-      // Else value was directly saved on the stack. The frame's original stack pointer,
-      // before any extension by its callee (due to Compiler1 linkage on SPARC), must be used.
-        : Continuation::usp_offset_to_location(*fr, reg_map, loc.stack_offset(), loc.type() == Location::oop || loc.type() == Location::narrowoop);
-      
-      assert(Continuation::is_in_usable_stack(value_addr, reg_map), INTPTR_FORMAT, p2i(value_addr)); 
-    }
 
     // Then package it right depending on type
     // Note: the transfer of the data is thru a union that contains
@@ -152,7 +114,7 @@ StackValue* StackValue::create_stack_value(const frame* fr, const RegisterMap* r
     }
 #endif
     case Location::oop: {
-      if (reg_map->in_cont() && UseCompressedOops) {
+      if (in_cont && UseCompressedOops) {
         narrowOop noop = *(narrowOop*) value_addr;
         Handle h(Thread::current(), CompressedOops::decode(noop));
         return new StackValue(h);

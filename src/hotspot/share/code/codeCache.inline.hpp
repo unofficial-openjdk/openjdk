@@ -35,9 +35,9 @@ inline CodeBlob* CodeCache::find_blob_fast(void* pc) {
 
 inline CodeBlob* CodeCache::find_blob_and_oopmap(void* pc, int& slot) {
   NativePostCallNop* nop = nativePostCallNop_at((address) pc);
-  if (nop != NULL) {
+  if (LIKELY(nop != NULL)) {
     CodeBlob* cb;
-    if (nop->displacement() != 0) {
+    if (LIKELY(nop->displacement() != 0)) {
       int offset = (nop->displacement() & 0xffffff);
       cb = (CodeBlob*) ((address) pc - offset);
       slot = ((nop->displacement() >> 24) & 0xff);
