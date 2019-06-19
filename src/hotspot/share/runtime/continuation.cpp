@@ -523,8 +523,6 @@ public:
   bool is_in_stack(void* p) const ;
   bool is_in_ref_stack(void* p) const;
 
-  bool is_map_at_top(RegisterMap& map);
-
   bool is_empty();
 
   template<op_mode mode> const hframe last_frame();
@@ -926,10 +924,6 @@ inline oop ContMirror::obj_at(int i) {
 
 int ContMirror::num_oops() {
   return _ref_stack == NULL ? 0 : _ref_stack->length() - _ref_sp;
-}
-
-bool ContMirror::is_map_at_top(RegisterMap& map) {
-  return (map.location(rbp->as_VMReg()) == (address)&_fp);
 }
 
 template<typename Event> void ContMirror::post_jfr_event(Event* e) {

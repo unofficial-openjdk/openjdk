@@ -672,43 +672,51 @@ public:
 private:
   intptr_t*   _rbp;
 
+#ifdef ASSERT
   JavaThread* _thread;
-  bool        _update_map;              // Tells if the register map need to be updated when traversing the stack
-  bool        _validate_oops;           // whether to perform valid oop checks in asserts -- used only in the map use for continuation freeze/thaw
-  // bool     _walk_cont;               // whether to walk frames on a continuation stack
+#endif
+  // bool        _update_map;              // Tells if the register map need to be updated when traversing the stack
+  // bool        _validate_oops;           // whether to perform valid oop checks in asserts -- used only in the map use for continuation freeze/thaw
+  // bool        _walk_cont;               // whether to walk frames on a continuation stack
 public:
   SmallRegisterMap(JavaThread *thread, bool update_map = true, bool walk_cont = false, bool validate_oops = true) 
-   : _thread(thread), _update_map(update_map), _validate_oops(validate_oops) {
+   DEBUG_ONLY(: _thread(thread)) /*, _update_map(update_map), _validate_oops(validate_oops) */ {
      _rbp = NULL;
   }
   SmallRegisterMap(const SmallRegisterMap* map) 
-    : _thread(map->thread()), _update_map(map->update_map()), _validate_oops(map->validate_oops()) {
+    DEBUG_ONLY(: _thread(map->thread())) /*, _update_map(map->update_map()), _validate_oops(map->validate_oops()) */ {
     _rbp = map->_rbp;
   }
   SmallRegisterMap(const RegisterMap* map) 
-    : _thread(map->thread()), _update_map(map->update_map()), _validate_oops(map->validate_oops()) {
+    DEBUG_ONLY(: _thread(map->thread())) /* , _update_map(map->update_map()), _validate_oops(map->validate_oops()) */ {
     _rbp = (intptr_t*)map->location(my_reg);
   }
 
   address location(VMReg reg) const {
-    assert(!_validate_oops || _update_map, "updating map that does not need updating");
     assert (reg == my_reg || reg == my_reg->next(), "Reg: %s", reg->name());
     return (address)_rbp;
   }
 
   void set_location(VMReg reg, address loc) {
+    assert(!validate_oops() || update_map(), "updating map that does not need updating");
     assert (reg == my_reg || reg == my_reg->next(), "Reg: %s", reg->name());
     // tty->print_cr(">>> set location %s(%ld) loc: %p", reg->name(), reg->value(), loc);
     _rbp = (intptr_t*)loc;
   }
 
-  JavaThread* thread() const { return _thread; }
-  bool update_map()    const { return _update_map; }
-  bool validate_oops() const { return _validate_oops; }
-  bool walk_cont()     const { return false; }  
+  JavaThread* thread() const {
+  #ifdef ASSERT
+    return _thread;
+  #else
+    guarantee (false, ""); 
+    return NULL; 
+  #endif
+  }
+  bool update_map()    const { return false; }
+  bool validate_oops() const { return false; }
+  bool walk_cont()     const { return false; }
   bool include_argument_oops() const { return false; }
   void set_include_argument_oops(bool f)  {}
-
   bool in_cont()      const { return false; }
 
 #ifdef ASSERT
