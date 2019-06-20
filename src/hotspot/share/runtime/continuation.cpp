@@ -334,11 +334,22 @@ public:
   inline bool operator==(const HFrameBase& other) const;
   bool is_empty() const { return _pc == NULL && _sp < 0; }
 
-  inline bool is_interpreted_frame() const { return _is_interpreted; }
   inline int       sp()     const { return _sp; }
   inline address   pc()     const { return _pc; }
   inline int       ref_sp() const { return _ref_sp; }
-  CodeBlob* cb() const { return _cb; }
+  inline CodeBlob* cb()     const { return _cb; }
+  inline bool is_interpreted_frame() const { return _is_interpreted; } // due to partial copy below, this may lie in mode_fast
+
+  template<op_mode mode>
+  void copy_partial(const SelfPD& other) {
+    _sp = other._sp;
+    _ref_sp = other._ref_sp;
+    _pc = other._pc;
+    if (mode != mode_fast) {
+      _is_interpreted = other._is_interpreted;
+    }
+    self().copy_partial_pd(other);
+  }
 
   inline void set_pc(address pc) { _pc = pc; }
   inline void set_ref_sp(int ref_sp) { _ref_sp = ref_sp; }
@@ -1390,7 +1401,7 @@ public:
   }
 
   template<bool top>
-  NOINLINE freeze_result freeze(const frame& f, hframe& caller, intptr_t** callee_link_address, int callee_argsize) {
+  NOINLINE freeze_result freeze(const frame& f, hframe& caller, hframe::callee_info callee_info, int callee_argsize) {
     assert (f.unextended_sp() < _bottom_address - SP_WIGGLE, ""); // see recurse_java_frame
     assert (f.is_interpreted_frame() || ((top && mode == mode_preempt) == is_stub(f.cb())), "");
     assert (mode != mode_fast || (f.is_compiled_frame() && f.oop_map() != NULL), "");
@@ -1403,11 +1414,11 @@ public:
 
       assert (f.oop_map() != NULL, "");
 
-      return recurse_compiled_frame<top>(f, caller, callee_link_address);
+      return recurse_compiled_frame<top>(f, caller, callee_info);
     } else if (f.is_interpreted_frame()) {
       if (Interpreted::is_owning_locks(f)) return freeze_pinned_monitor;
 
-      return recurse_interpreted_frame<top>(f, caller, callee_link_address, callee_argsize);
+      return recurse_interpreted_frame<top>(f, caller, callee_info, callee_argsize);
     } else if (mode == mode_preempt && top && is_stub(f.cb())) {
       return recurse_stub_frame(f, caller);
     } else {
@@ -1544,10 +1555,12 @@ public:
     log_develop_trace(jvmcont)("============================= FREEZING FRAME interpreted: %d top: %d bottom: %d", FKind::interpreted, top, bottom);
     log_develop_trace(jvmcont)("fsize: %d argsize: %d oops: %d", fsize, argsize, oops);
     if (log_develop_is_enabled(Trace, jvmcont)) f.print_on(tty);
+    assert ((mode == mode_fast && !bottom) || caller.is_interpreted_frame() == Interpreter::contains(caller.pc()), "");
 
-    caller = FKind::interpreted
-      ? freeze_interpreted_frame       <top, bottom>(f, caller, fsize,          oops, (InterpreterOopMap*)extra)
-      : freeze_compiled_frame<Compiled, top, bottom>(f, caller, fsize, argsize, oops, (FreezeFnT)extra);
+    caller.copy_partial<mode>(
+      FKind::interpreted
+        ? freeze_interpreted_frame       <top, bottom>(f, caller, fsize,          oops, (InterpreterOopMap*)extra)
+        : freeze_compiled_frame<Compiled, top, bottom>(f, caller, fsize, argsize, oops, (FreezeFnT)extra));
   }
 
   template <typename FKind>
@@ -1578,7 +1591,7 @@ public:
   void patch(const frame& f, hframe& hf, const hframe& caller) {
     assert (FKind::is_instance(f), "");
     assert (bottom || !caller.is_empty(), "");
-    assert (bottom || Interpreter::contains(hf.return_pc<FKind>()) == caller.is_interpreted_frame(), "Interpreter::contains(hf.return_pc()): %d caller.is_interpreted_frame(): %d", Interpreter::contains(hf.return_pc<FKind>()), caller.is_interpreted_frame());
+    assert (bottom || mode == mode_fast || Interpreter::contains(hf.return_pc<FKind>()) == caller.is_interpreted_frame(), "");
     assert (!bottom || !_cont.is_empty() || (_cont.fp() == 0 && _cont.pc() == NULL), "");
     assert (!bottom || _cont.is_empty() || caller == _cont.last_frame<mode_slow>(), "");
     assert (!bottom || _cont.is_empty() || Continuation::is_cont_barrier_frame(f), "");
@@ -1676,9 +1689,11 @@ public:
     // Even in fast mode, we allow the caller of the bottom frame (i.e. last frame still on the hstack) to be interpreted.
     // We can have a different tradeoff, and only set mode_fast if this is not the case by uncommenting _fastpath = false in Thaw::finalize where we're setting the last frame
     // Doing so can save us the test for caller.is_interpreted_frame() when we're in mode_fast and bottom, but at the cost of not switching to fast mode even if only a frozen frame is interpreted.
-    assert (mode != mode_fast || bottom || !caller.is_interpreted_frame(), "");
+    assert (mode != mode_fast || bottom || !Interpreter::contains(caller.pc()), "");
 
-    if (bottom || (mode != mode_fast && caller.is_interpreted_frame())) { // we must test for interpreted caller even in fast mode b/c caller can be the top frozen frame
+    // in mode_fast we must not look at caller.is_interpreted_frame() because it may be wrong (hframe::partial_copy)
+
+    if (bottom || (mode != mode_fast && caller.is_interpreted_frame())) {
       log_develop_trace(jvmcont)("freeze_compiled_frame add argsize: fsize: %d argsize: %d fsize: %d", fsize, argsize, fsize + argsize);
       fsize += argsize;
       align<bottom>(caller); // TODO PERF
@@ -1708,7 +1723,7 @@ public:
     
     log_develop_trace(jvmcont)("freeze_compiled_frame real_pc: %p address: %p sp: %p", Frame::real_pc(f), &(((address*) f.sp())[-1]), f.sp());
 
-    assert(bottom || Interpreter::contains(hf.return_pc<FKind>()) == caller.is_interpreted_frame(), "");
+    assert(bottom || mode == mode_fast || Interpreter::contains(hf.return_pc<FKind>()) == caller.is_interpreted_frame(), "");
 
     return hf;
   }
@@ -2417,6 +2432,7 @@ public:
 
     log_develop_trace(jvmcont)("stack_length: %d", _cont.stack_length());
 
+    // TODO PERF see partial_copy in Freeze
     caller = FKind::interpreted ? thaw_interpreted_frame    <top, bottom>(hf, caller, (InterpreterOopMap*)extra)
                                 : thaw_compiled_frame<FKind, top, bottom>(hf, caller, (ThawFnT)extra);
 
@@ -2564,7 +2580,7 @@ public:
       hf.cb()->as_compiled_method()->dec_on_continuation_stack();
 
       if (mode == mode_preempt && _safepoint_stub_caller) {
-        _safepoint_stub_f = thaw_safepoint_stub(f, _map);
+        _safepoint_stub_f = thaw_safepoint_stub(f);
       }
 
       thaw_oops<FKind>(f, f.sp(), hf.ref_sp(), (void*)t_fn);
@@ -2673,7 +2689,7 @@ public:
     DEBUG_ONLY(_frames++;)
   }
 
-  NOINLINE frame thaw_safepoint_stub(frame& caller, RegisterMap& ignored) {
+  NOINLINE frame thaw_safepoint_stub(frame& caller) {
     // A safepoint stub is the only case we encounter callee-saved registers (aside from rbp). We therefore thaw that frame
     // before thawing the oops in its sender, as the oops will need to be written to that stub frame.
     log_develop_trace(jvmcont)("THAWING SAFEPOINT STUB");
@@ -2687,14 +2703,9 @@ public:
 
     frame f = thaw_compiled_frame<StubF, true, false>(stubf, caller, NULL);
 
-    f.oop_map()->update_register_map(&f, &_map);
+    f.oop_map()->update_register_map(&f, _map.as_RegisterMap());
     log_develop_trace(jvmcont)("THAWING OOPS FOR SENDER OF SAFEPOINT STUB");
     return f;
-  }
-
-  frame thaw_safepoint_stub(frame& caller, SmallRegisterMap& ignored) {
-    assert(false, "unreachable");
-    return frame();
   }
 
   inline ThawFnT get_oopmap_stub(const hframe& f) {
