@@ -1348,7 +1348,7 @@ public:
 bool OopMapStubGenerator::generate() {
   ResourceMark rm;
 
-  int size = 64 + (_oopmap.count() * 6 * 15) + (CheckCompressedOops ? 2048 : 0); // worst case, 6 instructions per oop, 15 bytes per instruction;
+  int size = 64 + (_oopmap.count() * 6 * 15) + (CheckCompressedOops ? (256 * _oopmap.count()) : 0); // worst case, 6 instructions per oop, 15 bytes per instruction;
 
   _blob = BufferBlob::create("oopmap stub", size);
   if (_blob == NULL) {
