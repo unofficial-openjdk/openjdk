@@ -1427,7 +1427,7 @@ public:
     if (senderf.unextended_sp() >= _bottom_address - SP_WIGGLE) { // dynamic branch
       // senderf is the entry frame
       freeze_result result = finalize<FKind>(senderf, f, argsize, caller); // recursion end
-      if (result != freeze_ok)
+      if (UNLIKELY(result != freeze_ok))
         return result;
 
       ContinuationHelper::update_register_map(&_map, callee_info); // restore saved link
@@ -1445,7 +1445,7 @@ public:
       }
 
       freeze_result result = freeze<false>(senderf, caller, my_info, argsize); // recursive call
-      if (result != freeze_ok)
+      if (UNLIKELY(result != freeze_ok))
         return result;
 
       if (mode == mode_preempt) _safepoint_stub_caller = safepoint_stub_caller; // restore _stub_caller
