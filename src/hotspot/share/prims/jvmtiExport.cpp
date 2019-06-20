@@ -1479,7 +1479,7 @@ void JvmtiExport::post_thread_end(JavaThread *thread) {
   }
 }
 
-void JvmtiExport::post_continuation_run(JavaThread* thread, jint frames_count) {
+void JvmtiExport::post_continuation_run(JavaThread* thread, jint continuation_frame_count) {
   if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
     return;
   }
@@ -1507,14 +1507,14 @@ void JvmtiExport::post_continuation_run(JavaThread* thread, jint frames_count) {
         JvmtiJavaThreadEventTransition jet(thread);
         jvmtiEventContinuationRun callback = env->callbacks()->ContinuationRun;
         if (callback != NULL) {
-          (*callback)(env->jvmti_external(), jem.jni_env(), jem.jni_thread(), frames_count);
+          (*callback)(env->jvmti_external(), jem.jni_env(), jem.jni_thread(), continuation_frame_count);
         }
       }
     }
   }
 }
 
-void JvmtiExport::post_continuation_yield(JavaThread* thread, jint frames_count) {
+void JvmtiExport::post_continuation_yield(JavaThread* thread, jint continuation_frame_count) {
   if (JvmtiEnv::get_phase() < JVMTI_PHASE_PRIMORDIAL) {
     return;
   }
@@ -1542,7 +1542,7 @@ void JvmtiExport::post_continuation_yield(JavaThread* thread, jint frames_count)
         JvmtiJavaThreadEventTransition jet(thread);
         jvmtiEventContinuationYield callback = env->callbacks()->ContinuationYield;
         if (callback != NULL) {
-          (*callback)(env->jvmti_external(), jem.jni_env(), jem.jni_thread(), frames_count);
+          (*callback)(env->jvmti_external(), jem.jni_env(), jem.jni_thread(), continuation_frame_count);
         }
       }
     }
@@ -1557,7 +1557,7 @@ void JvmtiExport::post_continuation_yield(JavaThread* thread, jint frames_count)
       if (!ets->has_frame_pops()) {
         continue;
       }
-      for (int frame_idx = 0; frame_idx < frames_count; frame_idx++) {
+      for (int frame_idx = 0; frame_idx < continuation_frame_count; frame_idx++) {
         int frame_num = top_frame_num - frame_idx;
 
         if (ets->is_frame_pop(frame_num)) {

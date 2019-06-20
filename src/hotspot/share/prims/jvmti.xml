@@ -12741,7 +12741,7 @@ myInit() {
             Thread the continuation is executed on.
           </description>
       </param>
-      <param id="frames_count">
+      <param id="continuation_frame_count">
         <jint min="1"/>
           <description>
             Number of frames the continuation is executing.
@@ -12778,7 +12778,7 @@ myInit() {
             Thread the continuation is executed on.
           </description>
       </param>
-      <param id="frames_count">
+      <param id="continuation_frame_count">
         <jint min="1"/>
           <description>
             Number of frames the continuation is executing.
