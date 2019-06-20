@@ -57,18 +57,6 @@ inline bool hframe::operator==(const hframe& other) const {
     return  HFrameBase::operator==(other) && _fp == other._fp;
 }
 
-inline intptr_t* hframe::real_fp(const ContMirror& cont) const {
-  assert (!_is_interpreted, "interpreted");
-  assert (cb() != NULL, "must be");
-  return cont.stack_address(_sp) + cb()->frame_size();
-}
-
-inline int hframe::real_fp_index(const ContMirror& cont) const {
-  assert (!_is_interpreted, "interpreted");
-  // assert (_length == cont.stack_length(), "");
-  return _sp + ContMirror::to_index(cb()->frame_size() * sizeof(intptr_t));
-}
-
 inline void hframe::patch_real_fp_offset(int offset, intptr_t value) {
   intptr_t* addr = (link_address() + offset);
   *(link_address() + offset) = value;
@@ -228,10 +216,10 @@ inline frame hframe::to_frame(ContMirror& cont, address pc, bool deopt) const {
 void hframe::print_on(outputStream* st) const {
   if (is_empty()) {
     st->print_cr("\tempty");
-  } else if (_is_interpreted) {
-    st->print_cr("\tInterpreted sp: %d fp: %ld pc: " INTPTR_FORMAT " ref_sp: %d", _sp, _fp, p2i(_pc), _ref_sp);
+  } else if (Interpreter::contains(pc())) { // in fast mode we cannot rely on _is_interpreted
+    st->print_cr("\tInterpreted sp: %d fp: %ld pc: " INTPTR_FORMAT " ref_sp: %d (is_interpreted: %d)", _sp, _fp, p2i(_pc), _ref_sp, _is_interpreted);
   } else {
-    st->print_cr("\tCompiled sp: %d fp: 0x%lx pc: " INTPTR_FORMAT " ref_sp: %d", _sp, _fp, p2i(_pc), _ref_sp);
+    st->print_cr("\tCompiled sp: %d fp: 0x%lx pc: " INTPTR_FORMAT " ref_sp: %d (is_interpreted: %d)", _sp, _fp, p2i(_pc), _ref_sp, _is_interpreted);
   }
 }
 
@@ -240,7 +228,7 @@ void hframe::print_on(const ContMirror& cont, outputStream* st) const {
   if (is_empty())
     return;
 
-  if (_is_interpreted) {
+  if (Interpreter::contains(pc())) { // in fast mode we cannot rely on _is_interpreted
     intptr_t* fp = link_address();
     Method** method_addr = (Method**)(fp + frame::interpreter_frame_method_offset);
     Method* method = *method_addr;
@@ -504,11 +492,9 @@ template<bool cont_empty>
 hframe Freeze<ConfigT, mode>::new_bottom_hframe(int sp, int ref_sp, address pc, bool interpreted) {
   intptr_t fp = _cont.fp();
   assert (!cont_empty || fp == 0, "");
-  if (cont_empty || !interpreted) {
-    return hframe(sp, ref_sp, fp, pc, NULL, interpreted);
-  } else {
-    return hframe(sp, ref_sp, fp, pc, NULL, interpreted, hframe::link_address<Interpreted>(sp, fp, NULL, _cont));
-  }
+  intptr_t* link_address = (cont_empty || !interpreted) ? NULL // if we're not interpreted, we're not interested in the link addresss
+                                                        : hframe::link_address<Interpreted>(sp, fp, NULL, _cont);
+  return hframe(sp, ref_sp, fp, pc, NULL, interpreted, link_address);
 }
 
 template <typename ConfigT, op_mode mode>
@@ -524,12 +510,10 @@ template<typename FKind> hframe Freeze<ConfigT, mode>::new_callee_hframe(const f
     cb = NULL;
   } else {
     fp = (intptr_t)f.fp();
-    cb = f.cb(); // TODO R : why are we even bothering with the cb?
+    cb = f.cb();
   }
 
-  hframe result = hframe(sp, caller.ref_sp() - num_oops, fp, f.pc(), cb, FKind::interpreted);
-  result.set_link_address<FKind>(_cont);
-  return result;
+  return hframe(sp, caller.ref_sp() - num_oops, fp, f.pc(), cb, FKind::interpreted, hframe::link_address<FKind>(sp, fp, cb, _cont));
 }
 
 template <typename ConfigT, op_mode mode>
@@ -543,11 +527,13 @@ inline void Freeze<ConfigT, mode>::patch_pd(const frame& f, hframe& hf, const hf
     assert (!_fp_oop_info._has_fp_oop, "only compiled frames");
   }
 
-  assert (mode != mode_fast || bottom || !caller.is_interpreted_frame(), "");
+  assert (mode != mode_fast || bottom || !Interpreter::contains(caller.pc()), "");
+  assert (!bottom || caller.is_interpreted_frame() == _cont.is_flag(FLAG_LAST_FRAME_INTERPRETED), "");
+
   if ((mode != mode_fast || bottom) && caller.is_interpreted_frame()) {
     hf.patch_link_relative(caller.link_address());
   } else {
-    assert (!caller.is_interpreted_frame(), "");
+    assert (!Interpreter::contains(caller.pc()), "");
     hf.patch_link(caller.fp()); // caller.fp() already contains _fp_oop_info._fp_index if appropriate, as it was patched when patch is called on the caller
   }
   if (FKind::interpreted) {
@@ -563,7 +549,7 @@ inline void Freeze<ConfigT, mode>::patch_pd(const frame& f, hframe& hf, const hf
 template <typename ConfigT, op_mode mode>
 template <bool bottom> 
 inline void Freeze<ConfigT, mode>::align(const hframe& caller) {
-  assert (mode != mode_fast || bottom || !caller.is_interpreted_frame(), "");
+  assert (mode != mode_fast || bottom || !Interpreter::contains(caller.pc()), "");
   if ((mode != mode_fast || bottom) && caller.is_interpreted_frame()) {
     _cont.add_size(sizeof(intptr_t));
   }
@@ -588,7 +574,7 @@ inline void Freeze<ConfigT, mode>::relativize_interpreted_frame_metadata(const f
 
 template <typename ConfigT, op_mode mode>
 inline frame Thaw<ConfigT, mode>::new_entry_frame() {
-  return frame(_cont.entrySP(), _cont.entryFP(), _cont.entryPC());
+  return frame(_cont.entrySP(), _cont.entryFP(), _cont.entryPC()); // TODO PERF: This find code blob and computes deopt state
 }
 
 template <typename ConfigT, op_mode mode>

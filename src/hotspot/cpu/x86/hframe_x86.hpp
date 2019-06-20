@@ -33,8 +33,6 @@ private:
   intptr_t* _link_address;
 
 private:
-  inline intptr_t* real_fp(const ContMirror& cont) const;
-  inline int real_fp_index(const ContMirror& cont) const;
   inline int link_index(const ContMirror& cont) const;
   inline intptr_t* interpreter_frame_metadata_at(int offset) const;
 
@@ -53,10 +51,7 @@ public:
   hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted, const ContMirror& cont)
     : HFrameBase(sp, ref_sp, pc, cb, is_interpreted), _fp(fp) { set_link_address(cont); }
 
-  hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted) // called by new_callee_hframe
-    : HFrameBase(sp, ref_sp, pc, cb, is_interpreted), _fp(fp), _link_address(NULL) {}
-
-  hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted, intptr_t* link_address) // called by new_bottom_hframe
+  hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted, intptr_t* link_address) // called by new_callee/bottom_hframe
     : HFrameBase(sp, ref_sp, pc, cb, is_interpreted), _fp(fp), _link_address(link_address) {}
 
   template <typename FKind> static hframe new_hframe(int sp, int ref_sp, intptr_t fp, address pc, const ContMirror& cont) {
@@ -66,6 +61,11 @@ public:
   }
 
   inline bool operator==(const hframe& other) const;
+
+  void copy_partial_pd(const hframe& other) {
+    _fp = other._fp;
+    _link_address = other._link_address;
+  } 
 
   inline intptr_t  fp()     const { return _fp; }
 
