@@ -393,8 +393,10 @@ preferDeliverEventOnFiber(EventIndex ei)
         case EI_MONITOR_WAITED:
         case EI_VM_DEATH:
             return gdata->notifyDebuggerOfAllFibers; /* Only deliver on fiber if notifying of all fibers. */
-        case EI_FIBER_MOUNT:     /* Not passed to event_callback(). */
-        case EI_FIBER_UNMOUNT:   /* Not passed to event_callback(). */
+        case EI_FIBER_MOUNT:        /* Not passed to event_callback(). */
+        case EI_FIBER_UNMOUNT:      /* Not passed to event_callback(). */
+        case EI_CONTINUATION_RUN:   /* Not passed to event_callback(). */
+        case EI_CONTINUATION_YIELD: /* Not passed to event_callback(). */
             EXIT_ERROR(AGENT_ERROR_INVALID_EVENT_TYPE, "invalid event index");
             break;
         default:
@@ -563,6 +565,8 @@ eventFilterRestricted_passesFilter(JNIEnv *env,
                     /* Don't decrement the counter. */
                     if (filter->u.Count.count > 1) {
                         return JNI_FALSE;
+                    } else {
+                        break;
                     }
                 }
                 if (--filter->u.Count.count > 0) {
@@ -1053,6 +1057,26 @@ eventFilter_setStepFilter(HandlerNode *node, jint index,
     return JVMTI_ERROR_NONE;
 }
 
+/*
+ * Finds the step filter in a node, and sets the thread for that filter.
+ * fiber fixme: not used. delete once we know for sure we'll never need it.
+ */
+void
+eventFilter_setStepFilterThread(HandlerNode *node, jthread thread)
+{
+    JNIEnv *env = getEnv();
+    Filter *filter = FILTERS_ARRAY(node);
+    int i;
+    for (i = 0; i < FILTER_COUNT(node); ++i, ++filter) {
+        switch (filter->modifier) {
+          case JDWP_REQUEST_MODIFIER(Step):
+            tossGlobalRef(env, &(filter->u.Step.thread));
+            saveGlobalRef(env, thread, &(filter->u.Step.thread));
+            return;
+        }
+    }
+    JDI_ASSERT(JNI_FALSE); /* We should have found a step filter, but didn't. */
+}
 
 jvmtiError
 eventFilter_setSourceNameMatchFilter(HandlerNode *node,
@@ -1356,6 +1380,8 @@ enableEvents(HandlerNode *node)
         case EI_FIBER_TERMINATED:
         case EI_FIBER_MOUNT:
         case EI_FIBER_UNMOUNT:
+        case EI_CONTINUATION_RUN:
+        case EI_CONTINUATION_YIELD:
             return error;
 
         case EI_FIELD_ACCESS:
@@ -1419,6 +1445,8 @@ disableEvents(HandlerNode *node)
         case EI_FIBER_TERMINATED:
         case EI_FIBER_MOUNT:
         case EI_FIBER_UNMOUNT:
+        case EI_CONTINUATION_RUN:
+        case EI_CONTINUATION_YIELD:
             return error;
 
         case EI_FIELD_ACCESS:
@@ -1447,6 +1475,91 @@ disableEvents(HandlerNode *node)
                                             NODE_EI(node), thread);
     }
     return error != JVMTI_ERROR_NONE? error : error2;
+}
+
+/***** debugging *****/
+
+void
+eventFilter_dumpHandlerFilters(HandlerNode *node)
+{
+    int i;
+    Filter *filter = FILTERS_ARRAY(node);
+
+    for (i = 0; i < FILTER_COUNT(node); ++i, ++filter) {
+        switch (filter->modifier) {
+            case JDWP_REQUEST_MODIFIER(ThreadOnly):
+                tty_message("ThreadOnly: thread(%p) is_fiber(%d)",
+                            filter->u.ThreadOnly.thread,
+                            filter->u.ThreadOnly.is_fiber);
+                break;
+            case JDWP_REQUEST_MODIFIER(ClassOnly): {
+                char *class_name;
+                classSignature(filter->u.ClassOnly.clazz, &class_name, NULL);
+                tty_message("ClassOnly: clazz(%s)",
+                            class_name);
+                break;
+            }
+            case JDWP_REQUEST_MODIFIER(LocationOnly): {
+                char *method_name;
+                char *class_name;
+                methodSignature(filter->u.LocationOnly.method, &method_name, NULL, NULL);
+                classSignature(filter->u.LocationOnly.clazz, &class_name, NULL);
+                tty_message("LocationOnly: clazz(%s), method(%s) location(%d)",
+                            class_name,
+                            method_name,
+                            filter->u.LocationOnly.location);
+                break;
+            }
+            case JDWP_REQUEST_MODIFIER(FieldOnly): {
+                char *class_name;
+                classSignature(filter->u.FieldOnly.clazz, &class_name, NULL);
+                tty_message("FieldOnly: clazz(%p), field(%d)",
+                            class_name,
+                            filter->u.FieldOnly.field);
+                break;
+            }
+            case JDWP_REQUEST_MODIFIER(ExceptionOnly):
+                tty_message("ExceptionOnly: clazz(%p), caught(%d) uncaught(%d)",
+                            filter->u.ExceptionOnly.exception,
+                            filter->u.ExceptionOnly.caught,
+                            filter->u.ExceptionOnly.uncaught);
+                break;
+            case JDWP_REQUEST_MODIFIER(InstanceOnly):
+                tty_message("InstanceOnly: instance(%p)",
+                            filter->u.InstanceOnly.instance);
+                break;
+            case JDWP_REQUEST_MODIFIER(Count):
+                tty_message("Count: count(%d)",
+                            filter->u.Count.count);
+                break;
+            case JDWP_REQUEST_MODIFIER(Conditional):
+                tty_message("Conditional: exprID(%d)",
+                            filter->u.Conditional.exprID);
+                break;
+            case JDWP_REQUEST_MODIFIER(ClassMatch):
+                tty_message("ClassMatch: classPattern(%s)",
+                            filter->u.ClassMatch.classPattern);
+                break;
+            case JDWP_REQUEST_MODIFIER(ClassExclude):
+                tty_message("ClassExclude: classPattern(%s)",
+                            filter->u.ClassExclude.classPattern);
+                break;
+            case JDWP_REQUEST_MODIFIER(Step):
+                tty_message("Step: size(%d) depth(%d) thread(%p) is_fiber(%d)",
+                            filter->u.Step.size,
+                            filter->u.Step.depth,
+                            filter->u.Step.thread,
+                            filter->u.Step.is_fiber);
+                break;
+            case JDWP_REQUEST_MODIFIER(SourceNameMatch): 
+                tty_message("SourceNameMatch: sourceNamePattern(%s)",
+                            filter->u.SourceNameOnly.sourceNamePattern);
+                break;
+            default:
+                EXIT_ERROR(AGENT_ERROR_ILLEGAL_ARGUMENT, "Invalid filter modifier");
+                return;
+        }
+    }
 }
 
 

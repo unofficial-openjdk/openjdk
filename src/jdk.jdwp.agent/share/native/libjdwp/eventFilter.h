@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,9 +66,13 @@ jvmtiError eventFilter_setStepFilter(HandlerNode *node,
                                jint index,
                                jthread thread,
                                jint size, jint depth);
+void eventFilter_setStepFilterThread(HandlerNode *node, jthread thread);
 jvmtiError eventFilter_setSourceNameMatchFilter(HandlerNode *node,
                                                 jint index,
                                                 char *sourceNamePattern);
+/***** debugging *****/
+
+void eventFilter_dumpHandlerFilters(HandlerNode *node);
 
 /***** misc *****/
 

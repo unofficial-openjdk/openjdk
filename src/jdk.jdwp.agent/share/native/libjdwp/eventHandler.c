@@ -687,6 +687,16 @@ event_callback_helper(JNIEnv *env, EventInfo *evinfo)
     LOG_MISC(("event_callback(): ei=%s", eventText(ei)));
     log_debugee_location("event_callback()", evinfo->thread, evinfo->method, evinfo->location);
 
+    if (evinfo->thread != NULL) {
+        /* fiber fixme: ignore all events on the fiber helper thread. Remove this when
+         * the need for helper threads goes away.
+         */
+        jclass threadClass = JNI_FUNC_PTR(env, GetObjectClass)(env, evinfo->thread);
+        if (JNI_FUNC_PTR(env, IsSameObject)(env, threadClass, gdata->innocuousThreadClass)) {
+            return;
+        }
+    }
+
     /* fiber fixme: little hack to ignore THREAD_START events while we are creating a fiber
      * helper thread. The need for this will eventually go away. */
     if (gdata->ignoreEvents) {
@@ -1519,6 +1529,7 @@ cbFiberTerminated(jvmtiEnv *jvmti_env, JNIEnv *env,
 
     LOG_MISC(("END cbFiberTerminated"));
 }
+
 /* Event callback for JVMTI_EVENT_FIBER_MOUNT */
 static void JNICALL
 cbFiberMount(jvmtiEnv *jvmti_env, JNIEnv *env,
@@ -1557,6 +1568,33 @@ cbFiberUnmount(jvmtiEnv *jvmti_env, JNIEnv *env,
     LOG_MISC(("END cbFiberUnmount"));
 }
 
+/* Event callback for JVMTI_EVENT_CONTINUATION_RUN */
+static void JNICALL
+cbContinuationRun(jvmtiEnv *jvmti_env, JNIEnv *env,
+                  jthread thread, jint continuation_frame_count)
+{
+    LOG_CB(("cbContinuationRun: thread=%p", thread));
+    //tty_message("cbContinuationRun: thread=%p continuation_frame_count=%d", thread, continuation_frame_count);
+    JDI_ASSERT(gdata->fibersSupported);
+
+    threadControl_continuationRun(thread, continuation_frame_count);
+
+    LOG_MISC(("END cbContinuationRun"));
+}
+
+/* Event callback for JVMTI_EVENT_CONTINUATION_YIELD */
+static void JNICALL
+cbContinuationYield(jvmtiEnv *jvmti_env, JNIEnv *env,
+                    jthread thread, jint continuation_frame_count)
+{
+    LOG_CB(("cbContinuationYield: thread=%p", thread));
+    //tty_message("cbContinuationYield: thread=%p continuation_frame_count=%d", thread, continuation_frame_count);
+    JDI_ASSERT(gdata->fibersSupported);
+
+    threadControl_continuationYield(thread, continuation_frame_count);
+
+    LOG_MISC(("END cbContinuationYield"));
+}
 
 /**
  * Delete this handler (do not delete permanent handlers):
@@ -1768,6 +1806,16 @@ eventHandler_initialize(jbyte sessionID)
         if (error != JVMTI_ERROR_NONE) {
             EXIT_ERROR(error,"Can't enable fiber unmount events");
         }
+        error = threadControl_setEventMode(JVMTI_ENABLE,
+                                           EI_CONTINUATION_RUN, NULL);
+        if (error != JVMTI_ERROR_NONE) {
+            EXIT_ERROR(error,"Can't enable continuation run events");
+        }
+        error = threadControl_setEventMode(JVMTI_ENABLE,
+                                           EI_CONTINUATION_YIELD, NULL);
+        if (error != JVMTI_ERROR_NONE) {
+            EXIT_ERROR(error,"Can't enable continuation yield events");
+        }
     }
 
     (void)memset(&(gdata->callbacks),0,sizeof(gdata->callbacks));
@@ -1819,6 +1867,10 @@ eventHandler_initialize(jbyte sessionID)
     gdata->callbacks.FiberMount                 = &cbFiberMount;
     /* Event callback for JVMTI_EVENT_FIBER_UNMOUNT */
     gdata->callbacks.FiberUnmount               = &cbFiberUnmount;
+    /* Event callback for JVMTI_EVENT_CONTINUATION_RUN */
+    gdata->callbacks.ContinuationRun            = &cbContinuationRun;
+    /* Event callback for JVMTI_EVENT_CONTINUATION_YIELD */
+    gdata->callbacks.ContinuationYield          = &cbContinuationYield;
 
     error = JVMTI_FUNC_PTR(gdata->jvmti,SetEventCallbacks)
                 (gdata->jvmti, &(gdata->callbacks), sizeof(gdata->callbacks));
@@ -2003,4 +2055,44 @@ eventHandler_installExternal(HandlerNode *node)
     return installHandler(node,
                           standardHandlers_defaultHandler(node->ei),
                           JNI_TRUE);
+}
+
+/***** debugging *****/
+
+void
+eventHandler_dumpAllHandlers(jboolean dumpPermanent)
+{
+    int ei;
+    for (ei = EI_min; ei <= EI_max; ++ei) {
+        eventHandler_dumpHandlers(ei, dumpPermanent);
+    }
+}
+
+void
+eventHandler_dumpHandlers(EventIndex ei, jboolean dumpPermanent)
+{
+  HandlerNode *nextNode;
+  nextNode = getHandlerChain(ei)->first;
+  if (nextNode != NULL) {
+      tty_message("\nHandlers for %s(%d)", eventIndex2EventName(ei), ei);
+      while (nextNode != NULL) {
+          HandlerNode *node = nextNode;
+          nextNode = NEXT(node);
+          
+          if (node->permanent && !dumpPermanent) {
+              continue; // ignore permanent handlers
+          }
+
+          tty_message("node(%p) handlerID(%d) suspendPolicy(%d) permanent(%d)",
+                      node, node->handlerID, node->suspendPolicy, node->permanent);
+          eventFilter_dumpHandlerFilters(node);
+      }
+  }
+}
+
+void
+eventHandler_dumpHandler(HandlerNode *node)
+{
+  tty_message("Handler for %s(%d)\n", eventIndex2EventName(node->ei), node->ei);
+  eventFilter_dumpHandlerFilters(node);
 }

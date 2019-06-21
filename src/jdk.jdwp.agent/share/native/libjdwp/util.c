@@ -184,6 +184,7 @@ util_initialize(JNIEnv *env)
         jclass localClassLoaderClass;
         jclass localStringClass;
         jclass localSystemClass;
+        jclass localInnocuousThreadClass;
         jclass localPropertiesClass;
         jclass localVMSupportClass;
         jobject localAgentProperties;
@@ -204,6 +205,7 @@ util_initialize(JNIEnv *env)
         localStringClass        = findClass(env,"java/lang/String");
         localSystemClass        = findClass(env,"java/lang/System");
         localPropertiesClass    = findClass(env,"java/util/Properties");
+        localInnocuousThreadClass = findClass(env, "jdk/internal/misc/InnocuousThread");
 
         /* Save references */
 
@@ -214,6 +216,7 @@ util_initialize(JNIEnv *env)
         saveGlobalRef(env, localClassLoaderClass, &(gdata->classLoaderClass));
         saveGlobalRef(env, localStringClass,      &(gdata->stringClass));
         saveGlobalRef(env, localSystemClass,      &(gdata->systemClass));
+        saveGlobalRef(env, localInnocuousThreadClass, &(gdata->innocuousThreadClass));
 
         /* Find some standard methods */
 
@@ -862,7 +865,10 @@ getThreadFiber(jthread thread)
     }
     error = JVMTI_FUNC_PTR(gdata->jvmti,GetThreadFiber)
         (gdata->jvmti, thread, &fiber);
-    if ( error != JVMTI_ERROR_NONE ) {
+    if (error == JVMTI_ERROR_THREAD_NOT_ALIVE) {
+        /* fiber fixme: get rid of this once we get rid of helperThreads. It should never happen then. */
+        return NULL;
+    } else if ( error != JVMTI_ERROR_NONE ) {
         EXIT_ERROR(error,"Error calling GetThreadFiber()");
         return JNI_FALSE;
     }
@@ -2057,6 +2063,8 @@ eventIndexInit(void)
     index2jvmti[EI_FIBER_TERMINATED   -EI_min] = JVMTI_EVENT_FIBER_TERMINATED;
     index2jvmti[EI_FIBER_MOUNT        -EI_min] = JVMTI_EVENT_FIBER_MOUNT;
     index2jvmti[EI_FIBER_UNMOUNT      -EI_min] = JVMTI_EVENT_FIBER_UNMOUNT;
+    index2jvmti[EI_CONTINUATION_RUN   -EI_min] = JVMTI_EVENT_CONTINUATION_RUN;
+    index2jvmti[EI_CONTINUATION_YIELD -EI_min] = JVMTI_EVENT_CONTINUATION_YIELD;
 
     index2jdwp[EI_SINGLE_STEP         -EI_min] = JDWP_EVENT(SINGLE_STEP);
     index2jdwp[EI_BREAKPOINT          -EI_min] = JDWP_EVENT(BREAKPOINT);
@@ -2085,6 +2093,8 @@ eventIndexInit(void)
      * produce an error if referenced. */
     index2jdwp[EI_FIBER_MOUNT         -EI_min] = -1;
     index2jdwp[EI_FIBER_UNMOUNT       -EI_min] = -1;
+    index2jdwp[EI_CONTINUATION_RUN    -EI_min] = -1;
+    index2jdwp[EI_CONTINUATION_YIELD  -EI_min] = -1;
 }
 
 jdwpEvent
@@ -2103,6 +2113,69 @@ eventIndex2jvmti(EventIndex i)
         EXIT_ERROR(AGENT_ERROR_INVALID_INDEX,"bad EventIndex");
     }
     return index2jvmti[i-EI_min];
+}
+
+
+char*
+eventIndex2EventName(EventIndex ei)
+{
+    switch ( ei ) {
+        case EI_SINGLE_STEP:
+            return "EI_SINGLE_STEP";
+        case EI_BREAKPOINT:
+            return "EI_BREAKPOINT";
+        case EI_FRAME_POP:
+            return "EI_FRAME_POP";
+        case EI_EXCEPTION:
+            return "EI_EXCEPTION";
+        case EI_THREAD_START:
+            return "EI_THREAD_START";
+        case EI_THREAD_END:
+            return "EI_THREAD_END";
+        case EI_CLASS_PREPARE:
+            return "EI_CLASS_PREPARE";
+        case EI_GC_FINISH:
+            return "EI_GC_FINISH";
+        case EI_CLASS_LOAD:
+            return "EI_CLASS_LOAD";
+        case EI_FIELD_ACCESS:
+            return "EI_FIELD_ACCESS";
+        case EI_FIELD_MODIFICATION:
+            return "EI_FIELD_MODIFICATION";
+        case EI_EXCEPTION_CATCH:
+            return "EI_EXCEPTION_CATCH";
+        case EI_METHOD_ENTRY:
+            return "EI_METHOD_ENTRY";
+        case EI_METHOD_EXIT:
+            return "EI_METHOD_EXIT";
+        case EI_MONITOR_CONTENDED_ENTER:
+            return "EI_MONITOR_CONTENDED_ENTER";
+        case EI_MONITOR_CONTENDED_ENTERED:
+            return "EI_MONITOR_CONTENDED_ENTERED";
+        case EI_MONITOR_WAIT:
+            return "EI_MONITOR_WAIT";
+        case EI_MONITOR_WAITED:
+            return "EI_MONITOR_WAITED";
+        case EI_VM_INIT:
+            return "EI_VM_INIT";
+        case EI_VM_DEATH:
+            return "EI_VM_DEATH";
+        case EI_FIBER_SCHEDULED:
+            return "EI_FIBER_SCHEDULED";
+        case EI_FIBER_TERMINATED:
+            return "EI_FIBER_TERMINATED";
+        case EI_FIBER_MOUNT:
+            return "EI_FIBER_MOUNT";
+        case EI_FIBER_UNMOUNT:
+            return "EI_FIBER_UNMOUNT";
+        case EI_CONTINUATION_RUN:
+            return "EI_CONTINUATION_RUN";
+        case EI_CONTINUATION_YIELD:
+            return "EI_CONTINUATION_YIELD";
+        default:
+            JDI_ASSERT(JNI_FALSE);
+            return "Bad EI";
+    }
 }
 
 EventIndex
@@ -2219,6 +2292,11 @@ jvmti2EventIndex(jvmtiEvent kind)
             return EI_FIBER_MOUNT;
         case JVMTI_EVENT_FIBER_UNMOUNT:
             return EI_FIBER_UNMOUNT;
+        /* continuation events */
+        case JVMTI_EVENT_CONTINUATION_RUN:
+            return EI_CONTINUATION_RUN;
+        case JVMTI_EVENT_CONTINUATION_YIELD:
+            return EI_CONTINUATION_YIELD;
 
         default:
             EXIT_ERROR(AGENT_ERROR_INVALID_INDEX,"JVMTI to EventIndex mapping");

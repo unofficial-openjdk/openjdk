@@ -83,4 +83,7 @@ jboolean threadControl_isKnownFiber(jthread fiber);
 void threadControl_unmountFiber(jthread fiber, jthread thread);
 void threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID);
 
+void threadControl_continuationRun(jthread thread, jint frames_count);
+void threadControl_continuationYield(jthread thread, jint frames_count);
+
 #endif

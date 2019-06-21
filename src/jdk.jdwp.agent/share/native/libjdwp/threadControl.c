@@ -967,11 +967,18 @@ getFiberHelperThread(jthread fiber)
      *
      * Disable all event handling while doing this, since we don't want to deal
      * with any incoming THREAD_START event.
-     */ 
+     *
+     * Also release the threadLock, or a deadlock will occur when the 
+     * CONTINUATION_RUN event arrives on the helper thread.
+     * fiber fixme: this might not be safe to do.
+     */
+    debugMonitorExit(threadLock);    
     gdata->ignoreEvents = JNI_TRUE;
     helperThread = JNI_FUNC_PTR(env,CallObjectMethod)
         (env, fiber, gdata->fiberTryMountAndSuspend);
     gdata->ignoreEvents = JNI_FALSE;
+    debugMonitorEnter(threadLock);
+
 
     if (JNI_FUNC_PTR(env,ExceptionOccurred)(env)) {
         JNI_FUNC_PTR(env,ExceptionClear)(env);
@@ -1132,7 +1139,7 @@ resumeThreadByNode(ThreadNode *node)
             jthread fiber = getThreadFiber(node->thread);
             if (fiber != NULL) {
                 ThreadNode *fiberNode = findThread(&runningFibers, fiber);
-                if (fiberNode->isTrackedSuspendedFiber) {
+                if (fiberNode != NULL && fiberNode->isTrackedSuspendedFiber) {
                     /* If tracking, decrement the fiber suspendCount also. */
                     if (fiberNode->suspendCount > 0) {
                         fiberNode->suspendCount--;
@@ -2839,7 +2846,7 @@ threadControl_setEventMode(jvmtiEventMode mode, EventIndex ei, jthread thread)
                  * although generally speaking we don't have many HandlerNodes because
                  * they are generated indirectly by the debugger as users do things
                  * like set breakpoints.
-                 * A hybrid appraoch might be best. Keep the handler chains as they are now,
+                 * A hybrid approach might be best. Keep the handler chains as they are now,
                  * but also have each fiber maintain a list of its handler nodes for faster
                  * handling during mount/unmount.
                  *
@@ -2890,7 +2897,8 @@ threadControl_setEventMode(jvmtiEventMode mode, EventIndex ei, jthread thread)
  * Returns the current thread, if the thread has generated at least
  * one event, and has not generated a thread end event.
  */
-jthread threadControl_currentThread(void)
+jthread
+threadControl_currentThread(void)
 {
     jthread thread;
 
@@ -2926,7 +2934,8 @@ threadControl_getFrameGeneration(jthread thread)
     return frameGeneration;
 }
 
-jthread threadControl_getFiberCarrierOrHelperThread(jthread fiber)
+jthread
+threadControl_getFiberCarrierOrHelperThread(jthread fiber)
 {
     /* Get the carrier thread that the fiber is running on */
     jthread carrier_thread = getFiberThread(fiber);
@@ -2948,7 +2957,8 @@ jthread threadControl_getFiberCarrierOrHelperThread(jthread fiber)
     }
 }
 
-jthread *threadControl_allFibers(jint *numFibers)
+jthread *
+threadControl_allFibers(jint *numFibers)
 {
     JNIEnv *env;
     ThreadNode *node;
@@ -2995,16 +3005,72 @@ threadControl_addFiber(jthread fiber)
     debugMonitorExit(threadLock);
 }
 
-void threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID) {
+void
+threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID) {
+    /* fiber fixme: this funciton no longer serves any purpose now that we rely on
+     * continuation events instead. remove.
+     */
+}
+
+
+void
+threadControl_unmountFiber(jthread fiber, jthread thread)
+{
+    /* fiber fixme: this funciton no longer serves any purpose now that we rely on
+     * continuation events instead. remove.
+     */
+}
+
+void
+threadControl_continuationRun(jthread thread, jint continuation_frame_count)
+{
     debugMonitorEnter(threadLock);
     {
         JNIEnv *env = getEnv();
-        ThreadNode *fiberNode;
         ThreadNode *threadNode;
+        ThreadNode *fiberNode;
+        jthread fiber;
+
+        threadNode = findThread(&runningThreads, thread);
+
+        /*
+         * fiber fixme: For now, NULL implies that this is a helper thread created by
+         * getFiberHelperThread(). We should actually verify that, but for now just
+         * assume it is the case and ignore the event. The need for helper threads will
+         * hopefully go away, in which case the assert can be re-added.
+         */
+        //JDI_ASSERT(threadNode != NULL);
+        if (threadNode == NULL) {
+            debugMonitorExit(threadLock);
+            return;
+        }
+
+        JDI_ASSERT(threadNode->isStarted);
+        JDI_ASSERT(bagSize(threadNode->eventBag) == 0);
+
+        if (threadNode->currentStep.pending) {
+            /*
+             *If we are doing a STEP_INTO and are doing class filtering (usually library
+             * classes), we are relying on METHOD_ENTRY events to tell us if we've stepped
+             * back into user code. We won't get this event if when we resume the
+             * continuation, so we need to let the stepControl now that we got a
+             * CONTINUATION_RUN event so it can do the right thing in absense of
+             * the METHOD_ENTRY event. There's also a FramePop setup situation that
+             * stepControl needs to deal with, which is another reason it needs to
+             * know about CONTINUATION_RUN events.
+             */
+            stepControl_handleContinuationRun(env, thread, &threadNode->currentStep);
+        }
+
+        fiber = getThreadFiber(threadNode->thread);
+        if (fiber == NULL) {
+            debugMonitorExit(threadLock);
+            return; /* Nothing more to do if thread is not executing a fiber. */
+        }
 
         fiberNode = findThread(&runningFibers, fiber);
         if (!gdata->notifyDebuggerOfAllFibers && fiberNode == NULL) {
-            /* This is not a fiber we are tracking. */
+            /* This is not a fiber we are tracking, so nothing to do. */
             debugMonitorExit(threadLock);
             return;
         }
@@ -3013,13 +3079,17 @@ void threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID) {
         JDI_ASSERT(fiberNode->isStarted);
         JDI_ASSERT(bagSize(fiberNode->eventBag) == 0);
 
-        threadNode = findThread(&runningThreads, thread);
-        JDI_ASSERT(threadNode != NULL);
-        JDI_ASSERT(threadNode->isStarted);
-        JDI_ASSERT(bagSize(threadNode->eventBag) == 0);
+        /* If we are not single stepping in this fiber then there is nothing to do. */
+        if (!fiberNode->currentStep.pending) {
+            debugMonitorExit(threadLock);
+            return;
+        }
+        JDI_ASSERT(fiberNode->currentStep.is_fiber);
 
-        /* Move the single step state from the fiberNode to threadNode, but only if we aren't
-         * already single stepping on the carrier thread. */
+        /*
+         * Move the single step state from the fiberNode to threadNode, but only if we aren't
+         * already single stepping on the carrier thread.
+         */
         if (!threadNode->currentStep.pending) {
             /* Copy fiber currentStep struct to carrier thread. */
             memcpy(&threadNode->currentStep, &fiberNode->currentStep, sizeof(fiberNode->currentStep));
@@ -3030,8 +3100,7 @@ void threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID) {
                 threadNode->instructionStepMode = JVMTI_ENABLE;
             }
 
-            /* Restore NotifyFramePop. This has to be done even if we are already single stepping
-             * on the carrier thread. */
+            /* Restore the NotifyFramePop that was in place when this Fiber yielded. */
             {
                 jvmtiError error;
                 jint depth;
@@ -3045,14 +3114,10 @@ void threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID) {
                  * then, we subtract fromStackDepth from the current number of frames. This
                  * represents the frame where the STEP_OVER was done, but since we want one
                  * frame below this point, we also subtract one.
-                 *
-                 * fiber fixme: When doing a STEP_OVER of a method call, NotifyFramePop is not always
-                 * done for the callee because it might be a native method. It's not clear to me how
-                 * this situation gets handled. Needs investigation. 
                  */
                 depth = getThreadFrameCount(thread) - fiberNode->currentStep.fromStackDepth;
                 depth--; /* We actually want the frame one below the adjusted fromStackDepth. */
-                if (depth > 1) {
+                if (depth >= 0) {
                     error = JVMTI_FUNC_PTR(gdata->jvmti,NotifyFramePop)(gdata->jvmti, thread, depth);
                     if (error == JVMTI_ERROR_DUPLICATE) {
                       error = JVMTI_ERROR_NONE;
@@ -3062,21 +3127,13 @@ void threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID) {
                     }
                 } else {
                     /*
-                     * If the depth is not greater than 1, then that means we were single stepping
-                     * over the Continuation.yield() or Continuation.yield0() call. In this case
-                     * NotifyFramePop is not going to work for us since these frames are destroyed
-                     * (not just unmounted, but actually gone for good). By the time we get this
-                     * mount event, Fiber.maybePark() has already executed a few bytecodes since
-                     * execution resumed after the Continuation.yield() call. So what is probably best
-                     * here is just to enable single stepping again. What the user will noticed is
-                     * jumping from the Continuation.yield() to a point later on in 
-                     * Fiber.maybePark() just after the notifyFiberMount() call.
-                     *
-                     * fixme fibers: If we were notified as soon as the Continuation is run again,
-                     * which we'll need for proper continuation single stepping anyway, then
-                     * we can improve this and resume immediately after the yield() call rather
-                     * than after the notifyFiberMount() call.
+                     * If the less than 0, then that means we were single stepping over
+                     * the Continuation.doYield() call. In this case NotifyFramePop is not going to work
+                     * since there was never one setup (doYield() was never actually entered). So
+                     * all that needs to be done is to restore single stepping, and we'll stop
+                     * on the next bytecode after the doYield() call.
                      */
+                    JDI_ASSERT(depth == -1);
                     if (fiberNode->instructionStepMode == JVMTI_DISABLE) {
                       stepControl_enableStepping(thread);
                       threadNode->instructionStepMode = JVMTI_ENABLE;
@@ -3120,57 +3177,170 @@ void threadControl_mountFiber(jthread fiber, jthread thread, jbyte sessionID) {
     debugMonitorExit(threadLock);
 }
 
+/*
+ * Returns true if the frame at frameDepth is part of the continuation. Note, frameDepth
+ * is from the bottom of the stack. In other words, the current frame depth is the total
+ * number of frames. The bottomost frame is depth is 1.
+ */
+static jboolean
+isContinuationFrame(jint total_frame_count, jint frameDepth, jint continuation_frame_count)
+{
+#if 0
+    tty_message("total_frame_count=%d frameDepth=%d continuation_frame_count=%d",
+                total_frame_count, frameDepth, continuation_frame_count);
+#endif
+    return (total_frame_count - frameDepth < continuation_frame_count);
+}
 
-void threadControl_unmountFiber(jthread fiber, jthread thread) {
+void
+threadControl_continuationYield(jthread thread, jint continuation_frame_count)
+{
     /* fiber fixme: need to figure out what to do with these 4 ThreadNode fields:
        unsigned int popFrameEvent : 1;
        unsigned int popFrameProceed : 1;
        unsigned int popFrameThread : 1;
        InvokeRequest currentInvoke;
     */
-
     debugMonitorEnter(threadLock);
     {
         JNIEnv *env = getEnv();
-        ThreadNode *fiberNode;
         ThreadNode *threadNode;
-
-        fiberNode = findThread(&runningFibers, fiber);
-        if (!gdata->notifyDebuggerOfAllFibers && fiberNode == NULL) {
-            /* This is not a fiber we are tracking. */
-            debugMonitorExit(threadLock);
-            return;
-        }
-
-        JDI_ASSERT(fiberNode != NULL);
-        JDI_ASSERT(fiberNode->isStarted);
-        JDI_ASSERT(bagSize(fiberNode->eventBag) == 0);
+        jint total_frame_count;
+        jint fromDepth;
 
         threadNode = findThread(&runningThreads, thread);
-        JDI_ASSERT(threadNode != NULL);
+
+        /*
+         * fiber fixme: For now, NULL implies that this is a helper thread created by
+         * getFiberHelperThread(). We should actually verify that, but for now just
+         * assume it is the case and ignore the event. The need for helper threads will
+         * hopefully go away, in which case the assert can be re-added.
+         */
+        //JDI_ASSERT(threadNode != NULL);
+        if (threadNode == NULL) {
+            debugMonitorExit(threadLock);
+            return; /* Nothing to do if thread is not known */
+        }
+
         JDI_ASSERT(threadNode->isStarted);
         JDI_ASSERT(bagSize(threadNode->eventBag) == 0);
 
-        /* If we are single stepping the fiber, not the carrier thread, then move the single step
-         * state to the fiberNode. */
-        if (threadNode->currentStep.is_fiber) {
-            /* Clean up JVMTI SINGLE_STEP state. */
-            if (threadNode->instructionStepMode == JVMTI_ENABLE) {
-                stepControl_disableStepping(thread);
-                threadNode->instructionStepMode = JVMTI_DISABLE;
-                fiberNode->instructionStepMode = JVMTI_ENABLE;
+        /*
+         * If we are not single stepping in this thread, then there is nothing to do.
+         */
+        if (!threadNode->currentStep.pending) {
+            debugMonitorExit(threadLock);
+            return; /* Nothing to do. */
+        }
+
+        fromDepth = threadNode->currentStep.fromStackDepth;
+        total_frame_count = getThreadFrameCount(thread);
+
+        if (threadNode->currentStep.depth == JDWP_STEP_DEPTH(OVER) &&
+            total_frame_count - fromDepth == continuation_frame_count) {
+            /*
+             * We are stepping over Continuation.doContinue() from Continuation.run(). This
+             * is a special case. The stack looks like:
+             *    java.lang.Continuation.yield0
+             *    java.lang.Continuation.yield
+             *    <fiber frames>  <-- if Fiber, otherwise just additional continuation frames
+             *    java.lang.Continuation.enter  <-- bottommost continuation frame
+             *    java.lang.Continuation.run    <-- doContinue() call jumps into continuation
+             *    java.lang.Fiber.runContinuation  <-- if Fiber, otherwise will be different
+             *    <scheduler frames>
+             * All frames above run(), starting with enter(), are continuation frames. The
+             * correct thing to do here is just enable single stepping. This will resume single
+             * stepping in Continuation.run() right after the Continuation.doContinue() call.
+             */
+            JDI_ASSERT(threadNode->instructionStepMode == JVMTI_DISABLE);
+            {
+                stepControl_enableStepping(thread);
+                threadNode->instructionStepMode = JVMTI_ENABLE;
             }
-   
-            /* Disable events */
-            threadControl_setEventMode(JVMTI_DISABLE, EI_EXCEPTION_CATCH, thread);
-            threadControl_setEventMode(JVMTI_DISABLE, EI_FRAME_POP, thread);
-            if (threadNode->currentStep.methodEnterHandlerNode != NULL) {
-                threadControl_setEventMode(JVMTI_DISABLE, EI_METHOD_ENTRY, thread);
+        } else if (!threadNode->currentStep.is_fiber) {
+            /* We were single stepping, but not in a fiber. */
+            if (isContinuationFrame(total_frame_count, fromDepth, continuation_frame_count)) {
+                /*
+                 * This means the frame we were single stepping in part of the set of
+                 * frames that will be frozen as this continuation yields. Because of that
+                 * we need to re-enable single stepping because we won't ever be getting
+                 * the FRAME_POP event for returning to that frame. This will resume single
+                 * stepping in Continuation.run() right after the Continuation.enter() call
+                 */
+                if (threadNode->instructionStepMode == JVMTI_DISABLE) {
+                    stepControl_enableStepping(thread);
+                    threadNode->instructionStepMode = JVMTI_ENABLE;
+                }
+            } else {
+                /*
+                 * We are not single stepping in the continuation, and from the earlier check we
+                 * know we are not single stepping in Continuation.run(), because that would imply
+                 * we were single stepping over the doContinue() call, and we already checked
+                 * for that. There is nothing to do in this case. A NotifyFramePop is already setup
+                 * for a frame further up the stack.
+                 */
+            }
+        } else {
+            /*
+             * We are single stepping the fiber, not the carrier thread. Move the single step
+             * state to the fiberNode.
+             */
+            jthread fiber = getThreadFiber(thread);
+            ThreadNode *fiberNode;
+            JDI_ASSERT(fiber != NULL);
+
+            fiberNode = findThread(&runningFibers, fiber);
+            if (!gdata->notifyDebuggerOfAllFibers && fiberNode == NULL) {
+                /* This is not a fiber we are tracking. */
+                debugMonitorExit(threadLock);
+                return;
             }
 
-            /* Copy currentStep struct from the threadNode to the fiberNode and then zero out the threadNode. */
-            memcpy(&fiberNode->currentStep, &threadNode->currentStep, sizeof(threadNode->currentStep));
-            memset(&threadNode->currentStep, 0, sizeof(threadNode->currentStep));
+            JDI_ASSERT(fiberNode != NULL);
+            JDI_ASSERT(fiberNode->isStarted);
+            JDI_ASSERT(bagSize(fiberNode->eventBag) == 0);
+
+            if (threadNode->currentStep.depth == JDWP_STEP_DEPTH(INTO) &&
+                (total_frame_count == fromDepth)) {
+                /* We are stepping into Continuation.doYield(), so leave single stepping enabled. It
+                 * will resume right after the call to Continuation.run().
+                 */
+            } else if (!isContinuationFrame(total_frame_count, fromDepth, continuation_frame_count)) {
+                /*
+                 * This means the single stepping was initiated stepping in a fiber, but in that small
+                 * window after Thread.setFiber(this) has been called, and before the fiber's
+                 * continuation was actually mounted. An example of this is stepping over the cont.run()
+                 * call in Fiber.runContinuation(). In this case we just leave the carrier thread's
+                 * single step state in place. We should eventually get a FramePop event to 
+                 * enable single stepping again.
+                 */
+                JDI_ASSERT(threadNode->currentStep.depth == JDWP_STEP_DEPTH(OVER));
+            } else {
+                /*
+                 * We were single stepping in the fiber, and now we need to stop doing that since
+                 * we are leaving the fiber. We will copy our single step state from the carrier
+                 * thread to the fiber so we can later restore it when the fiber is mounted again
+                 * and we get a CONTINUATION_RUN event.
+                 */
+
+                /* Clean up JVMTI SINGLE_STEP state. */
+                if (threadNode->instructionStepMode == JVMTI_ENABLE) {
+                    stepControl_disableStepping(thread);
+                    threadNode->instructionStepMode = JVMTI_DISABLE;
+                    fiberNode->instructionStepMode = JVMTI_ENABLE;
+                }
+   
+                /* Disable events */
+                threadControl_setEventMode(JVMTI_DISABLE, EI_EXCEPTION_CATCH, thread);
+                threadControl_setEventMode(JVMTI_DISABLE, EI_FRAME_POP, thread);
+                if (threadNode->currentStep.methodEnterHandlerNode != NULL) {
+                    threadControl_setEventMode(JVMTI_DISABLE, EI_METHOD_ENTRY, thread);
+                }
+
+                /* Copy currentStep struct from the threadNode to the fiberNode and then zero out the threadNode. */
+                memcpy(&fiberNode->currentStep, &threadNode->currentStep, sizeof(threadNode->currentStep));
+                memset(&threadNode->currentStep, 0, sizeof(threadNode->currentStep));
+            }
         }
     }
     debugMonitorExit(threadLock);

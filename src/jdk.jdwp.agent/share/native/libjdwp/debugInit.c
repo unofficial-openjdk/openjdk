@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -304,6 +304,7 @@ DEF_Agent_OnLoad(JavaVM *vm, char *options, void *reserved)
     needed_capabilities.can_generate_monitor_events             = 1;
     needed_capabilities.can_tag_objects                         = 1;
     needed_capabilities.can_support_fibers                      = 1;
+    needed_capabilities.can_support_continuations               = 1;
 
     /* And what potential ones that would be nice to have */
     needed_capabilities.can_force_early_return

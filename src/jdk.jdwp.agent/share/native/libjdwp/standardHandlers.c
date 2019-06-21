@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2005, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -155,6 +155,8 @@ standardHandlers_defaultHandler(EventIndex ei)
         case EI_FIBER_TERMINATED:
         case EI_FIBER_MOUNT:
         case EI_FIBER_UNMOUNT:
+        case EI_CONTINUATION_RUN:
+        case EI_CONTINUATION_YIELD:
             return &genericHandler;
 
         case EI_CLASS_PREPARE:

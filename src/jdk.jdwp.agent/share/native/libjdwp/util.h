@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1998, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,6 +102,7 @@ typedef struct {
     jclass              classLoaderClass;
     jclass              stringClass;
     jclass              systemClass;
+    jclass              innocuousThreadClass; /* fibers fixme: get rid of once helper threads go away */
     jmethodID           fiberToString;
     jmethodID           fiberTryMountAndSuspend;
     jmethodID           threadConstructor;
@@ -174,8 +175,10 @@ typedef enum {
         EI_FIBER_TERMINATED     = 22,
         EI_FIBER_MOUNT          = 23,
         EI_FIBER_UNMOUNT        = 24,
+        EI_CONTINUATION_RUN     = 25,
+        EI_CONTINUATION_YIELD   = 26,
 
-        EI_max                  = 24
+        EI_max                  = 26
 } EventIndex;
 
 /* Agent errors that might be in a jvmtiError for JDWP or internal.
@@ -406,6 +409,7 @@ void *jvmtiAllocate(jint numBytes);
 void jvmtiDeallocate(void *buffer);
 
 void             eventIndexInit(void);
+char*            eventIndex2EventName(EventIndex ei);
 jdwpEvent        eventIndex2jdwp(EventIndex i);
 jvmtiEvent       eventIndex2jvmti(EventIndex i);
 EventIndex       jdwp2EventIndex(jdwpEvent eventType);

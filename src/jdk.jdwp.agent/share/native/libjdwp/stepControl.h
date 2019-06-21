@@ -71,4 +71,7 @@ void stepControl_disableStepping(jthread thread);
 void stepControl_lock(void);
 void stepControl_unlock(void);
 
+void
+stepControl_handleContinuationRun(JNIEnv *env, jthread thread, StepRequest *step);
+
 #endif
