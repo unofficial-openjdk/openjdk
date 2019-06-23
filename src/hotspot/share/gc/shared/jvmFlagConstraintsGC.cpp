@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -319,6 +319,10 @@ static JVMFlag::Error MaxSizeForHeapAlignment(const char* name, size_t value, bo
   return MaxSizeForAlignment(name, value, heap_alignment, verbose);
 }
 
+JVMFlag::Error MinHeapSizeConstraintFunc(size_t value, bool verbose) {
+  return MaxSizeForHeapAlignment("MinHeapSize", value, verbose);
+}
+
 JVMFlag::Error InitialHeapSizeConstraintFunc(size_t value, bool verbose) {
   return MaxSizeForHeapAlignment("InitialHeapSize", value, verbose);
 }
@@ -330,6 +334,15 @@ JVMFlag::Error MaxHeapSizeConstraintFunc(size_t value, bool verbose) {
     status = CheckMaxHeapSizeAndSoftRefLRUPolicyMSPerMB(value, SoftRefLRUPolicyMSPerMB, verbose);
   }
   return status;
+}
+
+JVMFlag::Error SoftMaxHeapSizeConstraintFunc(size_t value, bool verbose) {
+  if (value > MaxHeapSize) {
+    JVMFlag::printError(verbose, "SoftMaxHeapSize must be less than or equal to the maximum heap size\n");
+    return JVMFlag::VIOLATES_CONSTRAINT;
+  }
+
+  return JVMFlag::SUCCESS;
 }
 
 JVMFlag::Error HeapBaseMinAddressConstraintFunc(size_t value, bool verbose) {

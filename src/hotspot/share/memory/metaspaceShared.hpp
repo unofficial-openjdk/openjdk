@@ -125,6 +125,11 @@ public:
     do_ptr(&ptr);
   }
 
+  void do_bool(bool *p) {
+    void* ptr = (void*)(uintx(*p));
+    do_ptr(&ptr);
+  }
+
   void do_tag(int tag) {
     _dump_region->append_intptr_t((intptr_t)tag);
   }
@@ -153,6 +158,8 @@ public:
   void do_ptr(void** p);
 
   void do_u4(u4* p);
+
+  void do_bool(bool *p);
 
   void do_tag(int tag);
 
@@ -297,7 +304,6 @@ class MetaspaceShared : AllStatic {
   static DumpRegion* misc_code_dump_space();
   static DumpRegion* read_write_dump_space();
   static DumpRegion* read_only_dump_space();
-  static DumpRegion* optional_data_dump_space();
   static void pack_dump_space(DumpRegion* current, DumpRegion* next,
                               ReservedSpace* rs);
 

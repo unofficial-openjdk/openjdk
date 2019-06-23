@@ -405,9 +405,6 @@ const size_t minimumSymbolTableSize = 1024;
   notproduct(bool, VerifyLastFrame, false,                                  \
           "Verify oops on last frame on entry to VM")                       \
                                                                             \
-  product(bool, FailOverToOldVerifier, true,                                \
-          "Fail over to old verifier when split verifier fails")            \
-                                                                            \
   product(bool, SafepointTimeout, false,                                    \
           "Time out and warn or fail after SafepointTimeoutDelay "          \
           "milliseconds if failed to reach safepoint")                      \
@@ -2470,7 +2467,7 @@ const size_t minimumSymbolTableSize = 1024;
           "leverage profiling for table/lookup switch")                     \
                                                                             \
   JFR_ONLY(product(bool, FlightRecorder, false,                             \
-          "Enable Flight Recorder"))                                        \
+          "(Deprecated) Enable Flight Recorder"))                                        \
                                                                             \
   JFR_ONLY(product(ccstr, FlightRecorderOptions, NULL,                      \
           "Flight Recorder options"))                                       \

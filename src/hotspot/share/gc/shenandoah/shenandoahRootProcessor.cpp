@@ -60,8 +60,7 @@ ShenandoahSerialRoots::ShenandoahSerialRoots() :
   _object_synchronizer_root(&ObjectSynchronizer::oops_do, ShenandoahPhaseTimings::ObjectSynchronizerRoots),
   _management_root(&Management::oops_do, ShenandoahPhaseTimings::ManagementRoots),
   _system_dictionary_root(&SystemDictionary::oops_do, ShenandoahPhaseTimings::SystemDictionaryRoots),
-  _jvmti_root(&JvmtiExport::oops_do, ShenandoahPhaseTimings::JVMTIRoots),
-  _jni_handle_root(&JNIHandles::oops_do, ShenandoahPhaseTimings::JNIRoots) {
+  _jvmti_root(&JvmtiExport::oops_do, ShenandoahPhaseTimings::JVMTIRoots) {
 }
 
 void ShenandoahSerialRoots::oops_do(OopClosure* cl, uint worker_id) {
@@ -70,7 +69,6 @@ void ShenandoahSerialRoots::oops_do(OopClosure* cl, uint worker_id) {
   _management_root.oops_do(cl, worker_id);
   _system_dictionary_root.oops_do(cl, worker_id);
   _jvmti_root.oops_do(cl, worker_id);
-  _jni_handle_root.oops_do(cl, worker_id);
 }
 
 ShenandoahThreadRoots::ShenandoahThreadRoots(bool is_par) : _is_par(is_par) {
@@ -146,20 +144,22 @@ ShenandoahRootProcessor::~ShenandoahRootProcessor() {
   _heap->phase_timings()->record_workers_end(_phase);
 }
 
-ShenandoahRootEvacuator::ShenandoahRootEvacuator(uint n_workers, ShenandoahPhaseTimings::Phase phase) :
+ShenandoahRootEvacuator::ShenandoahRootEvacuator(uint n_workers, ShenandoahPhaseTimings::Phase phase, bool include_concurrent_roots) :
   ShenandoahRootProcessor(phase),
   _thread_roots(n_workers > 1),
-  _weak_roots(n_workers) {
+  _weak_roots(n_workers),
+  _include_concurrent_roots(include_concurrent_roots) {
 }
 
 void ShenandoahRootEvacuator::roots_do(uint worker_id, OopClosure* oops) {
   MarkingCodeBlobClosure blobsCl(oops, CodeBlobToOopClosure::FixRelocations);
   CLDToOopClosure clds(oops, ClassLoaderData::_claim_strong);
-  CLDToOopClosure* weak_clds = ShenandoahHeap::heap()->unload_classes() ? NULL : &clds;
-
   AlwaysTrueClosure always_true;
 
   _serial_roots.oops_do(oops, worker_id);
+  if (_include_concurrent_roots) {
+    _jni_roots.oops_do<OopClosure>(oops, worker_id);
+  }
 
   _thread_roots.oops_do(oops, NULL, worker_id);
   _cld_roots.clds_do(&clds, &clds, worker_id);
@@ -189,6 +189,7 @@ void ShenandoahRootAdjuster::roots_do(uint worker_id, OopClosure* oops) {
   AlwaysTrueClosure always_true;
 
   _serial_roots.oops_do(oops, worker_id);
+  _jni_roots.oops_do(oops, worker_id);
 
   _thread_roots.oops_do(oops, NULL, worker_id);
   _cld_roots.clds_do(&adjust_cld_closure, NULL, worker_id);

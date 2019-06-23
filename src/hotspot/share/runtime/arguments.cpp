@@ -533,10 +533,10 @@ static SpecialFlag const special_jvm_flags[] = {
   { "InitialRAMFraction",           JDK_Version::jdk(10),  JDK_Version::undefined(), JDK_Version::undefined() },
   { "UseMembar",                    JDK_Version::jdk(10), JDK_Version::jdk(12), JDK_Version::undefined() },
   { "CompilationPolicyChoice",      JDK_Version::jdk(13), JDK_Version::jdk(14), JDK_Version::undefined() },
-  { "FailOverToOldVerifier",        JDK_Version::jdk(13), JDK_Version::jdk(14), JDK_Version::undefined() },
   { "AllowJNIEnvProxy",             JDK_Version::jdk(13), JDK_Version::jdk(14), JDK_Version::jdk(15) },
   { "ThreadLocalHandshakes",        JDK_Version::jdk(13), JDK_Version::jdk(14), JDK_Version::jdk(15) },
   { "AllowRedefinitionToAddDeleteMethods", JDK_Version::jdk(13), JDK_Version::undefined(), JDK_Version::undefined() },
+  { "FlightRecorder",               JDK_Version::jdk(13), JDK_Version::undefined(), JDK_Version::undefined() },
 
   // --- Deprecated alias flags (see also aliased_jvm_flags) - sorted by obsolete_in then expired_in:
   { "DefaultMaxRAMFraction",        JDK_Version::jdk(8),  JDK_Version::undefined(), JDK_Version::undefined() },
@@ -562,6 +562,7 @@ static SpecialFlag const special_jvm_flags[] = {
   { "ProfilerNumberOfRuntimeStubNodes", JDK_Version::undefined(), JDK_Version::jdk(13), JDK_Version::jdk(14) },
   { "UseImplicitStableValues",       JDK_Version::undefined(), JDK_Version::jdk(13), JDK_Version::jdk(14) },
   { "NeedsDeoptSuspend",             JDK_Version::undefined(), JDK_Version::jdk(13), JDK_Version::jdk(14) },
+  { "FailOverToOldVerifier",         JDK_Version::undefined(), JDK_Version::jdk(14), JDK_Version::jdk(15) },
 
 #ifdef TEST_VERIFY_SPECIAL_JVM_FLAGS
   // These entries will generate build errors.  Their purpose is to test the macros.
@@ -604,6 +605,7 @@ static AliasedLoggingFlag const aliased_logging_flags[] = {
   { "TraceSafepointCleanupTime", LogLevel::Info,  true,  LOG_TAGS(safepoint, cleanup) },
   { "TraceJVMTIObjectTagging",   LogLevel::Debug, true,  LOG_TAGS(jvmti, objecttagging) },
   { "TraceRedefineClasses",      LogLevel::Info,  false, LOG_TAGS(redefine, class) },
+  { "TraceNMethodInstalls",      LogLevel::Info,  true,  LOG_TAGS(nmethod, install) },
   { NULL,                        LogLevel::Off,   false, LOG_TAGS(_NO_TAG) }
 };
 
@@ -1628,8 +1630,8 @@ void Arguments::set_use_compressed_oops() {
 #ifdef _LP64
   // MaxHeapSize is not set up properly at this point, but
   // the only value that can override MaxHeapSize if we are
-  // to use UseCompressedOops is InitialHeapSize.
-  size_t max_heap_size = MAX2(MaxHeapSize, InitialHeapSize);
+  // to use UseCompressedOops are InitialHeapSize and MinHeapSize.
+  size_t max_heap_size = MAX3(MaxHeapSize, InitialHeapSize, MinHeapSize);
 
   if (max_heap_size <= max_heap_for_compressed_oops()) {
 #if !defined(COMPILER1) || defined(TIERED)
@@ -1830,6 +1832,8 @@ void Arguments::set_heap_size() {
       // after call to limit_by_allocatable_memory because that
       // method might reduce the allocation size.
       reasonable_max = MAX2(reasonable_max, (julong)InitialHeapSize);
+    } else if (!FLAG_IS_DEFAULT(MinHeapSize)) {
+      reasonable_max = MAX2(reasonable_max, (julong)MinHeapSize);
     }
 
     log_trace(gc, heap)("  Maximum heap size " SIZE_FORMAT, (size_t) reasonable_max);
@@ -1853,13 +1857,13 @@ void Arguments::set_heap_size() {
 
       reasonable_initial = limit_by_allocatable_memory(reasonable_initial);
 
-      log_trace(gc, heap)("  Initial heap size " SIZE_FORMAT, (size_t)reasonable_initial);
       FLAG_SET_ERGO(InitialHeapSize, (size_t)reasonable_initial);
+      log_trace(gc, heap)("  Initial heap size " SIZE_FORMAT, InitialHeapSize);
     }
-    // If the minimum heap size has not been set (via -Xms),
+    // If the minimum heap size has not been set (via -Xms or -XX:MinHeapSize),
     // synchronize with InitialHeapSize to avoid errors with the default value.
     if (MinHeapSize == 0) {
-      MinHeapSize = MIN2((size_t)reasonable_minimum, InitialHeapSize);
+      FLAG_SET_ERGO(MinHeapSize, MIN2((size_t)reasonable_minimum, InitialHeapSize));
       log_trace(gc, heap)("  Minimum heap size " SIZE_FORMAT, MinHeapSize);
     }
   }
@@ -1901,8 +1905,9 @@ jint Arguments::set_aggressive_heap_flags() {
     if (FLAG_SET_CMDLINE(InitialHeapSize, initHeapSize) != JVMFlag::SUCCESS) {
       return JNI_EINVAL;
     }
-    // Currently the minimum size and the initial heap sizes are the same.
-    MinHeapSize = initHeapSize;
+    if (FLAG_SET_CMDLINE(MinHeapSize, initHeapSize) != JVMFlag::SUCCESS) {
+      return JNI_EINVAL;
+    }
   }
   if (FLAG_IS_DEFAULT(NewSize)) {
     // Make the young generation 3/8ths of the total heap.
@@ -2593,19 +2598,19 @@ jint Arguments::parse_each_vm_init_arg(const JavaVMInitArgs* args, bool* patch_m
       }
     // -Xms
     } else if (match_option(option, "-Xms", &tail)) {
-      julong long_initial_heap_size = 0;
+      julong size = 0;
       // an initial heap size of 0 means automatically determine
-      ArgsRange errcode = parse_memory_size(tail, &long_initial_heap_size, 0);
+      ArgsRange errcode = parse_memory_size(tail, &size, 0);
       if (errcode != arg_in_range) {
         jio_fprintf(defaultStream::error_stream(),
                     "Invalid initial heap size: %s\n", option->optionString);
         describe_range_error(errcode);
         return JNI_EINVAL;
       }
-      MinHeapSize = (size_t)long_initial_heap_size;
-      // Currently the minimum size and the initial heap sizes are the same.
-      // Can be overridden with -XX:InitialHeapSize.
-      if (FLAG_SET_CMDLINE(InitialHeapSize, (size_t)long_initial_heap_size) != JVMFlag::SUCCESS) {
+      if (FLAG_SET_CMDLINE(MinHeapSize, (size_t)size) != JVMFlag::SUCCESS) {
+        return JNI_EINVAL;
+      }
+      if (FLAG_SET_CMDLINE(InitialHeapSize, (size_t)size) != JVMFlag::SUCCESS) {
         return JNI_EINVAL;
       }
     // -Xmx
@@ -3460,14 +3465,6 @@ jint Arguments::parse_options_buffer(const char* name, char* buffer, const size_
 
 void Arguments::set_shared_spaces_flags() {
   if (DumpSharedSpaces) {
-    if (FailOverToOldVerifier) {
-      // Don't fall back to the old verifier on verification failure. If a
-      // class fails verification with the split verifier, it might fail the
-      // CDS runtime verifier constraint check. In that case, we don't want
-      // to share the class. We only archive classes that pass the split verifier.
-      FLAG_SET_DEFAULT(FailOverToOldVerifier, false);
-    }
-
     if (RequireSharedSpaces) {
       warning("Cannot dump shared archive while using shared archive");
     }

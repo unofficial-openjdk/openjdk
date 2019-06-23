@@ -79,7 +79,7 @@ ZHeap::ZHeap() :
   _heap = this;
 
   // Update statistics
-  ZStatHeap::set_at_initialize(heap_max_size(), heap_max_reserve_size());
+  ZStatHeap::set_at_initialize(heap_min_size(), heap_max_size(), heap_max_reserve_size());
 }
 
 size_t ZHeap::heap_min_size() const {
@@ -113,8 +113,8 @@ size_t ZHeap::max_capacity() const {
   return _page_allocator.max_capacity();
 }
 
-size_t ZHeap::current_max_capacity() const {
-  return _page_allocator.current_max_capacity();
+size_t ZHeap::soft_max_capacity() const {
+  return _page_allocator.soft_max_capacity();
 }
 
 size_t ZHeap::capacity() const {
@@ -317,7 +317,7 @@ void ZHeap::mark_start() {
   _mark.start();
 
   // Update statistics
-  ZStatHeap::set_at_mark_start(capacity(), used());
+  ZStatHeap::set_at_mark_start(soft_max_capacity(), capacity(), used());
 }
 
 void ZHeap::mark(bool initial) {
@@ -328,45 +328,8 @@ void ZHeap::mark_flush_and_free(Thread* thread) {
   _mark.flush_and_free(thread);
 }
 
-class ZFixupPartialLoadsClosure : public ZRootsIteratorClosure {
-public:
-  virtual void do_oop(oop* p) {
-    ZBarrier::mark_barrier_on_root_oop_field(p);
-  }
-
-  virtual void do_oop(narrowOop* p) {
-    ShouldNotReachHere();
-  }
-};
-
-class ZFixupPartialLoadsTask : public ZTask {
-private:
-  ZThreadRootsIterator _thread_roots;
-
-public:
-  ZFixupPartialLoadsTask() :
-      ZTask("ZFixupPartialLoadsTask"),
-      _thread_roots() {}
-
-  virtual void work() {
-    ZFixupPartialLoadsClosure cl;
-    _thread_roots.oops_do(&cl);
-  }
-};
-
-void ZHeap::fixup_partial_loads() {
-  ZFixupPartialLoadsTask task;
-  _workers.run_parallel(&task);
-}
-
 bool ZHeap::mark_end() {
   assert(SafepointSynchronize::is_at_safepoint(), "Should be at safepoint");
-
-  // C2 can generate code where a safepoint poll is inserted
-  // between a load and the associated load barrier. To handle
-  // this case we need to rescan the thread stack here to make
-  // sure such oops are marked.
-  fixup_partial_loads();
 
   // Try end marking
   if (!_mark.end()) {
@@ -508,8 +471,8 @@ void ZHeap::relocate() {
 void ZHeap::object_iterate(ObjectClosure* cl, bool visit_referents) {
   assert(SafepointSynchronize::is_at_safepoint(), "Should be at safepoint");
 
-  ZHeapIterator iter(visit_referents);
-  iter.objects_do(cl);
+  ZHeapIterator iter;
+  iter.objects_do(cl, visit_referents);
 }
 
 void ZHeap::serviceability_initialize() {

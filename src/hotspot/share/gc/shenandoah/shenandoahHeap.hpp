@@ -391,6 +391,7 @@ public:
   void entry_reset();
   void entry_mark();
   void entry_preclean();
+  void entry_roots();
   void entry_cleanup();
   void entry_evac();
   void entry_updaterefs();
@@ -414,6 +415,7 @@ private:
   void op_reset();
   void op_mark();
   void op_preclean();
+  void op_roots();
   void op_cleanup();
   void op_conc_evac();
   void op_stw_evac();
@@ -690,8 +692,8 @@ public:
   template <class T>
   inline oop update_with_forwarded_not_null(T* p, oop obj);
 
-  inline oop atomic_compare_exchange_oop(oop n, narrowOop* addr, oop c);
-  inline oop atomic_compare_exchange_oop(oop n, oop* addr, oop c);
+  static inline oop cas_oop(oop n, narrowOop* addr, oop c);
+  static inline oop cas_oop(oop n, oop* addr, oop c);
 
   void trash_humongous_region_at(ShenandoahHeapRegion *r);
 
