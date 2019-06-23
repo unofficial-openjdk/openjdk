@@ -28,6 +28,7 @@
 #include "classfile/javaClasses.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/frame.inline.hpp"
+#include "runtime/thread.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/vframe.hpp"
 

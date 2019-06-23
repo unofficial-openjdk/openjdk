@@ -713,6 +713,10 @@
           "to move")                                                        \
                                                                             \
   /* gc parameters */                                                       \
+  product(size_t, MinHeapSize, 0,                                           \
+          "Minimum heap size (in bytes); zero means use ergonomics")        \
+          constraint(MinHeapSizeConstraintFunc,AfterErgo)                   \
+                                                                            \
   product(size_t, InitialHeapSize, 0,                                       \
           "Initial heap size (in bytes); zero means use ergonomics")        \
           constraint(InitialHeapSizeConstraintFunc,AfterErgo)               \
@@ -720,6 +724,10 @@
   product(size_t, MaxHeapSize, ScaleForWordSize(96*M),                      \
           "Maximum heap size (in bytes)")                                   \
           constraint(MaxHeapSizeConstraintFunc,AfterErgo)                   \
+                                                                            \
+  manageable(size_t, SoftMaxHeapSize, 0,                                    \
+          "Soft limit for maximum heap size (in bytes)")                    \
+          constraint(SoftMaxHeapSizeConstraintFunc,AfterMemoryInit)         \
                                                                             \
   product(size_t, OldSize, ScaleForWordSize(4*M),                           \
           "Initial tenured generation size (in bytes)")                     \

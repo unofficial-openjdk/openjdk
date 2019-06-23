@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,12 +21,24 @@
  * questions.
  */
 
-// key: compiler.err.break.complex.value.no.switch.expression
+class Xost {
+    static void log(String msg) { System.out.println(msg); }
 
-class BreakComplexValueNoSwitchExpressions {
-    void t() {
-        while (true) {
-            break 1 + 1;
+    static interface B {
+        int ORIGINAL_RETURN = 1;
+        int NEW_RETURN = 2;
+
+        private int privateMethod() {
+            Runnable race1 = () -> log("Hello from inside privateMethod");
+            race1.run();
+            return NEW_RETURN;
         }
+        public default int defaultMethod(String p) {
+            log(p + "from interface B's defaultMethod");
+             return privateMethod();
+        }
+    }
+
+    static class Impl implements B {
     }
 }

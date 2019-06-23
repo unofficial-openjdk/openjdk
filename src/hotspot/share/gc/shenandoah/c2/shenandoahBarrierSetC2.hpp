@@ -126,7 +126,6 @@ public:
   virtual void eliminate_gc_barrier(PhaseMacroExpand* macro, Node* node) const;
   virtual void enqueue_useful_gc_barrier(PhaseIterGVN* igvn, Node* node) const;
   virtual void eliminate_useless_gc_barriers(Unique_Node_List &useful, Compile* C) const;
-  virtual void add_users_to_worklist(Unique_Node_List* worklist) const;
 
   // Allow barrier sets to have shared state that is preserved across a compilation unit.
   // This could for example comprise macro nodes to be expanded during macro expansion.
@@ -145,7 +144,6 @@ public:
   virtual bool escape_add_to_con_graph(ConnectionGraph* conn_graph, PhaseGVN* gvn, Unique_Node_List* delayed_worklist, Node* n, uint opcode) const;
   virtual bool escape_add_final_edges(ConnectionGraph* conn_graph, PhaseGVN* gvn, Node* n, uint opcode) const;
   virtual bool escape_has_out_with_unsafe_object(Node* n) const;
-  virtual bool escape_is_barrier_node(Node* n) const;
 
   virtual bool matcher_find_shared_post_visit(Matcher* matcher, Node* n, uint opcode) const;
   virtual bool matcher_is_store_load_barrier(Node* x, uint xop) const;

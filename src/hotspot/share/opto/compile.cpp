@@ -2213,8 +2213,8 @@ void Compile::Optimize() {
 
 #endif
 
-#ifdef ASSERT
   BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
+#ifdef ASSERT
   bs->verify_gc_barriers(this, BarrierSetC2::BeforeOptimize);
 #endif
 
@@ -2373,7 +2373,6 @@ void Compile::Optimize() {
     igvn = ccp;
     igvn.optimize();
   }
-
   print_method(PHASE_ITER_GVN2, 2);
 
   if (failing())  return;
@@ -2383,12 +2382,6 @@ void Compile::Optimize() {
   if (!optimize_loops(igvn, LoopOptsDefault)) {
     return;
   }
-
-#if INCLUDE_ZGC
-  if (UseZGC) {
-    ZBarrierSetC2::find_dominating_barriers(igvn);
-  }
-#endif
 
   if (failing())  return;
 
@@ -2409,28 +2402,33 @@ void Compile::Optimize() {
   }
 
 #ifdef ASSERT
-  BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
-  bs->verify_gc_barriers(this, BarrierSetC2::BeforeExpand);
+  bs->verify_gc_barriers(this, BarrierSetC2::BeforeLateInsertion);
+#endif
+
+  bs->barrier_insertion_phase(C, igvn);
+  if (failing())  return;
+
+#ifdef ASSERT
+  bs->verify_gc_barriers(this, BarrierSetC2::BeforeMacroExpand);
 #endif
 
   {
     TracePhase tp("macroExpand", &timers[_t_macroExpand]);
     PhaseMacroExpand  mex(igvn);
-    print_method(PHASE_BEFORE_MACRO_EXPANSION, 2);
     if (mex.expand_macro_nodes()) {
       assert(failing(), "must bail out w/ explicit message");
       return;
     }
+    print_method(PHASE_MACRO_EXPANSION, 2);
   }
 
   {
     TracePhase tp("barrierExpand", &timers[_t_barrierExpand]);
-    print_method(PHASE_BEFORE_BARRIER_EXPAND, 2);
-    BarrierSetC2* bs = BarrierSet::barrier_set()->barrier_set_c2();
     if (bs->expand_barriers(this, igvn)) {
       assert(failing(), "must bail out w/ explicit message");
       return;
     }
+    print_method(PHASE_BARRIER_EXPANSION, 2);
   }
 
   if (opaque4_count() > 0) {
@@ -2826,7 +2824,7 @@ void Compile::final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &frc) {
     MemBarNode* mb = n->as_MemBar();
     if (mb->trailing_store() || mb->trailing_load_store()) {
       assert(mb->leading_membar()->trailing_membar() == mb, "bad membar pair");
-      Node* mem = mb->in(MemBarNode::Precedent);
+      Node* mem = BarrierSet::barrier_set()->barrier_set_c2()->step_over_gc_barrier(mb->in(MemBarNode::Precedent));
       assert((mb->trailing_store() && mem->is_Store() && mem->as_Store()->is_release()) ||
              (mb->trailing_load_store() && mem->is_LoadStore()), "missing mem op");
     } else if (mb->leading()) {
