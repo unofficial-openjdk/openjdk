@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -371,7 +371,9 @@ public class Object {
      * @see        java.lang.Object#notify()
      * @see        java.lang.Object#notifyAll()
      */
-    public final native void wait(long timeout) throws InterruptedException;
+    public final void wait(long timeoutMillis) throws InterruptedException {
+        wait0(timeoutMillis);
+    }
 
     /**
      * Causes current thread to wait until another thread invokes the
@@ -454,6 +456,9 @@ public class Object {
 
             wait(timeout);
     }
+
+    // final modifier so method not in vtable
+    private final native void wait0(long timeoutMillis) throws InterruptedException;
 
     /**
      * Causes current thread to wait until another thread invokes the
