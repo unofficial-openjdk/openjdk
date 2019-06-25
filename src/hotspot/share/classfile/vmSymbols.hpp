@@ -414,7 +414,7 @@
   template(contextClassLoader_name,                   "contextClassLoader")                       \
   template(inheritedAccessControlContext_name,        "inheritedAccessControlContext")            \
   template(getClassContext_name,                      "getClassContext")                          \
-  template(wait_name,                                 "wait")                                     \
+  template(wait_name,                                 "wait0")                                     \
   template(checkPackageAccess_name,                   "checkPackageAccess")                       \
   template(newInstance0_name,                         "newInstance0")                             \
   template(forName_name,                              "forName")                                  \
