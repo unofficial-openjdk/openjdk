@@ -436,17 +436,11 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
              */
             final long deadline = timed ? System.nanoTime() + nanos : 0L;
             Object w = Strands.currentStrand();
-            Thread t;
-            if (w instanceof Thread) {
-                t = (Thread) w;
-            } else {
-                t = Strands.getShadowThread((Fiber<?>)w);
-            }
             int spins = shouldSpin(s)
                 ? (timed ? MAX_TIMED_SPINS : MAX_UNTIMED_SPINS)
                 : 0;
             for (;;) {
-                if ((t != null && t.isInterrupted()) || Fiber.cancelled())
+                if (Strands.isInterrupted())
                     s.tryCancel();
                 SNode m = s.match;
                 if (m != null)
@@ -741,17 +735,11 @@ public class SynchronousQueue<E> extends AbstractQueue<E>
             /* Same idea as TransferStack.awaitFulfill */
             final long deadline = timed ? System.nanoTime() + nanos : 0L;
             Object w = Strands.currentStrand();
-            Thread t;
-            if (w instanceof Thread) {
-                t = (Thread) w;
-            } else {
-                t = Strands.getShadowThread((Fiber<?>)w);
-            }
             int spins = (head.next == s)
                 ? (timed ? MAX_TIMED_SPINS : MAX_UNTIMED_SPINS)
                 : 0;
             for (;;) {
-                if ((t != null && t.isInterrupted()) || Fiber.cancelled())
+                if (Strands.isInterrupted())
                     s.tryCancel(e);
                 Object x = s.item;
                 if (x != e)

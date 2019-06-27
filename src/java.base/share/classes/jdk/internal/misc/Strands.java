@@ -29,8 +29,9 @@ import jdk.internal.access.JavaLangAccess;
 import jdk.internal.access.SharedSecrets;
 
 /**
- * This class consists exclusively of static methods to support execution in
- * the context of a Fiber.
+ * This class defines static methods to support thread-implementation agnostic
+ * code in java.base and to support the execution of code in the context of
+ * fibers.
  */
 
 public final class Strands {
@@ -38,12 +39,47 @@ public final class Strands {
     private Strands() { }
 
     /**
-     * Returns the currently executing strand. If executed from a running fiber
-     * then the {@link Fiber} object will be returned, otherwise the {@code
-     * Thread} object.
+     * Returns the current strand.
      */
     public static Object currentStrand() {
         return JLA.currentStrand();
+    }
+
+    /**
+     * Returns the current carrier thread.
+     */
+    public static Thread currentCarrierThread() {
+        return JLA.currentCarrierThread();
+    }
+
+    /**
+     * Interrupt the given strand.
+     */
+    public static void interrupt(Object strand) {
+        JLA.interrupt(strand);
+    }
+
+    /**
+     * Interrupt the current strand.
+     */
+    public static void interruptSelf() {
+        interrupt(currentStrand());
+    }
+
+    /**
+     * Tests whether the current strand has been interrupted. The <i>interrupted
+     * status</i> of the strand is unaffected by this method.
+     */
+    public static boolean isInterrupted() {
+        return JLA.isInterrupted();
+    }
+
+    /**
+     * Tests whether the current strand has been interrupted.  The
+     * <i>interrupted status</i> of the strand is cleared by this method.
+     */
+    public static boolean clearInterrupt() {
+        return JLA.clearInterrupt();
     }
 
     /**

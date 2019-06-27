@@ -43,14 +43,19 @@ public class NetSockets {
         void run() throws IOException;
     }
 
-    private void test(TestCase test) {
-        Fiber.schedule(() -> { test.run(); return null; }).join();
+    private void test(TestCase test) throws Exception {
+        try (var scope = FiberScope.open()) {
+            scope.schedule(() -> {
+                test.run();
+                return null;
+            }).join();
+        }
     }
 
     /**
      * Cancel a fiber in connect.
      */
-    public void testSocketConnectCancel() {
+    public void testSocketConnectCancel() throws Exception {
         test(() -> {
             try (var listener = new ServerSocket()) {
                 listener.bind(new InetSocketAddress( InetAddress.getLocalHost(), 0));
@@ -70,7 +75,7 @@ public class NetSockets {
     /**
      * Socket read/write, no blocking.
      */
-    public void testSocketReadWrite1() {
+    public void testSocketReadWrite1() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 Socket s1 = connection.socket1();
@@ -92,7 +97,7 @@ public class NetSockets {
     /**
      * Fiber blocks in read.
      */
-    public void testSocketReadWrite2() {
+    public void testSocketReadWrite2() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 Socket s1 = connection.socket1();
@@ -114,7 +119,7 @@ public class NetSockets {
     /**
      * Fiber blocks in write.
      */
-    public void testSocketReadWrite3() {
+    public void testSocketReadWrite3() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 Socket s1 = connection.socket1();
@@ -136,7 +141,7 @@ public class NetSockets {
     /**
      * Fibers blocks in read, peer closes connection.
      */
-    public void testSocketReadPeerClose1() {
+    public void testSocketReadPeerClose1() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 Socket s1 = connection.socket1();
@@ -153,7 +158,7 @@ public class NetSockets {
     /**
      * Fibers blocks in read, peer closes connection abruptly.
      */
-    public void testSocketReadPeerClose2() {
+    public void testSocketReadPeerClose2() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 Socket s1 = connection.socket1();
@@ -175,7 +180,7 @@ public class NetSockets {
     /**
      * Socket close while Fiber blocked in read.
      */
-    public void testSocketReadAsyncClose() {
+    public void testSocketReadAsyncClose() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 Socket s = connection.socket1();
@@ -191,7 +196,7 @@ public class NetSockets {
     /**
      * Socket close while Fiber blocked in write.
      */
-    public void testSocketWriteAsyncClose() {
+    public void testSocketWriteAsyncClose() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 Socket s = connection.socket1();
@@ -210,7 +215,7 @@ public class NetSockets {
     /**
      * Cancel a fiber blocked in read.
      */
-    public void testSocketReadCancel() {
+    public void testSocketReadCancel() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 var fiber = Fiber.current().orElseThrow();
@@ -227,7 +232,7 @@ public class NetSockets {
     /**
      * Cancel a fiber blocked in write.
      */
-    public void testSocketWriteCancel() {
+    public void testSocketWriteCancel() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 var fiber = Fiber.current().orElseThrow();
@@ -247,7 +252,7 @@ public class NetSockets {
     /**
      * ServerSocket accept, no blocking.
      */
-    public void testServerSocketAccept1() {
+    public void testServerSocketAccept1() throws Exception {
         test(() -> {
             try (var listener = new ServerSocket(0)) {
                 var socket1 = new Socket(listener.getInetAddress(), listener.getLocalPort());
@@ -262,7 +267,7 @@ public class NetSockets {
     /**
      * Fiber blocks in accept.
      */
-    public void testServerSocketAccept2() {
+    public void testServerSocketAccept2() throws Exception {
         test(() -> {
             try (var listener = new ServerSocket(0)) {
                 var socket1 = new Socket();
@@ -278,7 +283,7 @@ public class NetSockets {
     /**
      * ServerSocket close while Fiber blocked in accept.
      */
-    public void testServerSocketAcceptAsyncClose() {
+    public void testServerSocketAcceptAsyncClose() throws Exception {
         test(() -> {
             try (var listener = new ServerSocket(0)) {
                 ScheduledCloser.schedule(listener, DELAY);
@@ -293,7 +298,7 @@ public class NetSockets {
     /**
      * Fiber cancelled while blocked in accept.
      */
-    public void testServerSocketAcceptCancel() {
+    public void testServerSocketAcceptCancel() throws Exception {
         test(() -> {
             try (var listener = new ServerSocket(0)) {
                 var fiber = Fiber.current().orElseThrow();

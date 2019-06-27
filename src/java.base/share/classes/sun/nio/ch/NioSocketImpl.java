@@ -170,7 +170,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
      * Disables the current thread or fiber for scheduling purposes until the
      * socket is ready for I/O or is asynchronously closed, for up to the
      * specified waiting time.
-     * @throws IOException if an I/O error occurs or the fiber is cancelled
+     * @throws IOException if an I/O error occurs or the fiber is interrupted
      */
     private void park(FileDescriptor fd, int event, long nanos) throws IOException {
         Object strand = Strands.currentStrand();
@@ -179,18 +179,14 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
             Poller.register(strand, fdVal, event);
             if (isOpen()) {
                 try {
-                    if (Fiber.cancelled()) {
-                        // throw SocketException for now
-                        throw new SocketException("I/O operation cancelled");
-                    }
                     if (nanos == 0) {
                         Strands.parkFiber();
                     } else {
                         Strands.parkFiber(nanos);
                     }
-                    if (Fiber.cancelled()) {
-                        // throw SocketException for now
-                        throw new SocketException("I/O operation cancelled");
+                    // throw SocketException with interrupt status set for now
+                    if (Strands.isInterrupted()) {
+                        throw new SocketException("I/O operation interrupted");
                     }
                 } finally {
                     Poller.deregister(strand, fdVal, event);
@@ -210,7 +206,7 @@ public final class NioSocketImpl extends SocketImpl implements PlatformSocketImp
     /**
      * Disables the current thread for scheduling purposes until the socket is
      * ready for I/O or is asynchronously closed.
-     * @throws IOException if an I/O error occurs
+     * @throws IOException if an I/O error occurs or the fiber is interrupted
      */
     private void park(FileDescriptor fd, int event) throws IOException {
         park(fd, event, 0);

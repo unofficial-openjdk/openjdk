@@ -2307,6 +2307,28 @@ public final class System {
                 Fiber<?> fiber = thread.getFiber();
                 return (fiber != null) ? fiber : thread;
             }
+            public void interrupt(Object strand) {
+                if (strand instanceof Fiber) {
+                    ((Fiber) strand).interrupt();
+                } else {
+                    ((Thread) strand).interrupt();
+                }
+            }
+            public boolean isInterrupted() {
+                Object strand = currentStrand();
+                if (strand instanceof Fiber) {
+                    return ((Fiber) strand).isInterrupted();
+                } else {
+                    return ((Thread) strand).isInterrupted();
+                }
+            }
+            public boolean clearInterrupt() {
+                if (currentStrand() instanceof Fiber) {
+                    return Fiber.clearInterrupt();
+                } else {
+                    return Thread.interrupted();
+                }
+            }
             public void parkFiber() {
                 Fiber.park();
             }
