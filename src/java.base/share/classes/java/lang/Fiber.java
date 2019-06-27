@@ -443,12 +443,11 @@ public class Fiber<V> {
      * @param notifyAgents true to notify JVMTI agents
      */
     private void afterTerminate(boolean notifyAgents) {
-        assert result != null;
-        int oldState = stateGetAndSet(ST_TERMINATED);
-        assert oldState == ST_STARTED || oldState == ST_RUNNABLE;
-
         // notify the scope
         scope.afterTerminate();
+
+        int oldState = stateGetAndSet(ST_TERMINATED);
+        assert oldState == ST_STARTED || oldState == ST_RUNNABLE;
 
         if (notifyAgents && notifyJvmtiEvents) {
             Thread thread = Thread.currentCarrierThread();
