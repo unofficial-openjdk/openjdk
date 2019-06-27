@@ -56,10 +56,10 @@ public class FiberTest {
     };
 
     public static void test1() throws Exception {
-        Fiber f1 = Fiber.schedule(PRODUCER);
-        Fiber f2 = Fiber.schedule(CONSUMER);
-        f1.awaitTermination();
-        f2.awaitTermination();
+        try (var scope = FiberScope.open()) {
+            scope.schedule(PRODUCER);
+            scope.schedule(CONSUMER);
+        }
     }
 
     void runTest() throws Exception {

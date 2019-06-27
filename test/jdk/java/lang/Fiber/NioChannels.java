@@ -55,14 +55,19 @@ public class NioChannels {
         void run() throws IOException;
     }
 
-    private void test(TestCase test) {
-        Fiber.schedule(() -> { test.run(); return null; }).join();
+    private void test(TestCase test) throws Exception {
+        try (var scope = FiberScope.open()) {
+            scope.schedule(() -> {
+                test.run();
+                return null;
+            }).join();
+        }
     }
 
     /**
      * SocketChannel read/write, no blocking.
      */
-    public void testSocketChannelReadWrite1() {
+    public void testSocketChannelReadWrite1() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 SocketChannel sc1 = connection.channel1();
@@ -85,7 +90,7 @@ public class NioChannels {
     /**
      * Fiber blocks in SocketChannel read.
      */
-    public void testSocketChannelReadWrite2() {
+    public void testSocketChannelReadWrite2() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 SocketChannel sc1 = connection.channel1();
@@ -107,7 +112,7 @@ public class NioChannels {
     /**
      * Fiber blocks in SocketChannel write.
      */
-    public void testSocketChannelReadWrite3() {
+    public void testSocketChannelReadWrite3() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 SocketChannel sc1 = connection.channel1();
@@ -130,7 +135,7 @@ public class NioChannels {
     /**
      * SocketChannel close while Fiber blocked in read.
      */
-    public void testSocketChannelReadAsyncClose() {
+    public void testSocketChannelReadAsyncClose() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 SocketChannel sc = connection.channel1();
@@ -146,7 +151,7 @@ public class NioChannels {
     /**
      * Fiber interrupted while blocked in SocketChannel read.
      */
-    public void testSocketChannelReadInterrupt() {
+    public void testSocketChannelReadInterrupt() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 SocketChannel sc = connection.channel1();
@@ -162,7 +167,7 @@ public class NioChannels {
     /**
      * Fiber cancelled while blocked in SocketChannel read.
      */
-    public void testSocketChannelReadCancel() {
+    public void testSocketChannelReadCancel() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 SocketChannel sc = connection.channel1();
@@ -179,7 +184,7 @@ public class NioChannels {
     /**
      * SocketChannel close while Fiber blocked in write.
      */
-    public void testSocketChannelWriteAsyncClose() {
+    public void testSocketChannelWriteAsyncClose() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 SocketChannel sc = connection.channel1();
@@ -199,7 +204,7 @@ public class NioChannels {
     /**
      * Fiber interrupted while blocked in SocketChannel write.
      */
-    public void testSocketChannelWriteInterrupt() {
+    public void testSocketChannelWriteInterrupt() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 SocketChannel sc = connection.channel1();
@@ -219,7 +224,7 @@ public class NioChannels {
     /**
      * Fiber cancelled while blocked in SocketChannel write.
      */
-    public void testSocketChannelWritCeancel() {
+    public void testSocketChannelWritCeancel() throws Exception {
         test(() -> {
             try (var connection = new Connection()) {
                 SocketChannel sc = connection.channel1();
@@ -240,7 +245,7 @@ public class NioChannels {
     /**
      * ServerSocketChannel accept, no blocking.
      */
-    public void testServerSocketChannelAccept1() {
+    public void testServerSocketChannelAccept1() throws Exception {
         test(() -> {
             try (var ssc = ServerSocketChannel.open()) {
                 ssc.bind(new InetSocketAddress(InetAddress.getLocalHost(), 0));
@@ -256,7 +261,7 @@ public class NioChannels {
     /**
      * Fiber blocks in ServerSocketChannel accept.
      */
-    public void testServerSocketChannelAccept2() {
+    public void testServerSocketChannelAccept2() throws Exception {
         test(() -> {
             try (var ssc = ServerSocketChannel.open()) {
                 ssc.bind(new InetSocketAddress(InetAddress.getLocalHost(), 0));
@@ -273,7 +278,7 @@ public class NioChannels {
     /**
      * SeverSocketChannel close while Fiber blocked in accept.
      */
-    public void testServerSocketChannelAcceptAsyncClose() {
+    public void testServerSocketChannelAcceptAsyncClose() throws Exception {
         test(() -> {
             try (var ssc = ServerSocketChannel.open()) {
                 InetAddress lh = InetAddress.getLocalHost();
@@ -291,7 +296,7 @@ public class NioChannels {
     /**
      * Fiber interrupted while blocked in ServerSocketChannel accept.
      */
-    public void testServerSocketChannelAcceptInterrupt() {
+    public void testServerSocketChannelAcceptInterrupt() throws Exception {
         test(() -> {
             try (var ssc = ServerSocketChannel.open()) {
                 InetAddress lh = InetAddress.getLocalHost();
@@ -309,7 +314,7 @@ public class NioChannels {
     /**
      * Fiber cancelled while blocked in ServerSocketChannel accept.
      */
-    public void testServerSocketChannelAcceptCancel() {
+    public void testServerSocketChannelAcceptCancel() throws Exception {
         test(() -> {
             try (var ssc = ServerSocketChannel.open()) {
                 InetAddress lh = InetAddress.getLocalHost();
@@ -328,7 +333,7 @@ public class NioChannels {
     /**
      * DatagramChannel receive/send, no blocking.
      */
-    public void testDatagramhannelSendReceive1() {
+    public void testDatagramhannelSendReceive1() throws Exception {
         test(() -> {
             try (DatagramChannel dc1 = DatagramChannel.open();
                  DatagramChannel dc2 = DatagramChannel.open()) {
@@ -352,7 +357,7 @@ public class NioChannels {
     /**
      * Fiber blocks in DatagramChannel receive.
      */
-    public void testDatagramhannelSendReceive2() {
+    public void testDatagramhannelSendReceive2() throws Exception {
         test(() -> {
             try (DatagramChannel dc1 = DatagramChannel.open();
                  DatagramChannel dc2 = DatagramChannel.open()) {
@@ -375,7 +380,7 @@ public class NioChannels {
     /**
      * DatagramChannel close while Fiber blocked in receive.
      */
-    public void testDatagramhannelReceiveAsyncClose() {
+    public void testDatagramhannelReceiveAsyncClose() throws Exception {
         test(() -> {
             try (DatagramChannel dc = DatagramChannel.open()) {
                 InetAddress lh = InetAddress.getLocalHost();
@@ -392,7 +397,7 @@ public class NioChannels {
     /**
      * Fiber interrupted while blocked in DatagramChannel receive.
      */
-    public void testDatagramhannelReceiveInterrupt() {
+    public void testDatagramhannelReceiveInterrupt() throws Exception {
         test(() -> {
             try (DatagramChannel dc = DatagramChannel.open()) {
                 InetAddress lh = InetAddress.getLocalHost();
@@ -409,7 +414,7 @@ public class NioChannels {
     /**
      * Fiber cancelled while blocked in DatagramChannel receive.
      */
-    public void testDatagramhannelReceiveCancel() {
+    public void testDatagramhannelReceiveCancel() throws Exception {
         test(() -> {
             try (DatagramChannel dc = DatagramChannel.open()) {
                 InetAddress lh = InetAddress.getLocalHost();
@@ -427,7 +432,7 @@ public class NioChannels {
     /**
      * Pipe read/write, no blocking.
      */
-    public void testPipeReadWrite1() {
+    public void testPipeReadWrite1() throws Exception {
         test(() -> {
             Pipe p = Pipe.open();
             try (Pipe.SinkChannel sink = p.sink();
@@ -450,7 +455,7 @@ public class NioChannels {
     /**
      * Fiber blocks in Pipe.SourceChannel read.
      */
-    public void testPipeReadWrite2() {
+    public void testPipeReadWrite2() throws Exception {
         test(() -> {
             Pipe p = Pipe.open();
             try (Pipe.SinkChannel sink = p.sink();
@@ -472,7 +477,7 @@ public class NioChannels {
     /**
      * Fiber blocks in Pipe.SinkChannel write.
      */
-    public void testPipeReadWrite3() {
+    public void testPipeReadWrite3() throws Exception {
         test(() -> {
             Pipe p = Pipe.open();
             try (Pipe.SinkChannel sink = p.sink();
@@ -495,7 +500,7 @@ public class NioChannels {
     /**
      * Pipe.SourceChannel close while Fiber blocked in read.
      */
-    public void testPipeReadAsyncClose() {
+    public void testPipeReadAsyncClose() throws Exception {
         test(() -> {
             Pipe p = Pipe.open();
             try (Pipe.SourceChannel source = p.source()) {
@@ -511,7 +516,7 @@ public class NioChannels {
     /**
      * Fiber interrupted while blocked in Pipe.SourceChannel read.
      */
-    public void testPipeReadInterrupt() {
+    public void testPipeReadInterrupt() throws Exception {
         test(() -> {
             Pipe p = Pipe.open();
             try (Pipe.SourceChannel source = p.source()) {
@@ -527,7 +532,7 @@ public class NioChannels {
     /**
      * Fiber cancelled while blocked in Pipe.SourceChannel read.
      */
-    public void testPipeReadCancel() {
+    public void testPipeReadCancel() throws Exception {
         test(() -> {
             Pipe p = Pipe.open();
             try (Pipe.SourceChannel source = p.source()) {
@@ -544,7 +549,7 @@ public class NioChannels {
     /**
      * Pipe.SinkChannel close while Fiber blocked in write.
      */
-    public void testPipeWriteAsyncClose() {
+    public void testPipeWriteAsyncClose() throws Exception {
         test(() -> {
             Pipe p = Pipe.open();
             try (Pipe.SinkChannel sink = p.sink()) {
@@ -564,7 +569,7 @@ public class NioChannels {
     /**
      * Fiber interrupted while blocked in Pipe.SinkChannel write.
      */
-    public void testPipeWriteInterrupt() {
+    public void testPipeWriteInterrupt() throws Exception {
         test(() -> {
             Pipe p = Pipe.open();
             try (Pipe.SinkChannel sink = p.sink()) {
@@ -584,7 +589,7 @@ public class NioChannels {
     /**
      * Fiber cancelled while blocked in Pipe.SinkChannel write.
      */
-    public void testPipeWriteCancel() {
+    public void testPipeWriteCancel() throws Exception {
         test(() -> {
             Pipe p = Pipe.open();
             try (Pipe.SinkChannel sink = p.sink()) {

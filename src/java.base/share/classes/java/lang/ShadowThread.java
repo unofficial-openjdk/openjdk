@@ -33,12 +33,6 @@ import sun.security.util.SecurityConstants;
 /**
  * Represents a Thread returned by Thread.currentThread() when invoked in the
  * context of a Fiber.
- *
- * A ShadowThread does not support all features of Thread.  In particular, a
- * ShadowThread is not an <i>active thread</i> in a thread group and so is not
- * enumerated or acted on by thread group operations. ShadowThread also do not
- * support setting an uncaught exception handler or operations such as stop,
- * suspend and resume.
  */
 
 class ShadowThread extends Thread {
@@ -47,10 +41,6 @@ class ShadowThread extends Thread {
 
     // the Fiber that this object shadows
     private final Fiber<?> fiber;
-
-    // Thread interrupt support
-    private final Object interruptLock = new Object();
-    private volatile boolean interrupted;
 
     /**
      * Creates a shadow thread for the given fiber using the given inheritable
@@ -72,75 +62,22 @@ class ShadowThread extends Thread {
         return fiber;
     }
 
-    /**
-     * Invoked when the fiber is mounted
-     */
-    void onMount(Thread carrierThread) {
-        // forward interrupt status to carrier thread, no synchronization needed
-        if (interrupted)
-            carrierThread.interrupt();
-    }
-
-    /**
-     * Invoked when the fiber is unmounted
-     */
-    void onUnmount(Thread carrierThread) {
-        // clear carrier thread interrupt status. Need to synchronize with
-        // Thread.interrupt to ensure that the carrier thread is not interrupted
-        // after the fiber unmounts
-        synchronized (interruptLock) {
-            carrierThread.getAndClearInterrupt();
-        }
-    }
-
     @Override
     public void start() {
         throw new IllegalStateException();
     }
 
-    /**
-     * Interrupt the thread and the carrier thread if the fiber is mounted. Also
-     * unpark the fiber.
-     */
     @Override
     public void interrupt() {
-        synchronized (interruptLock) {
-            super.interrupt();
-
-            // interrupt carrier thread
-            Thread t = fiber.carrierThread();
-            if (t != null) t.interrupt();
+        if (Thread.currentThread() != this) {
+            checkAccess();
         }
-
-        fiber.unpark();
+        fiber.interrupt();
     }
 
     @Override
     public boolean isInterrupted() {
-        return interrupted;
-    }
-
-    @Override
-    void doInterrupt() {
-        interrupted = true;
-    }
-
-    /**
-     * Clears the interrupt status and returns the old value. If set, this
-     * method clears this thread's interrupt status and the interrupt status of
-     * the carrier thread.
-     */
-    @Override
-    boolean getAndClearInterrupt() {
-        assert Thread.currentCarrierThread() == fiber.carrierThread();
-        boolean oldValue = interrupted;
-        if (oldValue) {
-            synchronized (interruptLock) {
-                interrupted = false;
-                fiber.carrierThread().getAndClearInterrupt();
-            }
-        }
-        return oldValue;
+        return fiber.isInterrupted();
     }
 
     @Override

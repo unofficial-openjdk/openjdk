@@ -32,7 +32,6 @@ import java.nio.channels.ClosedByInterruptException;
 import java.nio.channels.InterruptibleChannel;
 
 import jdk.internal.access.SharedSecrets;
-import jdk.internal.misc.Strands;
 import sun.nio.ch.Interruptible;
 
 
@@ -151,16 +150,8 @@ public abstract class AbstractInterruptibleChannel
      * closing and interruption for this channel.  </p>
      */
     protected final void begin() {
-        Object strand = Strands.currentStrand();
-        Thread me;
-        if (strand instanceof Thread) {
-            me = (Thread) strand;
-        } else {
-            me = Strands.getShadowThread((Fiber) strand);
-        }
-        if (me != null) {
-            if (interruptor == null) {
-                interruptor = new Interruptible() {
+        if (interruptor == null) {
+            interruptor = new Interruptible() {
                     public void interrupt(Thread target) {
                         synchronized (closeLock) {
                             if (closed)
@@ -172,11 +163,11 @@ public abstract class AbstractInterruptibleChannel
                             } catch (IOException x) { }
                         }
                     }};
-            }
-            blockedOn(interruptor);
-            if (me.isInterrupted())
-                interruptor.interrupt(me);
         }
+        blockedOn(interruptor);
+        Thread me = Thread.currentThread();
+        if (me.isInterrupted())
+            interruptor.interrupt(me);
     }
 
     /**
@@ -201,20 +192,11 @@ public abstract class AbstractInterruptibleChannel
     protected final void end(boolean completed)
         throws AsynchronousCloseException
     {
-        Object s = Strands.currentStrand();
-        Thread me;
-        if (s instanceof Thread) {
-            me = (Thread) s;
-        } else {
-            me = Strands.getShadowThread((Fiber<?>)s);
-        }
-        if (me != null) {
-            blockedOn(null);
-            Thread interrupted = this.interrupted;
-            if (interrupted != null && interrupted == me) {
-                this.interrupted = null;
-                throw new ClosedByInterruptException();
-            }
+        blockedOn(null);
+        Thread interrupted = this.interrupted;
+        if (interrupted != null && interrupted == Thread.currentThread()) {
+            this.interrupted = null;
+            throw new ClosedByInterruptException();
         }
         if (!completed && closed)
             throw new AsynchronousCloseException();

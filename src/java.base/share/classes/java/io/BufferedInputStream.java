@@ -25,6 +25,7 @@
 
 package java.io;
 
+import java.util.concurrent.locks.ReentrantLock;
 import jdk.internal.misc.Unsafe;
 import jdk.internal.util.ArraysSupport;
 
@@ -63,6 +64,9 @@ class BufferedInputStream extends FilterInputStream {
 
     private static final long BUF_OFFSET
             = U.objectFieldOffset(BufferedInputStream.class, "buf");
+
+    // initialized to null when BufferedInputStream is sub-classed
+    private final ReentrantLock lock;
 
     /**
      * The internal buffer array where the data is stored. When necessary,
@@ -200,12 +204,19 @@ class BufferedInputStream extends FilterInputStream {
             throw new IllegalArgumentException("Buffer size <= 0");
         }
         buf = new byte[size];
+
+        // use monitors when BufferedInputStream is sub-classed
+        if (getClass() == BufferedInputStream.class) {
+            lock = new ReentrantLock();
+        } else {
+            lock = null;
+        }
     }
 
     /**
      * Fills the buffer with more data, taking into account
      * shuffling and other tricks for dealing with marks.
-     * Assumes that it is being called by a synchronized method.
+     * Assumes that it is being called by a locked method.
      * This method also assumes that all data has already been read in,
      * hence pos > count.
      */
@@ -259,7 +270,22 @@ class BufferedInputStream extends FilterInputStream {
      *                          or an I/O error occurs.
      * @see        java.io.FilterInputStream#in
      */
-    public synchronized int read() throws IOException {
+    public int read() throws IOException {
+        if (lock != null) {
+            lock.lock();
+            try {
+                return lockedRead();
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            synchronized (this) {
+                return lockedRead();
+            }
+        }
+    }
+
+    private int lockedRead() throws IOException {
         if (pos >= count) {
             fill();
             if (pos >= count)
@@ -329,9 +355,22 @@ class BufferedInputStream extends FilterInputStream {
      *                          invoking its {@link #close()} method,
      *                          or an I/O error occurs.
      */
-    public synchronized int read(byte b[], int off, int len)
-        throws IOException
-    {
+    public int read(byte b[], int off, int len) throws IOException {
+        if (lock != null) {
+            lock.lock();
+            try {
+                return lockedRead(b, off, len);
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            synchronized (this) {
+                return lockedRead(b, off, len);
+            }
+        }
+    }
+
+    private int lockedRead(byte b[], int off, int len) throws IOException {
         getBufIfOpen(); // Check for closed stream
         if ((off | len | (off + len) | (b.length - (off + len))) < 0) {
             throw new IndexOutOfBoundsException();
@@ -363,7 +402,22 @@ class BufferedInputStream extends FilterInputStream {
      *                      {@code in.skip(n)} throws an IOException,
      *                      or an I/O error occurs.
      */
-    public synchronized long skip(long n) throws IOException {
+    public long skip(long n) throws IOException {
+        if (lock != null) {
+            lock.lock();
+            try {
+                return lockedSkip(n);
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            synchronized (this) {
+                return lockedSkip(n);
+            }
+        }
+    }
+
+    private long lockedSkip(long n) throws IOException {
         getBufIfOpen(); // Check for closed stream
         if (n <= 0) {
             return 0;
@@ -404,7 +458,22 @@ class BufferedInputStream extends FilterInputStream {
      *                          invoking its {@link #close()} method,
      *                          or an I/O error occurs.
      */
-    public synchronized int available() throws IOException {
+    public int available() throws IOException {
+        if (lock != null) {
+            lock.lock();
+            try {
+                return lockAvailable();
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            synchronized (this) {
+                return lockAvailable();
+            }
+        }
+    }
+
+    private int lockAvailable() throws IOException {
         int n = count - pos;
         int avail = getInIfOpen().available();
         return n > (Integer.MAX_VALUE - avail)
@@ -420,7 +489,22 @@ class BufferedInputStream extends FilterInputStream {
      *                      the mark position becomes invalid.
      * @see     java.io.BufferedInputStream#reset()
      */
-    public synchronized void mark(int readlimit) {
+    public void mark(int readlimit) {
+        if (lock != null) {
+            lock.lock();
+            try {
+                lockedMark(readlimit);
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            synchronized (this) {
+                lockedMark(readlimit);
+            }
+        }
+    }
+
+    private void lockedMark(int readlimit) {
         marklimit = readlimit;
         markpos = pos;
     }
@@ -441,7 +525,22 @@ class BufferedInputStream extends FilterInputStream {
      *                  method, or an I/O error occurs.
      * @see        java.io.BufferedInputStream#mark(int)
      */
-    public synchronized void reset() throws IOException {
+    public void reset() throws IOException {
+        if (lock != null) {
+            lock.lock();
+            try {
+                lockedReset();
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            synchronized (this) {
+                lockedReset();
+            }
+        }
+    }
+
+    private void lockedReset() throws IOException {
         getBufIfOpen(); // Cause exception if closed
         if (markpos < 0)
             throw new IOException("Resetting to invalid mark");

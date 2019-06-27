@@ -33,12 +33,12 @@ import java.security.AccessControlContext;
 import java.security.PrivilegedAction;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
+import jdk.internal.misc.Strands;
 import jdk.internal.misc.TerminatingThreadLocal;
 import sun.nio.ch.Interruptible;
 import jdk.internal.reflect.CallerSensitive;
@@ -177,10 +177,8 @@ class Thread implements Runnable {
         return threadInitNumber++;
     }
 
-    /*
-     * ThreadLocal values pertaining to this thread. This map is maintained
-     * by the ThreadLocal class.
-     */
+    /* ThreadLocal values pertaining to this thread. This map is maintained
+     * by the ThreadLocal class. */
     ThreadLocal.ThreadLocalMap threadLocals = null;
 
     /*
@@ -243,6 +241,18 @@ class Thread implements Runnable {
         }
     }
 
+    Object blockerLock() {
+        return blockerLock;
+    }
+
+    void runInterrupter() {
+        assert Thread.holdsLock(blockerLock);
+        Interruptible b = blocker;
+        if (b != null) {
+            b.interrupt(this);
+        }
+    }
+
     /**
      * The minimum priority that a thread can have.
      */
@@ -263,10 +273,9 @@ class Thread implements Runnable {
      *
      * <p> When executed in the context of a fiber, the returned Thread object
      * does not support all features of Thread. In particular, the Thread
-     * is not an <i>active thread</i> in its thread group and so is not
-     * enumerated or acted on by thread group operations. In addition, the
-     * Thread does does support setting an uncaught exception handler or the
-     * stop, suspend or resume methods.
+     * is not an <i>active thread</i> in its thread group and so is not enumerated
+     * or acted on by thread group operations. In addition it does not support
+     * the stop, suspend or resume methods.
      *
      * @return  the current thread
      */
@@ -339,15 +348,10 @@ class Thread implements Runnable {
     public static void yield() {
         Fiber<?> fiber = currentCarrierThread().getFiber();
         if (fiber != null) {
-            if (!Fiber.emulateCurrentThread()) {
-                throw new UnsupportedOperationException(
-                    "Thread.yield cannot be used in the context of a fiber");
-            }
             fiber.yield();
         } else {
             yield0();
         }
-
     }
     private static native void yield0();
 
@@ -372,39 +376,13 @@ class Thread implements Runnable {
         if (millis < 0) {
             throw new IllegalArgumentException("timeout value is negative");
         }
-        Fiber<?> fiber = currentCarrierThread().getFiber();
-        if (fiber != null) {
-            if (!Fiber.emulateCurrentThread()) {
-                throw new UnsupportedOperationException(
-                    "Thread.sleep cannot be used in the context of a fiber");
-            }
-
-            Thread shadowThread = fiber.shadowThreadOrNull();
-            if (Fiber.cancelled()) {
-                getAndClearInterrupt(shadowThread);
-                throw new InterruptedException();
-            }
-
-            long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
-            do {
-                long startTime = System.nanoTime();
-                Fiber.parkNanos(nanos);
-
-                // check if park interrupted by Thread.interrupt or cancel
-                if (getAndClearInterrupt(shadowThread) || Fiber.cancelled()) {
-                    throw new InterruptedException();
-                }
-
-                nanos -= System.nanoTime() - startTime;
-            } while (nanos > 0);
+        if (currentCarrierThread().getFiber() != null) {
+            Fiber.sleepNanos(TimeUnit.MILLISECONDS.toNanos(millis));
         } else {
-            // regular thread
             sleep0(millis);
         }
     }
-
     private static native void sleep0(long millis) throws InterruptedException;
-
 
     /**
      * Causes the currently executing thread to sleep (temporarily cease
@@ -428,8 +406,7 @@ class Thread implements Runnable {
      *          <i>interrupted status</i> of the current thread is
      *          cleared when this exception is thrown.
      */
-    public static void sleep(long millis, int nanos)
-    throws InterruptedException {
+    public static void sleep(long millis, int nanos) throws InterruptedException {
         if (millis < 0) {
             throw new IllegalArgumentException("timeout value is negative");
         }
@@ -1126,14 +1103,15 @@ class Thread implements Runnable {
             synchronized (blockerLock) {
                 Interruptible b = blocker;
                 if (b != null) {
-                    doInterrupt();
+                    interrupt0();  // set interrupt status
                     b.interrupt(this);
                     return;
                 }
             }
         }
 
-        doInterrupt();
+        // set interrupt status
+        interrupt0();
     }
 
     /**
@@ -1156,11 +1134,10 @@ class Thread implements Runnable {
     public static boolean interrupted() {
         Thread thread = Thread.currentCarrierThread();
         Fiber<?> fiber = thread.getFiber();
-        if (fiber == null) {
-            return thread.getAndClearInterrupt();
+        if (fiber != null) {
+            return fiber.isInterrupted(true);
         } else {
-            Thread st = fiber.shadowThreadOrNull();
-            return (st != null) ? st.getAndClearInterrupt() : false;
+            return thread.isInterrupted(true);
         }
     }
 
@@ -1181,26 +1158,8 @@ class Thread implements Runnable {
         return isInterrupted(false);
     }
 
-    /**
-     * Invoked by interrupt to set the interrupt status and unpark the thread.
-     */
-    void doInterrupt() {
-        interrupt0();
-    }
-
-    /**
-     * Clears the interrupt status and returns the old value.
-     */
-    boolean getAndClearInterrupt() {
-        return isInterrupted(true);
-    }
-
-    private static boolean getAndClearInterrupt(Thread thread) {
-        if (thread != null) {
-            return thread.getAndClearInterrupt();
-        } else {
-            return false;
-        }
+    void clearInterrupt() {
+        isInterrupted(true);
     }
 
     /**
@@ -1483,9 +1442,8 @@ class Thread implements Runnable {
      */
     public final void join(long millis) throws InterruptedException {
         if (this instanceof ShadowThread) {
-            Fiber<?> f = ((ShadowThread) this).fiber();
-            long nanos = TimeUnit.NANOSECONDS.convert(millis, TimeUnit.MILLISECONDS);
-            f.awaitInterruptibly(nanos);
+            Fiber<?> fiber = ((ShadowThread) this).fiber();
+            fiber.awaitInterruptibly(TimeUnit.MILLISECONDS.toNanos(millis));
             return;
         }
 
@@ -2191,8 +2149,6 @@ class Thread implements Runnable {
      * object acts as its handler.
      * @param eh the object to use as this thread's uncaught exception
      * handler. If {@code null} then this thread has no explicit handler.
-     * @throws     UnsupportedOperationException if invoked on the Thread object
-     *             for a Fiber
      * @throws  SecurityException  if the current thread is not allowed to
      *          modify this thread.
      * @see #setDefaultUncaughtExceptionHandler
@@ -2201,16 +2157,15 @@ class Thread implements Runnable {
      */
     public void setUncaughtExceptionHandler(UncaughtExceptionHandler eh) {
         checkAccess();
-        if (this instanceof ShadowThread)
-            throw new UnsupportedOperationException();
         uncaughtExceptionHandler = eh;
     }
 
     /**
      * Dispatch an uncaught exception to the handler. This method is
-     * intended to be called only by the JVM.
+     * called by the VM when a thread terminates with an exception. It is also
+     * called when a fiber terminates with an exception.
      */
-    private void dispatchUncaughtException(Throwable e) {
+    void dispatchUncaughtException(Throwable e) {
         getUncaughtExceptionHandler().uncaughtException(this, e);
     }
 

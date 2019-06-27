@@ -24,7 +24,6 @@
  */
 package java.lang;
 
-import java.lang.FiberScope.TerminationQueue;
 import java.lang.StackWalker.StackFrame;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
@@ -56,6 +55,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import jdk.internal.misc.InnocuousThread;
+import jdk.internal.misc.Strands;
 import jdk.internal.misc.Unsafe;
 import sun.security.action.GetPropertyAction;
 
@@ -67,17 +67,35 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * A <i>user mode</i> thread to execute a task that is scheduled by the Java
  * virtual machine rather than the operating system.
  *
- * <p> A {@code Fiber} is created and scheduled in a {@link FiberScope fiber
- * scope} to execute a task by invoking one of the {@link FiberScope#schedule(Runnable)
+ * <p> A fiber is created and scheduled in a {@link FiberScope FiberScope}
+ * to execute a task by invoking one of the {@link FiberScope#schedule(Runnable)
  * schedule} methods of that class. A fiber terminates when the task completes
- * execution, either normally or with a exception or error. The {@linkplain
- * #awaitTermination() awaitTermination} method can be used to wait for a fiber
- * to terminate. The {@linkplain #join() join} method also waits for a fiber to
- * terminate, returning the result of the task or throwing {@linkplain
- * CompletionException} when the task terminates with an exception. The {@linkplain
- * #toFuture() toFuture} method can be used to obtain a {@linkplain CompletableFuture}
- * to interoperate with code that uses a {@linkplain Future} or uses its
- * cancellation semantics.
+ * execution, either normally or with a exception or error. The {@linkplain #join()
+ * join} method may be used to wait for a fiber to terminate, returning the result
+ * of the task or throwing {@linkplain CompletionException} when the task terminates
+ * with an exception or error. The {@linkplain #awaitTermination(Duration)
+ * awaitTermination} method may be used to wait for a fiber to terminate for up a
+ * given waiting duration. The {@linkplain #toFuture() toFuture} method can be
+ * used to obtain a {@linkplain CompletableFuture} to interoperate with code that
+ * uses {@linkplain Future} or {@code CompletableFuture}.
+ *
+ * <p> Tasks executed by fibers are discouraged from using the APIs defined by
+ * {@linkplain Thread java.lang.Thread} for footprint/memory reasons. If a task
+ * invokes {@linkplain Thread#currentThread() Thread.currentThread()} then it
+ * returns a {@code Thread} object that is unique to the fiber and all thread
+ * locals (including the {@link Thread#getName() thread name}, {@link ThreadLocal
+ * thread-local variables}, and the {@link Thread#getContextClassLoader()
+ * thread context class loader}) are <em>fiber local</em> when used in the context
+ * of a fiber.
+ *
+ * <p> Fibers support <em>cooperative cancellation</em>. Each fiber has a
+ * <em>cancel status</em> that is set by invoking its {@linkplain #cancel() cancel}
+ * method. Once set, the cancel status can never be reset. Computation or blocking
+ * tasks poll for cancellation using the static {@linkplain #cancelled()} method.
+ * The method returns {@code true} when the cancel status is set and the fiber is
+ * executing in a <em>cancellable</em> fiber scope. Fibers also support an
+ * <em>interrupt status</em> for use with the thread interrupt mechanism defined
+ * by {@code java.lang.Thread}.
  *
  * <p> Unless otherwise noted, passing a {@code null} argument will cause a
  * {@linkplain NullPointerException} to be thrown.
@@ -89,7 +107,6 @@ public class Fiber<V> {
     private static final ContinuationScope FIBER_SCOPE = new ContinuationScope("Fibers");
     private static final Executor DEFAULT_SCHEDULER = defaultScheduler();
     private static final ScheduledExecutorService UNPARKER = delayedTaskScheduler();
-    private static final boolean EMULATE_CURRENT_THREAD = emulateCurrentThreadValue();
     private static final int TRACE_PINNING_MODE = tracePinningMode();
 
     private static final VarHandle STATE;
@@ -118,9 +135,8 @@ public class Fiber<V> {
     // carrier thread when mounted
     private volatile Thread carrierThread;
 
-    // current scope and termination queue
+    // current scope
     private volatile FiberScope scope;
-    private volatile TerminationQueue<? super V> terminationQueue;
 
     // fiber state
     private static final short ST_NEW      = 0;
@@ -147,8 +163,12 @@ public class Fiber<V> {
     // CompletableFuture integration
     private volatile CompletableFuture<V> future;
 
-    // cancellation
+    // cancel status
     private volatile boolean cancelled;
+
+    // interrupt support
+    private final Object interruptLock = new Object();
+    private volatile boolean interrupted;
 
     // task to execute after continue (for capturing stack trace and self-suspend)
     private volatile Runnable afterContinueTask;
@@ -160,25 +180,39 @@ public class Fiber<V> {
     /**
      * Creates a new {@code Fiber} to run the given task with the given scheduler.
      *
-     * @param scheduler the scheduler
      * @param task the task to execute
+     * @param scheduler the scheduler
      */
-    private Fiber(Executor scheduler, Object task) {
-        Objects.requireNonNull(scheduler);
+    @SuppressWarnings("unchecked")
+    private Fiber(Object task, Executor scheduler) {
         Objects.requireNonNull(task);
+        Objects.requireNonNull(scheduler);
 
         Runnable target = () -> {
+            V result = null;
+            Throwable exc = null;
             try {
                 if (task instanceof Callable) {
-                    @SuppressWarnings("unchecked")
-                    V value = ((Callable<? extends V>) task).call();
-                    complete(value);
+                    result = ((Callable<? extends V>) task).call();
+                    complete(result);
                 } else {
                     ((Runnable) task).run();
                     complete(null);
                 }
-            } catch (Throwable exc) {
-                completeExceptionally(exc);
+            } catch (Throwable e) {
+                exc = e;
+                completeExceptionally(e);
+            } finally {
+                try {
+                    scope.afterTask(result, exc);
+                } finally {
+                    if (exc != null) {
+                        Thread shadowThread = this.shadowThread;
+                        if (shadowThread != null) {
+                            shadowThread.dispatchUncaughtException(exc);
+                        }
+                    }
+                }
             }
         };
 
@@ -195,111 +229,65 @@ public class Fiber<V> {
         };
         this.runContinuation = this::runContinuation;
 
-        if (EMULATE_CURRENT_THREAD) {
-            // Inheritable context from creating thread or fiber
-            InheritableThreadContext ctxt = null;
-            Thread parentThread = Thread.currentCarrierThread();
-            Fiber<?> parentFiber = parentThread.getFiber();
-            if (parentFiber != null) {
-                parentThread = parentFiber.shadowThreadOrNull();
-                if (parentThread == null) {
-                    ctxt = parentFiber.inheritableThreadContext;
-                    if (ctxt == null) {
-                        // context has been cleared by creating the shadow thread
-                        parentThread = parentFiber.shadowThreadOrNull();
-                        assert parentThread != null;
-                    }
+        // Inheritable context from creating thread or fiber
+        InheritableThreadContext ctxt = null;
+        Thread parentThread = Thread.currentCarrierThread();
+        Fiber<?> parentFiber = parentThread.getFiber();
+        if (parentFiber != null) {
+            parentThread = parentFiber.shadowThreadOrNull();
+            if (parentThread == null) {
+                ctxt = parentFiber.inheritableThreadContext;
+                if (ctxt == null) {
+                    // context has been cleared by creating the shadow thread
+                    parentThread = parentFiber.shadowThreadOrNull();
+                    assert parentThread != null;
                 }
             }
-            if (parentThread != null) {
-                this.inheritableThreadContext = new InheritableThreadContext(parentThread);
-            } else {
-                assert ctxt != null;
-                this.inheritableThreadContext = ctxt;
-            }
+        }
+        if (parentThread != null) {
+            this.inheritableThreadContext = new InheritableThreadContext(parentThread);
+        } else {
+            assert ctxt != null;
+            this.inheritableThreadContext = ctxt;
         }
     }
 
-    static Fiber<?> newFiber(Runnable task) {
-        return new Fiber<>(DEFAULT_SCHEDULER, task);
-    }
-
-    static Fiber<?> newFiber(Executor scheduler, Runnable task) {
-        return new Fiber<>(scheduler, task);
-    }
-
-    static <V> Fiber<V> newFiber(Callable<? extends V> task) {
-        return new Fiber<>(DEFAULT_SCHEDULER, task);
-    }
-
-    static <V> Fiber<V> newFiber(Executor scheduler, Callable<? extends V> task) {
-        return new Fiber<>(scheduler, task);
-    }
-
     /**
-     * Creates and schedules a new {@code Fiber} to run the given task with the
-     * default scheduler.
-     *
-     * @apiNote
-     * For now, this method schedules the fiber in the detached scope. This will
-     * be re-visited once there is more experience gained using fiber scopes.
+     * Creates a new {@code Fiber} to run the given task.
      *
      * @param task the task to execute
-     * @return the fiber
      */
-    public static Fiber<?> schedule(Runnable task) {
-        return FiberScope.detached().schedule(DEFAULT_SCHEDULER, task);
+    Fiber(Runnable task) {
+        this(task, DEFAULT_SCHEDULER);
     }
 
     /**
-     * Creates and schedules a new {@code Fiber} to run the given task with the
-     * given scheduler.
+     * Creates a new {@code Fiber} to run the given task.
      *
-     * @apiNote
-     * For now, this method schedules the fiber in the detached scope. This will
-     * be re-visited once there is more experience gained using fiber scopes.
+     * @param task the task to execute
+     */
+    Fiber(Callable<? extends V> task) {
+        this(task, DEFAULT_SCHEDULER);
+    }
+
+    /**
+     * Creates a new {@code Fiber} to run the given task.
      *
      * @param scheduler the scheduler
      * @param task the task to execute
-     * @return the fiber
-     * @throws RejectedExecutionException if the scheduler cannot accept a task
      */
-    public static Fiber<?> schedule(Executor scheduler, Runnable task) {
-        return FiberScope.detached().schedule(scheduler, task);
+    Fiber(Executor scheduler, Runnable task) {
+        this(task, scheduler);
     }
 
     /**
-     * Creates and schedules a new {@code Fiber} to run the given value-returning
-     * task. The {@code Fiber} is scheduled with the default scheduler.
-     *
-     * @apiNote
-     * For now, this method schedules the fiber in the detached scope. This will
-     * be re-visited once there is more experience gained using fiber scopes.
-     *
-     * @param task the task to execute
-     * @param <V> the task's result type
-     * @return the fiber
-     */
-    public static <V> Fiber<V> schedule(Callable<? extends V> task) {
-        return FiberScope.detached().schedule(task);
-    }
-
-    /**
-     * Creates and schedules a new {@code Fiber} to run the given value-returning
-     * task. The {@code Fiber} is scheduled with the given scheduler.
-     *
-     * @apiNote
-     * For now, this method schedules the fiber in the detached scope. This will
-     * be re-visited once there is more experience gained using fiber scopes.
+     * Creates a new {@code Fiber} to run the given task.
      *
      * @param scheduler the scheduler
      * @param task the task to execute
-     * @param <V> the task's result type
-     * @return the fiber
-     * @throws RejectedExecutionException if the scheduler cannot accept a task
      */
-    public static <V> Fiber<V> schedule(Executor scheduler, Callable<? extends V> task) {
-        return FiberScope.detached().schedule(scheduler, task);
+    Fiber(Executor scheduler, Callable<? extends V> task) {
+        this(task, scheduler);
     }
 
     /**
@@ -335,22 +323,14 @@ public class Fiber<V> {
      *         executing in the scope
      * @throws RejectedExecutionException if the scheduler cannot accept a task
      */
-    Fiber<V> schedule(FiberScope scope, TerminationQueue<? super V> terminationQueue) {
+    Fiber<V> schedule(FiberScope scope) {
         Objects.requireNonNull(scope);
 
         if (!stateCompareAndSet(ST_NEW, ST_STARTED))
             throw new IllegalStateException("Fiber already scheduled");
 
         this.scope = scope;
-        if (terminationQueue != null)
-            this.terminationQueue = terminationQueue;
-        scope.onSchedule(this);
 
-        // switch to carrier thread when submitting task. Revisit this when
-        // ForkJoinPool is updated to reduce use of Thread.currentThread.
-        Thread thread = Thread.currentCarrierThread();
-        Fiber<?> parentFiber = thread.getFiber();
-        if (parentFiber != null) thread.setFiber(null);
         boolean scheduled = false;
         try {
             scheduler.execute(runContinuation);
@@ -360,7 +340,6 @@ public class Fiber<V> {
                 completeExceptionally(new IllegalStateException("stillborn"));
                 afterTerminate(false);
             }
-            if (parentFiber != null) thread.setFiber(parentFiber);
         }
 
         return this;
@@ -403,12 +382,11 @@ public class Fiber<V> {
     private void mount(boolean firstRun) {
         Thread thread = Thread.currentCarrierThread();
 
-        // sets the carrier thread
+        // sets the carrier thread and forward interrupt status if needed
         carrierThread = thread;
-
-        // notify the shadow thread so that the interrupt status can be forwarded
-        ShadowThread st = this.shadowThread;
-        if (st != null) st.onMount(thread);
+        if (interrupted) {
+            thread.interrupt();
+        }
 
         // set the fiber so that Thread.currentThread() returns the Fiber object
         assert thread.getFiber() == null;
@@ -433,11 +411,9 @@ public class Fiber<V> {
 
         // drop connection between this fiber and the carrier thread
         thread.setFiber(null);
-        carrierThread = null;
-
-        // notify shadow thread so that interrupt status is cleared
-        ShadowThread st = this.shadowThread;
-        if (st != null) st.onUnmount(thread);
+        synchronized (interruptLock) {   // synchronize with interrupt
+            carrierThread = null;
+        }
     }
 
     /**
@@ -471,19 +447,13 @@ public class Fiber<V> {
         int oldState = stateGetAndSet(ST_TERMINATED);
         assert oldState == ST_STARTED || oldState == ST_RUNNABLE;
 
+        // notify the scope
+        scope.afterTerminate();
+
         if (notifyAgents && notifyJvmtiEvents) {
             Thread thread = Thread.currentCarrierThread();
             notifyFiberTerminated(thread, this);
         }
-
-        // notify termination queue
-        TerminationQueue<? super V> queue = this.terminationQueue;
-        if (queue != null) {
-            queue.put(this);  // can fail with OOME
-        }
-
-        // notify scope
-        scope.onTerminate(this);  // can fail with OOME
 
         // notify anyone waiting for this fiber to terminate
         signalTermination();
@@ -578,7 +548,7 @@ public class Fiber<V> {
         if (fiber == null)
             throw new IllegalCallerException("not a fiber");
         if (nanos > 0) {
-            // switch to carrier thread when submitting task to unpark
+            // switch to carrier thread when submitting to avoid parking here
             thread.setFiber(null);
             Future<?> unparker;
             try {
@@ -602,8 +572,8 @@ public class Fiber<V> {
     /**
      * Park or complete immediately.
      *
-     * <p> If this fiber has already been unparked or the Thread's interrupt
-     * status is set then this method completes immediately; otherwise it yields.
+     * <p> If this fiber has already been unparked or its interrupt status is
+     * set then this method completes immediately; otherwise it yields.
      */
     private void maybePark() {
         assert Thread.currentCarrierThread().getFiber() == this;
@@ -613,8 +583,6 @@ public class Fiber<V> {
             throw new InternalError();
 
         // consume permit if available, and continue rather than park
-        Thread st = this.shadowThread;
-        boolean interrupted = (st != null) && st.isInterrupted();
         if (parkPermitGetAndSet(false) || interrupted) {
             if (!stateCompareAndSet(ST_PARKING, ST_RUNNABLE))
                 throw new InternalError();
@@ -651,8 +619,7 @@ public class Fiber<V> {
      * parked} then it will be unblocked, otherwise its next call to {@code park}
      * or {@linkplain #parkNanos(long) parkNanos} is guaranteed not to block.
      *
-     * @throws RejectedExecutionException if using a scheduler and it cannot
-     *         accept a task
+     * @throws RejectedExecutionException if the scheduler cannot accept a task
      * @return this fiber
      */
     Fiber<V> unpark() {
@@ -661,13 +628,7 @@ public class Fiber<V> {
         if (!parkPermitGetAndSet(true) && fiber != this) {
             int s = waitIfParking();
             if (s == ST_PARKED) {
-                // switch to carrier thread when submitting task to continue
-                if (fiber != null) thread.setFiber(null);
-                try {
-                    scheduler.execute(runContinuation);
-                } finally {
-                    if (fiber != null) thread.setFiber(fiber);
-                }
+                scheduler.execute(runContinuation);
             }
         }
         return this;
@@ -727,69 +688,29 @@ public class Fiber<V> {
     }
 
     /**
-     * Waits for this fiber to terminate.
-     *
-     * <p> If the current thread is interrupted while waiting then it will
-     * continue to wait. When the thread does return from this method then its
-     * interrupt status will be set. This will be re-visited once all the
-     * details of cancellation are worked out.
-     *
-     * @apiNote TBD if we need both awaitTermination and join methods.
-     */
-    public void awaitTermination() {
-        boolean joinInterrupted = false;
-        boolean terminated = false;
-        while (!terminated) {
-            try {
-                terminated = awaitInterruptibly(0);
-            } catch (InterruptedException e) {
-                joinInterrupted = true;
-            }
-        }
-        if (joinInterrupted)
-            Thread.currentThread().interrupt();
-    }
-
-    /**
      * Waits for this fiber to terminate for up to the given waiting duration.
      * This method does not wait if the duration to wait is less than or equal
      * to zero.
      *
-     * <p> If the current thread is interrupted while waiting then it will
-     * continue to wait. When the thread does return from this method then its
-     * interrupt status will be set. This will be re-visited once all the
-     * details of cancellation are worked out.
-     *
      * @param duration the maximum duration to wait
      * @return {@code true} if the fiber has terminated
+     * @throws InterruptedException if interrupted while waiting or called with
+     *         the interrupt status set. The interrupt status of the current
+     *         thread is cleared when this exception is thrown.
+     *
+     * @see #join()
      */
-    public boolean awaitTermination(Duration duration) {
+    public final boolean awaitTermination(Duration duration) throws InterruptedException {
         long nanos = TimeUnit.NANOSECONDS.convert(duration);
-        boolean terminated = false;
         if (nanos > 0) {
-            boolean interrupted = false;
-
-            // wait until the fiber terminates or timeout elapses
-            long startTime = System.nanoTime();
-            long remaining = nanos;
-            while (!terminated && remaining > 0) {
-                try {
-                    terminated = awaitInterruptibly(nanos);
-                } catch (InterruptedException e) {
-                    interrupted = true;
-                }
-                remaining = nanos - (System.nanoTime() - startTime);
-            }
-
-            // restore interrupt status
-            if (interrupted) {
-                Thread.currentThread().interrupt();
-            }
-        }
-        if (terminated || stateGet() == ST_TERMINATED) {
-            return true;
+            return awaitInterruptibly(nanos);
         } else {
-            return false;
+            if (Strands.clearInterrupt())
+                throw new InterruptedException();
+            short s = stateGet();
+            if (s == ST_NEW)
+                throw new IllegalStateException("Fiber not scheduled");
+            return s == ST_TERMINATED;
         }
     }
 
@@ -798,23 +719,23 @@ public class Fiber<V> {
      * A timeout of {@code 0} means to wait forever.
      *
      * @throws IllegalArgumentException if nanos is negative
-     * @throws InterruptedException if the shadow thread is interrupted while waiting
+     * @throws InterruptedException if interrupted while waiting
      * @throws IllegalStateException if the fiber has not been scheduled
      * @return true if the fiber has terminated
      */
     boolean awaitInterruptibly(long nanos) throws InterruptedException {
-        if (nanos < 0) {
-            throw new IllegalArgumentException("timeout is negative");
-        }
-        short s = stateGet();
-        if (s == ST_TERMINATED) {
+        if (nanos < 0)
+            throw new IllegalArgumentException("Timeout is negative");
+        if (Strands.clearInterrupt())
+            throw new InterruptedException();
+        if (stateGet() == ST_TERMINATED)
             return true;
-        }
+
         lock.lock();
         try {
-            s = stateGet();
+            short s = stateGet();
             if (s == ST_NEW)
-                throw new IllegalStateException("fiber not scheduled");
+                throw new IllegalStateException("Fiber not scheduled");
             if (s == ST_TERMINATED)
                 return true;
 
@@ -824,7 +745,6 @@ public class Fiber<V> {
             } else {
                 terminationCondition().await(nanos, NANOSECONDS);
             }
-
         } finally {
             lock.unlock();
         }
@@ -832,68 +752,67 @@ public class Fiber<V> {
     }
 
     /**
-     * Tests if this {@code Fiber} is alive. A thread is alive if it has not yet
-     * terminated.
+     * Tests if this fiber is alive. A fiber is alive if it has been scheduled
+     * but has not yet terminated.
      *
      * @return {@code true} if this fiber is alive; {@code false} otherwise.
      */
-    public boolean isAlive() {
+    public final boolean isAlive() {
         short s = stateGet();
         return (s != ST_NEW) && (s != ST_TERMINATED);
     }
 
     /**
      * Sets this fiber's cancel status if not already set. If the fiber hasn't
-     * terminated then it is also {@link
-     * java.util.concurrent.locks.LockSupport#unpark(Object) unparked}.
+     * terminated then its <em>interrupt status</em> is also set and the fiber
+     * is {@link java.util.concurrent.locks.LockSupport#unpark(Object) unparked}.
      *
-     * <p> This method has no effect on a {@linkplain CompletableFuture} obtained
-     * via the {@linkplain #toFuture()} method, its {@linkplain
-     * CompletableFuture#cancel(boolean) cancel(boolean)} method is not invoked.
+     * <p> If a {@linkplain CompletableFuture} object has been obtained using the
+     * {@linkplain #toFuture()} method then its {@linkplain
+     * CompletableFuture#cancel(boolean) cancel(boolean)} method is invoked to
+     * complete it with {@link java.util.concurrent.CancellationException} if
+     * not already completed or cancelled.
      *
-     * @return {@code true} if the fiber's cancel status was set by this method
-     * @throws RejectedExecutionException if using a scheduler and it cannot
-     *         accept a task
+     * @return true if the fiber's cancel status is changed by this method
+     *
+     * @throws RejectedExecutionException if the scheduler cannot accept a task
      */
-    public boolean cancel() {
+    public final boolean cancel() {
         boolean changed = !cancelled && CANCELLED.compareAndSet(this, false, true);
         if (stateGet() != ST_TERMINATED) {
-            FiberScope scope = this.scope;
-            // scope is null before initially scheduled
-            if (scope != null) {
-                scope.onCancel(this);
+            CompletableFuture<V> future;
+            FiberScope scope;
+
+            // complete future
+            if (changed && ((future = this.future) != null)) {
+                ((FutureImpl<V>) future).tryCancel(false);
             }
-            unpark();
+
+            // interrupt thread, even if already cancelled
+            interrupt();
+
+            // notify scope on first cancel
+            if (changed && ((scope = this.scope) != null)) {
+                scope.afterCancel();
+            }
         }
         return changed;
     }
 
     /**
-     * Sets this fiber's cancel status if not already set and optionally unpark
-     * the fiber. Its FiberScope is not notified by this method.
-     */
-    void cancel(boolean unpark) {
-        if (!cancelled) {
-            CANCELLED.set(this, true);
-            if (unpark && stateGet() != ST_TERMINATED) {
-                unpark();
-            }
-        }
-    }
-
-    /**
-     * Returns the fiber's cancel status.
+     * Returns the fiber's cancel status, irrespective of the scope that it is in.
      *
      * @return {@code true} if the fiber's cancel status is set
      */
-    public boolean isCancelled() {
+    public final boolean isCancelled() {
         return cancelled;
     }
 
     /**
      * Return {@code true} if the current fiber's cancel status is set and it
-     * is in executing in a {@link FiberScope#isCancellable() cancellable}
-     * scope. This method always returns {@code false} when invoked from a thread.
+     * is in executing in a <em>cancellable</em> scope.
+     *
+     * This method always returns {@code false} when invoked from a thread.
      *
      * @apiNote This method is intended to be used by blocking or compute bound
      * operations that check cooperatively for cancellation.
@@ -904,65 +823,105 @@ public class Fiber<V> {
         Fiber<?> fiber = currentFiber();
         if (fiber != null && fiber.cancelled) {
             FiberScope scope = fiber.scope;
-            if (scope != null) {
-                return scope.isCancellable();
-            } else {
-                // emulate the global scope for now
-                return true;
+            assert scope != null;
+            return scope.isCancellable();
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Tests whether this fiber has been interrupted, optionally clearing the
+     * interrupt status.
+     */
+    boolean isInterrupted(boolean clear) {
+        boolean oldValue = interrupted;
+        if (oldValue && clear) {
+            assert Thread.currentCarrierThread().getFiber() == this;
+            synchronized (interruptLock) {
+                interrupted = false;
+
+                Thread t = carrierThread;
+                if (t != null) t.clearInterrupt();
             }
         }
-        return false;
+        return oldValue;
+    }
+
+    /**
+     * Interrupts this fiber.
+     *
+     * <p> Interrupting a fiber that has terminated has no effect.
+     *
+     * @throws RejectedExecutionException if the scheduler cannot accept a task
+     */
+    void interrupt() {
+        if (stateGet() != ST_TERMINATED) {
+            synchronized (interruptLock) {
+                Thread shadowThread = this.shadowThread;
+
+                // fiber may be blocked in an I/O operation with an interrupter set
+                if (shadowThread != null
+                    && Thread.currentCarrierThread().getFiber() != this) {
+                    synchronized (shadowThread.blockerLock()) {
+                        interrupted = true;
+                        shadowThread.runInterrupter();
+                    }
+                } else {
+                    interrupted = true;
+                }
+
+                // interrupt carrier thread
+                Thread t = carrierThread;
+                if (t != null) t.interrupt();
+            }
+
+            unpark();
+        }
+    }
+
+    /**
+     * Tests whether this fiber has been interrupted. The <i>interrupt status</i>
+     * of the thread is unaffected by this method.
+     *
+     * @return {@code true} if this fiber's interrupt status is set
+     */
+    boolean isInterrupted() {
+        return isInterrupted(false);
+    }
+
+    /**
+     * Clears the current fiber's <i>interrupt status</i>..
+     *
+     * @return {@code true} if the current fiber's interrupt status was set
+     */
+    static boolean clearInterrupt() {
+        Fiber<?> fiber = currentFiber();
+        if (fiber != null) {
+            return fiber.isInterrupted(true);
+        } else {
+            return false;
+        }
     }
 
     /**
      * Waits for this fiber to terminate and returns the result of its task. If
-     * the task completed with an exception then {@linkplain CompletionException}
-     * is thrown with the exception as its cause.
-     *
-     * <p> If the current thread is interrupted while waiting then it will
-     * continue to wait. When the thread does return from this method then its
-     * interrupt status will be set. This will be re-visited once all the
-     * details of cancellation are worked out.
-     *
-     * @apiNote TBD if we need both awaitTermination and join methods.
+     * the task completed with an exception (or error) then {@linkplain CompletionException}
+     * is thrown with the exception (or error) as its cause.
      *
      * @return the result or {@code null} if the fiber was created with a Runnable
      * @throws CompletionException if the task completed with an exception
+     * @throws InterruptedException if interrupted while waiting or called with
+     *         the interrupt status set. The interrupt status of the current
+     *         thread is cleared when this exception is thrown.
+     *
+     * @see #awaitTermination(Duration)
      */
-    public V join() {
-        awaitTermination();
+    public final V join() throws InterruptedException {
+        awaitInterruptibly(0);
         @SuppressWarnings("unchecked")
         V r = (V) resultOrThrow();
         return r;
-    }
-
-    /**
-     * Waits for this fiber to terminate for up to the given waiting duration and
-     * returns the result of its task. If the task completed with an exception
-     * then {@linkplain CompletionException} is thrown with the exception as its
-     * cause. This method does not wait if the duration to wait is less than or
-     * equal to zero.
-     *
-     * <p> If the current thread is interrupted while waiting then it will
-     * continue to wait. When the thread does return from this method then its
-     * interrupt status will be set.T his will be re-visited once all the
-     * details of cancellation are worked out.
-     *
-     * @param duration the maximum duration to wait
-     * @return {@code true} if the fiber has terminated
-     * @return the result or {@code null} if the fiber was created with a Runnable
-     * @throws CompletionException if the task completed with an exception
-     * @throws TimeoutException if the wait timed out
-     */
-    public V join(Duration duration) throws TimeoutException {
-        boolean terminated = awaitTermination(duration);
-        if (terminated) {
-            @SuppressWarnings("unchecked")
-            V r = (V) resultOrThrow();
-            return r;
-        } else {
-            throw new TimeoutException();
-        }
     }
 
     /**
@@ -991,15 +950,13 @@ public class Fiber<V> {
      * <p> Invoking the {@code CompletableFuture}'s {@linkplain CompletableFuture#complete
      * complete} or {@linkplain CompletableFuture#completeExceptionally
      * completeExceptionally} methods to explicitly complete the result has no
-     * effort on the result returned by the {@linkplain #join()} and {@linkplain
-     * #join(Duration)} methods defined here. The {@code CompletableFuture}'s
-     * {@linkplain CompletableFuture#cancel(boolean) cancel} completes the {@code
-     * CompletableFuture} with a {@linkplain java.util.concurrent.CancellationException}
-     * and also sets the fiber's cancelled status as if by calling the {@linkplain
-     * #cancel() cancel} method. Once cancelled, the {@code CompletableFuture}'s
-     * {@linkplain CompletableFuture#isDone() isDone} method will return {@code
-     * true}. The fiber's {@link #isAlive() isAlive} method will continue
-     * to return {@code true} until the fiber terminates.
+     * effect on the result returned by the {@linkplain #join()} method defined
+     * here. The {@code CompletableFuture}'s {@linkplain CompletableFuture#cancel(boolean)
+     * cancel} method cancels the fiber as if by calling the {@linkplain #cancel()
+     * cancel} method. Once cancelled, the {@code CompletableFuture}'s {@linkplain
+     * CompletableFuture#isDone() isDone} method will return {@code true}. The
+     * fiber's {@link #isAlive() isAlive} method will continue to return {@code
+     * true} until the fiber terminates.
      *
      * <p> The first invocation of this method creates the {@code CompletableFuture},
      * subsequent calls to this method return the same object.
@@ -1007,17 +964,10 @@ public class Fiber<V> {
      * @return a CompletableFuture to represent the result of the task
      */
     @SuppressWarnings("unchecked")
-    public CompletableFuture<V> toFuture() {
+    public final CompletableFuture<V> toFuture() {
         CompletableFuture<V> future = this.future;
         if (future == null) {
-            future = new CompletableFuture<>() {
-                @Override
-                public boolean cancel(boolean ignored) {
-                    boolean cancelled = super.cancel(ignored);
-                    Fiber.this.cancel();
-                    return cancelled;
-                }
-            };
+            future = new FutureImpl<>(this);
             Object previous = FUTURE.compareAndExchange(this, null, future);
             if (previous != null) {
                 future = (CompletableFuture<V>) previous;
@@ -1030,17 +980,26 @@ public class Fiber<V> {
                     } else {
                         future.complete((r != NULL_RESULT) ? (V) r : null);
                     }
+                } else if (cancelled) {
+                    future.cancel(false);
                 }
             }
         }
         return future;
     }
 
-    /**
-     * Returns the current carrier thread, null if not mounted
-     */
-    Thread carrierThread() {
-        return carrierThread;
+    private static class FutureImpl<V> extends CompletableFuture<V> {
+        private final Fiber<V> fiber;
+        FutureImpl(Fiber<V> fiber) {
+            this.fiber = fiber;
+        }
+        boolean tryCancel(boolean mayInterruptIfRunning) {
+            return super.cancel(mayInterruptIfRunning);
+        }
+        @Override
+        public boolean cancel(boolean mayInterruptIfRunning) {
+            return fiber.cancel() && this.isCancelled();
+        }
     }
 
     /**
@@ -1056,10 +1015,6 @@ public class Fiber<V> {
      */
     Thread shadowThread() {
         assert Thread.currentCarrierThread() == carrierThread;
-        if (!EMULATE_CURRENT_THREAD) {
-            throw new UnsupportedOperationException(
-                "currentThread() cannot be used in the context of a fiber");
-        }
         ShadowThread thread = shadowThread;
         if (thread== null) {
             shadowThread = thread = new ShadowThread(this, inheritableThreadContext);
@@ -1068,6 +1023,27 @@ public class Fiber<V> {
             inheritableThreadContext = null;
         }
         return thread;
+    }
+
+    /**
+     * By use by Thread.sleep to park the current fiber for the specified number
+     * of nanoseconds.
+     */
+    static void sleepNanos(long nanos) throws InterruptedException {
+        Fiber<?> fiber = Thread.currentCarrierThread().getFiber();
+        if (fiber == null)
+            throw new IllegalCallerException("not a fiber");
+        if (fiber.isInterrupted(true))
+            throw new InterruptedException();
+        long remainingNanos = nanos;
+        long startNanos = System.nanoTime();
+        while (remainingNanos > 0) {
+            parkNanos(remainingNanos);
+            if (fiber.isInterrupted(true)) {
+                throw new InterruptedException();
+            }
+            remainingNanos = nanos - (System.nanoTime() - startNanos);
+        }
     }
 
     /**
@@ -1594,22 +1570,6 @@ public class Fiber<V> {
                 }
             });
         }
-    }
-
-    /**
-     * Returns true if the Thread API is emulated when running in a fiber
-     */
-    static boolean emulateCurrentThread() {
-        return EMULATE_CURRENT_THREAD;
-    }
-
-    /**
-     * Reads the value of the jdk.emulateCurrentThread property to determine
-     * if the Thread API is emulated when running in a fiber.
-     */
-    private static boolean emulateCurrentThreadValue() {
-        String value = GetPropertyAction.privilegedGetProperty("jdk.emulateCurrentThread");
-        return (value == null) || !value.equalsIgnoreCase("false");
     }
 
     /**

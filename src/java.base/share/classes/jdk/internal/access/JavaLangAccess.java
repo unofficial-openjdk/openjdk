@@ -350,6 +350,21 @@ public interface JavaLangAccess {
     Object currentStrand();
 
     /**
+     * Interrupt the given strand.
+     */
+    void interrupt(Object strand);
+
+    /**
+     * Returns the current strand's interrupt status
+     */
+    boolean isInterrupted();
+
+    /**
+     * Clear the current strand's interrupt status
+     */
+    boolean clearInterrupt();
+
+    /**
      * Disables the current fiber for scheduling purposes.
      */
     void parkFiber();
