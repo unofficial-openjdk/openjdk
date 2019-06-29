@@ -1813,6 +1813,7 @@ class JavaThread: public Thread {
   static ByteSize should_post_on_exceptions_flag_offset() {
     return byte_offset_of(JavaThread, _should_post_on_exceptions_flag);
   }
+  static ByteSize doing_unsafe_access_offset() { return byte_offset_of(JavaThread, _doing_unsafe_access); }
 
   DEBUG_ONLY(static ByteSize continuation_offset() { return byte_offset_of(JavaThread, _continuation); })
   static ByteSize cont_fastpath_offset()      { return byte_offset_of(JavaThread, _cont_fastpath); }
@@ -1950,7 +1951,7 @@ class JavaThread: public Thread {
   void deoptimize();
   void make_zombies();
 
-  void deoptimize_marked_methods(bool in_handshake);
+  void deoptimized_wrt_marked_nmethods();
 
  public:
   // Returns the running thread as a JavaThread

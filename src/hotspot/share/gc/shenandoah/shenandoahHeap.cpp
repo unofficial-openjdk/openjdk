@@ -348,7 +348,6 @@ jint ShenandoahHeap::initialize() {
   // The call below uses stuff (the SATB* things) that are in G1, but probably
   // belong into a shared location.
   ShenandoahBarrierSet::satb_mark_queue_set().initialize(this,
-                                                         SATB_Q_CBL_mon,
                                                          20 /* G1SATBProcessCompletedThreshold */,
                                                          60 /* G1SATBBufferEnqueueingThresholdPercent */);
 
@@ -1279,14 +1278,14 @@ void ShenandoahHeap::object_iterate(ObjectClosure* cl) {
 
   Stack<oop,mtGC> oop_stack;
 
-  // First, we process all GC roots. This populates the work stack with initial objects.
-  ShenandoahAllRootScanner rp(1, ShenandoahPhaseTimings::_num_phases);
+  // First, we process GC roots according to current GC cycle. This populates the work stack with initial objects.
+  ShenandoahHeapIterationRootScanner rp;
   ObjectIterateScanRootClosure oops(&_aux_bit_map, &oop_stack);
 
   if (unload_classes()) {
-    rp.strong_roots_do_unchecked(&oops);
+    rp.strong_roots_do(&oops);
   } else {
-    rp.roots_do_unchecked(&oops);
+    rp.roots_do(&oops);
   }
 
   // Work through the oop stack to traverse heap.
@@ -1513,7 +1512,9 @@ void ShenandoahHeap::op_final_mark() {
       // From here on, we need to update references.
       set_has_forwarded_objects(true);
 
-      evacuate_and_update_roots();
+      if (!is_degenerated_gc_in_progress()) {
+        evacuate_and_update_roots();
+      }
 
       if (ShenandoahPacing) {
         pacer()->setup_for_evac();
@@ -1521,7 +1522,9 @@ void ShenandoahHeap::op_final_mark() {
 
       if (ShenandoahVerify) {
         if (ShenandoahConcurrentRoots::should_do_concurrent_roots()) {
-          verifier()->verify_roots_no_forwarded_except(ShenandoahRootVerifier::JNIHandleRoots);
+          ShenandoahRootVerifier::RootTypes types = ShenandoahRootVerifier::combine(ShenandoahRootVerifier::JNIHandleRoots, ShenandoahRootVerifier::WeakRoots);
+          types = ShenandoahRootVerifier::combine(types, ShenandoahRootVerifier::CLDGRoots);
+          verifier()->verify_roots_no_forwarded_except(types);
         } else {
           verifier()->verify_roots_no_forwarded();
         }
@@ -1587,7 +1590,9 @@ void ShenandoahHeap::op_cleanup() {
 
 class ShenandoahConcurrentRootsEvacUpdateTask : public AbstractGangTask {
 private:
-  ShenandoahJNIHandleRoots<true /*concurrent*/>         _jni_roots;
+  ShenandoahJNIHandleRoots<true /*concurrent*/> _jni_roots;
+  ShenandoahWeakRoots<true /*concurrent*/>      _weak_roots;
+  ShenandoahClassLoaderDataRoots<true /*concurrent*/, false /*single threaded*/> _cld_roots;
 
 public:
   ShenandoahConcurrentRootsEvacUpdateTask() :
@@ -1597,7 +1602,11 @@ public:
   void work(uint worker_id) {
     ShenandoahEvacOOMScope oom;
     ShenandoahEvacuateUpdateRootsClosure cl;
+    CLDToOopClosure clds(&cl, ClassLoaderData::_claim_strong);
+
     _jni_roots.oops_do<ShenandoahEvacuateUpdateRootsClosure>(&cl);
+    _cld_roots.cld_do(&clds);
+    _weak_roots.oops_do<ShenandoahEvacuateUpdateRootsClosure>(&cl);
   }
 };
 

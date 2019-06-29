@@ -119,7 +119,7 @@ class nmethod : public CompiledMethod {
   // used by jvmti to track if an unload event has been posted for this nmethod.
   bool _unload_reported;
 
-  // Protected by CompiledMethod_lock
+  // Protected by Patching_lock
   volatile signed char _state;               // {not_installed, in_use, not_entrant, zombie, unloaded}
 
 #ifdef ASSERT
@@ -387,11 +387,12 @@ class nmethod : public CompiledMethod {
 
   int   comp_level() const                        { return _comp_level; }
 
-  void unlink_from_method();
+  void unlink_from_method(bool acquire_lock);
 
   // Support for oops in scopes and relocs:
   // Note: index 0 is reserved for null.
   oop   oop_at(int index) const;
+  oop   oop_at_phantom(int index) const; // phantom reference
   oop*  oop_addr_at(int index) const {  // for GC
     // relocation indexes are biased by 1 (because 0 is reserved)
     assert(index > 0 && index <= oops_count(), "must be a valid non-zero index");
