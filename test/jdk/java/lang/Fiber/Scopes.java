@@ -334,8 +334,8 @@ public class Scopes {
         }
         joinUninterruptibly(fiber);
         Thread.interrupted();
-        long seconds = Duration.between(start, Instant.now()).toSeconds();
-        assertTrue(seconds >= 2 && seconds <= 5);
+        long millis = Duration.between(start, Instant.now()).toMillis();
+        assertTrue(millis >= 1900 && millis <= 5000, "Duration " + millis + "ms");
     }
 
     // fiber owner, outer scope has deadline, inner scope has later deadline
@@ -361,8 +361,8 @@ public class Scopes {
         }
         joinUninterruptibly(fiber);
         Thread.interrupted();
-        long seconds = Duration.between(start, Instant.now()).toSeconds();
-        assertTrue(seconds >= 2 && seconds <= 5);
+        long millis = Duration.between(start, Instant.now()).toMillis();
+        assertTrue(millis >= 1900 && millis <= 5000, "Duration " + millis + "ms");
     }
 
     // fiber owner, outer scope has deadline, deeply nested inner scope has later deadline
@@ -403,9 +403,8 @@ public class Scopes {
         }
         joinUninterruptibly(fiber);
         Thread.interrupted();
-
-        long seconds = Duration.between(start, Instant.now()).toSeconds();
-        assertTrue(seconds >= 3);
+        long millis = Duration.between(start, Instant.now()).toMillis();
+        assertTrue(millis >= 2900, "Duration " + millis + "ms");
     }
 
     // fiber owner, outer scope has deadline, schedule fiber in inner ignore-cancel scope
