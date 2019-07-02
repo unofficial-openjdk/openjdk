@@ -163,7 +163,7 @@ public class Basic {
 
     // 2 x park
     public void testPark7() throws Exception {
-        var fiber =FiberScope. background().schedule(() -> {
+        var fiber = FiberScope.background().schedule(() -> {
             LockSupport.park();
             LockSupport.park();
         });
@@ -1458,24 +1458,18 @@ public class Basic {
 
     // fiber waits, notified by thread
     public void testWaitNotify1() throws Exception {
-        var ref = new AtomicReference<Thread>();
         var lock = new Object();
+        var ready = new Semaphore(0);
         var fiber = FiberScope.background().schedule(() -> {
-            ref.set(Thread.currentThread());
             synchronized (lock) {
+                ready.release();
                 try {
                     lock.wait();
                 } catch (InterruptedException e) { }
             }
         });
-
-        // spin until the fiber waiting
-        Thread t = waitForValue(ref);
-        while (t.getState() != Thread.State.WAITING) {
-            Thread.sleep(10);
-        }
-
         // thread invokes notify
+        ready.acquire();
         synchronized (lock) {
             lock.notifyAll();
         }
@@ -1485,31 +1479,38 @@ public class Basic {
     // thread waits, notified by fiber
     public void testWaitNotify2() throws Exception {
         var lock = new Object();
+        var ready = new Semaphore(0);
         FiberScope.background().schedule(() -> {
+            ready.acquire();
             synchronized (lock) {
                 lock.notifyAll();
             }
+            return null;
         });
         synchronized (lock) {
+            ready.release();
             lock.wait();
         }
     }
 
     // fiber waits, notified by other fiber
-    //@Test(enabled=false)
     public void testWaitNotify3() throws Exception {
         var lock = new Object();
+        var ready = new Semaphore(0);
         var fiber1 = FiberScope.background().schedule(() -> {
             synchronized (lock) {
+                ready.release();
                 try {
                     lock.wait();
                 } catch (InterruptedException e) { }
             }
         });
         var fiber2 = FiberScope.background().schedule(() -> {
+            ready.acquire();
             synchronized (lock) {
                 lock.notifyAll();
             }
+            return null;
         });
         fiber1.join();
         fiber2.join();
