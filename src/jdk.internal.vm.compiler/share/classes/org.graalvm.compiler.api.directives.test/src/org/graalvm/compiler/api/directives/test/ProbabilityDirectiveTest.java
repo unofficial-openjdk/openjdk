@@ -79,7 +79,7 @@ public class ProbabilityDirectiveTest extends GraalCompilerTest {
     }
 
     @Override
-    protected boolean checkLowTierGraph(StructuredGraph graph) {
+    protected void checkLowTierGraph(StructuredGraph graph) {
         NodeIterable<IfNode> ifNodes = graph.getNodes(IfNode.TYPE);
         Assert.assertEquals("IfNode count", 1, ifNodes.count());
 
@@ -92,8 +92,6 @@ public class ProbabilityDirectiveTest extends GraalCompilerTest {
             oneSuccessor = ifNode.falseSuccessor();
         }
         Assert.assertEquals("branch probability of " + ifNode, 0.125, ifNode.probability(oneSuccessor), 0);
-
-        return true;
     }
 
     private static int returnValue(AbstractBeginNode b) {

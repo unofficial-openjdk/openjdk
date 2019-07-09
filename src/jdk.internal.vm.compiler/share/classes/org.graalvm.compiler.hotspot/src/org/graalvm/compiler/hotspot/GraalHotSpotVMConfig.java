@@ -179,8 +179,7 @@ public class GraalHotSpotVMConfig extends GraalHotSpotVMConfigBase {
         return universeCollectedHeap + collectedHeapTotalCollectionsOffset;
     }
 
-    // Disable support for ReduceInitialCardMarks due to JDK-8225064.
-    public final boolean useDeferredInitBarriers = false;
+    public final boolean useDeferredInitBarriers = getFlag("ReduceInitialCardMarks", Boolean.class);
 
     // Compressed Oops related values.
     public final boolean useCompressedOops = getFlag("UseCompressedOops", Boolean.class);
