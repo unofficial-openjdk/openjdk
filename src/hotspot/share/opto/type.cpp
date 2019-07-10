@@ -720,8 +720,11 @@ const Type *Type::hashcons(void) {
   // Since we just discovered a new Type, compute its dual right now.
   assert( !_dual, "" );         // No dual yet
   _dual = xdual();              // Compute the dual
-  if( cmp(this,_dual)==0 ) {    // Handle self-symmetric
-    _dual = this;
+  if (cmp(this, _dual) == 0) {  // Handle self-symmetric
+    if (_dual != this) {
+      delete _dual;
+      _dual = this;
+    }
     return this;
   }
   assert( !_dual->_dual, "" );  // No reverse dual yet
@@ -2099,7 +2102,7 @@ const Type *TypeAry::xmeet( const Type *t ) const {
     const TypeAry *a = t->is_ary();
     return TypeAry::make(_elem->meet_speculative(a->_elem),
                          _size->xmeet(a->_size)->is_int(),
-                         _stable & a->_stable);
+                         _stable && a->_stable);
   }
   case Top:
     break;
@@ -3869,7 +3872,7 @@ const Type *TypeInstPtr::xmeet_helper(const Type *t) const {
     bool subtype_exact = false;
     if( tinst_klass->equals(this_klass) ) {
       subtype = this_klass;
-      subtype_exact = below_centerline(ptr) ? (this_xk & tinst_xk) : (this_xk | tinst_xk);
+      subtype_exact = below_centerline(ptr) ? (this_xk && tinst_xk) : (this_xk || tinst_xk);
     } else if( !tinst_xk && this_klass->is_subtype_of( tinst_klass ) ) {
       subtype = this_klass;     // Pick subtyping class
       subtype_exact = this_xk;
@@ -4351,7 +4354,7 @@ const Type *TypeAryPtr::xmeet_helper(const Type *t) const {
       if (below_centerline(this->_ptr)) {
         xk = this->_klass_is_exact;
       } else {
-        xk = (tap->_klass_is_exact | this->_klass_is_exact);
+        xk = (tap->_klass_is_exact || this->_klass_is_exact);
       }
       return make(ptr, const_oop(), tary, lazy_klass, xk, off, instance_id, speculative, depth);
     case Constant: {
