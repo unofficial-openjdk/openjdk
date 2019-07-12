@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2016, 2018 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -270,8 +270,9 @@ JVM_handle_linux_signal(int sig,
 
 #ifdef CAN_SHOW_REGISTERS_ON_ASSERT
   if ((sig == SIGSEGV || sig == SIGBUS) && info != NULL && info->si_addr == g_assert_poison) {
-    handle_assert_poison_fault(ucVoid, info->si_addr);
-    return 1;
+    if (handle_assert_poison_fault(ucVoid, info->si_addr)) {
+      return 1;
+    }
   }
 #endif
 
@@ -467,7 +468,8 @@ JVM_handle_linux_signal(int sig,
         // when the vector facility is installed, but operating system support is missing.
         VM_Version::reset_has_VectorFacility();
         stub = pc; // Continue with next instruction.
-      } else if (thread->thread_state() == _thread_in_vm &&
+      } else if ((thread->thread_state() == _thread_in_vm ||
+                  thread->thread_state() == _thread_in_native) &&
                  sig == SIGBUS && thread->doing_unsafe_access()) {
         // We don't really need a stub here! Just set the pending exeption and
         // continue at the next instruction after the faulting read. Returning

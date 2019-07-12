@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,7 +59,6 @@ public final class RequestPublishers {
     private RequestPublishers() { }
 
     public static class ByteArrayPublisher implements BodyPublisher {
-        private volatile Flow.Publisher<ByteBuffer> delegate;
         private final int length;
         private final byte[] content;
         private final int offset;
@@ -99,7 +98,7 @@ public final class RequestPublishers {
         @Override
         public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
             List<ByteBuffer> copy = copy(content, offset, length);
-            this.delegate = new PullPublisher<>(copy);
+            var delegate = new PullPublisher<>(copy);
             delegate.subscribe(subscriber);
         }
 
@@ -111,7 +110,6 @@ public final class RequestPublishers {
 
     // This implementation has lots of room for improvement.
     public static class IterablePublisher implements BodyPublisher {
-        private volatile Flow.Publisher<ByteBuffer> delegate;
         private final Iterable<byte[]> content;
         private volatile long contentLength;
 
@@ -174,7 +172,7 @@ public final class RequestPublishers {
         @Override
         public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
             Iterable<ByteBuffer> iterable = this::iterator;
-            this.delegate = new PullPublisher<>(iterable);
+            var delegate = new PullPublisher<>(iterable);
             delegate.subscribe(subscriber);
         }
 
@@ -271,12 +269,13 @@ public final class RequestPublishers {
 
         @Override
         public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
-            InputStream is;
+            InputStream is = null;
+            Throwable t = null;
             if (System.getSecurityManager() == null) {
                 try {
                     is = new FileInputStream(file);
                 } catch (IOException ioe) {
-                    throw new UncheckedIOException(ioe);
+                    t = ioe;
                 }
             } else {
                 try {
@@ -284,11 +283,16 @@ public final class RequestPublishers {
                             () -> new FileInputStream(file);
                     is = AccessController.doPrivileged(pa, null, filePermissions);
                 } catch (PrivilegedActionException pae) {
-                    throw new UncheckedIOException((IOException) pae.getCause());
+                    t = pae.getCause();
                 }
             }
-            PullPublisher<ByteBuffer> publisher =
-                    new PullPublisher<>(() -> new StreamIterator(is));
+            final InputStream fis = is;
+            PullPublisher<ByteBuffer> publisher;
+            if (t == null) {
+                publisher = new PullPublisher<>(() -> new StreamIterator(fis));
+            } else {
+                publisher = new PullPublisher<>(null, t);
+            }
             publisher.subscribe(subscriber);
         }
 

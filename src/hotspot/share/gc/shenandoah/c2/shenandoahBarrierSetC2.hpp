@@ -103,6 +103,7 @@ public:
   static const TypeFunc* write_ref_field_pre_entry_Type();
   static const TypeFunc* shenandoah_clone_barrier_Type();
   static const TypeFunc* shenandoah_load_reference_barrier_Type();
+  static const TypeFunc* oop_load_from_native_barrier_Type();
   virtual bool has_load_barriers() const { return true; }
 
   // This is the entry-point for the backend to perform accesses through the Access API.
@@ -144,7 +145,6 @@ public:
   virtual bool escape_add_to_con_graph(ConnectionGraph* conn_graph, PhaseGVN* gvn, Unique_Node_List* delayed_worklist, Node* n, uint opcode) const;
   virtual bool escape_add_final_edges(ConnectionGraph* conn_graph, PhaseGVN* gvn, Node* n, uint opcode) const;
   virtual bool escape_has_out_with_unsafe_object(Node* n) const;
-  virtual bool escape_is_barrier_node(Node* n) const;
 
   virtual bool matcher_find_shared_post_visit(Matcher* matcher, Node* n, uint opcode) const;
   virtual bool matcher_is_store_load_barrier(Node* x, uint xop) const;
