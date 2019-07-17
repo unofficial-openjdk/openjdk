@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2014, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -83,19 +83,13 @@
 #define REG_SP REG_RSP
 #define REG_PC REG_RIP
 #define REG_FP REG_RBP
-#define SPELL_REG_SP "rsp"
-#define SPELL_REG_FP "rbp"
 #else
 #define REG_FP 29
 #define REG_LR 30
-
-#define SPELL_REG_SP "sp"
-#define SPELL_REG_FP "x29"
 #endif
 
-address os::current_stack_pointer() {
-  register void *esp __asm__ (SPELL_REG_SP);
-  return (address) esp;
+NOINLINE address os::current_stack_pointer() {
+  return (address)__builtin_frame_address(0);
 }
 
 char* os::non_memory_address_word() {
@@ -230,23 +224,8 @@ frame os::get_sender_for_C_frame(frame* fr) {
 #endif
 }
 
-intptr_t* _get_previous_fp() {
-  register intptr_t **fp __asm__ (SPELL_REG_FP);
-
-  // fp is for this frame (_get_previous_fp). We want the fp for the
-  // caller of os::current_frame*(), so go up two frames. However, for
-  // optimized builds, _get_previous_fp() will be inlined, so only go
-  // up 1 frame in that case.
-  #ifdef _NMT_NOINLINE_
-    return **(intptr_t***)fp;
-  #else
-    return *fp;
-  #endif
-}
-
-
-frame os::current_frame() {
-  intptr_t* fp = _get_previous_fp();
+NOINLINE frame os::current_frame() {
+  intptr_t *fp = *(intptr_t **)__builtin_frame_address(0);
   frame myframe((intptr_t*)os::current_stack_pointer(),
                 (intptr_t*)fp,
                 CAST_FROM_FN_PTR(address, os::current_frame));
@@ -259,12 +238,6 @@ frame os::current_frame() {
 }
 
 // Utility functions
-
-// From IA32 System Programming Guide
-enum {
-  trap_page_fault = 0xE
-};
-
 #ifdef BUILTIN_SIM
 extern "C" void Fetch32PFI () ;
 extern "C" void Fetch32Resume () ;
@@ -306,8 +279,9 @@ JVM_handle_linux_signal(int sig,
 
 #ifdef CAN_SHOW_REGISTERS_ON_ASSERT
   if ((sig == SIGSEGV || sig == SIGBUS) && info != NULL && info->si_addr == g_assert_poison) {
-    handle_assert_poison_fault(ucVoid, info->si_addr);
-    return 1;
+    if (handle_assert_poison_fault(ucVoid, info->si_addr)) {
+      return 1;
+    }
   }
 #endif
 
@@ -446,8 +420,12 @@ JVM_handle_linux_signal(int sig,
         // Do not crash the VM in such a case.
         CodeBlob* cb = CodeCache::find_blob_unsafe(pc);
         CompiledMethod* nm = (cb != NULL) ? cb->as_compiled_method_or_null() : NULL;
-        if (nm != NULL && nm->has_unsafe_access()) {
+        bool is_unsafe_arraycopy = (thread->doing_unsafe_access() && UnsafeCopyMemory::contains_pc(pc));
+        if ((nm != NULL && nm->has_unsafe_access()) || is_unsafe_arraycopy) {
           address next_pc = pc + NativeCall::instruction_size;
+          if (is_unsafe_arraycopy) {
+            next_pc = UnsafeCopyMemory::page_error_continue_pc(pc);
+          }
           stub = SharedRuntime::handle_unsafe_access(thread, next_pc);
         }
       }
@@ -466,10 +444,14 @@ JVM_handle_linux_signal(int sig,
           // Determination of interpreter/vtable stub/compiled code null exception
           stub = SharedRuntime::continuation_for_implicit_exception(thread, pc, SharedRuntime::IMPLICIT_NULL);
       }
-    } else if (thread->thread_state() == _thread_in_vm &&
+    } else if ((thread->thread_state() == _thread_in_vm ||
+                 thread->thread_state() == _thread_in_native) &&
                sig == SIGBUS && /* info->si_code == BUS_OBJERR && */
                thread->doing_unsafe_access()) {
       address next_pc = pc + NativeCall::instruction_size;
+      if (UnsafeCopyMemory::contains_pc(pc)) {
+        next_pc = UnsafeCopyMemory::page_error_continue_pc(pc);
+      }
       stub = SharedRuntime::handle_unsafe_access(thread, next_pc);
     }
 
@@ -667,42 +649,42 @@ extern "C" {
     return 0;
   }
 
-  void _Copy_conjoint_jshorts_atomic(jshort* from, jshort* to, size_t count) {
+  void _Copy_conjoint_jshorts_atomic(const jshort* from, jshort* to, size_t count) {
     if (from > to) {
-      jshort *end = from + count;
+      const jshort *end = from + count;
       while (from < end)
         *(to++) = *(from++);
     }
     else if (from < to) {
-      jshort *end = from;
+      const jshort *end = from;
       from += count - 1;
       to   += count - 1;
       while (from >= end)
         *(to--) = *(from--);
     }
   }
-  void _Copy_conjoint_jints_atomic(jint* from, jint* to, size_t count) {
+  void _Copy_conjoint_jints_atomic(const jint* from, jint* to, size_t count) {
     if (from > to) {
-      jint *end = from + count;
+      const jint *end = from + count;
       while (from < end)
         *(to++) = *(from++);
     }
     else if (from < to) {
-      jint *end = from;
+      const jint *end = from;
       from += count - 1;
       to   += count - 1;
       while (from >= end)
         *(to--) = *(from--);
     }
   }
-  void _Copy_conjoint_jlongs_atomic(jlong* from, jlong* to, size_t count) {
+  void _Copy_conjoint_jlongs_atomic(const jlong* from, jlong* to, size_t count) {
     if (from > to) {
-      jlong *end = from + count;
+      const jlong *end = from + count;
       while (from < end)
         os::atomic_copy64(from++, to++);
     }
     else if (from < to) {
-      jlong *end = from;
+      const jlong *end = from;
       from += count - 1;
       to   += count - 1;
       while (from >= end)
@@ -710,22 +692,22 @@ extern "C" {
     }
   }
 
-  void _Copy_arrayof_conjoint_bytes(HeapWord* from,
+  void _Copy_arrayof_conjoint_bytes(const HeapWord* from,
                                     HeapWord* to,
                                     size_t    count) {
     memmove(to, from, count);
   }
-  void _Copy_arrayof_conjoint_jshorts(HeapWord* from,
+  void _Copy_arrayof_conjoint_jshorts(const HeapWord* from,
                                       HeapWord* to,
                                       size_t    count) {
     memmove(to, from, count * 2);
   }
-  void _Copy_arrayof_conjoint_jints(HeapWord* from,
+  void _Copy_arrayof_conjoint_jints(const HeapWord* from,
                                     HeapWord* to,
                                     size_t    count) {
     memmove(to, from, count * 4);
   }
-  void _Copy_arrayof_conjoint_jlongs(HeapWord* from,
+  void _Copy_arrayof_conjoint_jlongs(const HeapWord* from,
                                      HeapWord* to,
                                      size_t    count) {
     memmove(to, from, count * 8);
