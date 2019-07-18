@@ -176,6 +176,8 @@ protected:
   void* _gc_data;
 
   virtual void flush() = 0;
+
+  jweak _shadow;
 protected:
   CompiledMethod(Method* method, const char* name, CompilerType type, const CodeBlobLayout& layout, int frame_complete_offset, int frame_size, ImmutableOopMapSet* oop_maps, bool caller_must_gc_arguments, bool compiled);
   CompiledMethod(Method* method, const char* name, CompilerType type, int size, int header_size, CodeBuffer* cb, int frame_complete_offset, int frame_size, OopMapSet* oop_maps, bool caller_must_gc_arguments, bool compiled);
@@ -417,13 +419,13 @@ public:
   bool unload_nmethod_caches(bool class_unloading_occurred);
   virtual void do_unloading(bool unloading_occurred) = 0;
 
-  void inc_on_continuation_stack();
-  void dec_on_continuation_stack();
-  bool is_on_continuation_stack() const { return _on_continuation_stack > 0; }
+  bool is_on_continuation_stack();
 
+  jweak get_shadow();
+  jweak set_shadow(jweak shadow);
+  bool clear_shadow(jweak old);
 
 private:
-  volatile int _on_continuation_stack; // Counter that tells on how many unmounted continuation stacks this method are
   PcDesc* find_pc_desc(address pc, bool approximate) {
     return _pc_desc_container.find_pc_desc(pc, approximate, PcDescSearch(code_begin(), scopes_pcs_begin(), scopes_pcs_end()));
   }

@@ -967,6 +967,7 @@ void ciEnv::register_method(ciMethod* target,
                             bool has_unsafe_access,
                             bool has_wide_vectors,
                             bool has_monitors,
+                            int immediate_oops_patched,
                             RTMState  rtm_state) {
   VM_ENTRY_MARK;
   nmethod* nm = NULL;
@@ -1056,6 +1057,7 @@ void ciEnv::register_method(ciMethod* target,
       nm->set_has_unsafe_access(has_unsafe_access);
       nm->set_has_wide_vectors(has_wide_vectors);
       nm->set_has_monitors(has_monitors);
+      nm->set_immediate_oops_patched(immediate_oops_patched);
       assert (!method->is_synchronized() || nm->has_monitors(), "");
 #if INCLUDE_RTM_OPT
       nm->set_rtm_state(rtm_state);

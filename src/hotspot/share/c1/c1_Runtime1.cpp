@@ -56,6 +56,7 @@
 #include "runtime/atomic.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/compilationPolicy.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/fieldDescriptor.inline.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -1276,6 +1277,7 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* thread, Runtime1::StubID stub_i
 
     // Since we've patched some oops in the nmethod,
     // (re)register it with the heap.
+    Continuation::nmethod_patched(nm);
     Universe::heap()->register_nmethod(nm);
   }
 JRT_END

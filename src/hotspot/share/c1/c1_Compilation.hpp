@@ -91,6 +91,7 @@ class Compilation: public StackObj {
   CodeBuffer         _code;
   bool               _has_access_indexed;
   int                _interpreter_frame_size; // Stack space needed in case of a deoptimization
+  int                _immediate_oops_patched;
 
   // compilation helpers
   void initialize();

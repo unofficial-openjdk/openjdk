@@ -23,7 +23,7 @@
  */
 
 #include "precompiled.hpp"
-#include "code/compiledMethod.hpp"
+#include "code/compiledMethod.inline.hpp"
 #include "code/nmethod.hpp"
 #include "gc/shared/gcBehaviours.hpp"
 

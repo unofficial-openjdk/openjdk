@@ -950,6 +950,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                            has_unsafe_access(),
                            SharedRuntime::is_wide_vector(max_vector_size()),
                            has_monitors(),
+                           0,
                            rtm_state()
                            );
 

@@ -39,6 +39,7 @@
 #include "oops/method.inline.hpp"
 #include "prims/methodHandles.hpp"
 #include "runtime/deoptimization.hpp"
+#include "runtime/jniHandles.inline.hpp"
 #include "runtime/handles.inline.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -49,7 +50,8 @@ CompiledMethod::CompiledMethod(Method* method, const char* name, CompilerType ty
   : CodeBlob(name, type, layout, frame_complete_offset, frame_size, oop_maps, caller_must_gc_arguments, compiled),
     _mark_for_deoptimization_status(not_marked),
     _method(method),
-    _gc_data(NULL)
+    _gc_data(NULL),
+    _shadow(NULL)
 {
   init_defaults();
 }
@@ -61,7 +63,8 @@ CompiledMethod::CompiledMethod(Method* method, const char* name, CompilerType ty
              frame_complete_offset, frame_size, oop_maps, caller_must_gc_arguments, compiled),
     _mark_for_deoptimization_status(not_marked),
     _method(method),
-    _gc_data(NULL)
+    _gc_data(NULL),
+    _shadow(NULL)
 {
   init_defaults();
 }
@@ -72,7 +75,6 @@ void CompiledMethod::init_defaults() {
   _lazy_critical_native       = 0;
   _has_wide_vectors           = 0;
   _has_monitors               = 0;
-  _on_continuation_stack      = 0;
 }
 
 bool CompiledMethod::is_method_handle_return(address return_pc) {
@@ -714,3 +716,8 @@ bool CompiledMethod::has_evol_metadata() {
   }
   return check_evol.has_evol_dependency();
 }
+
+bool CompiledMethod::is_on_continuation_stack() {
+  return JNIHandles::resolve(_shadow) != NULL;
+}
+
