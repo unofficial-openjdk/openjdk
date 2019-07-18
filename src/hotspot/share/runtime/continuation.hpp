@@ -112,6 +112,8 @@ public:
   static void describe(FrameValues &values);
 #endif
 
+  static void nmethod_patched(nmethod* nm);
+
 private:
   // declared here as it's used in friend declarations
   static address oop_address(objArrayOop ref_stack, int ref_sp, int index);

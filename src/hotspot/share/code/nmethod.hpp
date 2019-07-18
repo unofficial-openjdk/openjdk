@@ -112,6 +112,12 @@ class nmethod : public CompiledMethod {
 
   int _compile_id;                           // which compilation made this nmethod
   int _comp_level;                           // compilation level
+  int _nr_oops;
+ public:
+  int nr_oops() const { return _nr_oops; }
+  void verify_nr_oops();
+  int count_oops();
+ private:
 
   // protected by CodeCache_lock
   bool _has_flushed_dependencies;            // Used for maintenance of dependencies (CodeCache_lock)
@@ -432,6 +438,8 @@ public:
   nmethod* osr_link() const                       { return _osr_link; }
   void     set_osr_link(nmethod *n)               { _osr_link = n; }
 
+  void set_immediate_oops_patched(int nr)         { _nr_oops += nr; }
+
   // Verify calls to dead methods have been cleaned.
   void verify_clean_inline_caches();
 
@@ -472,8 +480,8 @@ public:
 #endif
 
  public:
-  void oops_do(OopClosure* f) { oops_do(f, false); }
-  void oops_do(OopClosure* f, bool allow_zombie);
+  void oops_do(OopClosure* f) { oops_do(f, false, false); }
+  void oops_do(OopClosure* f, bool allow_zombie, bool allow_null = false);
 
   bool test_set_oops_do_mark();
   static void oops_do_marking_prologue();

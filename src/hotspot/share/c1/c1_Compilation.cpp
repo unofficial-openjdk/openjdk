@@ -363,6 +363,7 @@ int Compilation::emit_code_body() {
   }
 #endif /* PRODUCT */
 
+  _immediate_oops_patched = lir_asm.nr_immediate_oops_patched();
   return frame_map()->framesize();
 }
 
@@ -426,7 +427,8 @@ void Compilation::install_code(int frame_size) {
     compiler(),
     has_unsafe_access(),
     SharedRuntime::is_wide_vector(max_vector_size()),
-    has_monitors()
+    has_monitors(),
+    _immediate_oops_patched
   );
 }
 
@@ -570,6 +572,7 @@ Compilation::Compilation(AbstractCompiler* compiler, ciEnv* env, ciMethod* metho
 , _code(buffer_blob)
 , _has_access_indexed(false)
 , _interpreter_frame_size(0)
+, _immediate_oops_patched(0)
 , _current_instruction(NULL)
 #ifndef PRODUCT
 , _last_instruction_printed(NULL)

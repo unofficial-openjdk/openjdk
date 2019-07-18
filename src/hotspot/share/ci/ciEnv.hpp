@@ -380,6 +380,7 @@ public:
                        bool                      has_unsafe_access,
                        bool                      has_wide_vectors,
                        bool                      has_monitors,
+                       int                       immediate_oops_patched,
                        RTMState                  rtm_state = NoRTM);
 
 

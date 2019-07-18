@@ -576,6 +576,18 @@ nmethod* nmethod::new_nmethod(const methodHandle& method,
   return nm;
 }
 
+  class CountOops : public OopClosure {
+  private:
+    int _nr_oops;
+  public:
+    CountOops() : _nr_oops(0) {}
+    int nr_oops() const { return _nr_oops; }
+
+
+    virtual void do_oop(oop* o) { _nr_oops++; }
+    virtual void do_oop(narrowOop* o) { _nr_oops++; }
+  };
+
 // For native wrappers
 nmethod::nmethod(
   Method* method,
@@ -833,7 +845,19 @@ nmethod::nmethod(
     assert(compiler->is_c2() || compiler->is_jvmci() ||
            _method->is_static() == (entry_point() == _verified_entry_point),
            " entry points must be same for static methods and vice versa");
+
+    {
+      CountOops count;
+      this->oops_do(&count, false, true);
+      _nr_oops = count.nr_oops();
+    }
   }
+}
+
+int nmethod::count_oops() {
+  CountOops count;
+  this->oops_do(&count, false, true);
+  return count.nr_oops();
 }
 
 // Print a short set of xml attributes to identify this nmethod.  The
@@ -1773,7 +1797,7 @@ void nmethod::do_unloading(bool unloading_occurred) {
   }
 }
 
-void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
+void nmethod::oops_do(OopClosure* f, bool allow_zombie, bool allow_null) {
   // make sure the oops ready to receive visitors
   assert(allow_zombie || !is_zombie(), "should not call follow on zombie nmethod");
   assert(!is_unloaded(), "should not call follow on unloaded nmethod");
@@ -1790,7 +1814,7 @@ void nmethod::oops_do(OopClosure* f, bool allow_zombie) {
         assert(1 == (r->oop_is_immediate()) +
                (r->oop_addr() >= oops_begin() && r->oop_addr() < oops_end()),
                "oop must be found in exactly one place");
-        if (r->oop_is_immediate() && r->oop_value() != NULL) {
+        if (r->oop_is_immediate() && (r->oop_value() != NULL || allow_null)) {
           f->do_oop(r->oop_addr());
         }
       }
