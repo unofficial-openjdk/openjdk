@@ -261,7 +261,7 @@ public:
 
 DEBUG_ONLY(const char* NonInterpretedUnknown::name = "NonInterpretedUnknown";)
 
-class FpOopInfo;
+struct FpOopInfo;
 typedef int (*FreezeFnT)(address, address, address, address, int, FpOopInfo*);
 
 class Compiled : public NonInterpreted<Compiled>  {
