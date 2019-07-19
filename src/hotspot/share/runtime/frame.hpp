@@ -60,7 +60,7 @@ class frame {
     } _cont_sp;
   };
   address   _pc; // program counter (the next instruction after the call)
-  CodeBlob* _cb; // CodeBlob that "owns" pc
+  mutable CodeBlob* _cb; // CodeBlob that "owns" pc
   mutable const ImmutableOopMap* _oop_map; // oop map, for compiled/stubs frames only
   enum deopt_state {
     not_deoptimized,
@@ -105,8 +105,12 @@ class frame {
 
   int cont_sp()     const { return _cont_sp._sp; }
   int cont_ref_sp() const { return _cont_sp._ref_sp; }
+  int cont_unextended_sp() const;
 
   CodeBlob* cb() const           { return _cb; }
+  inline CodeBlob* get_cb() const;
+  // inline void set_cb(CodeBlob* cb);
+
   const ImmutableOopMap* oop_map() const {
     if (_oop_map == NULL) {
       _oop_map = get_oop_map();

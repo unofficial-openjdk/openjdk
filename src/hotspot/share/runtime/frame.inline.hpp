@@ -84,6 +84,24 @@ inline oop* frame::oopmapreg_to_location(VMReg reg, const RegisterMapT* reg_map)
   }
 }
 
+inline CodeBlob* frame::get_cb() const {
+  // if (_cb == NULL) _cb = CodeCache::find_blob(_pc);
+  if (_cb == NULL) {
+    int slot;
+    _cb = CodeCache::find_blob_and_oopmap(_pc, slot);
+    if (_oop_map == NULL && slot >= 0) {
+      _oop_map = _cb->oop_map_for_slot(slot, _pc);
+    }
+  }
+  return _cb;
+}
+
+// inline void frame::set_cb(CodeBlob* cb) {
+//   if (_cb == NULL) _cb = cb;
+//   assert (_cb == cb, "");
+//   assert (_cb->contains(_pc), "");
+// }
+
 inline bool StackFrameStream::is_done() {
   return (_is_done) ? true : (_is_done = _fr.is_first_frame(), false);
 }

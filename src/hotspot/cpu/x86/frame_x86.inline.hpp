@@ -131,7 +131,7 @@ inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address
   _fp = fp;
   _pc = pc;
   assert(pc != NULL, "no pc?");
-  _cb = CodeCache::find_blob(pc);
+  _cb = CodeCache::find_blob(pc); // TODO R find_blob_fast
   _oop_map = NULL;
   setup(pc);
 }
@@ -453,7 +453,12 @@ inline const ImmutableOopMap* frame::get_oop_map() const {
   if (_cb == NULL) return NULL;
   if (_cb->oop_maps() != NULL) {
     NativePostCallNop* nop = nativePostCallNop_at(_pc);
-    if (nop != NULL && nop->displacement() != 0) {
+    if (nop != NULL &&
+#ifdef CONT_DOUBLE_NOP
+      !nop->is_mode2() &&
+#endif
+      nop->displacement() != 0
+    ) {
       int slot = ((nop->displacement() >> 24) & 0xff);
       return _cb->oop_map_for_slot(slot, _pc);
     }

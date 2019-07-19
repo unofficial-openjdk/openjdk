@@ -659,6 +659,9 @@ CodeBlob* CodeCache::patch_nop(NativePostCallNop* nop, void* pc, int& slot) {
     slot = -1;
     log_debug(codecache)("failed to encode %d %d", oopmap_slot, (int) offset);
   }
+#ifdef CONT_DOUBLE_NOP
+  assert (!nop->is_mode2(), "");
+#endif
   return cb;
 }
 
