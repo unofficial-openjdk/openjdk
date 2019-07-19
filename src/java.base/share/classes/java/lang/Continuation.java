@@ -330,6 +330,7 @@ public class Continuation {
                     doContinue(); // intrinsic. Jumps into yield, as a return from doYield    
                 }
             } finally {
+                fence();
                 try {
                 if (TRACE) System.out.println("run (after) sp: " + sp + " refSP: " + refSP + " maxSize: " + maxSize);
 
@@ -677,12 +678,12 @@ public class Continuation {
     }
 
     void resizeStack(int newLength) {
-        if (DEBUG)
-            System.out.println("-- resizeStack0 length: " + stack.length + " sp: " + sp + " fp: " + fp + " newLength: " + newLength);
         int oldLength = stack.length;
         int offset = sp;
         int n = oldLength - offset;
         assert newLength >= n;
+        if (DEBUG)
+            System.out.println("-- resizeStack0 length: " + stack.length + " sp: " + sp + " newLength: " + newLength + " used: " + n);
         int[] newStack = new int[newLength];
         System.arraycopy(stack, offset, newStack, newLength - n, n);
         this.stack = newStack;
