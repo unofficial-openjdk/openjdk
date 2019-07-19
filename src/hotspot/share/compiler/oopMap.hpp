@@ -352,7 +352,7 @@ public:
   void print_on(outputStream* st) const;
   void print() const;
 
-  void generate_stub() const;
+  void generate_stub(const CodeBlob* cb) const;
   address freeze_stub() const { return _freeze_stub; }
   address thaw_stub() const { return _thaw_stub; }
 };

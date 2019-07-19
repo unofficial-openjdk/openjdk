@@ -30,6 +30,8 @@
 #include "runtime/os.hpp"
 #include "runtime/safepointMechanism.hpp"
 
+#include "runtime/continuation.hpp" // TODO LOOM remove after testing CONT_DOUBLE_NOP
+
 // We have interfaces for the following instructions:
 // - NativeInstruction
 // - - NativeCall
@@ -762,17 +764,54 @@ public:
     displacement_offset = 4
   };
 
-  bool check() const { return int_at(0) == 0x841f0f; }
+  bool check() const {
+  #ifdef CONT_DOUBLE_NOP
+    return check1() && int2_data() == 0;
+  #else
+    return int_at(0) == 0x841f0f; 
+  #endif
+  }
   int displacement() const { return (jint) int_at(displacement_offset); }
   void patch(jint diff);
+
+#ifdef CONT_DOUBLE_NOP
+  bool check1() const { return (int_at(0) & 0xffffff) == 0x841f0f && (int_at(8) & 0xffffff) == 0x841f0f; }
+  uint16_t short_data() const { return (uint16_t)((ubyte_at(3) << 8) | ubyte_at(11)); }
+  uint32_t int1_data()  const { return (uint32_t)int_at(4); }
+  uint32_t int2_data()  const { return (uint32_t)int_at(12); }
+  void patch(uint32_t int1, uint32_t int2);
+  void patch_int1(uint32_t int1);
+  void patch_int2(uint32_t int2);
+
+  // int mode() {
+  //   assert (int2_data() == 0 || int1_data() != 0, "");
+  //   return static_cast<bool>(int1_data()) + static_cast<bool>(int2_data());
+  // }
+
+  bool is_mode2() { return int2_data() != 0; } // mode2 is used for fast continuation freeze/thaw metadata
+#endif
 };
 
 inline NativePostCallNop* nativePostCallNop_at(address address) {
   NativePostCallNop* nop = (NativePostCallNop*) address;
+#ifdef CONT_DOUBLE_NOP
+  if (nop->check1()) {
+#else
   if (nop->check()) {
+#endif
     return nop;
   }
   return NULL;
+}
+
+inline NativePostCallNop* nativePostCallNop_unsafe_at(address address) {
+  NativePostCallNop* nop = (NativePostCallNop*) address;
+#ifdef CONT_DOUBLE_NOP
+  assert (nop->check1(), "");
+#else
+  assert (nop->check(), "");
+#endif
+  return nop;
 }
 
 #endif // CPU_X86_NATIVEINST_X86_HPP

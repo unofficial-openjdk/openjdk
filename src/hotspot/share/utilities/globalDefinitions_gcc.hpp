@@ -275,4 +275,10 @@ inline int wcslen(const jchar* x) { return wcslen((const wchar_t*)x); }
 //
 #define ATTRIBUTE_ALIGNED(x) __attribute__((aligned((__typeof__(x))x+0)))
 
+#define LIKELY(condition)   __builtin_expect(static_cast<bool>(condition), 1)
+#define UNLIKELY(condition) __builtin_expect(static_cast<bool>(condition), 0)
+
+#define __COLD __attribute__((cold))
+#define __HOT  __attribute__((hot))
+
 #endif // SHARE_UTILITIES_GLOBALDEFINITIONS_GCC_HPP

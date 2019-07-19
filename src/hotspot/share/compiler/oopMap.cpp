@@ -526,11 +526,11 @@ OopMapValue* ExplodedOopMap::copyOopMapValues(const ImmutableOopMap* oopMap, int
 }
 
 // NULL, fail, success (address)
-void ImmutableOopMap::generate_stub() const {
+void ImmutableOopMap::generate_stub(const CodeBlob* cb) const {
   /* The address of the ImmutableOopMap is put into the _freeze_stub and _thaw_stub 
    * if we can't generate the stub for some reason */
   if (_freeze_stub == NULL) {
-    OopMapStubGenerator cgen(*this);
+    OopMapStubGenerator cgen(cb, *this);
     if (Atomic::cmpxchg((address) this, &_freeze_stub, (address) NULL) == NULL) {
       if (!cgen.generate()) {
         Atomic::store((address) this, &_thaw_stub);

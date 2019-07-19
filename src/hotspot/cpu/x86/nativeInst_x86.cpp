@@ -699,3 +699,20 @@ void NativePostCallNop::patch(jint diff) {
   *((int32_t *)(code_pos)) = (int32_t) diff;
 }
 
+#ifdef CONT_DOUBLE_NOP
+void NativePostCallNop::patch(uint32_t int1, uint32_t int2) {
+  patch_int2(int2);
+  patch_int1(int1); // order matters
+
+  // *((uint8_t *)addr_at(3))  = (uint8_t) short1 >> 8;
+  // *((uint8_t *)addr_at(11)) = (uint8_t) short1;
+}
+void NativePostCallNop::patch_int1(uint32_t int1) {
+  *((uint32_t *)addr_at(4))  = (int32_t) int1;
+  wrote(4);
+}
+void NativePostCallNop::patch_int2(uint32_t int2) {
+  *((uint32_t *)addr_at(12)) = (int32_t) int2;
+  wrote(12);
+}
+#endif

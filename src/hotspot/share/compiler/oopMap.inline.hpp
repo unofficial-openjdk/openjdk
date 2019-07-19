@@ -30,7 +30,7 @@
 #include "oops/compressedOops.hpp"
 
 inline const ImmutableOopMap* ImmutableOopMapSet::find_map_at_slot(int slot, int pc_offset) const {
-  assert(slot >= 0 && slot < _count, "bounds");
+  assert(slot >= 0 && slot < _count, "bounds count: %d slot: %d", _count, slot);
   ImmutableOopMapPair* pairs = get_pairs();
   ImmutableOopMapPair* last = &pairs[slot];
   assert(last->pc_offset() == pc_offset, "oopmap not found");
