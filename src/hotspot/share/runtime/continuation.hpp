@@ -56,6 +56,8 @@ public:
   static void print_statistics();
   static void init();
 
+  static void cleanup_keepalives();
+
   static int flags() { return _flags; }
 };
 

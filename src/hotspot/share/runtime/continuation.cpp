@@ -1370,16 +1370,18 @@ public:
     }
 
     if (shadow != NULL) {
+      //log_info(jvmcont)("trying to clear stale shadow for %p", _method);
       if (cm->clear_shadow(shadow)) {
-        // TODO: We are currently leaking handles here. We can't just delete it straight away because someone else might be looking at it.
-        // The right thing to do would be to put it on a list and clear them at safepoint or similiar.
+        //log_info(jvmcont)("shadow cleared for %p", _method);
+        thread->keepalive_cleanup()->append(shadow);
+        // put on a list for cleanup in a safepoint
       }
     }
 
     nmethod* nm = cm->as_nmethod_or_null();
     if (nm != NULL) {
       _nr_oops = nm->nr_oops();
-      //log_info(jvmcont)("need shadow for %d oops", _nr_oops());
+      //log_info(jvmcont)("need shadow for %d oops", _nr_oops);
       _required = true;
       _parent = parent;
     }
@@ -4086,6 +4088,35 @@ public:
 
 void Continuations::init() {
   ConfigResolve::resolve();
+}
+
+class KeepaliveCleanupClosure : public ThreadClosure {
+private:
+  int _count;
+public:
+  KeepaliveCleanupClosure() : _count(0) {}
+
+  int count() const { return _count; }
+
+  virtual void do_thread(Thread* thread) {
+    JavaThread* jthread = (JavaThread*) thread;
+    GrowableArray<jweak>* cleanup_list = jthread->keepalive_cleanup();
+    int len = cleanup_list->length();
+    _count += len;
+    for (int i = 0; i < len; ++i) {
+      jweak ref = cleanup_list->at(i);
+      JNIHandles::destroy_weak_global(ref);
+    }
+
+    cleanup_list->clear();
+    assert(cleanup_list->length() == 0, "should be clean");
+  }
+};
+
+void Continuations::cleanup_keepalives() {
+  KeepaliveCleanupClosure closure;
+  Threads::java_threads_do(&closure);
+  //log_info(jvmcont)("cleanup %d refs", closure.count());
 }
 
 volatile intptr_t Continuations::_exploded_miss = 0;

@@ -1029,6 +1029,7 @@ class JavaThread: public Thread {
   // This holds the pointer to array (yeah like there might be more than one) of
   // description of compiled vframes that have locals that need to be updated.
   GrowableArray<jvmtiDeferredLocalVariableSet*>* _deferred_locals_updates;
+  GrowableArray<jweak>* _keepalive_cleanup;
 
   // Handshake value for fixing 6243940. We need a place for the i2c
   // adapter to store the callee Method*. This value is NEVER live
@@ -1521,6 +1522,9 @@ class JavaThread: public Thread {
   // Side structure for deferring update of java frame locals until deopt occurs
   GrowableArray<jvmtiDeferredLocalVariableSet*>* deferred_locals() const { return _deferred_locals_updates; }
   void set_deferred_locals(GrowableArray<jvmtiDeferredLocalVariableSet *>* vf) { _deferred_locals_updates = vf; }
+
+  void set_keepalive_cleanup(GrowableArray<jweak>* lst) { _keepalive_cleanup = lst; }
+  GrowableArray<jweak>* keepalive_cleanup() const { return _keepalive_cleanup; }
 
   // These only really exist to make debugging deopt problems simpler
 
