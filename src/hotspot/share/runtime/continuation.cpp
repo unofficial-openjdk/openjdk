@@ -58,7 +58,7 @@
 #include "utilities/exceptions.hpp"
 #include "utilities/macros.hpp"
 
-#define PERFTEST 1
+// #define PERFTEST 1
 
 #ifdef PERFTEST
 #define PERFTEST_ONLY(code) code
