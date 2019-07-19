@@ -1682,6 +1682,7 @@ void JavaThread::initialize() {
   set_vframe_array_head(NULL);
   set_vframe_array_last(NULL);
   set_deferred_locals(NULL);
+  set_keepalive_cleanup(new (ResourceObj::C_HEAP, mtInternal) GrowableArray<jweak>(16, true));
   set_deopt_mark(NULL);
   set_deopt_compiled_method(NULL);
   clear_must_deopt_id();
