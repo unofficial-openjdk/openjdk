@@ -1835,6 +1835,7 @@ public:
 
   template<typename FKind> // the callee's type
   void setup_jump(const frame& f, const frame& callee) {
+    assert (f.pc() == Frame::real_pc(f) || (f.is_compiled_frame() && f.cb()->as_compiled_method()->is_deopt_pc(Frame::real_pc(f))), "");
     ContinuationHelper::to_frame_info_pd<FKind>(f, callee, _fi);
     _fi->sp = f.unextended_sp(); // java_lang_Continuation::entrySP(cont);
     _fi->pc = Continuation::is_return_barrier_entry(f.pc()) ? _cont.entryPC()
