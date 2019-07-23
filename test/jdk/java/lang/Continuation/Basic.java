@@ -50,8 +50,6 @@ Graal tests currently disabled until we can find the problem with monitor pinned
 * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy Basic
 * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
 * @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
-* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:-UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy Basic
 */
 
 // Anything excluded or not compileonly is not compiled; see CompilerOracle::should_exclude
@@ -87,6 +85,15 @@ public class Basic {
 
     static final ContinuationScope FOO = new ContinuationScope() {};
     
+    // @Test
+    // public void test0() {
+    //     fooooooo();
+    // }
+
+    // private static void fooooooo() {
+    //     new Basic().test1();
+    // }
+
     public void test1() {
         System.out.println("test1");
         final AtomicInteger res = new AtomicInteger(0);

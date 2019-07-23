@@ -30,64 +30,52 @@ private:
   // additional fields beyond _sp and _pc:
   intptr_t _fp;
 
-  intptr_t* _link_address;
-
-private:
-  inline int link_index(const ContMirror& cont) const;
-  inline intptr_t* interpreter_frame_metadata_at(int offset) const;
-
 public:
 
   typedef intptr_t** callee_info;
 
 public:
-  hframe() : HFrameBase(), _fp(0), _link_address(NULL) {}
+  hframe() : HFrameBase(), _fp(0) {}
 
-  hframe(const hframe& hf) : HFrameBase(hf), _fp(hf._fp), _link_address(hf._link_address) {}
+  hframe(const hframe& hf) : HFrameBase(hf), _fp(hf._fp) {}
 
   hframe(int sp, int ref_sp, intptr_t fp, address pc, const ContMirror& cont) // called by ContMirror::last_frame
-    : HFrameBase(sp, ref_sp, pc, cont), _fp(fp) { set_link_address(cont); }
+    : HFrameBase(sp, ref_sp, pc, cont), _fp(fp) {}
   
-  hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted, const ContMirror& cont)
-    : HFrameBase(sp, ref_sp, pc, cb, is_interpreted), _fp(fp) { set_link_address(cont); }
 
-  hframe(int sp, int ref_sp, intptr_t fp, address pc, CodeBlob* cb, bool is_interpreted, intptr_t* link_address) // called by new_callee/bottom_hframe
-    : HFrameBase(sp, ref_sp, pc, cb, is_interpreted), _fp(fp), _link_address(link_address) {}
-
-  template <typename FKind> static hframe new_hframe(int sp, int ref_sp, intptr_t fp, address pc, const ContMirror& cont) {
-    assert (FKind::interpreted == Interpreter::contains(pc), "");
-    CodeBlob* cb = FKind::interpreted ? NULL : ContinuationCodeBlobLookup::find_blob(pc);
-    return hframe(sp, ref_sp, fp, pc, cb, FKind::interpreted, link_address<FKind>(sp, fp, cb, cont));
-  }
+  hframe(int sp, int ref_sp, intptr_t fp, address pc, void* cb_md, bool is_interpreted) 
+    : HFrameBase(sp, ref_sp, pc, cb_md, is_interpreted), _fp(fp) {}
 
   inline bool operator==(const hframe& other) const;
 
   void copy_partial_pd(const hframe& other) {
     _fp = other._fp;
-    _link_address = other._link_address;
   } 
 
   inline intptr_t  fp()     const { return _fp; }
 
   inline void set_fp(intptr_t fp) { _fp = fp; }
 
-  // the link is an offset from the real fp to the sender's fp IFF the sender is interpreted; otherwise, it's the contents of the rbp register
-  intptr_t* link_address() const { return _link_address; }
-  intptr_t link() const          { return *link_address(); }
+  const CodeBlob* get_cb() const;
+  const ImmutableOopMap* get_oop_map() const;
 
-  template<typename FKind> static inline intptr_t* link_address(int sp, intptr_t fp, const CodeBlob* cb, const ContMirror& cont);
-  template<typename FKind> inline void set_link_address(const ContMirror& cont);
-  inline void set_link_address(const ContMirror& cont);
+  inline int callee_link_index() const;
+  inline int pc_index() const;
 
-  void patch_link(intptr_t value) {
-    intptr_t* la = link_address();
-    *la = value;
-  }
+  inline address real_pc(const ContMirror& cont) const;
 
-  inline void patch_link_relative(intptr_t* fp);
+  inline intptr_t* interpreted_link_address() const { assert (Interpreter::contains(_pc), ""); return (intptr_t*)_cb_imd; }
 
-  inline void patch_real_fp_offset(int offset, intptr_t value);
-  inline intptr_t* get_real_fp_offset(int offset) { return (intptr_t*)*(link_address() + offset); }
+  static intptr_t* interpreted_link_address(intptr_t fp, const ContMirror& cont);
+
+  inline void patch_interpreter_metadata_offset(int offset, intptr_t value);
+  inline intptr_t* interpreter_frame_metadata_at(int offset) const;
+
+  inline void patch_interpreted_link(intptr_t value);
+  inline void patch_interpreted_link_relative(intptr_t fp);
+
+  inline void patch_callee_link(intptr_t value, const ContMirror& cont) const;
+  inline void patch_callee_link_relative(intptr_t fp, const ContMirror& cont) const;
 
   inline void patch_sender_sp_relative(intptr_t* value);
 
@@ -120,5 +108,57 @@ Method* hframe::method<Interpreted>() const {
   assert (_is_interpreted, "");
   return *(Method**)interpreter_frame_metadata_at(frame::interpreter_frame_method_offset);
 }
+
+#ifdef CONT_DOUBLE_NOP
+
+// TODO R move to continuation_x86.inline.hpp once PD has been separated
+
+const int mdSizeBits    = 13;
+const int mdOopBits     = 14;
+const int mdArgsizeBits = 5;
+STATIC_ASSERT(mdSizeBits + mdOopBits + mdArgsizeBits == 32);
+
+class CachedCompiledMetadata {
+private:
+  union {
+    struct {
+      uint _size    : mdSizeBits; // in DWORDS
+      uint _oops    : mdOopBits;
+      uint _argsize : mdArgsizeBits;
+    };
+    uint32_t _int1;
+  };
+
+public:
+  CachedCompiledMetadata() {}
+  CachedCompiledMetadata(uint32_t int1) { _int1 = int1; }
+  CachedCompiledMetadata(int size, int oops, int argsize) {
+    assert (size % 8 == 0, "");
+    size >>= LogBytesPerWord;
+    if (size <= ((1 << mdSizeBits) - 1) && oops <= ((1 << mdOopBits) - 1) && argsize <= ((1 << mdArgsizeBits) - 1)) {
+      _size = size;
+      _oops = oops;
+      _argsize = argsize;
+    } else {
+      tty->print_cr(">> metadata failed: size: %d oops: %d argsize: %d", size, oops, argsize);
+      _int1 = 0;
+    }
+  }
+
+  bool empty()        const { return _size == 0; }
+  int size()          const { return ((int)_size) << LogBytesPerWord; }
+  int size_words()    const { return (int)_size; }
+  int num_oops()      const { return (int)_oops; }
+  int stack_argsize() const { return (int)_argsize; }
+
+  uint32_t int1() const { return _int1; }
+
+  void print_on(outputStream* st) { st->print("size: %d args: %d oops: %d", size(), stack_argsize(), num_oops()); }
+  void print() { print_on(tty); }
+};
+
+STATIC_ASSERT(sizeof(CachedCompiledMetadata) == 4);
+
+#endif
 
 #endif // CPU_X86_HFRAME_X86_HPP

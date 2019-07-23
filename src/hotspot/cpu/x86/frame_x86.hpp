@@ -116,7 +116,7 @@
   // uses sp() to mean "raw" sp and unextended_sp() to mean the caller's
   // original sp we use that convention.
 
-  intptr_t*     _unextended_sp;
+  intptr_t* _unextended_sp;
   void adjust_unextended_sp() NOT_DEBUG_RETURN;
 
   intptr_t* ptr_at_addr(int offset) const {

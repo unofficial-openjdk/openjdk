@@ -47,6 +47,7 @@
 #include "oops/symbol.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/compilationPolicy.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -629,6 +630,15 @@ public:
 
         post_safepoint_cleanup_task_event(event, safepoint_id, name);
       }
+    }
+
+    if (_subtasks.try_claim_task(SafepointSynchronize::SAFEPOINT_CLEANUP_KEEPALIVES)) {
+      const char* name = "cleaning keepalive jweak handles";
+      EventSafepointCleanupTask event;
+      TraceTime timer(name, TRACETIME_LOG(Info, safepoint, cleanup));
+      Continuations::cleanup_keepalives();
+
+      post_safepoint_cleanup_task_event(event, safepoint_id, name);
     }
 
     _subtasks.all_tasks_completed(_num_workers);

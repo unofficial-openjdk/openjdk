@@ -32,19 +32,28 @@ class ImmutableOopMap;
 class BufferBlob;
 
 class OopMapStubGenerator {
+  static intptr_t code_cache_base;
+
+  const CodeBlob* _cb;
   const ImmutableOopMap& _oopmap;
   BufferBlob* _blob;
   address _freeze_stub;
   address _thaw_stub;
 
 public:
-  OopMapStubGenerator(const ImmutableOopMap& oopmap) : _oopmap(oopmap), _blob(NULL), _freeze_stub(NULL), _thaw_stub(NULL) {}
+  OopMapStubGenerator(const CodeBlob* cb, const ImmutableOopMap& oopmap) : _cb(cb), _oopmap(oopmap), _blob(NULL), _freeze_stub(NULL), _thaw_stub(NULL) {}
 
   address freeze_stub() { return _freeze_stub; }
   address thaw_stub() { return _thaw_stub; }
-
   bool generate();
   void free();
+
+  static void init();
+  
+  static address thaw_stub(address freeze_stub_address);
+  static CodeBlob* code_blob(address thaw_stub_address);
+  static intptr_t stub_to_offset(address stub);
+  static address offset_to_stub(intptr_t offset);
 };
 
 #endif

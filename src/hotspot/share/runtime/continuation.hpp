@@ -30,6 +30,8 @@
 #include "runtime/globals.hpp"
 #include "jni.h"
 
+// #define CONT_DOUBLE_NOP 1
+
 #define CONT_FULL_STACK (!UseContinuationLazyCopy)
 
 // The order of this struct matters as it's directly manipulated by assembly code (push/pop)
@@ -55,6 +57,8 @@ public:
 
   static void print_statistics();
   static void init();
+
+  static void cleanup_keepalives();
 
   static int flags() { return _flags; }
 };

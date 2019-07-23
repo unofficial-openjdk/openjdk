@@ -38,9 +38,21 @@
 #ifndef ALWAYSINLINE
 #define ALWAYSINLINE inline
 #endif
+#ifndef __HOT
+#define __HOT
+#endif
+#ifndef __COLD
+#define __COLD
+#endif
 
 #ifndef ATTRIBUTE_ALIGNED
 #define ATTRIBUTE_ALIGNED(x)
+#endif
+#ifndef LIKELY
+#define LIKELY(condition)   (condition)
+#endif
+#ifndef UNLIKELY
+#define UNLIKELY(condition) (condition)
 #endif
 
 // These are #defines to selectively turn on/off the Print(Opto)Assembly
@@ -1133,14 +1145,5 @@ template<typename K> unsigned primitive_hash(const K& k) {
 template<typename K> bool primitive_equals(const K& k0, const K& k1) {
   return k0 == k1;
 }
-
-#if (defined(__GNUC__) || defined(__clang__))
-#define LIKELY(condition)   __builtin_expect(static_cast<bool>(condition), 1)
-#define UNLIKELY(condition) __builtin_expect(static_cast<bool>(condition), 0)
-#else
-#define LIKELY(condition)   (condition)
-#define UNLIKELY(condition) (condition)
-#endif
-
 
 #endif // SHARE_UTILITIES_GLOBALDEFINITIONS_HPP

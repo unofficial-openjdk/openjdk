@@ -37,6 +37,8 @@
 #include "opto/optoreg.hpp"
 #endif
 
+// TODO PERF: Use non-temporal stores in freeze and non-temporal loads in thaw. See https://stackoverflow.com/a/45636785/750563
+
 static Register vsp = c_rarg0;
 static Register ref_stack = c_rarg1;
 static Register frame_ptr = c_rarg2;
@@ -1029,6 +1031,10 @@ public:
     return _thaw;
   }
 
+  address freeze_stub() {
+    return _freeze;
+  }
+
   bool has_rbp_index() {
     return _written_rbp_index;
   }
@@ -1052,6 +1058,8 @@ public:
     _link_offset_loaded = false;
     _written_rbp_index = false;
 
+    _masm->align(8);
+    _masm->emit_int64(0); // make room for CodeBlob pointer
     _thaw = _masm->pc();
 
     if (UseCompressedOops) {
@@ -1197,6 +1205,7 @@ public:
 
   void generate_freeze(const ImmutableOopMap& map) {
     _masm->align(8);
+    _masm->emit_int64(0); // make room for thaw stub pointer
     _freeze = _masm->pc();
 
     freeze_prologue(_masm);
@@ -1361,8 +1370,17 @@ bool OopMapStubGenerator::generate() {
   cgen.generate_freeze(_oopmap);
   cgen.generate_thaw(_oopmap);
 
-  _freeze_stub = _blob->code_begin();
-  _thaw_stub = cgen.thaw_stub();
+  _freeze_stub = cgen.freeze_stub(); // _blob->code_begin();
+  _thaw_stub   = cgen.thaw_stub();
+
+  *((address*)_freeze_stub - 1) = _thaw_stub;
+  *((const CodeBlob**)_thaw_stub - 1) = _cb;
+
+  assert (_cb != NULL, "");
+
+  assert (thaw_stub(_freeze_stub) == _thaw_stub, "");
+  assert ((intptr_t)_freeze_stub % 8 == 0, "");
+  assert ((intptr_t)_thaw_stub   % 8 == 0, "");
 
   return true;
 }
@@ -1374,4 +1392,30 @@ void OopMapStubGenerator::free() {
   }
   _freeze_stub = NULL;
   _thaw_stub = NULL;
+}
+
+address OopMapStubGenerator::thaw_stub(address freeze_stub_address) {
+  return *((address*)freeze_stub_address - 1);
+}
+
+intptr_t OopMapStubGenerator::stub_to_offset(address stub) {
+  assert (code_cache_base == (intptr_t)CodeCache::low_bound(CodeBlobType::NonNMethod), "");
+  intptr_t offset = (intptr_t)stub - (intptr_t)code_cache_base;
+  assert ((offset & 0xffffffff) == offset, "");
+  return offset;
+}
+
+address OopMapStubGenerator::offset_to_stub(intptr_t offset) {
+  assert (code_cache_base == (intptr_t)CodeCache::low_bound(CodeBlobType::NonNMethod), "");
+  return (address)(code_cache_base + offset);
+}
+
+CodeBlob* OopMapStubGenerator::code_blob(address thaw_stub_address) {
+  return (CodeBlob*)*((address*)thaw_stub_address - 1);
+}
+
+intptr_t OopMapStubGenerator::code_cache_base;
+
+void OopMapStubGenerator::init() {
+  code_cache_base = (intptr_t)CodeCache::low_bound(CodeBlobType::NonNMethod);
 }
