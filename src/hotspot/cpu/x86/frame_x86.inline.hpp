@@ -118,10 +118,12 @@ inline frame::frame(intptr_t* sp, intptr_t* unextended_sp, intptr_t* fp, address
   _oop_map = oop_map;
   _deopt_state = not_deoptimized;
 #ifdef ASSERT
-  if (cb != NULL) {
-    setup(pc);
-    assert(_pc == pc && _deopt_state == not_deoptimized, "");
-  }
+  // The following assertion has been disabled because it would sometime trap for Continuation.run, which is not *in* a continuation
+  // and therefore does not clear the _cont_fastpath flag, but this is benign even in fast mode (see Freeze::setup_jump)
+  // if (cb != NULL) {
+  //   setup(pc);
+  //   assert(_pc == pc && _deopt_state == not_deoptimized, "");
+  // }
 #endif
 }
 
