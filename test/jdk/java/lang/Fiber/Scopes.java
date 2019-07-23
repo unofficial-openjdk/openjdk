@@ -243,7 +243,6 @@ public class Scopes {
         runInFiber(() -> {
             try (var scope1 = FiberScope.open(PROPAGATE_CANCEL)) {
                 Fiber<?> top = Fiber.current().orElseThrow();
-
                 var child = scope1.schedule(() -> {
                     try (var scope2 = FiberScope.open()) {
                         assertFalse(Fiber.cancelled());

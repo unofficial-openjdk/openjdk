@@ -50,7 +50,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -694,8 +693,8 @@ public class Fiber<V> {
      * @param duration the maximum duration to wait
      * @return {@code true} if the fiber has terminated
      * @throws InterruptedException if interrupted while waiting or called with
-     *         the interrupt status set. The interrupt status of the current
-     *         thread is cleared when this exception is thrown.
+     *         the interrupt status set. The interrupt status is cleared when
+     *         this exception is thrown.
      *
      * @see #join()
      */
@@ -792,7 +791,7 @@ public class Fiber<V> {
 
             // notify scope on first cancel
             if (changed && ((scope = this.scope) != null)) {
-                scope.afterCancel();
+                scope.afterCancel(this);
             }
         }
         return changed;
@@ -911,8 +910,8 @@ public class Fiber<V> {
      * @return the result or {@code null} if the fiber was created with a Runnable
      * @throws CompletionException if the task completed with an exception
      * @throws InterruptedException if interrupted while waiting or called with
-     *         the interrupt status set. The interrupt status of the current
-     *         thread is cleared when this exception is thrown.
+     *         the interrupt status set. The interrupt status is cleared when
+     *         this exception is thrown.
      *
      * @see #awaitTermination(Duration)
      */

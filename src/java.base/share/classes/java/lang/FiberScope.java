@@ -468,13 +468,16 @@ public class FiberScope implements AutoCloseable {
         onComplete(result, exc);
     }
 
+    /**
+    * Invoked when the owner fiber is cancelled.
+    */
     void onCancel() { }
 
     /**
-     * Invoked when the owner fiber is cancelled
+     * Invoked when a fiber is cancelled
      */
-    final void afterCancel() {
-        if (cancellable) {
+    final void afterCancel(Fiber<?> fiber) {
+        if (cancellable && fiber == owner()) {
             onCancel();
         }
     }
@@ -589,7 +592,7 @@ public class FiberScope implements AutoCloseable {
 
         // propagate cancel to parent scope
         if (parent != null && parent.owner() == owner && Fiber.cancelled()) {
-            parent.afterCancel();
+            parent.afterCancel((Fiber<?>) owner);
         }
     }
 }
