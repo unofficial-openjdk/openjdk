@@ -1667,11 +1667,13 @@ public:
     // Dynamically branch on frame type
     if (mode == mode_fast || f.is_compiled_frame()) {
       if (UNLIKELY(mode != mode_fast && f.oop_map() == NULL))            return freeze_pinned_native; // special native frame
-      if (UNLIKELY(
-               #ifdef CONT_DOUBLE_NOP
-                   !(mode == mode_fast && !ContinuationHelper::cached_metadata<mode>(f).empty()) &&
-               #endif
-                   Compiled::is_owning_locks(_cont.thread(), &_map, f))) return freeze_pinned_monitor;
+
+      #ifdef CONT_DOUBLE_NOP
+        if (UNLIKELY(!(mode == mode_fast && !ContinuationHelper::cached_metadata<mode>(f).empty()) &&
+             Compiled::is_owning_locks(_cont.thread(), &_map, f))) return freeze_pinned_monitor;
+      #else
+        if (UNLIKELY(Compiled::is_owning_locks(_cont.thread(), &_map, f))) return freeze_pinned_monitor;
+      #endif
 
       // Keepalive info here...
       CompiledMethodKeepaliveT kd(f.cb()->as_compiled_method(), _keepalive, _thread);
