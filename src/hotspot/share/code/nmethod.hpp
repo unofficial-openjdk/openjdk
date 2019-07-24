@@ -480,8 +480,8 @@ public:
 #endif
 
  public:
-  void oops_do(OopClosure* f) { oops_do(f, false, false); }
-  void oops_do(OopClosure* f, bool allow_zombie, bool allow_null = false);
+  void oops_do(OopClosure* f) { oops_do(f, false); }
+  void oops_do(OopClosure* f, bool allow_dead, bool allow_null = false);
 
   bool test_set_oops_do_mark();
   static void oops_do_marking_prologue();

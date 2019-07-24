@@ -69,7 +69,7 @@ void ShenandoahBarrierSetAssembler::arraycopy_prologue(MacroAssembler* masm, Dec
     }
 #endif
 
-    if (ShenandoahSATBBarrier && !dest_uninitialized && !ShenandoahHeap::heap()->heuristics()->can_do_traversal_gc()) {
+    if (ShenandoahSATBBarrier && !dest_uninitialized) {
       Register thread = NOT_LP64(rax) LP64_ONLY(r15_thread);
       assert_different_registers(dst, count, thread); // we don't care about src here?
 #ifndef _LP64
@@ -943,7 +943,7 @@ address ShenandoahBarrierSetAssembler::generate_shenandoah_lrb(StubCodeGenerator
 
   save_vector_registers(cgen->assembler());
   __ movptr(rdi, rax);
-  __ call_VM_leaf(CAST_FROM_FN_PTR(address, ShenandoahRuntime::load_reference_barrier_JRT), rdi);
+  __ call_VM_leaf(CAST_FROM_FN_PTR(address, ShenandoahRuntime::load_reference_barrier), rdi);
   restore_vector_registers(cgen->assembler());
 
 #ifdef _LP64

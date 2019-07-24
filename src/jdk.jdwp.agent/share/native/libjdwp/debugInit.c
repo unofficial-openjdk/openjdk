@@ -875,7 +875,6 @@ printUsage(void)
  "launch=<command line>            run debugger on event             none\n"
  "onthrow=<exception name>         debug on throw                    none\n"
  "onuncaught=y|n                   debug on any uncaught?            n\n"
- "onjcmd=y|n                       start debug via jcmd?             n\n"
  "timeout=<timeout value>          for listen/attach in milliseconds n\n"
  "fibers=y|n|all                   support for debugging fibers      y\n"
  "mutf8=y|n                        output modified utf-8             n\n"
