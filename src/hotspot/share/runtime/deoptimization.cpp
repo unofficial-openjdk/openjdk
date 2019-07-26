@@ -158,6 +158,7 @@ JRT_BLOCK_ENTRY(Deoptimization::UnrollBlock*, Deoptimization::fetch_unroll_info(
   return fetch_unroll_info_helper(thread, exec_mode);
 JRT_END
 
+extern "C" void pfl();
 
 // This is factored, since it is both called from a JRT_LEAF (deoptimization) and a JRT_ENTRY (uncommon_trap)
 Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread* thread, int exec_mode) {
@@ -422,7 +423,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
 
   // If the caller is a continuation entry and the callee has a return barrier
   // then we cannot use the parameters in the caller.
-  bool caller_was_continuation_entry = Continuation::is_cont_barrier_frame(deopt_sender);
+  bool caller_was_continuation_entry = Continuation::is_cont_post_barrier_entry_frame(deopt_sender);
 
   //
   // frame_sizes/frame_pcs[0] oldest frame (int or c2i)
@@ -482,16 +483,15 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   // QQQ I'd rather see this pushed down into last_frame_adjust
   // and have it take the sender (aka caller).
 
-  // TODO LOOM: consider *always* adjusting instead of the conditionals below. What's the harm?
-  caller_adjustment = last_frame_adjust(0, callee_locals);
-  // if (deopt_sender.is_compiled_frame() || caller_was_method_handle || caller_was_continuation_entry) {
-  //   caller_adjustment = last_frame_adjust(0, callee_locals);
-  // } else if (callee_locals > callee_parameters) {
-  //   // The caller frame may need extending to accommodate
-  //   // non-parameter locals of the first unpacked interpreted frame.
-  //   // Compute that adjustment.
-  //   caller_adjustment = last_frame_adjust(callee_parameters, callee_locals);
-  // }
+  // TODO LOOM: consider *always* adjusting instead of the conditionals below. 
+  // That would simplify the alignment code in continuation freeze and particularly thaw, but it makes hotspot/jtreg/vmTestbase/nsk/jvmti/PopFrame/popframe005 fail.
+  // caller_adjustment = last_frame_adjust(0, callee_locals);
+  if (deopt_sender.is_compiled_frame() || caller_was_method_handle || caller_was_continuation_entry) {
+    caller_adjustment = last_frame_adjust(0, callee_locals);
+  } else if (callee_locals > callee_parameters) {
+    // The caller frame may need extending to accommodate non-parameter locals of the first unpacked interpreted frame.
+    caller_adjustment = last_frame_adjust(callee_parameters, callee_locals);
+  }
 
   // If the sender is deoptimized the we must retrieve the address of the handler
   // since the frame will "magically" show the original pc before the deopt

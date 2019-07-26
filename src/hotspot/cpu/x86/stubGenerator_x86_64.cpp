@@ -5952,6 +5952,7 @@ RuntimeStub* generate_cont_doYield() {
 
     __ subq(rsp, rax);             // make room for the thawed frames
     __ subptr(rsp, wordSize);      // make room for return address
+    __ andptr(rsp, -16); // align
     if (return_barrier) {
       __ push(rdx); __ push_d(xmm0); // save original return value -- again
     }

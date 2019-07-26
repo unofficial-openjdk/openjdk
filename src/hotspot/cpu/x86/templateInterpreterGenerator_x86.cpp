@@ -812,6 +812,7 @@ address TemplateInterpreterGenerator::generate_Continuation_doContinue_entry(voi
   address entry = __ pc();
   assert(StubRoutines::cont_thaw() != NULL, "stub not yet generated");
 
+  __ movl(c_rarg1, 1); // from interpreter
   __ jump(RuntimeAddress(CAST_FROM_FN_PTR(address, StubRoutines::cont_thaw())));
 
   return entry;

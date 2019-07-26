@@ -53,6 +53,7 @@
 #include "runtime/atomic.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/compilationPolicy.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/fieldDescriptor.inline.hpp"
 #include "runtime/frame.inline.hpp"
@@ -1310,7 +1311,7 @@ JRT_END
 
 JRT_LEAF(int, InterpreterRuntime::interpreter_contains(address pc))
 {
-  return (Interpreter::contains(pc) ? 1 : 0);
+  return (Interpreter::contains(Continuation::get_top_return_pc_post_barrier(JavaThread::current(), pc)) ? 1 : 0);
 }
 JRT_END
 
