@@ -826,7 +826,7 @@ inline void Freeze<ConfigT, mode>::align(const hframe& caller, int argsize) {
   assert (mode != mode_fast || bottom || !Interpreter::contains(caller.pc()), "");
   if ((mode != mode_fast || bottom) && caller.is_interpreted_frame()) {
     assert (argsize >= 0, "");
-    _cont.add_size((2  // one for alignment, one for extra word between interpreted and compiled
+    _cont.add_size((SP_WIGGLE
                    + ((argsize /* / 2*/) >> LogBytesPerWord)) // SharedRuntime::gen_i2c_adapter makes room that's twice as big as required for the stack-passed arguments by counting slots but subtracting words from rsp
                    * sizeof(intptr_t));
   }
@@ -891,7 +891,7 @@ inline intptr_t* Thaw<ConfigT, mode>::align(const hframe& hf, intptr_t* vsp, fra
     if (((bottom || mode != mode_fast) && caller.is_interpreted_frame()) 
         || (bottom && _cont.is_flag(FLAG_LAST_FRAME_INTERPRETED))) {
 
-      addedWords = 1; // add room between interpreted and compiled; deopt code depends on it.
+      addedWords = (SP_WIGGLE-1); // add room between interpreted and compiled; deopt code depends on it. TODO: is this only for instance methods? What about static methods?
 
       // SharedRuntime::gen_i2c_adapter makes room that's twice as big as required for the stack-passed arguments by counting slots but subtracting words from rsp 
       assert (VMRegImpl::stack_slot_size == 4, "");
