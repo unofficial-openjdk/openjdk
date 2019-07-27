@@ -186,7 +186,7 @@ STATIC_ASSERT(elementSizeInBytes <<  LogElemsPerWord == wordSize);
 static const unsigned char FLAG_LAST_FRAME_INTERPRETED = 1;
 static const unsigned char FLAG_SAFEPOINT_YIELD = 1 << 1;
 
-static const int SP_WIGGLE = 2;
+static const int SP_WIGGLE = 3; // depends on the extra space between interpreted and compiled we add in Thaw::align
 
 void continuations_init() {
   Continuations::init();
@@ -2600,7 +2600,7 @@ JRT_LEAF(int, Continuation::prepare_thaw(FrameInfo* fi, bool return_barrier))
   if (size == 0) { // no more frames
     return 0;
   }
-  size += 2 * sizeof(intptr_t); // just in case we have an interpreted entry after which we need to align
+  size += SP_WIGGLE * sizeof(intptr_t); // just in case we have an interpreted entry after which we need to align
 
   const address bottom = (address)fi->sp; // os::current_stack_pointer(); points to the entry frame
   if (!stack_overflow_check(thread, size + 300, bottom)) {
@@ -3040,7 +3040,7 @@ public:
     assert (!f.is_compiled_frame() || f.is_deoptimized_frame() == f.cb()->as_compiled_method()->is_deopt_pc(f.raw_pc()), "");
     assert (!f.is_compiled_frame() || f.is_deoptimized_frame() == (f.pc() != f.raw_pc()), "");
 
-    assert ((address)(_fi + 1) <= (address)f.sp(), "");
+    assert ((address)(_fi + 1) < (address)f.sp(), "");
     _fi->sp = f.sp();
     address pc = f.raw_pc();
     _fi->pc = pc;
