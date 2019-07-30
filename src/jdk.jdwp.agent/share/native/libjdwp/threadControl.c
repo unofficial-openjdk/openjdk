@@ -3050,7 +3050,7 @@ threadControl_continuationRun(jthread thread, jint continuation_frame_count)
 
         if (threadNode->currentStep.pending) {
             /*
-             *If we are doing a STEP_INTO and are doing class filtering (usually library
+             * If we are doing a STEP_INTO and are doing class filtering (usually library
              * classes), we are relying on METHOD_ENTRY events to tell us if we've stepped
              * back into user code. We won't get this event if when we resume the
              * continuation, so we need to let the stepControl now that we got a
@@ -3177,21 +3177,6 @@ threadControl_continuationRun(jthread thread, jint continuation_frame_count)
     debugMonitorExit(threadLock);
 }
 
-/*
- * Returns true if the frame at frameDepth is part of the continuation. Note, frameDepth
- * is from the bottom of the stack. In other words, the current frame depth is the total
- * number of frames. The bottomost frame is depth is 1.
- */
-static jboolean
-isContinuationFrame(jint total_frame_count, jint frameDepth, jint continuation_frame_count)
-{
-#if 0
-    tty_message("total_frame_count=%d frameDepth=%d continuation_frame_count=%d",
-                total_frame_count, frameDepth, continuation_frame_count);
-#endif
-    return (total_frame_count - frameDepth < continuation_frame_count);
-}
-
 void
 threadControl_continuationYield(jthread thread, jint continuation_frame_count)
 {
@@ -3233,14 +3218,21 @@ threadControl_continuationYield(jthread thread, jint continuation_frame_count)
             return; /* Nothing to do. */
         }
 
+        /* At what depth were we single stepping. */
         fromDepth = threadNode->currentStep.fromStackDepth;
+
+        /*
+         * Note the continuation has already been unmounted, so total_frame_count will not
+         * include the continuation frames.
+         */
         total_frame_count = getThreadFrameCount(thread);
 
         if (threadNode->currentStep.depth == JDWP_STEP_DEPTH(OVER) &&
-            total_frame_count - fromDepth == continuation_frame_count) {
+            total_frame_count == fromDepth) {
             /*
-             * We are stepping over Continuation.doContinue() from Continuation.run(). This
-             * is a special case. The stack looks like:
+             * We were stepping over Continuation.doContinue() in Continuation.run(). This
+             * is a special case. Before the continuation was unmounted do to the yield, the
+             * stack looked like:
              *    java.lang.Continuation.yield0
              *    java.lang.Continuation.yield
              *    <fiber frames>  <-- if Fiber, otherwise just additional continuation frames
@@ -3259,13 +3251,13 @@ threadControl_continuationYield(jthread thread, jint continuation_frame_count)
             }
         } else if (!threadNode->currentStep.is_fiber) {
             /* We were single stepping, but not in a fiber. */
-            if (isContinuationFrame(total_frame_count, fromDepth, continuation_frame_count)) {
+            if (total_frame_count < fromDepth) { /* Check if fromDepth is in the continuation. */
                 /*
-                 * This means the frame we were single stepping in part of the set of
-                 * frames that will be frozen as this continuation yields. Because of that
+                 * This means the frame we were single stepping in was part of the set of
+                 * frames that will were frozen when this continuation yielded. Because of that
                  * we need to re-enable single stepping because we won't ever be getting
                  * the FRAME_POP event for returning to that frame. This will resume single
-                 * stepping in Continuation.run() right after the Continuation.enter() call
+                 * stepping in Continuation.run() right after the Continuation.enter() call.
                  */
                 if (threadNode->instructionStepMode == JVMTI_DISABLE) {
                     stepControl_enableStepping(thread);
@@ -3301,11 +3293,12 @@ threadControl_continuationYield(jthread thread, jint continuation_frame_count)
             JDI_ASSERT(bagSize(fiberNode->eventBag) == 0);
 
             if (threadNode->currentStep.depth == JDWP_STEP_DEPTH(INTO) &&
-                (total_frame_count == fromDepth)) {
-                /* We are stepping into Continuation.doYield(), so leave single stepping enabled. It
-                 * will resume right after the call to Continuation.run().
+                (total_frame_count + continuation_frame_count == fromDepth)) {
+                /* We are stepping into Continuation.doYield(), so leave single stepping enabled.
+                 * This will resume single stepping in Continuation.run() right after the
+                 * Continuation.enter() call.
                  */
-            } else if (!isContinuationFrame(total_frame_count, fromDepth, continuation_frame_count)) {
+            } else if (total_frame_count >= fromDepth) { /* Check if fromDepth is NOT in the continuation. */
                 /*
                  * This means the single stepping was initiated stepping in a fiber, but in that small
                  * window after Thread.setFiber(this) has been called, and before the fiber's
