@@ -1548,10 +1548,10 @@ void JvmtiExport::post_continuation_yield(JavaThread* thread, jint continuation_
     }
   }
 
-  // Clear frame_pop requests in frames poped by yield
+  // Clear frame_pop requests in frames popped by yield
   if (can_post_frame_pop()) {
     JvmtiEnvThreadStateIterator it(state);
-    int top_frame_num = state->cur_stack_depth();
+    int top_frame_num = state->cur_stack_depth() + continuation_frame_count;
 
     for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
       if (!ets->has_frame_pops()) {
