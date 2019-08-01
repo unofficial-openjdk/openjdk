@@ -92,6 +92,7 @@ public:
   static frame top_frame(const frame& callee, RegisterMap* map);
   static frame sender_for_interpreter_frame(const frame& callee, RegisterMap* map);
   static frame sender_for_compiled_frame(const frame& callee, RegisterMap* map);
+  static int frame_size(const frame& f, const RegisterMap* map);
 
   static bool has_last_Java_frame(Handle continuation);
   static frame last_frame(Handle continuation, RegisterMap *map);

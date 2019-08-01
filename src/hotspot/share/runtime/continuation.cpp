@@ -3567,6 +3567,17 @@ frame Continuation::sender_for_compiled_frame(const frame& callee, RegisterMap* 
   return sender_for_frame(callee, map);
 }
 
+int Continuation::frame_size(const frame& f, const RegisterMap* map) {
+  if (map->in_cont()) {
+    ContMirror cont(map);
+    hframe hf = cont.from_frame(f);
+    return (hf.is_interpreted_frame() ? hf.interpreted_frame_size() : hf.compiled_frame_size()) >> LogBytesPerWord;
+  } else {
+    assert (Continuation::is_cont_barrier_frame(f), "");
+    return (f.is_interpreted_frame() ? ((address)Interpreted::frame_bottom(f) - (address)f.sp()) : NonInterpretedUnknown::size(f)) >> LogBytesPerWord;
+  }
+}
+
 class OopIndexClosure : public OopMapClosure {
 private:
   int _i;
