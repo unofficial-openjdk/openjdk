@@ -3116,7 +3116,7 @@ public class ForkJoinPool extends AbstractExecutorService {
         ForkJoinPool p;
         ForkJoinWorkerThread wt;
         WorkQueue w;
-        Thread t = Thread.currentThread();
+        Thread t = Strands.currentCarrierThread();
         if ((t instanceof ForkJoinWorkerThread) &&
             (p = (wt = (ForkJoinWorkerThread)t).pool) != null &&
             (w = wt.workQueue) != null) {

@@ -2276,6 +2276,11 @@ public final class System {
                 t.setCause(cause);
             }
 
+            public void loadLibrary(Class<?> caller, String library) {
+                assert library.indexOf(java.io.File.separatorChar) < 0;
+                ClassLoader.loadLibrary(caller, library, false);
+            }
+
             public Thread currentCarrierThread() {
                 return Thread.currentCarrierThread();
             }

@@ -25,9 +25,6 @@
 
 package sun.nio.fs;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
 /**
  * Unix system and library calls.
  */
@@ -422,6 +419,11 @@ class UnixNativeDispatcher {
     static native void futimes(int fd, long times0, long times1) throws UnixException;
 
     /**
+     * futimens(int fildes, const struct timespec times[2])
+     */
+    static native void futimens(int fd, long times0, long times1) throws UnixException;
+
+    /**
      * lutimes(const char* path, const struct timeval times[2])
      */
     static void lutimes(UnixPath path, long times0, long times1)
@@ -596,7 +598,8 @@ class UnixNativeDispatcher {
      */
     private static final int SUPPORTS_OPENAT        = 1 << 1;  // syscalls
     private static final int SUPPORTS_FUTIMES       = 1 << 2;
-    private static final int SUPPORTS_LUTIMES       = 1 << 4;
+    private static final int SUPPORTS_FUTIMENS      = 1 << 4;
+    private static final int SUPPORTS_LUTIMES       = 1 << 8;
     private static final int SUPPORTS_BIRTHTIME     = 1 << 16; // other features
     private static final int capabilities;
 
@@ -615,6 +618,13 @@ class UnixNativeDispatcher {
     }
 
     /**
+     * Supports futimens
+     */
+    static boolean futimensSupported() {
+        return (capabilities & SUPPORTS_FUTIMENS) != 0;
+    }
+
+    /**
      * Supports lutimes
      */
     static boolean lutimesSupported() {
@@ -630,11 +640,7 @@ class UnixNativeDispatcher {
 
     private static native int init();
     static {
-        AccessController.doPrivileged(new PrivilegedAction<>() {
-            public Void run() {
-                System.loadLibrary("nio");
-                return null;
-        }});
+        jdk.internal.loader.BootLoader.loadLibrary("nio");
         capabilities = init();
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Red Hat, Inc. All rights reserved.
+ * Copyright (c) 2018, 2019, Red Hat, Inc. All rights reserved.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
@@ -78,6 +78,7 @@ public:
 #endif
 
   void load_reference_barrier(MacroAssembler* masm, Register dst);
+  void load_reference_barrier_native(MacroAssembler* masm, Register dst);
 
   void cmpxchg_oop(MacroAssembler* masm,
                    Register res, Address addr, Register oldval, Register newval,
@@ -90,6 +91,8 @@ public:
                        Register dst, Address src, Register tmp1, Register tmp_thread);
   virtual void store_at(MacroAssembler* masm, DecoratorSet decorators, BasicType type,
                         Address dst, Register val, Register tmp1, Register tmp2);
+  virtual void try_resolve_jobject_in_native(MacroAssembler* masm, Register jni_env,
+                                             Register obj, Register tmp, Label& slowpath);
 
   virtual void barrier_stubs_init();
 

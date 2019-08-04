@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2003, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2003, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -312,6 +312,14 @@ public interface JavaLangAccess {
      * @param cause set t's cause to new value
      */
     void setCause(Throwable t, Throwable cause);
+
+    /**
+     * Privileged System.loadLibrary
+     *
+     * @param caller on behalf of which the library is being loaded
+     * @param library name of the library to load
+     */
+    void loadLibrary(Class<?> caller, String library);
 
     /**
      * Returns a reference to the Thread object for the currently executing
