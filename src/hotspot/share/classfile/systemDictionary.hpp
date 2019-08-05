@@ -353,7 +353,9 @@ public:
   static bool do_unloading(GCTimer* gc_timer);
 
   // Applies "f->do_oop" to all root oops in the system dictionary.
-  static void oops_do(OopClosure* f);
+  // If include_handles is true (the default), then the handles in the
+  // storage object returned by vm_global_oop_storage() are included.
+  static void oops_do(OopClosure* f, bool include_handles = true);
 
   // System loader lock
   static oop system_loader_lock()           { return _system_loader_lock_obj; }
@@ -568,7 +570,8 @@ public:
   // ProtectionDomain cache
   static ProtectionDomainCacheTable*   _pd_cache_table;
 
-  // VM weak OopStorage object.
+  // VM OopStorage objects.
+  static OopStorage*             _vm_global_oop_storage;
   static OopStorage*             _vm_weak_oop_storage;
 
 protected:
@@ -626,6 +629,7 @@ public:
   }
 
   static void initialize_oop_storage();
+  static OopStorage* vm_global_oop_storage();
   static OopStorage* vm_weak_oop_storage();
 
 protected:

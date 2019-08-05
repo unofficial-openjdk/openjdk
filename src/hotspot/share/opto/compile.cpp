@@ -2402,13 +2402,6 @@ void Compile::Optimize() {
   }
 
 #ifdef ASSERT
-  bs->verify_gc_barriers(this, BarrierSetC2::BeforeLateInsertion);
-#endif
-
-  bs->barrier_insertion_phase(C, igvn);
-  if (failing())  return;
-
-#ifdef ASSERT
   bs->verify_gc_barriers(this, BarrierSetC2::BeforeMacroExpand);
 #endif
 
@@ -2421,6 +2414,13 @@ void Compile::Optimize() {
     }
     print_method(PHASE_MACRO_EXPANSION, 2);
   }
+
+#ifdef ASSERT
+  bs->verify_gc_barriers(this, BarrierSetC2::BeforeLateInsertion);
+#endif
+
+  bs->barrier_insertion_phase(C, igvn);
+  if (failing())  return;
 
   {
     TracePhase tp("barrierExpand", &timers[_t_barrierExpand]);

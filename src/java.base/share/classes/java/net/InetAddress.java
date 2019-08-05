@@ -49,6 +49,7 @@ import java.util.Arrays;
 
 import jdk.internal.access.JavaNetInetAddressAccess;
 import jdk.internal.access.SharedSecrets;
+import jdk.internal.misc.Blocker;
 import sun.security.action.*;
 import sun.net.InetAddressCachePolicy;
 import sun.net.util.IPAddressUtil;
@@ -317,13 +318,7 @@ class InetAddress implements java.io.Serializable {
         } else {
             preferIPv6Address = PREFER_IPV4_VALUE;
         }
-        AccessController.doPrivileged(
-            new java.security.PrivilegedAction<>() {
-                public Void run() {
-                    System.loadLibrary("net");
-                    return null;
-                }
-            });
+        jdk.internal.loader.BootLoader.loadLibrary("net");
         SharedSecrets.setJavaNetInetAddressAccess(
                 new JavaNetInetAddressAccess() {
                     public String getOriginalHostName(InetAddress ia) {
@@ -926,13 +921,13 @@ class InetAddress implements java.io.Serializable {
         public InetAddress[] lookupAllHostAddr(String host)
             throws UnknownHostException
         {
-            return impl.lookupAllHostAddr(host);
+            return Blocker.run(() -> impl.lookupAllHostAddr(host));
         }
 
         public String getHostByAddr(byte[] addr)
             throws UnknownHostException
         {
-            return impl.getHostByAddr(addr);
+            return Blocker.run(() -> impl.getHostByAddr(addr));
         }
     }
 
