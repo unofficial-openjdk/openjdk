@@ -342,6 +342,8 @@ bool frame::can_be_deoptimized() const {
 }
 
 void frame::deoptimize(JavaThread* thread) {
+  // tty->print_cr(">>> frame::deoptimize");
+  // print_on(tty);
   assert(thread->frame_anchor()->has_last_Java_frame() &&
          thread->frame_anchor()->walkable(), "must be");
   // Schedule deoptimization of an nmethod activation with this frame.

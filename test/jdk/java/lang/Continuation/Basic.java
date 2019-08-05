@@ -28,28 +28,28 @@
 * @summary Basic tests for java.lang.Continuation
 *
 * @run testng/othervm -Xint -XX:-UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -Xint -XX:+UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:-UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,Basic.manyArgsDriver -XX:-UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,java/lang/Continuation.enter -XX:-UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=inline,java/lang/Continuation.run -XX:-UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
-* @run testng/othervm -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:-UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:+UnlockDiagnosticVMOptions -XX:TieredStopAtLevel=3 -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy Basic
+* @run testng/othervm -Xint -XX:+UseContinuationLazyCopy Basic
+* @run testng/othervm -Xcomp -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:-UseContinuationLazyCopy Basic
+* @run testng/othervm -Xcomp -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,Basic.manyArgsDriver -XX:-UseContinuationLazyCopy Basic
+* @run testng/othervm -Xcomp -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,java/lang/Continuation.enter -XX:-UseContinuationLazyCopy Basic
+* @run testng/othervm -Xcomp -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=inline,java/lang/Continuation.run -XX:-UseContinuationLazyCopy Basic
+* @run testng/othervm -Xcomp -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy Basic
+* @run testng/othervm -Xcomp -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
+* @run testng/othervm -Xcomp -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
+* @run testng/othervm -Xcomp -XX:TieredStopAtLevel=3 -XX:CompileOnly=java/lang/Continuation,Basic -XX:-UseContinuationLazyCopy Basic
+* @run testng/othervm -Xcomp -XX:TieredStopAtLevel=3 -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy Basic
 */
 
 /*
 Graal tests currently disabled until we can find the problem with monitor pinned tests.
 
-* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:-UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,Basic.manyArgsDriver -XX:-UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,java/lang/Continuation.enter -XX:-UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=inline,java/lang/Continuation.run -XX:-UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy Basic
-* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
-* @run testng/othervm -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:+UnlockDiagnosticVMOptions -XX:-TieredCompilation -Xcomp -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
+* @run testng/othervm -Xcomp -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:CompileOnly=java/lang/Continuation,Basic -XX:-UseContinuationLazyCopy Basic
+* @run testng/othervm -Xcomp -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,Basic.manyArgsDriver -XX:-UseContinuationLazyCopy Basic
+* @run testng/othervm -Xcomp -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=exclude,java/lang/Continuation.enter -XX:-UseContinuationLazyCopy Basic
+* @run testng/othervm -Xcomp -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:CompileCommand=inline,java/lang/Continuation.run -XX:-UseContinuationLazyCopy Basic
+* @run testng/othervm -Xcomp -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy Basic
+* @run testng/othervm -Xcomp -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy -XX:CompileCommand=exclude,Basic.manyArgsDriver Basic
+* @run testng/othervm -Xcomp -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler -XX:-TieredCompilation -XX:CompileOnly=java/lang/Continuation,Basic -XX:+UseContinuationLazyCopy -XX:CompileCommand=exclude,java/lang/Continuation.enter Basic
 */
 
 // Anything excluded or not compileonly is not compiled; see CompilerOracle::should_exclude

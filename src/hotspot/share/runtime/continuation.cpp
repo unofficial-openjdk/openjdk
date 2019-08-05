@@ -146,6 +146,7 @@ PERFTEST_ONLY(static int PERFTEST_LEVEL = ContPerfTest;)
 #define RUN_SIG    "java.lang.Continuation.run()V"
 
 static bool is_stub(CodeBlob* cb);
+template<bool indirect>
 static void set_anchor(JavaThread* thread, const FrameInfo* fi);
 // static void set_anchor(JavaThread* thread, const frame& f); -- unused
 
@@ -185,7 +186,7 @@ STATIC_ASSERT(elementSizeInBytes <<  LogElemsPerWord == wordSize);
 static const unsigned char FLAG_LAST_FRAME_INTERPRETED = 1;
 static const unsigned char FLAG_SAFEPOINT_YIELD = 1 << 1;
 
-static const int SP_WIGGLE = 2;
+static const int SP_WIGGLE = 3; // depends on the extra space between interpreted and compiled we add in Thaw::align
 
 void continuations_init() {
   Continuations::init();
@@ -1069,8 +1070,8 @@ public:
   static inline void to_frame_info(const frame& f, const frame& callee, FrameInfo* fi);
   template<typename FKind> static inline void to_frame_info_pd(const frame& f, const frame& callee, FrameInfo* fi);
   static inline void to_frame_info_pd(const frame& f, FrameInfo* fi);
+  template<bool indirect>
   static inline frame to_frame(FrameInfo* fi);
-  static inline frame to_frame_indirect(FrameInfo* fi);
   static inline void set_last_vstack_frame(RegisterMap* map, const frame& callee);
   static inline void clear_last_vstack_frame(RegisterMap* map);
 };
@@ -1299,7 +1300,7 @@ static inline void clear_anchor(JavaThread* thread) {
 #ifdef ASSERT
 static void set_anchor(ContMirror& cont) {
   FrameInfo fi = { cont.entryPC(), cont.entryFP(), cont.entrySP() };
-  set_anchor(cont.thread(), &fi);
+  set_anchor<false>(cont.thread(), &fi);
 }
 #endif
 
@@ -1566,7 +1567,7 @@ private:
 
   template<typename FKind> static inline frame sender(const frame& f);
   template <typename FKind, bool top, bool bottom> inline void patch_pd(const frame& f, hframe& callee, const hframe& caller);
-  template <bool bottom> inline void align(const hframe& caller);
+  template <bool bottom> inline void align(const hframe& caller, int argsize);
   inline void relativize_interpreted_frame_metadata(const frame& f, intptr_t* vsp, const hframe& hf);
   template<bool cont_empty> hframe new_bottom_hframe(int sp, int ref_sp, address pc, bool interpreted);
   template<typename FKind> hframe new_hframe(const frame& f, intptr_t* vsp, const hframe& caller, int fsize, int num_oops, int argsize);
@@ -1846,7 +1847,7 @@ public:
   #ifdef ASSERT
     // if (f.pc() != real_pc(f)) tty->print_cr("Continuation.run deopted!");
     log_develop_debug(jvmcont)("Jumping to frame (freeze): [%ld] (%d)", java_tid(_thread), _thread->has_pending_exception());
-    frame f1 = ContinuationHelper::to_frame_indirect(_fi);
+    frame f1 = ContinuationHelper::to_frame<true>(_fi);
     if (log_develop_is_enabled(Debug, jvmcont)) f1.print_on(tty);
     assert_top_java_frame_name(f1, RUN_SIG);
   #endif
@@ -2022,7 +2023,7 @@ public:
       }
       log_develop_trace(jvmcont)("freeze_compiled_frame add argsize: fsize: %d argsize: %d fsize: %d", fsize, argsize, fsize + argsize);
       fsize += argsize;
-      align<bottom>(caller); // TODO PERF
+      align<bottom>(caller, argsize); // TODO PERF
     }
 
     hframe hf = new_hframe<FKind>(f, vsp, caller, fsize, oops, argsize);
@@ -2336,8 +2337,9 @@ static void invlidate_JVMTI_stack(JavaThread* thread) {
   }
 }
 
-static void post_JVMTI_yield(JavaThread* thread, ContMirror& cont) {
+static void post_JVMTI_yield(JavaThread* thread, ContMirror& cont, const FrameInfo* fi) {
   if (JvmtiExport::should_post_continuation_yield() || JvmtiExport::can_post_frame_pop()) {
+    set_anchor<true>(thread, fi); // ensure frozen frames are invisible
     JvmtiExport::post_continuation_yield(JavaThread::current(), num_java_frames(cont));
   }
 
@@ -2397,7 +2399,7 @@ int freeze0(JavaThread* thread, FrameInfo* fi) {
   cont.write(); // commit the freeze
 
   cont.post_jfr_event(&event);
-  post_JVMTI_yield(thread, cont); // can safepoint
+  post_JVMTI_yield(thread, cont, fi); // can safepoint
 
   // set_anchor(thread, fi);
   thread->set_cont_yield(false);
@@ -2598,7 +2600,7 @@ JRT_LEAF(int, Continuation::prepare_thaw(FrameInfo* fi, bool return_barrier))
   if (size == 0) { // no more frames
     return 0;
   }
-  size += sizeof(intptr_t); // just in case we have an interpreted entry after which we need to align
+  size += SP_WIGGLE * sizeof(intptr_t); // just in case we have an interpreted entry after which we need to align
 
   const address bottom = (address)fi->sp; // os::current_stack_pointer(); points to the entry frame
   if (!stack_overflow_check(thread, size + 300, bottom)) {
@@ -2785,6 +2787,7 @@ public:
     caller = FKind::interpreted ? thaw_interpreted_frame    <top, bottom>(hf, caller, (InterpreterOopMap*)extra)
                                 : thaw_compiled_frame<FKind, top, bottom>(hf, caller, (ThawFnT)extra);
 
+    log_develop_trace(jvmcont)("thawed frame:");
     DEBUG_ONLY(print_vframe(caller, &dmap);)
   }
 
@@ -3037,6 +3040,7 @@ public:
     assert (!f.is_compiled_frame() || f.is_deoptimized_frame() == f.cb()->as_compiled_method()->is_deopt_pc(f.raw_pc()), "");
     assert (!f.is_compiled_frame() || f.is_deoptimized_frame() == (f.pc() != f.raw_pc()), "");
 
+    assert ((address)(_fi + 1) < (address)f.sp(), "");
     _fi->sp = f.sp();
     address pc = f.raw_pc();
     _fi->pc = pc;
@@ -3145,7 +3149,7 @@ public:
 
 static void post_JVMTI_continue(JavaThread* thread, FrameInfo* fi, int java_frame_count) {
   if (JvmtiExport::should_post_continuation_run()) {
-    set_anchor(thread, fi); // ensure thawed frames are visible
+    set_anchor<false>(thread, fi); // ensure thawed frames are visible
     JvmtiExport::post_continuation_run(JavaThread::current(), java_frame_count);
     clear_anchor(thread);
   }
@@ -3208,7 +3212,7 @@ static inline void thaw0(JavaThread* thread, FrameInfo* fi, const bool return_ba
   log_develop_trace(jvmcont)("fi->sp: " INTPTR_FORMAT " fi->fp: " INTPTR_FORMAT " fi->pc: " INTPTR_FORMAT, p2i(fi->sp), p2i(fi->fp), p2i(fi->pc));
 
 #ifndef PRODUCT
-  set_anchor(thread, fi);
+  set_anchor<false>(thread, fi);
   print_frames(thread, tty); // must be done after write(), as frame walking reads fields off the Java objects.
   clear_anchor(thread);
 #endif
@@ -3259,7 +3263,7 @@ JRT_ENTRY(address, Continuation::thaw(JavaThread* thread, FrameInfo* fi, bool re
   assert(thread == JavaThread::current(), "");
 
   thaw0(thread, fi, return_barrier);
-  set_anchor(thread, fi); // we're in a full transition that expects last_java_frame
+  set_anchor<false>(thread, fi); // we're in a full transition that expects last_java_frame
 
   if (exception) {
     // TODO: handle deopt. see TemplateInterpreterGenerator::generate_throw_exception, OptoRuntime::handle_exception_C, OptoRuntime::handle_exception_helper
@@ -3282,6 +3286,10 @@ bool Continuation::is_continuation_entry_frame(const frame& f, const RegisterMap
   return m->intrinsic_id() == vmIntrinsics::_Continuation_enter;
 }
 
+bool Continuation::is_cont_post_barrier_entry_frame(const frame& f) {
+  return is_return_barrier_entry(Frame::real_pc(f));
+}
+
 // When walking the virtual stack, this method returns true
 // iff the frame is a thawed continuation frame whose
 // caller is still frozen on the h-stack.
@@ -3294,7 +3302,6 @@ bool Continuation::is_cont_barrier_frame(const frame& f) {
 #endif
   assert (f.is_interpreted_frame() || f.cb() != NULL, "");
   return is_return_barrier_entry(f.is_interpreted_frame() ? Interpreted::return_pc(f) : Compiled::return_pc(f));
-  // return is_return_barrier_entry(CHOOSE1(f.is_interpreted_frame(), return_pc, f));
 }
 
 bool Continuation::is_return_barrier_entry(const address pc) {
@@ -3358,7 +3365,6 @@ static address get_entry_pc_past_barrier(JavaThread* thread, const frame& f) {
   assert (pc != NULL, "");
   return pc;
 }
-
 bool Continuation::fix_continuation_bottom_sender(RegisterMap* map, const frame& callee, address* sender_pc, intptr_t** sender_sp) {
   bool res = fix_continuation_bottom_sender(map->thread(), callee, sender_pc, sender_sp);
   if (res && !callee.is_interpreted_frame()) {
@@ -3370,10 +3376,11 @@ bool Continuation::fix_continuation_bottom_sender(RegisterMap* map, const frame&
 }
 
 bool Continuation::fix_continuation_bottom_sender(JavaThread* thread, const frame& callee, address* sender_pc, intptr_t** sender_sp) {
-  // tty->print_cr(">>> fix_continuation_bottom_sender: %p", *sender_pc);
   if (thread != NULL && is_return_barrier_entry(*sender_pc)) {
-    *sender_pc = get_entry_pc_past_barrier(thread, callee);
-    if (callee.is_compiled_frame()) {
+    address new_pc = get_entry_pc_past_barrier(thread, callee);
+    log_develop_trace(jvmcont)("fix_continuation_bottom_sender: sender_pc: " INTPTR_FORMAT " -> " INTPTR_FORMAT, p2i(*sender_pc), p2i(new_pc));
+    *sender_pc = new_pc; 
+    if (callee.is_compiled_frame() && !Interpreter::contains(*sender_pc)) {
       // The callee's stack arguments (part of the caller frame) are also thawed to the stack when using lazy-copy
       int argsize = callee.cb()->as_compiled_method()->method()->num_stack_arg_slots() * VMRegImpl::stack_slot_size;
       assert ((argsize & WordAlignmentMask) == 0, "must be");
@@ -3382,10 +3389,9 @@ bool Continuation::fix_continuation_bottom_sender(JavaThread* thread, const fram
       if (argsize % 2 != 0)
         argsize++; // 16-byte alignment for compiled frame sp
     #endif
-      // tty->print_cr(">>> fix_continuation_bottom_sender sp0: %p sp1: %p", *sender_sp, *sender_sp + argsize);
+      log_develop_trace(jvmcont)("fix_continuation_bottom_sender: sender_sp: " INTPTR_FORMAT " -> " INTPTR_FORMAT, p2i(*sender_sp), p2i(*sender_sp + argsize));
       *sender_sp += argsize;
     }
-    // tty->print_cr(">>> fix_continuation_bottom_sender 2: %p", *sender_pc);
     return true;
   }
   return false;
@@ -3408,6 +3414,14 @@ frame Continuation::fix_continuation_bottom_sender(const frame& callee, Register
   }
 
   return f;
+}
+
+address Continuation::get_top_return_pc_post_barrier(JavaThread* thread, address pc) {
+  oop cont;
+  if (thread != NULL && is_return_barrier_entry(pc) && (cont = get_continuation(thread)) != NULL) {
+    pc = java_lang_Continuation::entryPC(cont);
+  }
+  return pc;
 }
 
 bool Continuation::is_scope_bottom(oop cont_scope, const frame& f, const RegisterMap* map) {
@@ -3551,6 +3565,17 @@ frame Continuation::sender_for_interpreter_frame(const frame& callee, RegisterMa
 
 frame Continuation::sender_for_compiled_frame(const frame& callee, RegisterMap* map) {
   return sender_for_frame(callee, map);
+}
+
+int Continuation::frame_size(const frame& f, const RegisterMap* map) {
+  if (map->in_cont()) {
+    ContMirror cont(map);
+    hframe hf = cont.from_frame(f);
+    return (hf.is_interpreted_frame() ? hf.interpreted_frame_size() : hf.compiled_frame_size()) >> LogBytesPerWord;
+  } else {
+    assert (Continuation::is_cont_barrier_frame(f), "");
+    return (f.is_interpreted_frame() ? ((address)Interpreted::frame_bottom(f) - (address)f.sp()) : NonInterpretedUnknown::size(f)) >> LogBytesPerWord;
+  }
 }
 
 class OopIndexClosure : public OopMapClosure {
@@ -4436,7 +4461,7 @@ static void print_frames(JavaThread* thread, outputStream* st) {
   int i = 0;
   for (frame f = thread->last_frame(); !f.is_entry_frame(); f = f.sender(&map)) {
 #ifndef PRODUCT
-    // print_vframe(f, &map, st);
+    print_vframe(f, &map, st);
     f.describe(values, i, &map);
 #else
     print_vframe(f, &map, st);

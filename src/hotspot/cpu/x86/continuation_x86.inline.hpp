@@ -29,10 +29,11 @@
 #include "runtime/frame.hpp"
 #include "runtime/frame.inline.hpp"
 
+template<bool indirect>
 static void set_anchor(JavaThread* thread, const FrameInfo* fi) {
   JavaFrameAnchor* anchor = thread->frame_anchor();
   anchor->set_last_Java_sp((intptr_t*)fi->sp);
-  anchor->set_last_Java_fp((intptr_t*)fi->fp);
+  anchor->set_last_Java_fp(indirect ? *(intptr_t**)fi->fp : (intptr_t*)fi->fp); // there is an indirection in fi->fp in the FrameInfo created by Freeze::setup_jump
   anchor->set_last_Java_pc(fi->pc);
 
   assert (thread->has_last_Java_frame(), "");
@@ -658,18 +659,14 @@ inline void ContinuationHelper::to_frame_info_pd(const frame& f, FrameInfo* fi) 
   fi->fp = f.fp();
 }
 
+template<bool indirect>
 inline frame ContinuationHelper::to_frame(FrameInfo* fi) {
   address pc = fi->pc;
   int slot;
   CodeBlob* cb = ContinuationCodeBlobLookup::find_blob_and_oopmap(pc, slot);
-  return frame(fi->sp, fi->sp, fi->fp, pc, cb, slot == -1 ? NULL : cb->oop_map_for_slot(slot, pc));
-}
-
-inline frame ContinuationHelper::to_frame_indirect(FrameInfo* fi) {
-  address pc = fi->pc;
-  int slot;
-  CodeBlob* cb = ContinuationCodeBlobLookup::find_blob_and_oopmap(pc, slot);
-  return frame(fi->sp, fi->sp, (intptr_t*)*fi->fp, pc, cb, slot == -1 ? NULL : cb->oop_map_for_slot(slot, pc));
+  return frame(fi->sp, fi->sp, 
+    indirect ? *(intptr_t**)fi->fp : fi->fp, 
+    pc, cb, slot == -1 ? NULL : cb->oop_map_for_slot(slot, pc));
 }
 
 // creates the yield stub frame faster than JavaThread::last_frame
@@ -825,10 +822,12 @@ inline void Freeze<ConfigT, mode>::patch_pd(const frame& f, hframe& hf, const hf
 
 template <typename ConfigT, op_mode mode>
 template <bool bottom>
-inline void Freeze<ConfigT, mode>::align(const hframe& caller) {
+inline void Freeze<ConfigT, mode>::align(const hframe& caller, int argsize) {
   assert (mode != mode_fast || bottom || !Interpreter::contains(caller.pc()), "");
   if ((mode != mode_fast || bottom) && caller.is_interpreted_frame()) {
-    _cont.add_size(sizeof(intptr_t));
+    assert (argsize >= 0, "");
+    // See Thaw::align
+    _cont.add_size((SP_WIGGLE + ((argsize /* / 2*/) >> LogBytesPerWord)) * sizeof(intptr_t));
   }
 }
 
@@ -851,6 +850,7 @@ inline void Freeze<ConfigT, mode>::relativize_interpreted_frame_metadata(const f
 
 template <typename ConfigT, op_mode mode>
 inline frame Thaw<ConfigT, mode>::new_entry_frame() {
+  // if (Interpreter::contains(_cont.entryPC())) _cont.set_entrySP(_cont.entrySP() - 1);
   return frame(_cont.entrySP(), _cont.entryFP(), _cont.entryPC()); // TODO PERF: This finds code blob and computes deopt state
 }
 
@@ -885,22 +885,46 @@ inline intptr_t* Thaw<ConfigT, mode>::align(const hframe& hf, intptr_t* vsp, fra
   assert (mode != mode_fast || bottom, "");
 
   if (!FKind::interpreted && !FKind::stub) {
+    int addedWords = 0;
     assert (_cont.is_flag(FLAG_LAST_FRAME_INTERPRETED) == Interpreter::contains(_cont.pc()), "");
-    if ((!bottom && mode != mode_fast && caller.is_interpreted_frame())
+    if (((bottom || mode != mode_fast) && caller.is_interpreted_frame()) 
         || (bottom && _cont.is_flag(FLAG_LAST_FRAME_INTERPRETED))) {
-      _cont.sub_size(sizeof(intptr_t)); // we do this whether or not we've aligned because we add it in freeze_interpreted_frame
-    }
 
+      // Deoptimization likes ample room between interpreted frames and compiled frames. 
+      // This is due to caller_adjustment calculation in Deoptimization::fetch_unroll_info_helper.
+      // An attempt to simplify that calculation and make more room during deopt has failed some tests.
+
+      addedWords = (SP_WIGGLE-1); // We subtract 1 for alignment, which we may add later
+
+      // SharedRuntime::gen_i2c_adapter makes room that's twice as big as required for the stack-passed arguments by counting slots but subtracting words from rsp 
+      assert (VMRegImpl::stack_slot_size == 4, "");
+      int argsize = hf.compiled_frame_stack_argsize();
+      assert (argsize >= 0, "");
+      addedWords += (argsize /* / 2*/) >> LogBytesPerWord; // Not sure why dividing by 2 is not big enough.
+
+      if (!bottom || _cont.is_flag(FLAG_LAST_FRAME_INTERPRETED)) {
+        _cont.sub_size((1 + addedWords) * sizeof(intptr_t)); // we add one whether or not we've aligned because we add it in freeze_interpreted_frame
+      } 
+      if (!bottom || caller.is_interpreted_frame()) {
+        log_develop_trace(jvmcont)("Aligning compiled frame 0: " INTPTR_FORMAT " -> " INTPTR_FORMAT, p2i(vsp), p2i(vsp - addedWords));
+        vsp -= addedWords;
+      } else {
+        addedWords = 0;
+      }
+    }
   #ifdef _LP64
     if ((intptr_t)vsp % 16 != 0) {
-      log_develop_trace(jvmcont)("Aligning compiled frame: " INTPTR_FORMAT " -> " INTPTR_FORMAT, p2i(vsp), p2i(vsp - 1));
+      log_develop_trace(jvmcont)("Aligning compiled frame 1: " INTPTR_FORMAT " -> " INTPTR_FORMAT, p2i(vsp), p2i(vsp - 1));
       assert(caller.is_interpreted_frame() 
         || (bottom && !FKind::stub && hf.compiled_frame_stack_argsize() % 16 != 0), "");
+      addedWords++;
       vsp--;
-      caller.set_sp(caller.sp() - 1);
     }
     assert((intptr_t)vsp % 16 == 0, "");
   #endif
+
+   log_develop_trace(jvmcont)("Aligning sender sp: " INTPTR_FORMAT " -> " INTPTR_FORMAT, p2i(caller.sp()), p2i(caller.sp() - addedWords));
+    caller.set_sp(caller.sp() - addedWords);
   }
 
   return vsp;

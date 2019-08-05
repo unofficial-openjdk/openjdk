@@ -78,6 +78,7 @@ public:
 
   static oop  get_continutation_for_frame(JavaThread* thread, const frame& f);
   static bool is_continuation_entry_frame(const frame& f, const RegisterMap* map);
+  static bool is_cont_post_barrier_entry_frame(const frame& f);
   static bool is_cont_barrier_frame(const frame& f);
   static bool is_return_barrier_entry(const address pc);
   static bool is_frame_in_continuation(const frame& f, oop cont);
@@ -86,10 +87,12 @@ public:
   static bool fix_continuation_bottom_sender(RegisterMap* map, const frame& callee, address* sender_pc, intptr_t** sender_sp);
   static frame fix_continuation_bottom_sender(const frame& callee, RegisterMap* map, frame f);
   static address* get_continuation_entry_pc_for_sender(Thread* thread, const frame& f, address* pc_addr);
+  static address get_top_return_pc_post_barrier(JavaThread* thread, address pc);
 
   static frame top_frame(const frame& callee, RegisterMap* map);
   static frame sender_for_interpreter_frame(const frame& callee, RegisterMap* map);
   static frame sender_for_compiled_frame(const frame& callee, RegisterMap* map);
+  static int frame_size(const frame& f, const RegisterMap* map);
 
   static bool has_last_Java_frame(Handle continuation);
   static frame last_frame(Handle continuation, RegisterMap *map);

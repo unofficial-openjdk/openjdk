@@ -3423,7 +3423,7 @@ void JavaThread::trace_stack() {
   if (!has_last_Java_frame()) return;
   ResourceMark rm;
   HandleMark   hm;
-  RegisterMap reg_map(this);
+  RegisterMap reg_map(this, true, true);
   trace_stack_from(last_java_vframe(&reg_map));
 }
 
