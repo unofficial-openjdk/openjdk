@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2018 SAP SE. All rights reserved.
+ * Copyright (c) 2012, 2019 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,13 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/ldr.h>
 #include <errno.h>
 
 #include "porting_aix.h"
 
-static unsigned char dladdr_buffer[0x4000];
+static unsigned char dladdr_buffer[0x8000];
 
 static void fill_dll_info(void) {
   int rc = loadquery(L_GETINFO,dladdr_buffer, sizeof(dladdr_buffer));

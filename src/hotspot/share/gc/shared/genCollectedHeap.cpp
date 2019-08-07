@@ -575,9 +575,6 @@ void GenCollectedHeap::do_collection(bool           full,
 
   ClearedAllSoftRefs casr(do_clear_all_soft_refs, soft_ref_policy());
 
-  const size_t metadata_prev_used = MetaspaceUtils::used_bytes();
-
-
   FlagSetting fl(_is_gc_active, true);
 
   bool complete = full && (max_generation == OldGen);
@@ -586,6 +583,7 @@ void GenCollectedHeap::do_collection(bool           full,
 
   size_t young_prev_used = _young_gen->used();
   size_t old_prev_used = _old_gen->used();
+  const metaspace::MetaspaceSizesSnapshot prev_meta_sizes;
 
   bool run_verification = total_collections() >= VerifyGCStartAt;
   bool prepared_for_verification = false;
@@ -628,7 +626,7 @@ void GenCollectedHeap::do_collection(bool           full,
       _young_gen->compute_new_size();
 
       print_heap_change(young_prev_used, old_prev_used);
-      MetaspaceUtils::print_metaspace_change(metadata_prev_used);
+      MetaspaceUtils::print_metaspace_change(prev_meta_sizes);
 
       // Track memory usage and detect low memory after GC finishes
       MemoryService::track_memory_usage();
@@ -687,7 +685,7 @@ void GenCollectedHeap::do_collection(bool           full,
     update_full_collections_completed();
 
     print_heap_change(young_prev_used, old_prev_used);
-    MetaspaceUtils::print_metaspace_change(metadata_prev_used);
+    MetaspaceUtils::print_metaspace_change(prev_meta_sizes);
 
     // Track memory usage and detect low memory after GC finishes
     MemoryService::track_memory_usage();
@@ -863,11 +861,6 @@ void GenCollectedHeap::process_roots(StrongRootsScope* scope,
     AOTLoader::oops_do(strong_roots);
   }
 #endif
-#if INCLUDE_JVMCI
-  if (EnableJVMCI && _process_strong_tasks->try_claim_task(GCH_PS_jvmci_oops_do)) {
-    JVMCI::oops_do(strong_roots);
-  }
-#endif
   if (_process_strong_tasks->try_claim_task(GCH_PS_SystemDictionary_oops_do)) {
     SystemDictionary::oops_do(strong_roots);
   }
@@ -954,8 +947,9 @@ HeapWord** GenCollectedHeap::end_addr() const {
 // public collection interfaces
 
 void GenCollectedHeap::collect(GCCause::Cause cause) {
-  if (cause == GCCause::_wb_young_gc) {
-    // Young collection for the WhiteBox API.
+  if ((cause == GCCause::_wb_young_gc) ||
+      (cause == GCCause::_gc_locker)) {
+    // Young collection for WhiteBox or GCLocker.
     collect(cause, YoungGen);
   } else {
 #ifdef ASSERT
@@ -993,6 +987,11 @@ void GenCollectedHeap::collect_locked(GCCause::Cause cause, GenerationType max_g
   // Read the GC count while holding the Heap_lock
   unsigned int gc_count_before      = total_collections();
   unsigned int full_gc_count_before = total_full_collections();
+
+  if (GCLocker::should_discard(cause, gc_count_before)) {
+    return;
+  }
+
   {
     MutexUnlocker mu(Heap_lock);  // give up heap lock, execute gets it back
     VM_GenCollectFull op(gc_count_before, full_gc_count_before,
@@ -1007,24 +1006,15 @@ void GenCollectedHeap::do_full_collection(bool clear_all_soft_refs) {
 
 void GenCollectedHeap::do_full_collection(bool clear_all_soft_refs,
                                           GenerationType last_generation) {
-  GenerationType local_last_generation;
-  if (!incremental_collection_will_fail(false /* don't consult_young */) &&
-      gc_cause() == GCCause::_gc_locker) {
-    local_last_generation = YoungGen;
-  } else {
-    local_last_generation = last_generation;
-  }
-
   do_collection(true,                   // full
                 clear_all_soft_refs,    // clear_all_soft_refs
                 0,                      // size
                 false,                  // is_tlab
-                local_last_generation); // last_generation
+                last_generation);       // last_generation
   // Hack XXX FIX ME !!!
   // A scavenge may not have been attempted, or may have
   // been attempted and failed, because the old gen was too full
-  if (local_last_generation == YoungGen && gc_cause() == GCCause::_gc_locker &&
-      incremental_collection_will_fail(false /* don't consult_young */)) {
+  if (gc_cause() == GCCause::_gc_locker && incremental_collection_failed()) {
     log_debug(gc, jni)("GC locker: Trying a full collection because scavenge failed");
     // This time allow the old gen to be collected as well
     do_collection(true,                // full

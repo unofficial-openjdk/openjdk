@@ -46,6 +46,8 @@ extern Mutex*   JNIWeakActive_lock;              // JNI weak storage active list
 extern Mutex*   StringTableWeakAlloc_lock;       // StringTable weak storage allocate list lock
 extern Mutex*   StringTableWeakActive_lock;      // STringTable weak storage active list lock
 extern Mutex*   JNIHandleBlockFreeList_lock;     // a lock on the JNI handle block free list
+extern Mutex*   VMGlobalAlloc_lock;              // VM Global Handles storage allocate list lock
+extern Mutex*   VMGlobalActive_lock;             // VM Global Handles storage active list lock
 extern Mutex*   VMWeakAlloc_lock;                // VM Weak Handles storage allocate list lock
 extern Mutex*   VMWeakActive_lock;               // VM Weak Handles storage active list lock
 extern Mutex*   ResolvedMethodTableWeakAlloc_lock;  // ResolvedMethodTable weak storage allocate list
@@ -77,8 +79,6 @@ extern Monitor* CGC_lock;                        // used for coordination betwee
                                                  // fore- & background GC threads.
 extern Monitor* STS_lock;                        // used for joining/leaving SuspendibleThreadSet.
 extern Monitor* FullGCCount_lock;                // in support of "concurrent" full gc
-extern Monitor* SATB_Q_CBL_mon;                  // Protects SATB Q
-                                                 // completed buffer queue.
 extern Monitor* DirtyCardQ_CBL_mon;              // Protects dirty card Q
                                                  // completed buffer queue.
 extern Mutex*   Shared_DirtyCardQ_lock;          // Lock protecting dirty card
@@ -159,8 +159,6 @@ extern Monitor* CodeHeapStateAnalytics_lock;     // lock print functions against
 
 #if INCLUDE_JVMCI
 extern Monitor* JVMCI_lock;                      // Monitor to control initialization of JVMCI
-extern Mutex*   JVMCIGlobalAlloc_lock;           // JVMCI global storage allocate list lock
-extern Mutex*   JVMCIGlobalActive_lock;          // JVMCI global storage active list lock
 #endif
 
 // A MutexLocker provides mutual exclusion with respect to a given mutex

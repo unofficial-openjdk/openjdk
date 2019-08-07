@@ -53,7 +53,7 @@ ifeq ($(HAS_SPEC),)
       COMPARE_BUILD JTREG GTEST MICRO TEST_OPTS TEST_VM_OPTS
 
   # All known make control variables
-  MAKE_CONTROL_VARIABLES := $(INIT_CONTROL_VARIABLES) TEST JDK_FILTER
+  MAKE_CONTROL_VARIABLES := $(INIT_CONTROL_VARIABLES) TEST JDK_FILTER SPEC_FILTER
 
   # Define a simple reverse function.
   # Should maybe move to MakeBase.gmk, but we can't include that file now.
@@ -424,8 +424,8 @@ else # $(HAS_SPEC)=true
 	        $(if $(filter all, $(LOG_REPORT)), \
 	          $(GREP) -v -e "^Note: including file:" <  $(logfile) || true $(NEWLINE) \
 	        , \
-	          ($(GREP) -v -e "^Note: including file:" <  $(logfile) || true) | $(HEAD) -n 12 $(NEWLINE) \
-	          if test `$(WC) -l < $(logfile)` -gt 12; then \
+	          ($(GREP) -v -e "^Note: including file:" <  $(logfile) || true) | $(HEAD) -n 15 $(NEWLINE) \
+	          if test `$(WC) -l < $(logfile)` -gt 15; then \
 	            $(ECHO) "   ... (rest of output omitted)" ; \
 	          fi $(NEWLINE) \
 	        ) \

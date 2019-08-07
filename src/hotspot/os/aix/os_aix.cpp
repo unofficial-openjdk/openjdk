@@ -487,8 +487,7 @@ static void query_multipage_support() {
       if (::shmctl(shmid, SHM_PAGESIZE, &shm_buf) != 0) {
         const int en = errno;
         ::shmctl(shmid, IPC_RMID, NULL); // As early as possible!
-        trcVerbose("shmctl(SHM_PAGESIZE) failed with errno=%n",
-          errno);
+        trcVerbose("shmctl(SHM_PAGESIZE) failed with errno=%d", errno);
       } else {
         // Attach and double check pageisze.
         void* p = ::shmat(shmid, NULL, 0);
@@ -496,7 +495,7 @@ static void query_multipage_support() {
         guarantee0(p != (void*) -1); // Should always work.
         const size_t real_pagesize = os::Aix::query_pagesize(p);
         if (real_pagesize != pagesize) {
-          trcVerbose("real page size (0x%llX) differs.", real_pagesize);
+          trcVerbose("real page size (" SIZE_FORMAT_HEX ") differs.", real_pagesize);
         } else {
           can_use = true;
         }
@@ -1314,6 +1313,8 @@ bool os::dll_address_to_library_name(address addr, char* buf,
 // for the same architecture as Hotspot is running on.
 void *os::dll_load(const char *filename, char *ebuf, int ebuflen) {
 
+  log_info(os)("attempting shared library load of %s", filename);
+
   if (ebuf && ebuflen > 0) {
     ebuf[0] = '\0';
     ebuf[ebuflen - 1] = '\0';
@@ -1330,6 +1331,7 @@ void *os::dll_load(const char *filename, char *ebuf, int ebuflen) {
     Events::log(NULL, "Loaded shared library %s", filename);
     // Reload dll cache. Don't do this in signal handling.
     LoadedLibraries::reload();
+    log_info(os)("shared library load of %s was successful", filename);
     return result;
   } else {
     // error analysis when dlopen fails
@@ -1342,6 +1344,7 @@ void *os::dll_load(const char *filename, char *ebuf, int ebuflen) {
                filename, ::getenv("LIBPATH"), ::getenv("LD_LIBRARY_PATH"), error_report);
     }
     Events::log(NULL, "Loading shared library %s failed, %s", filename, error_report);
+    log_info(os)("shared library load of %s failed, %s", filename, error_report);
   }
   return NULL;
 }
@@ -1662,16 +1665,8 @@ void os::print_jni_name_suffix_on(outputStream* st, int args_size) {
 ////////////////////////////////////////////////////////////////////////////////
 // sun.misc.Signal support
 
-static volatile jint sigint_count = 0;
-
 static void
 UserHandler(int sig, void *siginfo, void *context) {
-  // 4511530 - sem_post is serialized and handled by the manager thread. When
-  // the program is interrupted by Ctrl-C, SIGINT is sent to every thread. We
-  // don't want to flood the manager thread with sem_post requests.
-  if (sig == SIGINT && Atomic::add(1, &sigint_count) > 1)
-    return;
-
   // Ctrl-C is pressed during error reporting, likely because the error
   // handler fails to abort. Let VM die immediately.
   if (sig == SIGINT && VMError::is_error_reported()) {
@@ -1811,7 +1806,6 @@ void os::signal_notify(int sig) {
 }
 
 static int check_pending_signals() {
-  Atomic::store(0, &sigint_count);
   for (;;) {
     for (int i = 0; i < NSIG + 1; i++) {
       jint n = pending_signals[i];
@@ -1888,12 +1882,12 @@ struct vmembk_t {
     if (!contains_range(p, s)) {
       trcVerbose("[" PTR_FORMAT " - " PTR_FORMAT "] is not a sub "
               "range of [" PTR_FORMAT " - " PTR_FORMAT "].",
-              p, p + s, addr, addr + size);
+              p2i(p), p2i(p + s), p2i(addr), p2i(addr + size));
       guarantee0(false);
     }
     if (!is_aligned_to(p, pagesize) || !is_aligned_to(p + s, pagesize)) {
       trcVerbose("range [" PTR_FORMAT " - " PTR_FORMAT "] is not"
-              " aligned to pagesize (%lu)", p, p + s, (unsigned long) pagesize);
+              " aligned to pagesize (%lu)", p2i(p), p2i(p + s), (unsigned long) pagesize);
       guarantee0(false);
     }
   }
@@ -1964,7 +1958,7 @@ static char* reserve_shmated_memory (
 
   trcVerbose("reserve_shmated_memory " UINTX_FORMAT " bytes, wishaddress "
     PTR_FORMAT ", alignment_hint " UINTX_FORMAT "...",
-    bytes, requested_addr, alignment_hint);
+    bytes, p2i(requested_addr), alignment_hint);
 
   // Either give me wish address or wish alignment but not both.
   assert0(!(requested_addr != NULL && alignment_hint != 0));
@@ -1973,7 +1967,7 @@ static char* reserve_shmated_memory (
   // BRK because that may cause malloc OOM.
   if (requested_addr != NULL && is_close_to_brk((address)requested_addr)) {
     trcVerbose("Wish address " PTR_FORMAT " is too close to the BRK segment. "
-      "Will attach anywhere.", requested_addr);
+      "Will attach anywhere.", p2i(requested_addr));
     // Act like the OS refused to attach there.
     requested_addr = NULL;
   }
@@ -2025,7 +2019,7 @@ static char* reserve_shmated_memory (
 
   // Handle shmat error. If we failed to attach, just return.
   if (addr == (char*)-1) {
-    trcVerbose("Failed to attach segment at " PTR_FORMAT " (%d).", requested_addr, errno_shmat);
+    trcVerbose("Failed to attach segment at " PTR_FORMAT " (%d).", p2i(requested_addr), errno_shmat);
     return NULL;
   }
 
@@ -2033,15 +2027,15 @@ static char* reserve_shmated_memory (
   // work (see above), the system may have given us something other then 4K (LDR_CNTRL).
   const size_t real_pagesize = os::Aix::query_pagesize(addr);
   if (real_pagesize != shmbuf.shm_pagesize) {
-    trcVerbose("pagesize is, surprisingly, %h.", real_pagesize);
+    trcVerbose("pagesize is, surprisingly, " SIZE_FORMAT, real_pagesize);
   }
 
   if (addr) {
     trcVerbose("shm-allocated " PTR_FORMAT " .. " PTR_FORMAT " (" UINTX_FORMAT " bytes, " UINTX_FORMAT " %s pages)",
-      addr, addr + size - 1, size, size/real_pagesize, describe_pagesize(real_pagesize));
+      p2i(addr), p2i(addr + size - 1), size, size/real_pagesize, describe_pagesize(real_pagesize));
   } else {
     if (requested_addr != NULL) {
-      trcVerbose("failed to shm-allocate " UINTX_FORMAT " bytes at with address " PTR_FORMAT ".", size, requested_addr);
+      trcVerbose("failed to shm-allocate " UINTX_FORMAT " bytes at with address " PTR_FORMAT ".", size, p2i(requested_addr));
     } else {
       trcVerbose("failed to shm-allocate " UINTX_FORMAT " bytes at any address.", size);
     }
@@ -2057,7 +2051,7 @@ static char* reserve_shmated_memory (
 static bool release_shmated_memory(char* addr, size_t size) {
 
   trcVerbose("release_shmated_memory [" PTR_FORMAT " - " PTR_FORMAT "].",
-    addr, addr + size - 1);
+    p2i(addr), p2i(addr + size - 1));
 
   bool rc = false;
 
@@ -2073,12 +2067,12 @@ static bool release_shmated_memory(char* addr, size_t size) {
 
 static bool uncommit_shmated_memory(char* addr, size_t size) {
   trcVerbose("uncommit_shmated_memory [" PTR_FORMAT " - " PTR_FORMAT "].",
-    addr, addr + size - 1);
+    p2i(addr), p2i(addr + size - 1));
 
   const bool rc = my_disclaim64(addr, size);
 
   if (!rc) {
-    trcVerbose("my_disclaim64(" PTR_FORMAT ", " UINTX_FORMAT ") failed.\n", addr, size);
+    trcVerbose("my_disclaim64(" PTR_FORMAT ", " UINTX_FORMAT ") failed.\n", p2i(addr), size);
     return false;
   }
   return true;
@@ -2095,11 +2089,11 @@ static bool uncommit_shmated_memory(char* addr, size_t size) {
 static char* reserve_mmaped_memory(size_t bytes, char* requested_addr, size_t alignment_hint) {
   trcVerbose("reserve_mmaped_memory " UINTX_FORMAT " bytes, wishaddress " PTR_FORMAT ", "
     "alignment_hint " UINTX_FORMAT "...",
-    bytes, requested_addr, alignment_hint);
+    bytes, p2i(requested_addr), alignment_hint);
 
   // If a wish address is given, but not aligned to 4K page boundary, mmap will fail.
   if (requested_addr && !is_aligned_to(requested_addr, os::vm_page_size()) != 0) {
-    trcVerbose("Wish address " PTR_FORMAT " not aligned to page boundary.", requested_addr);
+    trcVerbose("Wish address " PTR_FORMAT " not aligned to page boundary.", p2i(requested_addr));
     return NULL;
   }
 
@@ -2107,7 +2101,7 @@ static char* reserve_mmaped_memory(size_t bytes, char* requested_addr, size_t al
   // BRK because that may cause malloc OOM.
   if (requested_addr != NULL && is_close_to_brk((address)requested_addr)) {
     trcVerbose("Wish address " PTR_FORMAT " is too close to the BRK segment. "
-      "Will attach anywhere.", requested_addr);
+      "Will attach anywhere.", p2i(requested_addr));
     // Act like the OS refused to attach there.
     requested_addr = NULL;
   }
@@ -2154,7 +2148,7 @@ static char* reserve_mmaped_memory(size_t bytes, char* requested_addr, size_t al
       PROT_READ|PROT_WRITE|PROT_EXEC, flags, -1, 0);
 
   if (addr == MAP_FAILED) {
-    trcVerbose("mmap(" PTR_FORMAT ", " UINTX_FORMAT ", ..) failed (%d)", requested_addr, size, errno);
+    trcVerbose("mmap(" PTR_FORMAT ", " UINTX_FORMAT ", ..) failed (%d)", p2i(requested_addr), size, errno);
     return NULL;
   }
 
@@ -2173,10 +2167,10 @@ static char* reserve_mmaped_memory(size_t bytes, char* requested_addr, size_t al
 
   if (addr) {
     trcVerbose("mmap-allocated " PTR_FORMAT " .. " PTR_FORMAT " (" UINTX_FORMAT " bytes)",
-      addr, addr + bytes, bytes);
+      p2i(addr), p2i(addr + bytes), bytes);
   } else {
     if (requested_addr != NULL) {
-      trcVerbose("failed to mmap-allocate " UINTX_FORMAT " bytes at wish address " PTR_FORMAT ".", bytes, requested_addr);
+      trcVerbose("failed to mmap-allocate " UINTX_FORMAT " bytes at wish address " PTR_FORMAT ".", bytes, p2i(requested_addr));
     } else {
       trcVerbose("failed to mmap-allocate " UINTX_FORMAT " bytes at any address.", bytes);
     }
@@ -2196,7 +2190,7 @@ static bool release_mmaped_memory(char* addr, size_t size) {
   assert0(is_aligned_to(size, os::vm_page_size()));
 
   trcVerbose("release_mmaped_memory [" PTR_FORMAT " - " PTR_FORMAT "].",
-    addr, addr + size - 1);
+    p2i(addr), p2i(addr + size - 1));
   bool rc = false;
 
   if (::munmap(addr, size) != 0) {
@@ -2216,7 +2210,7 @@ static bool uncommit_mmaped_memory(char* addr, size_t size) {
   assert0(is_aligned_to(size, os::vm_page_size()));
 
   trcVerbose("uncommit_mmaped_memory [" PTR_FORMAT " - " PTR_FORMAT "].",
-    addr, addr + size - 1);
+    p2i(addr), p2i(addr + size - 1));
   bool rc = false;
 
   // Uncommit mmap memory with msync MS_INVALIDATE.
@@ -2247,7 +2241,7 @@ int os::vm_allocation_granularity() {
 static void warn_fail_commit_memory(char* addr, size_t size, bool exec,
                                     int err) {
   warning("INFO: os::commit_memory(" PTR_FORMAT ", " SIZE_FORMAT
-          ", %d) failed; error='%s' (errno=%d)", addr, size, exec,
+          ", %d) failed; error='%s' (errno=%d)", p2i(addr), size, exec,
           os::errno_name(err), err);
 }
 #endif
@@ -2275,7 +2269,7 @@ bool os::pd_commit_memory(char* addr, size_t size, bool exec) {
   guarantee0(vmi);
   vmi->assert_is_valid_subrange(addr, size);
 
-  trcVerbose("commit_memory [" PTR_FORMAT " - " PTR_FORMAT "].", addr, addr + size - 1);
+  trcVerbose("commit_memory [" PTR_FORMAT " - " PTR_FORMAT "].", p2i(addr), p2i(addr + size - 1));
 
   if (UseExplicitCommit) {
     // AIX commits memory on touch. So, touch all pages to be committed.
@@ -4075,7 +4069,7 @@ void os::Aix::initialize_os_info() {
     assert(minor > 0, "invalid OS release");
     _os_version = (major << 24) | (minor << 16);
     char ver_str[20] = {0};
-    char *name_str = "unknown OS";
+    const char* name_str = "unknown OS";
     if (strcmp(uts.sysname, "OS400") == 0) {
       // We run on AS/400 PASE. We do not support versions older than V5R4M0.
       _on_pase = 1;
@@ -4086,19 +4080,19 @@ void os::Aix::initialize_os_info() {
       name_str = "OS/400 (pase)";
       jio_snprintf(ver_str, sizeof(ver_str), "%u.%u", major, minor);
     } else if (strcmp(uts.sysname, "AIX") == 0) {
-      // We run on AIX. We do not support versions older than AIX 5.3.
+      // We run on AIX. We do not support versions older than AIX 7.1.
       _on_pase = 0;
       // Determine detailed AIX version: Version, Release, Modification, Fix Level.
       odmWrapper::determine_os_kernel_version(&_os_version);
-      if (os_version_short() < 0x0503) {
-        trcVerbose("AIX release older than AIX 5.3 not supported.");
+      if (os_version_short() < 0x0701) {
+        trcVerbose("AIX releases older than AIX 7.1 are not supported.");
         assert(false, "AIX release too old.");
       }
       name_str = "AIX";
       jio_snprintf(ver_str, sizeof(ver_str), "%u.%u.%u.%u",
                    major, minor, (_os_version >> 8) & 0xFF, _os_version & 0xFF);
     } else {
-      assert(false, name_str);
+      assert(false, "%s", name_str);
     }
     trcVerbose("We run on %s %s", name_str, ver_str);
   }

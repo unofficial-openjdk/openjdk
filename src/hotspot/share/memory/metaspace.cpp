@@ -471,9 +471,36 @@ MetaspaceChunkFreeListSummary MetaspaceUtils::chunk_free_list_summary(Metaspace:
   return cm->chunk_free_list_summary();
 }
 
-void MetaspaceUtils::print_metaspace_change(size_t prev_metadata_used) {
-  log_info(gc, metaspace)("Metaspace: "  SIZE_FORMAT "K->" SIZE_FORMAT "K("  SIZE_FORMAT "K)",
-                          prev_metadata_used/K, used_bytes()/K, reserved_bytes()/K);
+void MetaspaceUtils::print_metaspace_change(const metaspace::MetaspaceSizesSnapshot& pre_meta_values) {
+  const metaspace::MetaspaceSizesSnapshot meta_values;
+
+  if (Metaspace::using_class_space()) {
+    log_info(gc, metaspace)(HEAP_CHANGE_FORMAT" "
+                            HEAP_CHANGE_FORMAT" "
+                            HEAP_CHANGE_FORMAT,
+                            HEAP_CHANGE_FORMAT_ARGS("Metaspace",
+                                                    pre_meta_values.used(),
+                                                    pre_meta_values.committed(),
+                                                    meta_values.used(),
+                                                    meta_values.committed()),
+                            HEAP_CHANGE_FORMAT_ARGS("NonClass",
+                                                    pre_meta_values.non_class_used(),
+                                                    pre_meta_values.non_class_committed(),
+                                                    meta_values.non_class_used(),
+                                                    meta_values.non_class_committed()),
+                            HEAP_CHANGE_FORMAT_ARGS("Class",
+                                                    pre_meta_values.class_used(),
+                                                    pre_meta_values.class_committed(),
+                                                    meta_values.class_used(),
+                                                    meta_values.class_committed()));
+  } else {
+    log_info(gc, metaspace)(HEAP_CHANGE_FORMAT,
+                            HEAP_CHANGE_FORMAT_ARGS("Metaspace",
+                                                    pre_meta_values.used(),
+                                                    pre_meta_values.committed(),
+                                                    meta_values.used(),
+                                                    meta_values.committed()));
+  }
 }
 
 void MetaspaceUtils::print_on(outputStream* out) {
@@ -556,6 +583,11 @@ static void print_basic_switches(outputStream* out, size_t scale) {
 // This will print out a basic metaspace usage report but
 // unlike print_report() is guaranteed not to lock or to walk the CLDG.
 void MetaspaceUtils::print_basic_report(outputStream* out, size_t scale) {
+
+  if (!Metaspace::initialized()) {
+    out->print_cr("Metaspace not yet initialized.");
+    return;
+  }
 
   out->cr();
   out->print_cr("Usage:");
@@ -644,6 +676,11 @@ void MetaspaceUtils::print_basic_report(outputStream* out, size_t scale) {
 }
 
 void MetaspaceUtils::print_report(outputStream* out, size_t scale, int flags) {
+
+  if (!Metaspace::initialized()) {
+    out->print_cr("Metaspace not yet initialized.");
+    return;
+  }
 
   const bool print_loaders = (flags & rf_show_loaders) > 0;
   const bool print_classes = (flags & rf_show_classes) > 0;
@@ -931,6 +968,8 @@ VirtualSpaceList* Metaspace::_class_space_list = NULL;
 
 ChunkManager* Metaspace::_chunk_manager_metadata = NULL;
 ChunkManager* Metaspace::_chunk_manager_class = NULL;
+
+bool Metaspace::_initialized = false;
 
 #define VIRTUALSPACEMULTIPLIER 2
 
@@ -1258,6 +1297,9 @@ void Metaspace::global_initialize() {
   }
 
   _tracer = new MetaspaceTracer();
+
+  _initialized = true;
+
 }
 
 void Metaspace::post_initialize() {

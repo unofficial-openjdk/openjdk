@@ -64,8 +64,8 @@ class Monitor : public CHeapObj<mtSynchronizer> {
        tty            = access         +   2,
        special        = tty            +   1,
        suspend_resume = special        +   1,
-       vmweak         = suspend_resume +   2,
-       leaf           = vmweak         +   2,
+       oopstorage     = suspend_resume +   2,
+       leaf           = oopstorage     +   2,
        safepoint      = leaf           +  10,
        barrier        = safepoint      +   1,
        nonleaf        = barrier        +   1,
@@ -138,10 +138,6 @@ class Monitor : public CHeapObj<mtSynchronizer> {
   };
 
   NOT_PRODUCT(SafepointCheckRequired _safepoint_check_required;)
-
- protected:
-   static void ClearMonitor (Monitor * m, const char* name = NULL) ;
-   Monitor() ;
 
  public:
   Monitor(int rank, const char *name, bool allow_vm_block = false,

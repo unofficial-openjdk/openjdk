@@ -206,7 +206,7 @@ static Thresholds calc_thresholds(size_t green_zone,
     // available buffers near green_zone value.  When yellow_size is
     // large we don't want to allow a full step to accumulate before
     // doing any processing, as that might lead to significantly more
-    // than green_zone buffers to be processed by update_rs.
+    // than green_zone buffers to be processed during scanning.
     step = MIN2(step, ParallelGCThreads / 2.0);
   }
   size_t activate_offset = static_cast<size_t>(ceil(step * (worker_i + 1)));
@@ -322,18 +322,18 @@ void G1ConcurrentRefine::print_threads_on(outputStream* st) const {
 }
 
 static size_t calc_new_green_zone(size_t green,
-                                  double update_rs_time,
-                                  size_t update_rs_processed_buffers,
+                                  double log_buffer_scan_time,
+                                  size_t processed_log_buffers,
                                   double goal_ms) {
   // Adjust green zone based on whether we're meeting the time goal.
   // Limit to max_green_zone.
   const double inc_k = 1.1, dec_k = 0.9;
-  if (update_rs_time > goal_ms) {
+  if (log_buffer_scan_time > goal_ms) {
     if (green > 0) {
       green = static_cast<size_t>(green * dec_k);
     }
-  } else if (update_rs_time < goal_ms &&
-             update_rs_processed_buffers > green) {
+  } else if (log_buffer_scan_time < goal_ms &&
+             processed_log_buffers > green) {
     green = static_cast<size_t>(MAX2(green * inc_k, green + 1.0));
     green = MIN2(green, max_green_zone);
   }
@@ -350,20 +350,20 @@ static size_t calc_new_red_zone(size_t green, size_t yellow) {
   return MIN2(yellow + (yellow - green), max_red_zone);
 }
 
-void G1ConcurrentRefine::update_zones(double update_rs_time,
-                                      size_t update_rs_processed_buffers,
+void G1ConcurrentRefine::update_zones(double log_buffer_scan_time,
+                                      size_t processed_log_buffers,
                                       double goal_ms) {
   log_trace( CTRL_TAGS )("Updating Refinement Zones: "
-                         "update_rs time: %.3fms, "
-                         "update_rs buffers: " SIZE_FORMAT ", "
-                         "update_rs goal time: %.3fms",
-                         update_rs_time,
-                         update_rs_processed_buffers,
+                         "log buffer scan time: %.3fms, "
+                         "processed buffers: " SIZE_FORMAT ", "
+                         "goal time: %.3fms",
+                         log_buffer_scan_time,
+                         processed_log_buffers,
                          goal_ms);
 
   _green_zone = calc_new_green_zone(_green_zone,
-                                    update_rs_time,
-                                    update_rs_processed_buffers,
+                                    log_buffer_scan_time,
+                                    processed_log_buffers,
                                     goal_ms);
   _yellow_zone = calc_new_yellow_zone(_green_zone, _min_yellow_zone_size);
   _red_zone = calc_new_red_zone(_green_zone, _yellow_zone);
@@ -376,13 +376,13 @@ void G1ConcurrentRefine::update_zones(double update_rs_time,
             _green_zone, _yellow_zone, _red_zone);
 }
 
-void G1ConcurrentRefine::adjust(double update_rs_time,
-                                size_t update_rs_processed_buffers,
+void G1ConcurrentRefine::adjust(double log_buffer_scan_time,
+                                size_t processed_log_buffers,
                                 double goal_ms) {
   G1DirtyCardQueueSet& dcqs = G1BarrierSet::dirty_card_queue_set();
 
   if (G1UseAdaptiveConcRefinement) {
-    update_zones(update_rs_time, update_rs_processed_buffers, goal_ms);
+    update_zones(log_buffer_scan_time, processed_log_buffers, goal_ms);
 
     // Change the barrier params
     if (max_num_threads() == 0) {
@@ -397,7 +397,7 @@ void G1ConcurrentRefine::adjust(double update_rs_time,
     dcqs.set_max_completed_buffers(red_zone());
   }
 
-  size_t curr_queue_size = dcqs.completed_buffers_num();
+  size_t curr_queue_size = dcqs.num_completed_buffers();
   if ((dcqs.max_completed_buffers() > 0) &&
       (curr_queue_size >= yellow_zone())) {
     dcqs.set_completed_buffers_padding(curr_queue_size);
@@ -430,7 +430,7 @@ void G1ConcurrentRefine::maybe_activate_more_threads(uint worker_id, size_t num_
 bool G1ConcurrentRefine::do_refinement_step(uint worker_id) {
   G1DirtyCardQueueSet& dcqs = G1BarrierSet::dirty_card_queue_set();
 
-  size_t curr_buffer_num = dcqs.completed_buffers_num();
+  size_t curr_buffer_num = dcqs.num_completed_buffers();
   // If the number of the buffers falls down into the yellow zone,
   // that means that the transition period after the evacuation pause has ended.
   // Since the value written to the DCQS is the same for all threads, there is no

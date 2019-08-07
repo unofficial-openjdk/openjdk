@@ -331,30 +331,24 @@ void C1_MacroAssembler::inline_cache_check(Register receiver, Register iCache) {
 
 
 void C1_MacroAssembler::build_frame(int framesize, int bang_size_in_bytes) {
-  // If we have to make this method not-entrant we'll overwrite its
-  // first instruction with a jump.  For this action to be legal we
-  // must ensure that this first instruction is a B, BL, NOP, BKPT,
-  // SVC, HVC, or SMC.  Make it a NOP.
-  nop();
   assert(bang_size_in_bytes >= framesize, "stack bang size incorrect");
   // Make sure there is enough stack space for this method's activation.
   // Note that we do this before doing an enter().
   generate_stack_overflow_check(bang_size_in_bytes);
   MacroAssembler::build_frame(framesize + 2 * wordSize);
-  if (NotifySimulator) {
-    notify(Assembler::method_entry);
-  }
 }
 
 void C1_MacroAssembler::remove_frame(int framesize) {
   MacroAssembler::remove_frame(framesize + 2 * wordSize);
-  if (NotifySimulator) {
-    notify(Assembler::method_reentry);
-  }
 }
 
 
 void C1_MacroAssembler::verified_entry() {
+  // If we have to make this method not-entrant we'll overwrite its
+  // first instruction with a jump.  For this action to be legal we
+  // must ensure that this first instruction is a B, BL, NOP, BKPT,
+  // SVC, HVC, or SMC.  Make it a NOP.
+  nop();
 }
 
 void C1_MacroAssembler::load_parameter(int offset_in_words, Register reg) {

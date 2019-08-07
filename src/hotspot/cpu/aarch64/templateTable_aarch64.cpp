@@ -1478,8 +1478,7 @@ void TemplateTable::fop2(Operation op)
   case rem:
     __ fmovs(v1, v0);
     __ pop_f(v0);
-    __ call_VM_leaf_base1(CAST_FROM_FN_PTR(address, SharedRuntime::frem),
-                         0, 2, MacroAssembler::ret_type_float);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::frem));
     break;
   default:
     ShouldNotReachHere();
@@ -1511,8 +1510,7 @@ void TemplateTable::dop2(Operation op)
   case rem:
     __ fmovd(v1, v0);
     __ pop_d(v0);
-    __ call_VM_leaf_base1(CAST_FROM_FN_PTR(address, SharedRuntime::drem),
-                         0, 2, MacroAssembler::ret_type_double);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::drem));
     break;
   default:
     ShouldNotReachHere();
@@ -1653,8 +1651,7 @@ void TemplateTable::convert()
     __ fcvtzsw(r0, v0);
     __ get_fpsr(r1);
     __ cbzw(r1, L_Okay);
-    __ call_VM_leaf_base1(CAST_FROM_FN_PTR(address, SharedRuntime::f2i),
-                         0, 1, MacroAssembler::ret_type_integral);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::f2i));
     __ bind(L_Okay);
   }
     break;
@@ -1665,8 +1662,7 @@ void TemplateTable::convert()
     __ fcvtzs(r0, v0);
     __ get_fpsr(r1);
     __ cbzw(r1, L_Okay);
-    __ call_VM_leaf_base1(CAST_FROM_FN_PTR(address, SharedRuntime::f2l),
-                         0, 1, MacroAssembler::ret_type_integral);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::f2l));
     __ bind(L_Okay);
   }
     break;
@@ -1680,8 +1676,7 @@ void TemplateTable::convert()
     __ fcvtzdw(r0, v0);
     __ get_fpsr(r1);
     __ cbzw(r1, L_Okay);
-    __ call_VM_leaf_base1(CAST_FROM_FN_PTR(address, SharedRuntime::d2i),
-                         0, 1, MacroAssembler::ret_type_integral);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::d2i));
     __ bind(L_Okay);
   }
     break;
@@ -1692,8 +1687,7 @@ void TemplateTable::convert()
     __ fcvtzd(r0, v0);
     __ get_fpsr(r1);
     __ cbzw(r1, L_Okay);
-    __ call_VM_leaf_base1(CAST_FROM_FN_PTR(address, SharedRuntime::d2l),
-                         0, 1, MacroAssembler::ret_type_integral);
+    __ call_VM_leaf(CAST_FROM_FN_PTR(address, SharedRuntime::d2l));
     __ bind(L_Okay);
   }
     break;
@@ -2323,7 +2317,7 @@ void TemplateTable::resolve_cache_and_index(int byte_no,
   const Register temp = r19;
   assert_different_registers(Rcache, index, temp);
 
-  Label resolved;
+  Label resolved, clinit_barrier_slow;
 
   Bytecodes::Code code = bytecode();
   switch (code) {
@@ -2338,6 +2332,8 @@ void TemplateTable::resolve_cache_and_index(int byte_no,
   __ br(Assembler::EQ, resolved);
 
   // resolve first time through
+  // Class initialization barrier slow path lands here as well.
+  __ bind(clinit_barrier_slow);
   address entry = CAST_FROM_FN_PTR(address, InterpreterRuntime::resolve_from_cache);
   __ mov(temp, (int) code);
   __ call_VM(noreg, entry, temp);
@@ -2347,6 +2343,13 @@ void TemplateTable::resolve_cache_and_index(int byte_no,
   // n.b. unlike x86 Rcache is now rcpool plus the indexed offset
   // so all clients ofthis method must be modified accordingly
   __ bind(resolved);
+
+  // Class initialization barrier for static methods
+  if (VM_Version::supports_fast_class_init_checks() && bytecode() == Bytecodes::_invokestatic) {
+    __ load_resolved_method_at_index(byte_no, temp, Rcache);
+    __ load_method_holder(temp, temp);
+    __ clinit_barrier(temp, rscratch1, NULL, &clinit_barrier_slow);
+  }
 }
 
 // The Rcache and index registers must be set before call
@@ -3418,9 +3421,8 @@ void TemplateTable::invokeinterface(int byte_no) {
   __ profile_virtual_call(r3, r13, r19);
 
   // Get declaring interface class from method, and itable index
-  __ ldr(r0, Address(rmethod, Method::const_offset()));
-  __ ldr(r0, Address(r0, ConstMethod::constants_offset()));
-  __ ldr(r0, Address(r0, ConstantPool::pool_holder_offset_in_bytes()));
+
+  __ load_method_holder(r0, rmethod);
   __ ldrw(rmethod, Address(rmethod, Method::itable_index_offset()));
   __ subw(rmethod, rmethod, Method::itable_index_max);
   __ negw(rmethod, rmethod);

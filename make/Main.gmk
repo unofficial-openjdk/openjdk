@@ -77,6 +77,10 @@ interim-rmic:
 
 interim-cldrconverter:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CopyInterimCLDRConverter.gmk)
+ 
+interim-tzdb:
+	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CopyInterimTZDB.gmk)
+
 
 buildtools-jdk:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileToolsJdk.gmk)
@@ -88,7 +92,7 @@ buildtools-hotspot:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f CompileToolsHotspot.gmk)
 
 ALL_TARGETS += buildtools-langtools interim-langtools \
-    interim-rmic interim-cldrconverter buildtools-jdk buildtools-modules \
+    interim-rmic interim-cldrconverter interim-tzdb buildtools-jdk buildtools-modules \
     buildtools-hotspot
 
 ################################################################################
@@ -427,6 +431,9 @@ docs-jdk-index:
 docs-zip:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Docs.gmk docs-zip)
 
+docs-specs-zip:
+	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Docs.gmk docs-specs-zip)
+
 update-build-docs:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f UpdateBuildDocs.gmk)
 
@@ -436,7 +443,7 @@ update-x11wrappers:
 ALL_TARGETS += docs-jdk-api-javadoc docs-jdk-api-modulegraph \
     docs-javase-api-javadoc docs-javase-api-modulegraph \
     docs-reference-api-javadoc docs-reference-api-modulegraph docs-jdk-specs \
-    docs-jdk-index docs-zip update-build-docs update-x11wrappers
+    docs-jdk-index docs-zip docs-specs-zip update-build-docs update-x11wrappers
 
 ################################################################################
 # Cross compilation support
@@ -645,7 +652,7 @@ else
 
   interim-langtools: $(INTERIM_LANGTOOLS_GENSRC_TARGETS)
 
-  buildtools-jdk: interim-langtools interim-cldrconverter
+  buildtools-jdk: interim-langtools interim-cldrconverter interim-tzdb
 
   buildtools-hotspot: interim-langtools
 
@@ -884,6 +891,8 @@ else
       docs-jdk-index
 
   docs-zip: docs-jdk
+
+  docs-specs-zip: docs-jdk-specs
 
   # Tests
   test: jdk-image test-image

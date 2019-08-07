@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2002, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2001, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@ import java.io.*;
 import java.nio.*;
 import java.nio.channels.*;
 import java.nio.channels.spi.*;
-
+import java.util.Objects;
 
 /**
  * This class is defined here rather than in java.nio.channels.Channels
@@ -87,10 +87,8 @@ public class ChannelInputStream
     public synchronized int read(byte[] bs, int off, int len)
         throws IOException
     {
-        if ((off < 0) || (off > bs.length) || (len < 0) ||
-            ((off + len) > bs.length) || ((off + len) < 0)) {
-            throw new IndexOutOfBoundsException();
-        } else if (len == 0)
+        Objects.checkFromIndexSize(off, len, bs.length);
+        if (len == 0)
             return 0;
 
         ByteBuffer bb = ((this.bs == bs)
@@ -117,6 +115,27 @@ public class ChannelInputStream
             return (rem > Integer.MAX_VALUE) ? Integer.MAX_VALUE : (int)rem;
         }
         return 0;
+    }
+
+    public synchronized long skip(long n) throws IOException {
+        // special case where the channel is to a file
+        if (ch instanceof SeekableByteChannel) {
+            SeekableByteChannel sbc = (SeekableByteChannel)ch;
+            long pos = sbc.position();
+            long newPos;
+            if (n > 0) {
+                newPos = pos + n;
+                long size = sbc.size();
+                if (newPos < 0 || newPos > size) {
+                    newPos = size;
+                }
+            } else {
+                newPos = Long.max(pos + n, 0);
+            }
+            sbc.position(newPos);
+            return newPos - pos;
+        }
+        return super.skip(n);
     }
 
     public void close() throws IOException {

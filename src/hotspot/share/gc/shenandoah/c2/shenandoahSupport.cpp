@@ -670,42 +670,6 @@ void ShenandoahBarrierC2Support::verify(RootNode* root) {
         }
       }
     }
-    for( uint i = 0; i < n->len(); ++i ) {
-      Node *m = n->in(i);
-      if (m == NULL) continue;
-
-      // In most cases, inputs should be known to be non null. If it's
-      // not the case, it could be a missing cast_not_null() in an
-      // intrinsic or support might be needed in AddPNode::Ideal() to
-      // avoid a NULL+offset input.
-      if (!(n->is_Phi() ||
-            (n->is_SafePoint() && (!n->is_CallRuntime() || !strcmp(n->as_Call()->_name, "shenandoah_wb_pre") || !strcmp(n->as_Call()->_name, "unsafe_arraycopy"))) ||
-            n->Opcode() == Op_CmpP ||
-            n->Opcode() == Op_CmpN ||
-            (n->Opcode() == Op_StoreP && i == StoreNode::ValueIn) ||
-            (n->Opcode() == Op_StoreN && i == StoreNode::ValueIn) ||
-            n->is_ConstraintCast() ||
-            n->Opcode() == Op_Return ||
-            n->Opcode() == Op_Conv2B ||
-            n->is_AddP() ||
-            n->Opcode() == Op_CMoveP ||
-            n->Opcode() == Op_CMoveN ||
-            n->Opcode() == Op_Rethrow ||
-            n->is_MemBar() ||
-            n->is_Mem() ||
-            n->Opcode() == Op_AryEq ||
-            n->Opcode() == Op_SCMemProj ||
-            n->Opcode() == Op_EncodeP ||
-            n->Opcode() == Op_DecodeN ||
-            n->Opcode() == Op_ShenandoahEnqueueBarrier ||
-            n->Opcode() == Op_ShenandoahLoadReferenceBarrier)) {
-        if (m->bottom_type()->make_oopptr() && m->bottom_type()->make_oopptr()->meet(TypePtr::NULL_PTR) == m->bottom_type()) {
-          report_verify_failure("Shenandoah verification: null input", n, m);
-        }
-      }
-
-      wq.push(m);
-    }
   }
 
   if (verify_no_useless_barrier) {
@@ -1082,7 +1046,7 @@ void ShenandoahBarrierC2Support::in_cset_fast_test(Node*& ctrl, Node*& not_cset_
   phase->register_control(ctrl, loop, in_cset_fast_test_iff);
 }
 
-void ShenandoahBarrierC2Support::call_lrb_stub(Node*& ctrl, Node*& val, Node*& result_mem, Node* raw_mem, PhaseIdealLoop* phase) {
+void ShenandoahBarrierC2Support::call_lrb_stub(Node*& ctrl, Node*& val, Node*& result_mem, Node* raw_mem, bool is_native, PhaseIdealLoop* phase) {
   IdealLoopTree*loop = phase->get_loop(ctrl);
   const TypePtr* obj_type = phase->igvn().type(val)->is_oopptr()->cast_to_nonconst();
 
@@ -1093,7 +1057,10 @@ void ShenandoahBarrierC2Support::call_lrb_stub(Node*& ctrl, Node*& val, Node*& r
   mm->set_memory_at(Compile::AliasIdxRaw, raw_mem);
   phase->register_new_node(mm, ctrl);
 
-  Node* call = new CallLeafNode(ShenandoahBarrierSetC2::shenandoah_load_reference_barrier_Type(), CAST_FROM_FN_PTR(address, ShenandoahRuntime::load_reference_barrier_JRT), "shenandoah_load_reference_barrier", TypeRawPtr::BOTTOM);
+  address calladdr = is_native ? CAST_FROM_FN_PTR(address, ShenandoahRuntime::load_reference_barrier_native)
+                               : CAST_FROM_FN_PTR(address, ShenandoahRuntime::load_reference_barrier);
+  const char* name = is_native ? "oop_load_from_native_barrier" : "load_reference_barrier";
+  Node* call = new CallLeafNode(ShenandoahBarrierSetC2::shenandoah_load_reference_barrier_Type(), calladdr, name, TypeRawPtr::BOTTOM);
   call->init_req(TypeFunc::Control, ctrl);
   call->init_req(TypeFunc::I_O, phase->C->top());
   call->init_req(TypeFunc::Memory, mm);
@@ -1556,7 +1523,7 @@ void ShenandoahBarrierC2Support::pin_and_expand(PhaseIdealLoop* phase) {
     Node* result_mem = NULL;
     ctrl = if_not_fwd;
     fwd = new_val;
-    call_lrb_stub(ctrl, fwd, result_mem, raw_mem, phase);
+    call_lrb_stub(ctrl, fwd, result_mem, raw_mem, lrb->is_native(), phase);
     region->init_req(_evac_path, ctrl);
     val_phi->init_req(_evac_path, fwd);
     raw_mem_phi->init_req(_evac_path, result_mem);
@@ -2999,9 +2966,26 @@ void MemoryGraphFixer::fix_memory_uses(Node* mem, Node* replacement, Node* rep_p
   }
 }
 
-ShenandoahLoadReferenceBarrierNode::ShenandoahLoadReferenceBarrierNode(Node* ctrl, Node* obj)
-: Node(ctrl, obj) {
+ShenandoahLoadReferenceBarrierNode::ShenandoahLoadReferenceBarrierNode(Node* ctrl, Node* obj, bool native)
+: Node(ctrl, obj), _native(native) {
   ShenandoahBarrierSetC2::bsc2()->state()->add_load_reference_barrier(this);
+}
+
+bool ShenandoahLoadReferenceBarrierNode::is_native() const {
+  return _native;
+}
+
+uint ShenandoahLoadReferenceBarrierNode::size_of() const {
+  return sizeof(*this);
+}
+
+uint ShenandoahLoadReferenceBarrierNode::hash() const {
+  return Node::hash() + (_native ? 1 : 0);
+}
+
+bool ShenandoahLoadReferenceBarrierNode::cmp( const Node &n ) const {
+  return Node::cmp(n) && n.Opcode() == Op_ShenandoahLoadReferenceBarrier &&
+         _native == ((const ShenandoahLoadReferenceBarrierNode&)n)._native;
 }
 
 const Type* ShenandoahLoadReferenceBarrierNode::bottom_type() const {
@@ -3103,6 +3087,7 @@ bool ShenandoahLoadReferenceBarrierNode::needs_barrier_impl(PhaseGVN* phase, Nod
       return needs_barrier_impl(phase, n->in(1), visited);
     case Op_LoadN:
       return true;
+    case Op_CMoveN:
     case Op_CMoveP:
       return needs_barrier_impl(phase, n->in(2), visited) ||
              needs_barrier_impl(phase, n->in(3), visited);
@@ -3254,6 +3239,7 @@ ShenandoahLoadReferenceBarrierNode::Strength ShenandoahLoadReferenceBarrierNode:
       case Op_StrComp:
       case Op_StrIndexOf:
       case Op_StrIndexOfChar:
+      case Op_HasNegatives:
         if (!ShenandoahOptimizeStableFinals) {
            strength = WEAK;
         }

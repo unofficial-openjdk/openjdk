@@ -1642,7 +1642,7 @@ int MachCallRuntimeNode::ret_addr_offset() {
   //   adr(rscratch2, retaddr)
   //   lea(rscratch1, RuntimeAddress(addr)
   //   stp(zr, rscratch2, Address(__ pre(sp, -2 * wordSize)))
-  //   blrt rscratch1
+  //   blr(rscratch1)
   CodeBlob *cb = CodeCache::find_blob(_entry_point);
   if (cb) {
     return MacroAssembler::far_branch_size();
@@ -1761,15 +1761,22 @@ void MachPrologNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   // branch if we need to invalidate the method later
   __ nop();
 
+  if (C->clinit_barrier_on_entry()) {
+    assert(!C->method()->holder()->is_not_initialized(), "initialization should have been started");
+
+    Label L_skip_barrier;
+
+    __ mov_metadata(rscratch2, C->method()->holder()->constant_encoding());
+    __ clinit_barrier(rscratch2, rscratch1, &L_skip_barrier);
+    __ far_jump(RuntimeAddress(SharedRuntime::get_handle_wrong_method_stub()));
+    __ bind(L_skip_barrier);
+  }
+  
   int bangsize = C->bang_size_in_bytes();
   if (C->need_stack_bang(bangsize) && UseStackBanging)
     __ generate_stack_overflow_check(bangsize);
 
   __ build_frame(framesize);
-
-  if (NotifySimulator) {
-    __ notify(Assembler::method_entry);
-  }
 
   if (VerifyStackAtCalls) {
     Unimplemented();
@@ -1830,10 +1837,6 @@ void MachEpilogNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
   int framesize = C->frame_slots() << LogBytesPerInt;
 
   __ remove_frame(framesize);
-
-  if (NotifySimulator) {
-    __ notify(Assembler::method_reentry);
-  }
 
   if (StackReservedPages > 0 && C->has_reserved_stack_access()) {
     __ reserved_stack_check();
@@ -2496,47 +2499,6 @@ bool Matcher::clone_address_expressions(AddPNode* m, Matcher::MStack& mstack, Ve
 void Compile::reshape_address(AddPNode* addp) {
 }
 
-// helper for encoding java_to_runtime calls on sim
-//
-// this is needed to compute the extra arguments required when
-// planting a call to the simulator blrt instruction. the TypeFunc
-// can be queried to identify the counts for integral, and floating
-// arguments and the return type
-
-static void getCallInfo(const TypeFunc *tf, int &gpcnt, int &fpcnt, int &rtype)
-{
-  int gps = 0;
-  int fps = 0;
-  const TypeTuple *domain = tf->domain();
-  int max = domain->cnt();
-  for (int i = TypeFunc::Parms; i < max; i++) {
-    const Type *t = domain->field_at(i);
-    switch(t->basic_type()) {
-    case T_FLOAT:
-    case T_DOUBLE:
-      fps++;
-    default:
-      gps++;
-    }
-  }
-  gpcnt = gps;
-  fpcnt = fps;
-  BasicType rt = tf->return_type();
-  switch (rt) {
-  case T_VOID:
-    rtype = MacroAssembler::ret_type_void;
-    break;
-  default:
-    rtype = MacroAssembler::ret_type_integral;
-    break;
-  case T_FLOAT:
-    rtype = MacroAssembler::ret_type_float;
-    break;
-  case T_DOUBLE:
-    rtype = MacroAssembler::ret_type_double;
-    break;
-  }
-}
 
 #define MOV_VOLATILE(REG, BASE, INDEX, SCALE, DISP, SCRATCH, INSN)      \
   MacroAssembler _masm(&cbuf);                                          \
@@ -3486,7 +3448,7 @@ encode %{
 
     // some calls to generated routines (arraycopy code) are scheduled
     // by C2 as runtime calls. if so we can call them using a br (they
-    // will be in a reachable segment) otherwise we have to use a blrt
+    // will be in a reachable segment) otherwise we have to use a blr
     // which loads the absolute address into a register.
     address entry = (address)$meth$$method;
     CodeBlob *cb = CodeCache::find_blob(entry);
@@ -3497,16 +3459,12 @@ encode %{
         return;
       }
     } else {
-      int gpcnt;
-      int fpcnt;
-      int rtype;
-      getCallInfo(tf(), gpcnt, fpcnt, rtype);
       Label retaddr;
       __ adr(rscratch2, retaddr);
       __ lea(rscratch1, RuntimeAddress(entry));
       // Leave a breadcrumb for JavaFrameAnchor::capture_last_Java_pc()
       __ stp(zr, rscratch2, Address(__ pre(sp, -2 * wordSize)));
-      __ blrt(rscratch1, gpcnt, fpcnt, rtype);
+      __ blr(rscratch1);
       __ bind(retaddr);
       __ add(sp, sp, 2 * wordSize);
     }
@@ -14255,7 +14213,7 @@ instruct compF_reg_zero(rFlagsReg cr, vRegF src1, immF0 src2)
   format %{ "fcmps $src1, 0.0" %}
 
   ins_encode %{
-    __ fcmps(as_FloatRegister($src1$$reg), 0.0D);
+    __ fcmps(as_FloatRegister($src1$$reg), 0.0);
   %}
 
   ins_pipe(pipe_class_compare);
@@ -14284,7 +14242,7 @@ instruct compD_reg_zero(rFlagsReg cr, vRegD src1, immD0 src2)
   format %{ "fcmpd $src1, 0.0" %}
 
   ins_encode %{
-    __ fcmpd(as_FloatRegister($src1$$reg), 0.0D);
+    __ fcmpd(as_FloatRegister($src1$$reg), 0.0);
   %}
 
   ins_pipe(pipe_class_compare);
@@ -14360,7 +14318,7 @@ instruct compF3_reg_immF0(iRegINoSp dst, vRegF src1, immF0 zero, rFlagsReg cr)
     Label done;
     FloatRegister s1 = as_FloatRegister($src1$$reg);
     Register d = as_Register($dst$$reg);
-    __ fcmps(s1, 0.0D);
+    __ fcmps(s1, 0.0);
     // installs 0 if EQ else -1
     __ csinvw(d, zr, zr, Assembler::EQ);
     // keeps -1 if less or unordered else installs 1
@@ -14387,7 +14345,7 @@ instruct compD3_reg_immD0(iRegINoSp dst, vRegD src1, immD0 zero, rFlagsReg cr)
     Label done;
     FloatRegister s1 = as_FloatRegister($src1$$reg);
     Register d = as_Register($dst$$reg);
-    __ fcmpd(s1, 0.0D);
+    __ fcmpd(s1, 0.0);
     // installs 0 if EQ else -1
     __ csinvw(d, zr, zr, Assembler::EQ);
     // keeps -1 if less or unordered else installs 1

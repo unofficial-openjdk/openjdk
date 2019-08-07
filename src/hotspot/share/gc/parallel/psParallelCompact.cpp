@@ -1064,7 +1064,6 @@ void PSParallelCompact::post_compact()
   MetaspaceUtils::verify_metrics();
 
   heap->prune_scavengable_nmethods();
-  JvmtiExport::gc_epilogue();
 
 #if COMPILER2_OR_JVMCI
   DerivedPointerTable::update_pointers();
@@ -1780,7 +1779,7 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   // miscellaneous bookkeeping.
   pre_compact();
 
-  PreGCValues pre_gc_values(heap);
+  const PreGenGCValues pre_gc_values = heap->get_pre_gc_values();
 
   // Get the compaction manager reserved for the VM thread.
   ParCompactionManager* const vmthread_cm =
@@ -1924,9 +1923,7 @@ bool PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
       accumulated_time()->stop();
     }
 
-    young_gen->print_used_change(pre_gc_values.young_gen_used());
-    old_gen->print_used_change(pre_gc_values.old_gen_used());
-    MetaspaceUtils::print_metaspace_change(pre_gc_values.metadata_used());
+    heap->print_heap_change(pre_gc_values);
 
     // Track memory usage and detect low memory
     MemoryService::track_memory_usage();
@@ -2128,7 +2125,6 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
     q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::class_loader_data));
     q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::jvmti));
     q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::code_cache));
-    JVMCI_ONLY(q->enqueue(new MarkFromRootsTask(MarkFromRootsTask::jvmci));)
 
     if (active_gc_threads > 1) {
       for (uint j = 0; j < active_gc_threads; j++) {
@@ -2217,8 +2213,6 @@ void PSParallelCompact::adjust_roots(ParCompactionManager* cm) {
   CodeBlobToOopClosure adjust_from_blobs(&oop_closure, CodeBlobToOopClosure::FixRelocations);
   CodeCache::blobs_do(&adjust_from_blobs);
   AOT_ONLY(AOTLoader::oops_do(&oop_closure);)
-
-  JVMCI_ONLY(JVMCI::oops_do(&oop_closure);)
 
   ref_processor()->weak_oops_do(&oop_closure);
   // Roots were visited so references into the young gen in roots

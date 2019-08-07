@@ -162,10 +162,12 @@ public final class OptionsEncoder {
                 }
                 res.put(key, value);
             }
+            if (in.available() != 0) {
+                throw new IllegalArgumentException(in.available() + " undecoded bytes");
+            }
         } catch (IOException ioe) {
             throw new IllegalArgumentException(ioe);
         }
         return res;
     }
 }
-

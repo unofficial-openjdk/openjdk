@@ -4250,7 +4250,6 @@ void CMSCollector::checkpointRootsFinalWork() {
   if (should_unload_classes()) {
     heap->prune_scavengable_nmethods();
   }
-  JvmtiExport::gc_epilogue();
 
   // If we encountered any (marking stack / work queue) overflow
   // events during the current CMS cycle, take appropriate
@@ -6970,7 +6969,7 @@ void CMSPrecleanRefsYieldClosure::do_yield_work() {
   }
 
   ConcurrentMarkSweepThread::synchronize(true);
-  bml->lock();
+  bml->lock_without_safepoint_check();
 
   _collector->startTimer();
 }

@@ -433,7 +433,10 @@ public class AArch64Move {
     }
 
     static void reg2stack(CompilationResultBuilder crb, AArch64MacroAssembler masm, AllocatableValue result, AllocatableValue input) {
-        AArch64Address dest = loadStackSlotAddress(crb, masm, asStackSlot(result), Value.ILLEGAL);
+        AArch64Address dest;
+        try (ScratchRegister scratch = masm.getScratchRegister()) {
+            dest = loadStackSlotAddress(crb, masm, asStackSlot(result), scratch.getRegister());
+        }
         Register src = asRegister(input);
         // use the slot kind to define the operand size
         AArch64Kind kind = (AArch64Kind) result.getPlatformKind();
@@ -525,8 +528,8 @@ public class AArch64Move {
                 break;
             case Object:
                 if (input.isNull()) {
-                    if (crb.mustReplaceWithNullRegister(input)) {
-                        masm.mov(64, dst, crb.nullRegister);
+                    if (crb.mustReplaceWithUncompressedNullRegister(input)) {
+                        masm.mov(64, dst, crb.uncompressedNullRegister);
                     } else {
                         masm.mov(dst, 0);
                     }
@@ -722,7 +725,7 @@ public class AArch64Move {
 
         @Override
         public void emitCode(CompilationResultBuilder crb, AArch64MacroAssembler masm) {
-            Register nullRegister = crb.nullRegister;
+            Register nullRegister = crb.uncompressedNullRegister;
             if (!nullRegister.equals(Register.None)) {
                 emitConversion(asRegister(result), asRegister(input), nullRegister, masm);
             }

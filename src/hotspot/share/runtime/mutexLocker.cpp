@@ -53,6 +53,8 @@ Mutex*   JNIWeakActive_lock           = NULL;
 Mutex*   StringTableWeakAlloc_lock    = NULL;
 Mutex*   StringTableWeakActive_lock   = NULL;
 Mutex*   JNIHandleBlockFreeList_lock  = NULL;
+Mutex*   VMGlobalAlloc_lock           = NULL;
+Mutex*   VMGlobalActive_lock          = NULL;
 Mutex*   VMWeakAlloc_lock             = NULL;
 Mutex*   VMWeakActive_lock            = NULL;
 Mutex*   ResolvedMethodTableWeakAlloc_lock  = NULL;
@@ -82,7 +84,6 @@ Mutex*   NonJavaThreadsListSync_lock  = NULL;
 Monitor* CGC_lock                     = NULL;
 Monitor* STS_lock                     = NULL;
 Monitor* FullGCCount_lock             = NULL;
-Monitor* SATB_Q_CBL_mon               = NULL;
 Monitor* DirtyCardQ_CBL_mon           = NULL;
 Mutex*   Shared_DirtyCardQ_lock       = NULL;
 Mutex*   MarkStackFreeList_lock       = NULL;
@@ -162,8 +163,6 @@ Mutex*   DumpTimeTable_lock           = NULL;
 
 #if INCLUDE_JVMCI
 Monitor* JVMCI_lock                   = NULL;
-Mutex*   JVMCIGlobalAlloc_lock        = NULL;
-Mutex*   JVMCIGlobalActive_lock       = NULL;
 #endif
 
 
@@ -217,19 +216,20 @@ void mutex_init() {
   def(CGC_lock                     , PaddedMonitor, special,     true,  Monitor::_safepoint_check_never);      // coordinate between fore- and background GC
   def(STS_lock                     , PaddedMonitor, leaf,        true,  Monitor::_safepoint_check_never);
 
-  def(VMWeakAlloc_lock             , PaddedMutex  , vmweak,      true,  Monitor::_safepoint_check_never);
-  def(VMWeakActive_lock            , PaddedMutex  , vmweak-1,    true,  Monitor::_safepoint_check_never);
+  def(VMGlobalAlloc_lock           , PaddedMutex  , oopstorage,  true,  Monitor::_safepoint_check_never);
+  def(VMGlobalActive_lock          , PaddedMutex  , oopstorage-1,true,  Monitor::_safepoint_check_never);
 
-  def(StringTableWeakAlloc_lock    , PaddedMutex  , vmweak,      true,  Monitor::_safepoint_check_never);
-  def(StringTableWeakActive_lock   , PaddedMutex  , vmweak-1,    true,  Monitor::_safepoint_check_never);
+  def(VMWeakAlloc_lock             , PaddedMutex  , oopstorage,  true,  Monitor::_safepoint_check_never);
+  def(VMWeakActive_lock            , PaddedMutex  , oopstorage-1,true,  Monitor::_safepoint_check_never);
 
-  def(ResolvedMethodTableWeakAlloc_lock    , PaddedMutex  , vmweak,      true,  Monitor::_safepoint_check_never);
-  def(ResolvedMethodTableWeakActive_lock   , PaddedMutex  , vmweak-1,    true,  Monitor::_safepoint_check_never);
+  def(StringTableWeakAlloc_lock    , PaddedMutex  , oopstorage,  true,  Monitor::_safepoint_check_never);
+  def(StringTableWeakActive_lock   , PaddedMutex  , oopstorage-1,true,  Monitor::_safepoint_check_never);
+
+  def(ResolvedMethodTableWeakAlloc_lock    , PaddedMutex  , oopstorage,   true,  Monitor::_safepoint_check_never);
+  def(ResolvedMethodTableWeakActive_lock   , PaddedMutex  , oopstorage-1, true,  Monitor::_safepoint_check_never);
 
   def(FullGCCount_lock             , PaddedMonitor, leaf,        true,  Monitor::_safepoint_check_never);      // in support of ExplicitGCInvokesConcurrent
   if (UseG1GC) {
-    def(SATB_Q_CBL_mon             , PaddedMonitor, access,      true,  Monitor::_safepoint_check_never);
-
     def(DirtyCardQ_CBL_mon         , PaddedMonitor, access,      true,  Monitor::_safepoint_check_never);
     def(Shared_DirtyCardQ_lock     , PaddedMutex  , access + 1,  true,  Monitor::_safepoint_check_never);
 
@@ -246,8 +246,6 @@ void mutex_init() {
     def(MonitoringSupport_lock     , PaddedMutex  , native   ,   true,  Monitor::_safepoint_check_never);      // used for serviceability monitoring support
   }
   if (UseShenandoahGC) {
-    def(SATB_Q_CBL_mon             , PaddedMonitor, access,      true,  Monitor::_safepoint_check_never);
-
     def(StringDedupQueue_lock      , PaddedMonitor, leaf,        true,  Monitor::_safepoint_check_never);
     def(StringDedupTable_lock      , PaddedMutex  , leaf,        true,  Monitor::_safepoint_check_never);
   }
@@ -361,8 +359,6 @@ void mutex_init() {
 
 #if INCLUDE_JVMCI
   def(JVMCI_lock                   , PaddedMonitor, nonleaf+2,   true,  Monitor::_safepoint_check_always);
-  def(JVMCIGlobalAlloc_lock        , PaddedMutex  , nonleaf,     true,  Monitor::_safepoint_check_never);
-  def(JVMCIGlobalActive_lock       , PaddedMutex  , nonleaf-1,   true,  Monitor::_safepoint_check_never);
 #endif
   def(DumpTimeTable_lock           , PaddedMutex  , leaf,        true,  Monitor::_safepoint_check_never);
 #endif // INCLUDE_CDS

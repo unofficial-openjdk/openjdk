@@ -232,9 +232,6 @@ void VM_RedefineClasses::doit() {
     ResolvedMethodTable::adjust_method_entries(&trace_name_printed);
   }
 
-  // Disable any dependent concurrent compilations
-  SystemDictionary::notice_modification();
-
   // Set flag indicating that some invariants are no longer true.
   // See jvmtiExport.hpp for detailed explanation.
   JvmtiExport::set_has_redefined_a_class();
@@ -1624,6 +1621,11 @@ jvmtiError VM_RedefineClasses::merge_cp_and_rewrite(
     // The merge can fail due to memory allocation failure or due
     // to robustness checks.
     return JVMTI_ERROR_INTERNAL;
+  }
+
+  if (old_cp->has_dynamic_constant()) {
+    merge_cp->set_has_dynamic_constant();
+    scratch_cp->set_has_dynamic_constant();
   }
 
   log_info(redefine, class, constantpool)("merge_cp_len=%d, index_map_len=%d", merge_cp_length, _index_map_count);
@@ -3248,6 +3250,10 @@ void VM_RedefineClasses::set_new_constant_pool(
   // attach klass to new constant pool
   // reference to the cp holder is needed for copy_operands()
   smaller_cp->set_pool_holder(scratch_class);
+
+  if (scratch_cp->has_dynamic_constant()) {
+    smaller_cp->set_has_dynamic_constant();
+  }
 
   scratch_cp->copy_cp_to(1, scratch_cp_length - 1, smaller_cp, 1, THREAD);
   if (HAS_PENDING_EXCEPTION) {

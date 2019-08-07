@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018 SAP SE. All rights reserved.
+ * Copyright (c) 2016, 2019 SAP SE. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,11 +23,12 @@
  * questions.
  */
 #include <stdio.h>
+#include <string.h>
 #include <sys/ldr.h>
 
 #include "java_md_aix.h"
 
-static unsigned char dladdr_buffer[0x4000];
+static unsigned char dladdr_buffer[0x8000];
 
 static int fill_dll_info(void) {
     return loadquery(L_GETINFO, dladdr_buffer, sizeof(dladdr_buffer));
