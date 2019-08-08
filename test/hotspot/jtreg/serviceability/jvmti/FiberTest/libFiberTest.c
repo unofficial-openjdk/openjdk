@@ -112,8 +112,6 @@ print_method(jvmtiEnv *jvmti, JNIEnv *jni, jmethodID method, jint depth) {
 
 static void
 print_stack_trace(jvmtiEnv *jvmti, JNIEnv *jni, int count, jvmtiFrameInfo *frames) {
-  jvmtiError err;
-
   printf("JVMTI Stack Trace: frame count: %d\n", count);
   for (int depth = 0; depth < count; depth++) {
     print_method(jvmti, jni, frames[depth].method, depth);
@@ -414,7 +412,7 @@ test_GetFiberFrameLocation(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject
     if (location < 0) {
       (*jni)->FatalError(jni, "event handler: JVMTI GetFiberFrameLocation with good fiber returned negative location\n");
     }
-    printf("JVMTI GetFiberFrameLocation with good fiber returned location: %d\n", location);
+    printf("JVMTI GetFiberFrameLocation with good fiber returned location: %d\n", (int) location);
   }
 }
 
