@@ -4266,6 +4266,7 @@ int java_lang_Continuation::_refSP_offset;
 int java_lang_Continuation::_cs_offset;
 int java_lang_Continuation::_flags_offset;
 int java_lang_Continuation::_reset_offset;
+int java_lang_Continuation::_mounted_offset;
 int java_lang_ClassLoader::parent_offset;
 int java_lang_System::static_in_offset;
 int java_lang_System::static_out_offset;
@@ -4469,6 +4470,7 @@ void java_lang_ContinuationScope::serialize_offsets(SerializeClosure* f) {
   macro(_flags_offset,     k, vmSymbols::flags_name(),     byte_signature,              false); \
   macro(_cs_offset,        k, vmSymbols::cs_name(),        short_signature,             false); \
   macro(_reset_offset,     k, vmSymbols::reset_name(),     bool_signature,              false); \
+  macro(_mounted_offset,   k, vmSymbols::mounted_name(),   bool_signature,              false); \
   macro(_numFrames_offset, k, vmSymbols::numFrames_name(), short_signature,             false); \
   macro(_numInterpretedFrames_offset, k, vmSymbols::numInterpretedFrames_name(), short_signature, false);
 
@@ -4487,6 +4489,10 @@ bool java_lang_Continuation::on_local_stack(oop ref, address adr) {
   arrayOop s = stack(ref);
   void* base = s->base(T_INT);
   return adr >= base && (char*)adr < ((char*)base + (s->length() * 4));
+}
+ 
+bool java_lang_Continuation::is_mounted(oop ref) {
+  return ref->bool_field(_mounted_offset) != 0;
 }
 
 
