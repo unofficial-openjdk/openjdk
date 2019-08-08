@@ -515,7 +515,7 @@ vframeStream::vframeStream(JavaThread* thread, Handle continuation_scope, bool s
     }
     _frame = _frame.sender(&_reg_map);
   }
-  _cont = Handle(thread, cont);
+  _cont = Handle(Thread::current(), cont);
 
   assert (_reg_map.cont() == (oop)NULL || oopDesc::equals(_cont(), _reg_map.cont()), 
     "map.cont: " INTPTR_FORMAT " vframeStream: " INTPTR_FORMAT, 

@@ -997,6 +997,7 @@ class java_lang_Continuation: AllStatic {
   static int _cs_offset;
   static int _flags_offset;
   static int _reset_offset;
+  static int _mounted_offset;
 
   static void compute_offsets();
  public:
@@ -1040,6 +1041,7 @@ class java_lang_Continuation: AllStatic {
   static inline jshort critical_section(oop ref);
   static bool on_local_stack(oop ref, address adr);
   static bool is_reset(oop ref);
+  static bool is_mounted(oop ref);
 };
 
 // Interface to java.lang.invoke.MethodHandle objects
