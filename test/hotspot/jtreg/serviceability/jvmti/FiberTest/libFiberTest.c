@@ -28,6 +28,7 @@
 extern "C" {
 #endif
 
+#define MAX_FRAME_COUNT 30
 #define MAX_WORKER_THREADS 10
 
 typedef struct Tinfo {
@@ -75,8 +76,53 @@ find_tinfo(JNIEnv* jni, char* thr_name) {
   return inf; // return slot
 }
 
+static char*
+get_method_class_name(jvmtiEnv *jvmti, JNIEnv *jni, jmethodID method) {
+  jvmtiError err;
+  jclass klass = NULL;
+  char*  cname = NULL;
+
+  err = (*jvmti)->GetMethodDeclaringClass(jvmti, method, &klass);
+  if (err != JVMTI_ERROR_NONE) {
+    (*jni)->FatalError(jni, "get_method_class_name: error in JVMTI GetMethodDeclaringClass");
+  }
+  err = (*jvmti)->GetClassSignature(jvmti, klass, &cname, NULL);
+  if (err != JVMTI_ERROR_NONE) {
+    (*jni)->FatalError(jni, "get_method_class_name: error in JVMTI GetClassSignature");
+  }
+  cname[strlen(cname) - 1] = '\0'; // get rid of trailing ';'
+  return cname + 1;                // get rid of leading 'L'
+}
+
 static void
-print_fiber_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, char* event_name) {
+print_method(jvmtiEnv *jvmti, JNIEnv *jni, jmethodID method, jint depth) {
+  char*  cname = NULL;
+  char*  mname = NULL;
+  char*  msign = NULL;
+  jvmtiError err;
+
+  cname = get_method_class_name(jvmti, jni, method);
+
+  err = (*jvmti)->GetMethodName(jvmti, method, &mname, &msign, NULL);
+  if (err != JVMTI_ERROR_NONE) {
+    (*jni)->FatalError(jni, "print_method: error in JVMTI GetMethodName");
+  }
+  printf("%2d: %s: %s%s\n", depth, cname, mname, msign);
+}
+
+static void
+print_stack_trace(jvmtiEnv *jvmti, JNIEnv *jni, int count, jvmtiFrameInfo *frames) {
+  jvmtiError err;
+
+  printf("JVMTI Stack Trace: frame count: %d\n", count);
+  for (int depth = 0; depth < count; depth++) {
+    print_method(jvmti, jni, frames[depth].method, depth);
+  }
+  printf("\n");
+}
+
+static void
+print_fiber_event_info(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject fiber, char* event_name) {
   jvmtiThreadInfo thr_info;
   jvmtiError err = (*jvmti)->GetThreadInfo(jvmti, thread, &thr_info);
 
@@ -84,8 +130,7 @@ print_fiber_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fib
     (*jni)->FatalError(jni, "event handler failed during JVMTI GetThreadInfo call");
   }
   char* thr_name = (thr_info.name == NULL) ? "<Unnamed thread>" : thr_info.name;
-  printf("\n%s event: event thread: %s, fiber: %p\n", event_name, thr_name, fiber);
-  fflush(0);
+  printf("\n#### %s event: thread: %s, fiber: %p\n", event_name, thr_name, fiber);
 
   Tinfo* inf = find_tinfo(jni, thr_name); // Find slot with named worker thread
 
@@ -124,7 +169,7 @@ print_fiber_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fib
 }
 
 static void
-print_cont_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_cnt, char* event_name) {
+print_cont_event_info(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jint frames_cnt, char* event_name) {
   static int cont_events_cnt = 0;
   if (cont_events_cnt++ > MAX_EVENTS_TO_PROCESS) {
     return; // No need to test all events
@@ -137,8 +182,7 @@ print_cont_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_
     (*jni)->FatalError(jni, "event handler failed during JVMTI GetThreadInfo call");
   }
   char* thr_name = (thr_info.name == NULL) ? "<Unnamed thread>" : thr_info.name;
-  printf("\n%s event: event thread: %s, frames count: %d\n", event_name, thr_name, frames_cnt);
-  fflush(0);
+  printf("\n#### %s event: thread: %s, frames count: %d\n", event_name, thr_name, frames_cnt);
 
   Tinfo* inf = find_tinfo(jni, thr_name); // Find slot with named worker thread
   if (inf->thr_name == NULL) {
@@ -155,7 +199,7 @@ print_cont_event_info(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_
 }
 
 static void
-test_IsFiber(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, char* event_name) {
+test_IsFiber(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject fiber, char* event_name) {
   jboolean is_fiber = JNI_FALSE;
   jvmtiError err;
 
@@ -170,7 +214,7 @@ test_IsFiber(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, char* 
   if (is_fiber != JNI_FALSE) {
     (*jni)->FatalError(jni, "event handler: JVMTI IsFiber with NULL fiber failed to return JNI_FALSE");
   }
-  printf("%s event: JVMTI IsFiber with NULL fiber returned JNI_FALSE as expected\n", event_name);
+  printf("JVMTI IsFiber with NULL fiber returned JNI_FALSE as expected\n");
 
   // #2: Test JVMTI IsFiber function with a bad fiber
 
@@ -181,7 +225,7 @@ test_IsFiber(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, char* 
   if (is_fiber != JNI_FALSE) {
     (*jni)->FatalError(jni, "event handler: JVMTI IsFiber with bad fiber failed to return JNI_FALSE");
   }
-  printf("%s event: JVMTI IsFiber with bad fiber returned JNI_FALSE as expected\n", event_name);
+  printf("JVMTI IsFiber with bad fiber returned JNI_FALSE as expected\n");
 
   // #3: Test JVMTI IsFiber function with a good fiber
 
@@ -192,11 +236,11 @@ test_IsFiber(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, char* 
   if (is_fiber != JNI_TRUE) {
     (*jni)->FatalError(jni, "event handler: JVMTI IsFiber with good fiber failed to return JNI_TRUE");
   }
-  printf("%s event: JVMTI IsFiber with good fiber returned JNI_TRUE as expected\n", event_name);
+  printf("JVMTI IsFiber with good fiber returned JNI_TRUE as expected\n");
 }
 
 static void
-test_GetThreadFiber(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, char* event_name) {
+test_GetThreadFiber(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject fiber, char* event_name) {
   jobject thread_fiber = NULL;
   jvmtiError err;
 
@@ -211,15 +255,14 @@ test_GetThreadFiber(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber,
   if (thread_fiber == NULL) {
     (*jni)->FatalError(jni, "event handler: JVMTI GetThreadFiber with NULL thread (current) failed to return non-NULL fiber");
   }
-  printf("%s event: JVMTI GetThreadFiber with NULL thread (current) returned non-NULL fiber as expected\n", event_name);
+  printf("JVMTI GetThreadFiber with NULL thread (current) returned non-NULL fiber as expected\n");
 
   // #2: Test JVMTI GetThreadFiber function a bad thread
 
   err = (*jvmti)->GetThreadFiber(jvmti, fiber, &thread_fiber);
-  if (err == JVMTI_ERROR_NONE) {
-    (*jni)->FatalError(jni, "event handler: JVMTI GetThreadFiber with bad thread failed to return JVMTI_ERROR_INVALID_FIBER");
+  if (err != JVMTI_ERROR_INVALID_THREAD) {
+    (*jni)->FatalError(jni, "event handler: JVMTI GetThreadFiber with bad thread failed to return JVMTI_ERROR_INVALID_THREAD");
   }
-  printf("%s event: JVMTI GetThreadFiber with bad thread returned JVMTI_ERROR_INVALID_THREAD as expected\n", event_name);
 
   // #3: Test JVMTI GetThreadFiber function with a good thread
 
@@ -230,11 +273,11 @@ test_GetThreadFiber(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber,
   if (thread_fiber == NULL) {
     (*jni)->FatalError(jni, "event handler: JVMTI GetThreadFiber with good thread failed to return non-NULL fiber");
   }
-  printf("%s event: JVMTI GetThreadFiber with good thread returned non-NULL fiber as expected\n", event_name);
+  printf("JVMTI GetThreadFiber with good thread returned non-NULL fiber as expected\n");
 }
 
 static void
-test_GetFiberThread(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, char* event_name) {
+test_GetFiberThread(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject fiber, char* event_name) {
   jthread fiber_thread = NULL;
   jvmtiError err;
 
@@ -243,18 +286,16 @@ test_GetFiberThread(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber,
   // #1: Test JVMTI GetFiberThread function with NULL fiber
 
   err = (*jvmti)->GetFiberThread(jvmti, NULL, &fiber_thread);
-  if (err == JVMTI_ERROR_NONE) {
-    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberThread with NULL fiber failed to return JVMTI_ERROR_INVALID_THREAD");
+  if (err != JVMTI_ERROR_INVALID_FIBER) {
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberThread with NULL fiber failed to return JVMTI_ERROR_INVALID_FIBER");
   }
-  printf("%s event: JVMTI GetFiberThread with NULL fiber returned JVMTI_ERROR_INVALID_THREAD as expected\n", event_name);
 
   // #2: Test JVMTI GetFiberThread function with a bad fiber
 
   err = (*jvmti)->GetFiberThread(jvmti, thread, &fiber_thread);
-  if (err == JVMTI_ERROR_NONE) {
-    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberThread with bad fiber failed to return JVMTI_ERROR_INVALID_THREAD");
+  if (err != JVMTI_ERROR_INVALID_FIBER) {
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberThread with bad fiber failed to return JVMTI_ERROR_INVALID_FIBER");
   }
-  printf("%s event: JVMTI GetFiberThread with bad fiber returned JVMTI_ERROR_INVALID_THREAD as expected\n", event_name);
 
   // #3: Test JVMTI GetFiberThread function with a good fiber
 
@@ -265,11 +306,199 @@ test_GetFiberThread(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber,
   if (fiber_thread == NULL) {
     (*jni)->FatalError(jni, "event handler: JVMTI GetFiberThread with good fiber failed to return non-NULL carrier thread");
   }
-  printf("%s event: JVMTI GetFiberThread with good fiber returned non-NULL carrier thread as expected\n", event_name);
+  printf("JVMTI GetFiberThread with good fiber returned non-NULL carrier thread as expected\n");
+}
+
+static int
+test_GetFiberFrameCount(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject fiber, char* event_name) {
+  int frame_count = -1;
+  jvmtiError err;
+
+  // #1: Test JVMTI GetFiberFrameCount function with NULL fiber
+
+  err = (*jvmti)->GetFiberFrameCount(jvmti, NULL, &frame_count);
+  if (err != JVMTI_ERROR_INVALID_FIBER) {
+      printf("JVMTI GetFiberFrameCount with NULL fiber returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberFrameCount with NULL fiber failed to return JVMTI_ERROR_INVALID_FIBER");
+  }
+
+  // #2: Test JVMTI GetFiberFrameCount function with a bad fiber
+
+  err = (*jvmti)->GetFiberFrameCount(jvmti, thread, &frame_count);
+  if (err != JVMTI_ERROR_INVALID_FIBER) {
+      printf("JVMTI GetFiberFrameCount with bad fiber returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberFrameCount with bad fiber failed to return JVMTI_ERROR_INVALID_FIBER");
+  }
+
+  // #3: Test JVMTI GetFiberFrameCount function with NULL count_ptr pointer
+
+  err = (*jvmti)->GetFiberFrameCount(jvmti, fiber, NULL);
+  if (err != JVMTI_ERROR_NULL_POINTER) {
+      printf("JVMTI GetFiberFrameCount with bad fiber returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberFrameCount with NULL count_ptr pointer failed to return JVMTI_ERROR_NULL_POINTER");
+  }
+
+  // #4: Test JVMTI GetFiberFrameCount function with a good fiber
+
+  err = (*jvmti)->GetFiberFrameCount(jvmti, fiber, &frame_count);
+  if (err != JVMTI_ERROR_NONE) {
+    printf("JVMTI GetFiberFrameCount with good fiber returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: failed during JVMTI GetFiberFrameCount call");
+  }
+  if (frame_count < 0) {
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberFrameCount with good fiber returned negative frame_count\n");
+  }
+  printf("JVMTI GetFiberFrameCount with good fiber returned frame_count: %d\n", frame_count);
+
+  return frame_count;
 }
 
 static void
-processFiberEvent(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, char* event_name) {
+test_GetFiberFrameLocation(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject fiber, char* event_name, int frame_count) {
+  jmethodID method = NULL;
+  jlocation location = -1;
+  jvmtiError err;
+
+  // #1: Test JVMTI GetFiberFrameLocation function with NULL fiber
+
+  err = (*jvmti)->GetFiberFrameLocation(jvmti, NULL, 0, &method, &location);
+  if (err != JVMTI_ERROR_INVALID_FIBER) {
+    printf("JVMTI GetFiberFrameCount with NULL fiber returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberFrameLocation with NULL fiber failed to return JVMTI_ERROR_INVALID_FIBER");
+  }
+
+  // #2: Test JVMTI GetFiberFrameLocation function with a bad fiber
+
+  err = (*jvmti)->GetFiberFrameLocation(jvmti, thread, 0, &method, &location);
+  if (err != JVMTI_ERROR_INVALID_FIBER) {
+    printf("JVMTI GetFiberFrameCount with bad fiber returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberFrameLocation with bad fiber failed to return JVMTI_ERROR_INVALID_FIBER");
+  }
+
+  // #3: Test JVMTI GetFiberFrameLocation function with negative frame depth
+  err = (*jvmti)->GetFiberFrameLocation(jvmti, fiber, -1, &method, &location);
+  if (err != JVMTI_ERROR_ILLEGAL_ARGUMENT) {
+    printf("JVMTI GetFiberFrameCount with negative frame depth returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberFrameLocation with negative frame depth failed to return JVMTI_ERROR_ILLEGAL_ARGUMENT");
+  }
+
+  // #4: Test JVMTI GetFiberFrameLocation function with NULL method_ptr
+  err = (*jvmti)->GetFiberFrameLocation(jvmti, fiber, 0, NULL, &location);
+  if (err != JVMTI_ERROR_NULL_POINTER) {
+    printf("JVMTI GetFiberFrameCount with NULL method_ptr returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberFrameLocation with NULL method_ptr failed to return JVMTI_ERROR_NULL_POINTER");
+  }
+
+  // #5: Test JVMTI GetFiberFrameLocation function with NULL location_ptr
+  err = (*jvmti)->GetFiberFrameLocation(jvmti, fiber, 0, &method, NULL);
+  if (err != JVMTI_ERROR_NULL_POINTER) {
+    printf("JVMTI GetFiberFrameCount with NULL location_ptr returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberFrameLocation with NULL location_ptr failed to return JVMTI_ERROR_NULL_POINTER");
+  }
+
+  // #6: Test JVMTI GetFiberFrameLocation function with a good fiber
+
+  if (frame_count == 0) {
+    err = (*jvmti)->GetFiberFrameLocation(jvmti, fiber, 0, &method, &location);
+    if (err != JVMTI_ERROR_NO_MORE_FRAMES) {
+      printf("JVMTI GetFiberFrameLocation for empty stack returned error: %d\n", err);
+      (*jni)->FatalError(jni, "event handler: JVMTI GetFiberFrameLocation for empty stack failed to return JVMTI_ERROR_NO_MORE_FRAMES");
+    }
+    printf("JVMTI GetFiberFrameLocation for empty stack returned JVMTI_ERROR_NO_MORE_FRAMES as expected\n");
+  } else {
+    err = (*jvmti)->GetFiberFrameLocation(jvmti, fiber, 0, &method, &location);
+    if (err != JVMTI_ERROR_NONE) {
+      printf("JVMTI GetFiberFrameLocation with good fiber returned error: %d\n", err);
+      (*jni)->FatalError(jni, "event handler: failed during JVMTI GetFiberFrameCount call");
+    }
+    if (location < 0) {
+      (*jni)->FatalError(jni, "event handler: JVMTI GetFiberFrameLocation with good fiber returned negative location\n");
+    }
+    printf("JVMTI GetFiberFrameLocation with good fiber returned location: %d\n", location);
+  }
+}
+
+static void
+test_GetFiberStackTrace(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject fiber, char* event_name, int frame_count) {
+  jvmtiFrameInfo frames[MAX_FRAME_COUNT];
+  int count = -1;
+  jmethodID method = NULL;
+  jvmtiError err;
+
+  printf("\n");
+
+  // #1: Test JVMTI GetFiberStackTrace function with NULL fiber
+
+  err = (*jvmti)->GetFiberStackTrace(jvmti, NULL, 0, MAX_FRAME_COUNT, frames, &count);
+  if (err != JVMTI_ERROR_INVALID_FIBER) {
+    printf("JVMTI GetFiberStackTrace with NULL fiber returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberStackTrace with NULL fiber failed to return JVMTI_ERROR_INVALID_FIBER");
+  }
+
+  // #2: Test JVMTI GetFiberStackTrace function with a bad fiber
+
+  err = (*jvmti)->GetFiberStackTrace(jvmti, thread, 0, MAX_FRAME_COUNT, frames, &count);
+  if (err != JVMTI_ERROR_INVALID_FIBER) {
+    printf("JVMTI GetFiberStackTrace with bad fiber returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberStackTrace with bad fiber failed to return JVMTI_ERROR_INVALID_FIBER");
+  }
+
+  // #3: Test JVMTI GetFiberStackTrace function with bad start_depth
+  err = (*jvmti)->GetFiberStackTrace(jvmti, fiber, -(frame_count + 1), MAX_FRAME_COUNT, frames, &count);
+  if (err != JVMTI_ERROR_ILLEGAL_ARGUMENT) {
+    printf("JVMTI GetFiberStackTrace with very negative start_depth returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberStackTrace with verynegative start_depth failed to return JVMTI_ERROR_ILLEGAL_ARGUMENT");
+  }
+  err = (*jvmti)->GetFiberStackTrace(jvmti, fiber, (frame_count + 1), MAX_FRAME_COUNT, frames, &count);
+  if (err != JVMTI_ERROR_ILLEGAL_ARGUMENT) {
+    printf("JVMTI GetFiberStackTrace with very big start_depth returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberStackTrace with very big start_depth failed to return JVMTI_ERROR_ILLEGAL_ARGUMENT");
+  }
+
+  // #4: Test JVMTI GetFiberStackTrace function with negative max_frame_count
+  err = (*jvmti)->GetFiberStackTrace(jvmti, fiber, 0, -1, frames, &count);
+  if (err != JVMTI_ERROR_ILLEGAL_ARGUMENT) {
+    printf("JVMTI GetFiberStackTrace with negative max_frame_count returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberStackTrace with negative max_frame_count failed to return JVMTI_ERROR_ILLEGAL_ARGUMENT");
+  }
+
+  // #5: Test JVMTI GetFiberStackTrace function with NULL frame_buffer pointer
+  err = (*jvmti)->GetFiberStackTrace(jvmti, fiber, 0, MAX_FRAME_COUNT, NULL, &count);
+  if (err != JVMTI_ERROR_NULL_POINTER) {
+    printf("JVMTI GetFiberStackTrace with NULL frame_buffer pointer returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberStackTrace witt NULL frame_buffer pointer failed to return JVMTI_ERROR_NULL_POINTER");
+  }
+
+  // #6: Test JVMTI GetFiberStackTrace function with NULL count_ptr pointer
+  err = (*jvmti)->GetFiberStackTrace(jvmti, fiber, 0, MAX_FRAME_COUNT, frames, NULL);
+  if (err != JVMTI_ERROR_NULL_POINTER) {
+    printf("JVMTI GetFiberStackTrace with NULL count_ptr pointer returned error: %d\n", err);
+    (*jni)->FatalError(jni, "event handler: JVMTI GetFiberStackTrace witt NULL count_ptr pointer failed to return JVMTI_ERROR_NULL_POINTER");
+  }
+
+  // #7: Test JVMTI GetFiberStackTrace function with a good fiber
+
+  if (frame_count == 0) {
+    err = (*jvmti)->GetFiberStackTrace(jvmti, fiber, 1, MAX_FRAME_COUNT, frames, &count);
+    if (err != JVMTI_ERROR_ILLEGAL_ARGUMENT) {
+      printf("JVMTI GetFiberStackTrace for empty stack returned error: %d\n", err);
+      (*jni)->FatalError(jni, "event handler: JVMTI GetFiberStackTrace for empty stack failed to return JVMTI_ERROR_ILLEGAL_ARGUMENT");
+    }
+  } else {
+    err = (*jvmti)->GetFiberStackTrace(jvmti, fiber, 0, MAX_FRAME_COUNT, frames, &count);
+    if (err != JVMTI_ERROR_NONE) {
+      printf("JVMTI GetFiberStackTrace with good fiber returned error: %d\n", err);
+      (*jni)->FatalError(jni, "event handler: failed during JVMTI GetFiberStackTrace call");
+    }
+    if (count <= 0) {
+      (*jni)->FatalError(jni, "event handler: JVMTI GetFiberStackTrace with good fiber returned negative frame count\n");
+    }
+    print_stack_trace(jvmti, jni, count, frames);
+  }
+}
+
+static void
+processFiberEvent(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject fiber, char* event_name) {
   static int fiber_events_cnt = 0;
 
   if (strcmp(event_name, "FiberTerminated") != 0 &&
@@ -288,10 +517,17 @@ processFiberEvent(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber, c
 
   test_GetThreadFiber(jvmti, jni, thread, fiber, event_name);
   test_GetFiberThread(jvmti, jni, thread, fiber, event_name);
+
+  if (strcmp(event_name, "FiberScheduled") == 0) {
+    return; // skip testing of GetFiberFrame* for FiberScheduled events
+  }
+  int frame_count = test_GetFiberFrameCount(jvmti, jni, thread, fiber, event_name);
+  test_GetFiberFrameLocation(jvmti, jni, thread, fiber, event_name, frame_count);
+  test_GetFiberStackTrace(jvmti, jni, thread, fiber, event_name, frame_count);
 }
 
 static void JNICALL
-FiberScheduled(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber) {
+FiberScheduled(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject fiber) {
   jobject mounted_fiber = NULL;
   jvmtiError err;
 
@@ -311,7 +547,7 @@ FiberScheduled(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber) {
 }
 
 static void JNICALL
-FiberTerminated(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber) {
+FiberTerminated(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject fiber) {
   jobject mounted_fiber = NULL;
   jvmtiError err;
 
@@ -331,28 +567,28 @@ FiberTerminated(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber) {
 }
 
 static void JNICALL
-FiberMount(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber) {
+FiberMount(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject fiber) {
   lock_events();
   processFiberEvent(jvmti, jni, thread, fiber, "FiberMount");
   unlock_events();
 }
 
 static void JNICALL
-FiberUnmount(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jobject fiber) {
+FiberUnmount(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jobject fiber) {
   lock_events();
   processFiberEvent(jvmti, jni, thread, fiber, "FiberUnmount");
   unlock_events();
 }
 
 static void JNICALL
-ContinuationRun(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_count) {
+ContinuationRun(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jint frames_count) {
   lock_events();
   print_cont_event_info(jvmti, jni, thread, frames_count, "ContinuationRun");
   unlock_events();
 }
 
 static void JNICALL
-ContinuationYield(jvmtiEnv *jvmti, JNIEnv* jni, jthread thread, jint frames_count) {
+ContinuationYield(jvmtiEnv *jvmti, JNIEnv *jni, jthread thread, jint frames_count) {
   lock_events();
   print_cont_event_info(jvmti, jni, thread, frames_count, "ContinuationYield");
   unlock_events();

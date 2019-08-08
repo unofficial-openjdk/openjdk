@@ -93,6 +93,9 @@
   template(GetFrameCount)                         \
   template(GetFrameLocation)                      \
   template(GetFiberThread)                        \
+  template(GetFiberStackTrace)                    \
+  template(GetFiberFrameCount)                    \
+  template(GetFiberFrameLocation)                 \
   template(ChangeBreakpoints)                     \
   template(GetOrSetLocal)                         \
   template(GetCurrentLocation)                    \

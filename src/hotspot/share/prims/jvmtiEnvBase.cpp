@@ -805,6 +805,68 @@ JvmtiEnvBase::get_locked_objects_in_frame(JavaThread* calling_thread, JavaThread
 }
 
 jvmtiError
+JvmtiEnvBase::get_stack_trace(javaVFrame *jvf,
+                              jint start_depth, jint max_count,
+                              jvmtiFrameInfo* frame_buffer, jint* count_ptr) {
+  Thread* current_thread = Thread::current();
+  ResourceMark rm(current_thread);
+  HandleMark hm(current_thread);
+  int count = 0;
+
+  if (start_depth != 0) {
+    if (start_depth > 0) {
+      for (int j = 0; j < start_depth && jvf != NULL; j++) {
+        jvf = jvf->java_sender();
+      }
+      if (jvf == NULL) {
+        // start_depth is deeper than the stack depth
+        return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+      }
+    } else { // start_depth < 0
+      // we are referencing the starting depth based on the oldest
+      // part of the stack.
+      // optimize to limit the number of times that java_sender() is called
+      javaVFrame *jvf_cursor = jvf;
+      javaVFrame *jvf_prev = NULL;
+      javaVFrame *jvf_prev_prev = NULL;
+      int j = 0;
+      while (jvf_cursor != NULL) {
+        jvf_prev_prev = jvf_prev;
+        jvf_prev = jvf_cursor;
+        for (j = 0; j > start_depth && jvf_cursor != NULL; j--) {
+          jvf_cursor = jvf_cursor->java_sender();
+        }
+      }
+      if (j == start_depth) {
+        // previous pointer is exactly where we want to start
+        jvf = jvf_prev;
+      } else {
+        // we need to back up further to get to the right place
+        if (jvf_prev_prev == NULL) {
+          // the -start_depth is greater than the stack depth
+          return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+        }
+        // j now is the number of frames on the stack starting with
+        // jvf_prev, we start from jvf_prev_prev and move older on
+        // the stack that many, the result is -start_depth frames
+        // remaining.
+        jvf = jvf_prev_prev;
+        for (; j < 0; j++) {
+          jvf = jvf->java_sender();
+        }
+      }
+    }
+  }
+  for (; count < max_count && jvf != NULL; count++) {
+    frame_buffer[count].method = jvf->method()->jmethod_id();
+    frame_buffer[count].location = (jvf->method()->is_native() ? -1 : jvf->bci());
+    jvf = jvf->java_sender();
+  }
+  *count_ptr = count;
+  return JVMTI_ERROR_NONE;
+}
+
+jvmtiError
 JvmtiEnvBase::get_stack_trace(JavaThread *java_thread,
                               jint start_depth, jint max_count,
                               jvmtiFrameInfo* frame_buffer, jint* count_ptr) {
@@ -815,69 +877,23 @@ JvmtiEnvBase::get_stack_trace(JavaThread *java_thread,
           java_thread->is_thread_fully_suspended(false, &debug_bits)),
          "at safepoint or target thread is suspended");
   int count = 0;
+  jvmtiError err = JVMTI_ERROR_NONE;
+
   if (java_thread->has_last_Java_frame()) {
     RegisterMap reg_map(java_thread, true, true);
     Thread* current_thread = Thread::current();
     ResourceMark rm(current_thread);
     javaVFrame *jvf = java_thread->last_java_vframe(&reg_map);
-    HandleMark hm(current_thread);
-    if (start_depth != 0) {
-      if (start_depth > 0) {
-        for (int j = 0; j < start_depth && jvf != NULL; j++) {
-          jvf = jvf->java_sender();
-        }
-        if (jvf == NULL) {
-          // start_depth is deeper than the stack depth
-          return JVMTI_ERROR_ILLEGAL_ARGUMENT;
-        }
-      } else { // start_depth < 0
-        // we are referencing the starting depth based on the oldest
-        // part of the stack.
-        // optimize to limit the number of times that java_sender() is called
-        javaVFrame *jvf_cursor = jvf;
-        javaVFrame *jvf_prev = NULL;
-        javaVFrame *jvf_prev_prev = NULL;
-        int j = 0;
-        while (jvf_cursor != NULL) {
-          jvf_prev_prev = jvf_prev;
-          jvf_prev = jvf_cursor;
-          for (j = 0; j > start_depth && jvf_cursor != NULL; j--) {
-            jvf_cursor = jvf_cursor->java_sender();
-          }
-        }
-        if (j == start_depth) {
-          // previous pointer is exactly where we want to start
-          jvf = jvf_prev;
-        } else {
-          // we need to back up further to get to the right place
-          if (jvf_prev_prev == NULL) {
-            // the -start_depth is greater than the stack depth
-            return JVMTI_ERROR_ILLEGAL_ARGUMENT;
-          }
-          // j now is the number of frames on the stack starting with
-          // jvf_prev, we start from jvf_prev_prev and move older on
-          // the stack that many, the result is -start_depth frames
-          // remaining.
-          jvf = jvf_prev_prev;
-          for (; j < 0; j++) {
-            jvf = jvf->java_sender();
-          }
-        }
-      }
-    }
-    for (; count < max_count && jvf != NULL; count++) {
-      frame_buffer[count].method = jvf->method()->jmethod_id();
-      frame_buffer[count].location = (jvf->method()->is_native() ? -1 : jvf->bci());
-      jvf = jvf->java_sender();
-    }
+
+    err = get_stack_trace(jvf, start_depth, max_count, frame_buffer, count_ptr);
   } else {
+    *count_ptr = 0;
     if (start_depth != 0) {
       // no frames and there is a starting depth
-      return JVMTI_ERROR_ILLEGAL_ARGUMENT;
+      err = JVMTI_ERROR_ILLEGAL_ARGUMENT;
     }
   }
-  *count_ptr = count;
-  return JVMTI_ERROR_NONE;
+  return err;
 }
 
 jvmtiError
@@ -1602,3 +1618,81 @@ VM_GetFiberThread::doit() {
   *_carrier_thread_ptr = (jthread)JNIHandles::make_local(_current_thread, carrier_thread);
 }
 
+static
+javaVFrame* get_fiber_jvf(Thread* cur_thread, oop fiber) {
+  oop cont = java_lang_Fiber::continuation(fiber);
+  javaVFrame* jvf = NULL;
+
+  if (cont != NULL && java_lang_Continuation::is_mounted(cont)) {
+    oop carrier_thread = java_lang_Fiber::carrier_thread(fiber);
+    JavaThread* java_thread = java_lang_Thread::thread(carrier_thread);
+    vframeStream vfs(java_thread, Handle(cur_thread, Continuation::continuation_scope(cont)));
+    
+    if (!vfs.at_end()) {
+      jvf = vfs.asJavaVFrame();
+    }
+  } else {
+    Handle cont_h(cur_thread, cont);
+    vframeStream vfs(cont_h);
+
+    if (!vfs.at_end()) {
+      jvf = vfs.asJavaVFrame();
+    }
+  }
+  return jvf;
+}
+
+void
+VM_GetFiberStackTrace::doit() {
+  Thread* cur_thread = Thread::current();
+  ResourceMark rm(cur_thread);
+  HandleMark hm(cur_thread);
+  javaVFrame *jvf = get_fiber_jvf(cur_thread, _fiber_h());
+  _result = ((JvmtiEnvBase *)_env)->get_stack_trace(jvf,
+                                                    _start_depth, _max_count,
+                                                    _frame_buffer, _count_ptr);
+}
+
+void
+VM_GetFiberFrameCount::doit() {
+  Thread* cur_thread = Thread::current();
+  ResourceMark rm(cur_thread);
+  HandleMark hm(cur_thread);
+  javaVFrame *jvf = get_fiber_jvf(cur_thread, _fiber_h());
+  int count = 0;
+
+  while (jvf != NULL) {
+    Method* method = jvf->method();
+    jvf = jvf->java_sender();
+    count++;
+  }
+  *_count_ptr = count;
+}
+
+void
+VM_GetFiberFrameLocation::doit() {
+  Thread* cur_thread = Thread::current();
+  ResourceMark rm(cur_thread);
+  HandleMark hm(cur_thread);
+  javaVFrame *jvf = get_fiber_jvf(cur_thread, _fiber_h());
+  int  depth = -1;
+
+  while (jvf != NULL && depth < _depth) {
+    Method* method = jvf->method();
+    jvf = jvf->java_sender();
+    depth++;
+  }
+
+  if (depth < _depth) {
+    _result = JVMTI_ERROR_NO_MORE_FRAMES;
+    return;
+  }
+
+  Method* method = jvf->method();
+  if (method->is_native()) {
+    *_location_ptr = -1;
+  } else {
+    *_location_ptr = jvf->bci();
+  }
+  *_method_ptr = method->jmethod_id();
+}

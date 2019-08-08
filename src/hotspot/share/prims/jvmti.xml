@@ -120,7 +120,8 @@
                     field  CDATA #IMPLIED>
 
    <!ELEMENT jframeID EMPTY>
-   <!ATTLIST jframeID thread CDATA #IMPLIED>
+   <!ATTLIST jframeID thread CDATA #IMPLIED
+                      fiber  CDATA #IMPLIED>
 
    <!ELEMENT jrawMonitorID EMPTY>
 
@@ -134,6 +135,8 @@
 
    <!ELEMENT jthreadGroup EMPTY>
    <!ELEMENT jobject EMPTY>
+   <!ATTLIST jobject frame CDATA #IMPLIED>
+
    <!ELEMENT jvalue EMPTY>
    <!ELEMENT jchar EMPTY>
    <!ELEMENT jint EMPTY>
@@ -2235,7 +2238,7 @@ jvmtiEnv *jvmti;
     <intro>
     </intro>
 
-    <function id="IsFiber" num="105" since="13">
+    <function id="IsFiber" num="105" since="14">
       <synopsis>Is Fiber</synopsis>
       <description>
         Determines whether a thread object reference represents a fiber.
@@ -2267,7 +2270,7 @@ jvmtiEnv *jvmti;
       </errors>
     </function>
 
-    <function id="GetThreadFiber" num="113" since="13">
+    <function id="GetThreadFiber" num="113" since="14">
       <synopsis>Get Thread Fiber</synopsis>
       <description>
         Get the fiber mounted to the specified thread.
@@ -2297,7 +2300,7 @@ jvmtiEnv *jvmti;
       </errors>
     </function>
 
-    <function id="GetFiberThread" num="117" since="13">
+    <function id="GetFiberThread" num="117" since="14">
       <synopsis>Get Fiber Thread</synopsis>
       <description>
         Get the thread the specified fiber is mounted to.
@@ -2321,6 +2324,165 @@ jvmtiEnv *jvmti;
           <description>
             On return, points to the thread the fiber is mounted to, or <code>NULL</code>.
             The result is transient if not all carrier threads are suspended.
+          </description>
+        </param>
+      </parameters>
+      <errors>
+        <error id="JVMTI_ERROR_INVALID_FIBER">
+          <paramlink id="fiber"></paramlink> is not a fiber.
+        </error>
+      </errors>
+    </function>
+
+    <function id="GetFiberStackTrace" num="118" since="14">
+      <synopsis>Get Fiber Stack Trace</synopsis>
+      <description>
+        Get information about the stack of a fiber.
+        If <paramlink id="max_frame_count"></paramlink> is less than the depth of the stack,
+        the <paramlink id="max_frame_count"></paramlink> topmost frames are returned,
+        otherwise the entire stack is returned.
+        The topmost frames, those most recently invoked, are at the beginning of the returned buffer.
+        <p/>
+        The <paramlink id="fiber"></paramlink> need not be suspended to call this function.
+        <p/>
+        The <functionlink id="GetLineNumberTable"></functionlink>
+        function can be used to map locations to line numbers. Note that
+        this mapping can be done lazily.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+        <required id="can_support_fibers">Can support fibers.</required>
+      </capabilities>
+      <parameters>
+        <param id="fiber">
+          <jobject />
+            <description>
+              Fetch the stack trace of this fiber.
+            </description>
+        </param>
+        <param id="start_depth">
+          <jint/>
+          <description>
+            Begin retrieving frames at this depth.
+            If non-negative, count from the current frame,
+            the first frame retrieved is at depth <code>start_depth</code>.
+            For example, if zero, start from the current frame; if one, start from the
+            caller of the current frame; if two, start from the caller of the
+            caller of the current frame; and so on.
+            If negative, count from below the oldest frame,
+            the first frame retrieved is at depth <i>stackDepth</i><code> + start_depth</code>,
+            where <i>stackDepth</i> is the count of frames on the stack.
+            For example, if negative one, only the oldest frame is retrieved;
+            if negative two, start from the frame called by the oldest frame.
+          </description>
+        </param>
+        <param id="max_frame_count">
+          <jint min="0"/>
+          <description>
+            The maximum number of <datalink id="jvmtiFrameInfo"/> records to retrieve.
+          </description>
+        </param>
+        <param id="frame_buffer">
+          <outbuf incount="max_frame_count" outcount="count_ptr">
+            <struct>jvmtiFrameInfo</struct>
+          </outbuf>
+            <description>
+              On return, this agent allocated buffer is filled
+              with stack frame information.
+            </description>
+        </param>
+        <param id="count_ptr">
+          <outptr><jint/></outptr>
+          <description>
+            On return, points to the number of records filled in.
+            For non-negative <code>start_depth</code>, this will be
+            min(<code>max_frame_count</code>, <i>stackDepth</i><code> - start_depth</code>).
+            For negative <code>start_depth</code>, this will be
+            min(<code>max_frame_count</code>, <code>-start_depth</code>).
+          </description>
+        </param>
+      </parameters>
+      <errors>
+        <error id="JVMTI_ERROR_INVALID_FIBER">
+          <paramlink id="fiber"></paramlink> is not a fiber.
+        </error>
+        <error id="JVMTI_ERROR_ILLEGAL_ARGUMENT">
+          <paramlink id="start_depth"/> is positive and greater than or equal to <i>stackDepth</i>.
+          Or <paramlink id="start_depth"/> is negative and less than <i>-stackDepth</i>.
+        </error>
+      </errors>
+    </function>
+
+    <function id="GetFiberFrameCount" num="119" since="14">
+      <synopsis>Get Fiber Frame Count</synopsis>
+      <description>
+        Get the number of frames currently in the specified fiber's call stack.
+        <p/>
+        If this function is called for a fiber actively executing bytecodes (for example,
+        not on the current or suspended thread), the information returned is transient.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+        <required id="can_support_fibers">Can support fibers.</required>
+      </capabilities>
+      <parameters>
+        <param id="fiber">
+          <jobject />
+            <description>
+              The fiber to query.
+            </description>
+        </param>
+        <param id="count_ptr">
+          <outptr><jint/></outptr>
+          <description>
+            On return, points to the number of frames in the call stack.
+          </description>
+        </param>
+      </parameters>
+      <errors>
+        <error id="JVMTI_ERROR_INVALID_FIBER">
+          <paramlink id="fiber"></paramlink> is not a fiber.
+        </error>
+      </errors>
+    </function>
+
+    <function id="GetFiberFrameLocation" num="141" since="14">
+      <synopsis>Get Fiber Frame Location</synopsis>
+      <description>
+        <p/>
+        For a Java programming language frame, return the location of the instruction
+        currently executing.
+      </description>
+      <origin>new</origin>
+      <capabilities>
+        <required id="can_support_fibers">Can support fibers.</required>
+      </capabilities>
+      <parameters>
+        <param id="fiber">
+          <jobject frame="frame"/>
+          <description>
+            The fiber of the frame to query.
+          </description>
+        </param>
+        <param id="depth">
+          <jframeID fiber="fiber"/>
+          <description>
+            The depth of the frame to query.
+          </description>
+        </param>
+        <param id="method_ptr">
+          <outptr><jmethodID/></outptr>
+            <description>
+              On return, points to the method for the current location.
+            </description>
+        </param>
+        <param id="location_ptr">
+          <outptr><jlocation/></outptr>
+          <description>
+            On return, points to the index of the currently
+            executing instruction.
+            Is set to <code>-1</code> if the frame is executing
+            a native method.
           </description>
         </param>
       </parameters>
@@ -10470,7 +10632,7 @@ myInit() {
 	  called and <eventlink id="SampledObjectAlloc"></eventlink> events can be generated.
         </description>
       </capabilityfield>
-      <capabilityfield id="can_support_fibers" since="13">
+      <capabilityfield id="can_support_fibers" since="14">
         <description>
           Can support Fibers.
           If this capability is enabled then the following fiber aware functions can be called:
@@ -10484,7 +10646,7 @@ myInit() {
           <eventlink id="FiberUnmount"></eventlink>.
         </description>
       </capabilityfield>
-      <capabilityfield id="can_support_continuations" since="13">
+      <capabilityfield id="can_support_continuations" since="14">
         <description>
           Can support Continuations.
           and the following continuation aware events can be enabled:
@@ -12832,7 +12994,7 @@ myInit() {
   </event>
 
  <event label="Fiber Scheduled"
-         id="FiberScheduled" const="JVMTI_EVENT_FIBER_SCHEDULED" filtered="thread" num="87" phase="start" since="13">
+         id="FiberScheduled" const="JVMTI_EVENT_FIBER_SCHEDULED" filtered="thread" num="87" phase="start" since="14">
     <description>
       Fiber scheduled events are generated before its initial method executes.
       <p/>
@@ -12869,7 +13031,7 @@ myInit() {
   </event>
 
   <event label="Fiber Terminated"
-         id="FiberTerminated" const="JVMTI_EVENT_FIBER_TERMINATED" filtered="thread" num="88" phase="start" since="13">
+         id="FiberTerminated" const="JVMTI_EVENT_FIBER_TERMINATED" filtered="thread" num="88" phase="start" since="14">
     <description>
       Fiber terminated events are generated after its initial method has finished execution.
       <p/>
@@ -12906,7 +13068,7 @@ myInit() {
   </event>
 
   <event label="Fiber Mount"
-         id="FiberMount" const="JVMTI_EVENT_FIBER_MOUNT" filtered="thread" num="89" phase="start" since="13">
+         id="FiberMount" const="JVMTI_EVENT_FIBER_MOUNT" filtered="thread" num="89" phase="start" since="14">
     <description>
       Fiber mount events are generated before its method continue to execute on the mounted thread.
       <p/>
@@ -12943,7 +13105,7 @@ myInit() {
   </event>
 
   <event label="Fiber Unmount"
-         id="FiberUnmount" const="JVMTI_EVENT_FIBER_UNMOUNT" filtered="thread" num="90" phase="start" since="13">
+         id="FiberUnmount" const="JVMTI_EVENT_FIBER_UNMOUNT" filtered="thread" num="90" phase="start" since="14">
     <description>
       Fiber unmount events are generated when the fiber is about to be unmounted from the carrier thread.
       <p/>
@@ -12980,7 +13142,7 @@ myInit() {
   </event>
 
   <event label="Continuation Run"
-         id="ContinuationRun" const="JVMTI_EVENT_CONTINUATION_RUN" filtered="thread" num="91" phase="start" since="13">
+         id="ContinuationRun" const="JVMTI_EVENT_CONTINUATION_RUN" filtered="thread" num="91" phase="start" since="14">
     <description>
       Continuation run events are generated before the continuation is continued execution on current thread.
       <p/>
@@ -13017,7 +13179,7 @@ myInit() {
   </event>
 
   <event label="Continuation Yield"
-         id="ContinuationYield" const="JVMTI_EVENT_CONTINUATION_YIELD" filtered="thread" num="92" phase="start" since="13">
+         id="ContinuationYield" const="JVMTI_EVENT_CONTINUATION_YIELD" filtered="thread" num="92" phase="start" since="14">
     <description>
       Continuation yield events are generated before the continuation actually yields on current thread.
       <p/>

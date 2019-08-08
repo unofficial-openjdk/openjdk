@@ -868,8 +868,7 @@ JvmtiEnv::GetThreadFiber(JavaThread* java_thread, jobject* fiber_ptr) {
   return JVMTI_ERROR_NONE;
 } /* end GetThreadFiber */
 
-// fiber - pre-checked for NULL
-// is_thread_ptr - pre-checked for NULL
+// thread_ptr - pre-checked for NULL
 jvmtiError
 JvmtiEnv::GetFiberThread(jobject fiber, jthread* thread_ptr) {
   JavaThread* current_thread  = JavaThread::current();
@@ -885,6 +884,62 @@ JvmtiEnv::GetFiberThread(jobject fiber, jthread* thread_ptr) {
 
   return op.result();
 } /* end GetFiberThread */
+
+// max_frame_count - pre-checked to be greater than or equal to 0
+// frame_buffer - pre-checked for NULL
+// count_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetFiberStackTrace(jobject fiber, jint start_depth, jint max_frame_count, jvmtiFrameInfo* frame_buffer, jint* count_ptr) {
+  JavaThread* current_thread = JavaThread::current();
+  HandleMark hm(current_thread);
+  oop fiber_obj = JNIHandles::resolve_external_guard(fiber);
+
+  if (!java_lang_Fiber::is_instance(fiber_obj)) {
+    return JVMTI_ERROR_INVALID_FIBER;
+  }
+
+  VM_GetFiberStackTrace op(this, Handle(current_thread, fiber_obj),
+                           start_depth, max_frame_count, frame_buffer, count_ptr);
+  VMThread::execute(&op);
+
+  return op.result();
+} /* end GetFiberStackTrace */
+
+// count_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetFiberFrameCount(jobject fiber, jint* count_ptr) {
+  JavaThread* current_thread = JavaThread::current();
+  HandleMark hm(current_thread);
+  oop fiber_obj = JNIHandles::resolve_external_guard(fiber);
+
+  if (!java_lang_Fiber::is_instance(fiber_obj)) {
+    return JVMTI_ERROR_INVALID_FIBER;
+  }
+
+  VM_GetFiberFrameCount op(this, Handle(current_thread, fiber_obj), count_ptr);
+  VMThread::execute(&op);
+
+  return op.result();
+} /* end GetFiberFrameCount */
+
+// depth - pre-checked as non-negative
+// method_ptr - pre-checked for NULL
+// location_ptr - pre-checked for NULL
+jvmtiError
+JvmtiEnv::GetFiberFrameLocation(jobject fiber, jint depth, jmethodID* method_ptr, jlocation* location_ptr) {
+  JavaThread* current_thread  = JavaThread::current();
+  HandleMark hm(current_thread);
+  oop fiber_obj = JNIHandles::resolve_external_guard(fiber);
+
+  if (!java_lang_Fiber::is_instance(fiber_obj)) {
+    return JVMTI_ERROR_INVALID_FIBER;
+  }
+
+  VM_GetFiberFrameLocation op(this, Handle(current_thread, fiber_obj), depth, method_ptr, location_ptr);
+  VMThread::execute(&op);
+
+  return op.result();
+} /* end GetFiberFrameLocation */
 
 
   //
