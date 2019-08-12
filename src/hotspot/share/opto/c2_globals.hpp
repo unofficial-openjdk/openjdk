@@ -107,9 +107,6 @@
   notproduct(bool, PrintOptoInlining, false,                                \
           "Print compiler2 inlining decisions")                             \
                                                                             \
-  notproduct(bool, VerifyOpto, false,                                       \
-          "Apply more time consuming verification during compilation")      \
-                                                                            \
   notproduct(bool, VerifyIdealNodeCount, false,                             \
           "Verify that tracked dead ideal node count is accurate")          \
                                                                             \
@@ -513,7 +510,7 @@
           "Sets max value cached by the java.lang.Integer autobox cache")   \
           range(0, max_jint)                                                \
                                                                             \
-  experimental(bool, AggressiveUnboxing, true,                              \
+  experimental(bool, AggressiveUnboxing, false,                             \
           "Control optimizations for aggressive boxing elimination")        \
                                                                             \
   develop(bool, TracePostallocExpand, false, "Trace expanding nodes after"  \
