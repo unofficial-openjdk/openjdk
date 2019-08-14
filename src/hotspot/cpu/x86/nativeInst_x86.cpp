@@ -676,7 +676,6 @@ void NativeGeneralJump::replace_mt_safe(address instr_addr, address code_buffer)
      assert(*((address)((intptr_t)instr_addr + i)) == a_byte, "mt safe patching failed");
    }
 #endif
-
 }
 
 
@@ -694,7 +693,7 @@ address NativeGeneralJump::jump_destination() const {
 }
 
 void NativePostCallNop::patch(jint diff) {
-  assert(diff > 0, "must be");
+  assert(diff != 0, "must be");
   int32_t *code_pos = (int32_t *) addr_at(displacement_offset);
   *((int32_t *)(code_pos)) = (int32_t) diff;
 }

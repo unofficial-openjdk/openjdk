@@ -46,6 +46,7 @@ public:
     jni,
     stringtable,
     resolved_method_table,
+    nmethod_keepalive,
     vm
   };
 

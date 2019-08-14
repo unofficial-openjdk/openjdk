@@ -30,6 +30,7 @@
 #include "oops/oop.hpp"
 #include "oops/weakHandle.inline.hpp"
 #include "prims/resolvedMethodTable.hpp"
+#include "runtime/continuation.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/ostream.hpp"
 
@@ -45,6 +46,10 @@ template <> OopStorage* WeakHandle<vm_resolved_method_table_data>::get_storage()
   return ResolvedMethodTable::weak_storage();
 }
 
+template <> OopStorage* WeakHandle<vm_nmethod_keepalive_data>::get_storage() {
+  return Continuation::weak_storage();
+}
+
 template <WeakHandleType T>
 WeakHandle<T> WeakHandle<T>::create(Handle obj) {
   assert(obj() != NULL, "no need to create weak null oop");
@@ -55,6 +60,12 @@ WeakHandle<T> WeakHandle<T>::create(Handle obj) {
   // Create WeakHandle with address returned and store oop into it.
   NativeAccess<ON_PHANTOM_OOP_REF>::oop_store(oop_addr, obj());
   return WeakHandle(oop_addr);
+}
+
+template <WeakHandleType T>
+WeakHandle<T> WeakHandle<T>::from_raw(oop* raw) {
+  assert(raw != NULL, "can't create from raw with NULL value");
+  return WeakHandle(raw);
 }
 
 template <WeakHandleType T>
@@ -80,3 +91,4 @@ void WeakHandle<T>::print_on(outputStream* st) const {
 template class WeakHandle<vm_class_loader_data>;
 template class WeakHandle<vm_string_table_data>;
 template class WeakHandle<vm_resolved_method_table_data>;
+template class WeakHandle<vm_nmethod_keepalive_data>;

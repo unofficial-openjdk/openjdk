@@ -59,6 +59,8 @@ Mutex*   VMWeakAlloc_lock             = NULL;
 Mutex*   VMWeakActive_lock            = NULL;
 Mutex*   ResolvedMethodTableWeakAlloc_lock  = NULL;
 Mutex*   ResolvedMethodTableWeakActive_lock = NULL;
+Mutex*   NMethodKeepaliveAlloc_lock   = NULL;
+Mutex*   NMethodKeepaliveActive_lock  = NULL;
 Mutex*   JmethodIdCreation_lock       = NULL;
 Mutex*   JfieldIdCreation_lock        = NULL;
 Monitor* JNICritical_lock             = NULL;
@@ -227,6 +229,9 @@ void mutex_init() {
 
   def(ResolvedMethodTableWeakAlloc_lock    , PaddedMutex  , oopstorage,   true,  Monitor::_safepoint_check_never);
   def(ResolvedMethodTableWeakActive_lock   , PaddedMutex  , oopstorage-1, true,  Monitor::_safepoint_check_never);
+
+  def(NMethodKeepaliveAlloc_lock   , PaddedMutex  , oopstorage,   true,  Monitor::_safepoint_check_never);
+  def(NMethodKeepaliveActive_lock  , PaddedMutex  , oopstorage-1, true,  Monitor::_safepoint_check_never);
 
   def(FullGCCount_lock             , PaddedMonitor, leaf,        true,  Monitor::_safepoint_check_never);      // in support of ExplicitGCInvokesConcurrent
   if (UseG1GC) {

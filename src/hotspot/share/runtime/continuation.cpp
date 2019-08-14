@@ -33,6 +33,7 @@
 #include "compiler/oopMap.inline.hpp"
 #include "jfr/jfrEvents.hpp"
 #include "gc/shared/memAllocator.hpp"
+#include "gc/shared/oopStorage.hpp"
 #include "gc/shared/threadLocalAllocBuffer.inline.hpp"
 #include "interpreter/interpreter.hpp"
 #include "interpreter/linkResolver.hpp"
@@ -42,6 +43,8 @@
 #include "metaprogramming/conditional.hpp"
 #include "oops/access.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
+#include "oops/weakHandle.hpp"
+#include "oops/weakHandle.inline.hpp"
 #include "prims/jvmtiThreadState.hpp"
 #include "runtime/continuation.hpp"
 #include "runtime/deoptimization.hpp"
@@ -102,6 +105,8 @@
 // #define assert(p, ...)
 
 int Continuations::_flags = 0;
+
+OopStorage* Continuation::_weak_handles = NULL;
 
 PERFTEST_ONLY(static int PERFTEST_LEVEL = ContPerfTest;)
 // Freeze:
@@ -511,7 +516,7 @@ private:
   static void copy_primitive_array(typeArrayOop old_array, int old_start, typeArrayOop new_array, int new_start, int count);
   template <typename ConfigT> bool allocate_ref_stack(int nr_oops);
   template <typename ConfigT> objArrayOop  allocate_refstack_array(size_t nr_oops);
-  template <typename ConfigT> objArrayOop  allocate_shadow_array(size_t nr_oops);
+  template <typename ConfigT> objArrayOop  allocate_keepalive_array(size_t nr_oops);
   template <typename ConfigT> bool grow_ref_stack(int nr_oops);
   template <typename ConfigT> void copy_ref_array(objArrayOop old_array, int old_start, objArrayOop new_array, int new_start, int count);
   template <typename ConfigT> void zero_ref_array(objArrayOop new_array, int new_length, int min_length);
@@ -1439,48 +1444,74 @@ private:
   }
 };
 
+/*
+ * This class is mainly responsible for the work that is required to make sure that nmethods that
+ * are referenced from a Continuation stack are kept alive.
+ *
+ * While freezing, for each nmethod a keepalive array is allocated. It contains elements for all the
+ * oops that are either immediates or in the oop section in the nmethod (basically all that would be
+ * published to the closure while running nm->oops_do().).
+ *
+ * The keepalive array is than strongly linked from the oop array in the Continuation, a weak reference
+ * is kept in the nmethod -> the keepalive array.
+ *
+ * Some GCs (currently only G1) have code that considers the weak reference to the keepalive array a
+ * strong reference while this nmethod is on the stack. This is true while we are freezing, it helps
+ * performance because we don't need to allocate and keep oops to this objects in a Handle for such GCs.
+ * As soon as they are linked into the nmethod we know the object will stay alive.
+ */
 template <typename ConfigT>
 class CompiledMethodKeepalive {
 private:
   typedef typename ConfigT::OopT OopT;
   typedef CompiledMethodKeepalive<ConfigT> SelfT;
+  typedef typename ConfigT::KeepaliveObjectT KeepaliveObjectT;
 
-  Handle _shadowHolder;
+  typename KeepaliveObjectT::TypeT _keepalive;
   CompiledMethod* _method;
   SelfT* _parent;
+  JavaThread* _thread;
   int _nr_oops;
   bool _required;
 
-public:
-  CompiledMethodKeepalive(CompiledMethod* cm, SelfT* parent, JavaThread* thread) : _method(cm), _parent(NULL), _nr_oops(0), _required(false) {
-    jweak shadow = cm->get_shadow();
-    oop resolved = JNIHandles::resolve(shadow);
-    if (resolved != NULL) {
-      _shadowHolder = Handle(thread, resolved);
-      return;
-    }
+  void store_keepalive(JavaThread* thread, oop* keepalive) { _keepalive = KeepaliveObjectT::make_keepalive(thread, keepalive); }
+  oop read_keepalive() { return KeepaliveObjectT::read_keepalive(_keepalive); }
 
-    if (shadow != NULL) {
-      //log_info(jvmcont)("trying to clear stale shadow for %p", _method);
-      if (cm->clear_shadow(shadow)) {
-        //log_info(jvmcont)("shadow cleared for %p", _method);
-        thread->keepalive_cleanup()->append(shadow);
+public:
+  CompiledMethodKeepalive(CompiledMethod* cm, SelfT* parent, JavaThread* thread) : _method(cm), _parent(NULL), _thread(thread), _nr_oops(0), _required(false) {
+    oop* keepalive = cm->get_keepalive();
+    if (keepalive != NULL) {
+   //   log_info(jvmcont)("keepalive is %p (%p) for nm %p", keepalive, (void *) *keepalive, cm);
+      WeakHandle<vm_nmethod_keepalive_data> wh = WeakHandle<vm_nmethod_keepalive_data>::from_raw(keepalive);
+      oop resolved = wh.resolve();
+      if (resolved != NULL) {
+        //log_info(jvmcont)("found keepalive %p (%p)", keepalive, (void *) resolved);
+        store_keepalive(thread, keepalive);
+        return;
+      }
+
+      //log_info(jvmcont)("trying to clear stale keepalive for %p", _method);
+      if (cm->clear_keepalive(keepalive)) {
+        //log_info(jvmcont)("keepalive cleared for %p", _method);
+        thread->keepalive_cleanup()->append(wh);
         // put on a list for cleanup in a safepoint
       }
     }
+  //  log_info(jvmcont)("keepalive is %p for nm %p", keepalive, cm);
 
     nmethod* nm = cm->as_nmethod_or_null();
     if (nm != NULL) {
       _nr_oops = nm->nr_oops();
-      //log_info(jvmcont)("need shadow for %d oops", _nr_oops);
+      //log_info(jvmcont)("need keepalive for %d oops", _nr_oops);
       _required = true;
       _parent = parent;
     }
   }
 
   void write_at(ContMirror& mirror, int index) {
+    assert(_keepalive != NULL, "");
     //log_develop_info(jvmcont)("writing mirror at %d\n", index);
-    mirror.add_oop<ConfigT>(_shadowHolder(), index);
+    mirror.add_oop<ConfigT>(read_keepalive(), index);
     //*(hsp + index)
   }
 
@@ -1492,26 +1523,32 @@ public:
 
     nmethod* nm = _method->as_nmethod_or_null();
     if (nm != NULL) {
-      PersistOops<OopT> persist(_nr_oops, (objArrayOop) _shadowHolder());
+      assert(_keepalive != NULL && read_keepalive() != NULL, "");
+      PersistOops<OopT> persist(_nr_oops, (objArrayOop) read_keepalive());
       nm->oops_do(&persist);
       //log_info(jvmcont)("oops persisted");
     }
   }
 
-  void set_handle(Handle shadow) {
-    _shadowHolder = shadow;
-    jobject obj = JNIHandles::make_weak_global(shadow);
-    jobject result = _method->set_shadow(obj);
+  void set_handle(Handle keepalive) {
+    WeakHandle<vm_nmethod_keepalive_data> wh = WeakHandle<vm_nmethod_keepalive_data>::create(keepalive);
+    oop* result = _method->set_keepalive(wh.raw());
+
     if (result != NULL) {
+      store_keepalive(_thread, result);
       // someone else managed to do it before us, destroy the weak
       _required = false;
-      JNIHandles::destroy_weak_global(obj);
+      wh.release();
+    } else {
+      store_keepalive(_thread, wh.raw());
+      //log_info(jvmcont)("Winning cas for %p (%p -> %p (%p))", _method, result, wh.raw(), (void *) wh.resolve());
     }
   }
 
   SelfT* parent() { return _parent; }
   bool required() const { return _required; }
   int nr_oops() const { return _nr_oops; }
+
 };
 
 template <typename FKind>
@@ -3821,11 +3858,12 @@ void ContMirror::make_keepalive(CompiledMethodKeepalive<ConfigT>* keepalive) {
   if (oops == 0) {
     oops = 1;
   }
-  Handle shadow = Handle(_thread, allocate_shadow_array<ConfigT>(oops));
+  oop keepalive_obj = allocate_keepalive_array<ConfigT>(oops);
 
   uint64_t counter = SafepointSynchronize::safepoint_counter();
   // check gc cycle
-  keepalive->set_handle(shadow);
+  Handle keepaliveHandle = Handle(_thread, keepalive_obj);
+  keepalive->set_handle(keepaliveHandle);
   // check gc cycle and maybe reload
   //if (!SafepointSynchronize::is_same_safepoint(counter)) {
     post_safepoint(conth);
@@ -4063,10 +4101,10 @@ objArrayOop ContMirror::allocate_refstack_array(size_t nr_oops) {
 }
 
 template <typename ConfigT>
-objArrayOop ContMirror::allocate_shadow_array(size_t nr_oops) {
+objArrayOop ContMirror::allocate_keepalive_array(size_t nr_oops) {
   //assert(nr_oops > 0, "");
   bool zero = true; // !BarrierSet::barrier_set()->is_a(BarrierSet::ModRef);
-  log_develop_trace(jvmcont)("allocate_shadow_array nr_oops: %lu zero: %d", nr_oops, zero);
+  log_develop_trace(jvmcont)("allocate_keepalive_array nr_oops: %lu zero: %d", nr_oops, zero);
 
   ArrayKlass* klass = ArrayKlass::cast(Universe::objectArrayKlassObj());
   size_t size_in_words = objArrayOopDesc::object_size((int)nr_oops);
@@ -4243,12 +4281,41 @@ static inline CachedCompiledMetadata cached_metadata(const hframe& hf) {
 }
 #endif
 
-template <bool compressed_oops, bool post_barrier, bool gen_stubs>
+/* This is hopefully only temporary, currently only G1 has support for making the weak
+ * keepalive OOPs strong while their nmethods are on the stack. */
+class HandleKeepalive {
+public:
+  typedef Handle TypeT;
+
+  static Handle make_keepalive(JavaThread* thread, oop* keepalive) {
+    return Handle(thread, WeakHandle<vm_nmethod_keepalive_data>::from_raw(keepalive).resolve());
+  }
+
+  static oop read_keepalive(Handle obj) {
+    return obj();
+  }
+};
+
+class NoKeepalive {
+public:
+  typedef oop* TypeT;
+
+  static oop* make_keepalive(JavaThread* thread, oop* keepalive) {
+    return keepalive;
+  }
+
+  static oop read_keepalive(oop* keepalive) {
+    return WeakHandle<vm_nmethod_keepalive_data>::from_raw(keepalive).resolve();
+  }
+};
+
+template <bool compressed_oops, bool post_barrier, bool gen_stubs, bool g1gc>
 class Config {
 public:
-  typedef Config<compressed_oops, post_barrier, gen_stubs> SelfT;
+  typedef Config<compressed_oops, post_barrier, gen_stubs, g1gc> SelfT;
   typedef typename Conditional<compressed_oops, narrowOop, oop>::type OopT;
   typedef typename Conditional<post_barrier, RawOopWriter<SelfT>, NormalOopWriter<SelfT> >::type OopWriterT;
+  typedef typename Conditional<g1gc, NoKeepalive, HandleKeepalive>::type KeepaliveObjectT;
 
   static const bool _compressed_oops = compressed_oops;
   static const bool _post_barrier = post_barrier;
@@ -4283,27 +4350,42 @@ public:
 
   template <bool use_compressed, bool is_modref>
   static void resolve_gencode() {
-    LoomGenCode ? resolve<use_compressed, is_modref, true>()
-                : resolve<use_compressed, is_modref, false>();
+    LoomGenCode 
+      ? resolve_g1<use_compressed, is_modref, true>()
+      : resolve_g1<use_compressed, is_modref, false>();
   } 
 
-  template <bool use_compressed, bool is_modref, bool gen_code>
+  template <bool use_compressed, bool is_modref, bool gencode>
+  static void resolve_g1() {
+    UseG1GC && UseContinuationStrong
+      ? resolve<use_compressed, is_modref, gencode, true>()
+      : resolve<use_compressed, is_modref, gencode, false>();
+  }
+
+  template <bool use_compressed, bool is_modref, bool gencode, bool g1gc>
   static void resolve() {
     // tty->print_cr(">>> ConfigResolve::resolve use_compressed: %d is_modref: %d gen_code:%d", use_compressed, is_modref, gen_code);
 
-    cont_freeze_fast    = Config<use_compressed, is_modref, gen_code>::template freeze<mode_fast>;
-    cont_freeze_slow    = Config<use_compressed, is_modref, gen_code>::template freeze<mode_slow>;
-    cont_freeze_preempt = Config<use_compressed, is_modref, gen_code>::template freeze<mode_preempt>;
+    cont_freeze_fast    = Config<use_compressed, is_modref, gencode, g1gc>::template freeze<mode_fast>;
+    cont_freeze_slow    = Config<use_compressed, is_modref, gencode, g1gc>::template freeze<mode_slow>;
+    cont_freeze_preempt = Config<use_compressed, is_modref, gencode, g1gc>::template freeze<mode_preempt>;
 
-    cont_thaw_fast    = Config<use_compressed, is_modref, gen_code>::template thaw<mode_fast>;
-    cont_thaw_slow    = Config<use_compressed, is_modref, gen_code>::template thaw<mode_slow>;
-    cont_thaw_preempt = Config<use_compressed, is_modref, gen_code>::template thaw<mode_preempt>;
+    cont_thaw_fast    = Config<use_compressed, is_modref, gencode, g1gc>::template thaw<mode_fast>;
+    cont_thaw_slow    = Config<use_compressed, is_modref, gencode, g1gc>::template thaw<mode_slow>;
+    cont_thaw_preempt = Config<use_compressed, is_modref, gencode, g1gc>::template thaw<mode_preempt>;
   }
 };
 
 void Continuations::init() {
   ConfigResolve::resolve();
   OopMapStubGenerator::init();
+  Continuation::init();
+}
+
+void Continuation::init() {
+  _weak_handles = new OopStorage("Continuation NMethodKeepalive weak",
+      NMethodKeepaliveAlloc_lock,
+      NMethodKeepaliveActive_lock);
 }
 
 class KeepaliveCleanupClosure : public ThreadClosure {
@@ -4316,12 +4398,12 @@ public:
 
   virtual void do_thread(Thread* thread) {
     JavaThread* jthread = (JavaThread*) thread;
-    GrowableArray<jweak>* cleanup_list = jthread->keepalive_cleanup();
+    GrowableArray<WeakHandle<vm_nmethod_keepalive_data> >* cleanup_list = jthread->keepalive_cleanup();
     int len = cleanup_list->length();
     _count += len;
     for (int i = 0; i < len; ++i) {
-      jweak ref = cleanup_list->at(i);
-      JNIHandles::destroy_weak_global(ref);
+      WeakHandle<vm_nmethod_keepalive_data> ref = cleanup_list->at(i);
+      ref.release();
     }
 
     cleanup_list->clear();
@@ -4377,9 +4459,16 @@ void Continuation::describe(FrameValues &values) {
 #endif
 
 void Continuation::nmethod_patched(nmethod* nm) {
-  log_info(jvmcont)("nmethod patched %p", nm);
-  jweak shadow = nm->get_shadow();
-  oop resolved = JNIHandles::resolve(shadow);
+  //log_info(jvmcont)("nmethod patched %p", nm);
+  oop* keepalive = nm->get_keepalive();
+  if (keepalive == NULL) {
+    return;
+  }
+  WeakHandle<vm_nmethod_keepalive_data> wh = WeakHandle<vm_nmethod_keepalive_data>::from_raw(keepalive);
+  oop resolved = wh.resolve();
+#ifdef DEBUG
+  Universe::heap()->is_in_or_null(resolved);
+#endif
 
 #ifndef PRODUCT
   CountOops count;

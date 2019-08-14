@@ -37,6 +37,7 @@
 #include "memory/resourceArea.hpp"
 #include "oops/methodData.hpp"
 #include "oops/method.inline.hpp"
+#include "oops/weakHandle.inline.hpp"
 #include "prims/methodHandles.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/jniHandles.inline.hpp"
@@ -51,7 +52,7 @@ CompiledMethod::CompiledMethod(Method* method, const char* name, CompilerType ty
     _mark_for_deoptimization_status(not_marked),
     _method(method),
     _gc_data(NULL),
-    _shadow(NULL)
+    _keepalive(NULL)
 {
   init_defaults();
 }
@@ -64,7 +65,7 @@ CompiledMethod::CompiledMethod(Method* method, const char* name, CompilerType ty
     _mark_for_deoptimization_status(not_marked),
     _method(method),
     _gc_data(NULL),
-    _shadow(NULL)
+    _keepalive(NULL)
 {
   init_defaults();
 }
@@ -718,6 +719,9 @@ bool CompiledMethod::has_evol_metadata() {
 }
 
 bool CompiledMethod::is_on_continuation_stack() {
-  return JNIHandles::resolve(_shadow) != NULL;
+  if (_keepalive != NULL) {
+    WeakHandle<vm_nmethod_keepalive_data> wh = WeakHandle<vm_nmethod_keepalive_data>::from_raw(_keepalive);
+    return wh.resolve() != NULL;
+  }
+  return false;
 }
-
