@@ -27,6 +27,7 @@
 #include "classfile/systemDictionary.hpp"
 #include "gc/shared/weakProcessorPhases.hpp"
 #include "prims/resolvedMethodTable.hpp"
+#include "runtime/continuation.hpp"
 #include "runtime/jniHandles.hpp"
 #include "utilities/debug.hpp"
 #include "utilities/macros.hpp"
@@ -83,6 +84,7 @@ const char* WeakProcessorPhases::description(Phase phase) {
   case stringtable: return "StringTable weak processing";
   case resolved_method_table: return "ResolvedMethodTable weak processing";
   case vm: return "VM weak processing";
+  case nmethod_keepalive: return "NMethod keepalive (continuations)";
   default:
     ShouldNotReachHere();
     return "Invalid weak processing phase";
@@ -105,6 +107,7 @@ OopStorage* WeakProcessorPhases::oop_storage(Phase phase) {
   case stringtable: return StringTable::weak_storage();
   case resolved_method_table: return ResolvedMethodTable::weak_storage();
   case vm: return SystemDictionary::vm_weak_oop_storage();
+  case nmethod_keepalive: return Continuation::weak_storage();
   default:
     ShouldNotReachHere();
     return NULL;

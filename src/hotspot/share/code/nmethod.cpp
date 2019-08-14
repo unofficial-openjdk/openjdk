@@ -49,6 +49,7 @@
 #include "oops/method.inline.hpp"
 #include "oops/methodData.hpp"
 #include "oops/oop.inline.hpp"
+#include "oops/weakHandle.inline.hpp"
 #include "prims/jvmtiImpl.hpp"
 #include "runtime/atomic.hpp"
 #include "runtime/flags/flagSetting.hpp"
@@ -1826,9 +1827,18 @@ void nmethod::do_unloading(bool unloading_occurred) {
   }
 }
 
-void nmethod::oops_do(OopClosure* f, bool allow_dead, bool allow_null) {
+void nmethod::oops_do(OopClosure* f, bool allow_dead, bool allow_null, bool keepalive_is_strong) {
   // make sure the oops ready to receive visitors
   assert(allow_dead || is_alive(), "should not call follow on dead nmethod");
+
+  if (keepalive_is_strong) {
+    if (_keepalive != NULL) {
+      WeakHandle<vm_nmethod_keepalive_data> wh = WeakHandle<vm_nmethod_keepalive_data>::from_raw(_keepalive);
+      if (wh.resolve() != NULL) {
+        f->do_oop(_keepalive);
+      }
+    }
+  }
 
   // Prevent extra code cache walk for platforms that don't have immediate oops.
   if (relocInfo::mustIterateImmediateOopsInCode()) {

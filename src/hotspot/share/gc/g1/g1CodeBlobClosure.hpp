@@ -51,8 +51,9 @@ class G1CodeBlobClosure : public CodeBlobClosure {
   };
 
   HeapRegionGatheringOopClosure _oc;
+  bool _keepalive_is_strong;
 public:
-  G1CodeBlobClosure(OopClosure* oc) : _oc(oc) {}
+  G1CodeBlobClosure(OopClosure* oc, bool keepalive_is_strong) : _oc(oc), _keepalive_is_strong(keepalive_is_strong) {}
 
   void do_code_blob(CodeBlob* cb);
 };

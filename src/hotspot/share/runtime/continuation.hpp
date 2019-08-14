@@ -67,9 +67,16 @@ void continuations_init();
 
 class javaVFrame;
 class JavaThread;
+class OopStorage;
 
 class Continuation : AllStatic {
+private:
+  static OopStorage* _weak_handles;
 public:
+  static void init();
+
+  static OopStorage* weak_storage() { return _weak_handles; }
+
   static int freeze(JavaThread* thread, FrameInfo* fi, bool from_interpreter);
   static int prepare_thaw(FrameInfo* fi, bool return_barrier);
   static address thaw_leaf(FrameInfo* fi, bool return_barrier, bool exception);

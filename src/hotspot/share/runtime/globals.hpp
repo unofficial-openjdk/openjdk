@@ -2439,6 +2439,9 @@ const size_t minimumSymbolTableSize = 1024;
   product(bool, UseContinuationLazyCopy, true,                              \
       "Use lazy-copy in continuations")                                     \
                                                                             \
+  product(bool, UseContinuationStrong, true,                                \
+      "The weak keepalive is considered strong on stack")                   \
+                                                                            \
   product(bool, UseContinuationFastPath, true,                              \
       "Use fast-path frame walking in continuations")                       \
                                                                             \

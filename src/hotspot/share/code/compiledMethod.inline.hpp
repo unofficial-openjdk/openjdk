@@ -59,14 +59,14 @@ inline address CompiledMethod::get_deopt_original_pc(const frame* fr) {
   return NULL;
 }
 
-inline jweak CompiledMethod::get_shadow() { return _shadow; }
+inline oop* CompiledMethod::get_keepalive() { return _keepalive; }
 
-inline jweak CompiledMethod::set_shadow(jweak obj) {
-  return Atomic::cmpxchg(obj, &_shadow, (jweak) NULL);
+inline oop* CompiledMethod::set_keepalive(oop* obj) {
+  return Atomic::cmpxchg(obj, &_keepalive, (oop*) NULL);
 }
 
-inline bool CompiledMethod::clear_shadow(jweak old) {
-  return Atomic::cmpxchg((jweak) NULL, &_shadow, (jweak) old) == old;
+inline bool CompiledMethod::clear_keepalive(oop* old) {
+  return Atomic::cmpxchg((oop*) NULL, &_keepalive, (oop*) old) == old;
 }
 
 // class ExceptionCache methods

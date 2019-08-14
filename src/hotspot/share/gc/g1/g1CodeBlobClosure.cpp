@@ -57,7 +57,7 @@ void G1CodeBlobClosure::do_code_blob(CodeBlob* cb) {
   if (nm != NULL) {
     if (!nm->test_set_oops_do_mark()) {
       _oc.set_nm(nm);
-      nm->oops_do(&_oc);
+      nm->oops_do_keepalive(&_oc, _keepalive_is_strong);
       nm->fix_oop_relocations();
     }
   }

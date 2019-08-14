@@ -44,8 +44,8 @@ public:
   CLDClosure* strong_clds()           { return &_closures._clds; }
   CLDClosure* second_pass_weak_clds() { return NULL; }
 
-  CodeBlobClosure* strong_codeblobs()      { return &_closures._codeblobs; }
-  CodeBlobClosure* weak_codeblobs()        { return &_closures._codeblobs; }
+  CodeBlobClosure* strong_codeblobs()      { return &_closures._strong_codeblobs; }
+  CodeBlobClosure* weak_codeblobs()        { return &_closures._weak_codeblobs; }
 
   OopClosure* raw_strong_oops() { return &_closures._oops; }
 
@@ -87,8 +87,8 @@ public:
   // return a NULL closure for the following specialized versions in that case.
   CLDClosure* second_pass_weak_clds() { return null_if<G1MarkFromRoot>(&_weak._clds); }
 
-  CodeBlobClosure* strong_codeblobs()      { return &_strong._codeblobs; }
-  CodeBlobClosure* weak_codeblobs()        { return &_weak._codeblobs; }
+  CodeBlobClosure* strong_codeblobs()      { return &_strong._strong_codeblobs; }
+  CodeBlobClosure* weak_codeblobs()        { return &_weak._weak_codeblobs; }
 
   OopClosure* raw_strong_oops() { return &_strong._oops; }
 

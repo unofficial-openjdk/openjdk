@@ -177,7 +177,7 @@ protected:
 
   virtual void flush() = 0;
 
-  jweak _shadow;
+  oop* _keepalive; // allocated and maintained by Continuation::weak_storage().
 protected:
   CompiledMethod(Method* method, const char* name, CompilerType type, const CodeBlobLayout& layout, int frame_complete_offset, int frame_size, ImmutableOopMapSet* oop_maps, bool caller_must_gc_arguments, bool compiled);
   CompiledMethod(Method* method, const char* name, CompilerType type, int size, int header_size, CodeBuffer* cb, int frame_complete_offset, int frame_size, OopMapSet* oop_maps, bool caller_must_gc_arguments, bool compiled);
@@ -421,9 +421,9 @@ public:
 
   bool is_on_continuation_stack();
 
-  jweak get_shadow();
-  jweak set_shadow(jweak shadow);
-  bool clear_shadow(jweak old);
+  oop* get_keepalive();
+  oop* set_keepalive(oop* keepalive);
+  bool clear_keepalive(oop* old);
 
 private:
   PcDesc* find_pc_desc(address pc, bool approximate) {
