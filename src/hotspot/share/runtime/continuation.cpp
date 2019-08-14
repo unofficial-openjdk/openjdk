@@ -1509,7 +1509,7 @@ public:
   }
 
   void write_at(ContMirror& mirror, int index) {
-    assert(_keepalive != NULL, "");
+    //assert(_keepalive != NULL, "");
     //log_develop_info(jvmcont)("writing mirror at %d\n", index);
     mirror.add_oop<ConfigT>(read_keepalive(), index);
     //*(hsp + index)
@@ -1523,7 +1523,7 @@ public:
 
     nmethod* nm = _method->as_nmethod_or_null();
     if (nm != NULL) {
-      assert(_keepalive != NULL && read_keepalive() != NULL, "");
+      //assert(_keepalive != NULL && read_keepalive() != NULL, "");
       PersistOops<OopT> persist(_nr_oops, (objArrayOop) read_keepalive());
       nm->oops_do(&persist);
       //log_info(jvmcont)("oops persisted");
