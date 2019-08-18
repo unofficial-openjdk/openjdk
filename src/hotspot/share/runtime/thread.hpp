@@ -368,7 +368,7 @@ class Thread: public ThreadShadow {
   void set_missed_ic_stub_refill_verifier(ICRefillVerifier* verifier) {
     _missed_ic_stub_refill_verifier = verifier;
   }
-#endif
+#endif // ASSERT
 
  private:
 
@@ -382,12 +382,13 @@ class Thread: public ThreadShadow {
   //
   NOT_PRODUCT(int _no_safepoint_count;)         // If 0, thread allow a safepoint to happen
 
+ private:
   // Used by SkipGCALot class.
   NOT_PRODUCT(bool _skip_gcalot;)               // Should we elide gc-a-lot?
 
+  friend class GCLocker;
   friend class NoSafepointVerifier;
   friend class PauseNoSafepointVerifier;
-  friend class GCLocker;
 
   volatile void* _polling_page;                 // Thread local polling page
 
@@ -491,6 +492,10 @@ class Thread: public ThreadShadow {
 
   // Can this thread make Java upcalls
   virtual bool can_call_java() const                 { return false; }
+
+  // Is this a JavaThread that is on the VM's current ThreadsList?
+  // If so it must participate in the safepoint protocol.
+  virtual bool is_active_Java_thread() const         { return false; }
 
   // Casts
   virtual WorkerThread* as_Worker_thread() const     { return NULL; }
@@ -754,9 +759,12 @@ protected:
   // Deadlock detection
   ResourceMark* current_resource_mark()          { return _current_resource_mark; }
   void set_current_resource_mark(ResourceMark* rm) { _current_resource_mark = rm; }
-#endif
+#endif // ASSERT
 
-  void check_for_valid_safepoint_state(bool potential_vm_operation) PRODUCT_RETURN;
+  // These functions check conditions on a JavaThread before possibly going to a safepoint,
+  // including NoSafepointVerifier.
+  void check_for_valid_safepoint_state(bool potential_vm_operation) NOT_DEBUG_RETURN;
+  void check_possible_safepoint() NOT_DEBUG_RETURN;
 
  private:
   volatile int _jvmti_env_iteration_count;
@@ -1227,7 +1235,7 @@ class JavaThread: public Thread {
 #ifdef ASSERT
   // verify this JavaThread hasn't be published in the Threads::list yet
   void verify_not_published();
-#endif
+#endif // ASSERT
 
   //JNI functiontable getter/setter for JVMTI jni function table interception API.
   void set_jni_functions(struct JNINativeInterface_* functionTable) {
@@ -1256,6 +1264,10 @@ class JavaThread: public Thread {
   // Testers
   virtual bool is_Java_thread() const            { return true;  }
   virtual bool can_call_java() const             { return true; }
+
+  virtual bool is_active_Java_thread() const {
+    return on_thread_list() && !is_terminated();
+  }
 
   // Thread oop. threadObj() can be NULL for initial JavaThread
   // (or for threads attached via JNI)
