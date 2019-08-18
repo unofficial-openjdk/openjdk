@@ -202,7 +202,7 @@ static const struct PhaseMap phase_mapping[] = {
   {WeakProcessorPhases::vm,                    ShenandoahPhaseTimings::VMWeakRoots}
 };
 
-STATIC_ASSERT(sizeof(phase_mapping) / sizeof(PhaseMap) == WeakProcessorPhases::phase_count);
+//STATIC_ASSERT(sizeof(phase_mapping) / sizeof(PhaseMap) == WeakProcessorPhases::phase_count);
 
 void ShenandoahTimingConverter::weak_processing_timing_to_shenandoah_timing(WeakProcessorPhaseTimes* weak_processing_timings,
                                                                             ShenandoahWorkerTimings* sh_worker_times) {
