@@ -35,7 +35,13 @@ import jdk.internal.access.SharedSecrets;
  */
 
 public final class Strands {
-    private static final JavaLangAccess JLA = SharedSecrets.getJavaLangAccess();
+    private static final JavaLangAccess JLA;
+    static {
+        JLA = SharedSecrets.getJavaLangAccess();
+        if (JLA == null) {
+            throw new InternalError("JavaLangAccess not setup");
+        }
+    }
     private Strands() { }
 
     /**
