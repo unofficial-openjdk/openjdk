@@ -34,6 +34,7 @@
 #include "gc/shenandoah/shenandoahHeap.hpp"
 #include "gc/shenandoah/shenandoahHeuristics.hpp"
 #include "gc/shenandoah/shenandoahUtils.hpp"
+#include "utilities/debug.hpp"
 
 ShenandoahPhaseTimings::Phase ShenandoahGCPhase::_current_phase = ShenandoahGCPhase::_invalid_phase;
 
@@ -199,10 +200,11 @@ static const struct PhaseMap phase_mapping[] = {
   {WeakProcessorPhases::jni,                   ShenandoahPhaseTimings::JNIWeakRoots},
   {WeakProcessorPhases::stringtable,           ShenandoahPhaseTimings::StringTableRoots},
   {WeakProcessorPhases::resolved_method_table, ShenandoahPhaseTimings::ResolvedMethodTableRoots},
-  {WeakProcessorPhases::vm,                    ShenandoahPhaseTimings::VMWeakRoots}
+  {WeakProcessorPhases::vm,                    ShenandoahPhaseTimings::VMWeakRoots},
+  {WeakProcessorPhases::nmethod_keepalive,     ShenandoahPhaseTimings::NMethodKeepAliveRoots}
 };
 
-//STATIC_ASSERT(sizeof(phase_mapping) / sizeof(PhaseMap) == WeakProcessorPhases::phase_count);
+STATIC_ASSERT(sizeof(phase_mapping) / sizeof(PhaseMap) == WeakProcessorPhases::phase_count);
 
 void ShenandoahTimingConverter::weak_processing_timing_to_shenandoah_timing(WeakProcessorPhaseTimes* weak_processing_timings,
                                                                             ShenandoahWorkerTimings* sh_worker_times) {
