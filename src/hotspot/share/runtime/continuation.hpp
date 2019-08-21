@@ -90,8 +90,8 @@ public:
   static bool is_return_barrier_entry(const address pc);
   static bool is_frame_in_continuation(const frame& f, oop cont);
   static bool is_frame_in_continuation(JavaThread* thread, const frame& f);
-  static bool fix_continuation_bottom_sender(JavaThread* thread, const frame& callee, address* sender_pc, intptr_t** sender_sp);
-  static bool fix_continuation_bottom_sender(RegisterMap* map, const frame& callee, address* sender_pc, intptr_t** sender_sp);
+  static bool fix_continuation_bottom_sender(JavaThread* thread, const frame& callee, address* sender_pc, intptr_t** sender_sp, intptr_t** sender_fp);
+  static bool fix_continuation_bottom_sender(RegisterMap* map, const frame& callee, address* sender_pc, intptr_t** sender_sp, intptr_t** sender_fp);
   static frame fix_continuation_bottom_sender(const frame& callee, RegisterMap* map, frame f);
   static address* get_continuation_entry_pc_for_sender(Thread* thread, const frame& f, address* pc_addr);
   static address get_top_return_pc_post_barrier(JavaThread* thread, address pc);

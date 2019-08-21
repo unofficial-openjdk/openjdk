@@ -410,7 +410,7 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
   // This is the saved value of EBP which may or may not really be an FP.
   // It is only an FP if the sender is an interpreter frame (or C1?).
   intptr_t** saved_fp_addr = (intptr_t**) (sender_sp - frame::sender_sp_offset);
-
+  intptr_t* sender_fp = *saved_fp_addr;
   if (map->update_map()) {
     // Tell GC to use argument oopmaps for some runtime stubs that need it.
     // For C1, the runtime stub might not have oop maps, so set this flag
@@ -438,17 +438,17 @@ frame frame::sender_for_compiled_frame(RegisterMap* map) const {
     if (map->walk_cont()) { // about to walk into an h-stack 	
       return Continuation::top_frame(*this, map);	
     } else {
-      Continuation::fix_continuation_bottom_sender(map, *this, &sender_pc, &sender_sp);	
+      Continuation::fix_continuation_bottom_sender(map, *this, &sender_pc, &sender_sp, &sender_fp);	
     }
   }
 
   intptr_t* unextended_sp = sender_sp;
   CodeBlob* sender_cb = LOOKUP::find_blob(sender_pc);
   if (sender_cb != NULL) {
-    return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc, sender_cb); // Continuation::fix_continuation_bottom_sender(*this, map, frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc, sender_cb));
+    return frame(sender_sp, unextended_sp, sender_fp, sender_pc, sender_cb);
   }
   // tty->print_cr(">>>> NO CB:"); print_on(tty);
-  return frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc); // Continuation::fix_continuation_bottom_sender(*this, map, frame(sender_sp, unextended_sp, *saved_fp_addr, sender_pc));
+  return frame(sender_sp, unextended_sp, sender_fp, sender_pc);
 }
 
 inline const ImmutableOopMap* frame::get_oop_map() const {
