@@ -3346,7 +3346,7 @@ bool Continuation::is_return_barrier_entry(const address pc) {
 }
 
 static inline bool is_sp_in_continuation(intptr_t* const sp, oop cont) {
-  tty->print_cr(">>>> is_sp_in_continuation cont: %p sp: %p entry: %p in: %d", (oopDesc*)cont, sp, java_lang_Continuation::entrySP(cont), java_lang_Continuation::entrySP(cont) > sp);
+  // tty->print_cr(">>>> is_sp_in_continuation cont: %p sp: %p entry: %p in: %d", (oopDesc*)cont, sp, java_lang_Continuation::entrySP(cont), java_lang_Continuation::entrySP(cont) > sp);
   return java_lang_Continuation::entrySP(cont) > sp;
 }
 
