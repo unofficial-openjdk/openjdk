@@ -3346,7 +3346,7 @@ bool Continuation::is_return_barrier_entry(const address pc) {
 }
 
 static inline bool is_sp_in_continuation(intptr_t* const sp, oop cont) {
-  // tty->print_cr(">>>> is_sp_in_continuation cont: %p sp: %p entry: %p in: %d", (oopDesc*)cont, sp, java_lang_Continuation::entrySP(cont), java_lang_Continuation::entrySP(cont) >= sp);
+  tty->print_cr(">>>> is_sp_in_continuation cont: %p sp: %p entry: %p in: %d", (oopDesc*)cont, sp, java_lang_Continuation::entrySP(cont), java_lang_Continuation::entrySP(cont) > sp);
   return java_lang_Continuation::entrySP(cont) > sp;
 }
 
@@ -3379,16 +3379,18 @@ address* Continuation::get_continuation_entry_pc_for_sender(Thread* thread, cons
     return pc_addr0;
   if (is_sp_in_continuation(f.unextended_sp(), cont))
     return pc_addr0; // not the run frame
-
+  if (*pc_addr0 == f.raw_pc())
+    return pc_addr0;
+  
+  address *pc_addr = java_lang_Continuation::entryPC_addr(cont);
   // If our callee is the entry frame, we can continue as usual becuse we use the ordinary return address; see Freeze::setup_jump
   // If the entry frame is the callee, we set entryPC_addr to NULL in Thaw::finalize
-
-  address *pc_addr = java_lang_Continuation::entryPC_addr(cont);
-  if (*pc_addr == NULL) {
-    assert (!is_return_barrier_entry(*pc_addr0), "");
-    return pc_addr0;
-  }
+  // if (*pc_addr == NULL) {
+  //   assert (!is_return_barrier_entry(*pc_addr0), "");
+  //   return pc_addr0;
+  // }
  
+  // tty->print_cr(">>>> get_continuation_entry_pc_for_sender"); f.print_on(tty);
   log_develop_trace(jvmcont)("get_continuation_entry_pc_for_sender pc_addr: " INTPTR_FORMAT " *pc_addr: " INTPTR_FORMAT, p2i(pc_addr), p2i(*pc_addr));
   DEBUG_ONLY(if (log_develop_is_enabled(Trace, jvmcont)) { print_blob(tty, *pc_addr); print_blob(tty, *(address*)(f.sp()-1)); })
   // if (log_develop_is_enabled(Trace, jvmcont)) { os::print_location(tty, (intptr_t)pc_addr); os::print_location(tty, (intptr_t)*pc_addr); }
@@ -3396,18 +3398,8 @@ address* Continuation::get_continuation_entry_pc_for_sender(Thread* thread, cons
   return pc_addr;
 }
 
-bool Continuation::fix_continuation_bottom_sender(RegisterMap* map, const frame& callee, address* sender_pc, intptr_t** sender_sp, intptr_t** sender_fp) {
-  bool res = fix_continuation_bottom_sender(map->thread(), callee, sender_pc, sender_sp, sender_fp);
-  if (res && !callee.is_interpreted_frame()) {
-    ContinuationHelper::set_last_vstack_frame(map, callee);
-  } else {
-    ContinuationHelper::clear_last_vstack_frame(map);
-  }
-  return res;
-}
-
 bool Continuation::fix_continuation_bottom_sender(JavaThread* thread, const frame& callee, address* sender_pc, intptr_t** sender_sp, intptr_t** sender_fp) {
-  // TODO : this code and its use sites probably need more work
+  // TODO : this code and its use sites, as well as get_continuation_entry_pc_for_sender, probably need more work
   if (thread != NULL && is_return_barrier_entry(*sender_pc)) {
     log_develop_trace(jvmcont)("fix_continuation_bottom_sender callee:"); if (log_develop_is_enabled(Debug, jvmcont)) callee.print_value_on(tty, thread);
     log_develop_trace(jvmcont)("fix_continuation_bottom_sender: sender_pc: " INTPTR_FORMAT " sender_sp: " INTPTR_FORMAT " sender_fp: " INTPTR_FORMAT, p2i(*sender_pc), p2i(*sender_sp), p2i(*sender_fp));
@@ -3448,6 +3440,16 @@ bool Continuation::fix_continuation_bottom_sender(JavaThread* thread, const fram
     return true;
   }
   return false;
+}
+
+bool Continuation::fix_continuation_bottom_sender(RegisterMap* map, const frame& callee, address* sender_pc, intptr_t** sender_sp, intptr_t** sender_fp) {
+  bool res = fix_continuation_bottom_sender(map->thread(), callee, sender_pc, sender_sp, sender_fp);
+  if (res && !callee.is_interpreted_frame()) {
+    ContinuationHelper::set_last_vstack_frame(map, callee);
+  } else {
+    ContinuationHelper::clear_last_vstack_frame(map);
+  }
+  return res;
 }
 
 frame Continuation::fix_continuation_bottom_sender(const frame& callee, RegisterMap* map, frame f) {
