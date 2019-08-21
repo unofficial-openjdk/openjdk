@@ -633,8 +633,8 @@ void ContinuationHelper::update_register_map_from_last_vstack_frame(RegisterMap*
   frame::update_map_with_saved_link(map, fp);
 }
 
-inline frame ContinuationHelper::frame_with(frame& f, intptr_t* sp, address pc) {
-  return frame(sp, f.unextended_sp(), f.fp(), pc, CodeCache::find_blob(pc));
+inline frame ContinuationHelper::frame_with(frame& f, intptr_t* sp, address pc, intptr_t* fp) {
+  return frame(sp, f.unextended_sp(), fp, pc, CodeCache::find_blob(pc));
 }
 
 inline void ContinuationHelper::set_last_vstack_frame(RegisterMap* map, const frame& hf) {
@@ -1106,6 +1106,7 @@ static void print_vframe(frame f, const RegisterMap* map, outputStream* st) {
     st->print("\t'real' return_pc: "); os::print_location(st, *(intptr_t*)(f.real_fp() - 1));
     // st->print("\treturn_pc: "); os::print_location(st, *(intptr_t*)(fp + frame::return_addr_offset));
   }
+  st->print_cr("-------");
 }
 
 #endif // CPU_X86_CONTINUATION_X86_INLINE_HPP

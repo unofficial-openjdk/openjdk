@@ -74,9 +74,7 @@ void AbstractInterpreter::layout_activation(Method* method,
   int extra_locals = (method->max_locals() - method->size_of_parameters()) *
     Interpreter::stackElementWords;
 
-#ifdef ASSERT
   assert(caller->sp() == interpreter_frame->sender_sp(), "Frame not properly walkable");
-#endif
 
   interpreter_frame->interpreter_frame_set_method(method);
   // NOTE the difference in using sender_sp and
