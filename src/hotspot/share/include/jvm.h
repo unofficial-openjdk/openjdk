@@ -248,14 +248,8 @@ JVM_Sleep(JNIEnv *env, jclass threadClass, jlong millis);
 JNIEXPORT jobject JNICALL
 JVM_CurrentThread(JNIEnv *env, jclass threadClass);
 
-JNIEXPORT jint JNICALL
-JVM_CountStackFrames(JNIEnv *env, jobject thread);
-
 JNIEXPORT void JNICALL
 JVM_Interrupt(JNIEnv *env, jobject thread);
-
-JNIEXPORT jboolean JNICALL
-JVM_IsInterrupted(JNIEnv *env, jobject thread, jboolean clearInterrupted);
 
 JNIEXPORT jboolean JNICALL
 JVM_HoldsLock(JNIEnv *env, jclass threadClass, jobject obj);

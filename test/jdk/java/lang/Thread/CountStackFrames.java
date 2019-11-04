@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,20 +21,36 @@
  * questions.
  */
 
-
-package org.graalvm.compiler.test;
-
-/**
- * A class loader that exports all packages in the module defining the class loader to all classes
- * in the unnamed module associated with the loader.
+/* @test
+ * @bug 8205132
+ * @summary Test Thread.countStackFrames()
+ * @run testng CountStackFrames
  */
-public class ExportingClassLoader extends ClassLoader {
-    public ExportingClassLoader() {
-        ModuleSupport.exportAllPackagesTo(getClass(), this);
+
+import org.testng.annotations.Test;
+
+public class CountStackFrames {
+
+    // current thread
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testCurrentThread() {
+        Thread.currentThread().countStackFrames();
     }
 
-    public ExportingClassLoader(ClassLoader parent) {
-        super(parent);
-        ModuleSupport.exportAllPackagesTo(getClass(), this);
+    // unstarted thread
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testUnstartedThread() {
+        Thread thread = new Thread(() -> { });
+        thread.countStackFrames();
     }
+
+    // terminated thread
+    @Test(expectedExceptions = UnsupportedOperationException.class)
+    public void testTerminatedThread() throws Exception {
+        Thread thread = new Thread(() -> { });
+        thread.start();
+        thread.join();
+        thread.countStackFrames();
+    }
+
 }
